@@ -3,11 +3,11 @@
 from datetime import datetime
 from typing import Dict, Any, Optional
 import streamlit as st
-from models.depreciation.enhanced_depreciation import EnhancedDepreciationModel
+from enhanced_depreciation import EnhancedDepreciationModel
 
 # Import function-based database access (not class-based)
 try:
-    from data.vehicle_database import get_trims_for_vehicle, get_vehicle_trim_price
+    from vehicle_database import get_trims_for_vehicle, get_vehicle_trim_price
     DATABASE_AVAILABLE = True
 except ImportError:
     DATABASE_AVAILABLE = False
@@ -21,11 +21,11 @@ except ImportError:
 from datetime import datetime
 from typing import Dict, Any, Optional
 import streamlit as st
-from models.depreciation.enhanced_depreciation import EnhancedDepreciationModel
+from enhanced_depreciation import EnhancedDepreciationModel
 
 # Import function-based database access (not class-based)
 try:
-    from data.vehicle_database import get_trims_for_vehicle, get_vehicle_trim_price
+    from vehicle_database import get_trims_for_vehicle, get_vehicle_trim_price
     DATABASE_AVAILABLE = True
 except ImportError:
     DATABASE_AVAILABLE = False
@@ -306,7 +306,7 @@ def integrate_used_vehicle_estimation():
                     
                     # Show estimation info to user
                     st.info(f"""
-                    🔍 **Used Vehicle Detected**
+                    ðŸ” **Used Vehicle Detected**
                     
                     Estimated current market value: **${estimated_value:,.0f}**
                     
@@ -315,7 +315,7 @@ def integrate_used_vehicle_estimation():
                     - Current mileage: {current_mileage:,} miles
                     - {make} {model} depreciation patterns
                     
-                    💡 *This value has been automatically entered in the purchase price field*
+                    ðŸ’¡ *This value has been automatically entered in the purchase price field*
                     """)
                     
                     # Get and display insights
@@ -324,7 +324,7 @@ def integrate_used_vehicle_estimation():
                     )
                     
                     if insights:
-                        with st.expander("📊 View Depreciation Analysis"):
+                        with st.expander("ðŸ“Š View Depreciation Analysis"):
                             col1, col2 = st.columns(2)
                             
                             with col1:
@@ -338,7 +338,7 @@ def integrate_used_vehicle_estimation():
                             st.write(f"**Market Position:** {insights['market_position']}")
                 
                 else:
-                    st.warning("⚠️ Unable to estimate current value - vehicle data not found in database")
+                    st.warning("âš ï¸ Unable to estimate current value - vehicle data not found in database")
             
             else:
                 # Clear any previous estimation
@@ -355,7 +355,7 @@ def enhanced_vehicle_selection_with_price_estimation():
     
     estimator = UsedVehicleEstimator()
     
-    st.subheader("🚗 Vehicle Selection")
+    st.subheader("ðŸš— Vehicle Selection")
     
     # Vehicle selection inputs (simplified example)
     col1, col2 = st.columns(2)
@@ -407,7 +407,7 @@ def enhanced_vehicle_selection_with_price_estimation():
                 
                 # Show estimation details
                 st.success(f"""
-                ✅ **Used Vehicle Price Estimated**
+                âœ… **Used Vehicle Price Estimated**
                 
                 Current market value: **${estimated_value:,.0f}**
                 

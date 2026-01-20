@@ -8,14 +8,14 @@ Enhanced with detailed maintenance scheduling and FIXED EV efficiency handling
 from typing import Dict, Any, List
 import math
 
-from models.depreciation.enhanced_depreciation import EnhancedDepreciationModel
-from models.maintenance.maintenance_utils import MaintenanceCalculator
-from models.insurance.advanced_insurance import AdvancedInsuranceCalculator
-from models.fuel.fuel_utils import FuelCostCalculator
-from models.fuel.electric_vehicle_utils import EVCostCalculator
-from services.financial_analysis import FinancialAnalysisService
-from data.vehicle_database import get_vehicle_characteristics
-from utils.zip_code_utils import get_regional_cost_multiplier
+from enhanced_depreciation import EnhancedDepreciationModel
+from maintenance_utils import MaintenanceCalculator
+from advanced_insurance import AdvancedInsuranceCalculator
+from fuel_utils import FuelCostCalculator
+from electric_vehicle_utils import EVCostCalculator
+from financial_analysis import FinancialAnalysisService
+from vehicle_database import get_vehicle_characteristics
+from zip_code_utils import get_regional_cost_multiplier
 
 class PredictionService:
     """Main service for orchestrating TCO predictions"""
@@ -156,46 +156,16 @@ class PredictionService:
             analysis_years                     # years
         )
         
-        # In _calculate_purchase_tco method, build lifestyle factors dictionary:
-
-        lifestyle_factors = {
-            'annual_mileage': input_data['annual_mileage'],
-            'climate': {
-                'avg_high_temp': self._get_climate_high_temp(input_data.get('zip_code')),
-                'avg_low_temp': self._get_climate_low_temp(input_data.get('zip_code')),
-                'humidity_pct': self._get_humidity(input_data.get('zip_code'))
-            },
-            'location': {
-                'state': input_data.get('state', ''),
-                'coastal_distance_miles': None  # Optional: integrate KB GeoRisk API
-            },
-            'driving': {
-                'trip_type': input_data.get('trip_type', 'mixed'),
-                'trip_length': input_data.get('trip_length', '5_to_20'),
-                'driving_style': input_data.get('driving_style', 'average'),
-                'road_conditions': input_data.get('road_conditions', 'mixed'),
-                'towing_frequency': input_data.get('towing_frequency', 'never')
-            },
-            'vehicle': {
-                'engine_displacement': vehicle_characteristics.get('displacement', 2.5),
-                'cylinders': vehicle_characteristics.get('cylinders', 4),
-                'is_turbocharged': vehicle_characteristics.get('is_turbocharged', False),
-                'is_awd': vehicle_characteristics.get('is_awd', False),
-                'is_performance': vehicle_characteristics.get('is_performance', False)
-            }
-        }
-
-        # Pass to maintenance calculator
+        # Calculate maintenance schedule
         maintenance_schedule = self.maintenance_calculator.get_maintenance_schedule(
             annual_mileage=input_data['annual_mileage'],
             years=analysis_years,
             starting_mileage=current_mileage,
             vehicle_make=input_data['make'],
             driving_style=input_data.get('driving_style', 'normal'),
-            vehicle_model=input_data['model'],
-            lifestyle_factors=lifestyle_factors  # New parameter
+            vehicle_model=input_data['model']
         )
-         
+        
         # Calculate financing if applicable - FIXED to check multiple conditions
         financing_schedule = None
         # Check if financing is needed
@@ -606,14 +576,14 @@ class PredictionService:
 
             if is_electric:
                 annual_fuel = self.ev_calculator.calculate_annual_electricity_cost(
-                    annual_mileage=annual_mileage_limit,  # âœ… Use lease mileage limit
+                    annual_mileage=annual_mileage_limit,  # Ã¢Å“â€¦ Use lease mileage limit
                     vehicle_efficiency=adjusted_ev_efficiency,
                     electricity_rate=input_data.get('electricity_rate', 0.12),
                     charging_preference=input_data.get('charging_preference', 'mixed')
                 )
             else:
                 annual_fuel = self.fuel_calculator.calculate_annual_fuel_cost(
-                    annual_mileage=annual_mileage_limit,  # âœ… Use lease mileage limit
+                    annual_mileage=annual_mileage_limit,  # Ã¢Å“â€¦ Use lease mileage limit
                     mpg=vehicle_characteristics.get('mpg', 25),
                     fuel_price=input_data.get('fuel_price', 3.50),
                     driving_style=driving_style,

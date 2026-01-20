@@ -718,7 +718,7 @@ def estimate_annual_fuel_cost(mpg_data: dict, annual_mileage: int, fuel_price: f
             
             # Use EVCostCalculator for realistic cost calculation
             try:
-                from models.fuel.electric_vehicle_utils import EVCostCalculator
+                from electric_vehicle_utils import EVCostCalculator
                 ev_calc = EVCostCalculator()
                 
                 annual_cost = ev_calc.calculate_annual_electricity_cost(
@@ -835,7 +835,7 @@ if __name__ == "__main__":
         efficiency_rating = get_fuel_efficiency_rating(mpg_data)
         comparison = compare_mpg_to_class_average(mpg_data, make, model)
         
-        print(f"🚗 {year} {make} {model} {trim}")
+        print(f"ðŸš— {year} {make} {model} {trim}")
         print(f"   MPG: {display_text}")
         print(f"   Rating: {efficiency_rating}")
         print(f"   Class: {comparison['class_name']} (avg: {comparison['class_average']} MPG)")
@@ -847,4 +847,4 @@ if __name__ == "__main__":
         print(f"   Est. Annual Fuel Cost: ${annual_cost_gas:.0f}")
         print()
     
-    print("✅ MPG Database ready for integration!")
+    print("âœ… MPG Database ready for integration!")

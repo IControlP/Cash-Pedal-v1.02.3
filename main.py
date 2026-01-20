@@ -13,7 +13,6 @@ import os
 # Add project root to path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Updated imports for root directory structure (no subdirectories)
 from calculator_display import display_calculator
 from comparison_display import display_comparison
 from session_manager import initialize_session_state, clear_session_state

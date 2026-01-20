@@ -1,0 +1,17 @@
+# Vehicle TCO Calculator - Python Dependencies
+# Last Updated: January 2025
+
+# Core Framework
+streamlit>=1.28.0,<2.0.0
+
+# Data Visualization
+plotly>=5.15.0,<6.0.0
+
+# Data Processing
+pandas>=2.0.0,<3.0.0
+numpy>=1.24.0,<2.0.0
+
+# Optional: Add these if you need them later
+# openpyxl>=3.1.0          # For Excel file export
+# requests>=2.31.0         # For API calls
+# python-dotenv>=1.0.0     # For environment variables

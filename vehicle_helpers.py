@@ -8,7 +8,7 @@ from typing import Dict, Any
 
 # Import MPG database functions
 try:
-    from data.vehicle_mpg_database import (
+    from vehicle_mpg_database import (
         get_vehicle_mpg, 
         get_mpg_display_text, 
         get_fuel_efficiency_rating,

@@ -220,11 +220,11 @@ class ComparisonService:
         # Affordability insights
         affordable_percentage = affordability.get('affordable_percentage', 0)
         if affordable_percentage == 100:
-            insights.append("All vehicles in comparison are within your budget guidelines")
+            insights.append("All vehicles in comparison are within your budget guidelines (≤10% of income)")
         elif affordable_percentage == 0:
-            insights.append("None of the vehicles meet conservative affordability guidelines")
+            insights.append("None of the vehicles meet conservative affordability guidelines (≤10% of income)")
         else:
-            insights.append(f"{affordable_percentage:.0f}% of vehicles meet affordability guidelines")
+            insights.append(f"{affordable_percentage:.0f}% of vehicles meet affordability guidelines (≤10% of income)")
         
         # Transaction type insights
         lease_count = transaction_breakdown.get('lease_count', 0)

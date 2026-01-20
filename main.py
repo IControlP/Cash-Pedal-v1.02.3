@@ -22,7 +22,7 @@ from prediction_service import PredictionService
 # Page configuration
 st.set_page_config(
     page_title="Vehicle TCO Calculator",
-    page_icon="ðŸš—",
+    page_icon="🚗",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -33,38 +33,38 @@ def main():
     initialize_session_state()
     
     # Application header
-    st.title("ðŸš— Vehicle Total Cost of Ownership Calculator")
+    st.title("🚗 Vehicle Total Cost of Ownership Calculator")
     st.markdown("---")
     
     # Sidebar navigation
     with st.sidebar:
-        st.header("ðŸ“‹ Navigation")
+        st.header("📋 Navigation")
         
         # Main navigation options
         page = st.radio(
             "Select Function:",
-            ["ðŸ”§ Single Vehicle Calculator", "âš–ï¸ Multi-Vehicle Comparison"],
+            ["🔧 Single Vehicle Calculator", "⚖️ Multi-Vehicle Comparison"],
             help="Choose between analyzing a single vehicle or comparing multiple vehicles"
         )
         
         st.markdown("---")
         
         # Session management
-        st.header("ðŸ”„ Session Management")
+        st.header("🔄 Session Management")
         
         # Display current session stats
         if hasattr(st.session_state, 'comparison_vehicles') and st.session_state.comparison_vehicles:
-            st.success(f"ðŸ“Š {len(st.session_state.comparison_vehicles)} vehicles in comparison")
+            st.success(f"📊 {len(st.session_state.comparison_vehicles)} vehicles in comparison")
         
         # Clear session button
-        if st.button("ðŸ—‘ï¸ Clear All Data", type="secondary"):
+        if st.button("🗑️ Clear All Data", type="secondary"):
             clear_session_state()
             st.rerun()
         
         st.markdown("---")
         
         # Application info
-        st.header("â„¹ï¸ About")
+        st.header("ℹ️ About")
         st.info("""
         **Features:**
         - ZIP code-based auto-population
@@ -77,7 +77,7 @@ def main():
         
         # Disclaimers
         st.markdown("---")
-        st.header("âš ï¸ Disclaimers")
+        st.header("⚠️ Disclaimers")
         st.warning("""
         **Important Notes:**
         - Estimates may vary from actual costs
@@ -87,9 +87,9 @@ def main():
         """)
     
     # Main content area based on navigation
-    if page == "ðŸ”§ Single Vehicle Calculator":
+    if page == "🔧 Single Vehicle Calculator":
         display_calculator()
-    elif page == "âš–ï¸ Multi-Vehicle Comparison":
+    elif page == "⚖️ Multi-Vehicle Comparison":
         display_comparison()
     
     # Footer

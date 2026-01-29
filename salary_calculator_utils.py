@@ -193,7 +193,7 @@ def calculate_required_salary(monthly_vehicle_cost: float, state: str,
     """
     Calculate required gross salary to afford a vehicle at specified affordability level
     
-    Uses iterative approach since tax calculations are non-linear
+    Standard financial advice: total vehicle costs should be 10-15% of GROSS income
     """
     thresholds = AffordabilityThresholds()
     
@@ -204,38 +204,24 @@ def calculate_required_salary(monthly_vehicle_cost: float, state: str,
     else:
         target_percent = thresholds.moderate
     
-    # Required monthly take-home for this vehicle cost at target percentage
-    required_monthly_take_home = monthly_vehicle_cost / target_percent
-    required_annual_take_home = required_monthly_take_home * 12
+    # Calculate required gross income based on percentage of GROSS income
+    # If vehicle cost should be X% of gross, then: gross = vehicle_cost / X%
+    annual_vehicle_cost = monthly_vehicle_cost * 12
+    required_gross_annual = annual_vehicle_cost / target_percent
     
-    # Iteratively find gross salary that produces this take-home
-    # Start with estimate assuming ~30% total tax rate
-    gross_estimate = required_annual_take_home / 0.70
-    
-    # Refine estimate through iteration
-    for _ in range(20):  # Usually converges in 5-10 iterations
-        take_home_result = calculate_take_home_pay(gross_estimate, state, filing_status)
-        actual_net = take_home_result['net_annual']
-        
-        if abs(actual_net - required_annual_take_home) < 100:  # Within $100
-            break
-        
-        # Adjust estimate based on difference
-        ratio = required_annual_take_home / actual_net if actual_net > 0 else 1.5
-        gross_estimate *= ratio
-    
-    # Final calculation at found gross salary
-    final_result = calculate_take_home_pay(gross_estimate, state, filing_status)
+    # Calculate take-home pay for this gross salary (for reference)
+    tax_result = calculate_take_home_pay(required_gross_annual, state, filing_status)
     
     return {
-        'required_gross_annual': gross_estimate,
-        'required_gross_monthly': gross_estimate / 12,
-        'monthly_take_home': final_result['net_monthly'],
-        'annual_take_home': final_result['net_annual'],
+        'required_gross_annual': required_gross_annual,
+        'required_gross_monthly': required_gross_annual / 12,
+        'monthly_take_home': tax_result['net_monthly'],
+        'annual_take_home': tax_result['net_annual'],
         'monthly_vehicle_cost': monthly_vehicle_cost,
+        'annual_vehicle_cost': annual_vehicle_cost,
         'affordability_percent': target_percent * 100,
         'affordability_level': affordability_level,
-        'tax_breakdown': final_result,
+        'tax_breakdown': tax_result,
         'state': state,
         'state_name': STATE_TAX_DATA.get(state, (0, 'Unknown', True))[1],
         'filing_status': filing_status,

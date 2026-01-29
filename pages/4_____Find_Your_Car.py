@@ -362,6 +362,7 @@ def main():
             background: linear-gradient(90deg, #1E88E5, #7B1FA2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 0.5rem;
         }
         .quiz-subtitle {
@@ -369,11 +370,40 @@ def main():
             color: #666;
         }
         .question-card {
-            background-color: #f8f9fa;
+            background-color: #e3f2fd;
             border-radius: 15px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-            border-left: 4px solid #1E88E5;
+            padding: 1.2rem;
+            margin: 0.8rem 0;
+            border-left: 5px solid #1E88E5;
+            border: 2px solid #1E88E5;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .question-card strong {
+            color: #1a1a1a !important;
+        }
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .question-card {
+                background-color: #1e3a5f;
+                border-color: #42a5f5;
+            }
+            .question-card strong {
+                color: #ffffff !important;
+            }
+        }
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .question-card {
+                padding: 1rem;
+                margin: 0.5rem 0;
+                font-size: 0.95rem;
+            }
+            .quiz-title {
+                font-size: 1.8rem;
+            }
+            .quiz-subtitle {
+                font-size: 1rem;
+            }
         }
         .result-header {
             text-align: center;

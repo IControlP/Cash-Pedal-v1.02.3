@@ -45,6 +45,13 @@ try:
 except ImportError:
     MAINTENANCE_AVAILABLE = False
 
+# Try to import used vehicle estimator
+try:
+    from used_vehicle_estimator import UsedVehicleEstimator
+    USED_VEHICLE_ESTIMATOR_AVAILABLE = True
+except ImportError:
+    USED_VEHICLE_ESTIMATOR_AVAILABLE = False
+
 # Page configuration
 st.set_page_config(
     page_title="Salary Calculator - CashPedal",
@@ -153,11 +160,11 @@ def display_salary_results(monthly_cost: float, state: str, filing_status: str =
         with cols[i]:
             st.markdown(f"""
             <div style="background-color: {bg_color}; padding: 20px; border-radius: 10px; border-left: 5px solid {color}; text-align: center;">
-                <p style="color: {color}; font-weight: bold; margin: 0; font-size: 14px;">{label} ({percent} of take-home)</p>
+                <p style="color: {color}; font-weight: bold; margin: 0; font-size: 14px;">{label} ({percent} of gross income)</p>
                 <h2 style="margin: 10px 0; color: #333;">{format_currency(result['required_gross_annual'])}</h2>
-                <p style="margin: 0; color: #666; font-size: 14px;">per year before taxes</p>
+                <p style="margin: 0; color: #666; font-size: 14px;">per year (gross salary)</p>
                 <hr style="margin: 10px 0; border: none; border-top: 1px solid #ddd;">
-                <p style="margin: 0; color: #888; font-size: 12px;">Monthly take-home: {format_currency(result['monthly_take_home'])}</p>
+                <p style="margin: 0; color: #888; font-size: 12px;">Take-home: ~{format_currency(result['monthly_take_home'])}/mo</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -204,7 +211,7 @@ def main():
     st.title("💰 Salary Requirements Calculator")
     st.markdown("""
     Find out what salary you need to comfortably afford a vehicle. We'll calculate based on 
-    the recommendation that **total vehicle costs should be 10-15% of your monthly take-home pay**.
+    the recommendation that **total vehicle costs should be 10-15% of your gross (pre-tax) income**.
     """)
     st.markdown("---")
     
@@ -220,7 +227,7 @@ def main():
         - Registration/fees
         - Depreciation (for purchases)
         
-        **Affordability Levels:**
+        **Affordability Levels (% of gross income):**
         - **10%** - Conservative (recommended)
         - **15%** - Comfortable for most
         - **20%** - Upper limit
@@ -253,13 +260,17 @@ def main():
     else:
         st.caption("📌 Select any available model year")
     
-    # Vehicle selection
+    # Vehicle selection - initialize all variables
     vehicle_price = 35000
+    original_msrp = 35000
     vehicle_tier = 'standard'
     make = ""
     model = ""
     trim = "Base"
     mpg = 28
+    year = 2025
+    is_used_vehicle = False
+    estimated_value = None
     
     if VEHICLE_DATABASE_AVAILABLE:
         col1, col2 = st.columns(2)
@@ -322,7 +333,40 @@ def main():
                 'economy': '💚 Economy'
             }
             
-            st.success(f"**{year} {make} {model} {trim}** — MSRP: {format_currency(vehicle_price)} — Category: {tier_labels.get(vehicle_tier, 'Standard')}")
+            # Store original MSRP
+            original_msrp = vehicle_price
+            estimated_value = None
+            is_used_vehicle = False
+            
+            # For used vehicles (not 2025), estimate current market value
+            if year < 2025 and USED_VEHICLE_ESTIMATOR_AVAILABLE:
+                try:
+                    estimator = UsedVehicleEstimator()
+                    # Assume average mileage for estimation (12k miles per year of age)
+                    vehicle_age = 2025 - year
+                    estimated_mileage = vehicle_age * 12000
+                    
+                    estimated_value = estimator.estimate_current_value(
+                        make=make,
+                        model=model,
+                        year=year,
+                        trim=trim,
+                        current_mileage=estimated_mileage
+                    )
+                    
+                    if estimated_value and estimated_value > 0:
+                        vehicle_price = estimated_value
+                        is_used_vehicle = True
+                except Exception as e:
+                    # Fall back to MSRP if estimation fails
+                    pass
+            
+            # Display vehicle summary
+            if is_used_vehicle and estimated_value:
+                st.success(f"**{year} {make} {model} {trim}** — Est. Value: {format_currency(vehicle_price)} (MSRP: {format_currency(original_msrp)}) — Category: {tier_labels.get(vehicle_tier, 'Standard')}")
+                st.caption(f"📉 Estimated value based on {vehicle_age} years of age and ~{estimated_mileage:,} miles (average use)")
+            else:
+                st.success(f"**{year} {make} {model} {trim}** — MSRP: {format_currency(vehicle_price)} — Category: {tier_labels.get(vehicle_tier, 'Standard')}")
     else:
         st.warning("Vehicle database not available. Please enter vehicle details manually.")
         col1, col2 = st.columns(2)
@@ -368,6 +412,58 @@ def main():
     st.markdown("---")
     
     # =========================================================================
+    # STEP 4: Down Payment (Purchase only)
+    # =========================================================================
+    down_payment_percent = 0
+    down_payment_amount = 0
+    
+    if not is_lease:
+        st.subheader("Step 4: How much will you put down?")
+        st.caption("📌 A larger down payment reduces your monthly payment and required salary")
+        
+        # Only show if vehicle is selected
+        if make and model and make != "-- Select Make --" and model != "-- Select Model --":
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                down_payment_percent = st.slider(
+                    "Down Payment",
+                    min_value=0,
+                    max_value=100,
+                    value=20,
+                    step=5,
+                    format="%d%%",
+                    help="Percentage of vehicle price to pay upfront"
+                )
+            
+            with col2:
+                down_payment_amount = vehicle_price * (down_payment_percent / 100)
+                loan_amount = vehicle_price - down_payment_amount
+                
+                st.markdown(f"""
+                <div style="background-color: #f0f7ff; padding: 15px; border-radius: 8px; text-align: center; margin-top: 5px;">
+                    <p style="margin: 0; color: #666; font-size: 12px;">Down Payment</p>
+                    <p style="margin: 5px 0; font-size: 20px; font-weight: bold; color: #1565c0;">{format_currency(down_payment_amount)}</p>
+                    <p style="margin: 0; color: #666; font-size: 12px;">Amount to Finance</p>
+                    <p style="margin: 5px 0; font-size: 16px; color: #333;">{format_currency(loan_amount)}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # Show impact message
+            if down_payment_percent >= 50:
+                st.success("💪 Excellent! A 50%+ down payment significantly reduces your monthly costs and interest paid.")
+            elif down_payment_percent >= 20:
+                st.info("👍 A 20%+ down payment is recommended to avoid being underwater on your loan.")
+            elif down_payment_percent > 0:
+                st.warning("💡 Consider putting at least 20% down to reduce interest costs and build equity faster.")
+            else:
+                st.warning("⚠️ Financing 100% of the vehicle will result in higher monthly payments and more interest paid.")
+        else:
+            st.info("👆 Select a vehicle first to set your down payment.")
+        
+        st.markdown("---")
+    
+    # =========================================================================
     # CALCULATE RESULTS
     # =========================================================================
     
@@ -406,7 +502,7 @@ def main():
                 is_lease=False,
                 loan_term_years=5,
                 interest_rate=6.5,
-                down_payment_percent=10,
+                down_payment_percent=down_payment_percent,
                 vehicle_age=0 if year == 2025 else (2025 - year),
                 vehicle_tier=vehicle_tier
             )
@@ -416,10 +512,44 @@ def main():
         # Display Results Header
         st.subheader(f"💵 Salary Required for {year} {make} {model}")
         
-        st.markdown(f"""
-        Based on **{format_currency(monthly_cost)}/month** in total ownership costs 
-        ({'lease' if is_lease else 'purchase'}, 12,000 miles/year, normal driving):
-        """)
+        # Show calculation summary
+        if is_lease:
+            st.markdown(f"""
+            Based on **{format_currency(monthly_cost)}/month** in total ownership costs 
+            (lease, 12,000 miles/year, normal driving):
+            """)
+        else:
+            # Check if this is a used vehicle with estimated value
+            price_basis = ""
+            if is_used_vehicle:
+                price_basis = f" on est. value of {format_currency(vehicle_price)}"
+            
+            if down_payment_percent > 0:
+                st.markdown(f"""
+                Based on **{format_currency(monthly_cost)}/month** in total ownership costs 
+                ({down_payment_percent}% down payment of {format_currency(down_payment_amount)}{price_basis}, 
+                5-year loan at 6.5% APR, 12,000 miles/year):
+                """)
+            else:
+                st.markdown(f"""
+                Based on **{format_currency(monthly_cost)}/month** in total ownership costs 
+                (no down payment{price_basis}, 5-year loan at 6.5% APR, 12,000 miles/year):
+                """)
+        
+        # Show monthly cost breakdown summary
+        with st.expander("📋 View Monthly Cost Breakdown"):
+            breakdown_col1, breakdown_col2 = st.columns(2)
+            with breakdown_col1:
+                st.markdown(f"- **Car Payment:** {format_currency(costs['vehicle_payment'])}")
+                st.markdown(f"- **Fuel:** {format_currency(costs['fuel_cost'])}")
+                st.markdown(f"- **Insurance:** {format_currency(costs['insurance_cost'])}")
+            with breakdown_col2:
+                st.markdown(f"- **Maintenance:** {format_currency(costs['maintenance_cost'])}")
+                st.markdown(f"- **Registration/Fees:** {format_currency(costs['registration_cost'])}")
+                if not is_lease and costs.get('depreciation_cost', 0) > 0:
+                    st.markdown(f"- **Depreciation:** {format_currency(costs['depreciation_cost'])}")
+            
+            st.markdown(f"**Total Monthly Cost: {format_currency(monthly_cost)}**")
         
         # Display salary ranges
         display_salary_results(monthly_cost, state, 'single')

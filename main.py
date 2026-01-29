@@ -1,9 +1,8 @@
 """
 Vehicle Total Cost of Ownership Calculator
-Main Application Controller
+Main Application - Home Page
 
-This is the main entry point for the Streamlit application.
-Handles routing, session management, and overall application flow.
+This is the main entry point and landing page for the Streamlit application.
 """
 
 import streamlit as st
@@ -13,93 +12,190 @@ import os
 # Add project root to path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Updated imports for root directory structure (no subdirectories)
-from calculator_display import display_calculator
-from comparison_display import display_comparison
-from session_manager import initialize_session_state, clear_session_state
-from prediction_service import PredictionService
+# Import session manager for initialization
+from session_manager import initialize_session_state
 
-# Page configuration
+# Page configuration - MUST be first Streamlit command
 st.set_page_config(
-    page_title="Vehicle TCO Calculator",
+    page_title="CashPedal - Vehicle TCO Calculator",
     page_icon="🚗",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 def main():
-    """Main application entry point"""
+    """Main application entry point - Home Page"""
     # Initialize session state
     initialize_session_state()
     
-    # Application header
-    st.title("🚗 Vehicle Total Cost of Ownership Calculator")
+    # Custom CSS for better styling
+    st.markdown("""
+        <style>
+        .main-header {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #1E88E5;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .sub-header {
+            font-size: 1.2rem;
+            color: #666;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .feature-card {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border-left: 4px solid #1E88E5;
+            margin-bottom: 1rem;
+        }
+        .cta-button {
+            text-align: center;
+            margin-top: 2rem;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    # Hero Section
+    st.markdown('<p class="main-header">🚗 CashPedal</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Vehicle Total Cost of Ownership Calculator</p>', unsafe_allow_html=True)
+    
     st.markdown("---")
     
-    # Sidebar navigation
-    with st.sidebar:
-        st.header("📋 Navigation")
+    # Welcome message
+    st.markdown("""
+    Welcome to **CashPedal**, your comprehensive tool for understanding the true cost 
+    of vehicle ownership. Make informed decisions by analyzing all the costs associated 
+    with buying, leasing, or owning a vehicle.
+    """)
+    
+    # Quick Navigation Cards
+    st.subheader("🎯 Get Started")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        <div class="feature-card">
+            <h3>🔧 Single Vehicle Calculator</h3>
+            <p>Analyze the total cost of ownership for a single vehicle including:</p>
+            <ul>
+                <li>Purchase price and financing</li>
+                <li>Depreciation estimates</li>
+                <li>Fuel and maintenance costs</li>
+                <li>Insurance estimates</li>
+                <li>Lease vs. buy analysis</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
         
-        # Main navigation options
-        page = st.radio(
-            "Select Function:",
-            ["🔧 Single Vehicle Calculator", "⚖️ Multi-Vehicle Comparison"],
-            help="Choose between analyzing a single vehicle or comparing multiple vehicles"
-        )
+        if st.button("🔧 Open Single Vehicle Calculator", key="nav_single", use_container_width=True):
+            st.switch_page("pages/1___Single_Vehicle_Calculator.py")
+    
+    with col2:
+        st.markdown("""
+        <div class="feature-card">
+            <h3>⚖️ Multi-Vehicle Comparison</h3>
+            <p>Compare up to 5 vehicles side by side:</p>
+            <ul>
+                <li>Cost comparison charts</li>
+                <li>Feature-by-feature analysis</li>
+                <li>Automated recommendations</li>
+                <li>Export comparison reports</li>
+                <li>Pros and cons analysis</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
         
-        st.markdown("---")
-        
-        # Session management
-        st.header("🔄 Session Management")
-        
-        # Display current session stats
-        if hasattr(st.session_state, 'comparison_vehicles') and st.session_state.comparison_vehicles:
-            st.success(f"📊 {len(st.session_state.comparison_vehicles)} vehicles in comparison")
-        
-        # Clear session button
-        if st.button("🗑️ Clear All Data", type="secondary"):
-            clear_session_state()
-            st.rerun()
-        
-        st.markdown("---")
-        
-        # Application info
-        st.header("ℹ️ About")
-        st.info("""
-        **Features:**
-        - ZIP code-based auto-population
-        - Lease vs Purchase analysis
-        - Multi-vehicle comparison (up to 5)
-        - Automated pros/cons analysis
-        - Geographic cost adjustments
-        - Export capabilities
-        """)
-        
-        # Disclaimers
-        st.markdown("---")
-        st.header("⚠️ Disclaimers")
-        st.warning("""
-        **Important Notes:**
-        - Estimates may vary from actual costs
-        - Results based on current market data
-        - Consult financial advisors for major decisions
-        - Regional variations may apply
+        if st.button("⚖️ Open Vehicle Comparison", key="nav_compare", use_container_width=True):
+            st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
+    
+    st.markdown("---")
+    
+    # Key Features Section
+    st.subheader("✨ Key Features")
+    
+    feat_col1, feat_col2, feat_col3 = st.columns(3)
+    
+    with feat_col1:
+        st.markdown("""
+        **📍 Location-Based Estimates**
+        - ZIP code auto-population
+        - Regional fuel prices
+        - State tax calculations
+        - Local insurance rates
         """)
     
-    # Main content area based on navigation
-    if page == "🔧 Single Vehicle Calculator":
-        display_calculator()
-    elif page == "⚖️ Multi-Vehicle Comparison":
-        display_comparison()
+    with feat_col2:
+        st.markdown("""
+        **📈 Advanced Analytics**
+        - Weibull reliability modeling
+        - Climate-adjusted maintenance
+        - Market depreciation data
+        - Historical cost trends
+        """)
+    
+    with feat_col3:
+        st.markdown("""
+        **📊 Comprehensive Reports**
+        - Monthly cost breakdown
+        - 5-year projections
+        - Export to PDF/Excel
+        - Visual comparisons
+        """)
+    
+    # Sidebar content
+    with st.sidebar:
+        st.header("📋 Navigation")
+        st.info("""
+        Use the sidebar to navigate between pages, 
+        or click the buttons above to get started.
+        """)
+        
+        st.markdown("---")
+        
+        # Session status
+        st.header("📊 Session Status")
+        if hasattr(st.session_state, 'comparison_vehicles') and st.session_state.comparison_vehicles:
+            st.success(f"✅ {len(st.session_state.comparison_vehicles)} vehicles in comparison")
+        else:
+            st.info("No vehicles added yet")
+        
+        st.markdown("---")
+        
+        # Quick links
+        st.header("🔗 Quick Links")
+        st.markdown("""
+        - [How to Use This Calculator](#how-to-use)
+        - [Understanding TCO](#understanding-tco)
+        - [FAQ](#faq)
+        """)
+    
+    # How to Use Section
+    st.markdown("---")
+    st.subheader("📖 How to Use This Calculator")
+    st.markdown("""
+    1. **Enter Your Location**: Start by entering your ZIP code to get accurate local pricing for fuel, taxes, and insurance.
+    
+    2. **Select a Vehicle**: Choose from our comprehensive database of vehicles, or enter custom specifications.
+    
+    3. **Configure Options**: Set your financing terms, expected mileage, and ownership duration.
+    
+    4. **Review Results**: Get a detailed breakdown of all costs over your ownership period.
+    
+    5. **Compare Options**: Add multiple vehicles to compare and find the best value for your needs.
+    """)
     
     # Footer
     st.markdown("---")
     st.markdown(
         """
         <div style='text-align: center; color: gray; font-size: 12px;'>
-        Vehicle TCO Calculator v1.02.2 | 
+        CashPedal - Vehicle TCO Calculator v1.02.3 | 
         Powered by Streamlit | 
-        <a href='#' style='color: gray;'>Help & Support</a>
+        <a href='https://www.cashpedal.io' style='color: gray;'>www.cashpedal.io</a>
         </div>
         """, 
         unsafe_allow_html=True

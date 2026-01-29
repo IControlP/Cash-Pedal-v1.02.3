@@ -15,7 +15,7 @@ from fuel_utils import FuelCostCalculator
 from electric_vehicle_utils import EVCostCalculator
 from financial_analysis import FinancialAnalysisService
 from vehicle_database import get_vehicle_characteristics
-from zip_code_utils import get_regional_cost_multiplier
+from zip_code_utils import get_regional_cost_multiplier, get_climate_data_for_zip
 
 class PredictionService:
     """Main service for orchestrating TCO predictions"""
@@ -71,22 +71,48 @@ class PredictionService:
         schedule = []
         current_value = initial_value  # Start with actual purchase price, not original MSRP
         
-        # Used vehicle depreciation rates (much lower than new vehicles)
+        # Determine vehicle tier for depreciation rates
+        luxury_makes = {'BMW', 'Mercedes-Benz', 'Audi', 'Porsche', 'Lexus', 'Land Rover',
+                        'Jaguar', 'Maserati', 'Genesis', 'Infiniti', 'Acura', 'Cadillac', 
+                        'Lincoln', 'Volvo', 'Alfa Romeo'}
+        
+        is_luxury = input_data['make'] in luxury_makes
+        
+        # Used vehicle depreciation rates based on age and tier
         if vehicle_age_at_purchase <= 3:
             # Recently used (1-3 years) - still depreciates moderately
-            annual_rates = [0.08, 0.07, 0.06, 0.05, 0.04]  # 8%, 7%, 6%, 5%, 4%
+            if is_luxury:
+                annual_rates = [0.12, 0.10, 0.08, 0.07, 0.06]  # Luxury depreciates faster
+            else:
+                annual_rates = [0.08, 0.07, 0.06, 0.05, 0.04]  # Standard
         elif vehicle_age_at_purchase <= 7:
             # Mid-age used (4-7 years) - slower depreciation
-            annual_rates = [0.05, 0.04, 0.04, 0.03, 0.03]  # 5%, 4%, 4%, 3%, 3%
+            if is_luxury:
+                annual_rates = [0.08, 0.07, 0.06, 0.05, 0.05]  # Luxury still faster
+            else:
+                annual_rates = [0.05, 0.04, 0.04, 0.03, 0.03]  # Standard
         else:
-            # Older used (8+ years) - minimal depreciation
-            annual_rates = [0.03, 0.02, 0.02, 0.02, 0.02]  # 3%, 2%, 2%, 2%, 2%
+            # Older used (8+ years) - minimal depreciation for all
+            annual_rates = [0.04, 0.03, 0.03, 0.02, 0.02]
         
-        # Apply brand multipliers
+        # Fine-tune brand multipliers
         brand_multipliers = {
-            'Toyota': 0.8, 'Honda': 0.8, 'Lexus': 0.7,  # Better retention
-            'BMW': 1.2, 'Mercedes-Benz': 1.2, 'Audi': 1.1,  # Faster depreciation
-            'Chevrolet': 1.0, 'Ford': 1.0, 'Hyundai': 0.9
+            # Premium Value Retention
+            'Toyota': 0.80, 'Honda': 0.82, 'Lexus': 0.85,
+            'Porsche': 0.88, 'Subaru': 0.85,
+            
+            # Average Retention  
+            'Mazda': 0.95, 'Hyundai': 0.92, 'Kia': 0.90,
+            'Ford': 1.0, 'Chevrolet': 1.0, 'GMC': 0.98,
+            
+            # Below Average Retention (luxury brands)
+            'BMW': 1.15, 'Mercedes-Benz': 1.18, 'Audi': 1.12,
+            'Cadillac': 1.15, 'Lincoln': 1.18, 'Infiniti': 1.10,
+            'Acura': 1.05, 'Genesis': 1.08, 'Volvo': 1.10,
+            
+            # Poor Retention
+            'Jaguar': 1.25, 'Land Rover': 1.22, 'Alfa Romeo': 1.28,
+            'Maserati': 1.30,
         }
         brand_multiplier = brand_multipliers.get(input_data['make'], 1.0)
         
@@ -95,12 +121,15 @@ class PredictionService:
             base_rate = annual_rates[min(year - 1, len(annual_rates) - 1)]
             adjusted_rate = base_rate * brand_multiplier
             
+            # Cap maximum annual depreciation at 15%
+            adjusted_rate = min(adjusted_rate, 0.15)
+            
             # Calculate depreciation for this year
             annual_depreciation = current_value * adjusted_rate
             new_value = current_value - annual_depreciation
             
             # Ensure minimum value (used vehicles retain some value)
-            min_value = initial_value * 0.15  # Minimum 15% of purchase price
+            min_value = initial_value * 0.20  # Minimum 20% of purchase price
             new_value = max(new_value, min_value)
             annual_depreciation = current_value - new_value  # Recalculate if min value applied
             
@@ -147,14 +176,31 @@ class PredictionService:
         }
         
         # Calculate depreciation schedule
-        depreciation_schedule = self.depreciation_model.calculate_depreciation_schedule(
-            purchase_price,                    # initial_value
-            input_data['make'],                # vehicle_make
-            input_data['model'],               # vehicle_model
-            input_data['year'],                # model_year
-            input_data['annual_mileage'],      # annual_mileage
-            analysis_years                     # years
-        )
+        # FIXED: Use realistic used vehicle depreciation for non-new vehicles
+        from datetime import datetime
+        current_year = datetime.now().year
+        vehicle_age = current_year - input_data['year']
+        
+        # Determine if this is a used vehicle (age > 0 or has significant mileage)
+        is_used_vehicle = vehicle_age > 0 or current_mileage > 5000
+        
+        if is_used_vehicle:
+            # Use the realistic used vehicle depreciation method
+            depreciation_schedule = self._calculate_realistic_used_vehicle_depreciation(
+                input_data,
+                purchase_price,
+                analysis_years
+            )
+        else:
+            # New vehicle - use standard depreciation model
+            depreciation_schedule = self.depreciation_model.calculate_depreciation_schedule(
+                purchase_price,                    # initial_value
+                input_data['make'],                # vehicle_make
+                input_data['model'],               # vehicle_model
+                input_data['year'],                # model_year
+                input_data['annual_mileage'],      # annual_mileage
+                analysis_years                     # years
+            )
         
         # In _calculate_purchase_tco method, build lifestyle factors dictionary:
 
@@ -606,14 +652,14 @@ class PredictionService:
 
             if is_electric:
                 annual_fuel = self.ev_calculator.calculate_annual_electricity_cost(
-                    annual_mileage=annual_mileage_limit,  # âœ… Use lease mileage limit
+                    annual_mileage=annual_mileage_limit,  # Ã¢Å“â€¦ Use lease mileage limit
                     vehicle_efficiency=adjusted_ev_efficiency,
                     electricity_rate=input_data.get('electricity_rate', 0.12),
                     charging_preference=input_data.get('charging_preference', 'mixed')
                 )
             else:
                 annual_fuel = self.fuel_calculator.calculate_annual_fuel_cost(
-                    annual_mileage=annual_mileage_limit,  # âœ… Use lease mileage limit
+                    annual_mileage=annual_mileage_limit,  # Ã¢Å“â€¦ Use lease mileage limit
                     mpg=vehicle_characteristics.get('mpg', 25),
                     fuel_price=input_data.get('fuel_price', 3.50),
                     driving_style=driving_style,
@@ -863,4 +909,52 @@ class PredictionService:
             'is_electric': results.get('vehicle_characteristics', {}).get('is_electric', False)
         })
         
+    def _get_climate_high_temp(self, zip_code: str) -> float:
+            """
+            Get average high temperature for a ZIP code
+            
+            Args:
+                zip_code: 5-digit ZIP code string
+                
+            Returns:
+                Average high temperature in Fahrenheit
+            """
+            if not zip_code:
+                return 78.0  # National average
+            
+            climate_data = get_climate_data_for_zip(zip_code)
+            return float(climate_data.get('avg_high_temp', 78.0))
+        
+    def _get_climate_low_temp(self, zip_code: str) -> float:
+        """
+        Get average low temperature for a ZIP code
+        
+        Args:
+            zip_code: 5-digit ZIP code string
+            
+        Returns:
+            Average low temperature in Fahrenheit
+        """
+        if not zip_code:
+            return 40.0  # National average
+        
+        climate_data = get_climate_data_for_zip(zip_code)
+        return float(climate_data.get('avg_low_temp', 40.0))
+    
+    def _get_humidity(self, zip_code: str) -> float:
+        """
+        Get average humidity percentage for a ZIP code
+        
+        Args:
+            zip_code: 5-digit ZIP code string
+            
+        Returns:
+            Average humidity percentage (0-100)
+        """
+        if not zip_code:
+            return 60.0  # National average
+        
+        climate_data = get_climate_data_for_zip(zip_code)
+        return float(climate_data.get('humidity_pct', 60.0))
+
         return display_results

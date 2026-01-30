@@ -12,8 +12,9 @@ import os
 # Add project root to path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Import session manager for initialization
+# Import session manager and theme utilities
 from session_manager import initialize_session_state
+from theme_utils import apply_theme, get_footer_html
 
 # Page configuration - MUST be first Streamlit command
 st.set_page_config(
@@ -28,35 +29,8 @@ def main():
     # Initialize session state
     initialize_session_state()
     
-    # Custom CSS for better styling
-    st.markdown("""
-        <style>
-        .main-header {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #1E88E5;
-            text-align: center;
-            margin-bottom: 1rem;
-        }
-        .sub-header {
-            font-size: 1.2rem;
-            color: #666;
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .feature-card {
-            background-color: #f8f9fa;
-            padding: 1.5rem;
-            border-radius: 10px;
-            border-left: 4px solid #1E88E5;
-            margin-bottom: 1rem;
-        }
-        .cta-button {
-            text-align: center;
-            margin-top: 2rem;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    # Apply CashPedal theme (handles device/dark mode detection)
+    apply_theme()
     
     # Hero Section
     st.markdown('<p class="main-header">🚗 CashPedal</p>', unsafe_allow_html=True)
@@ -121,30 +95,33 @@ def main():
     
     with feat_col1:
         st.markdown("""
-        **📍 Location-Based Estimates**
+        <span class="key-feature-title">📍 Location-Based Estimates</span>
+        
         - ZIP code auto-population
         - Regional fuel prices
         - State tax calculations
         - Local insurance rates
-        """)
+        """, unsafe_allow_html=True)
     
     with feat_col2:
         st.markdown("""
-        **📈 Advanced Analytics**
+        <span class="key-feature-title">📈 Advanced Analytics</span>
+        
         - Weibull reliability modeling
         - Climate-adjusted maintenance
         - Market depreciation data
         - Historical cost trends
-        """)
+        """, unsafe_allow_html=True)
     
     with feat_col3:
         st.markdown("""
-        **📊 Comprehensive Reports**
+        <span class="key-feature-title">📊 Comprehensive Reports</span>
+        
         - Monthly cost breakdown
         - 5-year projections
         - Export to PDF/Excel
         - Visual comparisons
-        """)
+        """, unsafe_allow_html=True)
     
     # Sidebar content
     with st.sidebar:
@@ -190,16 +167,7 @@ def main():
     
     # Footer
     st.markdown("---")
-    st.markdown(
-        """
-        <div style='text-align: center; color: gray; font-size: 12px;'>
-        CashPedal - Vehicle TCO Calculator v1.02.3 | 
-        Powered by Streamlit | 
-        <a href='https://www.cashpedal.io' style='color: gray;'>www.cashpedal.io</a>
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
+    st.markdown(get_footer_html(), unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()

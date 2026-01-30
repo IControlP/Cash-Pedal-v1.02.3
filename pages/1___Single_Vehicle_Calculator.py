@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from session_manager import initialize_session_state
 from calculator_display import display_calculator
+from theme_utils import apply_theme, get_footer_html
 
 # Page configuration
 st.set_page_config(
@@ -25,6 +26,9 @@ def main():
     """Single Vehicle Calculator Page"""
     # Initialize session state
     initialize_session_state()
+    
+    # Apply CashPedal theme (handles device/dark mode detection)
+    apply_theme()
     
     # Page header
     st.title("🔧 Single Vehicle Calculator")
@@ -73,14 +77,7 @@ def main():
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.markdown(
-            """
-            <div style='text-align: center; color: gray; font-size: 12px;'>
-            CashPedal - Vehicle TCO Calculator v1.02.3
-            </div>
-            """, 
-            unsafe_allow_html=True
-        )
+        st.markdown(get_footer_html(), unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()

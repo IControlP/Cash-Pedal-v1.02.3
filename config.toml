@@ -15,9 +15,9 @@ gatherUsageStats = false
 serverAddress = "0.0.0.0"
 
 [theme]
-# Optional: Customize your theme
-primaryColor = "#FF4B4B"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F0F2F6"
-textColor = "#262730"
+# CashPedal theme - Responsive to user preference
+# Primary accent color (orange/gold)
+primaryColor = "#F5A623"
 font = "sans serif"
+# Note: backgroundColor, secondaryBackgroundColor, and textColor 
+# are handled dynamically via theme_utils.py for device/preference detection

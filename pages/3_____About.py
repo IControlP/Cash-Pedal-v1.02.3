@@ -11,6 +11,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from session_manager import initialize_session_state
+from theme_utils import apply_theme, get_footer_html
 
 # Page configuration
 st.set_page_config(
@@ -24,6 +25,9 @@ def main():
     """About Page"""
     # Initialize session state
     initialize_session_state()
+    
+    # Apply CashPedal theme (handles device/dark mode detection)
+    apply_theme()
     
     # Page header
     st.title("ℹ️ About CashPedal")
@@ -219,16 +223,7 @@ def main():
     
     # Footer
     st.markdown("---")
-    st.markdown(
-        """
-        <div style='text-align: center; color: gray; font-size: 12px;'>
-        CashPedal - Vehicle TCO Calculator v1.02.3 | 
-        © 2025 CashPedal | 
-        <a href='https://www.cashpedal.io' style='color: gray;'>www.cashpedal.io</a>
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
+    st.markdown(get_footer_html(), unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()

@@ -2,7 +2,7 @@
 # Last Updated: January 2025
 
 # Core Framework
-streamlit>=1.28.0,<2.0.0
+streamlit>=1.33.0,<2.0.0
 
 # Data Visualization
 plotly>=5.15.0,<6.0.0
@@ -11,6 +11,9 @@ plotly>=5.15.0,<6.0.0
 pandas>=2.0.0,<3.0.0
 numpy>=2.0.0
 scipy>=1.11.0,<2.0.0
+
+# Database (PostgreSQL for consent records)
+psycopg2-binary>=2.9.0
 
 # Optional: Add these if you need them later
 # openpyxl>=3.1.0          # For Excel file export

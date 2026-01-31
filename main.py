@@ -8,6 +8,10 @@ This is the main entry point and landing page for the Streamlit application.
 import streamlit as st
 import sys
 import os
+from terms_agreement import require_terms_acceptance
+
+    
+
 
 # Add project root to path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -24,7 +28,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+
 def main():
+    if not require_terms_acceptance():
+        st.stop()
     """Main application entry point - Home Page"""
     # Initialize session state
     initialize_session_state()

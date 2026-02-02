@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Terms and Conditions Agreement with PostgreSQL Storage
-With verbose debugging for database issues
+Permanent legal audit trail for protection
+
+Storage: PostgreSQL (Railway) with JSON file fallback for local dev
 """
 
 import streamlit as st
@@ -18,6 +20,8 @@ from typing import Optional, Dict, Any, List
 
 TERMS_VERSION = "1.0.0"
 TERMS_LAST_UPDATED = "January 2025"
+
+# Fallback for local development
 CONSENT_LOG_FILE = "user_data/consent_log.json"
 
 # ======================
@@ -97,118 +101,50 @@ AGREE TO BE BOUND BY THESE TERMS AND CONDITIONS.**
 """.format(version=TERMS_VERSION, last_updated=TERMS_LAST_UPDATED)
 
 # ======================
-# DATABASE FUNCTIONS
+# DATABASE CONNECTION
 # ======================
 
 def get_database_url() -> Optional[str]:
-    """Get PostgreSQL connection URL - checks multiple possible variable names"""
-    return (os.environ.get('DATABASE_URL') or 
-            os.environ.get('Database_URL') or
-            os.environ.get('database_url'))
+    """Get PostgreSQL connection URL from environment"""
+    return os.environ.get('DATABASE_URL')
 
 def is_postgres_available() -> bool:
     """Check if PostgreSQL is configured"""
     return get_database_url() is not None
 
-def init_postgres_table() -> tuple[bool, str]:
-    """Create table if not exists - returns (success, message)"""
-    try:
-        import psycopg2
-        
-        db_url = get_database_url()
-        if not db_url:
-            return False, "No DATABASE_URL found"
-        
-        conn = psycopg2.connect(db_url)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS consent_records (
-                id SERIAL PRIMARY KEY,
-                record_id VARCHAR(36) UNIQUE NOT NULL,
-                session_id VARCHAR(36) NOT NULL,
-                timestamp_utc TIMESTAMP WITH TIME ZONE NOT NULL,
-                terms_version VARCHAR(20) NOT NULL,
-                ip_address VARCHAR(45),
-                user_agent TEXT,
-                disclaimers_acknowledged BOOLEAN DEFAULT FALSE,
-                liability_acknowledged BOOLEAN DEFAULT FALSE,
-                final_consent_given BOOLEAN DEFAULT FALSE,
-                consent_method VARCHAR(50),
-                terms_text_hash VARCHAR(64),
-                integrity_hash VARCHAR(64),
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        conn.commit()
-        conn.close()
-        return True, "Table created/verified successfully"
-    except Exception as e:
-        return False, f"Table init error: {str(e)}"
-
-def save_consent_to_postgres(record: Dict[str, Any]) -> tuple[bool, str]:
-    """Save to PostgreSQL - returns (success, message)"""
-    try:
-        import psycopg2
-        
-        # Initialize table first
-        table_ok, table_msg = init_postgres_table()
-        if not table_ok:
-            return False, f"Table init failed: {table_msg}"
-        
-        db_url = get_database_url()
-        conn = psycopg2.connect(db_url)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT INTO consent_records (
-                record_id, session_id, timestamp_utc, terms_version,
-                ip_address, user_agent, disclaimers_acknowledged,
-                liability_acknowledged, final_consent_given,
-                consent_method, terms_text_hash, integrity_hash
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ''', (
-            record['record_id'],
-            record['session_id'],
-            record['timestamp_utc'],
-            record['terms_version'],
-            record['ip_address'],
-            record['user_agent'],
-            record['consent_checkboxes']['disclaimers_acknowledged'],
-            record['consent_checkboxes']['liability_acknowledged'],
-            record['consent_checkboxes']['final_consent_given'],
-            record['consent_method'],
-            record['terms_text_hash'],
-            record['integrity_hash']
-        ))
-        
-        conn.commit()
-        conn.close()
-        return True, "Record saved to PostgreSQL"
-    except Exception as e:
-        return False, f"PostgreSQL save error: {str(e)}"
-
-def save_consent_to_json(record: Dict[str, Any]) -> tuple[bool, str]:
-    """Fallback: Save to JSON file - returns (success, message)"""
-    try:
-        os.makedirs(os.path.dirname(CONSENT_LOG_FILE), exist_ok=True)
-        
-        records = []
-        if os.path.exists(CONSENT_LOG_FILE):
-            try:
-                with open(CONSENT_LOG_FILE, 'r', encoding='utf-8') as f:
-                    records = json.load(f)
-            except:
-                records = []
-        
-        records.append(record)
-        
-        with open(CONSENT_LOG_FILE, 'w', encoding='utf-8') as f:
-            json.dump(records, f, indent=2, default=str)
-        return True, "Record saved to JSON file"
-    except Exception as e:
-        return False, f"JSON save error: {str(e)}"
+def init_postgres_table():
+    """Create consent_records table if it doesn't exist"""
+    import psycopg2
+    
+    conn = psycopg2.connect(get_database_url())
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS consent_records (
+            id SERIAL PRIMARY KEY,
+            record_id VARCHAR(36) UNIQUE NOT NULL,
+            session_id VARCHAR(36) NOT NULL,
+            timestamp_utc TIMESTAMP WITH TIME ZONE NOT NULL,
+            terms_version VARCHAR(20) NOT NULL,
+            ip_address VARCHAR(45),
+            user_agent TEXT,
+            disclaimers_acknowledged BOOLEAN DEFAULT FALSE,
+            liability_acknowledged BOOLEAN DEFAULT FALSE,
+            final_consent_given BOOLEAN DEFAULT FALSE,
+            consent_method VARCHAR(50),
+            terms_text_hash VARCHAR(64),
+            integrity_hash VARCHAR(64),
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    cursor.execute('''
+        CREATE INDEX IF NOT EXISTS idx_consent_timestamp 
+        ON consent_records(timestamp_utc)
+    ''')
+    
+    conn.commit()
+    conn.close()
 
 # ======================
 # SESSION STATE
@@ -224,8 +160,6 @@ def initialize_terms_state():
         st.session_state.session_id = str(uuid.uuid4())
     if 'consent_record_id' not in st.session_state:
         st.session_state.consent_record_id = None
-    if 'save_debug_msg' not in st.session_state:
-        st.session_state.save_debug_msg = None
 
 def has_accepted_terms() -> bool:
     """Check if user accepted current T&C version"""
@@ -263,15 +197,75 @@ def generate_integrity_hash(record: Dict[str, Any]) -> str:
     return hashlib.sha256(hash_string.encode()).hexdigest()
 
 # ======================
-# SAVE CONSENT
+# SAVE CONSENT RECORD
 # ======================
+
+def save_consent_to_postgres(record: Dict[str, Any]) -> bool:
+    """Save consent record to PostgreSQL"""
+    import psycopg2
+    
+    try:
+        init_postgres_table()
+        
+        conn = psycopg2.connect(get_database_url())
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO consent_records (
+                record_id, session_id, timestamp_utc, terms_version,
+                ip_address, user_agent, disclaimers_acknowledged,
+                liability_acknowledged, final_consent_given,
+                consent_method, terms_text_hash, integrity_hash
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (
+            record['record_id'],
+            record['session_id'],
+            record['timestamp_utc'],
+            record['terms_version'],
+            record['ip_address'],
+            record['user_agent'],
+            record['consent_checkboxes']['disclaimers_acknowledged'],
+            record['consent_checkboxes']['liability_acknowledged'],
+            record['consent_checkboxes']['final_consent_given'],
+            record['consent_method'],
+            record['terms_text_hash'],
+            record['integrity_hash']
+        ))
+        
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"PostgreSQL error: {e}")
+        return False
+
+def save_consent_to_json(record: Dict[str, Any]) -> bool:
+    """Fallback: Save consent record to JSON file"""
+    os.makedirs(os.path.dirname(CONSENT_LOG_FILE), exist_ok=True)
+    
+    records = []
+    if os.path.exists(CONSENT_LOG_FILE):
+        try:
+            with open(CONSENT_LOG_FILE, 'r', encoding='utf-8') as f:
+                records = json.load(f)
+        except:
+            records = []
+    
+    records.append(record)
+    
+    try:
+        with open(CONSENT_LOG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(records, f, indent=2, default=str)
+        return True
+    except:
+        return False
 
 def save_consent_record(
     disclaimers_checked: bool,
     liability_checked: bool,
     final_consent_checked: bool
-) -> tuple[Optional[str], str]:
-    """Save consent record - returns (record_id, debug_message)"""
+) -> Optional[str]:
+    """Save consent record to database"""
     
     record_id = str(uuid.uuid4())
     timestamp = datetime.now(timezone.utc)
@@ -293,36 +287,27 @@ def save_consent_record(
     }
     record['integrity_hash'] = generate_integrity_hash(record)
     
-    debug_messages = []
-    
-    # Try PostgreSQL first
+    # Try PostgreSQL first, fall back to JSON
     if is_postgres_available():
-        debug_messages.append("PostgreSQL URL found, attempting save...")
-        success, msg = save_consent_to_postgres(record)
-        debug_messages.append(msg)
+        success = save_consent_to_postgres(record)
         if success:
-            return record_id, " | ".join(debug_messages)
-    else:
-        debug_messages.append("PostgreSQL URL NOT found")
+            return record_id
     
-    # Fallback to JSON
-    debug_messages.append("Falling back to JSON...")
-    success, msg = save_consent_to_json(record)
-    debug_messages.append(msg)
+    # Fallback to JSON (local development)
+    if save_consent_to_json(record):
+        return record_id
     
-    if success:
-        return record_id, " | ".join(debug_messages)
-    
-    return None, " | ".join(debug_messages)
+    return None
 
 # ======================
-# FULL PAGE TERMS (NON-BYPASSABLE)
+# TERMS DIALOG
 # ======================
 
-def show_terms_fullpage():
-    """Display T&C as full page blocker"""
+@st.dialog("Terms and Conditions", width="large")
+def show_terms_dialog():
+    """Display T&C dialog with legal checkboxes"""
     
-    st.markdown("# Terms and Conditions")
+    st.markdown("### Please Review Our Terms and Conditions")
     st.markdown(f"**Version {TERMS_VERSION}** - You must accept to use CashPedal.")
     
     st.markdown("---")
@@ -331,15 +316,17 @@ def show_terms_fullpage():
         st.markdown(TERMS_AND_CONDITIONS)
     
     st.markdown("---")
-    st.markdown("### Please confirm:")
+    st.markdown("#### Please confirm:")
     
     disclaimer_check = st.checkbox(
-        "I understand all estimates are **approximations only** and may differ from actual costs.",
+        "I understand all estimates are **approximations only** and may differ "
+        "from actual costs.",
         key="disclaimer_checkbox"
     )
     
     liability_check = st.checkbox(
-        "I understand CashPedal is **not liable** for any decisions I make based on this information.",
+        "I understand CashPedal is **not liable** for any decisions I make "
+        "based on this information.",
         key="liability_checkbox"
     )
     
@@ -353,26 +340,22 @@ def show_terms_fullpage():
     all_checked = disclaimer_check and liability_check and consent_check
     
     if not all_checked:
-        st.warning("Please check all three boxes above to continue.")
+        st.warning("Please check all boxes to continue.")
     
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2 = st.columns(2)
     
-    with col2:
+    with col1:
         if st.button(
-            "I Accept the Terms and Conditions",
+            "I Accept",
             type="primary",
             use_container_width=True,
             disabled=not all_checked
         ):
-            # Save to database
-            record_id, debug_msg = save_consent_record(
+            record_id = save_consent_record(
                 disclaimers_checked=disclaimer_check,
                 liability_checked=liability_check,
                 final_consent_checked=consent_check
             )
-            
-            # Store debug message for display after rerun
-            st.session_state.save_debug_msg = debug_msg
             
             if record_id:
                 st.session_state.terms_accepted = True
@@ -380,30 +363,11 @@ def show_terms_fullpage():
                 st.session_state.consent_record_id = record_id
                 st.rerun()
             else:
-                st.error(f"Failed to save. Debug: {debug_msg}")
+                st.error("Failed to save. Please try again.")
     
-    # Debug info
-    with st.expander("Debug Info", expanded=False):
-        st.write(f"PostgreSQL available: {is_postgres_available()}")
-        db_url = get_database_url()
-        if db_url:
-            # Show partial URL for security
-            st.write(f"DATABASE_URL: {db_url[:30]}...")
-        else:
-            st.write("DATABASE_URL: Not set")
-        st.write(f"Session ID: {st.session_state.session_id}")
-        
-        # Test connection button
-        if st.button("Test Database Connection"):
-            success, msg = init_postgres_table()
-            if success:
-                st.success(f"Connection OK: {msg}")
-            else:
-                st.error(f"Connection FAILED: {msg}")
-        
-        # Show last save debug message
-        if st.session_state.get('save_debug_msg'):
-            st.info(f"Last save attempt: {st.session_state.save_debug_msg}")
+    with col2:
+        if st.button("Decline", use_container_width=True):
+            st.error("You must accept the Terms to use CashPedal.")
 
 # ======================
 # MAIN FUNCTION
@@ -412,15 +376,19 @@ def show_terms_fullpage():
 def require_terms_acceptance() -> bool:
     """
     Call at start of every page.
-    Shows FULL PAGE terms if not accepted - cannot be bypassed.
+    
+    Usage:
+        from terms_agreement import require_terms_acceptance
+        
+        def main():
+            if not require_terms_acceptance():
+                st.stop()
     """
     initialize_terms_state()
     
     if not has_accepted_terms():
-        show_terms_fullpage()
-        st.stop()
+        show_terms_dialog()
         return False
-    
     return True
 
 # ======================
@@ -430,8 +398,8 @@ def require_terms_acceptance() -> bool:
 def get_consent_count() -> int:
     """Get total consent records"""
     if is_postgres_available():
+        import psycopg2
         try:
-            import psycopg2
             conn = psycopg2.connect(get_database_url())
             cursor = conn.cursor()
             cursor.execute('SELECT COUNT(*) FROM consent_records')
@@ -441,6 +409,7 @@ def get_consent_count() -> int:
         except:
             pass
     
+    # Fallback to JSON
     if os.path.exists(CONSENT_LOG_FILE):
         try:
             with open(CONSENT_LOG_FILE, 'r') as f:
@@ -449,9 +418,70 @@ def get_consent_count() -> int:
             pass
     return 0
 
+def get_recent_consents(limit: int = 10) -> List[Dict]:
+    """Get recent consent records"""
+    if is_postgres_available():
+        import psycopg2
+        try:
+            conn = psycopg2.connect(get_database_url())
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT record_id, timestamp_utc, ip_address, terms_version 
+                FROM consent_records 
+                ORDER BY timestamp_utc DESC 
+                LIMIT %s
+            ''', (limit,))
+            rows = cursor.fetchall()
+            conn.close()
+            return [
+                {'record_id': r[0], 'timestamp': r[1], 'ip': r[2], 'version': r[3]}
+                for r in rows
+            ]
+        except:
+            pass
+    return []
+
 def reset_terms_session():
     """Reset session - for testing only"""
     st.session_state.terms_accepted = False
     st.session_state.terms_version_accepted = None
     st.session_state.consent_record_id = None
-    st.session_state.save_debug_msg = None
+
+# ======================
+# DEBUG FUNCTION
+# ======================
+
+def show_database_debug_info():
+    """Display database connection debug information"""
+    st.write("### Database Debug Information")
+    st.write(f"**PostgreSQL available:** {is_postgres_available()}")
+    
+    db_url = get_database_url()
+    if db_url:
+        # Hide sensitive connection string
+        st.write(f"**DATABASE_URL:** Set (length: {len(db_url)} characters)")
+    else:
+        st.write("**DATABASE_URL:** Not set")
+    
+    st.write(f"**Session ID:** {st.session_state.session_id if 'session_id' in st.session_state else 'Not initialized'}")
+    
+    # Test PostgreSQL connection
+    if is_postgres_available():
+        try:
+            import psycopg2
+            conn = psycopg2.connect(get_database_url())
+            cursor = conn.cursor()
+            cursor.execute('SELECT version()')
+            version = cursor.fetchone()[0]
+            conn.close()
+            st.success(f"✅ PostgreSQL connection successful!")
+            st.write(f"**Database version:** {version}")
+        except Exception as e:
+            st.error(f"❌ PostgreSQL connection failed: {str(e)}")
+    else:
+        st.warning("⚠️ PostgreSQL not configured - using JSON fallback")
+        st.write(f"**Fallback file:** {CONSENT_LOG_FILE}")
+        if os.path.exists(CONSENT_LOG_FILE):
+            st.write(f"**JSON file exists:** Yes")
+        else:
+            st.write(f"**JSON file exists:** No (will be created on first consent)")

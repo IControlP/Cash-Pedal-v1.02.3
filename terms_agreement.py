@@ -200,8 +200,12 @@ def generate_integrity_hash(record: Dict[str, Any]) -> str:
 # SAVE CONSENT RECORD
 # ======================
 
-def save_consent_to_postgres(record: Dict[str, Any]) -> bool:
-    """Save consent record to PostgreSQL"""
+def save_consent_to_postgres(record: Dict[str, Any]) -> tuple[bool, Optional[str]]:
+    """Save consent record to PostgreSQL
+    
+    Returns:
+        tuple: (success: bool, error_message: Optional[str])
+    """
     import psycopg2
     
     try:
@@ -234,10 +238,11 @@ def save_consent_to_postgres(record: Dict[str, Any]) -> bool:
         
         conn.commit()
         conn.close()
-        return True
+        return True, None
     except Exception as e:
-        print(f"PostgreSQL error: {e}")
-        return False
+        error_msg = f"PostgreSQL error: {type(e).__name__}: {str(e)}"
+        print(error_msg)  # Log to console
+        return False, error_msg
 
 def save_consent_to_json(record: Dict[str, Any]) -> bool:
     """Fallback: Save consent record to JSON file"""
@@ -264,8 +269,12 @@ def save_consent_record(
     disclaimers_checked: bool,
     liability_checked: bool,
     final_consent_checked: bool
-) -> Optional[str]:
-    """Save consent record to database"""
+) -> tuple[Optional[str], Optional[str]]:
+    """Save consent record to database
+    
+    Returns:
+        tuple: (record_id: Optional[str], error_message: Optional[str])
+    """
     
     record_id = str(uuid.uuid4())
     timestamp = datetime.now(timezone.utc)
@@ -289,15 +298,20 @@ def save_consent_record(
     
     # Try PostgreSQL first, fall back to JSON
     if is_postgres_available():
-        success = save_consent_to_postgres(record)
+        success, error_msg = save_consent_to_postgres(record)
         if success:
-            return record_id
+            return record_id, None
+        else:
+            # Log the error but continue to JSON fallback
+            print(f"PostgreSQL save failed: {error_msg}")
+            # Return the error for display
+            st.session_state.last_db_error = error_msg
     
-    # Fallback to JSON (local development)
+    # Fallback to JSON (local development or if PostgreSQL fails)
     if save_consent_to_json(record):
-        return record_id
+        return record_id, None
     
-    return None
+    return None, "Failed to save consent record to any storage"
 
 # ======================
 # TERMS DIALOG
@@ -342,6 +356,12 @@ def show_terms_dialog():
     if not all_checked:
         st.warning("Please check all boxes to continue.")
     
+    # Show last error if any
+    if 'last_db_error' in st.session_state and st.session_state.last_db_error:
+        with st.expander("⚠️ Database Error Details", expanded=True):
+            st.error(st.session_state.last_db_error)
+            st.info("Don't worry - your consent was saved to backup storage and the app will work normally.")
+    
     col1, col2 = st.columns(2)
     
     with col1:
@@ -351,7 +371,7 @@ def show_terms_dialog():
             use_container_width=True,
             disabled=not all_checked
         ):
-            record_id = save_consent_record(
+            record_id, error_msg = save_consent_record(
                 disclaimers_checked=disclaimer_check,
                 liability_checked=liability_check,
                 final_consent_checked=consent_check
@@ -363,7 +383,8 @@ def show_terms_dialog():
                 st.session_state.consent_record_id = record_id
                 st.rerun()
             else:
-                st.error("Failed to save. Please try again.")
+                st.error(f"Failed to save consent: {error_msg}")
+                st.info("Please try again or contact support@cashpedal.io")
     
     with col2:
         if st.button("Decline", use_container_width=True):
@@ -447,6 +468,31 @@ def reset_terms_session():
     st.session_state.terms_version_accepted = None
     st.session_state.consent_record_id = None
 
+def test_database_write():
+    """Test function to manually try saving a test record"""
+    test_record = {
+        'record_id': str(uuid.uuid4()),
+        'session_id': 'test-session-' + str(uuid.uuid4()),
+        'timestamp_utc': datetime.now(timezone.utc).isoformat(),
+        'terms_version': TERMS_VERSION,
+        'ip_address': 'test-ip',
+        'user_agent': 'test-agent',
+        'consent_checkboxes': {
+            'disclaimers_acknowledged': True,
+            'liability_acknowledged': True,
+            'final_consent_given': True
+        },
+        'consent_method': 'test_write',
+        'terms_text_hash': hashlib.sha256(TERMS_AND_CONDITIONS.encode()).hexdigest()
+    }
+    test_record['integrity_hash'] = generate_integrity_hash(test_record)
+    
+    if is_postgres_available():
+        success, error_msg = save_consent_to_postgres(test_record)
+        return success, error_msg, test_record['record_id']
+    else:
+        return False, "PostgreSQL not available", None
+
 # ======================
 # DEBUG FUNCTION
 # ======================
@@ -467,21 +513,86 @@ def show_database_debug_info():
     
     # Test PostgreSQL connection
     if is_postgres_available():
+        st.write("---")
+        st.write("### PostgreSQL Connection Test")
+        
         try:
             import psycopg2
             conn = psycopg2.connect(get_database_url())
             cursor = conn.cursor()
+            
+            # Test 1: Get database version
             cursor.execute('SELECT version()')
             version = cursor.fetchone()[0]
-            conn.close()
             st.success(f"✅ PostgreSQL connection successful!")
-            st.write(f"**Database version:** {version}")
+            st.code(version, language="text")
+            
+            # Test 2: Check if table exists
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'consent_records'
+                )
+            """)
+            table_exists = cursor.fetchone()[0]
+            
+            if table_exists:
+                st.success("✅ Table 'consent_records' exists")
+                
+                # Test 3: Get table structure
+                cursor.execute("""
+                    SELECT column_name, data_type 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'consent_records'
+                    ORDER BY ordinal_position
+                """)
+                columns = cursor.fetchall()
+                st.write("**Table Structure:**")
+                for col_name, col_type in columns:
+                    st.write(f"- `{col_name}`: {col_type}")
+                
+                # Test 4: Count records
+                cursor.execute("SELECT COUNT(*) FROM consent_records")
+                count = cursor.fetchone()[0]
+                st.metric("Records in Database", count)
+                
+                # Test 5: Show last 3 records
+                if count > 0:
+                    cursor.execute("""
+                        SELECT record_id, timestamp_utc, terms_version 
+                        FROM consent_records 
+                        ORDER BY timestamp_utc DESC 
+                        LIMIT 3
+                    """)
+                    recent = cursor.fetchall()
+                    st.write("**Recent Records:**")
+                    for rec in recent:
+                        st.write(f"- {rec[1].strftime('%Y-%m-%d %H:%M:%S')} UTC - Version {rec[2]} - ID: {rec[0][:8]}...")
+            else:
+                st.warning("⚠️ Table 'consent_records' does not exist - will be created on first use")
+            
+            conn.close()
+            
         except Exception as e:
-            st.error(f"❌ PostgreSQL connection failed: {str(e)}")
+            st.error(f"❌ PostgreSQL connection failed!")
+            st.code(f"{type(e).__name__}: {str(e)}", language="text")
+            st.info("Common issues:\n- Database credentials incorrect\n- Database not accessible from Railway\n- Network connectivity issues")
     else:
         st.warning("⚠️ PostgreSQL not configured - using JSON fallback")
         st.write(f"**Fallback file:** {CONSENT_LOG_FILE}")
         if os.path.exists(CONSENT_LOG_FILE):
             st.write(f"**JSON file exists:** Yes")
+            try:
+                with open(CONSENT_LOG_FILE, 'r') as f:
+                    records = json.load(f)
+                st.metric("Records in JSON File", len(records))
+            except:
+                st.write("**JSON file status:** Exists but could not read")
         else:
             st.write(f"**JSON file exists:** No (will be created on first consent)")
+    
+    # Show last error if any
+    if 'last_db_error' in st.session_state and st.session_state.last_db_error:
+        st.write("---")
+        st.write("### Last Database Error")
+        st.error(st.session_state.last_db_error)

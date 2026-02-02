@@ -105,8 +105,53 @@ AGREE TO BE BOUND BY THESE TERMS AND CONDITIONS.**
 # ======================
 
 def get_database_url() -> Optional[str]:
-    """Get PostgreSQL connection URL from environment"""
-    return os.environ.get('DATABASE_URL')
+    """Get PostgreSQL connection URL from environment
+    
+    Railway provides multiple URL formats:
+    - DATABASE_URL: Public URL (may be socket-based)
+    - DATABASE_PRIVATE_URL: Internal network URL (TCP/IP)
+    
+    We prefer DATABASE_PRIVATE_URL for container-to-container communication.
+    """
+    
+    # First, try Railway's private internal network URL (preferred)
+    private_url = os.environ.get('DATABASE_PRIVATE_URL')
+    if private_url:
+        return private_url
+    
+    # Fall back to DATABASE_URL
+    db_url = os.environ.get('DATABASE_URL')
+    
+    if not db_url:
+        return None
+    
+    # If DATABASE_URL is socket-based, we need to convert it
+    # Railway socket format: postgresql://user:pass@/db?host=/var/run/postgresql
+    if 'host=/var/run/postgresql' in db_url or '.s.PGSQL' in db_url:
+        import re
+        
+        # Try to extract and reconstruct as TCP/IP
+        # Pattern: postgresql://username:password@[host]/database[?params]
+        pattern = r'postgresql://([^:]+):([^@]+)@[^/]*/([^?]+)'
+        match = re.search(pattern, db_url)
+        
+        if match:
+            username = match.group(1)
+            password = match.group(2)
+            database = match.group(3)
+            
+            # Construct TCP/IP URL
+            # Railway's internal PostgreSQL hostname is typically the service name
+            # Try common Railway patterns
+            tcp_url = f'postgresql://{username}:{password}@postgres.railway.internal:5432/{database}'
+            
+            print(f"⚠️ Converted socket-based URL to TCP/IP")
+            print(f"   Original: {db_url[:50]}...")
+            print(f"   Converted: {tcp_url[:50]}...")
+            
+            return tcp_url
+    
+    return db_url
 
 def is_postgres_available() -> bool:
     """Check if PostgreSQL is configured"""
@@ -500,15 +545,45 @@ def test_database_write():
 def show_database_debug_info():
     """Display database connection debug information"""
     st.write("### Database Debug Information")
-    st.write(f"**PostgreSQL available:** {is_postgres_available()}")
     
-    db_url = get_database_url()
-    if db_url:
-        # Hide sensitive connection string
-        st.write(f"**DATABASE_URL:** Set (length: {len(db_url)} characters)")
+    # Check both URL types
+    db_url = os.environ.get('DATABASE_URL')
+    private_url = os.environ.get('DATABASE_PRIVATE_URL')
+    
+    st.write("#### Environment Variables")
+    
+    if private_url:
+        st.success("✅ **DATABASE_PRIVATE_URL:** Set (preferred for Railway)")
+        st.code(private_url[:80] + "...", language="text")
     else:
-        st.write("**DATABASE_URL:** Not set")
+        st.warning("⚠️ **DATABASE_PRIVATE_URL:** Not set")
     
+    if db_url:
+        if 'socket' in db_url or '/var/run/postgresql' in db_url:
+            st.error("❌ **DATABASE_URL:** Socket-based (won't work in containers)")
+            st.code(db_url[:80] + "...", language="text")
+        else:
+            st.info("ℹ️ **DATABASE_URL:** Set")
+            st.code(db_url[:80] + "...", language="text")
+    else:
+        st.error("❌ **DATABASE_URL:** Not set")
+    
+    # Show which URL is being used
+    final_url = get_database_url()
+    if final_url:
+        st.write("---")
+        st.write("#### Active Connection String")
+        if private_url and final_url == private_url:
+            st.success("✅ Using **DATABASE_PRIVATE_URL** (best for Railway)")
+        elif 'railway.internal' in final_url:
+            st.info("ℹ️ Using **converted TCP/IP URL** (socket URL was converted)")
+        else:
+            st.info("ℹ️ Using **DATABASE_URL**")
+        
+        st.code(final_url[:80] + "...", language="text")
+    
+    st.write("---")
+    st.write(f"**PostgreSQL available:** {is_postgres_available()}")
     st.write(f"**Session ID:** {st.session_state.session_id if 'session_id' in st.session_state else 'Not initialized'}")
     
     # Test PostgreSQL connection
@@ -576,7 +651,26 @@ def show_database_debug_info():
         except Exception as e:
             st.error(f"❌ PostgreSQL connection failed!")
             st.code(f"{type(e).__name__}: {str(e)}", language="text")
-            st.info("Common issues:\n- Database credentials incorrect\n- Database not accessible from Railway\n- Network connectivity issues")
+            
+            # Provide specific guidance based on error
+            error_str = str(e)
+            if 'socket' in error_str or '/var/run/postgresql' in error_str:
+                st.warning("**Issue:** Socket-based connection not working in container")
+                st.info("**Solution:** Add a Variable Reference in Railway:")
+                st.code("""
+1. Go to Railway Dashboard
+2. Click on your Streamlit service
+3. Go to "Variables" tab
+4. Click "New Variable" → "Add a Reference"
+5. Select your PostgreSQL service
+6. Choose "DATABASE_PRIVATE_URL" (not DATABASE_URL)
+7. Redeploy
+                """, language="text")
+            elif 'password authentication failed' in error_str:
+                st.warning("**Issue:** Incorrect database credentials")
+            elif 'could not connect' in error_str or 'connection refused' in error_str:
+                st.warning("**Issue:** Cannot reach PostgreSQL service")
+                st.info("Make sure both services are in the same Railway project")
     else:
         st.warning("⚠️ PostgreSQL not configured - using JSON fallback")
         st.write(f"**Fallback file:** {CONSENT_LOG_FILE}")

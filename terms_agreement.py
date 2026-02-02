@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Terms and Conditions Agreement with PostgreSQL Storage
-Fixed: Non-bypassable + better database error handling
+With verbose debugging for database issues
 """
 
 import streamlit as st
@@ -101,18 +101,25 @@ AGREE TO BE BOUND BY THESE TERMS AND CONDITIONS.**
 # ======================
 
 def get_database_url() -> Optional[str]:
-    """Get PostgreSQL connection URL"""
-    return os.environ.get('DATABASE_URL')
+    """Get PostgreSQL connection URL - checks multiple possible variable names"""
+    return (os.environ.get('DATABASE_URL') or 
+            os.environ.get('Database_URL') or
+            os.environ.get('database_url'))
 
 def is_postgres_available() -> bool:
     """Check if PostgreSQL is configured"""
     return get_database_url() is not None
 
-def init_postgres_table() -> bool:
-    """Create table if not exists - returns success status"""
+def init_postgres_table() -> tuple[bool, str]:
+    """Create table if not exists - returns (success, message)"""
     try:
         import psycopg2
-        conn = psycopg2.connect(get_database_url())
+        
+        db_url = get_database_url()
+        if not db_url:
+            return False, "No DATABASE_URL found"
+        
+        conn = psycopg2.connect(db_url)
         cursor = conn.cursor()
         
         cursor.execute('''
@@ -136,21 +143,22 @@ def init_postgres_table() -> bool:
         
         conn.commit()
         conn.close()
-        return True
+        return True, "Table created/verified successfully"
     except Exception as e:
-        st.error(f"Database init error: {e}")
-        return False
+        return False, f"Table init error: {str(e)}"
 
-def save_consent_to_postgres(record: Dict[str, Any]) -> bool:
-    """Save to PostgreSQL"""
+def save_consent_to_postgres(record: Dict[str, Any]) -> tuple[bool, str]:
+    """Save to PostgreSQL - returns (success, message)"""
     try:
         import psycopg2
         
         # Initialize table first
-        if not init_postgres_table():
-            return False
+        table_ok, table_msg = init_postgres_table()
+        if not table_ok:
+            return False, f"Table init failed: {table_msg}"
         
-        conn = psycopg2.connect(get_database_url())
+        db_url = get_database_url()
+        conn = psycopg2.connect(db_url)
         cursor = conn.cursor()
         
         cursor.execute('''
@@ -177,13 +185,12 @@ def save_consent_to_postgres(record: Dict[str, Any]) -> bool:
         
         conn.commit()
         conn.close()
-        return True
+        return True, "Record saved to PostgreSQL"
     except Exception as e:
-        st.error(f"Database save error: {e}")
-        return False
+        return False, f"PostgreSQL save error: {str(e)}"
 
-def save_consent_to_json(record: Dict[str, Any]) -> bool:
-    """Fallback: Save to JSON file"""
+def save_consent_to_json(record: Dict[str, Any]) -> tuple[bool, str]:
+    """Fallback: Save to JSON file - returns (success, message)"""
     try:
         os.makedirs(os.path.dirname(CONSENT_LOG_FILE), exist_ok=True)
         
@@ -199,10 +206,9 @@ def save_consent_to_json(record: Dict[str, Any]) -> bool:
         
         with open(CONSENT_LOG_FILE, 'w', encoding='utf-8') as f:
             json.dump(records, f, indent=2, default=str)
-        return True
+        return True, "Record saved to JSON file"
     except Exception as e:
-        st.error(f"JSON save error: {e}")
-        return False
+        return False, f"JSON save error: {str(e)}"
 
 # ======================
 # SESSION STATE
@@ -218,6 +224,8 @@ def initialize_terms_state():
         st.session_state.session_id = str(uuid.uuid4())
     if 'consent_record_id' not in st.session_state:
         st.session_state.consent_record_id = None
+    if 'save_debug_msg' not in st.session_state:
+        st.session_state.save_debug_msg = None
 
 def has_accepted_terms() -> bool:
     """Check if user accepted current T&C version"""
@@ -262,8 +270,8 @@ def save_consent_record(
     disclaimers_checked: bool,
     liability_checked: bool,
     final_consent_checked: bool
-) -> Optional[str]:
-    """Save consent record - tries PostgreSQL then JSON fallback"""
+) -> tuple[Optional[str], str]:
+    """Save consent record - returns (record_id, debug_message)"""
     
     record_id = str(uuid.uuid4())
     timestamp = datetime.now(timezone.utc)
@@ -285,36 +293,41 @@ def save_consent_record(
     }
     record['integrity_hash'] = generate_integrity_hash(record)
     
+    debug_messages = []
+    
     # Try PostgreSQL first
     if is_postgres_available():
-        if save_consent_to_postgres(record):
-            return record_id
-        # If PostgreSQL fails, fall through to JSON
+        debug_messages.append("PostgreSQL URL found, attempting save...")
+        success, msg = save_consent_to_postgres(record)
+        debug_messages.append(msg)
+        if success:
+            return record_id, " | ".join(debug_messages)
+    else:
+        debug_messages.append("PostgreSQL URL NOT found")
     
     # Fallback to JSON
-    if save_consent_to_json(record):
-        return record_id
+    debug_messages.append("Falling back to JSON...")
+    success, msg = save_consent_to_json(record)
+    debug_messages.append(msg)
     
-    return None
+    if success:
+        return record_id, " | ".join(debug_messages)
+    
+    return None, " | ".join(debug_messages)
 
 # ======================
 # FULL PAGE TERMS (NON-BYPASSABLE)
 # ======================
 
 def show_terms_fullpage():
-    """
-    Display T&C as full page blocker - CANNOT be bypassed
-    This replaces the dialog approach
-    """
+    """Display T&C as full page blocker"""
     
-    # Block the entire page with terms
     st.markdown("# Terms and Conditions")
     st.markdown(f"**Version {TERMS_VERSION}** - You must accept to use CashPedal.")
     
     st.markdown("---")
     
-    # Scrollable terms
-    with st.container(height=400):
+    with st.container(height=350):
         st.markdown(TERMS_AND_CONDITIONS)
     
     st.markdown("---")
@@ -352,11 +365,14 @@ def show_terms_fullpage():
             disabled=not all_checked
         ):
             # Save to database
-            record_id = save_consent_record(
+            record_id, debug_msg = save_consent_record(
                 disclaimers_checked=disclaimer_check,
                 liability_checked=liability_check,
                 final_consent_checked=consent_check
             )
+            
+            # Store debug message for display after rerun
+            st.session_state.save_debug_msg = debug_msg
             
             if record_id:
                 st.session_state.terms_accepted = True
@@ -364,13 +380,30 @@ def show_terms_fullpage():
                 st.session_state.consent_record_id = record_id
                 st.rerun()
             else:
-                st.error("Failed to save your acceptance. Please try again.")
+                st.error(f"Failed to save. Debug: {debug_msg}")
     
-    # Show storage status for debugging (can remove in production)
+    # Debug info
     with st.expander("Debug Info", expanded=False):
         st.write(f"PostgreSQL available: {is_postgres_available()}")
-        st.write(f"DATABASE_URL set: {get_database_url() is not None}")
+        db_url = get_database_url()
+        if db_url:
+            # Show partial URL for security
+            st.write(f"DATABASE_URL: {db_url[:30]}...")
+        else:
+            st.write("DATABASE_URL: Not set")
         st.write(f"Session ID: {st.session_state.session_id}")
+        
+        # Test connection button
+        if st.button("Test Database Connection"):
+            success, msg = init_postgres_table()
+            if success:
+                st.success(f"Connection OK: {msg}")
+            else:
+                st.error(f"Connection FAILED: {msg}")
+        
+        # Show last save debug message
+        if st.session_state.get('save_debug_msg'):
+            st.info(f"Last save attempt: {st.session_state.save_debug_msg}")
 
 # ======================
 # MAIN FUNCTION
@@ -380,21 +413,12 @@ def require_terms_acceptance() -> bool:
     """
     Call at start of every page.
     Shows FULL PAGE terms if not accepted - cannot be bypassed.
-    
-    Usage:
-        from terms_agreement import require_terms_acceptance
-        
-        def main():
-            if not require_terms_acceptance():
-                st.stop()
-            
-            # ... your page code (only runs after acceptance)
     """
     initialize_terms_state()
     
     if not has_accepted_terms():
         show_terms_fullpage()
-        st.stop()  # Prevent ANY other content from showing
+        st.stop()
         return False
     
     return True
@@ -430,3 +454,4 @@ def reset_terms_session():
     st.session_state.terms_accepted = False
     st.session_state.terms_version_accepted = None
     st.session_state.consent_record_id = None
+    st.session_state.save_debug_msg = None

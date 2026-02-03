@@ -373,41 +373,19 @@ def save_consent_record(
 def show_terms_fullscreen():
     """Display non-bypassable full-screen terms acceptance"""
     
-    # Hide all normal page content and sidebar
+    # Apply CSS styling - but DON'T hide the main container since we need to render in it
     st.markdown("""
     <style>
-    /* Hide main content */
-    .main .block-container {
-        display: none !important;
-    }
-    
     /* Hide sidebar */
     section[data-testid="stSidebar"] {
         display: none !important;
     }
     
-    /* Hide header */
-    header[data-testid="stHeader"] {
-        display: none !important;
-    }
-    
-    /* Full screen overlay */
-    .terms-fullscreen-overlay {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        background: white !important;
-        z-index: 999999 !important;
-        overflow-y: auto !important;
-        padding: 20px !important;
-    }
-    
-    .terms-content-wrapper {
+    /* Style the main container as full-screen overlay */
+    .main .block-container {
         max-width: 900px !important;
-        margin: 0 auto !important;
         padding: 40px 30px !important;
+        background: white !important;
     }
     
     .terms-header {
@@ -428,16 +406,18 @@ def show_terms_fullscreen():
         border-radius: 8px;
         border-left: 4px solid #1f77b4;
     }
+    
+    /* Make body white to prevent content behind */
+    body {
+        background: white !important;
+    }
     </style>
     """, unsafe_allow_html=True)
-    
-    # Create full-screen container
-    st.markdown('<div class="terms-fullscreen-overlay"><div class="terms-content-wrapper">', unsafe_allow_html=True)
     
     # Header  
     st.markdown("""
     <div class="terms-header">
-        <h1>Welcome to CashPedal</h1>
+        <h1>🚗 Welcome to CashPedal</h1>
         <p style="font-size: 1.1rem; color: #666;">
             Please review and accept our Terms and Conditions to continue
         </p>
@@ -445,19 +425,19 @@ def show_terms_fullscreen():
     """, unsafe_allow_html=True)
     
     # Display terms in scrollable container
-    with st.expander("View Full Terms and Conditions (Click to Expand)", expanded=False):
+    with st.expander("📋 View Full Terms and Conditions (Click to Expand)", expanded=False):
         st.markdown(TERMS_AND_CONDITIONS)
     
     st.markdown("---")
     
     # Required acknowledgments
-    st.markdown("### Required Acknowledgments")
+    st.markdown("### ✅ Required Acknowledgments")
     st.markdown("**You must check all boxes to proceed:**")
     
     # Checkbox 1
     st.markdown('<div class="terms-checkbox-box">', unsafe_allow_html=True)
     disclaimer_check = st.checkbox(
-        "**I understand that CashPedal provides cost estimates for informational and educational purposes only. These are approximations and not guarantees.**",
+        "I understand that CashPedal provides cost estimates for informational and educational purposes only. These are approximations and not guarantees.",
         key="disclaimer_ack",
         value=False
     )
@@ -466,7 +446,7 @@ def show_terms_fullscreen():
     # Checkbox 2
     st.markdown('<div class="terms-checkbox-box">', unsafe_allow_html=True)
     liability_check = st.checkbox(
-        "**I acknowledge the limitation of liability and assumption of risk. CashPedal is not liable for any decisions I make based on these estimates.**",
+        "I acknowledge the limitation of liability and assumption of risk. CashPedal is not liable for any decisions I make based on these estimates.",
         key="liability_ack",
         value=False
     )
@@ -475,7 +455,7 @@ def show_terms_fullscreen():
     # Checkbox 3
     st.markdown('<div class="terms-checkbox-box">', unsafe_allow_html=True)
     consent_check = st.checkbox(
-        "**I have read, understood, and agree to be bound by the complete Terms and Conditions above.**",
+        "I have read, understood, and agree to be bound by the complete Terms and Conditions above.",
         key="final_consent_ack",
         value=False
     )
@@ -487,11 +467,11 @@ def show_terms_fullscreen():
     all_checked = disclaimer_check and liability_check and consent_check
     
     if not all_checked:
-        st.warning("Please check all three boxes above to accept the terms and continue.")
+        st.warning("⚠️ Please check all three boxes above to accept the terms and continue.")
     
     # Show last error if any
     if 'last_db_error' in st.session_state and st.session_state.last_db_error:
-        with st.expander("Database Error Details", expanded=False):
+        with st.expander("⚠️ Database Error Details", expanded=False):
             st.error(st.session_state.last_db_error)
             st.info("Don't worry - your consent was saved to backup storage and the app will work normally.")
     
@@ -499,7 +479,7 @@ def show_terms_fullscreen():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button(
-            "I Accept These Terms - Continue to CashPedal", 
+            "✅ I Accept These Terms - Continue to CashPedal", 
             type="primary",
             disabled=not all_checked,
             use_container_width=True,
@@ -519,7 +499,7 @@ def show_terms_fullscreen():
                 # Set query parameter to persist acceptance across page loads
                 st.query_params["terms_accepted"] = "true"
                 
-                st.success("Terms accepted! Loading application...")
+                st.success("✅ Terms accepted! Loading application...")
                 st.rerun()
             else:
                 st.error(f"Failed to save consent: {error_msg}")
@@ -531,8 +511,6 @@ def show_terms_fullscreen():
         Questions about our terms? Contact <strong>support@cashpedal.io</strong>
     </p>
     """, unsafe_allow_html=True)
-    
-    st.markdown('</div></div>', unsafe_allow_html=True)
 
 # ======================
 # MAIN FUNCTION

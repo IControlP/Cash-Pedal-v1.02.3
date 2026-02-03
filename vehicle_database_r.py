@@ -485,6 +485,86 @@ MANUFACTURERS_R = {
                 }
             }
         }
+    },
+    
+    "Rivian": {
+        "R1T": {
+            "production_years": (2022, 2026),
+            "trims_by_year": {
+                2022: {
+                    "R1T Explore": 67500,
+                    "R1T Adventure": 73000,
+                    "R1T Launch Edition": 75000
+                },
+                2023: {
+                    "R1T Explore": 69500,
+                    "R1T Adventure": 75500,
+                    "R1T Performance Dual-Motor": 87500
+                },
+                2024: {
+                    "R1T Standard": 69900,
+                    "R1T Large": 75900,
+                    "R1T Max": 84900,
+                    "R1T Performance Dual-Motor": 99900
+                },
+                2025: {
+                    "R1T Standard": 71700,
+                    "R1T Large": 77700,
+                    "R1T Max": 87000,
+                    "R1T Performance Dual-Motor": 102000
+                },
+                2026: {
+                    "R1T Standard": 73500,
+                    "R1T Large": 79500,
+                    "R1T Max": 89000,
+                    "R1T Performance Tri-Motor": 105000
+                }
+            }
+        },
+        "R1S": {
+            "production_years": (2022, 2026),
+            "trims_by_year": {
+                2022: {
+                    "R1S Explore": 72500,
+                    "R1S Adventure": 78000,
+                    "R1S Launch Edition": 84000
+                },
+                2023: {
+                    "R1S Explore": 74500,
+                    "R1S Adventure": 80500,
+                    "R1S Performance Dual-Motor": 92500
+                },
+                2024: {
+                    "R1S Standard": 75900,
+                    "R1S Large": 81900,
+                    "R1S Max": 90900,
+                    "R1S Performance Dual-Motor": 104900
+                },
+                2025: {
+                    "R1S Standard": 77700,
+                    "R1S Large": 83700,
+                    "R1S Max": 93000,
+                    "R1S Performance Dual-Motor": 107000
+                },
+                2026: {
+                    "R1S Standard": 79500,
+                    "R1S Large": 85500,
+                    "R1S Max": 95000,
+                    "R1S Performance Tri-Motor": 110000
+                }
+            }
+        },
+        "R2": {
+            "production_years": (2026, 2026),
+            "trims_by_year": {
+                2026: {
+                    "R2 Standard": 45000,
+                    "R2 Large": 52000,
+                    "R2 Performance Dual-Motor": 62000,
+                    "R2 Performance Tri-Motor": 70000
+                }
+            }
+        }
     }
 }
 

@@ -600,7 +600,18 @@ MANUFACTURERS_B = {
                 2022: {'iX xDrive50': 83200, 'iX M60': 106095},
                 2023: {'iX xDrive50': 85100, 'iX M60': 108000},
                 2024: {'iX xDrive50': 86900, 'iX M60': 109800},
-                2025: {'iX xDrive50': 88700, 'iX M60': 111600}
+                2025: {'iX xDrive50': 88700, 'iX M60': 111600},
+                2026: {'iX xDrive50': 90500, 'iX M60': 113500}
+            }
+        },
+        'iX3': {
+            'production_years': (2026, 2026),
+            'trims_by_year': {
+                2026: {
+                    'iX3 eDrive35': 60000,
+                    'iX3 xDrive50': 72000,
+                    'iX3 M50': 85000
+                }
             }
         }
     },

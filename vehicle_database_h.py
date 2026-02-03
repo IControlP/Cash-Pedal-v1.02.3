@@ -819,7 +819,7 @@ MANUFACTURERS_H = {
             }
         },
         'Passport': {
-            'production_years': (1994, 2002, 2019, 2025),  # Two production runs
+            'production_years': (1994, 2002, 2019, 2026),  # Two production runs
             'trims_by_year': {
                 2000: {'DX': 22650, 'LX': 25150, 'EX': 27650},
                 2001: {'DX': 22950, 'LX': 25450, 'EX': 27950},
@@ -868,6 +868,21 @@ MANUFACTURERS_H = {
                     'Passport Touring': 48080,
                     'Passport Elite': 49680,
                     'Passport TrailSport': 43680
+                },
+                2026: {
+                    'Passport Sport': 39500,
+                    'Passport EX-L': 43500,
+                    'Passport Touring': 47500,
+                    'Passport TrailSport': 45500
+                }
+            }
+        },
+        'Prelude': {
+            'production_years': (1979, 2001, 2026, 2026),  # Classic era and new 2026 return
+            'trims_by_year': {
+                2026: {
+                    'Prelude': 35000,
+                    'Prelude Touring': 40000
                 }
             }
         }

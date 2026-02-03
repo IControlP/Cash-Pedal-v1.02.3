@@ -68,6 +68,26 @@ MANUFACTURERS_K = {
                 }
             }
         },
+        'K4': {
+            'production_years': (2025, 2026),
+            'trims_by_year': {
+                2025: {
+                    'K4 LX': 23490,
+                    'K4 LXS': 25290,
+                    'K4 EX': 27890,
+                    'K4 GT-Line': 28490
+                },
+                2026: {
+                    'K4 LX': 23990,
+                    'K4 LXS': 25790,
+                    'K4 EX': 28390,
+                    'K4 GT-Line': 28990,
+                    'K4 Hatchback LXS': 24890,
+                    'K4 Hatchback EX': 28490,
+                    'K4 Hatchback GT-Line': 29090
+                }
+            }
+        },
         "Soul": {
             "production_years": (2010, 2025),
             "trims_by_year": {
@@ -570,7 +590,7 @@ MANUFACTURERS_K = {
             }
         },
         "Telluride": {
-            "production_years": (2020, 2025),
+            "production_years": (2020, 2026),
             "trims_by_year": {
                 2020: {
                     "Telluride LX": 31890,
@@ -609,10 +629,16 @@ MANUFACTURERS_K = {
                     "Telluride SX": 44390
                 },
                 2026: {
-                    "Telluride LX": 33390,
-                    "Telluride S": 36390,
-                    "Telluride EX": 39390,
-                    "Telluride SX": 44390
+                    "Telluride LX": 40000,
+                    "Telluride S": 43500,
+                    "Telluride EX": 47000,
+                    "Telluride SX": 52000,
+                    "Telluride X-Line": 54500,
+                    "Telluride X-Pro": 56000,
+                    "Telluride Hybrid LX": 43000,
+                    "Telluride Hybrid S": 46500,
+                    "Telluride Hybrid EX": 50000,
+                    "Telluride Hybrid SX": 55000
                 }
             }
         },

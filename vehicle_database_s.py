@@ -32,7 +32,7 @@ MANUFACTURERS_S = {
                 2023: {'Base': 28095, 'Premium': 30595, 'Limited': 34095, 'Limited XT': 37595, 'Touring': 39595, 'Touring XT': 40595, 'Wilderness': 38095},
                 2024: {'Base': 28395, 'Premium': 30895, 'Limited': 34395, 'Limited XT': 37895, 'Touring': 39895, 'Touring XT': 40895, 'Wilderness': 38395},
                 2025: {'Base': 28695, 'Premium': 31195, 'Limited': 34695, 'Limited XT': 38195, 'Touring': 40195, 'Touring XT': 41195, 'Wilderness': 38695},
-                2026: {'Base': 29400, 'Premium': 32000, 'Limited': 35600, 'Limited XT': 39100, 'Touring': 41200, 'Touring XT': 42200, 'Wilderness': 39700}
+                2026: {'Premium': 34995, 'Sport': 37495, 'Limited': 39995, 'Touring': 43995, 'Touring XT': 46495, 'Wilderness': 42495, 'Onyx Edition XT': 44995}
             }
         },
         'Forester': {
@@ -147,7 +147,7 @@ MANUFACTURERS_S = {
                 2023: {'Base': 23745, 'Premium': 25545, 'Limited': 28945, 'Sport': 26945, 'Wilderness': 32195},
                 2024: {'Base': 24045, 'Premium': 25845, 'Limited': 29245, 'Sport': 27245, 'Wilderness': 32495},
                 2025: {'Base': 24345, 'Premium': 26145, 'Limited': 29545, 'Sport': 27545, 'Wilderness': 32795},
-                2026: {'Base': 25000, 'Premium': 26800, 'Limited': 30300, 'Sport': 28200, 'Wilderness': 33600}
+                2026: {'Base': 25000, 'Premium': 26800, 'Limited': 30300, 'Sport': 28200, 'Wilderness': 33600, 'Hybrid Premium': 31500, 'Hybrid Limited': 35000}
             }
         },
         'Ascent': {

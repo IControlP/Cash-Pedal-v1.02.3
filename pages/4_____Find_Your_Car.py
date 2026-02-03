@@ -13,11 +13,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from session_manager import initialize_session_state
 from theme_utils import apply_theme, get_footer_html
 
-# CRITICAL: Check terms acceptance BEFORE page configuration
-from terms_agreement import require_terms_acceptance
-if not require_terms_acceptance():
-    st.stop()
-
 # Page configuration
 st.set_page_config(
     page_title="Find Your Perfect Car - CashPedal",
@@ -30,7 +25,7 @@ st.set_page_config(
 QUIZ_QUESTIONS = [
     {
         "id": "point_a_to_b",
-        "question": "A car is basically a couch with wheels that gets me places",
+        "question": "To me, a car is just a thing to get me from point A to point B",
         "emoji": "Ã°Å¸â€ºâ€¹Ã¯Â¸Â",
         "category": "mindset",
         "impacts": {"economy": 3, "sedan": 2, "hybrid": 1, "minivan": 1, "sports": -3, "luxury": -2, "truck": -1}
@@ -471,7 +466,7 @@ def main():
             st.markdown("""
             ### Ã°Å¸Å½Â® How It Works
             
-            1. **Slide Away** - Left = "nope, not me" / Right = "that's SO me"
+            1. **Pick Your Answer** - Select the circle that best describes you
             2. **No Wrong Answers** - Unless you lie to yourself Ã°Å¸Ëœâ€°
             3. **Get Matched** - We'll reveal your top 3 car soulmates
             4. **Mind = Blown** - Or mildly amused. Either works.
@@ -492,8 +487,17 @@ def main():
     
     elif st.session_state.quiz_started and not st.session_state.quiz_complete:
         # Quiz questions
-        st.markdown("### How much do you relate?")
-        st.caption("Ã°Å¸â€˜Ë† Not me at all Ã‚Â· Ã‚Â· Ã‚Â· Totally me Ã°Å¸â€˜â€°")
+        st.markdown("### How much do you agree?")
+        st.caption("Select the option that best describes how you feel")
+        
+        # Radio button options
+        options = [
+            "Strongly Disagree 😬",
+            "Disagree 😐", 
+            "Neutral 🤷",
+            "Agree 😊",
+            "Strongly Agree 😍"
+        ]
         
         # Display all questions
         for i, question in enumerate(QUIZ_QUESTIONS):
@@ -504,31 +508,25 @@ def main():
             </div>
             """, unsafe_allow_html=True)
             
-            # Create slider
+            # Get default value (convert to index 0-4)
             default_val = st.session_state.quiz_answers.get(question['id'], 3)
-            answer = st.slider(
+            default_index = default_val - 1  # Convert 1-5 to 0-4
+            
+            # Create radio buttons
+            answer_label = st.radio(
                 f"q_{question['id']}",
-                min_value=1,
-                max_value=5,
-                value=default_val,
-                key=f"slider_{question['id']}",
-                format="%d",
-                label_visibility="collapsed"
+                options=options,
+                index=default_index,
+                key=f"radio_{question['id']}",
+                label_visibility="collapsed",
+                horizontal=False
             )
             
-            # Show label
-            col1, col2, col3 = st.columns([1, 2, 1])
-            with col1:
-                st.caption("Ã°Å¸â€˜Å½ Disagree")
-            with col2:
-                label = get_slider_label(answer)
-                st.markdown(f"<p style='text-align:center; font-weight:bold;'>{label}</p>", unsafe_allow_html=True)
-            with col3:
-                st.caption("Agree Ã°Å¸â€˜Â")
+            # Convert answer back to 1-5 scale
+            answer = options.index(answer_label) + 1
             
             # Store answer
             st.session_state.quiz_answers[question['id']] = answer
-            
             st.markdown("<br>", unsafe_allow_html=True)
         
         # Submit button

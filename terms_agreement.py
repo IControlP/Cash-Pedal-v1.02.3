@@ -115,14 +115,14 @@ def get_database_url() -> Optional[str]:
     """
     
     # First, try Railway's private internal network URL (preferred)
-    private_url = os.environ.get('DATABASE_PRIVATE_URL')
-    if private_url:
+    private_url = os.environ.get('DATABASE_PRIVATE_URL', '').strip()
+    if private_url and private_url != '' and private_url != '<empty string>':
         return private_url
     
     # Fall back to DATABASE_URL
-    db_url = os.environ.get('DATABASE_URL')
+    db_url = os.environ.get('DATABASE_URL', '').strip()
     
-    if not db_url:
+    if not db_url or db_url == '' or db_url == '<empty string>':
         return None
     
     # If DATABASE_URL is socket-based, we need to convert it
@@ -196,11 +196,19 @@ def init_postgres_table():
 # ======================
 
 def initialize_terms_state():
-    """Initialize session state"""
+    """Initialize session state with query param persistence"""
+    # Check URL query parameters for acceptance flag
+    query_params = st.query_params
+    terms_param = query_params.get("terms_accepted", None)
+    
     if 'terms_accepted' not in st.session_state:
-        st.session_state.terms_accepted = False
+        # Check if URL indicates acceptance
+        st.session_state.terms_accepted = (terms_param == "true")
     if 'terms_version_accepted' not in st.session_state:
-        st.session_state.terms_version_accepted = None
+        if terms_param == "true":
+            st.session_state.terms_version_accepted = TERMS_VERSION
+        else:
+            st.session_state.terms_version_accepted = None
     if 'session_id' not in st.session_state:
         st.session_state.session_id = str(uuid.uuid4())
     if 'consent_record_id' not in st.session_state:
@@ -426,6 +434,10 @@ def show_terms_dialog():
                 st.session_state.terms_accepted = True
                 st.session_state.terms_version_accepted = TERMS_VERSION
                 st.session_state.consent_record_id = record_id
+                
+                # Set query parameter to persist acceptance across page loads
+                st.query_params["terms_accepted"] = "true"
+                
                 st.rerun()
             else:
                 st.error(f"Failed to save consent: {error_msg}")
@@ -547,24 +559,32 @@ def show_database_debug_info():
     st.write("### Database Debug Information")
     
     # Check both URL types
-    db_url = os.environ.get('DATABASE_URL')
-    private_url = os.environ.get('DATABASE_PRIVATE_URL')
+    db_url = os.environ.get('DATABASE_URL', '').strip()
+    private_url = os.environ.get('DATABASE_PRIVATE_URL', '').strip()
     
     st.write("#### Environment Variables")
     
-    if private_url:
+    # Check DATABASE_PRIVATE_URL
+    if private_url and private_url != '' and private_url != '<empty string>':
         st.success("✅ **DATABASE_PRIVATE_URL:** Set (preferred for Railway)")
         st.code(private_url[:80] + "...", language="text")
+    elif 'DATABASE_PRIVATE_URL' in os.environ:
+        st.error("❌ **DATABASE_PRIVATE_URL:** Empty string (variable exists but has no value)")
+        st.warning("**FIX:** Delete this variable and add it manually with the actual PostgreSQL URL")
     else:
         st.warning("⚠️ **DATABASE_PRIVATE_URL:** Not set")
     
-    if db_url:
+    # Check DATABASE_URL
+    if db_url and db_url != '' and db_url != '<empty string>':
         if 'socket' in db_url or '/var/run/postgresql' in db_url:
             st.error("❌ **DATABASE_URL:** Socket-based (won't work in containers)")
             st.code(db_url[:80] + "...", language="text")
         else:
             st.info("ℹ️ **DATABASE_URL:** Set")
             st.code(db_url[:80] + "...", language="text")
+    elif 'DATABASE_URL' in os.environ:
+        st.error("❌ **DATABASE_URL:** Empty string (variable exists but has no value)")
+        st.warning("**FIX:** Delete this variable and add it manually with the actual PostgreSQL URL")
     else:
         st.error("❌ **DATABASE_URL:** Not set")
     
@@ -581,6 +601,27 @@ def show_database_debug_info():
             st.info("ℹ️ Using **DATABASE_URL**")
         
         st.code(final_url[:80] + "...", language="text")
+    else:
+        st.error("❌ **No valid database URL found!**")
+        st.write("---")
+        st.write("### 🔧 How to Fix This")
+        st.markdown("""
+        **Problem:** Variable references showing `<empty string>`
+        
+        **Solution:**
+        1. Go to your **PostgreSQL service** in Railway
+        2. Click "Variables" tab
+        3. Find `DATABASE_PRIVATE_URL` and click 👁️ to reveal
+        4. **Copy the entire URL**
+        5. Go to your **Streamlit service** (this service)
+        6. Variables tab → Remove the empty `DATABASE_PRIVATE_URL`
+        7. Click "+ New Variable"
+        8. Name: `DATABASE_PRIVATE_URL`
+        9. Value: **Paste the URL you copied**
+        10. Add and redeploy
+        
+        See **RAILWAY_MANUAL_URL_SETUP.md** for detailed instructions.
+        """)
     
     st.write("---")
     st.write(f"**PostgreSQL available:** {is_postgres_available()}")
@@ -654,18 +695,12 @@ def show_database_debug_info():
             
             # Provide specific guidance based on error
             error_str = str(e)
-            if 'socket' in error_str or '/var/run/postgresql' in error_str:
+            if 'empty' in error_str.lower() or 'invalid dsn' in error_str.lower():
+                st.warning("**Issue:** Empty or invalid connection string")
+                st.info("**Solution:** Follow the steps above to manually add the PostgreSQL URL")
+            elif 'socket' in error_str or '/var/run/postgresql' in error_str:
                 st.warning("**Issue:** Socket-based connection not working in container")
-                st.info("**Solution:** Add a Variable Reference in Railway:")
-                st.code("""
-1. Go to Railway Dashboard
-2. Click on your Streamlit service
-3. Go to "Variables" tab
-4. Click "New Variable" → "Add a Reference"
-5. Select your PostgreSQL service
-6. Choose "DATABASE_PRIVATE_URL" (not DATABASE_URL)
-7. Redeploy
-                """, language="text")
+                st.info("**Solution:** Use DATABASE_PRIVATE_URL instead of DATABASE_URL")
             elif 'password authentication failed' in error_str:
                 st.warning("**Issue:** Incorrect database credentials")
             elif 'could not connect' in error_str or 'connection refused' in error_str:

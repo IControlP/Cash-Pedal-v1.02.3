@@ -566,28 +566,6 @@ def require_terms_acceptance() -> bool:
     return True
 
 # ======================
-# MAIN FUNCTION
-# ======================
-
-def require_terms_acceptance() -> bool:
-    """
-    Call at start of every page.
-    
-    Usage:
-        from terms_agreement import require_terms_acceptance
-        
-        def main():
-            if not require_terms_acceptance():
-                st.stop()
-    """
-    initialize_terms_state()
-    
-    if not has_accepted_terms():
-        show_terms_dialog()
-        return False
-    return True
-
-# ======================
 # ADMIN FUNCTIONS
 # ======================
 

@@ -25,7 +25,7 @@ if not require_terms_acceptance():
 # Page configuration - MUST be first Streamlit command
 st.set_page_config(
     page_title="CashPedal - Vehicle TCO Calculator",
-    page_icon="ðŸš—",
+    page_icon="Ã°Å¸Å¡â€”",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -40,7 +40,7 @@ def main():
     apply_theme()
     
     # Hero Section
-    st.markdown('<p class="main-header">ðŸš— CashPedal</p>', unsafe_allow_html=True)
+    st.markdown('<p class="main-header">Ã°Å¸Å¡â€” CashPedal</p>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Vehicle Total Cost of Ownership Calculator</p>', unsafe_allow_html=True)
     
     st.markdown("---")
@@ -53,14 +53,14 @@ def main():
     """)
     
     # Quick Navigation Cards
-    st.subheader("ðŸŽ¯ Get Started")
+    st.subheader("Ã°Å¸Å½Â¯ Get Started")
     
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("""
         <div class="feature-card">
-            <h3>ðŸ”§ Single Vehicle Calculator</h3>
+            <h3>Ã°Å¸â€Â§ Single Vehicle Calculator</h3>
             <p>Analyze the total cost of ownership for a single vehicle including:</p>
             <ul>
                 <li>Purchase price and financing</li>
@@ -72,13 +72,13 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        if st.button("ðŸ”§ Open Single Vehicle Calculator", key="nav_single", use_container_width=True):
+        if st.button("Ã°Å¸â€Â§ Open Single Vehicle Calculator", key="nav_single", use_container_width=True):
             st.switch_page("pages/1___Single_Vehicle_Calculator.py")
     
     with col2:
         st.markdown("""
         <div class="feature-card">
-            <h3>âš–ï¸ Multi-Vehicle Comparison</h3>
+            <h3>Ã¢Å¡â€“Ã¯Â¸Â Multi-Vehicle Comparison</h3>
             <p>Compare up to 5 vehicles side by side:</p>
             <ul>
                 <li>Cost comparison charts</li>
@@ -90,19 +90,19 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        if st.button("âš–ï¸ Open Vehicle Comparison", key="nav_compare", use_container_width=True):
+        if st.button("Ã¢Å¡â€“Ã¯Â¸Â Open Vehicle Comparison", key="nav_compare", use_container_width=True):
             st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
     
     st.markdown("---")
     
     # Key Features Section
-    st.subheader("âœ¨ Key Features")
+    st.subheader("Ã¢Å“Â¨ Key Features")
     
     feat_col1, feat_col2, feat_col3 = st.columns(3)
     
     with feat_col1:
         st.markdown("""
-        <span class="key-feature-title">ðŸ“ Location-Based Estimates</span>
+        <span class="key-feature-title">Ã°Å¸â€œÂ Location-Based Estimates</span>
         
         - ZIP code auto-population
         - Regional fuel prices
@@ -112,7 +112,7 @@ def main():
     
     with feat_col2:
         st.markdown("""
-        <span class="key-feature-title">ðŸ“ˆ Advanced Analytics</span>
+        <span class="key-feature-title">Ã°Å¸â€œË† Advanced Analytics</span>
         
         - Weibull reliability modeling
         - Climate-adjusted maintenance
@@ -122,7 +122,7 @@ def main():
     
     with feat_col3:
         st.markdown("""
-        <span class="key-feature-title">ðŸ“Š Comprehensive Reports</span>
+        <span class="key-feature-title">Ã°Å¸â€œÅ  Comprehensive Reports</span>
         
         - Monthly cost breakdown
         - 5-year projections
@@ -132,7 +132,7 @@ def main():
     
     # Sidebar content
     with st.sidebar:
-        st.header("ðŸ“‹ Navigation")
+        st.header("Ã°Å¸â€œâ€¹ Navigation")
         st.info("""
         Use the sidebar to navigate between pages, 
         or click the buttons above to get started.
@@ -141,16 +141,16 @@ def main():
         st.markdown("---")
         
         # Session status
-        st.header("ðŸ“Š Session Status")
+        st.header("Ã°Å¸â€œÅ  Session Status")
         if hasattr(st.session_state, 'comparison_vehicles') and st.session_state.comparison_vehicles:
-            st.success(f"âœ… {len(st.session_state.comparison_vehicles)} vehicles in comparison")
+            st.success(f"Ã¢Å“â€¦ {len(st.session_state.comparison_vehicles)} vehicles in comparison")
         else:
             st.info("No vehicles added yet")
         
         st.markdown("---")
         
         # Quick links
-        st.header("ðŸ”— Quick Links")
+        st.header("Ã°Å¸â€â€” Quick Links")
         st.markdown("""
         - [How to Use This Calculator](#how-to-use)
         - [Understanding TCO](#understanding-tco)
@@ -159,7 +159,7 @@ def main():
     
     # How to Use Section
     st.markdown("---")
-    st.subheader("ðŸ“– How to Use This Calculator")
+    st.subheader("Ã°Å¸â€œâ€“ How to Use This Calculator")
     st.markdown("""
     1. **Enter Your Location**: Start by entering your ZIP code to get accurate local pricing for fuel, taxes, and insurance.
     

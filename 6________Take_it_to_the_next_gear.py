@@ -29,6 +29,12 @@ def main():
     # Apply CashPedal theme (handles device/dark mode detection)
     apply_theme()
     
+    # Add verification meta tag for affiliate program
+    st.markdown(
+        '<meta name="fo-verify" content="df7203c6-f078-4576-8957-fdf45f55a848" />',
+        unsafe_allow_html=True
+    )
+    
     # Page header
     st.title("🚗 Take it to the Next Gear")
     st.markdown("Ready to make your move? Check out these trusted automotive resources.")

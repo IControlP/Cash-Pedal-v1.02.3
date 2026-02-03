@@ -14,10 +14,15 @@ from session_manager import initialize_session_state
 from calculator_display import display_calculator
 from theme_utils import apply_theme, get_footer_html
 
+# CRITICAL: Check terms acceptance BEFORE page configuration
+from terms_agreement import require_terms_acceptance
+if not require_terms_acceptance():
+    st.stop()
+
 # Page configuration
 st.set_page_config(
     page_title="Single Vehicle Calculator - CashPedal",
-    page_icon="🔧",
+    page_icon="ðŸ”§",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -31,13 +36,13 @@ def main():
     apply_theme()
     
     # Page header
-    st.title("🔧 Single Vehicle Calculator")
+    st.title("ðŸ”§ Single Vehicle Calculator")
     st.markdown("Analyze the total cost of ownership for an individual vehicle.")
     st.markdown("---")
     
     # Sidebar content specific to this page
     with st.sidebar:
-        st.header("📋 Calculator Guide")
+        st.header("ðŸ“‹ Calculator Guide")
         st.info("""
         **Steps:**
         1. Enter your ZIP code
@@ -50,10 +55,10 @@ def main():
         st.markdown("---")
         
         # Session status
-        st.header("📊 Session Status")
+        st.header("ðŸ“Š Session Status")
         if hasattr(st.session_state, 'comparison_vehicles') and st.session_state.comparison_vehicles:
-            st.success(f"✅ {len(st.session_state.comparison_vehicles)} vehicles in comparison")
-            if st.button("View Comparison →"):
+            st.success(f"âœ… {len(st.session_state.comparison_vehicles)} vehicles in comparison")
+            if st.button("View Comparison â†’"):
                 st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
         else:
             st.info("No vehicles in comparison yet")
@@ -62,7 +67,7 @@ def main():
         st.markdown("---")
         
         # Tips section
-        st.header("💡 Tips")
+        st.header("ðŸ’¡ Tips")
         st.markdown("""
         - Use accurate mileage estimates for better results
         - Include all financing costs

@@ -145,7 +145,7 @@ def get_database_url() -> Optional[str]:
             # Try common Railway patterns
             tcp_url = f'postgresql://{username}:{password}@postgres.railway.internal:5432/{database}'
             
-            print(f"⚠️ Converted socket-based URL to TCP/IP")
+            print(f"âš ï¸ Converted socket-based URL to TCP/IP")
             print(f"   Original: {db_url[:50]}...")
             print(f"   Converted: {tcp_url[:50]}...")
             
@@ -367,62 +367,143 @@ def save_consent_record(
     return None, "Failed to save consent record to any storage"
 
 # ======================
-# TERMS DIALOG
+# TERMS FULL-SCREEN DISPLAY (NON-BYPASSABLE)
 # ======================
 
-@st.dialog("Terms and Conditions", width="large")
-def show_terms_dialog():
-    """Display T&C dialog with legal checkboxes"""
+def show_terms_fullscreen():
+    """Display non-bypassable full-screen terms acceptance"""
     
-    st.markdown("### Please Review Our Terms and Conditions")
-    st.markdown(f"**Version {TERMS_VERSION}** - You must accept to use CashPedal.")
+    # Hide all normal page content and sidebar
+    st.markdown("""
+    <style>
+    /* Hide main content */
+    .main .block-container {
+        display: none !important;
+    }
     
-    st.markdown("---")
+    /* Hide sidebar */
+    section[data-testid="stSidebar"] {
+        display: none !important;
+    }
     
-    with st.container(height=350):
+    /* Hide header */
+    header[data-testid="stHeader"] {
+        display: none !important;
+    }
+    
+    /* Full screen overlay */
+    .terms-fullscreen-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: white !important;
+        z-index: 999999 !important;
+        overflow-y: auto !important;
+        padding: 20px !important;
+    }
+    
+    .terms-content-wrapper {
+        max-width: 900px !important;
+        margin: 0 auto !important;
+        padding: 40px 30px !important;
+    }
+    
+    .terms-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .terms-header h1 {
+        color: #1f77b4;
+        margin-bottom: 10px;
+        font-size: 2.5rem;
+    }
+    
+    .terms-checkbox-box {
+        margin: 20px 0;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #1f77b4;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Create full-screen container
+    st.markdown('<div class="terms-fullscreen-overlay"><div class="terms-content-wrapper">', unsafe_allow_html=True)
+    
+    # Header  
+    st.markdown("""
+    <div class="terms-header">
+        <h1>Welcome to CashPedal</h1>
+        <p style="font-size: 1.1rem; color: #666;">
+            Please review and accept our Terms and Conditions to continue
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Display terms in scrollable container
+    with st.expander("View Full Terms and Conditions (Click to Expand)", expanded=False):
         st.markdown(TERMS_AND_CONDITIONS)
     
     st.markdown("---")
-    st.markdown("#### Please confirm:")
     
+    # Required acknowledgments
+    st.markdown("### Required Acknowledgments")
+    st.markdown("**You must check all boxes to proceed:**")
+    
+    # Checkbox 1
+    st.markdown('<div class="terms-checkbox-box">', unsafe_allow_html=True)
     disclaimer_check = st.checkbox(
-        "I understand all estimates are **approximations only** and may differ "
-        "from actual costs.",
-        key="disclaimer_checkbox"
+        "**I understand that CashPedal provides cost estimates for informational and educational purposes only. These are approximations and not guarantees.**",
+        key="disclaimer_ack",
+        value=False
     )
+    st.markdown('</div>', unsafe_allow_html=True)
     
+    # Checkbox 2
+    st.markdown('<div class="terms-checkbox-box">', unsafe_allow_html=True)
     liability_check = st.checkbox(
-        "I understand CashPedal is **not liable** for any decisions I make "
-        "based on this information.",
-        key="liability_checkbox"
+        "**I acknowledge the limitation of liability and assumption of risk. CashPedal is not liable for any decisions I make based on these estimates.**",
+        key="liability_ack",
+        value=False
     )
+    st.markdown('</div>', unsafe_allow_html=True)
     
+    # Checkbox 3
+    st.markdown('<div class="terms-checkbox-box">', unsafe_allow_html=True)
     consent_check = st.checkbox(
-        "I have **read and agree** to the Terms and Conditions.",
-        key="consent_checkbox"
+        "**I have read, understood, and agree to be bound by the complete Terms and Conditions above.**",
+        key="final_consent_ack",
+        value=False
     )
+    st.markdown('</div>', unsafe_allow_html=True)
     
+    # Accept button
     st.markdown("---")
     
     all_checked = disclaimer_check and liability_check and consent_check
     
     if not all_checked:
-        st.warning("Please check all boxes to continue.")
+        st.warning("Please check all three boxes above to accept the terms and continue.")
     
     # Show last error if any
     if 'last_db_error' in st.session_state and st.session_state.last_db_error:
-        with st.expander("⚠️ Database Error Details", expanded=True):
+        with st.expander("Database Error Details", expanded=False):
             st.error(st.session_state.last_db_error)
             st.info("Don't worry - your consent was saved to backup storage and the app will work normally.")
     
-    col1, col2 = st.columns(2)
-    
-    with col1:
+    # Button container
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
         if st.button(
-            "I Accept",
+            "I Accept These Terms - Continue to CashPedal", 
             type="primary",
+            disabled=not all_checked,
             use_container_width=True,
-            disabled=not all_checked
+            key="accept_terms_button"
         ):
             record_id, error_msg = save_consent_record(
                 disclaimers_checked=disclaimer_check,
@@ -438,14 +519,51 @@ def show_terms_dialog():
                 # Set query parameter to persist acceptance across page loads
                 st.query_params["terms_accepted"] = "true"
                 
+                st.success("Terms accepted! Loading application...")
                 st.rerun()
             else:
                 st.error(f"Failed to save consent: {error_msg}")
                 st.info("Please try again or contact support@cashpedal.io")
     
-    with col2:
-        if st.button("Decline", use_container_width=True):
-            st.error("You must accept the Terms to use CashPedal.")
+    st.markdown("---")
+    st.markdown("""
+    <p style="text-align: center; color: #666; font-size: 0.9rem;">
+        Questions about our terms? Contact <strong>support@cashpedal.io</strong>
+    </p>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('</div></div>', unsafe_allow_html=True)
+
+# ======================
+# MAIN FUNCTION
+# ======================
+
+def require_terms_acceptance() -> bool:
+    """
+    Call at start of every page - BEFORE any page configuration.
+    
+    This function MUST be called before st.set_page_config() to ensure
+    the terms are displayed on every page load.
+    
+    Usage:
+        from terms_agreement import require_terms_acceptance
+        
+        # BEFORE st.set_page_config()
+        if not require_terms_acceptance():
+            st.stop()
+        
+        st.set_page_config(...)
+        
+        def main():
+            # Rest of page code
+    """
+    initialize_terms_state()
+    
+    if not has_accepted_terms():
+        show_terms_fullscreen()
+        st.stop()
+        return False
+    return True
 
 # ======================
 # MAIN FUNCTION
@@ -566,27 +684,27 @@ def show_database_debug_info():
     
     # Check DATABASE_PRIVATE_URL
     if private_url and private_url != '' and private_url != '<empty string>':
-        st.success("✅ **DATABASE_PRIVATE_URL:** Set (preferred for Railway)")
+        st.success("âœ… **DATABASE_PRIVATE_URL:** Set (preferred for Railway)")
         st.code(private_url[:80] + "...", language="text")
     elif 'DATABASE_PRIVATE_URL' in os.environ:
-        st.error("❌ **DATABASE_PRIVATE_URL:** Empty string (variable exists but has no value)")
+        st.error("âŒ **DATABASE_PRIVATE_URL:** Empty string (variable exists but has no value)")
         st.warning("**FIX:** Delete this variable and add it manually with the actual PostgreSQL URL")
     else:
-        st.warning("⚠️ **DATABASE_PRIVATE_URL:** Not set")
+        st.warning("âš ï¸ **DATABASE_PRIVATE_URL:** Not set")
     
     # Check DATABASE_URL
     if db_url and db_url != '' and db_url != '<empty string>':
         if 'socket' in db_url or '/var/run/postgresql' in db_url:
-            st.error("❌ **DATABASE_URL:** Socket-based (won't work in containers)")
+            st.error("âŒ **DATABASE_URL:** Socket-based (won't work in containers)")
             st.code(db_url[:80] + "...", language="text")
         else:
-            st.info("ℹ️ **DATABASE_URL:** Set")
+            st.info("â„¹ï¸ **DATABASE_URL:** Set")
             st.code(db_url[:80] + "...", language="text")
     elif 'DATABASE_URL' in os.environ:
-        st.error("❌ **DATABASE_URL:** Empty string (variable exists but has no value)")
+        st.error("âŒ **DATABASE_URL:** Empty string (variable exists but has no value)")
         st.warning("**FIX:** Delete this variable and add it manually with the actual PostgreSQL URL")
     else:
-        st.error("❌ **DATABASE_URL:** Not set")
+        st.error("âŒ **DATABASE_URL:** Not set")
     
     # Show which URL is being used
     final_url = get_database_url()
@@ -594,27 +712,27 @@ def show_database_debug_info():
         st.write("---")
         st.write("#### Active Connection String")
         if private_url and final_url == private_url:
-            st.success("✅ Using **DATABASE_PRIVATE_URL** (best for Railway)")
+            st.success("âœ… Using **DATABASE_PRIVATE_URL** (best for Railway)")
         elif 'railway.internal' in final_url:
-            st.info("ℹ️ Using **converted TCP/IP URL** (socket URL was converted)")
+            st.info("â„¹ï¸ Using **converted TCP/IP URL** (socket URL was converted)")
         else:
-            st.info("ℹ️ Using **DATABASE_URL**")
+            st.info("â„¹ï¸ Using **DATABASE_URL**")
         
         st.code(final_url[:80] + "...", language="text")
     else:
-        st.error("❌ **No valid database URL found!**")
+        st.error("âŒ **No valid database URL found!**")
         st.write("---")
-        st.write("### 🔧 How to Fix This")
+        st.write("### ðŸ”§ How to Fix This")
         st.markdown("""
         **Problem:** Variable references showing `<empty string>`
         
         **Solution:**
         1. Go to your **PostgreSQL service** in Railway
         2. Click "Variables" tab
-        3. Find `DATABASE_PRIVATE_URL` and click 👁️ to reveal
+        3. Find `DATABASE_PRIVATE_URL` and click ðŸ‘ï¸ to reveal
         4. **Copy the entire URL**
         5. Go to your **Streamlit service** (this service)
-        6. Variables tab → Remove the empty `DATABASE_PRIVATE_URL`
+        6. Variables tab â†’ Remove the empty `DATABASE_PRIVATE_URL`
         7. Click "+ New Variable"
         8. Name: `DATABASE_PRIVATE_URL`
         9. Value: **Paste the URL you copied**
@@ -640,7 +758,7 @@ def show_database_debug_info():
             # Test 1: Get database version
             cursor.execute('SELECT version()')
             version = cursor.fetchone()[0]
-            st.success(f"✅ PostgreSQL connection successful!")
+            st.success(f"âœ… PostgreSQL connection successful!")
             st.code(version, language="text")
             
             # Test 2: Check if table exists
@@ -653,7 +771,7 @@ def show_database_debug_info():
             table_exists = cursor.fetchone()[0]
             
             if table_exists:
-                st.success("✅ Table 'consent_records' exists")
+                st.success("âœ… Table 'consent_records' exists")
                 
                 # Test 3: Get table structure
                 cursor.execute("""
@@ -685,12 +803,12 @@ def show_database_debug_info():
                     for rec in recent:
                         st.write(f"- {rec[1].strftime('%Y-%m-%d %H:%M:%S')} UTC - Version {rec[2]} - ID: {rec[0][:8]}...")
             else:
-                st.warning("⚠️ Table 'consent_records' does not exist - will be created on first use")
+                st.warning("âš ï¸ Table 'consent_records' does not exist - will be created on first use")
             
             conn.close()
             
         except Exception as e:
-            st.error(f"❌ PostgreSQL connection failed!")
+            st.error(f"âŒ PostgreSQL connection failed!")
             st.code(f"{type(e).__name__}: {str(e)}", language="text")
             
             # Provide specific guidance based on error
@@ -707,7 +825,7 @@ def show_database_debug_info():
                 st.warning("**Issue:** Cannot reach PostgreSQL service")
                 st.info("Make sure both services are in the same Railway project")
     else:
-        st.warning("⚠️ PostgreSQL not configured - using JSON fallback")
+        st.warning("âš ï¸ PostgreSQL not configured - using JSON fallback")
         st.write(f"**Fallback file:** {CONSENT_LOG_FILE}")
         if os.path.exists(CONSENT_LOG_FILE):
             st.write(f"**JSON file exists:** Yes")

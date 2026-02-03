@@ -53,82 +53,144 @@ def main():
         
         st.markdown("---")
         
-        st.header("🔗 Quick Links")
+        st.header("📋 Quick Links")
         if st.button("🔧 Calculator"):
             st.switch_page("pages/1___Single_Vehicle_Calculator.py")
         if st.button("⚖️ Comparison"):
             st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
-        if st.button("🔍 Find Your Car"):
+        if st.button("🎯 Find Your Car"):
             st.switch_page("pages/4_____Find_Your_Car.py")
-    
-    # FlexOffers Verification
-    st.markdown("""
-    <div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
-    <p style="margin: 0; font-size: 12px; color: #666;">
-    FlexOffers Verification Code: <strong>1523685</strong>
-    </p>
-    </div>
-    """, unsafe_allow_html=True)
     
     # Introduction
     st.info("""
-    **Welcome to Our Resources Hub!**
+    **How to Use This Page**
     
-    We're building a comprehensive directory of trusted automotive resources to help you 
-    through every step of vehicle ownership. From shopping for your next car to maintaining 
-    the one you have, we'll connect you with quality services and competitive pricing.
+    We've curated trusted automotive resources to help you through every step of 
+    vehicle ownership. From shopping for your next car to maintaining the one you have, 
+    these partners offer quality services and competitive pricing.
     
-    **This page is currently under development.** Check back soon for direct links to our 
-    trusted partners!
-    
-    In the meantime, explore our powerful TCO calculator and comparison tools to help you 
-    make informed vehicle decisions.
+    *Disclosure: CashPedal may receive compensation when you use these links, 
+    which helps us keep our calculator free and up-to-date.*
     """)
     
     st.markdown("---")
     
     # Vehicle Shopping Section
-    st.header("🛒 Vehicle Shopping")
+    st.header("📋 Vehicle Shopping")
     st.markdown("Find your perfect vehicle with these trusted marketplaces:")
     
-    st.info("""
-    **Coming Soon!**
+    col1, col2 = st.columns(2)
     
-    We're partnering with trusted automotive retailers and marketplaces to bring you 
-    exclusive deals and offers. Check back soon for direct links to:
+    with col1:
+        st.markdown("""
+        ### 🚗 CarMax
+        **Nation's Largest Used Car Retailer**
+        
+        - 7-day money-back guarantee
+        - No-haggle pricing
+        - 30-day/1,500-mile limited warranty
+        - Over 200 locations nationwide
+        
+        Perfect for buyers who want a straightforward, pressure-free experience 
+        with quality certified pre-owned vehicles.
+        """)
+        
+        # Placeholder for affiliate link button
+        if st.button("🚗 Shop CarMax", key="carmax"):
+            st.info("Affiliate link would open here")
+        
+        st.markdown("---")
+        
+        st.markdown("""
+        ### 🚙 Carvana
+        **Buy a Car Online - Delivered to Your Door**
+        
+        - Fully online car buying experience
+        - Home delivery or pickup at vending machines
+        - 7-day return policy
+        - Virtual 360° car tours
+        
+        Ideal for tech-savvy buyers who prefer a completely digital 
+        car-buying experience.
+        """)
+        
+        if st.button("🚙 Browse Carvana", key="carvana"):
+            st.info("Affiliate link would open here")
     
-    - New and used car dealerships
-    - Online car buying platforms
-    - Certified pre-owned programs
-    - Private seller marketplaces
-    
-    In the meantime, use our TCO calculator to determine your budget and compare vehicles!
-    """)
-    
-    if st.button("🔧 Try Our Calculator", key="calc_from_shopping", use_container_width=True):
-        st.switch_page("pages/1___Single_Vehicle_Calculator.py")
+    with col2:
+        st.markdown("""
+        ### 🚗 Cars.com
+        **Search Millions of Listings**
+        
+        - Aggregates inventory from dealers nationwide
+        - Advanced search filters
+        - Dealer reviews and ratings
+        - Price analysis tools
+        
+        Best for buyers who want to compare inventory across multiple 
+        dealers in one place.
+        """)
+        
+        if st.button("🚗 Search Cars.com", key="cars_com"):
+            st.info("Affiliate link would open here")
+        
+        st.markdown("---")
+        
+        st.markdown("""
+        ### 🚘 Autotrader
+        **Find Your Perfect Car**
+        
+        - Extensive new and used inventory
+        - Expert reviews and advice
+        - Fair market value pricing
+        - Dealer and private party listings
+        
+        Great for researching vehicle values and finding both dealer 
+        and private party options.
+        """)
+        
+        if st.button("🚘 Visit Autotrader", key="autotrader"):
+            st.info("Affiliate link would open here")
     
     st.markdown("---")
     
     # Financing Section
-    st.header("💰 Financing Resources")
+    st.header("📋 Financing Resources")
     st.markdown("Get pre-approved and secure competitive rates:")
     
-    st.info("""
-    **Coming Soon!**
+    col1, col2 = st.columns(2)
     
-    We're working to connect you with trusted financial partners for:
+    with col1:
+        st.markdown("""
+        ### 💳 LendingTree
+        **Compare Auto Loan Offers**
+        
+        - Compare offers from multiple lenders
+        - Get pre-qualified in minutes
+        - No impact to credit score for checking rates
+        - New and used car financing
+        
+        Rates as low as 5.99% APR for qualified buyers.
+        """)
+        
+        if st.button("💳 Compare Rates", key="lendingtree"):
+            st.info("Affiliate link would open here")
     
-    - Auto loan pre-qualification
-    - Competitive rate comparisons
-    - Lease financing options
-    - Refinancing opportunities
-    
-    Check back soon for direct access to financing tools!
-    """)
-    
-    if st.button("💵 Calculate Your Budget", key="calc_from_finance", use_container_width=True):
-        st.switch_page("pages/5_______Salary_Calculator.py")
+    with col2:
+        st.markdown("""
+        ### 🏦 Capital One Auto Navigator
+        **Pre-Qualify Before You Shop**
+        
+        - Get pre-qualified without dealer visit
+        - Know your purchasing power
+        - No impact to credit score
+        - Reusable for 45 days
+        
+        Shop with confidence knowing your budget.
+        """)
+        
+        if st.button("🏦 Get Pre-Qualified", key="capital_one"):
+            st.info("Affiliate link would open here")
     
     st.markdown("---")
     
@@ -136,65 +198,153 @@ def main():
     st.header("🛡️ Insurance Quotes")
     st.markdown("Protect your investment with competitive insurance rates:")
     
-    st.info("""
-    **Coming Soon!**
+    col1, col2 = st.columns(2)
     
-    We're partnering with insurance providers to help you:
+    with col1:
+        st.markdown("""
+        ### 🦓 The Zebra
+        **Compare Quotes from 200+ Insurers**
+        
+        - Free, no-obligation quotes
+        - Compare rates in minutes
+        - Unbiased recommendations
+        - Save an average of $368/year
+        
+        Get the coverage you need at a price you'll love.
+        """)
+        
+        if st.button("🦓 Compare Insurance", key="zebra"):
+            st.info("Affiliate link would open here")
     
-    - Compare quotes from multiple insurers
-    - Find coverage that fits your needs
-    - Save money on premiums
-    - Get instant online quotes
-    
-    Stay tuned for direct quote comparison tools!
-    """)
-    
-    if st.button("📊 Compare Vehicle Costs", key="calc_from_insurance", use_container_width=True):
-        st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
+    with col2:
+        st.markdown("""
+        ### 🦎 GEICO
+        **15 Minutes Could Save You 15% or More**
+        
+        - Quick online quotes
+        - 24/7 customer service
+        - Mobile app for claims
+        - Multiple discount opportunities
+        
+        Trusted by millions of drivers nationwide.
+        """)
+        
+        if st.button("🦎 Get GEICO Quote", key="geico"):
+            st.info("Affiliate link would open here")
     
     st.markdown("---")
     
     # Auto Care Section
-    st.header("🔧 Auto Care & Maintenance")
+    st.header("📋 Auto Care & Maintenance")
     st.markdown("Keep your vehicle running smoothly:")
     
-    st.info("""
-    **Coming Soon!**
+    col1, col2 = st.columns(2)
     
-    We're building partnerships to help you with:
+    with col1:
+        st.markdown("""
+        ### 🔧 RepairPal
+        **Fair Price Estimates & Certified Shops**
+        
+        - Get repair estimates instantly
+        - Find certified mechanics near you
+        - Read verified customer reviews
+        - 12-month/12,000-mile warranty
+        
+        Take the guesswork out of auto repairs.
+        """)
+        
+        if st.button("🔧 Find a Shop", key="repairpal"):
+            st.info("Affiliate link would open here")
+        
+        st.markdown("---")
+        
+        st.markdown("""
+        ### 🚘 RockAuto
+        **Discount Auto Parts**
+        
+        - Huge selection of parts
+        - Wholesale pricing
+        - Ship worldwide
+        - Detailed fitment information
+        
+        Save money on DIY repairs and maintenance.
+        """)
+        
+        if st.button("🔧 Shop Parts", key="rockauto"):
+            st.info("Affiliate link would open here")
     
-    - Auto repair shops and mechanics
-    - Discount auto parts suppliers
-    - Car care and detailing products
-    - Tire retailers and services
-    
-    Future updates will include direct links to trusted service providers!
-    """)
-    
-    if st.button("🔍 Find Your Perfect Car", key="calc_from_care", use_container_width=True):
-        st.switch_page("pages/4_____Find_Your_Car.py")
+    with col2:
+        st.markdown("""
+        ### 🧪 Chemical Guys
+        **Premium Car Care Products**
+        
+        - Professional-grade detailing supplies
+        - Car wash and wax products
+        - Interior care solutions
+        - How-to guides and videos
+        
+        Keep your car looking showroom fresh.
+        """)
+        
+        if st.button("🧪 Shop Chemical Guys", key="chemical_guys"):
+            st.info("Affiliate link would open here")
+        
+        st.markdown("---")
+        
+        st.markdown("""
+        ### 🛞 Tire Rack
+        **Tires, Wheels & Accessories**
+        
+        - Expert tire recommendations
+        - Free shipping on orders over $50
+        - Installation partner network
+        - Comprehensive tire testing
+        
+        Find the perfect tires for your vehicle and driving style.
+        """)
+        
+        if st.button("🛞 Shop Tires", key="tire_rack"):
+            st.info("Affiliate link would open here")
     
     st.markdown("---")
     
     # Reviews & Research Section
-    st.header("📚 Reviews & Research")
+    st.header("📋 Reviews & Research")
     st.markdown("Make informed decisions with expert insights:")
     
-    st.info("""
-    **Coming Soon!**
+    col1, col2 = st.columns(2)
     
-    We're curating resources for:
+    with col1:
+        st.markdown("""
+        ### 🔗 Edmunds
+        **Expert Reviews & Advice**
+        
+        - In-depth vehicle reviews
+        - True Market Value pricing
+        - Expert buying advice
+        - Comparison tools
+        
+        Trusted automotive resource for over 50 years.
+        """)
+        
+        if st.button("🔗 Read Reviews", key="edmunds"):
+            st.info("Affiliate link would open here")
     
-    - Expert vehicle reviews
-    - Video comparisons and testing
-    - Buying guides and advice
-    - Latest automotive news
-    
-    Meanwhile, explore our built-in research tools and vehicle database!
-    """)
-    
-    if st.button("ℹ️ Learn About TCO", key="calc_from_research", use_container_width=True):
-        st.switch_page("pages/3_____About.py")
+    with col2:
+        st.markdown("""
+        ### 🔗 MotorTrend
+        **Video Reviews & Expert Testing**
+        
+        - Professional vehicle testing
+        - Video reviews and comparisons
+        - Car of the Year awards
+        - Latest automotive news
+        
+        See vehicles put through their paces by experts.
+        """)
+        
+        if st.button("🔗 Watch Reviews", key="motortrend"):
+            st.info("Affiliate link would open here")
     
     st.markdown("---")
     
@@ -202,39 +352,61 @@ def main():
     st.header("🛡️ Extended Warranties & Protection")
     st.markdown("Peace of mind for your investment:")
     
-    st.info("""
-    **Coming Soon!**
+    col1, col2 = st.columns(2)
     
-    We're exploring partnerships with warranty providers for:
+    with col1:
+        st.markdown("""
+        ### 🔗 Endurance
+        **Extended Vehicle Protection**
+        
+        - Coverage for vehicles up to 200K miles
+        - 30-day money-back guarantee
+        - Flexible payment options
+        - 24/7 roadside assistance
+        
+        Protect yourself from unexpected repair costs.
+        """)
+        
+        if st.button("💙 Get Quote", key="endurance"):
+            st.info("Affiliate link would open here")
     
-    - Extended vehicle protection plans
-    - Coverage for high-mileage vehicles
-    - Flexible payment options
-    - Roadside assistance programs
-    
-    Check back for direct access to protection plan quotes!
-    """)
+    with col2:
+        st.markdown("""
+        ### 🛡️ CarShield
+        **Vehicle Service Contracts**
+        
+        - Customizable coverage plans
+        - Pay deductible only
+        - Rental car reimbursement
+        - Covers high-tech components
+        
+        Affordable protection for your vehicle.
+        """)
+        
+        if st.button("🔗 Learn More", key="carshield"):
+            st.info("Affiliate link would open here")
     
     st.markdown("---")
     
     # Disclaimer Section
-    st.info("""
-    **Building Partnerships**
+    st.warning("""
+    **Affiliate Disclosure**
     
-    CashPedal is actively building partnerships with trusted automotive service providers 
-    and retailers. This page will be updated with direct links as affiliate relationships 
-    are established.
+    CashPedal participates in affiliate marketing programs. When you click on links 
+    and make a purchase or sign up for services, we may receive a commission at no 
+    additional cost to you. This helps us maintain and improve our free TCO calculator.
     
-    Our goal is to connect you with quality services that complement our TCO calculator, 
-    helping you through every stage of vehicle ownership - from shopping to maintenance.
+    We only recommend products and services we believe provide value to our users. 
+    Our editorial content is not influenced by affiliate partnerships. Always do your 
+    own research and compare options before making any financial decisions.
     
-    In the meantime, feel free to explore our comprehensive vehicle analysis tools to 
-    make informed decisions about your next vehicle purchase!
+    **Important:** Prices, rates, and offers may vary and are subject to change. 
+    Always verify current terms directly with the provider before committing.
     """)
     
     # Tips Section
     st.markdown("---")
-    st.header("💡 Smart Shopping Tips")
+    st.header("📋 Smart Shopping Tips")
     
     col1, col2, col3 = st.columns(3)
     

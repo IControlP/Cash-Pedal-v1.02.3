@@ -136,7 +136,7 @@ MANUFACTURERS_C = {
             }
         },
         'CT4': {
-            'production_years': (2020, 2025),
+            'production_years': (2020, 2026),
             'trims_by_year': {
                 2020: {
                     'CT4 Luxury': 33990,
@@ -177,11 +177,18 @@ MANUFACTURERS_C = {
                     'CT4 Sport': 43900,
                     'CT4-V': 49300,
                     'CT4-V Blackwing': 62995
+                },
+                2026: {
+                    'CT4 Luxury': 38400,
+                    'CT4 Premium Luxury': 42400,
+                    'CT4 Sport': 45000,
+                    'CT4-V': 50500,
+                    'CT4-V Blackwing': 64600
                 }
             }
         },
         'CT5': {
-            'production_years': (2020, 2025),
+            'production_years': (2020, 2026),
             'trims_by_year': {
                 2020: {
                     'CT5 Luxury': 36295,
@@ -222,11 +229,18 @@ MANUFACTURERS_C = {
                     'CT5 Sport': 48590,
                     'CT5-V': 52990,
                     'CT5-V Blackwing': 91790
+                },
+                2026: {
+                    'CT5 Luxury': 41600,
+                    'CT5 Premium Luxury': 48800,
+                    'CT5 Sport': 49800,
+                    'CT5-V': 54300,
+                    'CT5-V Blackwing': 94100
                 }
             }
         },
         'XT4': {
-            'production_years': (2019, 2025),
+            'production_years': (2019, 2026),
             'trims_by_year': {
                 2019: {
                     'XT4 Luxury': 34795,
@@ -262,11 +276,16 @@ MANUFACTURERS_C = {
                     'XT4 Luxury': 39095,
                     'XT4 Premium Luxury': 43695,
                     'XT4 Sport': 45995
+                },
+                2026: {
+                    'XT4 Luxury': 40100,
+                    'XT4 Premium Luxury': 44800,
+                    'XT4 Sport': 47100
                 }
             }
         },
         'XT5': {
-            'production_years': (2017, 2025),
+            'production_years': (2017, 2026),
             'trims_by_year': {
                 2017: {
                     'XT5': 38995,
@@ -318,11 +337,16 @@ MANUFACTURERS_C = {
                     'XT5 Luxury': 50595,
                     'XT5 Premium Luxury': 59595,
                     'XT5 Sport': 56595
+                },
+                2026: {
+                    'XT5 Luxury': 51900,
+                    'XT5 Premium Luxury': 61100,
+                    'XT5 Sport': 58000
                 }
             }
         },
         'XT6': {
-            'production_years': (2020, 2025),
+            'production_years': (2020, 2026),
             'trims_by_year': {
                 2020: {
                     'XT6 Luxury': 53690,
@@ -359,11 +383,17 @@ MANUFACTURERS_C = {
                     'XT6 Premium Luxury': 63190,
                     'XT6 Sport': 65190,
                     'XT6 Platinum': 72190
+                },
+                2026: {
+                    'XT6 Luxury': 60300,
+                    'XT6 Premium Luxury': 64800,
+                    'XT6 Sport': 66800,
+                    'XT6 Platinum': 74000
                 }
             }
         },
         'Escalade': {
-            'production_years': (1999, 2025),
+            'production_years': (1999, 2026),
             'trims_by_year': {
                 2000: {'Escalade': 46225},
                 2001: {'Escalade': 46725},
@@ -480,6 +510,17 @@ MANUFACTURERS_C = {
                     'Escalade ESV Sport': 93995,
                     'Escalade ESV Platinum': 103995,
                     'Escalade-V': 155795
+                },
+                2026: {
+                    'Escalade Luxury': 85000,
+                    'Escalade Premium Luxury': 90800,
+                    'Escalade Sport': 93300,
+                    'Escalade Platinum': 103500,
+                    'Escalade ESV Luxury': 88000,
+                    'Escalade ESV Premium Luxury': 93900,
+                    'Escalade ESV Sport': 96300,
+                    'Escalade ESV Platinum': 106600,
+                    'Escalade-V': 159700
                 }
             }
         },
@@ -634,7 +675,7 @@ MANUFACTURERS_C = {
             }
         },
         'Malibu': {
-            'production_years': (1997, 2025),
+            'production_years': (1997, 2026),
             'trims_by_year': {
                 2000: {'Malibu': 17170, 'Malibu LS': 19170},
                 2001: {'Malibu': 17270, 'Malibu LS': 19270},
@@ -730,6 +771,12 @@ MANUFACTURERS_C = {
                     'Malibu LT': 29700,
                     'Malibu Premier': 34200,
                     'Malibu RS': 31700
+                },
+                2026: {
+                    'Malibu LS': 26900,
+                    'Malibu LT': 30400,
+                    'Malibu Premier': 35100,
+                    'Malibu RS': 32500
                 }
             }
         },
@@ -788,7 +835,7 @@ MANUFACTURERS_C = {
             }
         },
         'Camaro': {
-            'production_years': (2010, 2025),
+            'production_years': (2010, 2026),
             'trims_by_year': {
                 2010: {'Camaro LS': 22995, 'Camaro LT': 24245, 'Camaro SS': 30995},
                 2011: {'Camaro LS': 23280, 'Camaro LT': 24530, 'Camaro SS': 31280, 'Camaro Convertible LT': 29530, 'Camaro Convertible SS': 36280},
@@ -872,11 +919,19 @@ MANUFACTURERS_C = {
                     'Camaro 2SS': 45195,
                     'Camaro ZL1': 66195,
                     'Camaro ZL1 1LE': 73195
+                },
+                2026: {
+                    'Camaro 1LT': 29900,
+                    'Camaro 2LT': 33800,
+                    'Camaro 1SS': 41200,
+                    'Camaro 2SS': 46300,
+                    'Camaro ZL1': 67800,
+                    'Camaro ZL1 1LE': 75000
                 }
             }
         },
         'Corvette': {
-            'production_years': (1953, 2025),
+            'production_years': (1953, 2026),
             'trims_by_year': {
                 2000: {'Corvette': 39475, 'Corvette Convertible': 45900},
                 2001: {'Corvette': 40475, 'Corvette Convertible': 46900, 'Corvette Z06': 47500},
@@ -990,11 +1045,21 @@ MANUFACTURERS_C = {
                     'Corvette Z06 Convertible': 115795,
                     'Corvette E-Ray': 105495,
                     'Corvette ZR1': 165995
+                },
+                2026: {
+                    'Corvette Stingray': 66200,
+                    'Corvette Stingray Z51': 74800,
+                    'Corvette Stingray Convertible': 73000,
+                    'Corvette Stingray Convertible Z51': 81600,
+                    'Corvette Z06': 111500,
+                    'Corvette Z06 Convertible': 118700,
+                    'Corvette E-Ray': 108100,
+                    'Corvette ZR1': 170100
                 }
             }
         },
         'Trax': {
-            'production_years': (2015, 2025),
+            'production_years': (2015, 2026),
             'trims_by_year': {
                 2015: {'Trax LS': 20995, 'Trax LT': 23535, 'Trax LTZ': 26780},
                 2016: {'Trax LS': 21295, 'Trax LT': 23835, 'Trax LTZ': 27080},
@@ -1016,11 +1081,17 @@ MANUFACTURERS_C = {
                     'Trax LT': 25995,
                     'Trax RS': 27995,
                     'Trax Premier': 29495
+                },
+                2026: {
+                    'Trax LS': 24100,
+                    'Trax LT': 26600,
+                    'Trax RS': 28700,
+                    'Trax Premier': 30200
                 }
             }
         },
         'Equinox': {
-            'production_years': (2005, 2025),
+            'production_years': (2005, 2026),
             'trims_by_year': {
                 2005: {'Equinox LS': 22695, 'Equinox LT': 26695},
                 2006: {'Equinox LS': 22995, 'Equinox LT': 26995},
@@ -1080,11 +1151,16 @@ MANUFACTURERS_C = {
                     'Equinox LT': 28500,
                     'Equinox RS': 31000,
                     'Equinox Premier': 34500
+                },
+                2026: {
+                    'Equinox LT': 29200,
+                    'Equinox RS': 31800,
+                    'Equinox Premier': 35400
                 }
             }
         },
         'Blazer': {
-            'production_years': (2019, 2025),
+            'production_years': (2019, 2026),
             'trims_by_year': {
                 2019: {
                     'Blazer L': 29995,
@@ -1138,11 +1214,18 @@ MANUFACTURERS_C = {
                     'Blazer 3LT': 42900,
                     'Blazer Premier': 47400,
                     'Blazer RS': 47400
+                },
+                2026: {
+                    'Blazer 1LT': 38300,
+                    'Blazer 2LT': 41400,
+                    'Blazer 3LT': 44000,
+                    'Blazer Premier': 48600,
+                    'Blazer RS': 48600
                 }
             }
         },
         'Traverse': {
-            'production_years': (2009, 2025),
+            'production_years': (2009, 2026),
             'trims_by_year': {
                 2009: {'Traverse LS': 28995, 'Traverse LT': 31995, 'Traverse LTZ': 39995},
                 2010: {'Traverse LS': 29295, 'Traverse LT': 32295, 'Traverse LTZ': 40295},
@@ -1213,11 +1296,18 @@ MANUFACTURERS_C = {
                     'Traverse LT Leather': 42700,
                     'Traverse Premier': 47200,
                     'Traverse High Country': 55200
+                },
+                2026: {
+                    'Traverse LS': 37200,
+                    'Traverse LT Cloth': 40500,
+                    'Traverse LT Leather': 43800,
+                    'Traverse Premier': 48400,
+                    'Traverse High Country': 56600
                 }
             }
         },
         'Tahoe': {
-            'production_years': (1995, 2025),
+            'production_years': (1995, 2026),
             'trims_by_year': {
                 2000: {'Tahoe': 28455, 'Tahoe LT': 32455, 'Tahoe Z71': 33455},
                 2001: {'Tahoe': 28755, 'Tahoe LT': 32755, 'Tahoe Z71': 33755},
@@ -1309,11 +1399,19 @@ MANUFACTURERS_C = {
                     'Tahoe Z71': 61800,
                     'Tahoe Premier': 70300,
                     'Tahoe High Country': 75100
+                },
+                2026: {
+                    'Tahoe LS': 56700,
+                    'Tahoe LT': 62600,
+                    'Tahoe RST': 67400,
+                    'Tahoe Z71': 63300,
+                    'Tahoe Premier': 72100,
+                    'Tahoe High Country': 77000
                 }
             }
         },
         'Suburban': {
-            'production_years': (1967, 2025),
+            'production_years': (1967, 2026),
             'trims_by_year': {
                 2000: {'Suburban 1500 LS': 30455, 'Suburban 1500 LT': 34455, 'Suburban 2500 LS': 31455, 'Suburban 2500 LT': 35455},
                 2001: {'Suburban 1500 LS': 30755, 'Suburban 1500 LT': 34755, 'Suburban 2500 LS': 31755, 'Suburban 2500 LT': 35755},
@@ -1405,11 +1503,19 @@ MANUFACTURERS_C = {
                     'Suburban Z71': 64895,
                     'Suburban Premier': 73395,
                     'Suburban High Country': 78195
+                },
+                2026: {
+                    'Suburban LS': 59500,
+                    'Suburban LT': 65800,
+                    'Suburban RST': 70600,
+                    'Suburban Z71': 66500,
+                    'Suburban Premier': 75200,
+                    'Suburban High Country': 80100
                 }
             }
         },
         'Colorado': {
-            'production_years': (2004, 2025),
+            'production_years': (2004, 2026),
             'trims_by_year': {
                 2004: {'Colorado Regular Cab': 15570, 'Colorado Extended Cab': 16970, 'Colorado Crew Cab': 18970},
                 2005: {'Colorado Regular Cab': 15770, 'Colorado Extended Cab': 17170, 'Colorado Crew Cab': 19170},
@@ -1510,11 +1616,18 @@ MANUFACTURERS_C = {
                     'Colorado Z71': 37800,
                     'Colorado Trail Boss': 40100,
                     'Colorado ZR2': 46795
+                },
+                2026: {
+                    'Colorado Work Truck': 29100,
+                    'Colorado LT': 33100,
+                    'Colorado Z71': 38700,
+                    'Colorado Trail Boss': 41100,
+                    'Colorado ZR2': 48000
                 }
             }
         },
         'Silverado': {
-            'production_years': (1999, 2025),
+            'production_years': (1999, 2026),
             'trims_by_year': {
                 2000: {'Silverado Regular Cab': 16985, 'Silverado Extended Cab': 19985, 'Silverado Crew Cab': 22985},
                 2001: {'Silverado Regular Cab': 17285, 'Silverado Extended Cab': 20285, 'Silverado Crew Cab': 23285},
@@ -1613,11 +1726,18 @@ MANUFACTURERS_C = {
                     'Silverado Crew Cab LT': 44300,
                     'Silverado Crew Cab LTZ': 50300,
                     'Silverado High Country': 60300
+                },
+                2026: {
+                    'Silverado Regular Cab Work Truck': 32800,
+                    'Silverado Double Cab LT': 42800,
+                    'Silverado Crew Cab LT': 45400,
+                    'Silverado Crew Cab LTZ': 51600,
+                    'Silverado High Country': 61800
                 }
             }
         },
         'Silverado 1500': {
-            'production_years': (2019, 2025),
+            'production_years': (2019, 2026),
             'trims_by_year': {
                 2019: {
                     'Silverado 1500 Regular Cab Work Truck': 28300,
@@ -1681,7 +1801,7 @@ MANUFACTURERS_C = {
     
     'Chrysler': {
         '300': {
-            'production_years': (2005, 2025),
+            'production_years': (2005, 2026),
             'trims_by_year': {
                 2005: {'300': 25445, '300 Touring': 27995, '300C': 33620, '300C SRT8': 44320},
                 2006: {'300': 25745, '300 Touring': 28295, '300C': 33920, '300C SRT8': 44620},
@@ -1778,11 +1898,17 @@ MANUFACTURERS_C = {
                     '300 Limited': 37195,
                     '300C': 45195,
                     '300S': 38195
+                },
+                2026: {
+                    '300': 36100,
+                    '300 Limited': 38100,
+                    '300C': 46300,
+                    '300S': 39100
                 }
             }
         },
         'Pacifica': {
-            'production_years': (2017, 2025),
+            'production_years': (2017, 2026),
             'trims_by_year': {
                 2017: {
                     'Pacifica LX': 28595,
@@ -1868,11 +1994,20 @@ MANUFACTURERS_C = {
                     'Pacifica Hybrid Touring': 44095,
                     'Pacifica Hybrid Touring-L': 47095,
                     'Pacifica Hybrid Limited': 52095
+                },
+                2026: {
+                    'Pacifica Touring': 36900,
+                    'Pacifica Touring-L': 40000,
+                    'Pacifica Touring-L Plus': 44100,
+                    'Pacifica Limited': 48900,
+                    'Pacifica Hybrid Touring': 45200,
+                    'Pacifica Hybrid Touring-L': 48300,
+                    'Pacifica Hybrid Limited': 53400
                 }
             }
         },
         'Voyager': {
-            'production_years': (2020, 2025),
+            'production_years': (2020, 2026),
             'trims_by_year': {
                 2020: {
                     'Voyager L': 26985,

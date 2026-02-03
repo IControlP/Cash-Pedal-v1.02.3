@@ -4,7 +4,7 @@
 MANUFACTURERS_H = {
     'Honda': {
         'Civic': {
-            'production_years': (1972, 2025),
+            'production_years': (1972, 2026),
             'trims_by_year': {
                 2000: {'DX': 13970, 'LX': 15270, 'EX': 17270, 'Si': 19270},
                 2001: {'DX': 14270, 'LX': 15570, 'EX': 17570, 'Si': 19570, 'HX': 16270},
@@ -120,17 +120,25 @@ MANUFACTURERS_H = {
                     'Civic Type R': 44890
                 },
                 2025: {
-                    'Civic LX': 25550,
-                    'Civic EX': 27250,
-                    'Civic EX-L': 29750,
-                    'Civic Touring': 32250,
-                    'Civic Si': 30700,
-                    'Civic Type R': 45790
+                    'Civic LX': 24595,
+                    'Civic Sport': 26795,
+                    'Civic Sport Hybrid': 29495,
+                    'Civic Sport Touring Hybrid': 32295,
+                    'Civic Si': 30795,
+                    'Civic Type R': 45895
+                },
+                2026: {
+                    'Civic LX': 24595,
+                    'Civic Sport': 26795,
+                    'Civic Sport Hybrid': 29495,
+                    'Civic Sport Touring Hybrid': 32295,
+                    'Civic Si': 30995,
+                    'Civic Type R': 46095
                 }
             }
         },
         'Accord': {
-            'production_years': (1976, 2025),
+            'production_years': (1976, 2026),
             'trims_by_year': {
                 2000: {'DX': 16270, 'LX': 18770, 'EX': 22270, 'EX V6': 24770},
                 2001: {'DX': 16570, 'LX': 19070, 'EX': 22570, 'EX V6': 25070},
@@ -295,19 +303,25 @@ MANUFACTURERS_H = {
 
                 },
                 2025: {
-                    'Accord LX': 28195,
-                    'Accord Sport': 30645,
-                    'Accord EX': 32645,
-                    'Accord EX-L': 35865,
-                    'Accord Touring': 40385,
-                    'Accord Hybrid Sport': 34720, 
-                    'Accord Hybrid EX-L': 37620, 
-                    'Accord Hybrid Touring': 41720
+                    'Accord LX': 28395,
+                    'Accord SE': 30395,
+                    'Accord Sport Hybrid': 33795,
+                    'Accord EX-L Hybrid': 36895,
+                    'Accord Sport-L Hybrid': 38895,
+                    'Accord Touring Hybrid': 40695
+                },
+                2026: {
+                    'Accord LX': 28395,
+                    'Accord SE': 30395,
+                    'Accord Sport Hybrid': 33795,
+                    'Accord EX-L Hybrid': 36895,
+                    'Accord Sport-L Hybrid': 38895,
+                    'Accord Touring Hybrid': 40695
                 }
             }
         },
         'CR-V': {
-            'production_years': (1997, 2025),
+            'production_years': (1997, 2026),
             'trims_by_year': {
                 2000: {'LX': 18700, 'EX': 21200},
                 2001: {'LX': 19000, 'EX': 21500},
@@ -430,11 +444,20 @@ MANUFACTURERS_H = {
                     'CR-V Sport Touring': 36600,
                     'CR-V Hybrid Sport': 37850, 
                     'CR-V Hybrid Sport Touring': 42650
+                },
+                2026: {
+                    'CR-V LX': 29800,
+                    'CR-V EX': 32400,
+                    'CR-V EX-L': 36000,
+                    'CR-V Sport': 33400,
+                    'CR-V Sport Touring': 37500,
+                    'CR-V Hybrid Sport': 38800, 
+                    'CR-V Hybrid Sport Touring': 43700
                 }
             }
         },
         'Pilot': {
-            'production_years': (2003, 2025),
+            'production_years': (2003, 2026),
             'trims_by_year': {
                 2003: {'LX': 27650, 'EX': 30650, 'EX-L': 34150},
                 2004: {'LX': 27950, 'EX': 30950, 'EX-L': 34450},
@@ -553,11 +576,18 @@ MANUFACTURERS_H = {
                     'Pilot TrailSport': 46340,
                     'Pilot Touring': 48590,
                     'Pilot Elite': 52340
+                },
+                2026: {
+                    'Pilot LX': 40200,
+                    'Pilot EX-L': 45200,
+                    'Pilot TrailSport': 47500,
+                    'Pilot Touring': 49800,
+                    'Pilot Elite': 53600
                 }
             }
         },
         'Odyssey': {
-            'production_years': (1995, 2025),
+            'production_years': (1995, 2026),
             'trims_by_year': {
                 2000: {'LX': 21900, 'EX': 25400},
                 2001: {'LX': 22200, 'EX': 25700},
@@ -668,6 +698,12 @@ MANUFACTURERS_H = {
                     'Odyssey EX-L': 43590,
                     'Odyssey Touring': 49590,
                     'Odyssey Elite': 52290
+                },
+                2026: {
+                    'Odyssey LX': 37000,
+                    'Odyssey EX-L': 44700,
+                    'Odyssey Touring': 50800,
+                    'Odyssey Elite': 53600
                 }
             }
         },
@@ -772,6 +808,13 @@ MANUFACTURERS_H = {
                     'Ridgeline RTL-E': 49790,
                     'Ridgeline TrailSport': 47790,
                     'Ridgeline Black Edition': 51790
+                },
+                2026: {
+                    'Ridgeline Sport': 39200,
+                    'Ridgeline RTL': 42800,
+                    'Ridgeline RTL-E': 51000,
+                    'Ridgeline TrailSport': 49000,
+                    'Ridgeline Black Edition': 53100
                 }
             }
         },
@@ -832,7 +875,7 @@ MANUFACTURERS_H = {
     
     'Hyundai': {
         'Elantra': {
-            'production_years': (1991, 2025),
+            'production_years': (1991, 2026),
             'trims_by_year': {
                 2000: {'GLS': 12449, 'GLS Wagon': 13449},
                 2001: {'GLS': 12749, 'GLS Wagon': 13749, 'GT': 14749},
@@ -940,11 +983,17 @@ MANUFACTURERS_H = {
                     'Elantra SEL': 25400,
                     'Elantra Limited': 27400,
                     'Elantra N': 36500
+                },
+                2026: {
+                    'Elantra SE': 24000,
+                    'Elantra SEL': 26000,
+                    'Elantra Limited': 28100,
+                    'Elantra N': 37400
                 }
             }
         },
         'Sonata': {
-            'production_years': (1989, 2025),
+            'production_years': (1989, 2026),
             'trims_by_year': {
                 2000: {'GLS': 16399, 'GLS V6': 18899},
                 2001: {'GLS': 16699, 'GLS V6': 19199, 'LX': 20699},
@@ -1076,11 +1125,21 @@ MANUFACTURERS_H = {
                     'Sonata Hybrid Blue': 31550,
                     'Sonata Hybrid SEL': 34050,
                     'Sonata Hybrid Limited': 39400
+                },
+                2026: {
+                    'Sonata SE': 27700,
+                    'Sonata SEL': 29200,
+                    'Sonata SEL Plus': 31800,
+                    'Sonata Limited': 37600,
+                    'Sonata N Line': 37500,
+                    'Sonata Hybrid Blue': 32300,
+                    'Sonata Hybrid SEL': 34900,
+                    'Sonata Hybrid Limited': 40400
                 }
             }
         },
         'Tucson': {
-            'production_years': (2005, 2025),
+            'production_years': (2005, 2026),
             'trims_by_year': {
                 2005: {'GLS': 17999, 'LX': 20999},
                 2006: {'GLS': 18299, 'LX': 21299},
@@ -1169,11 +1228,20 @@ MANUFACTURERS_H = {
                     'Tucson Hybrid Blue': 32750,
                     'Tucson Hybrid SEL': 35250,
                     'Tucson Hybrid Limited': 40250
+                },
+                2026: {
+                    'Tucson SE': 29100,
+                    'Tucson SEL': 31700,
+                    'Tucson N Line': 36400,
+                    'Tucson Limited': 38700,
+                    'Tucson Hybrid Blue': 33600,
+                    'Tucson Hybrid SEL': 36100,
+                    'Tucson Hybrid Limited': 41300
                 }
             }
         },
         'Santa Fe': {
-            'production_years': (2001, 2025),
+            'production_years': (2001, 2026),
             'trims_by_year': {
                 2001: {'GLS': 18999, 'LX': 21999},
                 2002: {'GLS': 19299, 'LX': 22299},
@@ -1285,11 +1353,21 @@ MANUFACTURERS_H = {
                     'Santa Fe Hybrid SEL': 37000,
                     'Santa Fe Hybrid Limited': 42500,
                     'Santa Fe Hybrid Calligraphy': 45500
+                },
+                2026: {
+                    'Santa Fe SE': 32300,
+                    'Santa Fe SEL': 34800,
+                    'Santa Fe SEL Plus': 37400,
+                    'Santa Fe Limited': 42200,
+                    'Santa Fe Calligraphy': 45300,
+                    'Santa Fe Hybrid SEL': 37900,
+                    'Santa Fe Hybrid Limited': 43600,
+                    'Santa Fe Hybrid Calligraphy': 46600
                 }
             }
         },
         'Palisade': {
-            'production_years': (2020, 2025),
+            'production_years': (2020, 2026),
             'trims_by_year': {
                 2020: {
                     'Palisade SE': 31550,
@@ -1328,11 +1406,18 @@ MANUFACTURERS_H = {
                     'Palisade XRT': 43000,
                     'Palisade Limited': 48500,
                     'Palisade Calligraphy': 52350
+                },
+                2026: {
+                    'Palisade SE': 38300,
+                    'Palisade SEL': 41700,
+                    'Palisade XRT': 44100,
+                    'Palisade Limited': 49700,
+                    'Palisade Calligraphy': 53700
                 }
             }
         },
         'Kona': {
-            'production_years': (2018, 2025),
+            'production_years': (2018, 2026),
             'trims_by_year': {
                 2018: {
                     'Kona SE': 19500,
@@ -1408,6 +1493,17 @@ MANUFACTURERS_H = {
                     'Kona Hybrid Blue': 26300,
                     'Kona Hybrid SEL': 28950,
                     'Kona Hybrid Limited': 31550
+                },
+                2026: {
+                    'Kona SE': 25000,
+                    'Kona SEL': 26800,
+                    'Kona Limited': 30300,
+                    'Kona Ultimate': 32700,
+                    'Kona N Line': 31200,
+                    'Kona N': 38000,
+                    'Kona Hybrid Blue': 27000,
+                    'Kona Hybrid SEL': 29700,
+                    'Kona Hybrid Limited': 32300
                 }
             }
         },
@@ -1582,7 +1678,7 @@ MANUFACTURERS_H = {
             }
         },
         'Ioniq 5': {
-            'production_years': (2022, 2025),
+            'production_years': (2022, 2026),
             'trims_by_year': {
                 2022: {
                     'Ioniq 5 SE': 39700,
@@ -1603,11 +1699,16 @@ MANUFACTURERS_H = {
                     'Ioniq 5 SE': 43000,
                     'Ioniq 5 SEL': 46950,
                     'Ioniq 5 Limited': 53900
+                },
+                2026: {
+                    'Ioniq 5 SE': 44100,
+                    'Ioniq 5 SEL': 48100,
+                    'Ioniq 5 Limited': 55200
                 }
             }
         },
         'Ioniq 6': {
-            'production_years': (2023, 2025),
+            'production_years': (2023, 2026),
             'trims_by_year': {
                 2023: {
                     'Ioniq 6 SE': 41600,

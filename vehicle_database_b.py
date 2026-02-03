@@ -4,7 +4,7 @@
 MANUFACTURERS_B = {
     'BMW': {
         '3 Series': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'323i': 27170, '323i Sport': 29170, '328i': 30170, '328i Sport': 32170},
                 2001: {'325i': 28270, '325i Sport': 30270, '330i': 33270, '330i Sport': 35270},
@@ -77,11 +77,19 @@ MANUFACTURERS_B = {
                     'M340i xDrive': 63500,
                     'M3': 76000,
                     'M3 Competition': 78000
+                },
+                2026: {
+                    '330i': 48200,
+                    '330i xDrive': 50200,
+                    'M340i': 63000,
+                    'M340i xDrive': 65100,
+                    'M3': 77900,
+                    'M3 Competition': 80000
                 }
             }
         },
         'X1': {
-            'production_years': (2013, 2025),
+            'production_years': (2013, 2026),
             'trims_by_year': {
                 2013: {'sDrive28i': 31200, 'xDrive28i': 32800},
                 2014: {'sDrive28i': 31700, 'xDrive28i': 33300},
@@ -113,11 +121,15 @@ MANUFACTURERS_B = {
                 2025: {
                     'X1 sDrive28i': 42700,
                     'X1 xDrive28i': 44400
+                },
+                2026: {
+                    'X1 sDrive28i': 43800,
+                    'X1 xDrive28i': 45500
                 }
             }
         },
         'X3': {
-            'production_years': (2004, 2025),
+            'production_years': (2004, 2026),
             'trims_by_year': {
                 2004: {'2.5i': 35000, '3.0i': 40000},
                 2005: {'2.5i': 35500, '3.0i': 40500},
@@ -175,16 +187,17 @@ MANUFACTURERS_B = {
                     'X3 M Competition': 77600
                 },
                 2025: {
-                    'sDrive30i': 49700,
-                    'xDrive30i': 51500,
-                    'M40i': 61800,
-                    'X3 M': 73800,
-                    'X3 M Competition': 78800
+                    'X3 30 xDrive': 50900,
+                    'X3 M50 xDrive': 65900
+                },
+                2026: {
+                    'X3 30 xDrive': 50900,
+                    'X3 M50 xDrive': 65900
                 }
             }
         },
         'X5': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'3.0i': 45400, '4.4i': 52400},
                 2001: {'3.0i': 45900, '4.4i': 52900, '4.6is': 58900},
@@ -260,11 +273,19 @@ MANUFACTURERS_B = {
                     'M50i': 90100,
                     'X5 M': 114200,
                     'X5 M Competition': 119200
+                },
+                2026: {
+                    'sDrive40i': 69700,
+                    'xDrive40i': 71800,
+                    'xDrive50i': 85200,
+                    'M50i': 92400,
+                    'X5 M': 117100,
+                    'X5 M Competition': 122200
                 }
             }
         },
         'X7': {
-            'production_years': (2019, 2025),
+            'production_years': (2019, 2026),
             'trims_by_year': {
                 2019: {
                     'xDrive40i': 73900,
@@ -304,6 +325,12 @@ MANUFACTURERS_B = {
                     'xDrive50i': 100200,
                     'M50i': 108100,
                     'M60i': 114100
+                },
+                2026: {
+                    'xDrive40i': 83500,
+                    'xDrive50i': 102700,
+                    'M50i': 110800,
+                    'M60i': 117000
                 }
             }
         },
@@ -323,7 +350,7 @@ MANUFACTURERS_B = {
             }
         },
         '330i': {
-            'production_years': (2016, 2025),
+            'production_years': (2016, 2026),
             'trims_by_year': {
                 2016: {'330i': 38950, '330i xDrive': 40650},
                 2017: {'330i': 38950, '330i xDrive': 40650},
@@ -334,7 +361,8 @@ MANUFACTURERS_B = {
                 2022: {'330i': 43300, '330i xDrive': 45300},
                 2023: {'330i': 44600, '330i xDrive': 46600},
                 2024: {'330i': 45800, '330i xDrive': 47800},
-                2025: {'330i': 47000, '330i xDrive': 49000}
+                2025: {'330i': 47000, '330i xDrive': 49000},
+                2026: {'330i': 48200, '330i xDrive': 50200}
             }
         },
         '340i': {
@@ -346,7 +374,7 @@ MANUFACTURERS_B = {
             }
         },
         'M3': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'M3': 41170},
                 2001: {'M3': 42270, 'M3 Convertible': 48270},
@@ -373,11 +401,12 @@ MANUFACTURERS_B = {
                 2022: {'M3': 72300, 'M3 Competition': 74300},
                 2023: {'M3': 73600, 'M3 Competition': 75600},
                 2024: {'M3': 74800, 'M3 Competition': 76800},
-                2025: {'M3': 76000, 'M3 Competition': 78000}
+                2025: {'M3': 76000, 'M3 Competition': 78000},
+                2026: {'M3': 77900, 'M3 Competition': 80000}
             }
         },
         'M4': {
-            'production_years': (2014, 2025),
+            'production_years': (2014, 2026),
             'trims_by_year': {
                 2014: {'M4': 65125, 'M4 Convertible': 73125},
                 2015: {'M4': 65700, 'M4 Convertible': 73700},
@@ -390,11 +419,12 @@ MANUFACTURERS_B = {
                 2022: {'M4': 73800, 'M4 Convertible': 81800, 'M4 Competition': 75800},
                 2023: {'M4': 75100, 'M4 Convertible': 83100, 'M4 Competition': 77100},
                 2024: {'M4': 76300, 'M4 Convertible': 84300, 'M4 Competition': 78300},
-                2025: {'M4': 77500, 'M4 Convertible': 85500, 'M4 Competition': 79500}
+                2025: {'M4': 77500, 'M4 Convertible': 85500, 'M4 Competition': 79500},
+                2026: {'M4': 79400, 'M4 Convertible': 87600, 'M4 Competition': 81500}
             }
         },
         'M5': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'M5': 74900},
                 2001: {'M5': 75400},
@@ -421,11 +451,12 @@ MANUFACTURERS_B = {
                 2022: {'M5': 106400, 'M5 Competition': 113700},
                 2023: {'M5': 107900, 'M5 Competition': 115200},
                 2024: {'M5': 109300, 'M5 Competition': 116600},
-                2025: {'M5': 110700, 'M5 Competition': 118000}
+                2025: {'M5': 110700, 'M5 Competition': 118000},
+                2026: {'M5': 113500, 'M5 Competition': 120900}
             }
         },
         'M8': {
-            'production_years': (2020, 2025),
+            'production_years': (2020, 2026),
             'trims_by_year': {
                 2020: {
                     'M8 Coupe': 130000,
@@ -474,11 +505,19 @@ MANUFACTURERS_B = {
                     'M8 Competition Coupe': 145600,
                     'M8 Competition Convertible': 157600,
                     'M8 Competition Gran Coupe': 147600
+                },
+                2026: {
+                    'M8 Coupe': 141000,
+                    'M8 Convertible': 153300,
+                    'M8 Gran Coupe': 143100,
+                    'M8 Competition Coupe': 149200,
+                    'M8 Competition Convertible': 161500,
+                    'M8 Competition Gran Coupe': 151300
                 }
             }
         },
         '530i': {
-            'production_years': (2017, 2025),
+            'production_years': (2017, 2026),
             'trims_by_year': {
                 2017: {'530i': 51200, '530i xDrive': 53700},
                 2018: {'530i': 52400, '530i xDrive': 54900},
@@ -488,11 +527,12 @@ MANUFACTURERS_B = {
                 2022: {'530i': 56400, '530i xDrive': 58900},
                 2023: {'530i': 57800, '530i xDrive': 60300},
                 2024: {'530i': 59100, '530i xDrive': 61600},
-                2025: {'530i': 60400, '530i xDrive': 62900}
+                2025: {'530i': 60400, '530i xDrive': 62900},
+                2026: {'530i': 61900, '530i xDrive': 64500}
             }
         },
         '540i': {
-            'production_years': (2017, 2025),
+            'production_years': (2017, 2026),
             'trims_by_year': {
                 2017: {'540i': 56500, '540i xDrive': 59000},
                 2018: {'540i': 57700, '540i xDrive': 60200},
@@ -502,11 +542,12 @@ MANUFACTURERS_B = {
                 2022: {'540i': 61700, '540i xDrive': 64200},
                 2023: {'540i': 63100, '540i xDrive': 65600},
                 2024: {'540i': 64400, '540i xDrive': 66900},
-                2025: {'540i': 65700, '540i xDrive': 68200}
+                2025: {'540i': 65700, '540i xDrive': 68200},
+                2026: {'540i': 67300, '540i xDrive': 69900}
             }
         },
         '750i': {
-            'production_years': (2009, 2025),
+            'production_years': (2009, 2026),
             'trims_by_year': {
                 2009: {'750i': 78525, '750Li': 81525, '750i xDrive': 81525, '750Li xDrive': 84525},
                 2010: {'750i': 79425, '750Li': 82425, '750i xDrive': 82425, '750Li xDrive': 85425},
@@ -524,7 +565,8 @@ MANUFACTURERS_B = {
                 2022: {'750i': 101400, '750i xDrive': 104400, '750Li xDrive': 107400},
                 2023: {'750i': 103100, '750i xDrive': 106100, '750Li xDrive': 109100},
                 2024: {'750i': 104700, '750i xDrive': 107700, '750Li xDrive': 110700},
-                2025: {'750i': 106300, '750i xDrive': 109300, '750Li xDrive': 112300}
+                2025: {'750i': 106300, '750i xDrive': 109300, '750Li xDrive': 112300},
+                2026: {'750i': 109000, '750i xDrive': 112000, '750Li xDrive': 115100}
             }
         },
         'i3': {
@@ -542,17 +584,18 @@ MANUFACTURERS_B = {
             }
         },
         'i4': {
-            'production_years': (2021, 2025),
+            'production_years': (2021, 2026),
             'trims_by_year': {
                 2021: {'i4 eDrive40': 55400, 'i4 M50': 67300},
                 2022: {'i4 eDrive40': 56395, 'i4 M50': 68295},
                 2023: {'i4 eDrive40': 57700, 'i4 M50': 69600},
                 2024: {'i4 eDrive40': 58900, 'i4 M50': 70800},
-                2025: {'i4 eDrive40': 60100, 'i4 M50': 72000}
+                2025: {'i4 eDrive40': 60100, 'i4 M50': 72000},
+                2026: {'i4 eDrive40': 61600, 'i4 M50': 73800}
             }
         },
         'iX': {
-            'production_years': (2022, 2025),
+            'production_years': (2022, 2026),
             'trims_by_year': {
                 2022: {'iX xDrive50': 83200, 'iX M60': 106095},
                 2023: {'iX xDrive50': 85100, 'iX M60': 108000},
@@ -591,7 +634,7 @@ MANUFACTURERS_B = {
             }
         },
         'Encore GX': {
-            'production_years': (2020, 2025),
+            'production_years': (2020, 2026),
             'trims_by_year': {
                 2020: {
                     'Encore GX Preferred': 25200,
@@ -622,11 +665,16 @@ MANUFACTURERS_B = {
                     'Encore GX Preferred': 28100,
                     'Encore GX Select': 29700,
                     'Encore GX Essence': 31900
+                },
+                2026: {
+                    'Encore GX Preferred': 28800,
+                    'Encore GX Select': 30400,
+                    'Encore GX Essence': 32700
                 }
             }
         },
         'Envision': {
-            'production_years': (2016, 2025),
+            'production_years': (2016, 2026),
             'trims_by_year': {
                 2016: {'Envision': 34065, 'Envision Leather': 35635, 'Envision Premium I': 38545, 'Envision Premium II': 42195},
                 2017: {'Envision': 31995, 'Envision Essence': 34990, 'Envision Premium I': 37995, 'Envision Premium II': 41995},
@@ -662,11 +710,17 @@ MANUFACTURERS_B = {
                     'Envision Essence': 38100,
                     'Envision Premium': 41500,
                     'Envision Avenir': 44100
+                },
+                2026: {
+                    'Envision Preferred': 36400,
+                    'Envision Essence': 39100,
+                    'Envision Premium': 42500,
+                    'Envision Avenir': 45200
                 }
             }
         },
         'Enclave': {
-            'production_years': (2008, 2025),
+            'production_years': (2008, 2026),
             'trims_by_year': {
                 2008: {'Enclave CX': 36790, 'Enclave CXL': 39510, 'Enclave CXL-2': 42250},
                 2009: {'Enclave CX': 36985, 'Enclave CXL': 39705, 'Enclave CXL-2': 42445},
@@ -717,6 +771,11 @@ MANUFACTURERS_B = {
                     'Enclave Essence': 46300,
                     'Enclave Premium': 52100,
                     'Enclave Avenir': 59500
+                },
+                2026: {
+                    'Enclave Essence': 47500,
+                    'Enclave Premium': 53400,
+                    'Enclave Avenir': 61000
                 }
             }
         },

@@ -161,6 +161,13 @@ MANUFACTURERS_V = {
                     "Jetta SEL": 27745,
                     "Jetta SEL Premium": 29745,
                     "Jetta GLI": 31745
+                },
+                2026: {
+                    "Jetta S": 20745,
+                    "Jetta SE": 23745,
+                    "Jetta SEL": 27745,
+                    "Jetta SEL Premium": 29745,
+                    "Jetta GLI": 31745
                 }
             }
         },
@@ -441,6 +448,11 @@ MANUFACTURERS_V = {
                     "Golf GTI S": 30095,
                     "Golf GTI SE": 34095,
                     "Golf R": 41895
+                },
+                2026: {
+                    "Golf GTI S": 30095,
+                    "Golf GTI SE": 34095,
+                    "Golf R": 41895
                 }
             }
         },
@@ -541,6 +553,13 @@ MANUFACTURERS_V = {
                     "Tiguan SEL R-Line": 35395
                 },
                 2025: {
+                    "Tiguan S": 26695,
+                    "Tiguan SE": 29695,
+                    "Tiguan SEL": 33695,
+                    "Tiguan SEL Premium": 37695,
+                    "Tiguan SEL R-Line": 35695
+                },
+                2026: {
                     "Tiguan S": 26695,
                     "Tiguan SE": 29695,
                     "Tiguan SEL": 33695,
@@ -751,6 +770,11 @@ MANUFACTURERS_V = {
                     "XC90 B5 Momentum": 54600,
                     "XC90 B6 R-Design": 60600,
                     "XC90 B6 Inscription": 64600
+                },
+                2026: {
+                    "XC90 B5 Momentum": 54600,
+                    "XC90 B6 R-Design": 60600,
+                    "XC90 B6 Inscription": 64600
                 }
             }
         },
@@ -842,6 +866,11 @@ MANUFACTURERS_V = {
                     "XC60 B5 Momentum": 42600,
                     "XC60 B6 R-Design": 47600,
                     "XC60 B6 Inscription": 51600
+                },
+                2026: {
+                    "XC60 B5 Momentum": 42600,
+                    "XC60 B6 R-Design": 47600,
+                    "XC60 B6 Inscription": 51600
                 }
             }
         },
@@ -883,6 +912,11 @@ MANUFACTURERS_V = {
                     "XC40 B5 Inscription": 41300
                 },
                 2025: {
+                    "XC40 B4 Momentum": 36600,
+                    "XC40 B5 R-Design": 39600,
+                    "XC40 B5 Inscription": 41600
+                },
+                2026: {
                     "XC40 B4 Momentum": 36600,
                     "XC40 B5 R-Design": 39600,
                     "XC40 B5 Inscription": 41600
@@ -1007,6 +1041,11 @@ MANUFACTURERS_V = {
                     "S60 B6 Inscription": 48300
                 },
                 2025: {
+                    "S60 B5 Momentum": 38600,
+                    "S60 B6 R-Design": 44600,
+                    "S60 B6 Inscription": 48600
+                },
+                2026: {
                     "S60 B5 Momentum": 38600,
                     "S60 B6 R-Design": 44600,
                     "S60 B6 Inscription": 48600

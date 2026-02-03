@@ -4,7 +4,7 @@
 MANUFACTURERS_J = {
     'Jaguar': {
         'XE': {
-            'production_years': (2015, 2025),
+            'production_years': (2015, 2026),
             'trims_by_year': {
                 2015: {'XE': 34900, 'XE Premium': 38900, 'XE Prestige': 42900, 'XE R-Sport': 40900},
                 2016: {'XE': 35195, 'XE Premium': 39195, 'XE Prestige': 43195, 'XE R-Sport': 41195, 'XE S': 52195},
@@ -16,11 +16,12 @@ MANUFACTURERS_J = {
                 2022: {'XE': 40900, 'XE S': 46900, 'XE SE': 43900, 'XE HSE': 48900},
                 2023: {'XE': 41400, 'XE S': 47400, 'XE SE': 44400, 'XE HSE': 49400},
                 2024: {'XE': 41900, 'XE S': 47900, 'XE SE': 44900, 'XE HSE': 49900},
-                2025: {'XE': 42400, 'XE S': 48400, 'XE SE': 45400, 'XE HSE': 50400}
+                2025: {'XE': 42400, 'XE S': 48400, 'XE SE': 45400, 'XE HSE': 50400},
+                2026: {'XE': 43500, 'XE S': 49600, 'XE SE': 46500, 'XE HSE': 51700}
             }
         },
         'XF': {
-            'production_years': (2008, 2025),
+            'production_years': (2008, 2026),
             'trims_by_year': {
                 2008: {'XF': 55900, 'XF Premium': 59900, 'XF Supercharged': 67900},
                 2009: {'XF': 56400, 'XF Premium': 60400, 'XF Supercharged': 68400, 'XF Luxury': 63400},
@@ -39,7 +40,8 @@ MANUFACTURERS_J = {
                 2022: {'XF': 52800, 'XF S': 58800, 'XF SE': 55800, 'XF HSE': 61800},
                 2023: {'XF': 53300, 'XF S': 59300, 'XF SE': 56300, 'XF HSE': 62300},
                 2024: {'XF': 53800, 'XF S': 59800, 'XF SE': 56800, 'XF HSE': 62800},
-                2025: {'XF': 54300, 'XF S': 60300, 'XF SE': 57300, 'XF HSE': 63300}
+                2025: {'XF': 54300, 'XF S': 60300, 'XF SE': 57300, 'XF HSE': 63300},
+                2026: {'XF': 55700, 'XF S': 61800, 'XF SE': 58700, 'XF HSE': 64900}
             }
         },
         'XJ': {
@@ -58,7 +60,7 @@ MANUFACTURERS_J = {
             }
         },
         'F-TYPE': {
-            'production_years': (2013, 2025),
+            'production_years': (2013, 2026),
             'trims_by_year': {
                 2013: {'F-TYPE': 69000, 'F-TYPE S': 81000, 'F-TYPE V8 S': 92000},
                 2014: {'F-TYPE': 69500, 'F-TYPE S': 81500, 'F-TYPE V8 S': 92500, 'F-TYPE R': 103500},
@@ -72,11 +74,12 @@ MANUFACTURERS_J = {
                 2022: {'F-TYPE': 73500, 'F-TYPE S': 85500, 'F-TYPE V8 S': 96500, 'F-TYPE R': 107500, 'F-TYPE R Coupe': 102500, 'F-TYPE SVR': 127000},
                 2023: {'F-TYPE': 74000, 'F-TYPE S': 86000, 'F-TYPE V8 S': 97000, 'F-TYPE R': 108000, 'F-TYPE R Coupe': 103000, 'F-TYPE SVR': 127500},
                 2024: {'F-TYPE': 74500, 'F-TYPE S': 86500, 'F-TYPE V8 S': 97500, 'F-TYPE R': 108500, 'F-TYPE R Coupe': 103500, 'F-TYPE SVR': 128000},
-                2025: {'F-TYPE': 75000, 'F-TYPE S': 87000, 'F-TYPE V8 S': 98000, 'F-TYPE R': 109000, 'F-TYPE R Coupe': 104000, 'F-TYPE SVR': 128500}
+                2025: {'F-TYPE': 75000, 'F-TYPE S': 87000, 'F-TYPE V8 S': 98000, 'F-TYPE R': 109000, 'F-TYPE R Coupe': 104000, 'F-TYPE SVR': 128500},
+                2026: {'F-TYPE': 76900, 'F-TYPE S': 89200, 'F-TYPE V8 S': 100400, 'F-TYPE R': 111700, 'F-TYPE R Coupe': 106600, 'F-TYPE SVR': 131700}
             }
         },
         'F-PACE': {
-            'production_years': (2016, 2025),
+            'production_years': (2016, 2026),
             'trims_by_year': {
                 2016: {'F-PACE': 42390, 'F-PACE Premium': 46390, 'F-PACE Prestige': 50390, 'F-PACE R-Sport': 48390, 'F-PACE S': 56390},
                 2017: {'F-PACE': 42890, 'F-PACE Premium': 46890, 'F-PACE Prestige': 50890, 'F-PACE R-Sport': 48890, 'F-PACE S': 56890},
@@ -87,11 +90,12 @@ MANUFACTURERS_J = {
                 2022: {'F-PACE': 51900, 'F-PACE S': 64900, 'F-PACE SE': 57900, 'F-PACE HSE': 67900, 'F-PACE SVR': 84900},
                 2023: {'F-PACE': 52400, 'F-PACE S': 65400, 'F-PACE SE': 58400, 'F-PACE HSE': 68400, 'F-PACE SVR': 85400},
                 2024: {'F-PACE': 52900, 'F-PACE S': 65900, 'F-PACE SE': 58900, 'F-PACE HSE': 68900, 'F-PACE SVR': 85900},
-                2025: {'F-PACE': 53400, 'F-PACE S': 66400, 'F-PACE SE': 59400, 'F-PACE HSE': 69400, 'F-PACE SVR': 86400}
+                2025: {'F-PACE': 53400, 'F-PACE S': 66400, 'F-PACE SE': 59400, 'F-PACE HSE': 69400, 'F-PACE SVR': 86400},
+                2026: {'F-PACE': 54700, 'F-PACE S': 68100, 'F-PACE SE': 60900, 'F-PACE HSE': 71100, 'F-PACE SVR': 88600}
             }
         },
         'E-PACE': {
-            'production_years': (2017, 2025),
+            'production_years': (2017, 2026),
             'trims_by_year': {
                 2017: {'E-PACE': 38600, 'E-PACE S': 42600, 'E-PACE SE': 45600, 'E-PACE HSE': 48600},
                 2018: {'E-PACE': 39100, 'E-PACE S': 43100, 'E-PACE SE': 46100, 'E-PACE HSE': 49100},
@@ -101,11 +105,12 @@ MANUFACTURERS_J = {
                 2022: {'E-PACE': 41100, 'E-PACE S': 45100, 'E-PACE SE': 48100, 'E-PACE HSE': 51100},
                 2023: {'E-PACE': 41600, 'E-PACE S': 45600, 'E-PACE SE': 48600, 'E-PACE HSE': 51600},
                 2024: {'E-PACE': 42100, 'E-PACE S': 46100, 'E-PACE SE': 49100, 'E-PACE HSE': 52100},
-                2025: {'E-PACE': 42600, 'E-PACE S': 46600, 'E-PACE SE': 49600, 'E-PACE HSE': 52600}
+                2025: {'E-PACE': 42600, 'E-PACE S': 46600, 'E-PACE SE': 49600, 'E-PACE HSE': 52600},
+                2026: {'E-PACE': 43700, 'E-PACE S': 47800, 'E-PACE SE': 50800, 'E-PACE HSE': 53900}
             }
         },
         'I-PACE': {
-            'production_years': (2018, 2025),
+            'production_years': (2018, 2026),
             'trims_by_year': {
                 2018: {'I-PACE': 69500, 'I-PACE S': 74500, 'I-PACE SE': 79500, 'I-PACE HSE': 84500},
                 2019: {'I-PACE': 70000, 'I-PACE S': 75000, 'I-PACE SE': 80000, 'I-PACE HSE': 85000},
@@ -120,7 +125,7 @@ MANUFACTURERS_J = {
     },
     'Jeep': {
         'Wrangler': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'Wrangler Sport': 16595, 'Wrangler Sahara': 20595},
                 2001: {'Wrangler Sport': 16895, 'Wrangler Sahara': 20895, 'Wrangler X': 15895},
@@ -147,11 +152,12 @@ MANUFACTURERS_J = {
                 2022: {'Wrangler Sport': 32395, 'Wrangler Sport S': 35395, 'Wrangler Sahara': 37395, 'Wrangler Rubicon': 40395, 'Wrangler Rubicon 392': 75395},
                 2023: {'Wrangler Sport': 32895, 'Wrangler Sport S': 35895, 'Wrangler Sahara': 37895, 'Wrangler Rubicon': 40895, 'Wrangler Rubicon 392': 75895},
                 2024: {'Wrangler Sport': 33395, 'Wrangler Sport S': 36395, 'Wrangler Sahara': 38395, 'Wrangler Rubicon': 41395, 'Wrangler Rubicon 392': 76395},
-                2025: {'Wrangler Sport': 33895, 'Wrangler Sport S': 36895, 'Wrangler Sahara': 38895, 'Wrangler Rubicon': 41895, 'Wrangler Rubicon 392': 76895}
+                2025: {'Wrangler Sport': 33895, 'Wrangler Sport S': 36895, 'Wrangler Sahara': 38895, 'Wrangler Rubicon': 41895, 'Wrangler Rubicon 392': 76895},
+                2026: {'Wrangler Sport': 34700, 'Wrangler Sport S': 37800, 'Wrangler Sahara': 39900, 'Wrangler Rubicon': 42900, 'Wrangler Rubicon 392': 78800}
             }
         },
         'Grand Cherokee': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'Grand Cherokee Laredo': 25390, 'Grand Cherokee Limited': 30390},
                 2001: {'Grand Cherokee Laredo': 25690, 'Grand Cherokee Limited': 30690},
@@ -178,11 +184,12 @@ MANUFACTURERS_J = {
                 2022: {'Grand Cherokee Laredo': 32890, 'Grand Cherokee Limited': 37890, 'Grand Cherokee Overland': 43890, 'Grand Cherokee SRT': 67490, 'Grand Cherokee Summit': 49490, 'Grand Cherokee Trailhawk': 40890, 'Grand Cherokee Trackhawk': 89290},
                 2023: {'Grand Cherokee Laredo': 33390, 'Grand Cherokee Limited': 38390, 'Grand Cherokee Overland': 44390, 'Grand Cherokee SRT': 67990, 'Grand Cherokee Summit': 49990, 'Grand Cherokee Trailhawk': 41390, 'Grand Cherokee Trackhawk': 89790},
                 2024: {'Grand Cherokee Laredo': 33890, 'Grand Cherokee Limited': 38890, 'Grand Cherokee Overland': 44890, 'Grand Cherokee SRT': 68490, 'Grand Cherokee Summit': 50490, 'Grand Cherokee Trailhawk': 41890, 'Grand Cherokee Trackhawk': 90290},
-                2025: {'Grand Cherokee Laredo': 34390, 'Grand Cherokee Limited': 39390, 'Grand Cherokee Overland': 45390, 'Grand Cherokee SRT': 68990, 'Grand Cherokee Summit': 50990, 'Grand Cherokee Trailhawk': 42390, 'Grand Cherokee Trackhawk': 90790}
+                2025: {'Grand Cherokee Laredo': 34390, 'Grand Cherokee Limited': 39390, 'Grand Cherokee Overland': 45390, 'Grand Cherokee SRT': 68990, 'Grand Cherokee Summit': 50990, 'Grand Cherokee Trailhawk': 42390, 'Grand Cherokee Trackhawk': 90790},
+                2026: {'Grand Cherokee Laredo': 35200, 'Grand Cherokee Limited': 40400, 'Grand Cherokee Overland': 46500, 'Grand Cherokee SRT': 70700, 'Grand Cherokee Summit': 52300, 'Grand Cherokee Trailhawk': 43400, 'Grand Cherokee Trackhawk': 93100}
             }
         },
         'Cherokee': {
-            'production_years': (2014, 2025),
+            'production_years': (2014, 2026),
             'trims_by_year': {
                 2014: {'Cherokee Sport': 22995, 'Cherokee Latitude': 25995, 'Cherokee Limited': 30995, 'Cherokee Trailhawk': 28995},
                 2015: {'Cherokee Sport': 23295, 'Cherokee Latitude': 26295, 'Cherokee Limited': 31295, 'Cherokee Trailhawk': 29295},
@@ -195,11 +202,12 @@ MANUFACTURERS_J = {
                 2022: {'Cherokee Latitude': 28395, 'Cherokee Latitude Plus': 31395, 'Cherokee Limited': 34395, 'Cherokee Trailhawk': 32395, 'Cherokee Overland': 37395},
                 2023: {'Cherokee Latitude': 28695, 'Cherokee Latitude Plus': 31695, 'Cherokee Limited': 34695, 'Cherokee Trailhawk': 32695, 'Cherokee Overland': 37695},
                 2024: {'Cherokee Latitude': 28995, 'Cherokee Latitude Plus': 31995, 'Cherokee Limited': 34995, 'Cherokee Trailhawk': 32995, 'Cherokee Overland': 37995},
-                2025: {'Cherokee Latitude': 29295, 'Cherokee Latitude Plus': 32295, 'Cherokee Limited': 35295, 'Cherokee Trailhawk': 33295, 'Cherokee Overland': 38295}
+                2025: {'Cherokee Latitude': 29295, 'Cherokee Latitude Plus': 32295, 'Cherokee Limited': 35295, 'Cherokee Trailhawk': 33295, 'Cherokee Overland': 38295},
+                2026: {'Cherokee Latitude': 30000, 'Cherokee Latitude Plus': 33100, 'Cherokee Limited': 36200, 'Cherokee Trailhawk': 34100, 'Cherokee Overland': 39300}
             }
         },
         'Compass': {
-            'production_years': (2007, 2025),
+            'production_years': (2007, 2026),
             'trims_by_year': {
                 2007: {'Compass Sport': 19635, 'Compass Limited': 22635},
                 2008: {'Compass Sport': 19935, 'Compass Limited': 22935},
@@ -219,11 +227,12 @@ MANUFACTURERS_J = {
                 2022: {'Compass Sport': 22495, 'Compass Latitude': 25495, 'Compass Limited': 28495, 'Compass Trailhawk': 30495},
                 2023: {'Compass Sport': 22795, 'Compass Latitude': 25795, 'Compass Limited': 28795, 'Compass Trailhawk': 30795},
                 2024: {'Compass Sport': 23095, 'Compass Latitude': 26095, 'Compass Limited': 29095, 'Compass Trailhawk': 31095},
-                2025: {'Compass Sport': 23395, 'Compass Latitude': 26395, 'Compass Limited': 29395, 'Compass Trailhawk': 31395}
+                2025: {'Compass Sport': 23395, 'Compass Latitude': 26395, 'Compass Limited': 29395, 'Compass Trailhawk': 31395},
+                2026: {'Compass Sport': 24000, 'Compass Latitude': 27100, 'Compass Limited': 30100, 'Compass Trailhawk': 32200}
             }
         },
         'Renegade': {
-            'production_years': (2015, 2025),
+            'production_years': (2015, 2026),
             'trims_by_year': {
                 2015: {'Renegade Sport': 17995, 'Renegade Latitude': 20995, 'Renegade Limited': 24995, 'Renegade Trailhawk': 25995},
                 2016: {'Renegade Sport': 18295, 'Renegade Latitude': 21295, 'Renegade Limited': 25295, 'Renegade Trailhawk': 26295},
@@ -235,11 +244,12 @@ MANUFACTURERS_J = {
                 2022: {'Renegade Sport': 20095, 'Renegade Latitude': 23095, 'Renegade Limited': 27095, 'Renegade Trailhawk': 28095},
                 2023: {'Renegade Sport': 20395, 'Renegade Latitude': 23395, 'Renegade Limited': 27395, 'Renegade Trailhawk': 28395},
                 2024: {'Renegade Sport': 20695, 'Renegade Latitude': 23695, 'Renegade Limited': 27695, 'Renegade Trailhawk': 28695},
-                2025: {'Renegade Sport': 20995, 'Renegade Latitude': 23995, 'Renegade Limited': 27995, 'Renegade Trailhawk': 28995}
+                2025: {'Renegade Sport': 20995, 'Renegade Latitude': 23995, 'Renegade Limited': 27995, 'Renegade Trailhawk': 28995},
+                2026: {'Renegade Sport': 21500, 'Renegade Latitude': 24600, 'Renegade Limited': 28700, 'Renegade Trailhawk': 29700}
             }
         },
         'Gladiator': {
-            'production_years': (2020, 2025),
+            'production_years': (2020, 2026),
             'trims_by_year': {
                 2020: {'Gladiator Sport': 33040, 'Gladiator Sport S': 36040, 'Gladiator Overland': 41040, 'Gladiator Rubicon': 43040},
                 2021: {'Gladiator Sport': 33540, 'Gladiator Sport S': 36540, 'Gladiator Overland': 41540, 'Gladiator Rubicon': 43540, 'Gladiator Mojave': 46540},

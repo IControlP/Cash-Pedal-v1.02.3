@@ -152,6 +152,17 @@ MANUFACTURERS_R = {
                     "Crew Cab Longhorn": 50495,
                     "Crew Cab Limited": 52495,
                     "Crew Cab TRX": 72495
+                },
+                2026: {
+                    "Regular Cab Tradesman": 33495,
+                    "Regular Cab Express": 35495,
+                    "Quad Cab Express": 37495,
+                    "Crew Cab Express": 39495,
+                    "Crew Cab Big Horn": 41495,
+                    "Crew Cab Laramie": 44495,
+                    "Crew Cab Longhorn": 50495,
+                    "Crew Cab Limited": 52495,
+                    "Crew Cab TRX": 72495
                 }
             }
         },
@@ -254,6 +265,13 @@ MANUFACTURERS_R = {
                     "Crew Cab Big Horn": 40195,
                     "Crew Cab Laramie": 47195,
                     "Crew Cab Limited": 54195
+                },
+                2026: {
+                    "Regular Cab Tradesman": 35195,
+                    "Crew Cab Tradesman": 37195,
+                    "Crew Cab Big Horn": 40195,
+                    "Crew Cab Laramie": 47195,
+                    "Crew Cab Limited": 54195
                 }
             }
         },
@@ -351,6 +369,13 @@ MANUFACTURERS_R = {
                     "Crew Cab Limited": 55895
                 },
                 2025: {
+                    "Regular Cab Tradesman": 37195,
+                    "Crew Cab Tradesman": 39195,
+                    "Crew Cab Big Horn": 42195,
+                    "Crew Cab Laramie": 49195,
+                    "Crew Cab Limited": 56195
+                },
+                2026: {
                     "Regular Cab Tradesman": 37195,
                     "Crew Cab Tradesman": 39195,
                     "Crew Cab Big Horn": 42195,

@@ -83,6 +83,17 @@ MANUFACTURERS_F = {
                     "Platinum": 63995,
                     "Limited": 66995,
                     "Raptor": 74995
+                },
+                2026: {
+                    "Regular Cab": 37995,
+                    "SuperCab XL": 39995,
+                    "SuperCab XLT": 42995,
+                    "SuperCrew XLT": 45995,
+                    "Lariat": 50995,
+                    "King Ranch": 60995,
+                    "Platinum": 63995,
+                    "Limited": 66995,
+                    "Raptor": 74995
                 }
             }
         },
@@ -162,6 +173,14 @@ MANUFACTURERS_F = {
                     "GT Premium": 48995,
                     "Dark Horse": 56995,
                     "Shelby GT500": 84995
+                },
+                2026: {
+                    "EcoBoost": 35995,
+                    "EcoBoost Premium": 39995,
+                    "GT": 44995,
+                    "GT Premium": 48995,
+                    "Dark Horse": 56995,
+                    "Shelby GT500": 84995
                 }
             }
         },
@@ -228,6 +247,13 @@ MANUFACTURERS_F = {
                     "Platinum": 62995
                 },
                 2025: {
+                    "Base": 42995,
+                    "XLT": 46995,
+                    "Limited": 53995,
+                    "ST": 61995,
+                    "Platinum": 64995
+                },
+                2026: {
                     "Base": 42995,
                     "XLT": 46995,
                     "Limited": 53995,
@@ -318,6 +344,15 @@ MANUFACTURERS_F = {
                     "Hybrid Platinum": 42995
                 },
                 2025: {
+                    "Active": 31495,
+                    "ST-Line": 34995,
+                    "ST-Line Elite": 37995,
+                    "Platinum": 40995,
+                    "Hybrid ST-Line": 38495,
+                    "Hybrid ST-Line Elite": 41495,
+                    "Hybrid Platinum": 43995
+                },
+                2026: {
                     "Active": 31495,
                     "ST-Line": 34995,
                     "ST-Line Elite": 37995,
@@ -513,6 +548,12 @@ MANUFACTURERS_F = {
                     "SEL": 43995,
                     "Titanium": 47995,
                     "ST": 52995
+                },
+                2026: {
+                    "SE": 39995,
+                    "SEL": 43995,
+                    "Titanium": 47995,
+                    "ST": 52995
                 }
             }
         },
@@ -587,6 +628,13 @@ MANUFACTURERS_F = {
                     "Limited": 73995,
                     "King Ranch": 77995,
                     "Platinum": 80995
+                },
+                2026: {
+                    "XL": 62995,
+                    "XLT": 66995,
+                    "Limited": 73995,
+                    "King Ranch": 77995,
+                    "Platinum": 80995
                 }
             }
         },
@@ -649,6 +697,17 @@ MANUFACTURERS_F = {
                     "Platinum": 71995,
                     "Limited": 74995,
                     "Tremor": 60995
+                },
+                2026: {
+                    "Regular Cab XL": 43995,
+                    "SuperCab XL": 46995,
+                    "SuperCab XLT": 49995,
+                    "Crew Cab XLT": 52995,
+                    "Lariat": 57995,
+                    "King Ranch": 64995,
+                    "Platinum": 71995,
+                    "Limited": 74995,
+                    "Tremor": 60995
                 }
             }
         },
@@ -694,6 +753,16 @@ MANUFACTURERS_F = {
                     "Heritage": 48995
                 },
                 2025: {
+                    "Base": 39995,
+                    "Big Bend": 42995,
+                    "Black Diamond": 45995,
+                    "Outer Banks": 48995,
+                    "Badlands": 51995,
+                    "Wildtrak": 57995,
+                    "Raptor": 74995,
+                    "Heritage": 50995
+                },
+                2026: {
                     "Base": 39995,
                     "Big Bend": 42995,
                     "Black Diamond": 45995,

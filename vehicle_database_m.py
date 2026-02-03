@@ -4,7 +4,7 @@
 MANUFACTURERS_M = {
     'Mazda': {
         'Mazda3': {
-            'production_years': (2004, 2025),
+            'production_years': (2004, 2026),
             'trims_by_year': {
                 2004: {'Mazda3 i': 14400, 'Mazda3 s': 16900},
                 2005: {'Mazda3 i': 14700, 'Mazda3 s': 17200},
@@ -93,6 +93,13 @@ MANUFACTURERS_M = {
                     'Mazda3 Preferred': 28600,
                     'Mazda3 Premium': 31900,
                     'Mazda3 Turbo': 33400
+                },
+                2026: {
+                    'Mazda3 Base': 25000,
+                    'Mazda3 Select': 27300,
+                    'Mazda3 Preferred': 29300,
+                    'Mazda3 Premium': 32700,
+                    'Mazda3 Turbo': 34200
                 }
             }
         },
@@ -160,7 +167,7 @@ MANUFACTURERS_M = {
             }
         },
         'MX-5 Miata': {
-            'production_years': (1990, 2025),
+            'production_years': (1990, 2026),
             'trims_by_year': {
                 2000: {'MX-5 Miata': 21400, 'MX-5 Miata LS': 23900},
                 2001: {'MX-5 Miata': 21700, 'MX-5 Miata LS': 24200, 'MX-5 Miata SE': 25200},
@@ -267,11 +274,16 @@ MANUFACTURERS_M = {
                     'MX-5 Miata Sport': 30000,
                     'MX-5 Miata Club': 33485,
                     'MX-5 Miata Grand Touring': 35190
+                },
+                2026: {
+                    'MX-5 Miata Sport': 30700,
+                    'MX-5 Miata Club': 34300,
+                    'MX-5 Miata Grand Touring': 36100
                 }
             }
         },
         'CX-5': {
-            'production_years': (2013, 2025),
+            'production_years': (2013, 2026),
             'trims_by_year': {
                 2013: {
                     'CX-5 Sport': 20845,
@@ -352,11 +364,18 @@ MANUFACTURERS_M = {
                     'CX-5 Grand Touring': 33700,
                     'CX-5 Grand Touring Reserve': 35700,
                     'CX-5 Signature': 36225
+                },
+                2026: {
+                    'CX-5 Sport': 29000,
+                    'CX-5 Touring': 31200,
+                    'CX-5 Grand Touring': 34500,
+                    'CX-5 Grand Touring Reserve': 36600,
+                    'CX-5 Signature': 37100
                 }
             }
         },
         'CX-9': {
-            'production_years': (2007, 2025),
+            'production_years': (2007, 2026),
             'trims_by_year': {
                 2007: {'CX-9 Sport': 28750, 'CX-9 Touring': 31695, 'CX-9 Grand Touring': 35230},
                 2008: {'CX-9 Sport': 29050, 'CX-9 Touring': 31995, 'CX-9 Grand Touring': 35530},
@@ -425,6 +444,13 @@ MANUFACTURERS_M = {
                     'CX-9 Grand Touring': 44300,
                     'CX-9 Carbon Edition': 46000,
                     'CX-9 Signature': 49000
+                },
+                2026: {
+                    'CX-9 Sport': 38300,
+                    'CX-9 Touring': 42100,
+                    'CX-9 Grand Touring': 45400,
+                    'CX-9 Carbon Edition': 47100,
+                    'CX-9 Signature': 50200
                 }
             }
         },
@@ -464,7 +490,7 @@ MANUFACTURERS_M = {
             }
         },
         'CX-30': {
-            'production_years': (2020, 2025),
+            'production_years': (2020, 2026),
             'trims_by_year': {
                 2020: {
                     'CX-30 Base': 22500,
@@ -506,11 +532,18 @@ MANUFACTURERS_M = {
                     'CX-30 Preferred': 28600,
                     'CX-30 Premium': 31100,
                     'CX-30 Turbo': 33100
+                },
+                2026: {
+                    'CX-30 Base': 25500,
+                    'CX-30 Select': 27300,
+                    'CX-30 Preferred': 29300,
+                    'CX-30 Premium': 31900,
+                    'CX-30 Turbo': 33900
                 }
             }
         },
         'CX-50': {
-            'production_years': (2023, 2025),
+            'production_years': (2023, 2026),
             'trims_by_year': {
                 2023: {
                     'CX-50 Select': 28000,
@@ -529,6 +562,12 @@ MANUFACTURERS_M = {
                     'CX-50 Preferred': 31400,
                     'CX-50 Premium': 33900,
                     'CX-50 Premium Plus': 36400
+                },
+                2026: {
+                    'CX-50 Select': 30100,
+                    'CX-50 Preferred': 32200,
+                    'CX-50 Premium': 34700,
+                    'CX-50 Premium Plus': 37300
                 }
             }
         },
@@ -548,7 +587,7 @@ MANUFACTURERS_M = {
     },
 'Mercedes-Benz': {
         'A-Class': {
-            'production_years': (2019, 2025),
+            'production_years': (2019, 2026),
             'trims_by_year': {
                 2019: {
                     'A 220': 33650,
@@ -583,11 +622,16 @@ MANUFACTURERS_M = {
                     'A 220': 38000,
                     'A 220 4MATIC': 40000,
                     'AMG A 35': 50600
+                },
+                2026: {
+                    'A 220': 39000,
+                    'A 220 4MATIC': 41000,
+                    'AMG A 35': 51900
                 }
             }
         },
         'C-Class': {
-            'production_years': (1994, 2025),
+            'production_years': (1994, 2026),
             'trims_by_year': {
                 2015: {
                     'C 300': 39400,
@@ -661,11 +705,17 @@ MANUFACTURERS_M = {
                     'C 300 4MATIC': 53800,
                     'AMG C 43': 71400,
                     'AMG C 63 S E Performance': 94900
+                },
+                2026: {
+                    'C 300': 53100,
+                    'C 300 4MATIC': 55100,
+                    'AMG C 43': 73200,
+                    'AMG C 63 S E Performance': 97300
                 }
             }
         },
         'E-Class': {
-            'production_years': (1986, 2025),
+            'production_years': (1986, 2026),
             'trims_by_year': {
                 2017: {
                     'E 300': 53500,
@@ -729,11 +779,18 @@ MANUFACTURERS_M = {
                     'E 450': 72650,
                     'AMG E 53': 89650,
                     'AMG E 63 S': 121150
+                },
+                2026: {
+                    'E 350': 66300,
+                    'E 350 4MATIC': 68300,
+                    'E 450': 74500,
+                    'AMG E 53': 91900,
+                    'AMG E 63 S': 124200
                 }
             }
         },
         'S-Class': {
-            'production_years': (1973, 2025),
+            'production_years': (1973, 2026),
             'trims_by_year': {
                 2017: {
                     'S 450': 91000,
@@ -792,11 +849,17 @@ MANUFACTURERS_M = {
                     'S 580': 132000,
                     'Maybach S 580': 201950,
                     'AMG S 63': 179000
+                },
+                2026: {
+                    'S 500': 130700,
+                    'S 580': 135300,
+                    'Maybach S 580': 207000,
+                    'AMG S 63': 183500
                 }
             }
         },
         'CLA': {
-            'production_years': (2014, 2025),
+            'production_years': (2014, 2026),
             'trims_by_year': {
                 2014: {
                     'CLA 250': 31500,
@@ -862,11 +925,17 @@ MANUFACTURERS_M = {
                     'CLA 250 4MATIC': 46150,
                     'AMG CLA 35': 56050,
                     'AMG CLA 45 S': 68250
+                },
+                2026: {
+                    'CLA 250': 45300,
+                    'CLA 250 4MATIC': 47300,
+                    'AMG CLA 35': 57500,
+                    'AMG CLA 45 S': 70000
                 }
             }
         },
         'GLC': {
-            'production_years': (2016, 2025),
+            'production_years': (2016, 2026),
             'trims_by_year': {
                 2016: {
                     'GLC 300': 39875,
@@ -928,11 +997,17 @@ MANUFACTURERS_M = {
                     'GLC 300 4MATIC': 54600,
                     'AMG GLC 43': 74350,
                     'AMG GLC 63 S E Performance': 103000
+                },
+                2026: {
+                    'GLC 300': 53900,
+                    'GLC 300 4MATIC': 56000,
+                    'AMG GLC 43': 76200,
+                    'AMG GLC 63 S E Performance': 105600
                 }
             }
         },
         'GLS': {
-            'production_years': (2017, 2025),
+            'production_years': (2017, 2026),
             'trims_by_year': {
                 2017: {
                     'GLS 450': 65950,
@@ -984,11 +1059,17 @@ MANUFACTURERS_M = {
                     'GLS 580': 114800,
                     'Maybach GLS 600': 185750,
                     'AMG GLS 63': 154500
+                },
+                2026: {
+                    'GLS 450': 92100,
+                    'GLS 580': 117700,
+                    'Maybach GLS 600': 190400,
+                    'AMG GLS 63': 158400
                 }
             }
         },
         'G-Class': {
-            'production_years': (1979, 2025),
+            'production_years': (1979, 2026),
             'trims_by_year': {
                 2019: {
                     'G 550': 131750,
@@ -1017,11 +1098,15 @@ MANUFACTURERS_M = {
                 2025: {
                     'G 550': 156800,
                     'AMG G 63': 176250
+                },
+                2026: {
+                    'G 550': 160700,
+                    'AMG G 63': 180700
                 }
             }
         },
         'AMG GT': {
-            'production_years': (2016, 2025),
+            'production_years': (2016, 2026),
             'trims_by_year': {
                 2016: {
                     'AMG GT': 112400,
@@ -1086,7 +1171,7 @@ MANUFACTURERS_M = {
     
     'Mini': {
         'Cooper': {
-            'production_years': (2002, 2025),
+            'production_years': (2002, 2026),
             'trims_by_year': {
                 2015: {
                     'Cooper': 23250,
@@ -1142,11 +1227,16 @@ MANUFACTURERS_M = {
                     'Cooper': 31400,
                     'Cooper S': 35100,
                     'John Cooper Works': 40300
+                },
+                2026: {
+                    'Cooper': 32200,
+                    'Cooper S': 36000,
+                    'John Cooper Works': 41300
                 }
             }
         },
         'Countryman': {
-            'production_years': (2011, 2025),
+            'production_years': (2011, 2026),
             'trims_by_year': {
                 2017: {
                     'Cooper': 27400,
@@ -1201,6 +1291,12 @@ MANUFACTURERS_M = {
                     'Cooper S': 39200,
                     'Cooper S E ALL4': 44300,
                     'John Cooper Works ALL4': 43800
+                },
+                2026: {
+                    'Cooper': 36100,
+                    'Cooper S': 40200,
+                    'Cooper S E ALL4': 45400,
+                    'John Cooper Works ALL4': 44900
                 }
             }
         },
@@ -1253,7 +1349,7 @@ MANUFACTURERS_M = {
     
     'Mitsubishi': {
         'Mirage': {
-            'production_years': (2014, 2025),
+            'production_years': (2014, 2026),
             'trims_by_year': {
                 2014: {
                     'Mirage DE': 12995,
@@ -1314,11 +1410,16 @@ MANUFACTURERS_M = {
                     'Mirage ES': 18190,
                     'Mirage SE': 19990,
                     'Mirage GT': 21590
+                },
+                2026: {
+                    'Mirage ES': 18600,
+                    'Mirage SE': 20500,
+                    'Mirage GT': 22100
                 }
             }
         },
         'Eclipse Cross': {
-            'production_years': (2018, 2025),
+            'production_years': (2018, 2026),
             'trims_by_year': {
                 2018: {
                     'Eclipse Cross ES': 24295,
@@ -1367,11 +1468,17 @@ MANUFACTURERS_M = {
                     'Eclipse Cross LE': 29790,
                     'Eclipse Cross SE': 31290,
                     'Eclipse Cross SEL': 33290
+                },
+                2026: {
+                    'Eclipse Cross ES': 28500,
+                    'Eclipse Cross LE': 30500,
+                    'Eclipse Cross SE': 32100,
+                    'Eclipse Cross SEL': 34100
                 }
             }
         },
         'Outlander': {
-            'production_years': (2003, 2025),
+            'production_years': (2003, 2026),
             'trims_by_year': {
                 2003: {
                     'Outlander ES': 19995,

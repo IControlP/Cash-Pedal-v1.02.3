@@ -4,7 +4,7 @@
 MANUFACTURERS_T = {
     'Tesla': {
         'Model S': {
-            'production_years': (2012, 2025),
+            'production_years': (2012, 2026),
             'trims_by_year': {
                 2012: {
                     'Model S': 57400,
@@ -74,13 +74,17 @@ MANUFACTURERS_T = {
                     'Model S Plaid': 89990
                 },
                 2025: {
-                    'Model S': 74990,
+                    'Model S': 79990,
                     'Model S Plaid': 89990
+                },
+                2026: {
+                    'Model S': 94990,
+                    'Model S Plaid': 109990
                 }
             }
         },
         'Model 3': {
-            'production_years': (2017, 2025),
+            'production_years': (2017, 2026),
             'trims_by_year': {
                 2017: {
                     'Model 3': 35000
@@ -121,14 +125,21 @@ MANUFACTURERS_T = {
                     'Model 3 Performance': 50240
                 },
                 2025: {
-                    'Model 3 RWD': 42490,
-                    'Model 3 Long Range': 50490,
+                    'Model 3 Standard RWD': 36990,
+                    'Model 3 Long Range RWD': 42490,
+                    'Model 3 Long Range AWD': 47490,
+                    'Model 3 Performance': 54990
+                },
+                2026: {
+                    'Model 3 Standard RWD': 36990,
+                    'Model 3 Long Range RWD': 42490,
+                    'Model 3 Long Range AWD': 47490,
                     'Model 3 Performance': 54990
                 }
             }
         },
         'Model X': {
-            'production_years': (2015, 2025),
+            'production_years': (2015, 2026),
             'trims_by_year': {
                 2015: {
                     'Model X 70D': 80000,
@@ -179,11 +190,15 @@ MANUFACTURERS_T = {
                 2025: {
                     'Model X': 79990,
                     'Model X Plaid': 94990
+                },
+                2026: {
+                    'Model X': 99990,
+                    'Model X Plaid': 109990
                 }
             }
         },
         'Model Y': {
-            'production_years': (2020, 2025),
+            'production_years': (2020, 2026),
             'trims_by_year': {
                 2020: {
                     'Model Y Long Range': 52990,
@@ -209,9 +224,16 @@ MANUFACTURERS_T = {
                     'Model Y Performance': 52490
                 },
                 2025: {
-                    'Model Y RWD': 44990,
-                    'Model Y Long Range': 49490,
-                    'Model Y Performance': 54490
+                    'Model Y Standard RWD': 39990,
+                    'Model Y Long Range RWD': 44990,
+                    'Model Y Long Range AWD': 48990,
+                    'Model Y Performance': 57490
+                },
+                2026: {
+                    'Model Y Standard RWD': 39990,
+                    'Model Y Long Range RWD': 44990,
+                    'Model Y Long Range AWD': 48990,
+                    'Model Y Performance': 57490
                 }
             }
         },
@@ -226,7 +248,7 @@ MANUFACTURERS_T = {
             }
         },
         'Cybertruck': {
-            'production_years': (2024, 2025),
+            'production_years': (2024, 2026),
             'trims_by_year': {
                 2024: {
                     'Cybertruck AWD': 99990,
@@ -236,6 +258,10 @@ MANUFACTURERS_T = {
                     'Cybertruck RWD': 60990,
                     'Cybertruck AWD': 79990,
                     'Cybertruck Cyberbeast': 99990
+                },
+                2026: {
+                    'Cybertruck AWD': 79990,
+                    'Cybertruck Cyberbeast': 99990
                 }
             }
         }
@@ -243,7 +269,7 @@ MANUFACTURERS_T = {
     
     'Toyota': {
         'Corolla': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'CE': 12770, 'VE': 13570, 'LE': 14970},
                 2001: {'CE': 13020, 'VE': 13820, 'LE': 15220, 'S': 16020},
@@ -298,15 +324,24 @@ MANUFACTURERS_T = {
                     'XSE': 28550
                 },
                 2025: {
-                    'LE': 25800,
-                    'SE': 28200,
-                    'XLE': 28400,
-                    'XSE': 29350
+                    'LE': 22925,
+                    'SE': 24850,
+                    'XLE': 25925,
+                    'XSE': 26925
+                },
+                2026: {
+                    'LE': 22925,
+                    'SE': 24850,
+                    'XLE': 25925,
+                    'XSE': 26925,
+                    'Hybrid LE': 24565,
+                    'Hybrid SE': 26390,
+                    'Hybrid XLE': 27465
                 }
             }
         },
         'Camry': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'CE': 17668, 'LE': 19518, 'XLE': 23118, 'XLE V6': 25268},
                 2001: {'CE': 17918, 'LE': 19768, 'XLE': 23368, 'XLE V6': 25518, 'Solara SE': 19908, 'Solara SLE': 22908},
@@ -379,19 +414,23 @@ MANUFACTURERS_T = {
                     'Hybrid XLE': 34250
                 },
                 2025: {
-                    'LE': 27020,
-                    'SE': 29000,
-                    'XLE': 31410,
-                    'XSE': 32650,
-                    'TRD': 33700,
-                    'Hybrid LE': 30460,
-                    'Hybrid SE': 32680,
-                    'Hybrid XLE': 34850
+                    'LE': 28700,
+                    'SE': 30700,
+                    'SE Nightshade': 31700,
+                    'XLE': 33450,
+                    'XSE': 35400
+                },
+                2026: {
+                    'LE': 29000,
+                    'SE': 31300,
+                    'SE Nightshade': 32300,
+                    'XLE': 33750,
+                    'XSE': 36395
                 }
             }
         },
         'RAV4': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'Base': 17998, '4WD': 19498},
                 2001: {'Base': 18248, '4WD': 19748},
@@ -481,20 +520,31 @@ MANUFACTURERS_T = {
                     'Prime LE': 41790
                 },
                 2025: {
-                    'LE': 30100,
-                    'XLE': 32000,
-                    'XLE Premium': 33550,
-                    'Limited': 38000,
-                    'Adventure': 37550,
-                    'TRD Off-Road': 39330,
-                    'Prime SE': 41570,
-                    'Prime XSE': 44895,
-                    'Prime LE': 42690
+                    'LE': 31900,
+                    'XLE': 34200,
+                    'XLE Premium': 36350,
+                    'Limited': 40700,
+                    'Woodland': 38350,
+                    'SE': 35150,
+                    'XSE': 39450,
+                    'Prime SE': 43595,
+                    'Prime XSE': 48685
+                },
+                2026: {
+                    'LE': 31900,
+                    'XLE': 34200,
+                    'XLE Premium': 36350,
+                    'Limited': 40700,
+                    'Woodland': 38350,
+                    'SE': 35150,
+                    'XSE': 39450,
+                    'Prime SE': 43595,
+                    'Prime XSE': 48685
                 }
             }
         },
         'Highlander': {
-            'production_years': (2001, 2025),
+            'production_years': (2001, 2026),
             'trims_by_year': {
                 2001: {'Base': 24718, 'Limited': 29718},
                 2002: {'Base': 24968, 'Limited': 29968, 'Sport': 27468},
@@ -587,11 +637,22 @@ MANUFACTURERS_T = {
                     'Hybrid XLE': 44920,
                     'Hybrid Limited': 49920,
                     'Hybrid Bronze Edition': 47920
+                },
+                2026: {
+                    'L': 37100,
+                    'LE': 40200,
+                    'XLE': 43800,
+                    'Limited': 47000,
+                    'Platinum': 51100,
+                    'Hybrid LE': 43000,
+                    'Hybrid XLE': 46000,
+                    'Hybrid Limited': 51200,
+                    'Hybrid Bronze Edition': 49100
                 }
             }
         },
         'Prius': {
-            'production_years': (2001, 2025),
+            'production_years': (2001, 2026),
             'trims_by_year': {
                 2001: {'Prius': 19995},
                 2002: {'Prius': 20450},
@@ -668,11 +729,20 @@ MANUFACTURERS_T = {
                     'Prius Prime SE': 33450,
                     'Prius Prime XSE': 36450,
                     'Prius Prime Limited': 39950
+                },
+                2026: {
+                    'Prius LE': 29200,
+                    'Prius XLE': 32200,
+                    'Prius XLE AWD': 33300,
+                    'Prius Limited': 37400,
+                    'Prius Prime SE': 34300,
+                    'Prius Prime XSE': 37400,
+                    'Prius Prime Limited': 40900
                 }
             }
         },
         'Tacoma': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'Regular Cab': 13998, 'Xtracab': 16498, 'Double Cab': 18998},
                 2001: {'Regular Cab': 14248, 'Xtracab': 16748, 'Double Cab': 19248, 'PreRunner': 17748},
@@ -741,11 +811,19 @@ MANUFACTURERS_T = {
                     'TRD Off-Road': 37700,
                     'Limited': 42220,
                     'TRD Pro': 47760
+                },
+                2026: {
+                    'SR': 29700,
+                    'SR5': 33000,
+                    'TRD Sport': 36800,
+                    'TRD Off-Road': 38600,
+                    'Limited': 43300,
+                    'TRD Pro': 49000
                 }
             }
         },
         'Tundra': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'Regular Cab': 15698, 'Access Cab': 18198},
                 2001: {'Regular Cab': 15948, 'Access Cab': 18448, 'Limited': 24948},
@@ -818,11 +896,20 @@ MANUFACTURERS_T = {
                     '1794 Edition': 71860,
                     'TRD Pro': 73900,
                     'Capstone': 79200
+                },
+                2026: {
+                    'SR': 41100,
+                    'SR5': 48000,
+                    'Limited': 59300,
+                    'Platinum': 70900,
+                    '1794 Edition': 73700,
+                    'TRD Pro': 75700,
+                    'Capstone': 81200
                 }
             }
         },
         'Sienna': {
-            'production_years': (2004, 2025),
+            'production_years': (2004, 2026),
             'trims_by_year': {
                 2004: {'CE': 24215, 'LE': 27215, 'XLE': 31715, 'Limited': 35215},
                 2005: {'CE': 24465, 'LE': 27465, 'XLE': 31965, 'Limited': 35465},
@@ -870,11 +957,17 @@ MANUFACTURERS_T = {
                     'XLE': 43890,
                     'Limited': 50320,
                     'Platinum': 53420
+                },
+                2026: {
+                    'LE': 39400,
+                    'XLE': 45000,
+                    'Limited': 51600,
+                    'Platinum': 54800
                 }
             }
         },
         'Land Cruiser': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'Land Cruiser': 55400},
                 2001: {'Land Cruiser': 55900},
@@ -905,11 +998,15 @@ MANUFACTURERS_T = {
                 2025: {
                     'Land Cruiser 1958': 57000,
                     'Land Cruiser First Edition': 74500
+                },
+                2026: {
+                    'Land Cruiser 1958': 58400,
+                    'Land Cruiser First Edition': 76400
                 }
             }
         },
         'Sequoia': {
-            'production_years': (2001, 2025),
+            'production_years': (2001, 2026),
             'trims_by_year': {
                 2001: {'SR5': 34065, 'Limited': 40065},
                 2002: {'SR5': 34315, 'Limited': 40315},
@@ -959,6 +1056,13 @@ MANUFACTURERS_T = {
                     'Platinum': 78950,
                     'TRD Pro': 80950,
                     'Capstone': 82950
+                },
+                2026: {
+                    'SR5': 63900,
+                    'Limited': 72700,
+                    'Platinum': 80900,
+                    'TRD Pro': 83000,
+                    'Capstone': 85000
                 }
             }
         },
@@ -1020,7 +1124,7 @@ MANUFACTURERS_T = {
             }
         },
         '4Runner': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'SR5': 25698, 'Limited': 31698},
                 2001: {'SR5': 25948, 'Limited': 31948},
@@ -1093,6 +1197,15 @@ MANUFACTURERS_T = {
                     'Limited': 46205,
                     'TRD Pro': 48205,
                     'Venture': 41705
+                },
+                2026: {
+                    'SR5': 41200,
+                    'SR5 Premium': 43800,
+                    'TRD Off-Road': 44300,
+                    'TRD Off-Road Premium': 46800,
+                    'Limited': 47400,
+                    'TRD Pro': 49400,
+                    'Venture': 42700
                 }
             }
         },
@@ -1130,6 +1243,11 @@ MANUFACTURERS_T = {
                     'LE': 35520,
                     'XLE': 38570,
                     'Limited': 42850
+                },
+                2026: {
+                    'LE': 36400,
+                    'XLE': 39500,
+                    'Limited': 43900
                 }
             }
         },
@@ -1145,27 +1263,29 @@ MANUFACTURERS_T = {
             }
         },
         'GR86': {
-            'production_years': (2022, 2025),
+            'production_years': (2022, 2026),
             'trims_by_year': {
                 2022: {'GR86': 27700, 'GR86 Premium': 30700},
                 2023: {'GR86': 28400, 'GR86 Premium': 31400},
                 2024: {'GR86': 29200, 'GR86 Premium': 32200},
-                2025: {'GR86': 30000, 'GR86 Premium': 33000}
+                2025: {'GR86': 30000, 'GR86 Premium': 33000},
+                2026: {'GR86': 30700, 'GR86 Premium': 33800}
             }
         },
         'GR Supra': {
-            'production_years': (2020, 2025),
+            'production_years': (2020, 2026),
             'trims_by_year': {
                 2020: {'3.0': 49990, '3.0 Premium': 53990},
                 2021: {'2.0': 42990, '3.0': 50990, '3.0 Premium': 55450},
                 2022: {'2.0': 43540, '3.0': 51540, '3.0 Premium': 56000},
                 2023: {'2.0': 44565, '3.0': 52565, '3.0 Premium': 57025},
                 2024: {'2.0': 45565, '3.0': 53565, '3.0 Premium': 58025},
-                2025: {'2.0': 46565, '3.0': 54565, '3.0 Premium': 59025}
+                2025: {'2.0': 46565, '3.0': 54565, '3.0 Premium': 59025},
+                2026: {'2.0': 47700, '3.0': 55900, '3.0 Premium': 60500}
             }
         },
         'Mirai': {
-            'production_years': (2016, 2025),
+            'production_years': (2016, 2026),
             'trims_by_year': {
                 2016: {'Mirai': 57500},
                 2017: {'Mirai': 57500},

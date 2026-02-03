@@ -4,7 +4,7 @@
 MANUFACTURERS_S = {
     'Subaru': {
         'Outback': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'L': 21495, 'Limited': 25495, 'VDC': 27495},
                 2001: {'L': 21795, 'Limited': 25795, 'VDC': 27795, 'LL Bean': 29795},
@@ -31,11 +31,12 @@ MANUFACTURERS_S = {
                 2022: {'Base': 27795, 'Premium': 30295, 'Limited': 33795, 'Limited XT': 37295, 'Touring': 39295, 'Touring XT': 40295, 'Wilderness': 37795},
                 2023: {'Base': 28095, 'Premium': 30595, 'Limited': 34095, 'Limited XT': 37595, 'Touring': 39595, 'Touring XT': 40595, 'Wilderness': 38095},
                 2024: {'Base': 28395, 'Premium': 30895, 'Limited': 34395, 'Limited XT': 37895, 'Touring': 39895, 'Touring XT': 40895, 'Wilderness': 38395},
-                2025: {'Base': 28695, 'Premium': 31195, 'Limited': 34695, 'Limited XT': 38195, 'Touring': 40195, 'Touring XT': 41195, 'Wilderness': 38695}
+                2025: {'Base': 28695, 'Premium': 31195, 'Limited': 34695, 'Limited XT': 38195, 'Touring': 40195, 'Touring XT': 41195, 'Wilderness': 38695},
+                2026: {'Base': 29400, 'Premium': 32000, 'Limited': 35600, 'Limited XT': 39100, 'Touring': 41200, 'Touring XT': 42200, 'Wilderness': 39700}
             }
         },
         'Forester': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'L': 20495, 'S': 22495},
                 2001: {'L': 20795, 'S': 22795, 'LL Bean': 25795},
@@ -62,11 +63,12 @@ MANUFACTURERS_S = {
                 2022: {'Base': 25195, 'Premium': 27895, 'Limited': 31895, 'Sport': 30195, 'Touring': 34195, 'Wilderness': 32695},
                 2023: {'Base': 25495, 'Premium': 28195, 'Limited': 32195, 'Sport': 30495, 'Touring': 34495, 'Wilderness': 32995},
                 2024: {'Base': 25795, 'Premium': 28495, 'Limited': 32495, 'Sport': 30795, 'Touring': 34795, 'Wilderness': 33295},
-                2025: {'Base': 26095, 'Premium': 28795, 'Limited': 32795, 'Sport': 31095, 'Touring': 35095, 'Wilderness': 33595}
+                2025: {'Base': 26095, 'Premium': 28795, 'Limited': 32795, 'Sport': 31095, 'Touring': 35095, 'Wilderness': 33595},
+                2026: {'Base': 26700, 'Premium': 29500, 'Limited': 33600, 'Sport': 31900, 'Touring': 36000, 'Wilderness': 34400}
             }
         },
         'Impreza': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'L': 16495, 'RS': 18495, '2.5RS': 20495},
                 2001: {'L': 16795, 'RS': 18795, '2.5RS': 20795, 'WRX': 24795},
@@ -93,11 +95,12 @@ MANUFACTURERS_S = {
                 2022: {'Base': 20295, 'Premium': 22795, 'Limited': 25795, 'WRX': 31995, 'WRX Premium': 34995, 'WRX Limited': 37995},
                 2023: {'Base': 20595, 'Premium': 23095, 'Limited': 26095, 'WRX': 32395, 'WRX Premium': 35395, 'WRX Limited': 38395},
                 2024: {'Base': 20895, 'Premium': 23395, 'Limited': 26395, 'WRX': 32795, 'WRX Premium': 35795, 'WRX Limited': 38795},
-                2025: {'Base': 21195, 'Premium': 23695, 'Limited': 26695, 'WRX': 33195, 'WRX Premium': 36195, 'WRX Limited': 39195}
+                2025: {'Base': 21195, 'Premium': 23695, 'Limited': 26695, 'WRX': 33195, 'WRX Premium': 36195, 'WRX Limited': 39195},
+                2026: {'Base': 21700, 'Premium': 24300, 'Limited': 27400, 'WRX': 34000, 'WRX Premium': 37100, 'WRX Limited': 40200}
             }
         },
         'Legacy': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'L': 19495, 'GT': 22495, 'Limited': 25495},
                 2001: {'L': 19795, 'GT': 22795, 'Limited': 25795, 'LL Bean': 27795},
@@ -124,11 +127,12 @@ MANUFACTURERS_S = {
                 2022: {'Base': 24245, 'Premium': 26745, 'Limited': 30245, 'Limited XT': 33245, 'Touring XT': 35245},
                 2023: {'Base': 24545, 'Premium': 27045, 'Limited': 30545, 'Limited XT': 33545, 'Touring XT': 35545},
                 2024: {'Base': 24845, 'Premium': 27345, 'Limited': 30845, 'Limited XT': 33845, 'Touring XT': 35845},
-                2025: {'Base': 25145, 'Premium': 27645, 'Limited': 31145, 'Limited XT': 34145, 'Touring XT': 36145}
+                2025: {'Base': 25145, 'Premium': 27645, 'Limited': 31145, 'Limited XT': 34145, 'Touring XT': 36145},
+                2026: {'Base': 25800, 'Premium': 28300, 'Limited': 31900, 'Limited XT': 35000, 'Touring XT': 37000}
             }
         },
         'Crosstrek': {
-            'production_years': (2013, 2025),
+            'production_years': (2013, 2026),
             'trims_by_year': {
                 2013: {'2.0i Premium': 22195, '2.0i Limited': 25195},
                 2014: {'2.0i Premium': 22495, '2.0i Limited': 25495, 'Hybrid': 26995},
@@ -142,11 +146,12 @@ MANUFACTURERS_S = {
                 2022: {'Base': 23445, 'Premium': 25245, 'Limited': 28645, 'Sport': 26645, 'Wilderness': 31895},
                 2023: {'Base': 23745, 'Premium': 25545, 'Limited': 28945, 'Sport': 26945, 'Wilderness': 32195},
                 2024: {'Base': 24045, 'Premium': 25845, 'Limited': 29245, 'Sport': 27245, 'Wilderness': 32495},
-                2025: {'Base': 24345, 'Premium': 26145, 'Limited': 29545, 'Sport': 27545, 'Wilderness': 32795}
+                2025: {'Base': 24345, 'Premium': 26145, 'Limited': 29545, 'Sport': 27545, 'Wilderness': 32795},
+                2026: {'Base': 25000, 'Premium': 26800, 'Limited': 30300, 'Sport': 28200, 'Wilderness': 33600}
             }
         },
         'Ascent': {
-            'production_years': (2019, 2025),
+            'production_years': (2019, 2026),
             'trims_by_year': {
                 2019: {'Base': 32970, 'Premium': 34970, 'Limited': 38970, 'Touring': 45970},
                 2020: {'Base': 33270, 'Premium': 35270, 'Limited': 39270, 'Touring': 46270},
@@ -154,7 +159,8 @@ MANUFACTURERS_S = {
                 2022: {'Base': 33870, 'Premium': 35870, 'Limited': 39870, 'Touring': 46870},
                 2023: {'Base': 34170, 'Premium': 36170, 'Limited': 40170, 'Touring': 47170},
                 2024: {'Base': 34470, 'Premium': 36470, 'Limited': 40470, 'Touring': 47470},
-                2025: {'Base': 34770, 'Premium': 36770, 'Limited': 40770, 'Touring': 47770}
+                2025: {'Base': 34770, 'Premium': 36770, 'Limited': 40770, 'Touring': 47770},
+                2026: {'Base': 35600, 'Premium': 37700, 'Limited': 41800, 'Touring': 49000}
             }
         },
         'Tribeca': {
@@ -172,7 +178,7 @@ MANUFACTURERS_S = {
             }
         },
         'BRZ': {
-            'production_years': (2013, 2025),
+            'production_years': (2013, 2026),
             'trims_by_year': {
                 2013: {'Premium': 26195, 'Limited': 28195},
                 2014: {'Premium': 26495, 'Limited': 28495},
@@ -185,11 +191,12 @@ MANUFACTURERS_S = {
                 2022: {'Premium': 29615, 'Limited': 31615},
                 2023: {'Premium': 29915, 'Limited': 31915},
                 2024: {'Premium': 30215, 'Limited': 32215},
-                2025: {'Premium': 30515, 'Limited': 32515}
+                2025: {'Premium': 30515, 'Limited': 32515},
+                2026: {'Premium': 31300, 'Limited': 33300}
             }
         },
         'WRX': {
-            'production_years': (2015, 2025),
+            'production_years': (2015, 2026),
             'trims_by_year': {
                 2015: {'Base': 26595, 'Premium': 28595, 'Limited': 30595},
                 2016: {'Base': 26995, 'Premium': 28995, 'Limited': 30995},
@@ -201,7 +208,8 @@ MANUFACTURERS_S = {
                 2022: {'Base': 31995, 'Premium': 34995, 'Limited': 37995},
                 2023: {'Base': 32395, 'Premium': 35395, 'Limited': 38395},
                 2024: {'Base': 32795, 'Premium': 35795, 'Limited': 38795},
-                2025: {'Base': 33195, 'Premium': 36195, 'Limited': 39195}
+                2025: {'Base': 33195, 'Premium': 36195, 'Limited': 39195},
+                2026: {'Base': 34000, 'Premium': 37100, 'Limited': 40200}
             }
         },
         'STI': {

@@ -4,7 +4,7 @@
 MANUFACTURERS_K = {
     "Kia": {
         'K5': {
-            'production_years': (2021, 2025),
+            'production_years': (2021, 2026),
             'trims_by_year': {
                 2021: {
                     'K5 LX': 23490,
@@ -55,6 +55,16 @@ MANUFACTURERS_K = {
                     'K5 Hybrid LX': 27390, 
                     'K5 Hybrid LXS': 30390, 
                     'K5 Hybrid EX': 31790
+                },
+                2026: {
+                    'K5 LX': 26400,
+                    'K5 LXS': 27500,
+                    'K5 GT-Line': 29500,
+                    'K5 EX': 30500,
+                    'K5 GT': 33600,
+                    'K5 Hybrid LX': 28100, 
+                    'K5 Hybrid LXS': 31100, 
+                    'K5 Hybrid EX': 32600
                 }
             }
         },
@@ -143,6 +153,12 @@ MANUFACTURERS_K = {
                     "Soul GT-Line": 25090
                 },
                 2025: {
+                    "Soul LX": 19390,
+                    "Soul S": 21390,
+                    "Soul !": 23390,
+                    "Soul GT-Line": 25390
+                },
+                2026: {
                     "Soul LX": 19390,
                     "Soul S": 21390,
                     "Soul !": 23390,
@@ -394,6 +410,15 @@ MANUFACTURERS_K = {
                     'Sportage Hybrid LX': 28890, 
                     'Sportage Hybrid EX': 31990, 
                     'Sportage Hybrid SX': 35990
+                },
+                2026: {
+                    "Sportage LX": 25900,
+                    "Sportage S": 27900,
+                    "Sportage EX": 29900,
+                    "Sportage SX": 34900,
+                    'Sportage Hybrid LX': 29600, 
+                    'Sportage Hybrid EX': 32800, 
+                    'Sportage Hybrid SX': 36900
                 }
             }
         },
@@ -532,6 +557,15 @@ MANUFACTURERS_K = {
                     'Sorento Hybrid LX': 36290, 
                     'Sorento Hybrid EX': 39190, 
                     'Sorento Hybrid SX': 42690
+                },
+                2026: {
+                    "Sorento LX": 30790,
+                    "Sorento S": 33790,
+                    "Sorento EX": 36790,
+                    "Sorento SX": 39790,
+                    'Sorento Hybrid LX': 37200, 
+                    'Sorento Hybrid EX': 40200, 
+                    'Sorento Hybrid SX': 43800
                 }
             }
         },
@@ -569,6 +603,12 @@ MANUFACTURERS_K = {
                     "Telluride SX": 44090
                 },
                 2025: {
+                    "Telluride LX": 33390,
+                    "Telluride S": 36390,
+                    "Telluride EX": 39390,
+                    "Telluride SX": 44390
+                },
+                2026: {
                     "Telluride LX": 33390,
                     "Telluride S": 36390,
                     "Telluride EX": 39390,
@@ -624,6 +664,11 @@ MANUFACTURERS_K = {
                     "Stinger GT-Line": 36500,
                     "Stinger GT1": 44500,
                     "Stinger GT2": 48500
+                },
+                2026: {
+                    "Stinger GT-Line": 36500,
+                    "Stinger GT1": 44500,
+                    "Stinger GT2": 48500
                 }
             }
         },
@@ -659,11 +704,17 @@ MANUFACTURERS_K = {
                     "Seltos S": 25190,
                     "Seltos EX": 28190,
                     "Seltos SX": 31190
+                },
+                2026: {
+                    "Seltos LX": 23190,
+                    "Seltos S": 25190,
+                    "Seltos EX": 28190,
+                    "Seltos SX": 31190
                 }
             }
         },
         'Forte': {
-            'production_years': (2010, 2025),
+            'production_years': (2010, 2026),
             'trims_by_year': {
                 2010: {'Forte LX': 14995, 'Forte EX': 17995, 'Forte SX': 19995},
                 2011: {'Forte LX': 15295, 'Forte EX': 18295, 'Forte SX': 20295},
@@ -680,7 +731,8 @@ MANUFACTURERS_K = {
                 2022: {'Forte LXS': 19590, 'Forte S': 20090, 'Forte EX': 22590, 'Forte GT-Line': 24090, 'Forte GT': 26190},
                 2023: {'Forte LXS': 19890, 'Forte S': 20390, 'Forte EX': 22890, 'Forte GT-Line': 24390, 'Forte GT': 26490},
                 2024: {'Forte LXS': 20290, 'Forte S': 20790, 'Forte EX': 23290, 'Forte GT-Line': 24790, 'Forte GT': 26890},
-                2025: {'Forte LXS': 20690, 'Forte S': 21190, 'Forte EX': 23690, 'Forte GT-Line': 25190, 'Forte GT': 27290}
+                2025: {'Forte LXS': 20690, 'Forte S': 21190, 'Forte EX': 23690, 'Forte GT-Line': 25190, 'Forte GT': 27290},
+                2026: {'Forte LXS': 21200, 'Forte S': 21700, 'Forte EX': 24300, 'Forte GT-Line': 25800, 'Forte GT': 28000}
             }
         },
         "Niro": {

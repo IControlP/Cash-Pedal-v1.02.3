@@ -4,7 +4,7 @@
 MANUFACTURERS_P = {
     'Porsche': {
         '911': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'911 Carrera': 70000, '911 Carrera 4': 76000, '911 Turbo': 125000},
                 2001: {'911 Carrera': 71000, '911 Carrera 4': 77000, '911 Turbo': 126000, '911 Carrera Cabriolet': 78000},
@@ -57,11 +57,16 @@ MANUFACTURERS_P = {
                     '911 Carrera': 110500, '911 Carrera S': 124600, '911 Carrera 4': 117600, '911 Carrera 4S': 131700,
                     '911 Turbo': 184100, '911 Turbo S': 218100, '911 GT3': 174100, '911 GT3 Touring': 174100,
                     '911 Carrera GTS': 143000, '911 Carrera 4 GTS': 150100, '911 GT3 RS': 229650
+                },
+                2026: {
+                    '911 Carrera': 113300, '911 Carrera S': 127700, '911 Carrera 4': 120500, '911 Carrera 4S': 135000,
+                    '911 Turbo': 188700, '911 Turbo S': 223600, '911 GT3': 178500, '911 GT3 Touring': 178500,
+                    '911 Carrera GTS': 146600, '911 Carrera 4 GTS': 153900, '911 GT3 RS': 235400
                 }
             }
         },
         'Cayenne': {
-            'production_years': (2003, 2025),
+            'production_years': (2003, 2026),
             'trims_by_year': {
                 2003: {'Cayenne': 53900, 'Cayenne S': 65400, 'Cayenne Turbo': 89800},
                 2004: {'Cayenne': 54200, 'Cayenne S': 65700, 'Cayenne Turbo': 90100},
@@ -114,11 +119,16 @@ MANUFACTURERS_P = {
                     'Cayenne': 75000, 'Cayenne S': 92900, 'Cayenne Turbo': 133900, 'Cayenne E-Hybrid': 90100,
                     'Cayenne Coupe': 83500, 'Cayenne S Coupe': 99500, 'Cayenne Turbo Coupe': 138300,
                     'Cayenne GTS': 115300, 'Cayenne GTS Coupe': 117600, 'Cayenne Turbo GT': 185900
+                },
+                2026: {
+                    'Cayenne': 76900, 'Cayenne S': 95200, 'Cayenne Turbo': 137200, 'Cayenne E-Hybrid': 92400,
+                    'Cayenne Coupe': 85600, 'Cayenne S Coupe': 102000, 'Cayenne Turbo Coupe': 141800,
+                    'Cayenne GTS': 118200, 'Cayenne GTS Coupe': 120500, 'Cayenne Turbo GT': 190500
                 }
             }
         },
         'Macan': {
-            'production_years': (2014, 2025),
+            'production_years': (2014, 2026),
             'trims_by_year': {
                 2014: {'Macan S': 49900, 'Macan Turbo': 72300},
                 2015: {'Macan': 47500, 'Macan S': 50900, 'Macan Turbo': 73200},
@@ -147,11 +157,15 @@ MANUFACTURERS_P = {
                 2025: {
                     'Macan': 58400, 'Macan S': 61850, 'Macan Turbo': 84150, 'Macan GTS': 77600,
                     'Macan 4': 60600, 'Macan 4S': 67000
+                },
+                2026: {
+                    'Macan': 59900, 'Macan S': 63400, 'Macan Turbo': 86300, 'Macan GTS': 79500,
+                    'Macan 4': 62100, 'Macan 4S': 68700
                 }
             }
         },
         'Panamera': {
-            'production_years': (2010, 2025),
+            'production_years': (2010, 2026),
             'trims_by_year': {
                 2010: {'Panamera S': 89800, 'Panamera 4S': 93800, 'Panamera Turbo': 132600},
                 2011: {'Panamera': 75375, 'Panamera S': 90175, 'Panamera 4S': 94175, 'Panamera Turbo': 132975},
@@ -195,6 +209,10 @@ MANUFACTURERS_P = {
                 2025: {
                     'Panamera': 97300, 'Panamera 4': 100500, 'Panamera 4S': 114500, 'Panamera Turbo': 160250,
                     'Panamera 4 E-Hybrid': 111900, 'Panamera GTS': 139000, 'Panamera Turbo S E-Hybrid': 195500
+                },
+                2026: {
+                    'Panamera': 99700, 'Panamera 4': 103000, 'Panamera 4S': 117400, 'Panamera Turbo': 164300,
+                    'Panamera 4 E-Hybrid': 114700, 'Panamera GTS': 142500, 'Panamera Turbo S E-Hybrid': 200400
                 }
             }
         },
@@ -237,7 +255,7 @@ MANUFACTURERS_P = {
             }
         },
         '718': {
-            'production_years': (2017, 2025),
+            'production_years': (2017, 2026),
             'trims_by_year': {
                 2017: {
                     '718 Boxster': 57050, '718 Boxster S': 68400, '718 Cayman': 55400, '718 Cayman S': 66800
@@ -275,11 +293,16 @@ MANUFACTURERS_P = {
                     '718 Boxster': 67050, '718 Boxster S': 78400, '718 Cayman': 65400, '718 Cayman S': 76800,
                     '718 Boxster GTS 4.0': 93600, '718 Cayman GTS 4.0': 93600, '718 Cayman GT4': 108600, '718 Spyder': 105800,
                     '718 Cayman Style Edition': 69700
+                },
+                2026: {
+                    '718 Boxster': 68700, '718 Boxster S': 80400, '718 Cayman': 67000, '718 Cayman S': 78700,
+                    '718 Boxster GTS 4.0': 95900, '718 Cayman GTS 4.0': 95900, '718 Cayman GT4': 111300, '718 Spyder': 108400,
+                    '718 Cayman Style Edition': 71400
                 }
             }
         },
         'Taycan': {
-            'production_years': (2020, 2025),
+            'production_years': (2020, 2026),
             'trims_by_year': {
                 2020: {
                     'Taycan 4S': 103800, 'Taycan Turbo': 150900, 'Taycan Turbo S': 185000

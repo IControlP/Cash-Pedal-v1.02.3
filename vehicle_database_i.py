@@ -91,6 +91,13 @@ MANUFACTURERS_I = {
                     "3.0t Luxe": 46450,
                     "3.0t Sport": 49450,
                     "Red Sport 400": 55450
+                },
+                2026: {
+                    "2.0t Pure": 39450,
+                    "2.0t Luxe": 42950,
+                    "3.0t Luxe": 46450,
+                    "3.0t Sport": 49450,
+                    "Red Sport 400": 55450
                 }
             }
         },
@@ -146,6 +153,12 @@ MANUFACTURERS_I = {
                     "Red Sport 400": 54450
                 },
                 2025: {
+                    "2.0t Pure": 43950,
+                    "2.0t Luxe": 47450,
+                    "3.0t Sport": 50950,
+                    "Red Sport 400": 54950
+                },
+                2026: {
                     "2.0t Pure": 43950,
                     "2.0t Luxe": 47450,
                     "3.0t Sport": 50950,
@@ -249,6 +262,14 @@ MANUFACTURERS_I = {
                     "Luxe AWD": 47950,
                     "Sensory": 49950,
                     "Sensory AWD": 51950
+                },
+                2026: {
+                    "Pure": 41950,
+                    "Pure AWD": 43950,
+                    "Luxe": 45950,
+                    "Luxe AWD": 47950,
+                    "Sensory": 49950,
+                    "Sensory AWD": 51950
                 }
             }
         },
@@ -334,6 +355,14 @@ MANUFACTURERS_I = {
                     "Sensory AWD": 56450
                 },
                 2025: {
+                    "Pure": 46950,
+                    "Pure AWD": 48950,
+                    "Luxe": 50950,
+                    "Luxe AWD": 52950,
+                    "Sensory": 54950,
+                    "Sensory AWD": 56950
+                },
+                2026: {
                     "Pure": 46950,
                     "Pure AWD": 48950,
                     "Luxe": 50950,

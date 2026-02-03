@@ -66,7 +66,7 @@ MANUFACTURERS_A = {
             }
         },
         'TLX': {
-            'production_years': (2015, 2025),
+            'production_years': (2015, 2026),
             'trims_by_year': {
                 2015: {
                     'TLX': 31890,
@@ -149,11 +149,18 @@ MANUFACTURERS_A = {
                     'TLX A-SPEC Package': 48100,
                     'TLX Advance Package': 51200,
                     'TLX Type S': 56400
+                },
+                2026: {
+                    'TLX': 42500,
+                    'TLX Technology Package': 45200,
+                    'TLX A-SPEC Package': 49200,
+                    'TLX Advance Package': 52300,
+                    'TLX Type S': 57500
                 }
             }
         },
         'RDX': {
-            'production_years': (2007, 2025),
+            'production_years': (2007, 2026),
             'trims_by_year': {
                 2007: {'RDX': 34195, 'RDX Technology Package': 36695},
                 2008: {'RDX': 34295, 'RDX Technology Package': 36795},
@@ -209,11 +216,17 @@ MANUFACTURERS_A = {
                     'RDX Technology Package': 45600,
                     'RDX A-SPEC Package': 49600,
                     'RDX Advance Package': 51000
+                },
+                2026: {
+                    'RDX': 43400,
+                    'RDX Technology Package': 46700,
+                    'RDX A-SPEC Package': 50700,
+                    'RDX Advance Package': 52100
                 }
             }
         },
         'MDX': {
-            'production_years': (2001, 2025),
+            'production_years': (2001, 2026),
             'trims_by_year': {
                 2001: {'MDX': 36300},
                 2002: {'MDX': 36945, 'MDX Touring': 39445, 'MDX Touring with Navigation': 41445},
@@ -263,6 +276,14 @@ MANUFACTURERS_A = {
                     'MDX A-SPEC Package': 60650,
                     'MDX Advance Package': 64650,
                     'MDX Type S': 71550
+                },
+                2026: {
+                    'MDX': 52600,
+                    'MDX Technology Package': 58500,
+                    'MDX A-SPEC Package': 62000,
+                    'MDX Advance Package': 66000,
+                    'MDX Type S': 72900,
+                    'MDX Type S Advance': 76900
                 }
             }
         },
@@ -278,7 +299,7 @@ MANUFACTURERS_A = {
             }
         },
         'Integra': {
-            'production_years': (2022, 2025),
+            'production_years': (2022, 2026),
             'trims_by_year': {
                 2022: {
                     'Integra': 31895,
@@ -298,6 +319,27 @@ MANUFACTURERS_A = {
                     'Integra': 33295,
                     'Integra A-SPEC': 36695,
                     'Integra Type S': 53300
+                },
+                2026: {
+                    'Integra': 34195,
+                    'Integra A-SPEC': 37595,
+                    'Integra A-SPEC Technology': 39595,
+                    'Integra Type S': 54300
+                }
+            }
+        },
+        'ADX': {
+            'production_years': (2025, 2026),
+            'trims_by_year': {
+                2025: {
+                    'ADX': 35000,
+                    'ADX A-SPEC': 38500,
+                    'ADX A-SPEC Advance': 42500
+                },
+                2026: {
+                    'ADX': 35000,
+                    'ADX A-SPEC': 38500,
+                    'ADX A-SPEC Advance': 42500
                 }
             }
         }
@@ -305,7 +347,7 @@ MANUFACTURERS_A = {
     
     'Alfa Romeo': {
         'Giulia': {
-            'production_years': (2017, 2025),
+            'production_years': (2017, 2026),
             'trims_by_year': {
                 2017: {
                     'Giulia': 38990,
@@ -364,11 +406,17 @@ MANUFACTURERS_A = {
                     'Giulia Ti': 48245,
                     'Giulia Ti Sport': 50245,
                     'Giulia Quadrifoglio': 80645
+                },
+                2026: {
+                    'Giulia': 46845,
+                    'Giulia Ti': 49345,
+                    'Giulia Ti Sport': 51345,
+                    'Giulia Quadrifoglio': 81745
                 }
             }
         },
         'Stelvio': {
-            'production_years': (2018, 2025),
+            'production_years': (2018, 2026),
             'trims_by_year': {
                 2018: {
                     'Stelvio': 42990,
@@ -420,6 +468,12 @@ MANUFACTURERS_A = {
                     'Stelvio Ti': 52245,
                     'Stelvio Ti Sport': 54245,
                     'Stelvio Quadrifoglio': 88645
+                },
+                2026: {
+                    'Stelvio': 50845,
+                    'Stelvio Ti': 53345,
+                    'Stelvio Ti Sport': 55345,
+                    'Stelvio Quadrifoglio': 89745
                 }
             }
         },
@@ -438,7 +492,7 @@ MANUFACTURERS_A = {
     
     'Audi': {
         'A3': {
-            'production_years': (2006, 2025),
+            'production_years': (2006, 2026),
             'trims_by_year': {
                 2006: {'A3 2.0T': 27270, 'A3 3.2 quattro': 32270},
                 2007: {'A3 2.0T': 27270, 'A3 3.2 quattro': 32270},
@@ -567,11 +621,17 @@ MANUFACTURERS_A = {
                     'A3 Premium Plus': 41200,
                     'A3 Prestige': 46000,
                     'S3': 49600
+                },
+                2026: {
+                    'A3 Premium': 38800,
+                    'A3 Premium Plus': 42200,
+                    'A3 Prestige': 47100,
+                    'S3': 50800
                 }
             }
         },
         'A4': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'A4 1.8T': 25900, 'A4 2.8 quattro': 29400},
                 2001: {'A4 1.8T': 26200, 'A4 2.8 quattro': 29700, 'A4 3.0 quattro': 32200},
@@ -658,11 +718,18 @@ MANUFACTURERS_A = {
                     'A4 45 TFSI quattro Premium Plus': 48600,
                     'A4 45 TFSI quattro Prestige': 52100,
                     'S4': 60400
+                },
+                2026: {
+                    'A4 40 TFSI': 43600,
+                    'A4 45 TFSI quattro Premium': 46100,
+                    'A4 45 TFSI quattro Premium Plus': 49800,
+                    'A4 45 TFSI quattro Prestige': 53400,
+                    'S4': 61900
                 }
             }
         },
         'A5': {
-            'production_years': (2008, 2025),
+            'production_years': (2008, 2026),
             'trims_by_year': {
                 2008: {'A5 3.2': 37200, 'A5 3.2 quattro': 39700},
                 2009: {'A5 2.0T': 38100, 'A5 3.2 quattro': 40600, 'S5': 52300},
@@ -765,11 +832,21 @@ MANUFACTURERS_A = {
                     'A5 Sportback 45 TFSI quattro Prestige': 57300,
                     'S5 Coupe': 63100,
                     'S5 Sportback': 64100
+                },
+                2026: {
+                    'A5 Coupe 45 TFSI quattro Premium': 52600,
+                    'A5 Coupe 45 TFSI quattro Premium Plus': 55500,
+                    'A5 Coupe 45 TFSI quattro Prestige': 59200,
+                    'A5 Sportback 45 TFSI quattro Premium': 52100,
+                    'A5 Sportback 45 TFSI quattro Premium Plus': 54900,
+                    'A5 Sportback 45 TFSI quattro Prestige': 58700,
+                    'S5 Coupe': 64700,
+                    'S5 Sportback': 65700
                 }
             }
         },
         'A6': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'A6 2.8': 33750, 'A6 2.8 quattro': 36250, 'S6': 65000},
                 2001: {'A6 2.8': 34050, 'A6 2.8 quattro': 36550, 'A6 4.2': 42050, 'A6 4.2 quattro': 44550, 'S6': 65300},
@@ -901,11 +978,19 @@ MANUFACTURERS_A = {
                     'A6 55 TFSI quattro Premium Plus': 69000,
                     'A6 55 TFSI quattro Prestige': 72700,
                     'S6': 91900
+                },
+                2026: {
+                    'A6 45 TFSI quattro Premium': 64000,
+                    'A6 45 TFSI quattro Premium Plus': 67900,
+                    'A6 45 TFSI quattro Prestige': 71600,
+                    'A6 55 TFSI quattro Premium Plus': 70700,
+                    'A6 55 TFSI quattro Prestige': 74500,
+                    'S6': 94200
                 }
             }
         },
         'A7': {
-            'production_years': (2012, 2025),
+            'production_years': (2012, 2026),
             'trims_by_year': {
                 2012: {
                     'A7 3.0T Premium': 59250,
@@ -981,11 +1066,16 @@ MANUFACTURERS_A = {
                     'A7 55 TFSI quattro Premium Plus': 75700,
                     'A7 55 TFSI quattro Prestige': 79400,
                     'S7': 92400
+                },
+                2026: {
+                    'A7 55 TFSI quattro Premium Plus': 77600,
+                    'A7 55 TFSI quattro Prestige': 81400,
+                    'S7': 94700
                 }
             }
         },
         'A8': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'A8 3.7': 62000, 'A8 4.2 quattro': 68000, 'S8': 85000},
                 2001: {'A8 3.7': 62300, 'A8 4.2 quattro': 68300, 'A8 6.0 W12': 125000, 'S8': 85300},
@@ -1107,11 +1197,18 @@ MANUFACTURERS_A = {
                     'A8 60 TFSI quattro': 101900,
                     'A8 L 60 TFSI quattro': 105600,
                     'S8': 121900
+                },
+                2026: {
+                    'A8 55 TFSI quattro': 96300,
+                    'A8 L 55 TFSI quattro': 100100,
+                    'A8 60 TFSI quattro': 104400,
+                    'A8 L 60 TFSI quattro': 108200,
+                    'S8': 124900
                 }
             }
         },
         'Q3': {
-            'production_years': (2015, 2025),
+            'production_years': (2015, 2026),
             'trims_by_year': {
                 2015: {
                     'Q3 2.0T Premium': 32500,
@@ -1167,11 +1264,16 @@ MANUFACTURERS_A = {
                     'Q3 45 TFSI Premium': 40200,
                     'Q3 45 TFSI Premium Plus': 43000,
                     'Q3 45 TFSI Prestige': 46700
+                },
+                2026: {
+                    'Q3 45 TFSI Premium': 41200,
+                    'Q3 45 TFSI Premium Plus': 44100,
+                    'Q3 45 TFSI Prestige': 47900
                 }
             }
         },
         'Q5': {
-            'production_years': (2009, 2025),
+            'production_years': (2009, 2026),
             'trims_by_year': {
                 2009: {
                     'Q5 3.2 Premium': 35200,
@@ -1291,11 +1393,17 @@ MANUFACTURERS_A = {
                     'Q5 45 TFSI Premium Plus': 51800,
                     'Q5 45 TFSI Prestige': 55500,
                     'SQ5': 61800
+                },
+                2026: {
+                    'Q5 45 TFSI Premium': 50200,
+                    'Q5 45 TFSI Premium Plus': 53100,
+                    'Q5 45 TFSI Prestige': 56900,
+                    'SQ5': 63300
                 }
             }
         },
         'Q5 Sportback': {
-            'production_years': (2021, 2025),
+            'production_years': (2021, 2026),
             'trims_by_year': {
                 2021: {
                     'Q5 Sportback 45 TFSI Premium': 46200,
@@ -1326,11 +1434,17 @@ MANUFACTURERS_A = {
                     'Q5 Sportback 45 TFSI Premium Plus': 53800,
                     'Q5 Sportback 45 TFSI Prestige': 57500,
                     'SQ5 Sportback': 63800
+                },
+                2026: {
+                    'Q5 Sportback 45 TFSI Premium': 52300,
+                    'Q5 Sportback 45 TFSI Premium Plus': 55100,
+                    'Q5 Sportback 45 TFSI Prestige': 58900,
+                    'SQ5 Sportback': 65400
                 }
             }
         },
         'Q7': {
-            'production_years': (2007, 2025),
+            'production_years': (2007, 2026),
             'trims_by_year': {
                 2007: {
                     'Q7 3.6 Premium': 41000,
@@ -1443,11 +1557,18 @@ MANUFACTURERS_A = {
                     'Q7 45 TFSI Prestige': 71400,
                     'Q7 55 TFSI Premium Plus': 73600,
                     'Q7 55 TFSI Prestige': 78200
+                },
+                2026: {
+                    'Q7 45 TFSI Premium': 63400,
+                    'Q7 45 TFSI Premium Plus': 68500,
+                    'Q7 45 TFSI Prestige': 73200,
+                    'Q7 55 TFSI Premium Plus': 75400,
+                    'Q7 55 TFSI Prestige': 80200
                 }
             }
         },
         'Q8': {
-            'production_years': (2019, 2025),
+            'production_years': (2019, 2026),
             'trims_by_year': {
                 2019: {
                     'Q8 55 TFSI Premium Plus': 67400,
@@ -1481,11 +1602,16 @@ MANUFACTURERS_A = {
                     'Q8 55 TFSI Premium Plus': 76200,
                     'Q8 55 TFSI Prestige': 83200,
                     'SQ8': 95900
+                },
+                2026: {
+                    'Q8 55 TFSI Premium Plus': 78100,
+                    'Q8 55 TFSI Prestige': 85300,
+                    'SQ8': 98300
                 }
             }
         },
         'S4': {
-            'production_years': (2000, 2025),
+            'production_years': (2000, 2026),
             'trims_by_year': {
                 2000: {'S4': 45000},
                 2001: {'S4': 45300},
@@ -1512,11 +1638,12 @@ MANUFACTURERS_A = {
                 2022: {'S4': 58395},
                 2023: {'S4': 59695},
                 2024: {'S4': 60895},
-                2025: {'S4': 62095}
+                2025: {'S4': 62095},
+                2026: {'S4': 63600}
             }
         },
         'S5': {
-            'production_years': (2008, 2025),
+            'production_years': (2008, 2026),
             'trims_by_year': {
                 2008: {'S5': 52300},
                 2009: {'S5': 53100},
@@ -1559,11 +1686,15 @@ MANUFACTURERS_A = {
                 2025: {
                     'S5 Coupe': 61900,
                     'S5 Sportback': 62900
+                },
+                2026: {
+                    'S5 Coupe': 63400,
+                    'S5 Sportback': 64500
                 }
             }
         },
         'RS7': {
-            'production_years': (2014, 2025),
+            'production_years': (2014, 2026),
             'trims_by_year': {
                 2014: {'RS7': 105000},
                 2015: {'RS7': 105400},
@@ -1576,11 +1707,12 @@ MANUFACTURERS_A = {
                 2022: {'RS7': 116500},
                 2023: {'RS7': 118600},
                 2024: {'RS7': 120600},
-                2025: {'RS7': 122600}
+                2025: {'RS7': 122600},
+                2026: {'RS7': 125700}
             }
         },
         'e-tron': {
-            'production_years': (2019, 2025),
+            'production_years': (2019, 2026),
             'trims_by_year': {
                 2019: {
                     'e-tron 55 Premium': 74800,

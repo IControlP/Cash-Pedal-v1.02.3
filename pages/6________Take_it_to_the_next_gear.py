@@ -61,6 +61,15 @@ def main():
         if st.button("🔍 Find Your Car"):
             st.switch_page("pages/4_____Find_Your_Car.py")
     
+    # FlexOffers Verification
+    st.markdown("""
+    <div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
+    <p style="margin: 0; font-size: 12px; color: #666;">
+    FlexOffers Verification: <strong>flexoffers</strong>
+    </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     # Introduction
     st.info("""
     **How to Use This Page**

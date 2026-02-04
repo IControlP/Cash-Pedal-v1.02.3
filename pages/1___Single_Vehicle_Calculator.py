@@ -31,13 +31,13 @@ def main():
     apply_theme()
     
     # Page header
-    st.title("ðŸ”§ Single Vehicle Calculator")
+    st.title(" Single Vehicle Calculator")
     st.markdown("Analyze the total cost of ownership for an individual vehicle.")
     st.markdown("---")
     
     # Sidebar content specific to this page
     with st.sidebar:
-        st.header("Ã°Å¸â€œâ€¹ Calculator Guide")
+        st.header(" Calculator Guide")
         st.info("""
         **Steps:**
         1. Enter your ZIP code
@@ -50,10 +50,10 @@ def main():
         st.markdown("---")
         
         # Session status
-        st.header("Ã°Å¸â€œÅ  Session Status")
+        st.header(" Session Status")
         if hasattr(st.session_state, 'comparison_vehicles') and st.session_state.comparison_vehicles:
-            st.success(f"âœ… {len(st.session_state.comparison_vehicles)} vehicles in comparison")
-            if st.button("View Comparison Ã¢â€ â€™"):
+            st.success(f" {len(st.session_state.comparison_vehicles)} vehicles in comparison")
+            if st.button("View Comparison 
                 st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
         else:
             st.info("No vehicles in comparison yet")
@@ -62,7 +62,7 @@ def main():
         st.markdown("---")
         
         # Tips section
-        st.header("ðŸ’¡ Tips")
+        st.header(" Tips")
         st.markdown("""
         - Use accurate mileage estimates for better results
         - Include all financing costs

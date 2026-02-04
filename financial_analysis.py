@@ -279,7 +279,7 @@ class FinancialAnalysisService:
         if affordability['is_affordable']:
             insights.append(f"✅ This vehicle fits well within your budget at {affordability['percentage_of_income']:.1f}% of income")
         else:
-            insights.append(f"⚠️ This vehicle may strain your budget at {affordability['percentage_of_income']:.1f}% of income")
+            insights.append(f"⚠️ This vehicle may strain your budget at {affordability['percentage_of_income']:.1f}% of income")
             insights.append(f"💡 Consider a vehicle costing ${affordability['over_budget_amount']:,.0f} less to stay within guidelines")
         
         # Cost optimization insights
@@ -287,8 +287,8 @@ class FinancialAnalysisService:
         insights.append(f"💰 {largest_category[0].replace('_', ' ').title()} is your largest cost at ${largest_category[1]:,.0f}")
         
         # General financial advice
-        insights.append("📊 Consider comparing lease vs purchase options for the same vehicle")
-        insights.append("🔍 Shop around for insurance and financing to optimize costs")
+        insights.append("ðŸ“Š Consider comparing lease vs purchase options for the same vehicle")
+        insights.append("ðŸ” Shop around for insurance and financing to optimize costs")
         
         return insights
 

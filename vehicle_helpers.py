@@ -321,17 +321,17 @@ def display_vehicle_mpg_info(make: str, model: str, year: int, trim: str = None,
         with col2:
             efficiency_rating = get_fuel_efficiency_rating(mpg_data)
             rating_emoji = {
-                'Excellent': '⭐⭐⭐⭐⭐',
-                'Very Good': '⭐⭐⭐⭐',
-                'Good': '⭐⭐⭐',
-                'Average': '⭐⭐',
-                'Below Average': '⭐'
-            }.get(efficiency_rating, '⭐⭐⭐')
+                'Excellent': '‐‐‐‐‐',
+                'Very Good': '‐‐‐‐',
+                'Good': '‐‐‐',
+                'Average': '‐‐',
+                'Below Average': '‐'
+            }.get(efficiency_rating, '‐‐‐')
             st.metric("Efficiency Rating", f"{efficiency_rating} {rating_emoji}")
         
         with col3:
             comparison = compare_mpg_to_class_average(mpg_data, make, model)
-            comparison_emoji = '📈' if comparison['comparison'] == 'above' else '📉'
+            comparison_emoji = 'ðŸ“ˆ' if comparison['comparison'] == 'above' else 'ðŸ“‰'
             st.metric(
                 f"{comparison['class_name']} Comparison",
                 f"{comparison_emoji} {comparison['difference']:.1f} MPG {comparison['comparison']} avg",
@@ -368,6 +368,6 @@ def display_vehicle_mpg_info(make: str, model: str, year: int, trim: str = None,
                 st.metric("Cost per Mile", f"${cost_data['cost_per_mile']:.2f}")
         
         # Data source attribution
-        st.caption(f"📊 Data source: {mpg_data['source']}")
+        st.caption(f"ðŸ“Š Data source: {mpg_data['source']}")
     else:
         st.info(f"💡 MPG data not available for {year} {make} {model}")

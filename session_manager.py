@@ -375,16 +375,16 @@ def display_persistent_settings_status():
     status_items = []
     if completion['location']:
         zip_code = get_persistent_setting('location', 'zip_code', '')
-        status_items.append(f"📍 {zip_code}")
+        status_items.append(f"ðŸ“ {zip_code}")
     
     if completion['personal']:
         age = get_persistent_setting('personal', 'user_age', 35)
         income = get_persistent_setting('personal', 'gross_income', 60000)
-        status_items.append(f"👤 Age {age}, ${income:,}")
+        status_items.append(f"ðŸ‘¤ Age {age}, ${income:,}")
     
     if completion['insurance']:
         coverage = get_persistent_setting('insurance', 'coverage_type', 'standard')
-        status_items.append(f"🛡️ {coverage.title()}")
+        status_items.append(f"ðŸ›¡ï¸ {coverage.title()}")
     
     if status_items:
         st.info(f"**Saved Settings:** {' | '.join(status_items)}")

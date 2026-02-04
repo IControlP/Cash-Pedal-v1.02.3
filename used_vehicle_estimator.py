@@ -306,7 +306,7 @@ def integrate_used_vehicle_estimation():
                     
                     # Show estimation info to user
                     st.info(f"""
-                    🔍 **Used Vehicle Detected**
+                    ðŸ” **Used Vehicle Detected**
                     
                     Estimated current market value: **${estimated_value:,.0f}**
                     
@@ -324,7 +324,7 @@ def integrate_used_vehicle_estimation():
                     )
                     
                     if insights:
-                        with st.expander("📊 View Depreciation Analysis"):
+                        with st.expander("ðŸ“Š View Depreciation Analysis"):
                             col1, col2 = st.columns(2)
                             
                             with col1:
@@ -338,7 +338,7 @@ def integrate_used_vehicle_estimation():
                             st.write(f"**Market Position:** {insights['market_position']}")
                 
                 else:
-                    st.warning("⚠️ Unable to estimate current value - vehicle data not found in database")
+                    st.warning("⚠️ Unable to estimate current value - vehicle data not found in database")
             
             else:
                 # Clear any previous estimation
@@ -355,7 +355,7 @@ def enhanced_vehicle_selection_with_price_estimation():
     
     estimator = UsedVehicleEstimator()
     
-    st.subheader("🚗 Vehicle Selection")
+    st.subheader("ðŸš— Vehicle Selection")
     
     # Vehicle selection inputs (simplified example)
     col1, col2 = st.columns(2)

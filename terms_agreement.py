@@ -145,7 +145,7 @@ def get_database_url() -> Optional[str]:
             # Try common Railway patterns
             tcp_url = f'postgresql://{username}:{password}@postgres.railway.internal:5432/{database}'
             
-            print(f"Ã¢Å¡Â Ã¯Â¸Â Converted socket-based URL to TCP/IP")
+            print(f"ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Converted socket-based URL to TCP/IP")
             print(f"   Original: {db_url[:50]}...")
             print(f"   Converted: {tcp_url[:50]}...")
             
@@ -417,7 +417,7 @@ def show_terms_fullscreen():
     # Header  
     st.markdown("""
     <div class="terms-header">
-        <h1>ðŸš— Welcome to CashPedal</h1>
+        <h1>Ã°Å¸Å¡â€” Welcome to CashPedal</h1>
         <p style="font-size: 1.1rem; color: #666;">
             Please review and accept our Terms and Conditions to continue
         </p>
@@ -425,7 +425,7 @@ def show_terms_fullscreen():
     """, unsafe_allow_html=True)
     
     # Display terms in scrollable container
-    with st.expander("ðŸ“‹ View Full Terms and Conditions (Click to Expand)", expanded=False):
+    with st.expander("Ã°Å¸â€œâ€¹ View Full Terms and Conditions (Click to Expand)", expanded=False):
         st.markdown(TERMS_AND_CONDITIONS)
     
     st.markdown("---")
@@ -640,27 +640,27 @@ def show_database_debug_info():
     
     # Check DATABASE_PRIVATE_URL
     if private_url and private_url != '' and private_url != '<empty string>':
-        st.success("Ã¢Å“… **DATABASE_PRIVATE_URL:** Set (preferred for Railway)")
+        st.success("ÃƒÂ¢Ã…â€œâ€¦ **DATABASE_PRIVATE_URL:** Set (preferred for Railway)")
         st.code(private_url[:80] + "...", language="text")
     elif 'DATABASE_PRIVATE_URL' in os.environ:
-        st.error("Ã¢ÂÅ’ **DATABASE_PRIVATE_URL:** Empty string (variable exists but has no value)")
+        st.error("ÃƒÂ¢Ã‚ÂÃ…â€™ **DATABASE_PRIVATE_URL:** Empty string (variable exists but has no value)")
         st.warning("**FIX:** Delete this variable and add it manually with the actual PostgreSQL URL")
     else:
-        st.warning("Ã¢Å¡Â Ã¯Â¸Â **DATABASE_PRIVATE_URL:** Not set")
+        st.warning("ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â **DATABASE_PRIVATE_URL:** Not set")
     
     # Check DATABASE_URL
     if db_url and db_url != '' and db_url != '<empty string>':
         if 'socket' in db_url or '/var/run/postgresql' in db_url:
-            st.error("Ã¢ÂÅ’ **DATABASE_URL:** Socket-based (won't work in containers)")
+            st.error("ÃƒÂ¢Ã‚ÂÃ…â€™ **DATABASE_URL:** Socket-based (won't work in containers)")
             st.code(db_url[:80] + "...", language="text")
         else:
-            st.info("Ã¢”Â¹Ã¯Â¸Â **DATABASE_URL:** Set")
+            st.info("ÃƒÂ¢â€Ã‚Â¹ÃƒÂ¯Ã‚Â¸Ã‚Â **DATABASE_URL:** Set")
             st.code(db_url[:80] + "...", language="text")
     elif 'DATABASE_URL' in os.environ:
-        st.error("Ã¢ÂÅ’ **DATABASE_URL:** Empty string (variable exists but has no value)")
+        st.error("ÃƒÂ¢Ã‚ÂÃ…â€™ **DATABASE_URL:** Empty string (variable exists but has no value)")
         st.warning("**FIX:** Delete this variable and add it manually with the actual PostgreSQL URL")
     else:
-        st.error("Ã¢ÂÅ’ **DATABASE_URL:** Not set")
+        st.error("ÃƒÂ¢Ã‚ÂÃ…â€™ **DATABASE_URL:** Not set")
     
     # Show which URL is being used
     final_url = get_database_url()
@@ -668,27 +668,27 @@ def show_database_debug_info():
         st.write("---")
         st.write("#### Active Connection String")
         if private_url and final_url == private_url:
-            st.success("Ã¢Å“… Using **DATABASE_PRIVATE_URL** (best for Railway)")
+            st.success("ÃƒÂ¢Ã…â€œâ€¦ Using **DATABASE_PRIVATE_URL** (best for Railway)")
         elif 'railway.internal' in final_url:
-            st.info("Ã¢”Â¹Ã¯Â¸Â Using **converted TCP/IP URL** (socket URL was converted)")
+            st.info("ÃƒÂ¢â€Ã‚Â¹ÃƒÂ¯Ã‚Â¸Ã‚Â Using **converted TCP/IP URL** (socket URL was converted)")
         else:
-            st.info("Ã¢”Â¹Ã¯Â¸Â Using **DATABASE_URL**")
+            st.info("ÃƒÂ¢â€Ã‚Â¹ÃƒÂ¯Ã‚Â¸Ã‚Â Using **DATABASE_URL**")
         
         st.code(final_url[:80] + "...", language="text")
     else:
-        st.error("Ã¢ÂÅ’ **No valid database URL found!**")
+        st.error("ÃƒÂ¢Ã‚ÂÃ…â€™ **No valid database URL found!**")
         st.write("---")
-        st.write("### Ã°Å¸–Â§ How to Fix This")
+        st.write("### ÃƒÂ°Ã…Â¸â€“Ã‚Â§ How to Fix This")
         st.markdown("""
         **Problem:** Variable references showing `<empty string>`
         
         **Solution:**
         1. Go to your **PostgreSQL service** in Railway
         2. Click "Variables" tab
-        3. Find `DATABASE_PRIVATE_URL` and click Ã°Å¸‘ÂÃ¯Â¸Â to reveal
+        3. Find `DATABASE_PRIVATE_URL` and click ÃƒÂ°Ã…Â¸â€˜Ã‚ÂÃƒÂ¯Ã‚Â¸Ã‚Â to reveal
         4. **Copy the entire URL**
         5. Go to your **Streamlit service** (this service)
-        6. Variables tab Ã¢–’ Remove the empty `DATABASE_PRIVATE_URL`
+        6. Variables tab ÃƒÂ¢â€“â€™ Remove the empty `DATABASE_PRIVATE_URL`
         7. Click "+ New Variable"
         8. Name: `DATABASE_PRIVATE_URL`
         9. Value: **Paste the URL you copied**
@@ -714,7 +714,7 @@ def show_database_debug_info():
             # Test 1: Get database version
             cursor.execute('SELECT version()')
             version = cursor.fetchone()[0]
-            st.success(f"Ã¢Å“… PostgreSQL connection successful!")
+            st.success(f"ÃƒÂ¢Ã…â€œâ€¦ PostgreSQL connection successful!")
             st.code(version, language="text")
             
             # Test 2: Check if table exists
@@ -727,7 +727,7 @@ def show_database_debug_info():
             table_exists = cursor.fetchone()[0]
             
             if table_exists:
-                st.success("Ã¢Å“… Table 'consent_records' exists")
+                st.success("ÃƒÂ¢Ã…â€œâ€¦ Table 'consent_records' exists")
                 
                 # Test 3: Get table structure
                 cursor.execute("""
@@ -759,12 +759,12 @@ def show_database_debug_info():
                     for rec in recent:
                         st.write(f"- {rec[1].strftime('%Y-%m-%d %H:%M:%S')} UTC - Version {rec[2]} - ID: {rec[0][:8]}...")
             else:
-                st.warning("Ã¢Å¡Â Ã¯Â¸Â Table 'consent_records' does not exist - will be created on first use")
+                st.warning("ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Table 'consent_records' does not exist - will be created on first use")
             
             conn.close()
             
         except Exception as e:
-            st.error(f"Ã¢ÂÅ’ PostgreSQL connection failed!")
+            st.error(f"ÃƒÂ¢Ã‚ÂÃ…â€™ PostgreSQL connection failed!")
             st.code(f"{type(e).__name__}: {str(e)}", language="text")
             
             # Provide specific guidance based on error
@@ -781,7 +781,7 @@ def show_database_debug_info():
                 st.warning("**Issue:** Cannot reach PostgreSQL service")
                 st.info("Make sure both services are in the same Railway project")
     else:
-        st.warning("Ã¢Å¡Â Ã¯Â¸Â PostgreSQL not configured - using JSON fallback")
+        st.warning("ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â PostgreSQL not configured - using JSON fallback")
         st.write(f"**Fallback file:** {CONSENT_LOG_FILE}")
         if os.path.exists(CONSENT_LOG_FILE):
             st.write(f"**JSON file exists:** Yes")

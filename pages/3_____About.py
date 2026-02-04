@@ -36,7 +36,7 @@ def main():
     
     # Sidebar
     with st.sidebar:
-        st.header("📋 Page Sections")
+        st.header("ðŸ“‹ Page Sections")
         st.markdown("""
         - [What is TCO?](#what-is-tco)
         - [Our Methodology](#our-methodology)
@@ -47,16 +47,16 @@ def main():
         
         st.markdown("---")
         
-        st.header("🔗 Quick Links")
+        st.header("ðŸ”— Quick Links")
         if st.button("🔧 Calculator"):
             st.switch_page("pages/1___Single_Vehicle_Calculator.py")
-        if st.button("⚖️ Comparison"):
+        if st.button("âš–ï¸ Comparison"):
             st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
     
     # Main content
     
     # What is TCO Section
-    st.header("🎯 What is TCO?")
+    st.header("ðŸŽ¯ What is TCO?")
     st.markdown("""
     **Total Cost of Ownership (TCO)** represents the complete cost of owning a vehicle 
     over a specified period, not just the purchase price. Understanding TCO helps you 
@@ -75,7 +75,7 @@ def main():
         - Taxes and fees
         - Registration costs
         
-        **⛽ Operating Costs**
+        **â›½ Operating Costs**
         - Fuel or electricity
         - Regular maintenance
         - Repairs and wear items
@@ -84,7 +84,7 @@ def main():
     
     with col2:
         st.markdown("""
-        **📉 Ownership Costs**
+        **ðŸ“‰ Ownership Costs**
         - Depreciation
         - Insurance premiums
         - Financing interest
@@ -100,7 +100,7 @@ def main():
     st.markdown("---")
     
     # Methodology Section
-    st.header("📊 Our Methodology")
+    st.header("ðŸ“Š Our Methodology")
     
     st.subheader("Depreciation Modeling")
     st.markdown("""
@@ -142,7 +142,7 @@ def main():
     st.markdown("---")
     
     # Data Sources Section
-    st.header("📚 Data Sources")
+    st.header("ðŸ“š Data Sources")
     st.markdown("""
     CashPedal aggregates data from multiple authoritative sources:
     
@@ -195,7 +195,7 @@ def main():
     st.markdown("---")
     
     # Contact Section
-    st.header("📧 Contact & Feedback")
+    st.header("ðŸ“§ Contact & Feedback")
     st.markdown("""
     We're constantly working to improve CashPedal. If you have:
     

@@ -37,7 +37,7 @@ def main():
     
     # Sidebar content specific to this page
     with st.sidebar:
-        st.header("📋 Comparison Guide")
+        st.header("ðŸ“‹ Comparison Guide")
         
         # Show current comparison status
         vehicle_count = len(st.session_state.get('comparison_vehicles', []))
@@ -50,7 +50,7 @@ def main():
             2. Configure and calculate a vehicle
             3. Click "Add to Comparison"
             """)
-            if st.button("➕ Add a Vehicle"):
+            if st.button("âž• Add a Vehicle"):
                 st.switch_page("pages/1___Single_Vehicle_Calculator.py")
         else:
             st.success(f"✅ {vehicle_count} vehicle(s) ready")
@@ -63,16 +63,16 @@ def main():
             
             if vehicle_count < 5:
                 st.caption(f"You can add {5 - vehicle_count} more vehicle(s)")
-                if st.button("➕ Add Another Vehicle"):
+                if st.button("âž• Add Another Vehicle"):
                     st.switch_page("pages/1___Single_Vehicle_Calculator.py")
         
         st.markdown("---")
         
         # Session management
-        st.header("🔄 Session Management")
+        st.header("ðŸ”„ Session Management")
         
         if vehicle_count > 0:
-            if st.button("🗑️ Clear All Vehicles", type="secondary"):
+            if st.button("ðŸ—‘ï¸ Clear All Vehicles", type="secondary"):
                 clear_session_state()
                 st.rerun()
         
@@ -81,11 +81,11 @@ def main():
         # Comparison features
         st.header("✨ Comparison Features")
         st.markdown("""
-        - 📊 Side-by-side cost tables
-        - 📈 Interactive charts
-        - 🏆 Value ranking
-        - 👍 Pros/cons analysis
-        - 📄 Export reports
+        - ðŸ“Š Side-by-side cost tables
+        - ðŸ“ˆ Interactive charts
+        - ðŸ† Value ranking
+        - ðŸ‘ Pros/cons analysis
+        - ðŸ“„ Export reports
         """)
     
     # Main content - call the comparison display function
@@ -94,12 +94,12 @@ def main():
     # Quick action buttons if no vehicles
     if vehicle_count < 2:
         st.markdown("---")
-        st.subheader("🚀 Quick Actions")
+        st.subheader("ðŸš€ Quick Actions")
         
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.info("Add at least 2 vehicles to see comparison results.")
-            if st.button("🔧 Go to Single Vehicle Calculator", use_container_width=True):
+            if st.button("ðŸ”§ Go to Single Vehicle Calculator", use_container_width=True):
                 st.switch_page("pages/1___Single_Vehicle_Calculator.py")
     
     # Footer

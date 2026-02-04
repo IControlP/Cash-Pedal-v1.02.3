@@ -37,7 +37,7 @@ def main():
     
     # Sidebar content specific to this page
     with st.sidebar:
-        st.header("📋 Calculator Guide")
+        st.header("ðŸ“‹ Calculator Guide")
         st.info("""
         **Steps:**
         1. Enter your ZIP code
@@ -50,10 +50,10 @@ def main():
         st.markdown("---")
         
         # Session status
-        st.header("📊 Session Status")
+        st.header("ðŸ“Š Session Status")
         if hasattr(st.session_state, 'comparison_vehicles') and st.session_state.comparison_vehicles:
             st.success(f"✅ {len(st.session_state.comparison_vehicles)} vehicles in comparison")
-            if st.button("View Comparison →"):
+            if st.button("View Comparison â†’"):
                 st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
         else:
             st.info("No vehicles in comparison yet")

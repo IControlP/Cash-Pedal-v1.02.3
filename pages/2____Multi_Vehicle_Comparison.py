@@ -16,7 +16,7 @@ from comparison_display import display_comparison
 # Page configuration
 st.set_page_config(
     page_title="Vehicle Comparison - CashPedal",
-    page_icon="⚖",
+    page_icon="⚖️",
     layout="wide",
     initial_sidebar_state="expanded"
 )

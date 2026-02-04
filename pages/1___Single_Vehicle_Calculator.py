@@ -12,7 +12,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from session_manager import initialize_session_state
 from calculator_display import display_calculator
-from theme_utils import apply_theme, get_footer_html
 
 # Page configuration
 st.set_page_config(
@@ -27,17 +26,14 @@ def main():
     # Initialize session state
     initialize_session_state()
     
-    # Apply CashPedal theme (handles device/dark mode detection)
-    apply_theme()
-    
     # Page header
-    st.title("Ã°Å¸â€Â§ Single Vehicle Calculator")
+    st.title("🔧 Single Vehicle Calculator")
     st.markdown("Analyze the total cost of ownership for an individual vehicle.")
     st.markdown("---")
     
     # Sidebar content specific to this page
     with st.sidebar:
-        st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ Calculator Guide")
+        st.header("📋 Calculator Guide")
         st.info("""
         **Steps:**
         1. Enter your ZIP code
@@ -50,10 +46,10 @@ def main():
         st.markdown("---")
         
         # Session status
-        st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â  Session Status")
+        st.header("📊 Session Status")
         if hasattr(st.session_state, 'comparison_vehicles') and st.session_state.comparison_vehicles:
-            st.success(f"Ã¢Å“â€¦ {len(st.session_state.comparison_vehicles)} vehicles in comparison")
-            if st.button("View Comparison ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢"):
+            st.success(f"✅ {len(st.session_state.comparison_vehicles)} vehicles in comparison")
+            if st.button("View Comparison →"):
                 st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
         else:
             st.info("No vehicles in comparison yet")
@@ -62,7 +58,7 @@ def main():
         st.markdown("---")
         
         # Tips section
-        st.header("Ã°Å¸â€™Â¡ Tips")
+        st.header("💡 Tips")
         st.markdown("""
         - Use accurate mileage estimates for better results
         - Include all financing costs
@@ -77,7 +73,14 @@ def main():
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.markdown(get_footer_html(), unsafe_allow_html=True)
+        st.markdown(
+            """
+            <div style='text-align: center; color: gray; font-size: 12px;'>
+            CashPedal - Vehicle TCO Calculator v1.02.3
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
 
 if __name__ == "__main__":
     main()

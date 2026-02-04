@@ -12,7 +12,7 @@ from typing import Dict, Any, List
 def display_comparison():
     """Display the multi-vehicle comparison interface"""
     
-    st.header("âš–ï¸ Multi-Vehicle Comparison")
+    st.header("Ã¢Å¡â€“Ã¯Â¸Â Multi-Vehicle Comparison")
     
     # Check if we have vehicles to compare
     if not hasattr(st.session_state, 'comparison_vehicles') or not st.session_state.comparison_vehicles:
@@ -29,12 +29,12 @@ def display_comparison():
         display_comparison_results()
     else:
         st.info("Add at least 2 vehicles to see comparison results.")
-        st.markdown("ðŸ’¡ **Tip:** Use the Single Vehicle Calculator to analyze and add vehicles to comparison.")
+        st.markdown("Ã°Å¸â€™Â¡ **Tip:** Use the Single Vehicle Calculator to analyze and add vehicles to comparison.")
 
 def display_empty_comparison():
     """Display interface when no vehicles are in comparison"""
     
-    st.info("ðŸš— No vehicles in comparison yet.")
+    st.info("Ã°Å¸Å¡â€” No vehicles in comparison yet.")
     
     col1, col2 = st.columns(2)
     
@@ -50,15 +50,15 @@ def display_empty_comparison():
     with col2:
         st.markdown("""
         ### Comparison Features:
-        - âš–ï¸ Side-by-side cost analysis
-        - ðŸ“Š Interactive visualizations
-        - ðŸ’¡ Automated recommendations
-        - ðŸ“„ Exportable reports
-        - ðŸ”„ Lease vs Purchase mixing
+        - Ã¢Å¡â€“Ã¯Â¸Â Side-by-side cost analysis
+        - Ã°Å¸â€œÅ  Interactive visualizations
+        - Ã°Å¸â€™Â¡ Automated recommendations
+        - Ã°Å¸â€œâ€ž Exportable reports
+        - Ã°Å¸â€â€ž Lease vs Purchase mixing
         """)
     
     # Quick add section (if we had a simplified form)
-    with st.expander("ðŸš€ Quick Add Vehicle", expanded=False):
+    with st.expander("Ã°Å¸Å¡â‚¬ Quick Add Vehicle", expanded=False):
         st.markdown("*Quick vehicle addition coming in future update*")
         st.info("For now, please use the Single Vehicle Calculator to add vehicles.")
 
@@ -66,7 +66,7 @@ def display_empty_comparison():
 def display_comparison_summary():
     """Display summary of vehicles currently in comparison"""
     
-    st.subheader("ðŸ“‹ Vehicles in Comparison")
+    st.subheader("Ã°Å¸â€œâ€¹ Vehicles in Comparison")
     
     vehicles = st.session_state.comparison_vehicles
     
@@ -91,9 +91,9 @@ def display_comparison_summary():
     
     with col4:
         if len(vehicles) >= 2:
-            st.success("âœ… Ready to Compare")
+            st.success("Ã¢Å“â€¦ Ready to Compare")
         else:
-            st.warning("â³ Need 1+ More")
+            st.warning("Ã¢ÂÂ³ Need 1+ More")
     
     # List current vehicles
     for i, vehicle_entry in enumerate(vehicles):
@@ -116,7 +116,7 @@ def display_comparison_summary():
             transaction = vehicle.get('transaction_type', 'Unknown')
             
             # Display with indicator of whether results are available
-            status_icon = "âœ…" if has_results else "âš ï¸"
+            status_icon = "Ã¢Å“â€¦" if has_results else "Ã¢Å¡Â Ã¯Â¸Â"
             
             if transaction.lower() == 'lease':
                 monthly = vehicle.get('lease_monthly_payment', 0)
@@ -125,10 +125,10 @@ def display_comparison_summary():
                 st.write(f"{status_icon} **{vehicle_name}** ({transaction}) - ${price:,.0f}")
             
             if not has_results:
-                st.caption("âš ï¸ Missing calculation results - may need to recalculate")
+                st.caption("Ã¢Å¡Â Ã¯Â¸Â Missing calculation results - may need to recalculate")
         
         with col2:
-            if st.button("ðŸ—‘ï¸ Remove", key=f"remove_{i}"):
+            if st.button("Ã°Å¸â€”â€˜Ã¯Â¸Â Remove", key=f"remove_{i}"):
                 from session_manager import remove_vehicle_from_comparison
                 success, message = remove_vehicle_from_comparison(i)
                 if success:
@@ -199,7 +199,7 @@ def display_comparison_results():
             st.error("Please check your vehicle configurations and try again.")
             
             # Show debug info
-            with st.expander("ðŸ” Debug Information"):
+            with st.expander("Ã°Å¸â€Â Debug Information"):
                 st.write("Vehicle Entries:", len(vehicle_entries))
                 for i, entry in enumerate(vehicle_entries):
                     st.write(f"Vehicle {i+1}:")
@@ -264,25 +264,25 @@ def display_comparison_tabs(comparison_results: Dict[str, Any],
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        if st.button("ðŸ“Š Refresh Comparison", use_container_width=True):
+        if st.button("Ã°Å¸â€œÅ  Refresh Comparison", use_container_width=True):
             st.rerun()
     
     with col2:
-        if st.button("ðŸ“„ Export Report", use_container_width=True):
+        if st.button("Ã°Å¸â€œâ€ž Export Report", use_container_width=True):
             export_comparison_report(comparison_results, recommendations)
     
     with col3:
-        if st.button("ðŸ—‘ï¸ Clear All", use_container_width=True):
+        if st.button("Ã°Å¸â€”â€˜Ã¯Â¸Â Clear All", use_container_width=True):
             from session_manager import clear_session_state
             st.session_state.comparison_vehicles = []
             st.rerun()
     
     # Tabs for different views
     tab1, tab2, tab3, tab4 = st.tabs([
-        "ðŸ† Executive Summary", 
-        "ðŸ“Š Cost Comparison", 
-        "ðŸ“ˆ Visualizations", 
-        "ðŸ’¡ Recommendations"
+        "Ã°Å¸Ââ€  Executive Summary", 
+        "Ã°Å¸â€œÅ  Cost Comparison", 
+        "Ã°Å¸â€œË† Visualizations", 
+        "Ã°Å¸â€™Â¡ Recommendations"
     ])
     
     with tab1:
@@ -302,23 +302,23 @@ def display_executive_summary(comparison_results: Dict[str, Any],
                              recommendations: Dict[str, Any]):
     """Display executive summary of comparison"""
     
-    st.subheader("ðŸ† Executive Summary")
+    st.subheader("Ã°Å¸Ââ€  Executive Summary")
     
     # Winner announcement
     if comparison_results.get('best_overall'):
         best_vehicle = comparison_results['best_overall']
         
         st.success(f"""
-        ### ðŸ¥‡ **Best Overall Choice**
+        ### Ã°Å¸Â¥â€¡ **Best Overall Choice**
         **{best_vehicle['vehicle_name']}** ({best_vehicle['transaction_type']})
         
         **Annual Cost:** ${best_vehicle['annual_cost']:,.0f}  
         **Total Cost:** ${best_vehicle['total_cost']:,.0f}  
-        **Affordability:** {'âœ… Good' if best_vehicle.get('is_affordable', False) else 'âš ï¸ Marginal'}
+        **Affordability:** {'Ã¢Å“â€¦ Good' if best_vehicle.get('is_affordable', False) else 'Ã¢Å¡Â Ã¯Â¸Â Marginal'}
         """)
     
     # Quick comparison metrics
-    st.markdown("#### ðŸ“Š Quick Comparison")
+    st.markdown("#### Ã°Å¸â€œÅ  Quick Comparison")
     
     col1, col2, col3 = st.columns(3)
     
@@ -348,19 +348,19 @@ def display_executive_summary(comparison_results: Dict[str, Any],
             )
     
     # Key insights
-    st.markdown("#### ðŸ” Key Insights")
+    st.markdown("#### Ã°Å¸â€Â Key Insights")
     
     insights = recommendations.get('key_insights', [])
     if insights:
         for insight in insights[:5]:  # Show top 5 insights
-            st.markdown(f"â€¢ {insight}")
+            st.markdown(f"Ã¢â‚¬Â¢ {insight}")
     else:
         st.info("Detailed insights will appear here after analysis.")
 
 def display_cost_comparison_table(comparison_results: Dict[str, Any]):
     """Display detailed cost comparison table"""
     
-    st.subheader("ðŸ“Š Detailed Cost Comparison")
+    st.subheader("Ã°Å¸â€œÅ  Detailed Cost Comparison")
     
     vehicles = comparison_results.get('vehicles', [])
     if not vehicles:
@@ -398,7 +398,7 @@ def display_cost_comparison_table(comparison_results: Dict[str, Any]):
             'Monthly Cost': annual_cost / 12,
             'Cost per Mile': vehicle.get('cost_per_mile', 0),
             '% of Income': income_percentage,  # NEW: Income percentage
-            'Affordable': 'âœ…' if vehicle.get('is_affordable', False) else 'âš ï¸'
+            'Affordable': 'Ã¢Å“â€¦' if vehicle.get('is_affordable', False) else 'Ã¢Å¡Â Ã¯Â¸Â'
         }
         
         # Add category breakdowns if available
@@ -427,7 +427,7 @@ def display_cost_comparison_table(comparison_results: Dict[str, Any]):
     st.dataframe(df, use_container_width=True)
     
     # Enhanced ranking section with income percentage
-    st.markdown("#### ðŸ… Rankings")
+    st.markdown("#### Ã°Å¸Ââ€¦ Rankings")
     
     col1, col2, col3 = st.columns(3)
     
@@ -435,7 +435,7 @@ def display_cost_comparison_table(comparison_results: Dict[str, Any]):
         st.markdown("**By Total Cost:**")
         sorted_by_total = sorted(vehicles, key=lambda x: x['total_cost'])
         for i, vehicle in enumerate(sorted_by_total[:3]):
-            emoji = ["ðŸ¥‡", "ðŸ¥ˆ", "ðŸ¥‰"][i]
+            emoji = ["Ã°Å¸Â¥â€¡", "Ã°Å¸Â¥Ë†", "Ã°Å¸Â¥â€°"][i]
             st.markdown(f"{emoji} {vehicle['vehicle_name']}: ${vehicle['total_cost']:,.0f}")
     
     with col2:
@@ -457,7 +457,7 @@ def display_cost_comparison_table(comparison_results: Dict[str, Any]):
         
         sorted_by_annual = sorted(vehicles_with_fixed_annual, key=lambda x: x['fixed_annual_cost'])
         for i, vehicle in enumerate(sorted_by_annual[:3]):
-            emoji = ["ðŸ¥‡", "ðŸ¥ˆ", "ðŸ¥‰"][i]
+            emoji = ["Ã°Å¸Â¥â€¡", "Ã°Å¸Â¥Ë†", "Ã°Å¸Â¥â€°"][i]
             st.markdown(f"{emoji} {vehicle['vehicle_name']}: ${vehicle['fixed_annual_cost']:,.0f}")
     
     with col3:
@@ -468,7 +468,7 @@ def display_cost_comparison_table(comparison_results: Dict[str, Any]):
             sorted_by_income = sorted(vehicles_with_income, 
                                     key=lambda x: x.get('raw_results', {}).get('affordability', {}).get('percentage_of_income', 100))
             for i, vehicle in enumerate(sorted_by_income[:3]):
-                emoji = ["ðŸ¥‡", "ðŸ¥ˆ", "ðŸ¥‰"][i]
+                emoji = ["Ã°Å¸Â¥â€¡", "Ã°Å¸Â¥Ë†", "Ã°Å¸Â¥â€°"][i]
                 income_pct = vehicle.get('raw_results', {}).get('affordability', {}).get('percentage_of_income', 0)
                 st.markdown(f"{emoji} {vehicle['vehicle_name']}: {income_pct:.1f}%")
         else:
@@ -477,7 +477,7 @@ def display_cost_comparison_table(comparison_results: Dict[str, Any]):
 def display_comparison_visualizations(comparison_results: Dict[str, Any]):
     """Display comparison charts and visualizations - using line graphs with overlaid data points"""
     
-    st.subheader("ðŸ“ˆ Visual Analysis")
+    st.subheader("Ã°Å¸â€œË† Visual Analysis")
     
     vehicles = comparison_results.get('vehicles', [])
     if not vehicles:
@@ -635,7 +635,7 @@ def display_comparison_visualizations(comparison_results: Dict[str, Any]):
 def display_recommendations_detailed(recommendations: Dict[str, Any]):
     """Display detailed recommendations for each vehicle"""
     
-    st.subheader("ðŸŽ¯ Detailed Recommendations")
+    st.subheader("Ã°Å¸Å½Â¯ Detailed Recommendations")
     
     vehicle_recommendations = recommendations.get('vehicle_recommendations', {})
     
@@ -645,37 +645,37 @@ def display_recommendations_detailed(recommendations: Dict[str, Any]):
     
     # Display recommendations for each vehicle
     for vehicle_name, vehicle_rec in vehicle_recommendations.items():
-        with st.expander(f"ðŸ“ {vehicle_name}"):
+        with st.expander(f"Ã°Å¸â€œÂ {vehicle_name}"):
             
             col1, col2 = st.columns(2)
             
             with col1:
-                st.markdown("**âœ… Pros:**")
+                st.markdown("**Ã¢Å“â€¦ Pros:**")
                 pros = vehicle_rec.get('pros', [])
                 for pro in pros:
-                    st.markdown(f"â€¢ {pro}")
+                    st.markdown(f"Ã¢â‚¬Â¢ {pro}")
             
             with col2:
-                st.markdown("**âš ï¸ Cons:**")
+                st.markdown("**Ã¢Å¡Â Ã¯Â¸Â Cons:**")
                 cons = vehicle_rec.get('cons', [])
                 for con in cons:
-                    st.markdown(f"â€¢ {con}")
+                    st.markdown(f"Ã¢â‚¬Â¢ {con}")
             
             # Best use case
             best_use_case = vehicle_rec.get('best_use_case', '')
             if best_use_case:
-                st.markdown(f"**ðŸŽ¯ Best For:** {best_use_case}")
+                st.markdown(f"**Ã°Å¸Å½Â¯ Best For:** {best_use_case}")
             
             # Overall recommendation
             overall_rec = vehicle_rec.get('overall_recommendation', '')
             if overall_rec:
-                st.markdown(f"**ðŸ’¡ Recommendation:** {overall_rec}")
+                st.markdown(f"**Ã°Å¸â€™Â¡ Recommendation:** {overall_rec}")
 
 def export_comparison_report(comparison_results: Dict[str, Any], 
                            recommendations: Dict[str, Any]):
     """Export detailed comparison report"""
     
-    st.subheader("ðŸ“„ Export Report")
+    st.subheader("Ã°Å¸â€œâ€ž Export Report")
     
     vehicles = comparison_results.get('vehicles', [])
     if not vehicles:
@@ -703,7 +703,7 @@ def export_comparison_report(comparison_results: Dict[str, Any],
         if analysis_years > 0 and annual_cost > total_cost * 0.8:
             annual_cost = total_cost / analysis_years
         
-        report_content += f"""### ðŸ† Best Overall Choice
+        report_content += f"""### Ã°Å¸Ââ€  Best Overall Choice
 **{best_overall['vehicle_name']}** ({best_overall['transaction_type']})
 - Annual Cost: ${annual_cost:,.0f}
 - Total Cost: ${total_cost:,.0f}
@@ -749,10 +749,10 @@ def export_comparison_report(comparison_results: Dict[str, Any],
     
     # Create download button
     st.download_button(
-        label="ðŸ“„ Download Comparison Report",
+        label="Ã°Å¸â€œâ€ž Download Comparison Report",
         data=report_content,
         file_name=f"Vehicle_Comparison_Report_{pd.Timestamp.now().strftime('%Y%m%d_%H%M')}.md",
         mime="text/markdown"
     )
     
-    st.success("âœ… Comparison report prepared for download!")
+    st.success("Ã¢Å“â€¦ Comparison report prepared for download!")

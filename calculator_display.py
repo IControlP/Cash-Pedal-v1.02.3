@@ -75,7 +75,7 @@ def display_fuel_cost_estimate(mpg_data: Dict[str, Any], annual_mileage: int, fu
     monthly_cost = annual_cost / 12
     cost_per_mile = annual_cost / annual_mileage if annual_mileage > 0 else 0
     
-    st.markdown("#### ðŸ’° Estimated Fuel Costs")
+    st.markdown("#### � Estimated Fuel Costs")
     
     col1, col2, col3 = st.columns(3)
     
@@ -122,10 +122,10 @@ def display_fuel_cost_estimate(mpg_data: Dict[str, Any], annual_mileage: int, fu
         adjustment_text = ""
         if driving_style != 'normal' or terrain != 'flat':
             adjustment_pct = (combined_multiplier - 1.0) * 100
-            adjustment_text = f" â€¢ {adjustment_pct:+.0f}% for {driving_style} driving on {terrain} terrain"
+            adjustment_text = f" � {adjustment_pct:+.0f}% for {driving_style} driving on {terrain} terrain"
         
-        st.info(f"âš¡ **Electric Vehicle**: {mpge} MPGe base â†’ {adjusted_mpge:.0f} MPGe adjusted â€¢ "
-                f"{kwh_per_100mi:.1f} kWh/100mi â€¢ ${electricity_rate:.3f}/kWh base rate â€¢ "
+        st.info(f"� **Electric Vehicle**: {mpge} MPGe base � {adjusted_mpge:.0f} MPGe adjusted � "
+                f"{kwh_per_100mi:.1f} kWh/100mi � ${electricity_rate:.3f}/kWh base rate � "
                 f"{charging_label}{adjustment_text}")
     else:
         combined_mpg = mpg_data.get('combined', 25)
@@ -136,10 +136,10 @@ def display_fuel_cost_estimate(mpg_data: Dict[str, Any], annual_mileage: int, fu
         adjustment_text = ""
         if driving_style != 'normal' or terrain != 'flat':
             adjustment_pct = (combined_multiplier - 1.0) * 100
-            adjustment_text = f" â€¢ {adjustment_pct:+.0f}% for {driving_style} driving on {terrain} terrain"
+            adjustment_text = f" � {adjustment_pct:+.0f}% for {driving_style} driving on {terrain} terrain"
         
-        st.info(f"â›½ **Gasoline Vehicle**: {combined_mpg} MPG base â†’ {adjusted_mpg:.1f} MPG adjusted â€¢ "
-                f"{annual_gallons:.0f} gallons/year â€¢ ${fuel_price:.2f}/gallon{adjustment_text}")
+        st.info(f"� **Gasoline Vehicle**: {combined_mpg} MPG base � {adjusted_mpg:.1f} MPG adjusted � "
+                f"{annual_gallons:.0f} gallons/year � ${fuel_price:.2f}/gallon{adjustment_text}")
     
     return {
         'annual_cost': annual_cost,
@@ -312,16 +312,16 @@ def display_charging_preference_form(electricity_rate: float = None, state: str 
         state: State for auto-detecting electricity rate
     """
     
-    st.subheader("ðŸ”Œ EV Charging Preferences")
+    st.subheader("� EV Charging Preferences")
     
     # Get base electricity rate if not provided
     if electricity_rate is None:
         electricity_rate = get_electricity_rate_from_location(None, state) if state else 0.12
     
     charging_options = {
-        'home_primary': 'ðŸ  Home Primary (80% home, 15% workplace, 5% public)',
-        'mixed': 'âš¡ Mixed Charging (60% home, 20% workplace, 20% public)', 
-        'public_heavy': 'ðŸ¢ Public Heavy (40% home, 10% workplace, 50% public)'
+        'home_primary': '��� Home Primary (80% home, 15% workplace, 5% public)',
+        'mixed': '� Mixed Charging (60% home, 20% workplace, 20% public)', 
+        'public_heavy': '��� Public Heavy (40% home, 10% workplace, 50% public)'
     }
     
     col1, col2 = st.columns(2)
@@ -339,7 +339,7 @@ def display_charging_preference_form(electricity_rate: float = None, state: str 
         # Calculate blended rate for selected preference
         blended_info = calculate_blended_electricity_rate(electricity_rate, charging_preference)
         
-        st.info("**ðŸ’° Blended Utility Rate:**")
+        st.info("**� Blended Utility Rate:**")
         st.metric(
             "Weighted Avg Rate", 
             f"${blended_info['blended_rate']:.3f}/kWh",
@@ -348,7 +348,7 @@ def display_charging_preference_form(electricity_rate: float = None, state: str 
         st.caption(f"Base home rate: ${electricity_rate:.3f}/kWh")
     
     # Show detailed breakdown in expander
-    with st.expander("ðŸ“Š See Detailed Rate Breakdown"):
+    with st.expander("� See Detailed Rate Breakdown"):
         st.markdown("**Charging Mix & Effective Rates:**")
         
         breakdown_data = []
@@ -368,17 +368,17 @@ def display_charging_preference_form(electricity_rate: float = None, state: str 
         st.dataframe(df, use_container_width=True, hide_index=True)
         
         st.markdown("---")
-        st.markdown("**ðŸ’¡ Rate Explanation:**")
-        st.write(f"â€¢ **Home:** ${electricity_rate:.3f}/kWh (your residential rate)")
-        st.write(f"â€¢ **Workplace:** ${electricity_rate * 0.5:.3f}/kWh (typically subsidized)")
-        st.write(f"â€¢ **Public Level 2:** ${electricity_rate * 1.5:.3f}/kWh (~50% premium)")
-        st.write(f"â€¢ **DC Fast Charging:** ${electricity_rate * 2.5:.3f}/kWh (~150% premium)")
+        st.markdown("**� Rate Explanation:**")
+        st.write(f"� **Home:** ${electricity_rate:.3f}/kWh (your residential rate)")
+        st.write(f"� **Workplace:** ${electricity_rate * 0.5:.3f}/kWh (typically subsidized)")
+        st.write(f"� **Public Level 2:** ${electricity_rate * 1.5:.3f}/kWh (~50% premium)")
+        st.write(f"� **DC Fast Charging:** ${electricity_rate * 2.5:.3f}/kWh (~150% premium)")
         
-        st.info(f"ðŸŽ¯ **Your Blended Rate:** ${blended_info['blended_rate']:.3f}/kWh reflects the weighted average across all charging locations you'll use.")
+        st.info(f"� **Your Blended Rate:** ${blended_info['blended_rate']:.3f}/kWh reflects the weighted average across all charging locations you'll use.")
     
     # Show estimated monthly costs with blended rate
     st.markdown("---")
-    st.markdown("**ðŸ“ˆ Estimated Monthly Energy Costs:**")
+    st.markdown("**� Estimated Monthly Energy Costs:**")
     
     col1, col2, col3 = st.columns(3)
     
@@ -403,25 +403,25 @@ def display_charging_preference_form(electricity_rate: float = None, state: str 
         cost = monthly_costs['home_primary']
         is_selected = charging_preference == 'home_primary'
         if is_selected:
-            st.success(f"**ðŸ  Home Primary**\n\n${cost:.0f}/month")
+            st.success(f"**��� Home Primary**\n\n${cost:.0f}/month")
         else:
-            st.metric("ðŸ  Home Primary", f"${cost:.0f}/mo")
+            st.metric("��� Home Primary", f"${cost:.0f}/mo")
     
     with col2:
         cost = monthly_costs['mixed']
         is_selected = charging_preference == 'mixed'
         if is_selected:
-            st.success(f"**âš¡ Mixed**\n\n${cost:.0f}/month")
+            st.success(f"**� Mixed**\n\n${cost:.0f}/month")
         else:
-            st.metric("âš¡ Mixed", f"${cost:.0f}/mo")
+            st.metric("� Mixed", f"${cost:.0f}/mo")
     
     with col3:
         cost = monthly_costs['public_heavy']
         is_selected = charging_preference == 'public_heavy'
         if is_selected:
-            st.success(f"**ðŸ¢ Public Heavy**\n\n${cost:.0f}/month")
+            st.success(f"**��� Public Heavy**\n\n${cost:.0f}/month")
         else:
-            st.metric("ðŸ¢ Public Heavy", f"${cost:.0f}/mo")
+            st.metric("��� Public Heavy", f"${cost:.0f}/mo")
     
     st.caption("*Estimate based on average EV efficiency (32 kWh/100mi, 12,000 miles/year). Actual costs calculated using your specific vehicle's efficiency.")
     
@@ -439,17 +439,17 @@ def display_location_energy_info(zip_code: str = None, state: str = None, make: 
     
     location_str = ""
     if zip_code and state:
-        location_str = f"ðŸ—ºï¸ Location: {zip_code}, {state}"
+        location_str = f"�️ Location: {zip_code}, {state}"
     elif state:
-        location_str = f"ðŸ—ºï¸ State: {state}"
+        location_str = f"�️ State: {state}"
     
     if is_electric:
         electricity_rate = get_electricity_rate_from_location(zip_code, state)
-        st.info(f"{location_str} | ðŸ”Œ Electricity Rate: ${electricity_rate:.3f}/kWh | âš¡ Electric Vehicle")
+        st.info(f"{location_str} | � Electricity Rate: ${electricity_rate:.3f}/kWh | � Electric Vehicle")
         
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("Energy Type", "âš¡ Electric")
+            st.metric("Energy Type", "� Electric")
         with col2:
             st.metric("Electricity Rate", f"${electricity_rate:.3f}/kWh")
         with col3:
@@ -458,16 +458,16 @@ def display_location_energy_info(zip_code: str = None, state: str = None, make: 
             
     elif energy_type == 'hybrid':
         fuel_price = get_fuel_price_from_location(zip_code, state)
-        st.info(f"{location_str} | â›½ Fuel Price: ${fuel_price:.2f}/gallon | ðŸ”‹ Hybrid Vehicle")
+        st.info(f"{location_str} | � Fuel Price: ${fuel_price:.2f}/gallon | � Hybrid Vehicle")
         
     else:
         fuel_price = get_fuel_price_from_location(zip_code, state)
-        st.info(f"{location_str} | â›½ Fuel Price: ${fuel_price:.2f}/gallon | ðŸš— Gasoline Vehicle")
+        st.info(f"{location_str} | � Fuel Price: ${fuel_price:.2f}/gallon | � Gasoline Vehicle")
 
 def display_maintenance_schedule_tab(results: Dict[str, Any], vehicle_data: Dict[str, Any]):
     """Display detailed maintenance schedule and activities for each year (from calculator_display_10AUG.py)"""
     
-    st.subheader("ðŸ”§ Detailed Maintenance Schedule")
+    st.subheader("� Detailed Maintenance Schedule")
     
     maintenance_schedule = results.get('maintenance_schedule', [])
     annual_breakdown = results.get('annual_breakdown', [])
@@ -498,7 +498,7 @@ def display_maintenance_schedule_tab(results: Dict[str, Any], vehicle_data: Dict
     st.markdown("---")
     
     # Detailed year-by-year breakdown
-    st.markdown("#### ðŸ“… Year-by-Year Maintenance Activities")
+    st.markdown("#### � Year-by-Year Maintenance Activities")
     
     for year_data in maintenance_schedule:
         year_num = year_data['year']
@@ -519,7 +519,7 @@ def display_maintenance_schedule_tab(results: Dict[str, Any], vehicle_data: Dict
             
             # Display scheduled maintenance
             if scheduled_services:
-                st.markdown("**ðŸ”§ Scheduled Maintenance:**")
+                st.markdown("**� Scheduled Maintenance:**")
                 
                 # Create a nice table for scheduled services
                 service_data = []
@@ -538,12 +538,12 @@ def display_maintenance_schedule_tab(results: Dict[str, Any], vehicle_data: Dict
             
             # Display wear and tear items
             if wear_services:
-                st.markdown("**âš™ï¸ Wear & Tear / Repairs:**")
+                st.markdown("**�️ Wear & Tear / Repairs:**")
                 
                 for service in wear_services:
                     col1, col2 = st.columns([3, 1])
                     with col1:
-                        st.write(f"â€¢ {service['service']}")
+                        st.write(f"� {service['service']}")
                     with col2:
                         st.write(f"${service['total_cost']:,.0f}")
             
@@ -552,7 +552,7 @@ def display_maintenance_schedule_tab(results: Dict[str, Any], vehicle_data: Dict
             wear_total = sum(s['total_cost'] for s in wear_services)
             
             if scheduled_total > 0 or wear_total > 0:
-                st.markdown("**ðŸ’° Year Summary:**")
+                st.markdown("**� Year Summary:**")
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
@@ -567,51 +567,51 @@ def display_maintenance_schedule_tab(results: Dict[str, Any], vehicle_data: Dict
                 warranty_discount = year_data.get('warranty_discount', 0)
                 if warranty_discount > 0:
                     warranty_savings = scheduled_total / (1 - warranty_discount) * warranty_discount
-                    st.success(f"ðŸ›¡ï¸ Warranty Coverage: ${warranty_savings:,.0f} covered ({warranty_discount*100:.0f}%)")
+                    st.success(f"�️ Warranty Coverage: ${warranty_savings:,.0f} covered ({warranty_discount*100:.0f}%)")
     
     # Maintenance insights and recommendations
     st.markdown("---")
-    st.markdown("#### ðŸ’¡ Maintenance Insights")
+    st.markdown("#### � Maintenance Insights")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("**ðŸ“Š Cost Analysis:**")
+        st.markdown("**� Cost Analysis:**")
         
         # Peak years analysis
         peak_year = max(maintenance_schedule, key=lambda x: x['total_year_cost'])
         low_year = min(maintenance_schedule, key=lambda x: x['total_year_cost'])
         
-        st.write(f"â€¢ **Highest cost year:** Year {peak_year['year']} (${peak_year['total_year_cost']:,.0f})")
-        st.write(f"â€¢ **Lowest cost year:** Year {low_year['year']} (${low_year['total_year_cost']:,.0f})")
+        st.write(f"� **Highest cost year:** Year {peak_year['year']} (${peak_year['total_year_cost']:,.0f})")
+        st.write(f"� **Lowest cost year:** Year {low_year['year']} (${low_year['total_year_cost']:,.0f})")
         
         # Calculate cost trend
         first_half_avg = sum(y['total_year_cost'] for y in maintenance_schedule[:len(maintenance_schedule)//2]) / (len(maintenance_schedule)//2)
         second_half_avg = sum(y['total_year_cost'] for y in maintenance_schedule[len(maintenance_schedule)//2:]) / (len(maintenance_schedule) - len(maintenance_schedule)//2)
         
         if second_half_avg > first_half_avg * 1.2:
-            st.write("â€¢ **Trend:** Costs increase significantly in later years")
+            st.write("� **Trend:** Costs increase significantly in later years")
         elif second_half_avg < first_half_avg * 0.8:
-            st.write("â€¢ **Trend:** Costs decrease in later years (unusual)")
+            st.write("� **Trend:** Costs decrease in later years (unusual)")
         else:
-            st.write("â€¢ **Trend:** Costs remain relatively stable over time")
+            st.write("� **Trend:** Costs remain relatively stable over time")
     
     with col2:
-        st.markdown("**ðŸ’° Cost Optimization Tips:**")
+        st.markdown("**� Cost Optimization Tips:**")
         
         shop_type = vehicle_data.get('shop_type', 'independent')
         if shop_type == 'dealership':
-            st.write("â€¢ Consider independent shops for routine maintenance to save 15-20%")
+            st.write("� Consider independent shops for routine maintenance to save 15-20%")
         elif shop_type == 'independent':
-            st.write("â€¢ You're already optimizing costs with independent shops")
+            st.write("� You're already optimizing costs with independent shops")
         
-        st.write("â€¢ Follow manufacturer's maintenance schedule to prevent major repairs")
-        st.write("â€¢ Keep detailed maintenance records for warranty and resale value")
+        st.write("� Follow manufacturer's maintenance schedule to prevent major repairs")
+        st.write("� Keep detailed maintenance records for warranty and resale value")
         
         if vehicle_data.get('transaction_type', '').lower() == 'lease':
-            st.write("â€¢ For leases, use dealership service to maintain warranty coverage")
+            st.write("� For leases, use dealership service to maintain warranty coverage")
         else:
-            st.write("â€¢ Regular maintenance can extend vehicle life beyond analysis period")
+            st.write("� Regular maintenance can extend vehicle life beyond analysis period")
 
 def display_calculator():
     """
@@ -619,16 +619,16 @@ def display_calculator():
     Single vehicle TCO analysis with EV support
     """
     
-    st.header("ðŸ”§ Single Vehicle Analysis")
+    st.header("� Single Vehicle Analysis")
     
     # Feature highlights
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.info("ðŸ—ºï¸ **ZIP Code Pricing**\nAuto-detects fuel/electricity rates")
+        st.info("�️ **ZIP Code Pricing**\nAuto-detects fuel/electricity rates")
     with col2:
-        st.info("âš¡ **EV Support**\nCharging style selection")
+        st.info("� **EV Support**\nCharging style selection")
     with col3:
-        st.info("ðŸ”§ **All Forms Visible**\nComplete in any order")
+        st.info("� **All Forms Visible**\nComplete in any order")
     
     st.markdown("---")
     
@@ -643,8 +643,8 @@ def display_calculator():
         col1, col2, col3 = st.columns([1, 2, 1])
         
         with col2:
-            if st.button("ðŸš€ Calculate Total Cost of Ownership", type="primary", use_container_width=True):
-                with st.spinner("ðŸ”„ Calculating comprehensive TCO analysis..."):
+            if st.button("� Calculate Total Cost of Ownership", type="primary", use_container_width=True):
+                with st.spinner("� Calculating comprehensive TCO analysis..."):
                     try:
                         # Initialize prediction service
                         from prediction_service import PredictionService
@@ -658,26 +658,26 @@ def display_calculator():
                         st.session_state.current_vehicle = all_data
                         st.session_state.calculation_complete = True
                         
-                        st.success("âœ… Calculation complete! Results displayed below.")
+                        st.success("� Calculation complete! Results displayed below.")
                         st.rerun()
                         
                     except Exception as e:
-                        st.error(f"âŒ Calculation failed: {str(e)}")
+                        st.error(f"� Calculation failed: {str(e)}")
                         st.error("Please check your inputs and try again.")
                         import traceback
                         st.error(traceback.format_exc())
           
-        # âœ… ONLY SHOW "Add to Comparison" AFTER CALCULATION IS COMPLETE
+        # � ONLY SHOW "Add to Comparison" AFTER CALCULATION IS COMPLETE
         if st.session_state.get('calculation_complete', False):
             st.markdown("---")
             
             col1, col2, col3 = st.columns([1, 2, 1])
             
             with col2:
-                st.markdown("### ðŸ“Š Multi-Vehicle Comparison")
+                st.markdown("### � Multi-Vehicle Comparison")
                 st.write("Compare this vehicle with others to make the best decision")
                 
-                if st.button("âž• Add to Comparison", type="secondary", use_container_width=True, key="add_to_comparison_main"):
+                if st.button("� Add to Comparison", type="secondary", use_container_width=True, key="add_to_comparison_main"):
                     try:
                         # Initialize comparison list if needed
                         if 'comparison_vehicles' not in st.session_state:
@@ -706,7 +706,7 @@ def display_calculator():
                             # Check maximum limit
                             max_vehicles = 5
                             if len(st.session_state.comparison_vehicles) >= max_vehicles:
-                                st.error(f"âŒ Maximum of {max_vehicles} vehicles allowed in comparison.")
+                                st.error(f"� Maximum of {max_vehicles} vehicles allowed in comparison.")
                             else:
                                 # Add vehicle to comparison (with results)
                                 vehicle_entry = {
@@ -717,23 +717,23 @@ def display_calculator():
                                 st.session_state.comparison_vehicles.append(vehicle_entry)
                                 vehicle_count = len(st.session_state.comparison_vehicles)
                                 
-                                st.success(f"âœ… Added {year} {make} {model} {trim} to comparison!")
+                                st.success(f"� Added {year} {make} {model} {trim} to comparison!")
                                 st.balloons()
-                                st.info(f"ðŸ“Š Comparison list now has {vehicle_count} vehicle(s). Go to 'Multi-Vehicle Comparison' to compare.")
+                                st.info(f"� Comparison list now has {vehicle_count} vehicle(s). Go to 'Multi-Vehicle Comparison' to compare.")
                                 
                                 # Show quick link to comparison
-                                st.markdown("ðŸ‘‰ **Go to Multi-Vehicle Comparison in the sidebar to see your comparison**")
+                                st.markdown("� **Go to Multi-Vehicle Comparison in the sidebar to see your comparison**")
                         else:
-                            st.warning("âš ï¸ This exact vehicle configuration is already in your comparison list!")
+                            st.warning("�️ This exact vehicle configuration is already in your comparison list!")
                             
                     except Exception as e:
-                        st.error(f"âŒ Error adding to comparison: {str(e)}")
+                        st.error(f"� Error adding to comparison: {str(e)}")
                         import traceback
                         st.error(traceback.format_exc())
         
         else:
-            st.warning(f"âš ï¸ {validation_message}")
-            st.info("ðŸ’¡ Please complete all required fields above to proceed with calculation")
+            st.warning(f"�️ {validation_message}")
+            st.info("� Please complete all required fields above to proceed with calculation")
     
     # Display results if calculation is complete (uses existing function)
     if st.session_state.get('calculation_complete', False) and 'current_results' in st.session_state:
@@ -746,14 +746,14 @@ def display_calculator():
 def display_enhanced_basic_calculator():
     """Enhanced calculator with simplified form but missing some advanced services"""
     
-    st.subheader("ðŸš— Vehicle Cost Calculator")
-    st.warning("âš ï¸ Some advanced services unavailable - using simplified calculator. Install dependencies for advanced analysis.")
+    st.subheader("� Vehicle Cost Calculator")
+    st.warning("�️ Some advanced services unavailable - using simplified calculator. Install dependencies for advanced analysis.")
     
     # Enhanced form with all features
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("**ðŸš— Vehicle Information**")
+        st.markdown("**� Vehicle Information**")
         make = st.selectbox("Make:", ["Tesla", "Toyota", "Honda", "Chevrolet", "Ford", "Hyundai", "BMW", "Nissan"])
         model = st.text_input("Model:", value="Model 3" if make == "Tesla" else "Camry")
         year = st.number_input("Year:", min_value=2015, max_value=2025, value=2024)
@@ -764,7 +764,7 @@ def display_enhanced_basic_calculator():
         is_electric = detect_electric_vehicle(make, model)
         
         if is_electric:
-            st.success(f"âš¡ Electric Vehicle Detected: {make} {model}")
+            st.success(f"� Electric Vehicle Detected: {make} {model}")
             price = st.number_input("Purchase Price ($):", min_value=20000, max_value=200000, value=45000, step=1000)
         else:
             price = st.number_input("Purchase Price ($):", min_value=10000, max_value=200000, value=30000, step=1000)
@@ -778,7 +778,7 @@ def display_enhanced_basic_calculator():
                 pass
     
     with col2:
-        st.markdown("**ðŸ“ Location & Usage**")
+        st.markdown("**�� Location & Usage**")
         zip_code = st.text_input("ZIP Code (5 digits):", value="90210", help="Auto-populates fuel/electricity pricing")
         
         if zip_code and len(zip_code) == 5 and zip_code.isdigit():
@@ -805,7 +805,7 @@ def display_enhanced_basic_calculator():
         charging_data = display_charging_preference_form(electricity_rate, state)
     
     # Calculate button
-    if st.button("ðŸš€ Calculate Enhanced TCO", type="primary", use_container_width=True):
+    if st.button("� Calculate Enhanced TCO", type="primary", use_container_width=True):
         
         if is_electric:
             electricity_rate = get_electricity_rate_from_location(zip_code, state)
@@ -878,7 +878,7 @@ def calculate_enhanced_tco(make: str, model: str, year: int, price: float, annua
      
     except Exception as e:
         # Enhanced error handling 
-        st.error(f"âŒ Calculation failed: {str(e)}")
+        st.error(f"� Calculation failed: {str(e)}")
         st.error("Please check your inputs and try again.")
         
         # Return basic fallback result
@@ -892,8 +892,8 @@ def calculate_enhanced_tco(make: str, model: str, year: int, price: float, annua
 def display_full_featured_calculator():
     """Full calculator with all services available"""
     
-    st.subheader("ðŸš— Advanced Vehicle Calculator")
-    st.success("âœ… All services available - full functionality enabled")
+    st.subheader("� Advanced Vehicle Calculator")
+    st.success("� All services available - full functionality enabled")
     
     # Create two columns: form and results
     col1, col2 = st.columns([1.2, 0.8])
@@ -911,7 +911,7 @@ def display_full_featured_calculator():
             form_data.update(charging_data)
         
         if not is_valid:
-            st.warning(f"âš ï¸ {message}")
+            st.warning(f"�️ {message}")
             return
         
         # Enhanced location display with reactive fuel pricing
@@ -924,23 +924,23 @@ def display_full_featured_calculator():
         # Show current fuel pricing based on selections
         if make and model and state:
             st.markdown("---")
-            st.subheader("ðŸ“ Current Pricing Information")
+            st.subheader("�� Current Pricing Information")
             
             vehicle_is_electric = detect_electric_vehicle(make, model)
             
             if vehicle_is_electric:
                 electricity_rate = get_electricity_rate_from_location(zip_code, state)
-                st.info(f"âš¡ **Electric Vehicle**: {make} {model} - Electricity: ${electricity_rate:.3f}/kWh")
+                st.info(f"� **Electric Vehicle**: {make} {model} - Electricity: ${electricity_rate:.3f}/kWh")
             else:
                 fuel_price = get_fuel_price_from_location(zip_code, state)
-                st.info(f"â›½ **Gas Vehicle**: {make} {model} - Fuel: ${fuel_price:.2f}/gal")
+                st.info(f"� **Gas Vehicle**: {make} {model} - Fuel: ${fuel_price:.2f}/gal")
         
         st.markdown("---")
         
         # Calculate button
-        if st.button("ðŸ§® Calculate Enhanced TCO", type="primary", use_container_width=True):
+        if st.button("� Calculate Enhanced TCO", type="primary", use_container_width=True):
             try:
-                with st.spinner('ðŸ”„ Calculating comprehensive TCO analysis...'):
+                with st.spinner('� Calculating comprehensive TCO analysis...'):
                     prediction_service = PredictionService()
                     results = prediction_service.calculate_total_cost_of_ownership(form_data)
                     
@@ -949,26 +949,26 @@ def display_full_featured_calculator():
                     st.session_state.current_vehicle = form_data
                     st.session_state.calculation_complete = True
                     
-                    st.success("âœ… Calculation Complete! Results displayed below.")
+                    st.success("� Calculation Complete! Results displayed below.")
                     st.rerun()
                     
             except Exception as e:
-                st.error(f"âŒ Calculation failed: {str(e)}")
+                st.error(f"� Calculation failed: {str(e)}")
                 st.error("Please check your inputs and try again.")
         
 
         
-        # âœ… ONLY SHOW "Add to Comparison" AFTER CALCULATION IS COMPLETE
+        # � ONLY SHOW "Add to Comparison" AFTER CALCULATION IS COMPLETE
         if st.session_state.get('calculation_complete', False):
             st.markdown("---")
             
             col1, col2, col3 = st.columns([1, 2, 1])
             
             with col2:
-                st.markdown("### ðŸ“Š Multi-Vehicle Comparison")
+                st.markdown("### � Multi-Vehicle Comparison")
                 st.write("Compare this vehicle with others to make the best decision")
                 
-                if st.button("âž• Add to Comparison", type="secondary", use_container_width=True, key="add_to_comparison_main"):
+                if st.button("� Add to Comparison", type="secondary", use_container_width=True, key="add_to_comparison_main"):
                     try:
                         # Initialize comparison list if needed
                         if 'comparison_vehicles' not in st.session_state:
@@ -997,7 +997,7 @@ def display_full_featured_calculator():
                             # Check maximum limit
                             max_vehicles = 5
                             if len(st.session_state.comparison_vehicles) >= max_vehicles:
-                                st.error(f"âŒ Maximum of {max_vehicles} vehicles allowed in comparison.")
+                                st.error(f"� Maximum of {max_vehicles} vehicles allowed in comparison.")
                             else:
                                 # Add vehicle to comparison (with results)
                                 vehicle_entry = {
@@ -1008,24 +1008,24 @@ def display_full_featured_calculator():
                                 st.session_state.comparison_vehicles.append(vehicle_entry)
                                 vehicle_count = len(st.session_state.comparison_vehicles)
                                 
-                                st.success(f"âœ… Added {year} {make} {model} {trim} to comparison!")
+                                st.success(f"� Added {year} {make} {model} {trim} to comparison!")
                                 st.balloons()
-                                st.info(f"ðŸ“Š Comparison list now has {vehicle_count} vehicle(s). Go to 'Multi-Vehicle Comparison' to compare.")
+                                st.info(f"� Comparison list now has {vehicle_count} vehicle(s). Go to 'Multi-Vehicle Comparison' to compare.")
                                 
                                 # Show quick link to comparison
-                                st.markdown("ðŸ‘‰ **Go to Multi-Vehicle Comparison in the sidebar to see your comparison**")
+                                st.markdown("� **Go to Multi-Vehicle Comparison in the sidebar to see your comparison**")
                         else:
-                            st.warning("âš ï¸ This exact vehicle configuration is already in your comparison list!")
+                            st.warning("�️ This exact vehicle configuration is already in your comparison list!")
                             
                     except Exception as e:
-                        st.error(f"âŒ Error adding to comparison: {str(e)}")
+                        st.error(f"� Error adding to comparison: {str(e)}")
                         import traceback
                         st.error(traceback.format_exc())
         
     with col2:
         # Display enhanced quick summary if available
         if st.session_state.get('calculation_complete', False):
-            st.subheader("ðŸ“Š Quick Summary")
+            st.subheader("� Quick Summary")
             
             results = st.session_state.current_results
             vehicle_data = st.session_state.current_vehicle
@@ -1036,7 +1036,7 @@ def display_full_featured_calculator():
             year = vehicle_data.get('year', '')
             
             is_electric = detect_electric_vehicle(make, model)
-            energy_icon = "âš¡" if is_electric else "â›½"
+            energy_icon = "�" if is_electric else "�"
             
             st.markdown(f"**{year} {make} {model} {energy_icon}**")
             
@@ -1050,7 +1050,7 @@ def display_full_featured_calculator():
             
             # REMOVED: The duplicate "Add to Comparison" button that was here
         else:
-            st.info("ðŸ‘ˆ Complete the form and click 'Calculate Enhanced TCO' to see results")
+            st.info("� Complete the form and click 'Calculate Enhanced TCO' to see results")
     
     # Display detailed results if calculation is complete
     if st.session_state.get('calculation_complete', False):
@@ -1066,7 +1066,7 @@ def display_quick_summary():
     results = st.session_state.current_results
     vehicle_data = st.session_state.current_vehicle
     
-    st.subheader("ðŸ“Š Quick Summary")
+    st.subheader("� Quick Summary")
     
     # Vehicle info
     make = vehicle_data.get('make', '')
@@ -1074,7 +1074,7 @@ def display_quick_summary():
     year = vehicle_data.get('year', '')
     
     is_electric = detect_electric_vehicle(make, model)
-    energy_icon = "âš¡" if is_electric else "â›½"
+    energy_icon = "�" if is_electric else "�"
     
     st.markdown(f"**{year} {make} {model} {energy_icon}**")
     
@@ -1103,11 +1103,11 @@ def display_detailed_results_with_maintenance():
     
     # Tabs for organized display - NOW INCLUDING DETAILED MAINTENANCE
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "ðŸ“Š Summary", 
-        "ðŸ”§ Detailed Maintenance",  # Enhanced maintenance tab
-        "ðŸ“ˆ Visualizations", 
-        "ðŸ’° Cost Breakdown",
-        "ðŸŽ¯ Recommendations"
+        "� Summary", 
+        "� Detailed Maintenance",  # Enhanced maintenance tab
+        "� Visualizations", 
+        "� Cost Breakdown",
+        "� Recommendations"
     ])
     
     with tab1:
@@ -1129,7 +1129,7 @@ def display_detailed_results_with_maintenance():
 def display_summary_tab(results: Dict[str, Any], vehicle_data: Dict[str, Any]):
     """Display summary information"""
     
-    st.subheader("ðŸ“Š Cost Summary")
+    st.subheader("� Cost Summary")
     
     # Summary metrics based on transaction type
     if vehicle_data.get('transaction_type') == 'Purchase':
@@ -1196,7 +1196,7 @@ def display_summary_tab(results: Dict[str, Any], vehicle_data: Dict[str, Any]):
 def display_visualizations(results: Dict[str, Any], vehicle_data: Dict[str, Any]):
     """Display charts and visualizations"""
     
-    st.subheader("ðŸ“Š Cost Visualizations")
+    st.subheader("� Cost Visualizations")
     
     # Annual costs over time
     breakdown_data = results.get('annual_breakdown', [])
@@ -1253,8 +1253,8 @@ def display_visualizations(results: Dict[str, Any], vehicle_data: Dict[str, Any]
 def display_cost_breakdown(results: Dict[str, Any], vehicle_data: Dict[str, Any]):
     """Display detailed cost breakdown - OPERATING COSTS ONLY with 15-year maximum bound"""
     
-    st.subheader("ðŸ’° Annual Operating Cost Breakdown")
-    st.info("ðŸ’¡ **Direct expenses only** - Depreciation tracked separately as opportunity cost")
+    st.subheader("� Annual Operating Cost Breakdown")
+    st.info("� **Direct expenses only** - Depreciation tracked separately as opportunity cost")
     
     annual_breakdown = results.get('annual_breakdown', [])
     
@@ -1348,16 +1348,16 @@ def display_cost_breakdown(results: Dict[str, Any], vehicle_data: Dict[str, Any]
         # Add info about the analysis period
         if current_mileage > 0:
             final_mileage = current_mileage + (annual_mileage * max_years)
-            st.info(f"ðŸ“Š **Used Vehicle Analysis:** Starting at {current_mileage:,} miles, ending at {final_mileage:,} miles over {max_years} years")
+            st.info(f"� **Used Vehicle Analysis:** Starting at {current_mileage:,} miles, ending at {final_mileage:,} miles over {max_years} years")
         else:
             final_mileage = annual_mileage * max_years
-            st.info(f"ðŸ“Š **New Vehicle Analysis:** {final_mileage:,} total miles over {max_years} years")
+            st.info(f"� **New Vehicle Analysis:** {final_mileage:,} total miles over {max_years} years")
         
         # Add depreciation summary separately (only for purchases)
         if vehicle_data.get('transaction_type', 'Purchase') == 'Purchase':
             st.markdown("---")
-            st.subheader("ðŸ“ˆ Depreciation Summary")
-            st.info("ðŸ’¡ **Opportunity cost** - Not a direct annual expense")
+            st.subheader("� Depreciation Summary")
+            st.info("� **Opportunity cost** - Not a direct annual expense")
             
             if bounded_breakdown:
                 total_depreciation = sum(year_data.get('annual_depreciation', year_data.get('depreciation', 0)) for year_data in bounded_breakdown)
@@ -1369,8 +1369,8 @@ def display_cost_breakdown(results: Dict[str, Any], vehicle_data: Dict[str, Any]
 def display_cost_breakdown_clean(results: Dict[str, Any], vehicle_data: Dict[str, Any]):
     """Clean version with built-in bounds and error handling"""
     
-    st.subheader("ðŸ’° Annual Operating Cost Breakdown")
-    st.info("ðŸ’¡ **Direct expenses only** - Depreciation tracked separately as opportunity cost")
+    st.subheader("� Annual Operating Cost Breakdown")
+    st.info("� **Direct expenses only** - Depreciation tracked separately as opportunity cost")
     
     # Get vehicle data with defaults
     current_mileage = vehicle_data.get('current_mileage', 0)
@@ -1451,13 +1451,13 @@ def display_cost_breakdown_clean(results: Dict[str, Any], vehicle_data: Dict[str
     
     # Summary info
     final_mileage = current_mileage + (annual_mileage * bounded_years)
-    st.success(f"âœ… **Analysis Period:** {bounded_years} years | **Mileage:** {current_mileage:,} â†’ {final_mileage:,} miles")
+    st.success(f"� **Analysis Period:** {bounded_years} years | **Mileage:** {current_mileage:,} � {final_mileage:,} miles")
     
     # Depreciation summary for purchases
     if transaction_type == 'Purchase' and annual_breakdown:
         st.markdown("---")
-        st.subheader("ðŸ“ˆ Depreciation Summary")
-        st.info("ðŸ’¡ **Opportunity cost** - Not a direct annual expense")
+        st.subheader("� Depreciation Summary")
+        st.info("� **Opportunity cost** - Not a direct annual expense")
         
         # Only sum depreciation for the bounded period
         bounded_depreciation = sum(
@@ -1470,7 +1470,7 @@ def display_cost_breakdown_clean(results: Dict[str, Any], vehicle_data: Dict[str
 def display_recommendations_tab(results: Dict[str, Any], vehicle_data: Dict[str, Any]):
     """Display recommendations and insights"""
     
-    st.subheader("ðŸŽ¯ Recommendations & Insights")
+    st.subheader("� Recommendations & Insights")
     
     # Affordability assessment
     affordability = results.get('affordability', {})
@@ -1483,10 +1483,10 @@ def display_recommendations_tab(results: Dict[str, Any], vehicle_data: Dict[str,
         
         with col1:
             if is_affordable:
-                st.success(f"âœ… **Budget Friendly**")
+                st.success(f"� **Budget Friendly**")
                 st.write(f"This vehicle represents {income_percentage:.1f}% of your income, which is within recommended guidelines.")
             else:
-                st.warning(f"âš ï¸ **Budget Consideration**")
+                st.warning(f"�️ **Budget Consideration**")
                 st.write(f"This vehicle represents {income_percentage:.1f}% of your income, which may strain your budget.")
         
         with col2:
@@ -1494,43 +1494,43 @@ def display_recommendations_tab(results: Dict[str, Any], vehicle_data: Dict[str,
             st.metric("Monthly Budget Impact", f"${monthly_impact:,.0f}")
     
     # Cost optimization suggestions
-    st.markdown("#### ðŸ’° Cost Optimization Tips")
+    st.markdown("#### � Cost Optimization Tips")
     
     suggestions = []
     
     # Generic suggestions based on transaction type
     if vehicle_data.get('transaction_type') == 'Purchase':
         suggestions.extend([
-            "ðŸ”§ **Maintenance**: Use independent shops for routine maintenance to save 20-30%",
-            "â›½ **Fuel**: Consider fuel-efficient driving techniques to improve MPG by 10-15%",
-            "ðŸ›¡ï¸ **Insurance**: Shop around annually - savings of $200-500 possible",
-            "ðŸ“… **Timing**: Proper maintenance timing can prevent costly repairs"
+            "� **Maintenance**: Use independent shops for routine maintenance to save 20-30%",
+            "� **Fuel**: Consider fuel-efficient driving techniques to improve MPG by 10-15%",
+            "�️ **Insurance**: Shop around annually - savings of $200-500 possible",
+            "� **Timing**: Proper maintenance timing can prevent costly repairs"
         ])
     else:  # Lease
         suggestions.extend([
-            "ðŸ“ **Mileage**: Monitor mileage closely to avoid overage fees",
-            "ðŸ”§ **Maintenance**: Keep all service records for lease return",
-            "ðŸ›¡ï¸ **Protection**: Consider gap insurance for lease coverage",
-            "â° **Early Return**: Understand early termination costs before making changes"
+            "�� **Mileage**: Monitor mileage closely to avoid overage fees",
+            "� **Maintenance**: Keep all service records for lease return",
+            "�️ **Protection**: Consider gap insurance for lease coverage",
+            "⏰ **Early Return**: Understand early termination costs before making changes"
         ])
     
     for suggestion in suggestions:
         st.markdown(suggestion)
     
     # Comparison recommendation
-    st.markdown("#### ðŸ”„ Next Steps")
+    st.markdown("#### � Next Steps")
     
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("**Consider Comparing:**")
-        st.write("â€¢ Similar vehicles from other manufacturers")
-        st.write("â€¢ Different trim levels of the same model")
-        st.write("â€¢ Lease vs purchase for this vehicle")
+        st.write("� Similar vehicles from other manufacturers")
+        st.write("� Different trim levels of the same model")
+        st.write("� Lease vs purchase for this vehicle")
     
     with col2:
         st.markdown("**Before You Decide:**")
-        st.write("â€¢ Test drive the vehicle")
-        st.write("â€¢ Get insurance quotes")
-        st.write("â€¢ Negotiate purchase/lease terms")
-        st.write("â€¢ Consider certified pre-owned options")
+        st.write("� Test drive the vehicle")
+        st.write("� Get insurance quotes")
+        st.write("� Negotiate purchase/lease terms")
+        st.write("� Consider certified pre-owned options")

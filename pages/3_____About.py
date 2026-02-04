@@ -16,7 +16,7 @@ from theme_utils import apply_theme, get_footer_html
 # Page configuration
 st.set_page_config(
     page_title="About - CashPedal",
-    page_icon="ℹ️",
+    page_icon="ℹ",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -30,13 +30,13 @@ def main():
     apply_theme()
     
     # Page header
-    st.title("ℹ️ About CashPedal")
+    st.title("â„¹ï¸ About CashPedal")
     st.markdown("Learn more about how our Vehicle Total Cost of Ownership Calculator works.")
     st.markdown("---")
     
     # Sidebar
     with st.sidebar:
-        st.header("ðŸ“‹ Page Sections")
+        st.header("Ã°Å¸â€œâ€¹ Page Sections")
         st.markdown("""
         - [What is TCO?](#what-is-tco)
         - [Our Methodology](#our-methodology)
@@ -47,16 +47,16 @@ def main():
         
         st.markdown("---")
         
-        st.header("ðŸ”— Quick Links")
-        if st.button("🔧 Calculator"):
+        st.header("Ã°Å¸â€â€” Quick Links")
+        if st.button("ðŸ”§ Calculator"):
             st.switch_page("pages/1___Single_Vehicle_Calculator.py")
-        if st.button("âš–ï¸ Comparison"):
+        if st.button("Ã¢Å¡â€“Ã¯Â¸Â Comparison"):
             st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
     
     # Main content
     
     # What is TCO Section
-    st.header("ðŸŽ¯ What is TCO?")
+    st.header("Ã°Å¸Å½Â¯ What is TCO?")
     st.markdown("""
     **Total Cost of Ownership (TCO)** represents the complete cost of owning a vehicle 
     over a specified period, not just the purchase price. Understanding TCO helps you 
@@ -69,13 +69,13 @@ def main():
     
     with col1:
         st.markdown("""
-        **💰 Acquisition Costs**
+        **ðŸ’° Acquisition Costs**
         - Purchase price or lease payments
         - Down payment
         - Taxes and fees
         - Registration costs
         
-        **â›½ Operating Costs**
+        **Ã¢â€ºÂ½ Operating Costs**
         - Fuel or electricity
         - Regular maintenance
         - Repairs and wear items
@@ -84,13 +84,13 @@ def main():
     
     with col2:
         st.markdown("""
-        **ðŸ“‰ Ownership Costs**
+        **Ã°Å¸â€œâ€° Ownership Costs**
         - Depreciation
         - Insurance premiums
         - Financing interest
         - Extended warranties
         
-        **🔧 Maintenance Costs**
+        **ðŸ”§ Maintenance Costs**
         - Scheduled services
         - Tire replacements
         - Brake services
@@ -100,7 +100,7 @@ def main():
     st.markdown("---")
     
     # Methodology Section
-    st.header("ðŸ“Š Our Methodology")
+    st.header("Ã°Å¸â€œÅ  Our Methodology")
     
     st.subheader("Depreciation Modeling")
     st.markdown("""
@@ -142,7 +142,7 @@ def main():
     st.markdown("---")
     
     # Data Sources Section
-    st.header("ðŸ“š Data Sources")
+    st.header("Ã°Å¸â€œÅ¡ Data Sources")
     st.markdown("""
     CashPedal aggregates data from multiple authoritative sources:
     
@@ -161,7 +161,7 @@ def main():
     st.markdown("---")
     
     # Disclaimers Section
-    st.header("⚠️ Important Disclaimers")
+    st.header("âš ï¸ Important Disclaimers")
     
     st.warning("""
     **Please Read Carefully**
@@ -195,7 +195,7 @@ def main():
     st.markdown("---")
     
     # Contact Section
-    st.header("ðŸ“§ Contact & Feedback")
+    st.header("Ã°Å¸â€œÂ§ Contact & Feedback")
     st.markdown("""
     We're constantly working to improve CashPedal. If you have:
     

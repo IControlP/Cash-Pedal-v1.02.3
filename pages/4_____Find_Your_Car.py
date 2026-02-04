@@ -26,70 +26,70 @@ QUIZ_QUESTIONS = [
     {
         "id": "point_a_to_b",
         "question": "To me, a car is just a thing to get me from point A to point B",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂºÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂºÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¹ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â",
         "category": "mindset",
         "impacts": {"economy": 3, "sedan": 2, "hybrid": 1, "minivan": 1, "sports": -3, "luxury": -2, "truck": -1}
     },
     {
         "id": "car_person",
         "question": "I've definitely watched a car review video at 2am... for fun",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â½Ãƒâ€šÃ‚Â¬",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â½ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬",
         "category": "mindset",
         "impacts": {"sports": 3, "luxury": 2, "truck": 2, "electric": 1, "economy": -2, "minivan": -2}
     },
     {
         "id": "mobile_wardrobe",
         "question": "My car is basically a mobile closet - there's a outfit for every occasion in there",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¹Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â",
         "category": "lifestyle",
         "impacts": {"suv": 2, "crossover": 2, "minivan": 2, "sedan": 1, "truck": 1, "sports": -3, "economy": -1}
     },
     {
         "id": "avoid_costs",
         "question": "I'd rather spend money on literally anything else besides my car",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢Ãƒâ€šÃ‚Â¸",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸",
         "category": "financial",
         "impacts": {"economy": 3, "hybrid": 2, "sedan": 2, "electric": 1, "luxury": -3, "sports": -3, "truck": -2}
     },
     {
         "id": "valet_moment",
         "question": "I secretly (or not so secretly) love the valet parking moment",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â½Ãƒâ€šÃ‚Â©",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â½ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©",
         "category": "values",
         "impacts": {"luxury": 3, "sports": 3, "truck": 1, "economy": -3, "minivan": -2, "hybrid": -1}
     },
     {
         "id": "kids_chaos",
         "question": "My backseat looks like a snack explosion happened... and that's okay",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚ÂÃƒâ€šÃ‚Â¿",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿",
         "category": "lifestyle",
         "impacts": {"minivan": 3, "suv": 2, "crossover": 2, "sedan": 0, "sports": -3, "luxury": -2}
     },
     {
         "id": "zoom_zoom",
         "question": "When the light turns green, I like to be the first one gone",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â¦",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦",
         "category": "driving",
         "impacts": {"sports": 3, "luxury": 2, "electric": 2, "truck": 0, "economy": -2, "minivan": -2}
     },
     {
         "id": "planet_love",
         "question": "I feel guilty every time I fill up at a gas station",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã¢â‚¬â„¢Ãƒâ€šÃ‚Â",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â",
         "category": "values",
         "impacts": {"electric": 3, "hybrid": 3, "economy": 1, "truck": -3, "sports": -2, "suv": -1}
     },
     {
         "id": "home_depot_run",
         "question": "I've definitely tried to fit something way too big into a car that was way too small",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚ÂªÃƒâ€šÃ‚Âµ",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂªÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âµ",
         "category": "practical",
         "impacts": {"truck": 3, "suv": 2, "crossover": 1, "minivan": 1, "sedan": -1, "sports": -3, "economy": -2}
     },
     {
         "id": "parking_warrior",
         "question": "I can parallel park in a spot that would make others sweat",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â",
         "category": "practical",
         "impacts": {"economy": 2, "sedan": 2, "sports": 1, "crossover": 0, "suv": -2, "truck": -3, "minivan": -2}
     }
@@ -99,7 +99,7 @@ QUIZ_QUESTIONS = [
 VEHICLE_PROFILES = {
     "suv": {
         "name": "SUV / Crossover",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¡ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢",
         "tagline": "The 'I Need Options' Mobile",
         "description": "You're the friend everyone calls when they're moving apartments. Your car is ready for soccer practice, camping trips, AND looking good at brunch. Basically, you want a Swiss Army knife with wheels.",
         "perfect_for": ["People who say 'let's take my car'", "Weekend warriors", "Costco power shoppers", "Weather? What weather?"],
@@ -113,7 +113,7 @@ VEHICLE_PROFILES = {
     },
     "sedan": {
         "name": "Sedan",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¡ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â",
         "tagline": "The Sensible Queen/King",
         "description": "You've got your life together and your car reflects that. No drama, no fuss, just reliable transportation that doesn't make you cry at the pump. Your accountant would be proud.",
         "perfect_for": ["Adulting champions", "Parallel parking pros", "People who actually check their tire pressure", "Highway hypermilers"],
@@ -127,7 +127,7 @@ VEHICLE_PROFILES = {
     },
     "truck": {
         "name": "Pickup Truck",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂºÃƒâ€šÃ‚Â»",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂºÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â»",
         "tagline": "The 'Hold My Beer' Vehicle",
         "description": "You've never said 'that won't fit' because everything fits. Whether you actually need to haul stuff or just like knowing you COULD haul stuff, trucks deliver that big capability energy.",
         "perfect_for": ["DIY legends", "Boat owners", "People who help everyone move (again)", "Tailgate party hosts"],
@@ -141,7 +141,7 @@ VEHICLE_PROFILES = {
     },
     "sports": {
         "name": "Sports Car",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚ÂÃƒâ€¦Ã‚Â½ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â½ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â",
         "tagline": "The 'Life's Too Short' Machine",
         "description": "You understand that cars should make you FEEL something. Every on-ramp is an opportunity, every curve is a conversation, and practicality is someone else's problem.",
         "perfect_for": ["People who take the long way home", "Driving playlist curators", "Weekend canyon carvers", "Those who smile at engine sounds"],
@@ -155,7 +155,7 @@ VEHICLE_PROFILES = {
     },
     "luxury": {
         "name": "Luxury Vehicle",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¹Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¹Ã…â€œ",
         "tagline": "The 'Treat Yourself' Chariot",
         "description": "You work hard and your car should reflect that. Butter-soft leather, a sound system that slaps, and a badge that says 'yes, I have arrived.' Self-care has wheels now.",
         "perfect_for": ["Corner office energy", "People who appreciate the finer things", "Massage seat enthusiasts", "Valet parking fans"],
@@ -169,7 +169,7 @@ VEHICLE_PROFILES = {
     },
     "economy": {
         "name": "Economy Car",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢Ãƒâ€šÃ‚Âµ",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âµ",
         "tagline": "The 'Money Isn't Everything' Genius",
         "description": "While everyone else is car-broke, you're out here living your best life with money left over for actual fun stuff. Big brain move? Getting from A to B without the financial trauma.",
         "perfect_for": ["Financial wizards", "People with actual hobbies", "City dwellers", "Anyone who's done the math"],
@@ -183,7 +183,7 @@ VEHICLE_PROFILES = {
     },
     "electric": {
         "name": "Electric Vehicle",
-        "emoji": "ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â¡",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡",
         "tagline": "The 'Living in 2035' Pioneer",
         "description": "Gas stations? Don't know her. You're charging at home like a smartphone and smugly passing every pump. Plus that instant torque makes every green light feel like a launch sequence.",
         "perfect_for": ["Tech early adopters", "Home charging havers", "Instant torque addicts", "People who like saying 'I don't buy gas'"],
@@ -197,7 +197,7 @@ VEHICLE_PROFILES = {
     },
     "hybrid": {
         "name": "Hybrid",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¹",
         "tagline": "The 'Best of Both Worlds' Strategist",
         "description": "You want to be eco-friendly but also want to drive to grandma's house 6 states away without a charging strategy. Having your cake and eating it too? That's just good planning.",
         "perfect_for": ["Range anxiety avoiders", "MPG obsessors", "Apartment dwellers who can't charge", "People who like watching efficiency gauges"],
@@ -211,7 +211,7 @@ VEHICLE_PROFILES = {
     },
     "minivan": {
         "name": "Minivan",
-        "emoji": "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â",
+        "emoji": "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â",
         "tagline": "The 'I've Embraced My Destiny' Legend",
         "description": "You've achieved final form. While others struggle with car seats and cargo, you're living in automotive enlightenment. Sliding doors are superior and you're not afraid to say it.",
         "perfect_for": ["Carpool champions", "Snack distribution specialists", "People who've given up pretending", "Ultimate road trip commanders"],
@@ -229,13 +229,13 @@ VEHICLE_PROFILES = {
 def get_slider_label(value):
     """Get descriptive label for slider value"""
     labels = {
-        1: "Not me at all ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦",
+        1: "Not me at all ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦",
         2: "Meh, not really",
-        3: "Sometimes? ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¤Ãƒâ€šÃ‚Â·",
+        3: "Sometimes? ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â·",
         4: "Yeah, pretty much",
-        5: "That's SO me ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢Ãƒâ€šÃ‚Â¯"
+        5: "That's SO me ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¯"
     }
-    return labels.get(value, "Sometimes? ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¤Ãƒâ€šÃ‚Â·")
+    return labels.get(value, "Sometimes? ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â·")
 
 
 def calculate_results(answers):
@@ -308,7 +308,7 @@ def display_result_card(vehicle_type, score, rank):
             margin-bottom: 1rem;
         ">
             <h2 style="margin:0; color: {profile.get('color', '#1E88E5')}">
-                ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã‚Â  #{rank} Match: {profile.get('emoji', 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¡ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â')} {profile.get('name', vehicle_type.title())}
+                ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â  #{rank} Match: {profile.get('emoji', 'ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â')} {profile.get('name', vehicle_type.title())}
             </h2>
             <p style="font-size: 1.3rem; font-style: italic; margin: 0.5rem 0; color: #555;">
                 "{profile.get('tagline', '')}"
@@ -326,7 +326,7 @@ def display_result_card(vehicle_type, score, rank):
             margin-bottom: 0.5rem;
         ">
             <h3 style="margin:0; color: {profile.get('color', '#333')}">
-                #{rank}: {profile.get('emoji', 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¡ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â')} {profile.get('name', vehicle_type.title())}
+                #{rank}: {profile.get('emoji', 'ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â')} {profile.get('name', vehicle_type.title())}
             </h3>
             <p style="font-style: italic; margin: 0.3rem 0; color: #666; font-size: 0.95rem;">
                 "{profile.get('tagline', '')}"
@@ -426,7 +426,7 @@ def main():
     # Header
     st.markdown("""
         <div class="quiz-header">
-            <p class="quiz-title">ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â½Ãƒâ€šÃ‚Â¯ Find Your Perfect Car</p>
+            <p class="quiz-title">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â½ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¯ Find Your Perfect Car</p>
             <p class="quiz-subtitle">10 totally scientific* questions to discover your automotive soulmate</p>
             <p style="font-size: 0.8rem; color: #999;">*not actually scientific</p>
         </div>
@@ -434,11 +434,11 @@ def main():
     
     # Sidebar
     with st.sidebar:
-        st.header("ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â½Ãƒâ€šÃ‚Â® Quiz Progress")
+        st.header("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â½ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â® Quiz Progress")
         
         if st.session_state.quiz_complete:
-            st.success("ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Quiz Complete!")
-            if st.button("ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾ Retake Quiz"):
+            st.success("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ Quiz Complete!")
+            if st.button("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ Retake Quiz"):
                 st.session_state.quiz_started = False
                 st.session_state.quiz_complete = False
                 st.session_state.quiz_answers = {}
@@ -450,10 +450,10 @@ def main():
             st.write(f"Questions answered: {answered}/{total}")
         
         st.markdown("---")
-        st.header("ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Quick Links")
-        if st.button("ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒâ€šÃ‚Â§ Vehicle Calculator"):
+        st.header("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Quick Links")
+        if st.button("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ Vehicle Calculator"):
             st.switch_page("pages/1___Single_Vehicle_Calculator.py")
-        if st.button("ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â Compare Vehicles"):
+        if st.button("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â Compare Vehicles"):
             st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
     
     # Main content
@@ -464,23 +464,23 @@ def main():
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.markdown("""
-            ### ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â½Ãƒâ€šÃ‚Â® How It Works
+            ### ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â½ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â® How It Works
             
             1. **Pick Your Answer** - Select the circle that best describes you
-            2. **No Wrong Answers** - Unless you lie to yourself ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¹Ã…â€œÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°
+            2. **No Wrong Answers** - Unless you lie to yourself ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¹Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â°
             3. **Get Matched** - We'll reveal your top 3 car soulmates
             4. **Mind = Blown** - Or mildly amused. Either works.
             
             ---
             
-            ### ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â Takes about 60 seconds!
+            ### ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â Takes about 60 seconds!
             
             *Shorter than your last doom scroll*
             """)
             
             st.markdown("<br>", unsafe_allow_html=True)
             
-            if st.button("ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â½Ãƒâ€šÃ‚Â¯ Let's Do This!", use_container_width=True, type="primary"):
+            if st.button("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â½ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¯ Let's Do This!", use_container_width=True, type="primary"):
                 st.session_state.quiz_started = True
                 st.session_state.quiz_answers = {}
                 st.rerun()
@@ -492,11 +492,11 @@ def main():
         
         # Radio button options
         options = [
-            "Strongly Disagree 😬",
-            "Disagree 😐", 
-            "Neutral 🤷",
-            "Agree 😊",
-            "Strongly Agree 😍"
+            "Strongly Disagree ðŸ˜¬",
+            "Disagree ðŸ˜", 
+            "Neutral ðŸ¤·",
+            "Agree ðŸ˜Š",
+            "Strongly Agree ðŸ˜"
         ]
         
         # Display all questions
@@ -533,7 +533,7 @@ def main():
         st.markdown("---")
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            if st.button("ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒâ€šÃ‚Â® Reveal My Car Soulmate!", use_container_width=True, type="primary"):
+            if st.button("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â® Reveal My Car Soulmate!", use_container_width=True, type="primary"):
                 st.session_state.quiz_complete = True
                 st.rerun()
     
@@ -541,7 +541,7 @@ def main():
         # Results page
         st.markdown("""
         <div class="result-header">
-            <h1 style="margin:0;">ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â½ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â° The Results Are In!</h1>
+            <h1 style="margin:0;">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â½ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â° The Results Are In!</h1>
             <p style="margin:0.5rem 0 0 0; font-size: 1.1rem;">We've analyzed your vibe and found your automotive soulmates...</p>
         </div>
         """, unsafe_allow_html=True)
@@ -559,16 +559,16 @@ def main():
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    st.markdown("#### ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Perfect For:")
+                    st.markdown("#### ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ Perfect For:")
                     for item in profile.get("perfect_for", []):
                         st.markdown(f"- {item}")
                 
                 with col2:
-                    st.markdown("#### ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¤ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Consider:")
+                    st.markdown("#### ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Consider:")
                     for item in profile.get("consider", []):
                         st.markdown(f"- {item}")
                 
-                st.markdown("#### ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¡ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Top Picks to Explore:")
+                st.markdown("#### ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Top Picks to Explore:")
                 pick_cols = st.columns(3)
                 for idx, pick in enumerate(profile.get("top_picks", [])):
                     with pick_cols[idx]:
@@ -582,31 +582,31 @@ def main():
                 st.markdown("---")
         
         # Score breakdown (optional expandable)
-        with st.expander("ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒâ€¦Ã‚Â  See All Category Scores"):
+        with st.expander("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â  See All Category Scores"):
             sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
             for vehicle_type, score in sorted_scores:
                 profile = VEHICLE_PROFILES.get(vehicle_type, {})
-                emoji = profile.get("emoji", "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¡ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â")
+                emoji = profile.get("emoji", "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â")
                 name = profile.get("name", vehicle_type.title())
                 st.progress(score / 100)
                 st.caption(f"{emoji} {name}: {score:.0f}/100")
         
         # Call to action
         st.markdown("---")
-        st.markdown("### ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¡ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ Ready to Explore Your Matches?")
+        st.markdown("### ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ Ready to Explore Your Matches?")
         
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            if st.button("ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒâ€šÃ‚Â§ Calculate Costs", use_container_width=True):
+            if st.button("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ Calculate Costs", use_container_width=True):
                 st.switch_page("pages/1___Single_Vehicle_Calculator.py")
         
         with col2:
-            if st.button("ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â Compare Vehicles", use_container_width=True):
+            if st.button("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â Compare Vehicles", use_container_width=True):
                 st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
         
         with col3:
-            if st.button("ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾ Retake Quiz", use_container_width=True):
+            if st.button("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ Retake Quiz", use_container_width=True):
                 st.session_state.quiz_started = False
                 st.session_state.quiz_complete = False
                 st.session_state.quiz_answers = {}

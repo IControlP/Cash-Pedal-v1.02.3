@@ -624,11 +624,11 @@ def display_calculator():
     # Feature highlights
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.info("ðŸ“ **ZIP Code Pricing**\nAuto-detects fuel/electricity rates")
+        st.info("**ZIP Code Pricing**\nAuto-detects fuel/electricity rates")
     with col2:
-        st.info("âš¡ **EV Support**\nCharging style selection")
+        st.info("**EV Support**\nCharging style selection")
     with col3:
-        st.info("âœ“ **All Forms Visible**\nComplete in any order")
+        st.info("**All Forms Visible**\nComplete in any order")
     
     st.markdown("---")
     

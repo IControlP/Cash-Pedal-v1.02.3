@@ -12,7 +12,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from session_manager import initialize_session_state, clear_session_state
 from comparison_display import display_comparison
-from theme_utils import apply_theme, get_footer_html
 
 # Page configuration
 st.set_page_config(
@@ -27,17 +26,14 @@ def main():
     # Initialize session state
     initialize_session_state()
     
-    # Apply CashPedal theme (handles device/dark mode detection)
-    apply_theme()
-    
     # Page header
-    st.title("Ã¢Å¡â€“Ã¯Â¸Â Multi-Vehicle Comparison")
+    st.title("⚖️ Multi-Vehicle Comparison")
     st.markdown("Compare up to 5 vehicles side by side to find the best value.")
     st.markdown("---")
     
     # Sidebar content specific to this page
     with st.sidebar:
-        st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ Comparison Guide")
+        st.header("📋 Comparison Guide")
         
         # Show current comparison status
         vehicle_count = len(st.session_state.get('comparison_vehicles', []))
@@ -50,10 +46,10 @@ def main():
             2. Configure and calculate a vehicle
             3. Click "Add to Comparison"
             """)
-            if st.button("ÃƒÂ¢Ã…Â¾Ã¢â‚¬Â¢ Add a Vehicle"):
+            if st.button("➕ Add a Vehicle"):
                 st.switch_page("pages/1___Single_Vehicle_Calculator.py")
         else:
-            st.success(f"Ã¢Å“â€¦ {vehicle_count} vehicle(s) ready")
+            st.success(f"✅ {vehicle_count} vehicle(s) ready")
             
             # List vehicles in comparison
             st.subheader("Vehicles in Comparison:")
@@ -63,29 +59,29 @@ def main():
             
             if vehicle_count < 5:
                 st.caption(f"You can add {5 - vehicle_count} more vehicle(s)")
-                if st.button("ÃƒÂ¢Ã…Â¾Ã¢â‚¬Â¢ Add Another Vehicle"):
+                if st.button("➕ Add Another Vehicle"):
                     st.switch_page("pages/1___Single_Vehicle_Calculator.py")
         
         st.markdown("---")
         
         # Session management
-        st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Å¾ Session Management")
+        st.header("🔄 Session Management")
         
         if vehicle_count > 0:
-            if st.button("ÃƒÂ°Ã…Â¸Ã¢â‚¬â€Ã¢â‚¬ËœÃƒÂ¯Ã‚Â¸Ã‚Â Clear All Vehicles", type="secondary"):
+            if st.button("🗑️ Clear All Vehicles", type="secondary"):
                 clear_session_state()
                 st.rerun()
         
         st.markdown("---")
         
         # Comparison features
-        st.header("Ã¢Å“Â¨ Comparison Features")
+        st.header("✨ Comparison Features")
         st.markdown("""
-        - ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â  Side-by-side cost tables
-        - ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‹â€  Interactive charts
-        - ÃƒÂ°Ã…Â¸Ã‚ÂÃ¢â‚¬Â  Value ranking
-        - ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â Pros/cons analysis
-        - ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Å¾ Export reports
+        - 📊 Side-by-side cost tables
+        - 📈 Interactive charts
+        - 🏆 Value ranking
+        - 👍 Pros/cons analysis
+        - 📄 Export reports
         """)
     
     # Main content - call the comparison display function
@@ -94,19 +90,26 @@ def main():
     # Quick action buttons if no vehicles
     if vehicle_count < 2:
         st.markdown("---")
-        st.subheader("ÃƒÂ°Ã…Â¸Ã…Â¡Ã¢â€šÂ¬ Quick Actions")
+        st.subheader("🚀 Quick Actions")
         
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.info("Add at least 2 vehicles to see comparison results.")
-            if st.button("Ã°Å¸â€œÂ§ Go to Single Vehicle Calculator", use_container_width=True):
+            if st.button("🔧 Go to Single Vehicle Calculator", use_container_width=True):
                 st.switch_page("pages/1___Single_Vehicle_Calculator.py")
     
     # Footer
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.markdown(get_footer_html(), unsafe_allow_html=True)
+        st.markdown(
+            """
+            <div style='text-align: center; color: gray; font-size: 12px;'>
+            CashPedal - Vehicle TCO Calculator v1.02.3
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
 
 if __name__ == "__main__":
     main()

@@ -618,7 +618,7 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
     FIXED: Now properly resets dependent fields when parent selections change
     """
     
-    st.subheader(" Vehicle Selection")
+    st.subheader("Ã¯Â¿Â½ Vehicle Selection")
     
     # Transaction type selection
     transaction_type = st.radio(
@@ -769,11 +769,11 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
             if vehicle_age > 0:
                 avg_annual = current_mileage / vehicle_age if vehicle_age > 0 else 0
                 if avg_annual < 10000:
-                    mileage_note = " Below average mileage"
+                    mileage_note = "Ã¯Â¿Â½ Below average mileage"
                 elif avg_annual < 15000:
-                    mileage_note = " Average mileage"
+                    mileage_note = "Ã¯Â¿Â½ Average mileage"
                 else:
-                    mileage_note = " Above average mileage"
+                    mileage_note = "Ã¯Â¿Â½ Above average mileage"
                 st.caption(f"{mileage_note} ({avg_annual:,.0f} miles/year)")
         
         with col2:
@@ -821,7 +821,7 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                 depreciation_pct = ((trim_msrp - estimated_price) / trim_msrp * 100) if trim_msrp > 0 else 0
                 
                 st.info(f"""
-                 **Used Vehicle Pricing**
+                Ã¯Â¿Â½ **Used Vehicle Pricing**
                 
                 - **Original MSRP ({selected_year})**: ${trim_msrp:,}
                 - **Estimated Current Value**: ${estimated_price:,.0f}
@@ -928,7 +928,7 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
         vehicle_data: Optional vehicle data to determine if EV and fuel type requirements
     """
     
-    st.subheader(" Location & Regional Settings")
+    st.subheader("Ã¯Â¿Â½Ã¯Â¿Â½ Location & Regional Settings")
     
     # Initialize persistent settings
     initialize_persistent_settings()
@@ -951,10 +951,10 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
     
     # Show persistence status
     if location_settings.get('is_set', False):
-        st.success(f" Using saved location: {location_settings.get('zip_code', '')} - {location_settings.get('state', '')}")
+        st.success(f"Ã¯Â¿Â½ Using saved location: {location_settings.get('zip_code', '')} - {location_settings.get('state', '')}")
         
         # Option to modify
-        if st.button(" Update Location Settings", key="update_location"):
+        if st.button("Ã¯Â¿Â½ Update Location Settings", key="update_location"):
             st.session_state.show_location_form = True
         else:
             st.session_state.show_location_form = False
@@ -1012,7 +1012,7 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
                     auto_geography = 'Suburban'
                     auto_fuel_price = 3.50
                     auto_electricity_rate = None
-                    st.error(" Invalid ZIP code format")
+                    st.error("Ã¯Â¿Â½ Invalid ZIP code format")
             else:
                 auto_state = location_settings.get('state', '')
                 auto_geography = location_settings.get('geography_type', 'Suburban')
@@ -1106,7 +1106,7 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
         # Show appropriate fields based on vehicle type
         if is_electric_vehicle:
             # EV: Show electricity rate prominently, fuel price hidden
-            st.markdown("** Electric Vehicle Pricing**")
+            st.markdown("**Ã¯Â¿Â½ Electric Vehicle Pricing**")
             electricity_rate = st.number_input(
                 "Electricity Rate ($/kWh):",
                 min_value=0.05,
@@ -1122,7 +1122,7 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
             
         else:
             # Gas/Hybrid: Show fuel price with premium detection
-            st.markdown("** Fuel Pricing**")
+            st.markdown("**Ã¯Â¿Â½ Fuel Pricing**")
             
             # Display fuel type detection if available
             if fuel_info:
@@ -1131,10 +1131,10 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
                 fuel_type = fuel_info.get('fuel_type', 'regular')
                 
                 if requires_premium:
-                    st.info(f" **Premium Fuel Required** for {make} {model} {trim if trim else ''}")
-                    st.caption(f"Base regular: ${fuel_info.get('regular_price', 3.50):.2f}/gal  Premium: ${detected_fuel_price:.2f}/gal (+$0.40)")
+                    st.info(f"Ã¯Â¿Â½Ã¯Â¿Â½Ã¯Â¿Â½ **Premium Fuel Required** for {make} {model} {trim if trim else ''}")
+                    st.caption(f"Base regular: ${fuel_info.get('regular_price', 3.50):.2f}/gal Ã¯Â¿Â½ Premium: ${detected_fuel_price:.2f}/gal (+$0.40)")
                 else:
-                    st.success(f" **Regular Fuel** for {make} {model}")
+                    st.success(f"Ã¯Â¿Â½ **Regular Fuel** for {make} {model}")
                 
                 # Use detected price as default
                 default_fuel_price = detected_fuel_price
@@ -1166,7 +1166,7 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
                 'electricity_rate': electricity_rate
             }
             save_persistent_setting('location', location_data)
-            st.success(" Location settings saved!")
+            st.success("Ã¯Â¿Â½ Location settings saved!")
             st.session_state.show_location_form = False
             st.rerun()
     else:
@@ -1193,7 +1193,7 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
             # Update fuel price if premium is required
             if fuel_info.get('requires_premium', False):
                 fuel_price = fuel_info.get('fuel_price', fuel_price)
-                st.info(f" Premium fuel detected for {make} {model} - Price adjusted to ${fuel_price:.2f}/gal")
+                st.info(f"Ã¯Â¿Â½Ã¯Â¿Â½Ã¯Â¿Â½ Premium fuel detected for {make} {model} - Price adjusted to ${fuel_price:.2f}/gal")
     
     return {
         'zip_code': zip_code,
@@ -1363,7 +1363,7 @@ def display_personal_info_form() -> Dict[str, Any]:
 def display_insurance_form() -> Dict[str, Any]:
     """Display insurance form with persistence"""
     
-    st.subheader(" Insurance Preferences")
+    st.subheader("Ã¯Â¿Â½Ã¯Â¸Â Insurance Preferences")
     
     initialize_persistent_settings()
     insurance_settings = get_persistent_setting('insurance')
@@ -1372,16 +1372,16 @@ def display_insurance_form() -> Dict[str, Any]:
         st.session_state.show_insurance_form = not insurance_settings.get('is_set', False)
     
     if insurance_settings.get('is_set', False):
-        st.success(f" Using saved insurance: {insurance_settings.get('coverage_type', 'Full Coverage')}")
+        st.success(f"Ã¯Â¿Â½ Using saved insurance: {insurance_settings.get('coverage_type', 'Full Coverage')}")
         
         col1, col2 = st.columns([1, 4])
         with col1:
             if st.session_state.show_insurance_form:
-                if st.button(" Hide", key="hide_insurance"):
+                if st.button("Ã¯Â¿Â½Ã¯Â¿Â½Ã¯Â¸Â Hide", key="hide_insurance"):
                     st.session_state.show_insurance_form = False
                     st.rerun()
             else:
-                if st.button(" Update", key="show_insurance"):
+                if st.button("Ã¯Â¿Â½ Update", key="show_insurance"):
                     st.session_state.show_insurance_form = True
                     st.rerun()
     
@@ -1414,7 +1414,7 @@ def display_insurance_form() -> Dict[str, Any]:
                 'shop_type': shop_type
             }
             save_persistent_setting('insurance', insurance_data)
-            st.success(" Insurance settings saved!")
+            st.success("Ã¯Â¿Â½ Insurance settings saved!")
             st.session_state.show_insurance_form = False
             st.rerun()
     else:
@@ -1431,7 +1431,7 @@ def display_insurance_form() -> Dict[str, Any]:
 def display_financial_parameters_form(transaction_type: str) -> Dict[str, Any]:
     """Display financial parameters form (this can vary per car)"""
     
-    st.subheader(" Financial Parameters")
+    st.subheader("Ã¯Â¿Â½ Financial Parameters")
     
     if transaction_type == "Purchase":
         # Payment method selection
@@ -1472,7 +1472,7 @@ def display_financial_parameters_form(transaction_type: str) -> Dict[str, Any]:
             }
         
         else:  # Financing (Loan)
-            st.info(" **Loan Financing Selected**")
+            st.info("Ã¯Â¿Â½Ã¯Â¿Â½Ã¯Â¿Â½ **Loan Financing Selected**")
             
             # FIX: Get purchase price from multiple possible sources
             purchase_price = (
@@ -1599,7 +1599,7 @@ def display_financial_parameters_form(transaction_type: str) -> Dict[str, Any]:
                     total_interest = total_payments - final_loan_amount
                     
                     st.markdown("---")
-                    st.markdown("** Loan Summary:**")
+                    st.markdown("**Ã¯Â¿Â½ Loan Summary:**")
                     
                     st.metric("Monthly Payment", f"${monthly_payment:.0f}")
                     st.metric("Total Interest", f"${total_interest:,.0f}")
@@ -1624,7 +1624,7 @@ def display_financial_parameters_form(transaction_type: str) -> Dict[str, Any]:
             }
     
     else:  # Lease
-        st.info(" **Lease Transaction**")
+        st.info("Ã¯Â¿Â½ **Lease Transaction**")
         
         col1, col2 = st.columns(2)
         
@@ -1674,7 +1674,7 @@ def display_financial_parameters_form(transaction_type: str) -> Dict[str, Any]:
 def display_analysis_settings_form(transaction_type: str = "Purchase") -> Dict[str, Any]:
     """Display analysis settings form"""
     
-    st.subheader(" Analysis Settings")
+    st.subheader("Ã¯Â¿Â½ Analysis Settings")
     
     initialize_persistent_settings()
     analysis_settings = get_persistent_setting('analysis')
@@ -1720,7 +1720,7 @@ def display_analysis_settings_form(transaction_type: str = "Purchase") -> Dict[s
                 'default_analysis_years': analysis_years if transaction_type == "Purchase" else 5
             }
             save_persistent_setting('analysis', analysis_data)
-            st.success(" Analysis preferences saved!")
+            st.success("Ã¯Â¿Â½ Analysis preferences saved!")
     
     return {
         'analysis_years': analysis_years,
@@ -1806,7 +1806,7 @@ def clear_persistent_settings():
 def display_settings_management_sidebar():
     """Display settings management in sidebar"""
     st.sidebar.markdown("---")
-    st.sidebar.subheader(" Persistent Settings")
+    st.sidebar.subheader("Ã¯Â¿Â½Ã¯Â¸Â Persistent Settings")
     
     # Initialize persistent settings
     initialize_persistent_settings()
@@ -1815,16 +1815,16 @@ def display_settings_management_sidebar():
     # Show status of saved settings
     saved_settings = []
     if get_persistent_setting('location', 'is_set', False):
-        saved_settings.append(" Location")
+        saved_settings.append("Ã¯Â¿Â½Ã¯Â¿Â½ Location")
     if get_persistent_setting('personal', 'is_set', False):
-        saved_settings.append(" Personal Info")
+        saved_settings.append("Ã¯Â¿Â½ Personal Info")
     if get_persistent_setting('insurance', 'is_set', False):
-        saved_settings.append(" Insurance")
+        saved_settings.append("Ã¯Â¿Â½Ã¯Â¸Â Insurance")
     if get_persistent_setting('analysis', 'is_set', False):
-        saved_settings.append(" Analysis Prefs")
+        saved_settings.append("Ã¯Â¿Â½ Analysis Prefs")
     
     if saved_settings:
-        st.sidebar.success(f" Saved: {', '.join(saved_settings)}")
+        st.sidebar.success(f"Ã¯Â¿Â½ Saved: {', '.join(saved_settings)}")
     else:
         st.sidebar.info(" No settings saved yet")
     
@@ -1832,26 +1832,26 @@ def display_settings_management_sidebar():
     col1, col2 = st.sidebar.columns(2)
     
     with col1:
-        if st.button(" Reset All", key="reset_all_settings", help="Clear all saved settings"):
+        if st.button("Ã¯Â¿Â½ Reset All", key="reset_all_settings", help="Clear all saved settings"):
             clear_persistent_settings()
             st.success("Settings cleared!")
             st.rerun()
     
     with col2:
         # Export settings (future enhancement)
-        if st.button(" View All", key="view_all_settings", help="View all saved settings"):
+        if st.button("Ã¯Â¿Â½ View All", key="view_all_settings", help="View all saved settings"):
             st.session_state.show_settings_summary = True
 
 def display_settings_summary():
     """Display a summary of all saved settings"""
     if st.session_state.get('show_settings_summary', False):
-        with st.expander(" Current Saved Settings", expanded=True):
+        with st.expander("Ã¯Â¿Â½ Current Saved Settings", expanded=True):
             initialize_persistent_settings()
             
             # Location settings
             location = get_persistent_setting('location')
             if location.get('is_set', False):
-                st.write("** Location & Regional:**")
+                st.write("**Ã¯Â¿Â½Ã¯Â¿Â½ Location & Regional:**")
                 st.write(f"- ZIP Code: {location.get('zip_code', 'Not set')}")
                 st.write(f"- State: {location.get('state', 'Not set')}")
                 st.write(f"- Geography: {location.get('geography_type', 'Not set')}")
@@ -1860,7 +1860,7 @@ def display_settings_summary():
             # Personal settings
             personal = get_persistent_setting('personal')
             if personal.get('is_set', False):
-                st.write("** Personal Information:**")
+                st.write("**Ã¯Â¿Â½ Personal Information:**")
                 st.write(f"- Age: {personal.get('user_age', 'Not set')}")
                 st.write(f"- Income: ${personal.get('gross_income', 0):,}")
                 st.write(f"- Annual Mileage: {personal.get('annual_mileage', 'Not set'):,}")
@@ -1871,18 +1871,18 @@ def display_settings_summary():
             # Insurance settings
             insurance = get_persistent_setting('insurance')
             if insurance.get('is_set', False):
-                st.write("** Insurance Settings:**")
+                st.write("**Ã¯Â¿Â½Ã¯Â¸Â Insurance Settings:**")
                 st.write(f"- Coverage: {insurance.get('coverage_type', 'Not set').title()}")
                 st.write(f"- Shop Type: {insurance.get('shop_type', 'Not set').title()}")
             
             # Analysis settings
             analysis = get_persistent_setting('analysis')
             if analysis.get('is_set', False):
-                st.write("** Analysis Preferences:**")
+                st.write("**Ã¯Â¿Â½ Analysis Preferences:**")
                 st.write(f"- Priority: {analysis.get('comparison_priority', 'Not set').title()}")
                 st.write(f"- Default Years: {analysis.get('default_analysis_years', 'Not set')}")
             
-            if st.button(" Close", key="close_settings_summary"):
+            if st.button("Ã¯Â¿Â½ Close", key="close_settings_summary"):
                 st.session_state.show_settings_summary = False
                 st.rerun()
 
@@ -1953,7 +1953,7 @@ def display_all_forms_visible() -> Tuple[Dict[str, Any], bool, str]:
     # Initialize persistent settings
     initialize_persistent_settings()
     
-    st.markdown("##  Vehicle Analysis Form")
+    st.markdown("## Ã¯Â¿Â½ Vehicle Analysis Form")
     st.markdown("*All sections visible - complete in any order*")
     st.markdown("---")
     
@@ -2053,8 +2053,8 @@ def get_default_form_data(vehicle_override: Dict[str, Any] = None) -> Dict[str, 
         'user_age': 35,
         'gross_income': 60000,
         'credit_score_range': '670-739 (Good)',
-        'driving_style': 'normal',  #  ADDED: Default driving style
-        'terrain': 'flat'  #  ADDED: Default terrain
+        'driving_style': 'normal',  # Ã¯Â¿Â½Ã¯Â¿Â½ ADDED: Default driving style
+        'terrain': 'flat'  # Ã¯Â¿Â½Ã¯Â¿Â½ ADDED: Default terrain
     }
     
     # Add location data if saved
@@ -2068,17 +2068,17 @@ def get_default_form_data(vehicle_override: Dict[str, Any] = None) -> Dict[str, 
             'electricity_rate': location.get('electricity_rate', 0.12)
         })
     
-    # Add personal data if saved -  FIXED: Now includes driving_style and terrain
+    # Add personal data if saved - Ã¯Â¿Â½Ã¯Â¿Â½ FIXED: Now includes driving_style and terrain
     personal = get_persistent_setting('personal')
     if personal.get('is_set', False):
         base_data.update({
             'user_age': personal.get('user_age', 35),
             'gross_income': personal.get('gross_income', 60000),
             'credit_score_range': personal.get('credit_score_range', '670-739 (Good)'),
-            'annual_mileage': personal.get('annual_mileage', 12000),  #  ADDED
-            'driving_style': personal.get('driving_style', 'normal'),  #  ADDED
-            'terrain': personal.get('terrain', 'flat'),  #  ADDED
-            'num_household_vehicles': personal.get('num_household_vehicles', 2)  #  ADDED
+            'annual_mileage': personal.get('annual_mileage', 12000),  # Ã¯Â¿Â½Ã¯Â¿Â½ ADDED
+            'driving_style': personal.get('driving_style', 'normal'),  # Ã¯Â¿Â½Ã¯Â¿Â½ ADDED
+            'terrain': personal.get('terrain', 'flat'),  # Ã¯Â¿Â½Ã¯Â¿Â½ ADDED
+            'num_household_vehicles': personal.get('num_household_vehicles', 2)  # Ã¯Â¿Â½Ã¯Â¿Â½ ADDED
         })
     
     # Add insurance data if saved

@@ -36,19 +36,9 @@ def main():
     )
     
     # Page header
-    st.title(" Take it to the Next Gear")
+    st.title("Ã°Å¸Å¡â€” Take it to the Next Gear")
     st.markdown("Ready to make your move? Check out these trusted automotive resources.")
     st.markdown("---")
-    
-    # FlexOffers Verification Number
-    st.markdown("""
-    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; margin: 20px 0;">
-        <p style="color: white; font-size: 14px; margin: 0;">FlexOffers Partner Verification</p>
-        <p style="color: white; font-size: 32px; font-weight: bold; margin: 10px 0; letter-spacing: 3px;">1523685</p>
-        <p style="color: white; font-size: 12px; margin: 0; opacity: 0.9;">Verified Affiliate Partner</p>
-    </div>
-    """, unsafe_allow_html=True)
-
 
     # FlexOffers Partner Verification Number
     st.markdown("""
@@ -72,7 +62,7 @@ def main():
     
     # Sidebar
     with st.sidebar:
-        st.header(" Page Sections")
+        st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ Page Sections")
         st.markdown("""
         - [Vehicle Shopping](#vehicle-shopping)
         - [Financing](#financing-resources)
@@ -83,12 +73,12 @@ def main():
         
         st.markdown("---")
         
-        st.header(" Quick Links")
-        if st.button(" Calculator"):
+        st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ Quick Links")
+        if st.button("Ã°Å¸â€œÂ§ Calculator"):
             st.switch_page("pages/1___Single_Vehicle_Calculator.py")
-        if st.button(" Comparison"):
+        if st.button("ÃƒÂ¢Ã…Â¡Ã¢â‚¬â€œÃƒÂ¯Ã‚Â¸Ã‚Â Comparison"):
             st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
-        if st.button(" Find Your Car"):
+        if st.button("ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â¯ Find Your Car"):
             st.switch_page("pages/4_____Find_Your_Car.py")
     
     # Introduction
@@ -106,14 +96,14 @@ def main():
     st.markdown("---")
     
     # Vehicle Shopping Section
-    st.header(" Vehicle Shopping")
+    st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ Vehicle Shopping")
     st.markdown("Find your perfect vehicle with these trusted marketplaces:")
     
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("""
-        ###  CarMax
+        ### Ã°Å¸Å¡â€” CarMax
         **Nation's Largest Used Car Retailer**
         
         - 7-day money-back guarantee
@@ -126,30 +116,30 @@ def main():
         """)
         
         # Placeholder for affiliate link button
-        if st.button(" Shop CarMax", key="carmax"):
+        if st.button("Ã°Å¸Å¡â€” Shop CarMax", key="carmax"):
             st.info("Affiliate link would open here")
         
         st.markdown("---")
         
         st.markdown("""
-        ###  Carvana
+        ### ÃƒÂ°Ã…Â¸Ã…Â¡Ã¢â€žÂ¢ Carvana
         **Buy a Car Online - Delivered to Your Door**
         
         - Fully online car buying experience
         - Home delivery or pickup at vending machines
         - 7-day return policy
-        - Virtual 360 car tours
+        - Virtual 360Ãƒâ€šÃ‚Â° car tours
         
         Ideal for tech-savvy buyers who prefer a completely digital 
         car-buying experience.
         """)
         
-        if st.button(" Browse Carvana", key="carvana"):
+        if st.button("ÃƒÂ°Ã…Â¸Ã…Â¡Ã¢â€žÂ¢ Browse Carvana", key="carvana"):
             st.info("Affiliate link would open here")
     
     with col2:
         st.markdown("""
-        ###  Cars.com
+        ### Ã°Å¸Å¡â€” Cars.com
         **Search Millions of Listings**
         
         - Aggregates inventory from dealers nationwide
@@ -161,13 +151,13 @@ def main():
         dealers in one place.
         """)
         
-        if st.button(" Search Cars.com", key="cars_com"):
+        if st.button("Ã°Å¸Å¡â€” Search Cars.com", key="cars_com"):
             st.info("Affiliate link would open here")
         
         st.markdown("---")
         
         st.markdown("""
-        ###  Autotrader
+        ### ÃƒÂ°Ã…Â¸Ã…Â¡Ã‹Å“ Autotrader
         **Find Your Perfect Car**
         
         - Extensive new and used inventory
@@ -179,20 +169,20 @@ def main():
         and private party options.
         """)
         
-        if st.button(" Visit Autotrader", key="autotrader"):
+        if st.button("ÃƒÂ°Ã…Â¸Ã…Â¡Ã‹Å“ Visit Autotrader", key="autotrader"):
             st.info("Affiliate link would open here")
     
     st.markdown("---")
     
     # Financing Section
-    st.header(" Financing Resources")
+    st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ Financing Resources")
     st.markdown("Get pre-approved and secure competitive rates:")
     
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("""
-        ###  LendingTree
+        ### Ã°Å¸â€™Â³ LendingTree
         **Compare Auto Loan Offers**
         
         - Compare offers from multiple lenders
@@ -203,12 +193,12 @@ def main():
         Rates as low as 5.99% APR for qualified buyers.
         """)
         
-        if st.button(" Compare Rates", key="lendingtree"):
+        if st.button("Ã°Å¸â€™Â³ Compare Rates", key="lendingtree"):
             st.info("Affiliate link would open here")
     
     with col2:
         st.markdown("""
-        ###  Capital One Auto Navigator
+        ### Ã°Å¸ÂÂ¦ Capital One Auto Navigator
         **Pre-Qualify Before You Shop**
         
         - Get pre-qualified without dealer visit
@@ -219,20 +209,20 @@ def main():
         Shop with confidence knowing your budget.
         """)
         
-        if st.button(" Get Pre-Qualified", key="capital_one"):
+        if st.button("Ã°Å¸ÂÂ¦ Get Pre-Qualified", key="capital_one"):
             st.info("Affiliate link would open here")
     
     st.markdown("---")
     
     # Insurance Section
-    st.header(" Insurance Quotes")
+    st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂºÃ‚Â¡ÃƒÂ¯Ã‚Â¸Ã‚Â Insurance Quotes")
     st.markdown("Protect your investment with competitive insurance rates:")
     
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("""
-        ###  The Zebra
+        ### ÃƒÂ°Ã…Â¸Ã‚Â¦Ã¢â‚¬Å“ The Zebra
         **Compare Quotes from 200+ Insurers**
         
         - Free, no-obligation quotes
@@ -243,12 +233,12 @@ def main():
         Get the coverage you need at a price you'll love.
         """)
         
-        if st.button(" Compare Insurance", key="zebra"):
+        if st.button("ÃƒÂ°Ã…Â¸Ã‚Â¦Ã¢â‚¬Å“ Compare Insurance", key="zebra"):
             st.info("Affiliate link would open here")
     
     with col2:
         st.markdown("""
-        ###  GEICO
+        ### ÃƒÂ°Ã…Â¸Ã‚Â¦Ã…Â½ GEICO
         **15 Minutes Could Save You 15% or More**
         
         - Quick online quotes
@@ -259,20 +249,20 @@ def main():
         Trusted by millions of drivers nationwide.
         """)
         
-        if st.button(" Get GEICO Quote", key="geico"):
+        if st.button("ÃƒÂ°Ã…Â¸Ã‚Â¦Ã…Â½ Get GEICO Quote", key="geico"):
             st.info("Affiliate link would open here")
     
     st.markdown("---")
     
     # Auto Care Section
-    st.header(" Auto Care & Maintenance")
+    st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ Auto Care & Maintenance")
     st.markdown("Keep your vehicle running smoothly:")
     
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("""
-        ###  RepairPal
+        ### Ã°Å¸â€œÂ§ RepairPal
         **Fair Price Estimates & Certified Shops**
         
         - Get repair estimates instantly
@@ -283,13 +273,13 @@ def main():
         Take the guesswork out of auto repairs.
         """)
         
-        if st.button(" Find a Shop", key="repairpal"):
+        if st.button("Ã°Å¸â€œÂ§ Find a Shop", key="repairpal"):
             st.info("Affiliate link would open here")
         
         st.markdown("---")
         
         st.markdown("""
-        ###  RockAuto
+        ### ÃƒÂ°Ã…Â¸Ã…Â¡Ã‹Å“ RockAuto
         **Discount Auto Parts**
         
         - Huge selection of parts
@@ -300,12 +290,12 @@ def main():
         Save money on DIY repairs and maintenance.
         """)
         
-        if st.button(" Shop Parts", key="rockauto"):
+        if st.button("Ã°Å¸â€œÂ§ Shop Parts", key="rockauto"):
             st.info("Affiliate link would open here")
     
     with col2:
         st.markdown("""
-        ###  Chemical Guys
+        ### Ã°Å¸Â§Âª Chemical Guys
         **Premium Car Care Products**
         
         - Professional-grade detailing supplies
@@ -316,13 +306,13 @@ def main():
         Keep your car looking showroom fresh.
         """)
         
-        if st.button(" Shop Chemical Guys", key="chemical_guys"):
+        if st.button("Ã°Å¸Â§Âª Shop Chemical Guys", key="chemical_guys"):
             st.info("Affiliate link would open here")
         
         st.markdown("---")
         
         st.markdown("""
-        ###  Tire Rack
+        ### ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂºÃ…Â¾ Tire Rack
         **Tires, Wheels & Accessories**
         
         - Expert tire recommendations
@@ -333,20 +323,20 @@ def main():
         Find the perfect tires for your vehicle and driving style.
         """)
         
-        if st.button(" Shop Tires", key="tire_rack"):
+        if st.button("ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂºÃ…Â¾ Shop Tires", key="tire_rack"):
             st.info("Affiliate link would open here")
     
     st.markdown("---")
     
     # Reviews & Research Section
-    st.header(" Reviews & Research")
+    st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ Reviews & Research")
     st.markdown("Make informed decisions with expert insights:")
     
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("""
-        ###  Edmunds
+        ### ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬â€ Edmunds
         **Expert Reviews & Advice**
         
         - In-depth vehicle reviews
@@ -357,12 +347,12 @@ def main():
         Trusted automotive resource for over 50 years.
         """)
         
-        if st.button(" Read Reviews", key="edmunds"):
+        if st.button("ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬â€ Read Reviews", key="edmunds"):
             st.info("Affiliate link would open here")
     
     with col2:
         st.markdown("""
-        ###  MotorTrend
+        ### ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬â€ MotorTrend
         **Video Reviews & Expert Testing**
         
         - Professional vehicle testing
@@ -373,20 +363,20 @@ def main():
         See vehicles put through their paces by experts.
         """)
         
-        if st.button(" Watch Reviews", key="motortrend"):
+        if st.button("ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬â€ Watch Reviews", key="motortrend"):
             st.info("Affiliate link would open here")
     
     st.markdown("---")
     
     # Extended Warranty Section
-    st.header(" Extended Warranties & Protection")
+    st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂºÃ‚Â¡ÃƒÂ¯Ã‚Â¸Ã‚Â Extended Warranties & Protection")
     st.markdown("Peace of mind for your investment:")
     
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("""
-        ###  Endurance
+        ### ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬â€ Endurance
         **Extended Vehicle Protection**
         
         - Coverage for vehicles up to 200K miles
@@ -397,12 +387,12 @@ def main():
         Protect yourself from unexpected repair costs.
         """)
         
-        if st.button(" Get Quote", key="endurance"):
+        if st.button("ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã¢â€žÂ¢ Get Quote", key="endurance"):
             st.info("Affiliate link would open here")
     
     with col2:
         st.markdown("""
-        ###  CarShield
+        ### ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂºÃ‚Â¡ÃƒÂ¯Ã‚Â¸Ã‚Â CarShield
         **Vehicle Service Contracts**
         
         - Customizable coverage plans
@@ -413,7 +403,7 @@ def main():
         Affordable protection for your vehicle.
         """)
         
-        if st.button(" Learn More", key="carshield"):
+        if st.button("ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬â€ Learn More", key="carshield"):
             st.info("Affiliate link would open here")
     
     st.markdown("---")
@@ -436,7 +426,7 @@ def main():
     
     # Tips Section
     st.markdown("---")
-    st.header(" Smart Shopping Tips")
+    st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ Smart Shopping Tips")
     
     col1, col2, col3 = st.columns(3)
     

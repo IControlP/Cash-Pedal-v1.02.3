@@ -30,13 +30,13 @@ def main():
     apply_theme()
     
     # Page header
-    st.title(" About CashPedal")
+    st.title("Ã¢â€žÂ¹Ã¯Â¸Â About CashPedal")
     st.markdown("Learn more about how our Vehicle Total Cost of Ownership Calculator works.")
     st.markdown("---")
     
     # Sidebar
     with st.sidebar:
-        st.header(" Page Sections")
+        st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ Page Sections")
         st.markdown("""
         - [What is TCO?](#what-is-tco)
         - [Our Methodology](#our-methodology)
@@ -47,16 +47,16 @@ def main():
         
         st.markdown("---")
         
-        st.header(" Quick Links")
-        if st.button(" Calculator"):
+        st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬â€ Quick Links")
+        if st.button("Ã°Å¸â€Â§ Calculator"):
             st.switch_page("pages/1___Single_Vehicle_Calculator.py")
-        if st.button(" Comparison"):
+        if st.button("ÃƒÂ¢Ã…Â¡Ã¢â‚¬â€œÃƒÂ¯Ã‚Â¸Ã‚Â Comparison"):
             st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
     
     # Main content
     
     # What is TCO Section
-    st.header(" What is TCO?")
+    st.header("ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â¯ What is TCO?")
     st.markdown("""
     **Total Cost of Ownership (TCO)** represents the complete cost of owning a vehicle 
     over a specified period, not just the purchase price. Understanding TCO helps you 
@@ -69,13 +69,13 @@ def main():
     
     with col1:
         st.markdown("""
-        ** Acquisition Costs**
+        **Ã°Å¸â€™Â° Acquisition Costs**
         - Purchase price or lease payments
         - Down payment
         - Taxes and fees
         - Registration costs
         
-        ** Operating Costs**
+        **ÃƒÂ¢Ã¢â‚¬ÂºÃ‚Â½ Operating Costs**
         - Fuel or electricity
         - Regular maintenance
         - Repairs and wear items
@@ -84,13 +84,13 @@ def main():
     
     with col2:
         st.markdown("""
-        ** Ownership Costs**
+        **ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â° Ownership Costs**
         - Depreciation
         - Insurance premiums
         - Financing interest
         - Extended warranties
         
-        ** Maintenance Costs**
+        **Ã°Å¸â€Â§ Maintenance Costs**
         - Scheduled services
         - Tire replacements
         - Brake services
@@ -100,7 +100,7 @@ def main():
     st.markdown("---")
     
     # Methodology Section
-    st.header(" Our Methodology")
+    st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â  Our Methodology")
     
     st.subheader("Depreciation Modeling")
     st.markdown("""
@@ -142,7 +142,7 @@ def main():
     st.markdown("---")
     
     # Data Sources Section
-    st.header(" Data Sources")
+    st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â¡ Data Sources")
     st.markdown("""
     CashPedal aggregates data from multiple authoritative sources:
     
@@ -161,7 +161,7 @@ def main():
     st.markdown("---")
     
     # Disclaimers Section
-    st.header(" Important Disclaimers")
+    st.header("Ã¢Å¡Â Ã¯Â¸Â Important Disclaimers")
     
     st.warning("""
     **Please Read Carefully**
@@ -195,7 +195,7 @@ def main():
     st.markdown("---")
     
     # Contact Section
-    st.header(" Contact & Feedback")
+    st.header("ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â§ Contact & Feedback")
     st.markdown("""
     We're constantly working to improve CashPedal. If you have:
     

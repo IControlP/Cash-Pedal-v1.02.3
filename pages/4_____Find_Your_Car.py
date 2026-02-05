@@ -25,7 +25,7 @@ st.set_page_config(
 QUIZ_QUESTIONS = [
     {
         "id": "point_a_to_b",
-        "question": "To me, a car is just a thing to get me from point A to point B",
+        "question": "Is a car just a thing that gets you from point A to point B?",
         "emoji": "",
         "category": "mindset",
         "impacts": {"economy": 3, "sedan": 2, "hybrid": 1, "minivan": 1, "sports": -3, "luxury": -2, "truck": -1}
@@ -503,7 +503,7 @@ def main():
         for i, question in enumerate(QUIZ_QUESTIONS):
             st.markdown(f"""
             <div class="question-card">
-                <strong style="font-size: 1.1rem;"> {question['question']}</strong>
+                <strong style="font-size: 1.1rem;">Q{i+1}. {question['question']}</strong>
             </div>
             """, unsafe_allow_html=True)
             
@@ -511,14 +511,14 @@ def main():
             default_val = st.session_state.quiz_answers.get(question['id'], 3)
             default_index = default_val - 1  # Convert 1-5 to 0-4
             
-            # Create radio buttons
+            # Create radio buttons (horizontal for better mobile experience)
             answer_label = st.radio(
                 f"q_{question['id']}",
                 options=options,
                 index=default_index,
                 key=f"radio_{question['id']}",
                 label_visibility="collapsed",
-                horizontal=False
+                horizontal=True
             )
             
             # Convert answer back to 1-5 scale

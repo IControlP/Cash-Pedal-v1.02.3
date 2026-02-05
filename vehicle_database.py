@@ -36,23 +36,23 @@ def safe_import_manufacturers():
             data = getattr(module, f'MANUFACTURERS_{letter}', {})
             manufacturers.update(data)
             imported_count += 1
-            print(f"Ã¢Å“â€¦ Loaded {module_name}: {list(data.keys())}")
+            print(f"ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Loaded {module_name}: {list(data.keys())}")
         except ImportError as e:
             missing_files.append(f"{module_name}.py")
-            print(f"Ã¢Å¡Â Ã¯Â¸Â Could not import {module_name}: {e}")
+            print(f"ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Could not import {module_name}: {e}")
         except Exception as e:
-            print(f"Ã¢ÂÅ’ Error loading {module_name}: {e}")
+            print(f"ÃƒÂ¢Ã‚ÂÃ…â€™ Error loading {module_name}: {e}")
     
     return manufacturers, imported_count, missing_files
 
 # Load the vehicle database
 try:
     vehicle_database, loaded_count, missing = safe_import_manufacturers()
-    print(f"Ã°Å¸â€œÅ  Database Status: {loaded_count} modules loaded, {len(missing)} missing")
+    print(f"ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â  Database Status: {loaded_count} modules loaded, {len(missing)} missing")
     if missing:
-        print(f"Ã°Å¸â€œÂ Missing files: {missing}")
+        print(f"ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â Missing files: {missing}")
 except Exception as e:
-    print(f"Ã¢ÂÅ’ Critical error loading database: {e}")
+    print(f"ÃƒÂ¢Ã‚ÂÃ…â€™ Critical error loading database: {e}")
     vehicle_database = {}
 
 # Fallback data for basic functionality
@@ -156,7 +156,7 @@ FALLBACK_DATABASE = {
 
 # Use loaded database or fallback
 if not vehicle_database:
-    print("Ã¢Å¡Â Ã¯Â¸Â Using fallback database with limited vehicle data")
+    print("ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Using fallback database with limited vehicle data")
     vehicle_database = FALLBACK_DATABASE
 
 # Core database access functions
@@ -240,9 +240,9 @@ def get_vehicle_characteristics(make, model, year, trim=None):
         actual_mpg = mpg_data.get('combined', 25)
         is_electric = mpg_data.get('is_electric', False)
         mpge_value = mpg_data.get('mpge_combined', 0) if is_electric else 0
-        print(f"Ã¢Å“â€¦ MPG Database: {make} {model} = {actual_mpg} MPG (source: {mpg_data.get('source', 'unknown')})")
+        print(f"ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ MPG Database: {make} {model} = {actual_mpg} MPG (source: {mpg_data.get('source', 'unknown')})")
     except Exception as e:
-        print(f"Ã¢Å¡Â Ã¯Â¸Â MPG Database unavailable, using fallback: {e}")
+        print(f"ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â MPG Database unavailable, using fallback: {e}")
         # Fallback to old logic if MPG database not available
         actual_mpg = 25
         is_electric = False
@@ -417,19 +417,19 @@ if __name__ == "__main__":
     
     # Display database statistics
     stats = get_database_stats()
-    print(f"Ã°Å¸â€œÅ  Database Statistics:")
-    print(f"   Ã¢â‚¬Â¢ Total Manufacturers: {stats['total_makes']}")
-    print(f"   Ã¢â‚¬Â¢ Total Models: {stats['total_models']}")
-    print(f"   Ã¢â‚¬Â¢ Years Covered: {stats['years_covered'][0]}-{stats['years_covered'][1]} ({stats['total_years']} years)")
-    print(f"   Ã¢â‚¬Â¢ Available Makes: {', '.join(stats['makes_list'])}")
+    print(f"ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â  Database Statistics:")
+    print(f"   ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Total Manufacturers: {stats['total_makes']}")
+    print(f"   ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Total Models: {stats['total_models']}")
+    print(f"   ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Years Covered: {stats['years_covered'][0]}-{stats['years_covered'][1]} ({stats['total_years']} years)")
+    print(f"   ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Available Makes: {', '.join(stats['makes_list'])}")
     
-    print(f"\nÃ°Å¸â€œâ€¹ Models per Manufacturer:")
+    print(f"\nÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ Models per Manufacturer:")
     for make, count in stats['models_per_make'].items():
         models = get_models_for_manufacturer(make)
-        print(f"   Ã¢â‚¬Â¢ {make}: {count} models ({', '.join(models[:3])}{'...' if len(models) > 3 else ''})")
+        print(f"   ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {make}: {count} models ({', '.join(models[:3])}{'...' if len(models) > 3 else ''})")
     
     # Test vehicle lookup
-    print(f"\nÃ°Å¸â€Â Sample Vehicle Data:")
+    print(f"\nÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â Sample Vehicle Data:")
     if stats['total_makes'] > 0:
         test_make = stats['makes_list'][0]
         test_models = get_models_for_manufacturer(test_make)
@@ -437,29 +437,29 @@ if __name__ == "__main__":
             test_model = test_models[0]
             test_year = 2024
             test_trims = get_trims_for_vehicle(test_make, test_model, test_year)
-            print(f"   Ã¢â‚¬Â¢ {test_year} {test_make} {test_model}")
-            print(f"   Ã¢â‚¬Â¢ Available trims: {list(test_trims.keys())}")
-            print(f"   Ã¢â‚¬Â¢ Price range: ${min(test_trims.values()):,} - ${max(test_trims.values()):,}")
+            print(f"   ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ {test_year} {test_make} {test_model}")
+            print(f"   ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Available trims: {list(test_trims.keys())}")
+            print(f"   ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Price range: ${min(test_trims.values()):,} - ${max(test_trims.values()):,}")
             
             # Test characteristics
             characteristics = get_vehicle_characteristics(test_make, test_model, test_year)
-            print(f"   Ã¢â‚¬Â¢ Market segment: {characteristics['market_segment']}")
-            print(f"   Ã¢â‚¬Â¢ Reliability score: {characteristics['reliability_score']}/5")
-            print(f"   Ã¢â‚¬Â¢ Fuel economy: {characteristics['mpg']} MPG")
+            print(f"   ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Market segment: {characteristics['market_segment']}")
+            print(f"   ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Reliability score: {characteristics['reliability_score']}/5")
+            print(f"   ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Fuel economy: {characteristics['mpg']} MPG")
     
     # Show price range examples
-    print(f"\nÃ°Å¸â€™Â° Sample Price Ranges:")
+    print(f"\nÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â° Sample Price Ranges:")
     budget_vehicles = search_vehicles_by_price_range(20000, 30000, 2024)
     luxury_vehicles = search_vehicles_by_price_range(50000, 70000, 2024)
     
     if budget_vehicles:
-        print(f"   Ã¢â‚¬Â¢ Budget vehicles ($20k-$30k): {len(budget_vehicles)} options")
+        print(f"   ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Budget vehicles ($20k-$30k): {len(budget_vehicles)} options")
         for v in budget_vehicles[:3]:
             print(f"     - {v['year']} {v['make']} {v['model']} {v['trim']}: ${v['price']:,}")
     
     if luxury_vehicles:
-        print(f"   Ã¢â‚¬Â¢ Luxury vehicles ($50k-$70k): {len(luxury_vehicles)} options")
+        print(f"   ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Luxury vehicles ($50k-$70k): {len(luxury_vehicles)} options")
         for v in luxury_vehicles[:3]:
             print(f"     - {v['year']} {v['make']} {v['model']} {v['trim']}: ${v['price']:,}")
     
-    print(f"\nÃ¢Å“â€¦ Database ready for use!")
+    print(f"\nÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Database ready for use!")

@@ -11,11 +11,12 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from session_manager import initialize_session_state
+from theme_utils import apply_theme, get_footer_html
 
 # Page configuration
 st.set_page_config(
     page_title="About - CashPedal",
-    page_icon="ℹ️",
+    page_icon="info",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -25,14 +26,17 @@ def main():
     # Initialize session state
     initialize_session_state()
     
+    # Apply CashPedal theme (handles device/dark mode detection)
+    apply_theme()
+    
     # Page header
-    st.title("ℹ️ About CashPedal")
+    st.title("About CashPedal")
     st.markdown("Learn more about how our Vehicle Total Cost of Ownership Calculator works.")
     st.markdown("---")
     
     # Sidebar
     with st.sidebar:
-        st.header("📋 Page Sections")
+        st.header("Page Sections")
         st.markdown("""
         - [What is TCO?](#what-is-tco)
         - [Our Methodology](#our-methodology)
@@ -43,16 +47,16 @@ def main():
         
         st.markdown("---")
         
-        st.header("🔗 Quick Links")
-        if st.button("🔧 Calculator"):
+        st.header("Quick Links")
+        if st.button("Calculator"):
             st.switch_page("pages/1___Single_Vehicle_Calculator.py")
-        if st.button("⚖️ Comparison"):
+        if st.button("Comparison"):
             st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
     
     # Main content
     
     # What is TCO Section
-    st.header("🎯 What is TCO?")
+    st.header("What is TCO?")
     st.markdown("""
     **Total Cost of Ownership (TCO)** represents the complete cost of owning a vehicle 
     over a specified period, not just the purchase price. Understanding TCO helps you 
@@ -65,13 +69,13 @@ def main():
     
     with col1:
         st.markdown("""
-        **💰 Acquisition Costs**
+        **Acquisition Costs**
         - Purchase price or lease payments
         - Down payment
         - Taxes and fees
         - Registration costs
         
-        **⛽ Operating Costs**
+        **Operating Costs**
         - Fuel or electricity
         - Regular maintenance
         - Repairs and wear items
@@ -80,13 +84,13 @@ def main():
     
     with col2:
         st.markdown("""
-        **📉 Ownership Costs**
+        **Ownership Costs**
         - Depreciation
         - Insurance premiums
         - Financing interest
         - Extended warranties
         
-        **🔧 Maintenance Costs**
+        **Maintenance Costs**
         - Scheduled services
         - Tire replacements
         - Brake services
@@ -96,7 +100,7 @@ def main():
     st.markdown("---")
     
     # Methodology Section
-    st.header("📊 Our Methodology")
+    st.header("Our Methodology")
     
     st.subheader("Depreciation Modeling")
     st.markdown("""
@@ -138,7 +142,7 @@ def main():
     st.markdown("---")
     
     # Data Sources Section
-    st.header("📚 Data Sources")
+    st.header("Data Sources")
     st.markdown("""
     CashPedal aggregates data from multiple authoritative sources:
     
@@ -157,7 +161,7 @@ def main():
     st.markdown("---")
     
     # Disclaimers Section
-    st.header("⚠️ Important Disclaimers")
+    st.header("Important Disclaimers")
     
     st.warning("""
     **Please Read Carefully**
@@ -191,7 +195,7 @@ def main():
     st.markdown("---")
     
     # Contact Section
-    st.header("📧 Contact & Feedback")
+    st.header("Contact & Feedback")
     st.markdown("""
     We're constantly working to improve CashPedal. If you have:
     
@@ -219,16 +223,7 @@ def main():
     
     # Footer
     st.markdown("---")
-    st.markdown(
-        """
-        <div style='text-align: center; color: gray; font-size: 12px;'>
-        CashPedal - Vehicle TCO Calculator v1.02.3 | 
-        © 2025 CashPedal | 
-        <a href='https://www.cashpedal.io' style='color: gray;'>www.cashpedal.io</a>
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
+    st.markdown(get_footer_html(), unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()

@@ -550,7 +550,7 @@ def test_zip_code_lookup():
 # ============================================================================
 # COMPREHENSIVE STATE CLIMATE DATABASE
 # ============================================================================
-# Data includes: avg_high_temp (°F), avg_low_temp (°F), humidity_pct (%), climate_zone
+# Data includes: avg_high_temp (Â°F), avg_low_temp (Â°F), humidity_pct (%), climate_zone
 # Climate zones: 1=Very Hot, 2=Hot, 3=Warm, 4=Mixed, 5=Cool, 6=Cold, 7=Very Cold, 8=Subarctic
 
 STATE_CLIMATE_DATA = {
@@ -828,7 +828,7 @@ def get_climate_description(zip_code: str) -> str:
     climate = get_climate_data_for_zip(zip_code)
     state = climate['state']
     
-    temp_desc = f"High: {climate['avg_high_temp']}°F, Low: {climate['avg_low_temp']}°F"
+    temp_desc = f"High: {climate['avg_high_temp']}Â°F, Low: {climate['avg_low_temp']}Â°F"
     
     humidity = climate['humidity_pct']
     humidity_desc = "very humid" if humidity > 70 else "humid" if humidity > 60 else "moderate humidity" if humidity > 50 else "dry"

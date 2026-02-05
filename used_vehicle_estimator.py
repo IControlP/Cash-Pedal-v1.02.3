@@ -315,7 +315,7 @@ def integrate_used_vehicle_estimation():
                     - Current mileage: {current_mileage:,} miles
                     - {make} {model} depreciation patterns
                     
-                    💡 *This value has been automatically entered in the purchase price field*
+                    ðŸ’¡ *This value has been automatically entered in the purchase price field*
                     """)
                     
                     # Get and display insights
@@ -338,7 +338,7 @@ def integrate_used_vehicle_estimation():
                             st.write(f"**Market Position:** {insights['market_position']}")
                 
                 else:
-                    st.warning("⚠️ Unable to estimate current value - vehicle data not found in database")
+                    st.warning("âš ï¸ Unable to estimate current value - vehicle data not found in database")
             
             else:
                 # Clear any previous estimation
@@ -407,7 +407,7 @@ def enhanced_vehicle_selection_with_price_estimation():
                 
                 # Show estimation details
                 st.success(f"""
-                ✅ **Used Vehicle Price Estimated**
+                âœ… **Used Vehicle Price Estimated**
                 
                 Current market value: **${estimated_value:,.0f}**
                 

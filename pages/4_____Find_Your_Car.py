@@ -11,11 +11,12 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from session_manager import initialize_session_state
+from theme_utils import apply_theme, get_footer_html
 
 # Page configuration
 st.set_page_config(
     page_title="Find Your Perfect Car - CashPedal",
-    page_icon="🎯",
+    page_icon="car",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -24,71 +25,71 @@ st.set_page_config(
 QUIZ_QUESTIONS = [
     {
         "id": "point_a_to_b",
-        "question": "A car is basically a couch with wheels that gets me places",
-        "emoji": "🛋️",
+        "question": "To me, a car is just a thing to get me from point A to point B",
+        "emoji": "",
         "category": "mindset",
         "impacts": {"economy": 3, "sedan": 2, "hybrid": 1, "minivan": 1, "sports": -3, "luxury": -2, "truck": -1}
     },
     {
         "id": "car_person",
         "question": "I've definitely watched a car review video at 2am... for fun",
-        "emoji": "🎬",
+        "emoji": "",
         "category": "mindset",
         "impacts": {"sports": 3, "luxury": 2, "truck": 2, "electric": 1, "economy": -2, "minivan": -2}
     },
     {
         "id": "mobile_wardrobe",
         "question": "My car is basically a mobile closet - there's a outfit for every occasion in there",
-        "emoji": "👗",
+        "emoji": "",
         "category": "lifestyle",
         "impacts": {"suv": 2, "crossover": 2, "minivan": 2, "sedan": 1, "truck": 1, "sports": -3, "economy": -1}
     },
     {
         "id": "avoid_costs",
         "question": "I'd rather spend money on literally anything else besides my car",
-        "emoji": "💸",
+        "emoji": "",
         "category": "financial",
         "impacts": {"economy": 3, "hybrid": 2, "sedan": 2, "electric": 1, "luxury": -3, "sports": -3, "truck": -2}
     },
     {
         "id": "valet_moment",
         "question": "I secretly (or not so secretly) love the valet parking moment",
-        "emoji": "🎩",
+        "emoji": "",
         "category": "values",
         "impacts": {"luxury": 3, "sports": 3, "truck": 1, "economy": -3, "minivan": -2, "hybrid": -1}
     },
     {
         "id": "kids_chaos",
         "question": "My backseat looks like a snack explosion happened... and that's okay",
-        "emoji": "🍿",
+        "emoji": "",
         "category": "lifestyle",
         "impacts": {"minivan": 3, "suv": 2, "crossover": 2, "sedan": 0, "sports": -3, "luxury": -2}
     },
     {
         "id": "zoom_zoom",
         "question": "When the light turns green, I like to be the first one gone",
-        "emoji": "🚦",
+        "emoji": "",
         "category": "driving",
         "impacts": {"sports": 3, "luxury": 2, "electric": 2, "truck": 0, "economy": -2, "minivan": -2}
     },
     {
         "id": "planet_love",
         "question": "I feel guilty every time I fill up at a gas station",
-        "emoji": "🌍",
+        "emoji": "",
         "category": "values",
         "impacts": {"electric": 3, "hybrid": 3, "economy": 1, "truck": -3, "sports": -2, "suv": -1}
     },
     {
         "id": "home_depot_run",
         "question": "I've definitely tried to fit something way too big into a car that was way too small",
-        "emoji": "🪵",
+        "emoji": "",
         "category": "practical",
         "impacts": {"truck": 3, "suv": 2, "crossover": 1, "minivan": 1, "sedan": -1, "sports": -3, "economy": -2}
     },
     {
         "id": "parking_warrior",
         "question": "I can parallel park in a spot that would make others sweat",
-        "emoji": "🅿️",
+        "emoji": "",
         "category": "practical",
         "impacts": {"economy": 2, "sedan": 2, "sports": 1, "crossover": 0, "suv": -2, "truck": -3, "minivan": -2}
     }
@@ -98,7 +99,7 @@ QUIZ_QUESTIONS = [
 VEHICLE_PROFILES = {
     "suv": {
         "name": "SUV / Crossover",
-        "emoji": "🚙",
+        "emoji": "",
         "tagline": "The 'I Need Options' Mobile",
         "description": "You're the friend everyone calls when they're moving apartments. Your car is ready for soccer practice, camping trips, AND looking good at brunch. Basically, you want a Swiss Army knife with wheels.",
         "perfect_for": ["People who say 'let's take my car'", "Weekend warriors", "Costco power shoppers", "Weather? What weather?"],
@@ -112,7 +113,7 @@ VEHICLE_PROFILES = {
     },
     "sedan": {
         "name": "Sedan",
-        "emoji": "🚗",
+        "emoji": "",
         "tagline": "The Sensible Queen/King",
         "description": "You've got your life together and your car reflects that. No drama, no fuss, just reliable transportation that doesn't make you cry at the pump. Your accountant would be proud.",
         "perfect_for": ["Adulting champions", "Parallel parking pros", "People who actually check their tire pressure", "Highway hypermilers"],
@@ -126,7 +127,7 @@ VEHICLE_PROFILES = {
     },
     "truck": {
         "name": "Pickup Truck",
-        "emoji": "🛻",
+        "emoji": "",
         "tagline": "The 'Hold My Beer' Vehicle",
         "description": "You've never said 'that won't fit' because everything fits. Whether you actually need to haul stuff or just like knowing you COULD haul stuff, trucks deliver that big capability energy.",
         "perfect_for": ["DIY legends", "Boat owners", "People who help everyone move (again)", "Tailgate party hosts"],
@@ -140,7 +141,7 @@ VEHICLE_PROFILES = {
     },
     "sports": {
         "name": "Sports Car",
-        "emoji": "🏎️",
+        "emoji": "",
         "tagline": "The 'Life's Too Short' Machine",
         "description": "You understand that cars should make you FEEL something. Every on-ramp is an opportunity, every curve is a conversation, and practicality is someone else's problem.",
         "perfect_for": ["People who take the long way home", "Driving playlist curators", "Weekend canyon carvers", "Those who smile at engine sounds"],
@@ -154,7 +155,7 @@ VEHICLE_PROFILES = {
     },
     "luxury": {
         "name": "Luxury Vehicle",
-        "emoji": "👑",
+        "emoji": "",
         "tagline": "The 'Treat Yourself' Chariot",
         "description": "You work hard and your car should reflect that. Butter-soft leather, a sound system that slaps, and a badge that says 'yes, I have arrived.' Self-care has wheels now.",
         "perfect_for": ["Corner office energy", "People who appreciate the finer things", "Massage seat enthusiasts", "Valet parking fans"],
@@ -168,7 +169,7 @@ VEHICLE_PROFILES = {
     },
     "economy": {
         "name": "Economy Car",
-        "emoji": "💵",
+        "emoji": "",
         "tagline": "The 'Money Isn't Everything' Genius",
         "description": "While everyone else is car-broke, you're out here living your best life with money left over for actual fun stuff. Big brain move? Getting from A to B without the financial trauma.",
         "perfect_for": ["Financial wizards", "People with actual hobbies", "City dwellers", "Anyone who's done the math"],
@@ -182,7 +183,7 @@ VEHICLE_PROFILES = {
     },
     "electric": {
         "name": "Electric Vehicle",
-        "emoji": "⚡",
+        "emoji": "",
         "tagline": "The 'Living in 2035' Pioneer",
         "description": "Gas stations? Don't know her. You're charging at home like a smartphone and smugly passing every pump. Plus that instant torque makes every green light feel like a launch sequence.",
         "perfect_for": ["Tech early adopters", "Home charging havers", "Instant torque addicts", "People who like saying 'I don't buy gas'"],
@@ -196,7 +197,7 @@ VEHICLE_PROFILES = {
     },
     "hybrid": {
         "name": "Hybrid",
-        "emoji": "🔋",
+        "emoji": "",
         "tagline": "The 'Best of Both Worlds' Strategist",
         "description": "You want to be eco-friendly but also want to drive to grandma's house 6 states away without a charging strategy. Having your cake and eating it too? That's just good planning.",
         "perfect_for": ["Range anxiety avoiders", "MPG obsessors", "Apartment dwellers who can't charge", "People who like watching efficiency gauges"],
@@ -210,7 +211,7 @@ VEHICLE_PROFILES = {
     },
     "minivan": {
         "name": "Minivan",
-        "emoji": "🚐",
+        "emoji": "",
         "tagline": "The 'I've Embraced My Destiny' Legend",
         "description": "You've achieved final form. While others struggle with car seats and cargo, you're living in automotive enlightenment. Sliding doors are superior and you're not afraid to say it.",
         "perfect_for": ["Carpool champions", "Snack distribution specialists", "People who've given up pretending", "Ultimate road trip commanders"],
@@ -228,13 +229,13 @@ VEHICLE_PROFILES = {
 def get_slider_label(value):
     """Get descriptive label for slider value"""
     labels = {
-        1: "Not me at all 🙅",
+        1: "Not me at all",
         2: "Meh, not really",
-        3: "Sometimes? 🤷",
+        3: "Sometimes?",
         4: "Yeah, pretty much",
-        5: "That's SO me 💯"
+        5: "That's SO me"
     }
-    return labels.get(value, "Sometimes? 🤷")
+    return labels.get(value, "Sometimes?")
 
 
 def calculate_results(answers):
@@ -307,7 +308,7 @@ def display_result_card(vehicle_type, score, rank):
             margin-bottom: 1rem;
         ">
             <h2 style="margin:0; color: {profile.get('color', '#1E88E5')}">
-                🏆 #{rank} Match: {profile.get('emoji', '🚗')} {profile.get('name', vehicle_type.title())}
+                #{rank} Match: {profile.get('name', vehicle_type.title())}
             </h2>
             <p style="font-size: 1.3rem; font-style: italic; margin: 0.5rem 0; color: #555;">
                 "{profile.get('tagline', '')}"
@@ -325,7 +326,7 @@ def display_result_card(vehicle_type, score, rank):
             margin-bottom: 0.5rem;
         ">
             <h3 style="margin:0; color: {profile.get('color', '#333')}">
-                #{rank}: {profile.get('emoji', '🚗')} {profile.get('name', vehicle_type.title())}
+                #{rank}: {profile.get('name', vehicle_type.title())}
             </h3>
             <p style="font-style: italic; margin: 0.3rem 0; color: #666; font-size: 0.95rem;">
                 "{profile.get('tagline', '')}"
@@ -340,6 +341,9 @@ def main():
     """Car Personality Quiz Page"""
     # Initialize session state
     initialize_session_state()
+    
+    # Apply CashPedal theme (handles device/dark mode detection)
+    apply_theme()
     
     # Initialize quiz state
     if 'quiz_started' not in st.session_state:
@@ -422,7 +426,7 @@ def main():
     # Header
     st.markdown("""
         <div class="quiz-header">
-            <p class="quiz-title">🎯 Find Your Perfect Car</p>
+            <p class="quiz-title">Find Your Perfect Car</p>
             <p class="quiz-subtitle">10 totally scientific* questions to discover your automotive soulmate</p>
             <p style="font-size: 0.8rem; color: #999;">*not actually scientific</p>
         </div>
@@ -430,11 +434,11 @@ def main():
     
     # Sidebar
     with st.sidebar:
-        st.header("🎮 Quiz Progress")
+        st.header("Quiz Progress")
         
         if st.session_state.quiz_complete:
-            st.success("✅ Quiz Complete!")
-            if st.button("🔄 Retake Quiz"):
+            st.success("Quiz Complete!")
+            if st.button("Retake Quiz"):
                 st.session_state.quiz_started = False
                 st.session_state.quiz_complete = False
                 st.session_state.quiz_answers = {}
@@ -446,10 +450,10 @@ def main():
             st.write(f"Questions answered: {answered}/{total}")
         
         st.markdown("---")
-        st.header("🔗 Quick Links")
-        if st.button("🔧 Vehicle Calculator"):
+        st.header("Quick Links")
+        if st.button("Vehicle Calculator"):
             st.switch_page("pages/1___Single_Vehicle_Calculator.py")
-        if st.button("⚖️ Compare Vehicles"):
+        if st.button("Compare Vehicles"):
             st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
     
     # Main content
@@ -460,73 +464,75 @@ def main():
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.markdown("""
-            ### 🎮 How It Works
+            ### How It Works
             
-            1. **Slide Away** - Left = "nope, not me" / Right = "that's SO me"
-            2. **No Wrong Answers** - Unless you lie to yourself 😉
+            1. **Pick Your Answer** - Select the circle that best describes you
+            2. **No Wrong Answers** - Unless you lie to yourself
             3. **Get Matched** - We'll reveal your top 3 car soulmates
             4. **Mind = Blown** - Or mildly amused. Either works.
             
             ---
             
-            ### ⏱️ Takes about 60 seconds!
+            ### Takes about 60 seconds!
             
             *Shorter than your last doom scroll*
             """)
             
             st.markdown("<br>", unsafe_allow_html=True)
             
-            if st.button("🎯 Let's Do This!", use_container_width=True, type="primary"):
+            if st.button("Let's Do This!", use_container_width=True, type="primary"):
                 st.session_state.quiz_started = True
                 st.session_state.quiz_answers = {}
                 st.rerun()
     
     elif st.session_state.quiz_started and not st.session_state.quiz_complete:
         # Quiz questions
-        st.markdown("### How much do you relate?")
-        st.caption("👈 Not me at all · · · Totally me 👉")
+        st.markdown("### How much do you agree?")
+        st.caption("Select the option that best describes how you feel")
+        
+        # Radio button options
+        options = [
+            "Strongly Disagree",
+            "Disagree", 
+            "Neutral",
+            "Agree",
+            "Strongly Agree"
+        ]
         
         # Display all questions
         for i, question in enumerate(QUIZ_QUESTIONS):
             st.markdown(f"""
             <div class="question-card">
-                <span style="font-size: 1.5rem;">{question['emoji']}</span>
                 <strong style="font-size: 1.1rem;"> {question['question']}</strong>
             </div>
             """, unsafe_allow_html=True)
             
-            # Create slider
+            # Get default value (convert to index 0-4)
             default_val = st.session_state.quiz_answers.get(question['id'], 3)
-            answer = st.slider(
+            default_index = default_val - 1  # Convert 1-5 to 0-4
+            
+            # Create radio buttons
+            answer_label = st.radio(
                 f"q_{question['id']}",
-                min_value=1,
-                max_value=5,
-                value=default_val,
-                key=f"slider_{question['id']}",
-                format="%d",
-                label_visibility="collapsed"
+                options=options,
+                index=default_index,
+                key=f"radio_{question['id']}",
+                label_visibility="collapsed",
+                horizontal=False
             )
             
-            # Show label
-            col1, col2, col3 = st.columns([1, 2, 1])
-            with col1:
-                st.caption("👎 Disagree")
-            with col2:
-                label = get_slider_label(answer)
-                st.markdown(f"<p style='text-align:center; font-weight:bold;'>{label}</p>", unsafe_allow_html=True)
-            with col3:
-                st.caption("Agree 👍")
+            # Convert answer back to 1-5 scale
+            answer = options.index(answer_label) + 1
             
             # Store answer
             st.session_state.quiz_answers[question['id']] = answer
-            
             st.markdown("<br>", unsafe_allow_html=True)
         
         # Submit button
         st.markdown("---")
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            if st.button("🔮 Reveal My Car Soulmate!", use_container_width=True, type="primary"):
+            if st.button("Reveal My Car Soulmate!", use_container_width=True, type="primary"):
                 st.session_state.quiz_complete = True
                 st.rerun()
     
@@ -534,7 +540,7 @@ def main():
         # Results page
         st.markdown("""
         <div class="result-header">
-            <h1 style="margin:0;">🎉 The Results Are In!</h1>
+            <h1 style="margin:0;">The Results Are In!</h1>
             <p style="margin:0.5rem 0 0 0; font-size: 1.1rem;">We've analyzed your vibe and found your automotive soulmates...</p>
         </div>
         """, unsafe_allow_html=True)
@@ -552,16 +558,16 @@ def main():
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    st.markdown("#### ✅ Perfect For:")
+                    st.markdown("#### Perfect For:")
                     for item in profile.get("perfect_for", []):
                         st.markdown(f"- {item}")
                 
                 with col2:
-                    st.markdown("#### 🤔 Consider:")
+                    st.markdown("#### Consider:")
                     for item in profile.get("consider", []):
                         st.markdown(f"- {item}")
                 
-                st.markdown("#### 🚗 Top Picks to Explore:")
+                st.markdown("#### Top Picks to Explore:")
                 pick_cols = st.columns(3)
                 for idx, pick in enumerate(profile.get("top_picks", [])):
                     with pick_cols[idx]:
@@ -575,31 +581,30 @@ def main():
                 st.markdown("---")
         
         # Score breakdown (optional expandable)
-        with st.expander("📊 See All Category Scores"):
+        with st.expander("See All Category Scores"):
             sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
             for vehicle_type, score in sorted_scores:
                 profile = VEHICLE_PROFILES.get(vehicle_type, {})
-                emoji = profile.get("emoji", "🚗")
                 name = profile.get("name", vehicle_type.title())
                 st.progress(score / 100)
-                st.caption(f"{emoji} {name}: {score:.0f}/100")
+                st.caption(f"{name}: {score:.0f}/100")
         
         # Call to action
         st.markdown("---")
-        st.markdown("### 🚀 Ready to Explore Your Matches?")
+        st.markdown("### Ready to Explore Your Matches?")
         
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            if st.button("🔧 Calculate Costs", use_container_width=True):
+            if st.button("Calculate Costs", use_container_width=True):
                 st.switch_page("pages/1___Single_Vehicle_Calculator.py")
         
         with col2:
-            if st.button("⚖️ Compare Vehicles", use_container_width=True):
+            if st.button("Compare Vehicles", use_container_width=True):
                 st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
         
         with col3:
-            if st.button("🔄 Retake Quiz", use_container_width=True):
+            if st.button("Retake Quiz", use_container_width=True):
                 st.session_state.quiz_started = False
                 st.session_state.quiz_complete = False
                 st.session_state.quiz_answers = {}
@@ -607,15 +612,7 @@ def main():
     
     # Footer
     st.markdown("---")
-    st.markdown(
-        """
-        <div style='text-align: center; color: gray; font-size: 12px;'>
-        CashPedal - Vehicle TCO Calculator v1.02.3 | 
-        Quiz results are suggestions based on your preferences
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
+    st.markdown(get_footer_html(), unsafe_allow_html=True)
 
 
 if __name__ == "__main__":

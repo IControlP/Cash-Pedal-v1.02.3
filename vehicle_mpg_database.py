@@ -847,4 +847,4 @@ if __name__ == "__main__":
         print(f"   Est. Annual Fuel Cost: ${annual_cost_gas:.0f}")
         print()
     
-    print("✅ MPG Database ready for integration!")
+    print("âœ… MPG Database ready for integration!")

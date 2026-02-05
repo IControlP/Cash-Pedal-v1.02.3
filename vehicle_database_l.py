@@ -4,7 +4,7 @@
 MANUFACTURERS_L = {
     'Lexus': {
         'IS': {
-            'production_years': (2001, 2026),
+            'production_years': (2001, 2025),
             'trims_by_year': {
                 2001: {'IS 300': 31000},
                 2002: {'IS 300': 31300, 'IS 300 SportCross': 32300},
@@ -102,19 +102,11 @@ MANUFACTURERS_L = {
                     'IS 350': 46500,
                     'IS 350 F Sport': 51100,
                     'IS 500 F Sport Performance': 59700
-                },
-                2026: {
-                    'IS 300': 43700,
-                    'IS 300 AWD': 45700,
-                    'IS 300 F Sport': 47000,
-                    'IS 350': 47700,
-                    'IS 350 F Sport': 52400,
-                    'IS 500 F Sport Performance': 61200
                 }
             }
         },
         'ES': {
-            'production_years': (1992, 2026),
+            'production_years': (1992, 2025),
             'trims_by_year': {
                 2000: {'ES 300': 29995},
                 2001: {'ES 300': 30295},
@@ -188,19 +180,11 @@ MANUFACTURERS_L = {
                     'ES 300h': 47700,
                     'ES 300h Luxury': 48890, 
                     'ES 300h Ultra Luxury': 53440
-                },
-                2026: {
-                    'ES 250': 44700,
-                    'ES 350': 45800,
-                    'ES 350 F Sport': 50800,
-                    'ES 300h': 48900,
-                    'ES 300h Luxury': 50100, 
-                    'ES 300h Ultra Luxury': 54800
                 }
             }
         },
         'LS': {
-            'production_years': (1990, 2026),
+            'production_years': (1990, 2025),
             'trims_by_year': {
                 2000: {'LS 400': 54000},
                 2001: {'LS 430': 55500},
@@ -275,18 +259,11 @@ MANUFACTURERS_L = {
                     'LS 500 F Sport': 90500,
                     'LS 500h': 88500,
                     'LS 500h AWD': 91000
-                },
-                2026: {
-                    'LS 500': 85600,
-                    'LS 500 AWD': 88100,
-                    'LS 500 F Sport': 92800,
-                    'LS 500h': 90700,
-                    'LS 500h AWD': 93300
                 }
             }
         },
         'UX': {
-            'production_years': (2019, 2026),
+            'production_years': (2019, 2025),
             'trims_by_year': {
                 2019: {
                     'UX 200': 32000,
@@ -329,17 +306,11 @@ MANUFACTURERS_L = {
                     'UX 250h': 39300,
                     'UX 200 F Sport': 40300,
                     'UX 250h F Sport': 42300
-                },
-                2026: {
-                    'UX 200': 38200,
-                    'UX 250h': 40300,
-                    'UX 200 F Sport': 41300,
-                    'UX 250h F Sport': 43400
                 }
             }
         },
         'NX': {
-            'production_years': (2015, 2026),
+            'production_years': (2015, 2025),
             'trims_by_year': {
                 2015: {
                     'NX 200t': 34480,
@@ -406,17 +377,11 @@ MANUFACTURERS_L = {
                     'NX 350': 47700,
                     'NX 350 F Sport': 52450,
                     'NX 450h+': 60300
-                },
-                2026: {
-                    'NX 250': 42800,
-                    'NX 350': 48900,
-                    'NX 350 F Sport': 53800,
-                    'NX 450h+': 61800
                 }
             }
         },
         'RX': {
-            'production_years': (1999, 2026),
+            'production_years': (1999, 2025),
             'trims_by_year': {
                 2000: {'RX 300': 34000},
                 2001: {'RX 300': 34300},
@@ -493,17 +458,11 @@ MANUFACTURERS_L = {
                     'RX 350 F Sport': 55300,
                     'RX 450h+': 65450,
                     'RX 500h F Sport': 70700
-                },
-                2026: {
-                    'RX 350': 52000,
-                    'RX 350 F Sport': 56700,
-                    'RX 450h+': 67100,
-                    'RX 500h F Sport': 72500
                 }
             }
         },
         'GX': {
-            'production_years': (2003, 2026),
+            'production_years': (2003, 2025),
             'trims_by_year': {
                 2003: {'GX 470': 46000},
                 2004: {'GX 470': 46500},
@@ -553,17 +512,11 @@ MANUFACTURERS_L = {
                     'GX 550 Premium': 69900,
                     'GX 550 Luxury': 73200,
                     'GX 550 Overtrail': 76900
-                },
-                2026: {
-                    'GX 550': 66000,
-                    'GX 550 Premium': 71600,
-                    'GX 550 Luxury': 75000,
-                    'GX 550 Overtrail': 78800
                 }
             }
         },
         'LX': {
-            'production_years': (1996, 2026),
+            'production_years': (1996, 2025),
             'trims_by_year': {
                 2000: {'LX 470': 64000},
                 2001: {'LX 470': 64500},
@@ -617,7 +570,7 @@ MANUFACTURERS_L = {
     
     'Lincoln': {
         'Corsair': {
-            'production_years': (2020, 2026),
+            'production_years': (2020, 2025),
             'trims_by_year': {
                 2020: {
                     'Corsair': 36940,
@@ -642,15 +595,11 @@ MANUFACTURERS_L = {
                 2025: {
                     'Corsair': 42590,
                     'Corsair Reserve': 50840
-                },
-                2026: {
-                    'Corsair': 43700,
-                    'Corsair Reserve': 52100
                 }
             }
         },
         'Navigator': {
-            'production_years': (1998, 2026),
+            'production_years': (1998, 2025),
             'trims_by_year': {
                 2000: {'Navigator': 42000},
                 2001: {'Navigator': 42500},
@@ -717,12 +666,6 @@ MANUFACTURERS_L = {
                     'Navigator Reserve': 89855,
                     'Navigator L': 84955,
                     'Navigator L Reserve': 92855
-                },
-                2026: {
-                    'Navigator': 84000,
-                    'Navigator Reserve': 92100,
-                    'Navigator L': 87100,
-                    'Navigator L Reserve': 95200
                 }
             }
         },
@@ -845,16 +788,11 @@ MANUFACTURERS_L = {
                     'Aviator': 56975,
                     'Aviator Reserve': 62175,
                     'Aviator Grand Touring': 74975
-                },
-                2026: {
-                    'Aviator': 58400,
-                    'Aviator Reserve': 63700,
-                    'Aviator Grand Touring': 76800
                 }
             }
         },
         'Nautilus': {
-            'production_years': (2019, 2026),
+            'production_years': (2019, 2025),
             'trims_by_year': {
                 2019: {
                     'Nautilus': 41040,
@@ -883,10 +821,6 @@ MANUFACTURERS_L = {
                 2025: {
                     'Nautilus': 47945,
                     'Nautilus Reserve': 54445
-                },
-                2026: {
-                    'Nautilus': 49100,
-                    'Nautilus Reserve': 55800
                 }
             }
         },

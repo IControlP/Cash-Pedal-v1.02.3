@@ -11,6 +11,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from session_manager import initialize_session_state
+from theme_utils import apply_theme, get_footer_html
 from salary_calculator_utils import (
     calculate_required_salary,
     estimate_vehicle_costs_simple,
@@ -55,7 +56,7 @@ except ImportError:
 # Page configuration
 st.set_page_config(
     page_title="Salary Calculator - CashPedal",
-    page_icon="💰",
+    page_icon="car",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -174,7 +175,7 @@ def display_maintenance_breakdown(maintenance: dict, vehicle_tier: str):
     
     st.markdown(f"""
     <div style="background-color: #f5f5f5; padding: 20px; border-radius: 10px; margin-top: 20px;">
-        <h4 style="margin-top: 0;">🔧 Estimated Annual Maintenance Costs</h4>
+        <h4 style="margin-top: 0;">Estimated Annual Maintenance Costs</h4>
         <p style="color: #666; font-style: italic;">{maintenance['tier_description']}</p>
     </div>
     """, unsafe_allow_html=True)
@@ -207,8 +208,11 @@ def main():
     # Initialize session state
     initialize_session_state()
     
+    # Apply CashPedal theme (handles device/dark mode detection)
+    apply_theme()
+    
     # Page header
-    st.title("💰 Salary Requirements Calculator")
+    st.title("Salary Requirements Calculator")
     st.markdown("""
     Find out what salary you need to comfortably afford a vehicle. We'll calculate based on 
     the recommendation that **total vehicle costs should be 10-15% of your gross (pre-tax) income**.
@@ -217,7 +221,7 @@ def main():
     
     # Sidebar
     with st.sidebar:
-        st.header("📋 About This Calculator")
+        st.header("About This Calculator")
         st.info("""
         **What's included in vehicle costs:**
         - Monthly payment
@@ -255,10 +259,10 @@ def main():
     st.subheader("Step 2: Select a vehicle")
     
     if is_lease:
-        st.caption("📌 Showing 2025 model year vehicles only (current year for leasing)")
+        st.caption("Showing 2025 model year vehicles only (current year for leasing)")
         available_year = 2025
     else:
-        st.caption("📌 Select any available model year")
+        st.caption("Select any available model year")
     
     # Vehicle selection - initialize all variables
     vehicle_price = 35000
@@ -327,10 +331,10 @@ def main():
                     mpg = mpg_data.get('combined', 28)
             
             tier_labels = {
-                'luxury': '🏆 Luxury',
-                'premium': '⭐ Premium', 
-                'standard': '🚗 Standard',
-                'economy': '💚 Economy'
+                'luxury': 'Luxury',
+                'premium': 'Premium', 
+                'standard': 'Standard',
+                'economy': 'Economy'
             }
             
             # Store original MSRP
@@ -363,10 +367,10 @@ def main():
             
             # Display vehicle summary
             if is_used_vehicle and estimated_value:
-                st.success(f"**{year} {make} {model} {trim}** — Est. Value: {format_currency(vehicle_price)} (MSRP: {format_currency(original_msrp)}) — Category: {tier_labels.get(vehicle_tier, 'Standard')}")
-                st.caption(f"📉 Estimated value based on {vehicle_age} years of age and ~{estimated_mileage:,} miles (average use)")
+                st.success(f"**{year} {make} {model} {trim}** - Est. Value: {format_currency(vehicle_price)} (MSRP: {format_currency(original_msrp)}) - Category: {tier_labels.get(vehicle_tier, 'Standard')}")
+                st.caption(f"Estimated value based on {vehicle_age} years of age and ~{estimated_mileage:,} miles (average use)")
             else:
-                st.success(f"**{year} {make} {model} {trim}** — MSRP: {format_currency(vehicle_price)} — Category: {tier_labels.get(vehicle_tier, 'Standard')}")
+                st.success(f"**{year} {make} {model} {trim}** - MSRP: {format_currency(vehicle_price)} - Category: {tier_labels.get(vehicle_tier, 'Standard')}")
     else:
         st.warning("Vehicle database not available. Please enter vehicle details manually.")
         col1, col2 = st.columns(2)
@@ -385,7 +389,7 @@ def main():
     # STEP 3: Select State
     # =========================================================================
     st.subheader("Step 3: What state do you live in?")
-    st.caption("📌 Your state affects income tax calculations")
+    st.caption("Your state affects income tax calculations")
     
     states = get_state_list()
     state_options = {f"{s['name']}": s['code'] for s in states}
@@ -405,9 +409,9 @@ def main():
     # Show tax info for selected state
     state_info = STATE_TAX_DATA.get(state, (0.05, selected_state_name, True))
     if not state_info[2]:  # No income tax
-        st.info(f"✨ {selected_state_name} has **no state income tax** — more of your paycheck stays with you!")
+        st.info(f"{selected_state_name} has **no state income tax** - more of your paycheck stays with you!")
     elif state_info[0] >= 0.07:
-        st.warning(f"📊 {selected_state_name} has a higher state income tax rate ({state_info[0]*100:.1f}%)")
+        st.warning(f"{selected_state_name} has a higher state income tax rate ({state_info[0]*100:.1f}%)")
     
     st.markdown("---")
     
@@ -419,7 +423,7 @@ def main():
     
     if not is_lease:
         st.subheader("Step 4: How much will you put down?")
-        st.caption("📌 A larger down payment reduces your monthly payment and required salary")
+        st.caption("A larger down payment reduces your monthly payment and required salary")
         
         # Only show if vehicle is selected
         if make and model and make != "-- Select Make --" and model != "-- Select Model --":
@@ -451,15 +455,15 @@ def main():
             
             # Show impact message
             if down_payment_percent >= 50:
-                st.success("💪 Excellent! A 50%+ down payment significantly reduces your monthly costs and interest paid.")
+                st.success("Excellent! A 50%+ down payment significantly reduces your monthly costs and interest paid.")
             elif down_payment_percent >= 20:
-                st.info("👍 A 20%+ down payment is recommended to avoid being underwater on your loan.")
+                st.info("A 20%+ down payment is recommended to avoid being underwater on your loan.")
             elif down_payment_percent > 0:
-                st.warning("💡 Consider putting at least 20% down to reduce interest costs and build equity faster.")
+                st.warning("Consider putting at least 20% down to reduce interest costs and build equity faster.")
             else:
-                st.warning("⚠️ Financing 100% of the vehicle will result in higher monthly payments and more interest paid.")
+                st.warning("Financing 100% of the vehicle will result in higher monthly payments and more interest paid.")
         else:
-            st.info("👆 Select a vehicle first to set your down payment.")
+            st.info("Select a vehicle first to set your down payment.")
         
         st.markdown("---")
     
@@ -510,7 +514,7 @@ def main():
         monthly_cost = costs['recommended_monthly_cost']
         
         # Display Results Header
-        st.subheader(f"💵 Salary Required for {year} {make} {model}")
+        st.subheader(f"Salary Required for {year} {make} {model}")
         
         # Show calculation summary
         if is_lease:
@@ -537,7 +541,7 @@ def main():
                 """)
         
         # Show monthly cost breakdown summary
-        with st.expander("📋 View Monthly Cost Breakdown"):
+        with st.expander("View Monthly Cost Breakdown"):
             breakdown_col1, breakdown_col2 = st.columns(2)
             with breakdown_col1:
                 st.markdown(f"- **Car Payment:** {format_currency(costs['vehicle_payment'])}")
@@ -565,7 +569,7 @@ def main():
         # Call to action for full calculator
         st.markdown("""
         <div style="background-color: #e8f5e9; padding: 25px; border-radius: 10px; text-align: center; border: 2px solid #4caf50;">
-            <h3 style="color: #2e7d32; margin-top: 0;">📊 Want More Details?</h3>
+            <h3 style="color: #2e7d32; margin-top: 0;">Want More Details?</h3>
             <p style="color: #333; font-size: 16px; margin-bottom: 15px;">
                 Get a complete cost breakdown including depreciation projections, insurance estimates, 
                 fuel costs by location, and year-by-year analysis.
@@ -575,25 +579,16 @@ def main():
         
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            if st.button("🔧 Try the Full Vehicle Cost Calculator", type="primary", use_container_width=True):
+            if st.button("Try the Full Vehicle Cost Calculator", type="primary", use_container_width=True):
                 st.switch_page("pages/1___Single_Vehicle_Calculator.py")
     
     else:
         # Prompt to select vehicle
-        st.info("👆 Please select a vehicle above to see salary requirements.")
+        st.info("Please select a vehicle above to see salary requirements.")
     
     # Footer
     st.markdown("---")
-    st.markdown(
-        """
-        <div style='text-align: center; color: gray; font-size: 12px;'>
-        CashPedal - Vehicle TCO Calculator v1.02.3<br>
-        <em>Estimates based on average driving (10-12K miles/year), normal conditions. 
-        Actual costs vary by location, driving habits, and individual circumstances.</em>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.markdown(get_footer_html(), unsafe_allow_html=True)
 
 
 if __name__ == "__main__":

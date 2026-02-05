@@ -211,6 +211,67 @@ def get_theme_css():
         .feature-card ul {{
             padding-left: 1.2rem;
         }}
+        
+        /* Mobile-optimized form inputs */
+        .stSelectbox > div > div {{
+            min-height: 48px !important;
+        }}
+        
+        .stSelectbox [data-baseweb="select"] {{
+            min-height: 48px !important;
+        }}
+        
+        .stSelectbox [data-baseweb="select"] > div {{
+            min-height: 46px !important;
+            padding: 8px 12px !important;
+        }}
+        
+        .stNumberInput input {{
+            min-height: 48px !important;
+            font-size: 16px !important; /* Prevents iOS zoom */
+        }}
+        
+        .stTextInput input {{
+            min-height: 48px !important;
+            font-size: 16px !important; /* Prevents iOS zoom */
+        }}
+        
+        /* Larger touch targets for buttons */
+        .stButton > button {{
+            min-height: 48px !important;
+            font-size: 1rem !important;
+        }}
+        
+        /* Better spacing for mobile columns */
+        [data-testid="column"] {{
+            padding: 0.25rem !important;
+        }}
+        
+        /* Radio buttons - larger touch targets */
+        .stRadio > div {{
+            gap: 0.5rem !important;
+        }}
+        
+        .stRadio label {{
+            padding: 12px 16px !important;
+            min-height: 44px !important;
+        }}
+        
+        /* Checkbox - larger touch target */
+        .stCheckbox label {{
+            padding: 12px 0 !important;
+            min-height: 44px !important;
+        }}
+        
+        /* Slider improvements */
+        .stSlider > div > div > div {{
+            height: 8px !important;
+        }}
+        
+        .stSlider [data-baseweb="slider"] div[role="slider"] {{
+            width: 28px !important;
+            height: 28px !important;
+        }}
     }}
 
     /* =============================================

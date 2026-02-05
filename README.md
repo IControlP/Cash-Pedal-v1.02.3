@@ -1,6 +1,6 @@
 # Railway Deployment Configuration Files
 
-## 📦 What's Included
+## ðŸ“¦ What's Included
 
 This package contains all the configuration files needed to deploy your Vehicle TCO Calculator to Railway with your custom Namecheap domain.
 
@@ -20,7 +20,7 @@ This package contains all the configuration files needed to deploy your Vehicle 
 
 ---
 
-## 🚀 Quick Start (3 Steps)
+## ðŸš€ Quick Start (3 Steps)
 
 ### Step 1: Add Files to Your GitHub Repository
 
@@ -28,14 +28,14 @@ Copy these files to your repository root:
 
 ```
 your-repo/
-├── .streamlit/
-│   └── config.toml          ← Copy this
-├── main.py                   ← Replace existing file
-├── Procfile                  ← Copy this (new file)
-├── railway.toml              ← Copy this (new file)
-├── .gitignore                ← Copy this
-├── requirements.txt          ← You already have this
-└── [all your .py files]      ← Keep in root directory
+â”œâ”€â”€ .streamlit/
+â”‚   â””â”€â”€ config.toml          â† Copy this
+â”œâ”€â”€ main.py                   â† Replace existing file
+â”œâ”€â”€ Procfile                  â† Copy this (new file)
+â”œâ”€â”€ railway.toml              â† Copy this (new file)
+â”œâ”€â”€ .gitignore                â† Copy this
+â”œâ”€â”€ requirements.txt          â† You already have this
+â””â”€â”€ [all your .py files]      â† Keep in root directory
 ```
 
 **Important:** All Python files should remain in the root directory (no subdirectories).
@@ -50,7 +50,7 @@ git push origin main
 ### Step 2: Deploy to Railway
 
 1. Go to [railway.app](https://railway.app)
-2. Click "New Project" → "Deploy from GitHub repo"
+2. Click "New Project" â†’ "Deploy from GitHub repo"
 3. Select your repository
 4. Wait for build to complete
 5. Click the generated URL to verify it works
@@ -58,12 +58,12 @@ git push origin main
 ### Step 3: Connect Your Namecheap Domain
 
 **In Railway:**
-1. Settings → Domains → Add a domain
+1. Settings â†’ Domains â†’ Add a domain
 2. Enter your domain (e.g., `www.yourdomain.com`)
 3. Note the CNAME target shown (e.g., `your-app.railway.app`)
 
 **In Namecheap:**
-1. Domain List → Manage → Advanced DNS
+1. Domain List â†’ Manage â†’ Advanced DNS
 2. Add CNAME Record:
    ```
    Type: CNAME Record
@@ -78,7 +78,7 @@ git push origin main
 
 ---
 
-## 📋 What Was Fixed
+## ðŸ“‹ What Was Fixed
 
 ### Main Problem: Import Path Mismatch
 
@@ -119,25 +119,25 @@ Now imports match your actual file structure.
 
 ---
 
-## ⚠️ Important Notes
+## âš ï¸ Important Notes
 
 ### File Structure Must Be:
 ```
-✅ CORRECT - All files in root:
+âœ… CORRECT - All files in root:
 repo/
-├── main.py
-├── calculator_display.py
-├── comparison_display.py
-├── session_manager.py
-└── [etc...]
+â”œâ”€â”€ main.py
+â”œâ”€â”€ calculator_display.py
+â”œâ”€â”€ comparison_display.py
+â”œâ”€â”€ session_manager.py
+â””â”€â”€ [etc...]
 
-❌ WRONG - Files in subdirectories:
+âŒ WRONG - Files in subdirectories:
 repo/
-├── ui/
-│   └── calculator_display.py
-├── utils/
-│   └── session_manager.py
-└── main.py
+â”œâ”€â”€ ui/
+â”‚   â””â”€â”€ calculator_display.py
+â”œâ”€â”€ utils/
+â”‚   â””â”€â”€ session_manager.py
+â””â”€â”€ main.py
 ```
 
 ### Railway Requirements:
@@ -153,7 +153,7 @@ repo/
 
 ---
 
-## 🔍 Verify Everything Works
+## ðŸ” Verify Everything Works
 
 ### 1. Local Test (Before Deploying)
 ```bash
@@ -161,26 +161,26 @@ pip install -r requirements.txt
 streamlit run main.py
 ```
 Open http://localhost:8501 and verify:
-- ✅ App loads without errors
-- ✅ Calculator works
-- ✅ Comparison mode works
-- ✅ No import errors in terminal
+- âœ… App loads without errors
+- âœ… Calculator works
+- âœ… Comparison mode works
+- âœ… No import errors in terminal
 
 ### 2. Railway Test
 After deployment, verify:
-- ✅ Railway build succeeds
-- ✅ App accessible via Railway URL
-- ✅ All features work
+- âœ… Railway build succeeds
+- âœ… App accessible via Railway URL
+- âœ… All features work
 
 ### 3. Custom Domain Test
 After DNS propagation:
-- ✅ Domain resolves to Railway
-- ✅ HTTPS works (green padlock)
-- ✅ All features work on custom domain
+- âœ… Domain resolves to Railway
+- âœ… HTTPS works (green padlock)
+- âœ… All features work on custom domain
 
 ---
 
-## 📖 Documentation Guide
+## ðŸ“– Documentation Guide
 
 ### For Your First Deployment:
 1. **Start here:** `RAILWAY_DEPLOYMENT_GUIDE.md`
@@ -201,7 +201,7 @@ After DNS propagation:
 
 ---
 
-## 🎯 Expected Timeline
+## ðŸŽ¯ Expected Timeline
 
 | Step | Time Required | What's Happening |
 |------|---------------|------------------|
@@ -217,42 +217,42 @@ After DNS propagation:
 
 ---
 
-## ✅ Success Criteria
+## âœ… Success Criteria
 
 Your deployment is successful when:
 
-1. ✅ **Railway URL works:** `https://your-app.railway.app` loads your app
-2. ✅ **Custom domain resolves:** Your domain points to Railway
-3. ✅ **HTTPS is active:** Green padlock in browser
-4. ✅ **App functions correctly:** All features work
-5. ✅ **Always online:** No sleep mode (Starter plan or higher)
+1. âœ… **Railway URL works:** `https://your-app.railway.app` loads your app
+2. âœ… **Custom domain resolves:** Your domain points to Railway
+3. âœ… **HTTPS is active:** Green padlock in browser
+4. âœ… **App functions correctly:** All features work
+5. âœ… **Always online:** No sleep mode (Starter plan or higher)
 
 ---
 
-## 🆘 Need Help?
+## ðŸ†˜ Need Help?
 
 ### Quick Fixes for Common Issues:
 
 **"Site can't be reached"**
-→ DNS not configured or still propagating (wait longer)
+â†’ DNS not configured or still propagating (wait longer)
 
 **"ModuleNotFoundError"**
-→ Wrong imports in main.py (use the provided version)
+â†’ Wrong imports in main.py (use the provided version)
 
 **"App crashes on startup"**
-→ Check Railway logs for errors
+â†’ Check Railway logs for errors
 
 **"Not secure" warning**
-→ SSL not provisioned yet (wait 10-15 minutes)
+â†’ SSL not provisioned yet (wait 10-15 minutes)
 
 ### Get Detailed Help:
 - See `TROUBLESHOOTING_GUIDE.md` for solutions
-- Check Railway logs: Dashboard → Deployments → Logs
+- Check Railway logs: Dashboard â†’ Deployments â†’ Logs
 - Railway Discord: https://discord.gg/railway
 
 ---
 
-## 🎓 Learning Resources
+## ðŸŽ“ Learning Resources
 
 ### Railway Documentation:
 - Getting Started: https://docs.railway.app/getting-started
@@ -269,7 +269,7 @@ Your deployment is successful when:
 
 ---
 
-## 🔄 Updating Your App
+## ðŸ”„ Updating Your App
 
 After initial deployment, to push updates:
 
@@ -290,7 +290,7 @@ No need to reconfigure anything!
 
 ---
 
-## 💡 Pro Tips
+## ðŸ’¡ Pro Tips
 
 1. **Test locally first** - Catch errors before deploying
 2. **Use Railway logs** - First place to check when debugging
@@ -301,7 +301,7 @@ No need to reconfigure anything!
 
 ---
 
-## 📞 Support Contacts
+## ðŸ“ž Support Contacts
 
 | Service | Support Method | Response Time |
 |---------|---------------|---------------|
@@ -311,7 +311,7 @@ No need to reconfigure anything!
 
 ---
 
-## 🎉 You're Ready!
+## ðŸŽ‰ You're Ready!
 
 Everything you need is here. Follow the guides, work through the checklist, and you'll have your app deployed with a custom domain in no time.
 
@@ -319,10 +319,10 @@ Everything you need is here. Follow the guides, work through the checklist, and 
 1. Read `RAILWAY_DEPLOYMENT_GUIDE.md`
 2. Work through `DEPLOYMENT_CHECKLIST.md`
 3. Keep `TROUBLESHOOTING_GUIDE.md` handy
-4. Deploy and celebrate! 🚀
+4. Deploy and celebrate! ðŸš€
 
 ---
 
 **Questions?** Start with the guides - they answer 95% of common questions!
 
-**Good luck with your deployment!** 🎯
+**Good luck with your deployment!** ðŸŽ¯

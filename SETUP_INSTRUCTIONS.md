@@ -1,6 +1,6 @@
 # Local Testing Instructions for Vehicle TCO Calculator
 
-## ✅ What Was Fixed
+## âœ… What Was Fixed
 
 All import statements have been corrected to work with your flat directory structure.
 
@@ -18,7 +18,7 @@ All import statements have been corrected to work with your flat directory struc
 
 ---
 
-## 🚀 How to Run Locally
+## ðŸš€ How to Run Locally
 
 ### 1. Prerequisites
 - Python 3.12 or 3.13 installed
@@ -47,7 +47,7 @@ All import statements have been corrected to work with your flat directory struc
 
 ---
 
-## 🔧 Troubleshooting
+## ðŸ”§ Troubleshooting
 
 ### If you still see "No module named..." errors:
 
@@ -56,14 +56,14 @@ Make sure **all .py files are in the same folder** (no subfolders like ui/, util
 Your folder structure should look like:
 ```
 CarApp/
-├── main.py
-├── calculator_display.py
-├── comparison_display.py
-├── input_forms.py
-├── prediction_service.py
-├── requirements.txt
-├── (all other .py files)
-└── (no subdirectories)
+â”œâ”€â”€ main.py
+â”œâ”€â”€ calculator_display.py
+â”œâ”€â”€ comparison_display.py
+â”œâ”€â”€ input_forms.py
+â”œâ”€â”€ prediction_service.py
+â”œâ”€â”€ requirements.txt
+â”œâ”€â”€ (all other .py files)
+â””â”€â”€ (no subdirectories)
 ```
 
 ### If emojis still look weird:
@@ -80,7 +80,7 @@ chcp 65001
 
 ---
 
-## 📝 Testing Checklist
+## ðŸ“ Testing Checklist
 
 - [ ] App starts without import errors
 - [ ] Single Vehicle Calculator opens
@@ -91,7 +91,7 @@ chcp 65001
 
 ---
 
-## 🆘 Need Help?
+## ðŸ†˜ Need Help?
 
 If you encounter any errors:
 1. Copy the full error message
@@ -101,7 +101,7 @@ If you encounter any errors:
 
 ---
 
-## 🎯 Next Steps
+## ðŸŽ¯ Next Steps
 
 Once it's working locally, you can:
 - Make changes to the code
@@ -109,4 +109,4 @@ Once it's working locally, you can:
 - Fix the encoding issues for deployment
 - Deploy to Streamlit Cloud or Railway
 
-Good luck! 🚀
+Good luck! ðŸš€

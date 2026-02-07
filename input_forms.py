@@ -1114,16 +1114,11 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
                 fuel_type = fuel_info.get('fuel_type', 'regular')
                 
                 if requires_premium:
-                    st.info(f"Premium Fuel Required for {make} {model} {trim if trim else ''}")
+                    st.info(f" **Premium Fuel Required** for {make} {model} {trim if trim else ''}")
                     st.caption(f"Base regular: ${fuel_info.get('regular_price', 3.50):.2f}/gal -> Premium: ${detected_fuel_price:.2f}/gal (+$0.40)")
                 else:
                     st.success(f"Regular fuel detected for {make} {model}")
-
-                # Keep widget/session value aligned with auto-detected fuel type pricing.
-                existing_widget_price = st.session_state.get('fuel_price_input')
-                if existing_widget_price is None or abs(float(existing_widget_price) - float(detected_fuel_price)) > 0.01:
-                    st.session_state['fuel_price_input'] = float(detected_fuel_price)
-
+                
                 # Use detected price as default
                 default_fuel_price = detected_fuel_price
             else:

@@ -10,6 +10,7 @@ from session_manager import add_vehicle_to_comparison, save_calculation_results
 from vehicle_helpers import (
     detect_electric_vehicle,
     determine_fuel_type_and_price,
+    display_vehicle_mpg_info,
     get_electricity_rate_from_location,
     get_fuel_price_from_location,
     get_premium_fuel_price,
@@ -133,13 +134,21 @@ def display_calculator() -> None:
     """Primary calculator UI used by the single-vehicle page."""
     st.subheader("Vehicle TCO Calculator")
 
-    # Keep all fields visible in a single workflow.
-    vehicle_data, is_valid, validation_message = display_all_forms_visible()
+    mode = st.radio("Form Mode", ["Step-by-step", "All sections"], horizontal=True)
+    if mode == "All sections":
+        vehicle_data, is_valid, validation_message = display_all_forms_visible()
+    else:
+        vehicle_data, is_valid, validation_message = collect_all_form_data()
 
     if not is_valid:
         if validation_message:
             st.warning(validation_message)
         return
+
+    make = vehicle_data.get("make", "")
+    model = vehicle_data.get("model", "")
+    if make and model:
+        display_vehicle_mpg_info(make, model)
 
     if st.button("Calculate TCO", type="primary"):
         with st.spinner("Running ownership cost analysis..."):

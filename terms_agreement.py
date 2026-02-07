@@ -145,7 +145,7 @@ def get_database_url() -> Optional[str]:
             # Try common Railway patterns
             tcp_url = f'postgresql://{username}:{password}@postgres.railway.internal:5432/{database}'
             
-            print(f"ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’ ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’ Converted socket-based URL to TCP/IP")
+            print(f"  Converted socket-based URL to TCP/IP")
             print(f"   Original: {db_url[:50]}...")
             print(f"   Converted: {tcp_url[:50]}...")
             
@@ -417,7 +417,7 @@ def show_terms_fullscreen():
     # Header  
     st.markdown("""
     <div class="terms-header">
-        <h1>[icon] Welcome to CashPedal</h1>
+        <h1>🚗 Welcome to CashPedal</h1>
         <p style="font-size: 1.1rem; color: #666;">
             Please review and accept our Terms and Conditions to continue
         </p>
@@ -425,13 +425,13 @@ def show_terms_fullscreen():
     """, unsafe_allow_html=True)
     
     # Display terms in scrollable container
-    with st.expander("[icon] View Full Terms and Conditions (Click to Expand)", expanded=False):
+    with st.expander("📋 View Full Terms and Conditions (Click to Expand)", expanded=False):
         st.markdown(TERMS_AND_CONDITIONS)
     
     st.markdown("---")
     
     # Required acknowledgments
-    st.markdown("### Ã¢Å“â€¦ Required Acknowledgments")
+    st.markdown("###   Required Acknowledgments")
     st.markdown("**You must check all boxes to proceed:**")
     
     # Checkbox 1
@@ -467,11 +467,11 @@ def show_terms_fullscreen():
     all_checked = disclaimer_check and liability_check and consent_check
     
     if not all_checked:
-        st.warning("  Please check all three boxes above to accept the terms and continue.")
+        st.warning("[!]  accept the terms and continue.")
     
     # Show last error if any
     if 'last_db_error' in st.session_state and st.session_state.last_db_error:
-        with st.expander("  Database Error Details", expanded=False):
+        with st.expander("  Database Error Details", expanded=False):
             st.error(st.session_state.last_db_error)
             st.info("Don't worry - your consent was saved to backup storage and the app will work normally.")
     
@@ -479,7 +479,7 @@ def show_terms_fullscreen():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button(
-            "Ã¢Å“â€¦ I Accept These Terms - Continue to CashPedal", 
+            "  I Accept These Terms - Continue to CashPedal", 
             type="primary",
             disabled=not all_checked,
             use_container_width=True,
@@ -499,7 +499,7 @@ def show_terms_fullscreen():
                 # Set query parameter to persist acceptance across page loads
                 st.query_params["terms_accepted"] = "true"
                 
-                st.success("Ã¢Å“â€¦ Terms accepted! Loading application...")
+                st.success("[!] ")
                 st.rerun()
             else:
                 st.error(f"Failed to save consent: {error_msg}")
@@ -640,27 +640,27 @@ def show_database_debug_info():
     
     # Check DATABASE_PRIVATE_URL
     if private_url and private_url != '' and private_url != '<empty string>':
-        st.success("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’ **DATABASE_PRIVATE_URL:** Set (preferred for Railway)")
+        st.success("[!] RL:** Set (preferred for Railway)")
         st.code(private_url[:80] + "...", language="text")
     elif 'DATABASE_PRIVATE_URL' in os.environ:
-        st.error("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’ **DATABASE_PRIVATE_URL:** Empty string (variable exists but has no value)")
-        st.warning("**FIX:** Delete this variable and add it manually with the actual PostgreSQL URL")
+        st.error("[!] **DATABASE_PRIVATE_URL:** Empty string (variable exists but has no value)")
+        st.warning("[!] with the actual PostgreSQL URL")
     else:
-        st.warning("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’ ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’ **DATABASE_PRIVATE_URL:** Not set")
+        st.warning("[!]   **DATABASE_PRIVATE_URL:** Not set")
     
     # Check DATABASE_URL
     if db_url and db_url != '' and db_url != '<empty string>':
         if 'socket' in db_url or '/var/run/postgresql' in db_url:
-            st.error("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’ **DATABASE_URL:** Socket-based (won't work in containers)")
+            st.error("[!] **DATABASE_URL:** Socket-based (won't work in containers)")
             st.code(db_url[:80] + "...", language="text")
         else:
-            st.info("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢Â¹ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’ **DATABASE_URL:** Set")
+            st.info("  **DATABASE_URL:** Set")
             st.code(db_url[:80] + "...", language="text")
     elif 'DATABASE_URL' in os.environ:
-        st.error("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’ **DATABASE_URL:** Empty string (variable exists but has no value)")
-        st.warning("**FIX:** Delete this variable and add it manually with the actual PostgreSQL URL")
+        st.error("[!] **DATABASE_URL:** Empty string (variable exists but has no value)")
+        st.warning("[!] with the actual PostgreSQL URL")
     else:
-        st.error("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’ **DATABASE_URL:** Not set")
+        st.error("[!] **DATABASE_URL:** Not set")
     
     # Show which URL is being used
     final_url = get_database_url()
@@ -668,27 +668,27 @@ def show_database_debug_info():
         st.write("---")
         st.write("#### Active Connection String")
         if private_url and final_url == private_url:
-            st.success("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’ Using **DATABASE_PRIVATE_URL** (best for Railway)")
+            st.success("[!] VATE_URL** (best for Railway)")
         elif 'railway.internal' in final_url:
-            st.info("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢Â¹ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’ Using **converted TCP/IP URL** (socket URL was converted)")
+            st.info("  Using **converted TCP/IP URL** (socket URL was converted)")
         else:
-            st.info("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢Â¹ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’ Using **DATABASE_URL**")
+            st.info("  Using **DATABASE_URL**")
         
         st.code(final_url[:80] + "...", language="text")
     else:
-        st.error("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’ **No valid database URL found!**")
+        st.error("[!] **No valid database URL found!**")
         st.write("---")
-        st.write("### ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’ How to Fix This")
+        st.write("###   How to Fix This")
         st.markdown("""
         **Problem:** Variable references showing `<empty string>`
         
         **Solution:**
         1. Go to your **PostgreSQL service** in Railway
         2. Click "Variables" tab
-        3. Find `DATABASE_PRIVATE_URL` and click ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’ to reveal
+        3. Find `DATABASE_PRIVATE_URL` and click   to reveal
         4. **Copy the entire URL**
         5. Go to your **Streamlit service** (this service)
-        6. Variables tab ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢Â¢ Remove the empty `DATABASE_PRIVATE_URL`
+        6. Variables tab   Remove the empty `DATABASE_PRIVATE_URL`
         7. Click "+ New Variable"
         8. Name: `DATABASE_PRIVATE_URL`
         9. Value: **Paste the URL you copied**
@@ -714,7 +714,7 @@ def show_database_debug_info():
             # Test 1: Get database version
             cursor.execute('SELECT version()')
             version = cursor.fetchone()[0]
-            st.success(f"ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’ PostgreSQL connection successful!")
+            st.success(f"  PostgreSQL connection successful!")
             st.code(version, language="text")
             
             # Test 2: Check if table exists
@@ -727,7 +727,7 @@ def show_database_debug_info():
             table_exists = cursor.fetchone()[0]
             
             if table_exists:
-                st.success("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’ Table 'consent_records' exists")
+                st.success("[!] ds' exists")
                 
                 # Test 3: Get table structure
                 cursor.execute("""
@@ -759,29 +759,29 @@ def show_database_debug_info():
                     for rec in recent:
                         st.write(f"- {rec[1].strftime('%Y-%m-%d %H:%M:%S')} UTC - Version {rec[2]} - ID: {rec[0][:8]}...")
             else:
-                st.warning("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’ ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’ Table 'consent_records' does not exist - will be created on first use")
+                st.warning("[!]   Table 'consent_records' does not exist - will be created on first use")
             
             conn.close()
             
         except Exception as e:
-            st.error(f"ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’ PostgreSQL connection failed!")
+            st.error(f"  PostgreSQL connection failed!")
             st.code(f"{type(e).__name__}: {str(e)}", language="text")
             
             # Provide specific guidance based on error
             error_str = str(e)
             if 'empty' in error_str.lower() or 'invalid dsn' in error_str.lower():
-                st.warning("**Issue:** Empty or invalid connection string")
+                st.warning("[!] ")
                 st.info("**Solution:** Follow the steps above to manually add the PostgreSQL URL")
             elif 'socket' in error_str or '/var/run/postgresql' in error_str:
-                st.warning("**Issue:** Socket-based connection not working in container")
+                st.warning("[!] container")
                 st.info("**Solution:** Use DATABASE_PRIVATE_URL instead of DATABASE_URL")
             elif 'password authentication failed' in error_str:
-                st.warning("**Issue:** Incorrect database credentials")
+                st.warning("[!] ")
             elif 'could not connect' in error_str or 'connection refused' in error_str:
-                st.warning("**Issue:** Cannot reach PostgreSQL service")
+                st.warning("[!] ")
                 st.info("Make sure both services are in the same Railway project")
     else:
-        st.warning("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’ ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’ PostgreSQL not configured - using JSON fallback")
+        st.warning("[!]   PostgreSQL not configured - using JSON fallback")
         st.write(f"**Fallback file:** {CONSENT_LOG_FILE}")
         if os.path.exists(CONSENT_LOG_FILE):
             st.write(f"**JSON file exists:** Yes")

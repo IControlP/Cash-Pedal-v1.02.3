@@ -1,0 +1,11 @@
+# Force UTF-8 encoding for Python files
+*.py text eol=lf encoding=utf-8 working-tree-encoding=utf-8
+
+# Binary files (never modify)
+*.zip binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary

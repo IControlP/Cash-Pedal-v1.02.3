@@ -17,7 +17,7 @@ if not require_terms_acceptance():
 
 st.set_page_config(
     page_title="CashPedal - Vehicle TCO Calculator",
-    page_icon="car",
+    page_icon="ðŸš—",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -27,7 +27,7 @@ def main():
     apply_theme()
     
     # Hero Section
-    st.markdown('<p class="main-header">CashPedal</p>', unsafe_allow_html=True)
+    st.markdown('<p class="main-header">ðŸš— CashPedal</p>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Vehicle Total Cost of Ownership Calculator</p>', unsafe_allow_html=True)
     st.markdown("---")
     
@@ -38,13 +38,13 @@ def main():
     """)
     
     # Quick Navigation
-    st.subheader("Get Started")
+    st.subheader("ðŸŽ¯ Get Started")
     
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("""
-        ### Single Vehicle Calculator
+        ### ðŸ”§ Single Vehicle Calculator
         Analyze the total cost of ownership for a single vehicle including:
         - Purchase price and financing
         - Depreciation estimates
@@ -53,12 +53,12 @@ def main():
         - Lease vs. buy analysis
         """)
         
-        if st.button("Open Single Vehicle Calculator", key="nav_single", use_container_width=True):
+        if st.button("ðŸ”§ Open Single Vehicle Calculator", key="nav_single", use_container_width=True):
             st.switch_page("pages/1___Single_Vehicle_Calculator.py")
     
     with col2:
         st.markdown("""
-        ### Multi-Vehicle Comparison
+        ### âš– Multi-Vehicle Comparison
         Compare up to 5 vehicles side by side:
         - Cost comparison charts
         - Feature-by-feature analysis
@@ -67,19 +67,19 @@ def main():
         - Pros and cons analysis
         """)
         
-        if st.button("Open Vehicle Comparison", key="nav_compare", use_container_width=True):
+        if st.button("âš– Open Vehicle Comparison", key="nav_compare", use_container_width=True):
             st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
     
     st.markdown("---")
     
     # Key Features
-    st.subheader("Key Features")
+    st.subheader("âœ¨ Key Features")
     
     feat_col1, feat_col2, feat_col3 = st.columns(3)
     
     with feat_col1:
         st.markdown("""
-        **Location-Based Estimates**
+        **ðŸ“ Location-Based Estimates**
         - ZIP code auto-population
         - Regional fuel prices
         - State tax calculations
@@ -88,7 +88,7 @@ def main():
     
     with feat_col2:
         st.markdown("""
-        **Advanced Analytics**
+        **ðŸ“Š Advanced Analytics**
         - Weibull reliability modeling
         - Climate-adjusted maintenance
         - Market depreciation data
@@ -97,7 +97,7 @@ def main():
     
     with feat_col3:
         st.markdown("""
-        **Comprehensive Reports**
+        **ðŸ“‹ Comprehensive Reports**
         - Monthly cost breakdown
         - 5-year projections
         - Export to PDF/Excel
@@ -106,18 +106,18 @@ def main():
     
     # Sidebar
     with st.sidebar:
-        st.header("Navigation")
+        st.header("ðŸ“± Navigation")
         st.info("Use the sidebar to navigate between pages, or click the buttons above to get started.")
         
         st.markdown("---")
-        st.header("Session Status")
+        st.header("ðŸ“Š Session Status")
         if hasattr(st.session_state, 'comparison_vehicles') and st.session_state.comparison_vehicles:
-            st.success(f"{len(st.session_state.comparison_vehicles)} vehicles in comparison")
+            st.success(f"âœ“ {len(st.session_state.comparison_vehicles)} vehicles in comparison")
         else:
             st.info("No vehicles added yet")
         
         st.markdown("---")
-        st.header("Quick Links")
+        st.header("ðŸ”— Quick Links")
         st.markdown("""
         - Single Vehicle Calculator
         - Multi-Vehicle Comparison
@@ -136,7 +136,7 @@ def main():
     
     # How to Use
     st.markdown("---")
-    st.subheader("How to Use This Calculator")
+    st.subheader("ðŸ“– How to Use This Calculator")
     st.markdown("""
     1. **Enter Your Location**: Start by entering your ZIP code
     2. **Select a Vehicle**: Choose from our database

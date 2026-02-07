@@ -261,12 +261,13 @@ def determine_fuel_type_and_price(make: str, model: str, year: int, trim: str = 
     return {
         'fuel_type': fuel_type,
         'fuel_price': fuel_price,
+        'regular_price': regular_price,
         'requires_premium': requires_premium,
         'price_info': price_info
     }
 
 
-def display_vehicle_mpg_info(make: str, model: str, year: int, trim: str = None,
+def display_vehicle_mpg_info(make: str, model: str, year: int = None, trim: str = None,
                             annual_mileage: int = None, fuel_price: float = None,
                             electricity_rate: float = None, charging_preference: str = None,
                             driving_style: str = None, terrain: str = None):

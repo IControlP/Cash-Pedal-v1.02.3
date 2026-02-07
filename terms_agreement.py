@@ -199,16 +199,20 @@ def initialize_terms_state():
     """Initialize session state with query param persistence"""
     # Check URL query parameters for acceptance flag
     query_params = st.query_params
-    terms_param = query_params.get("terms_accepted", None)
+    terms_param_raw = query_params.get("terms_accepted", None)
+    if isinstance(terms_param_raw, list):
+        terms_param = terms_param_raw[0] if terms_param_raw else None
+    else:
+        terms_param = terms_param_raw
     
     if 'terms_accepted' not in st.session_state:
         # Check if URL indicates acceptance
         st.session_state.terms_accepted = (terms_param == "true")
-    if 'terms_version_accepted' not in st.session_state:
-        if terms_param == "true":
-            st.session_state.terms_version_accepted = TERMS_VERSION
-        else:
-            st.session_state.terms_version_accepted = None
+    if terms_param == "true":
+        st.session_state.terms_accepted = True
+        st.session_state.terms_version_accepted = TERMS_VERSION
+    elif 'terms_version_accepted' not in st.session_state:
+        st.session_state.terms_version_accepted = None
     if 'session_id' not in st.session_state:
         st.session_state.session_id = str(uuid.uuid4())
     if 'consent_record_id' not in st.session_state:
@@ -499,7 +503,7 @@ def show_terms_fullscreen():
                 # Set query parameter to persist acceptance across page loads
                 st.query_params["terms_accepted"] = "true"
                 
-                st.success("[!] ")
+                st.success("Terms accepted. Redirecting to CashPedal...")
                 st.rerun()
             else:
                 st.error(f"Failed to save consent: {error_msg}")

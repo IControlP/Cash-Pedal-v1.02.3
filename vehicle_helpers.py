@@ -6,19 +6,6 @@ Contains functions used by both calculator_display.py and input_forms.py
 import streamlit as st
 from typing import Dict, Any
 
-# Import MPG database functions
-try:
-    from vehicle_mpg_database import (
-        get_vehicle_mpg, 
-        get_mpg_display_text, 
-        get_fuel_efficiency_rating,
-        compare_mpg_to_class_average,
-        estimate_annual_fuel_cost
-    )
-    MPG_DATABASE_AVAILABLE = True
-except ImportError:
-    MPG_DATABASE_AVAILABLE = False
-
 
 def detect_electric_vehicle(make: str, model: str) -> bool:
     """Detect if make/model is an electric vehicle - FIXED for Audi"""
@@ -274,100 +261,15 @@ def determine_fuel_type_and_price(make: str, model: str, year: int, trim: str = 
     return {
         'fuel_type': fuel_type,
         'fuel_price': fuel_price,
+        'regular_price': regular_price,
         'requires_premium': requires_premium,
         'price_info': price_info
     }
 
 
-def display_vehicle_mpg_info(make: str, model: str, year: int, trim: str = None,
+def display_vehicle_mpg_info(make: str, model: str, year: int = None, trim: str = None,
                             annual_mileage: int = None, fuel_price: float = None,
                             electricity_rate: float = None, charging_preference: str = None,
                             driving_style: str = None, terrain: str = None):
-    """
-    Display comprehensive MPG information for the selected vehicle
-    
-    Args:
-        make: Vehicle make
-        model: Vehicle model
-        year: Vehicle year
-        trim: Vehicle trim (optional)
-        annual_mileage: Annual miles driven (optional - if None, don't show fuel costs)
-        fuel_price: Price per gallon for gas vehicles (optional)
-        electricity_rate: Base electricity rate for EVs (optional)
-        charging_preference: EV charging pattern (optional)
-        driving_style: 'gentle', 'normal', or 'aggressive' (optional)
-        terrain: 'flat' or 'hilly' (optional)
-    """
-    
-    if not MPG_DATABASE_AVAILABLE:
-        st.info("ðŸ’¡ MPG database not available - using estimates")
-        return
-    
-    # Get MPG data
-    mpg_data = get_vehicle_mpg(make, model, year, trim)
-    
-    if mpg_data:
-        # Create MPG display section
-        st.markdown("---")
-        st.subheader("â›½ Fuel Economy Information")
-        
-        # Main MPG display
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            display_text = get_mpg_display_text(mpg_data)
-            st.metric("Fuel Economy", display_text)
-        
-        with col2:
-            efficiency_rating = get_fuel_efficiency_rating(mpg_data)
-            rating_emoji = {
-                'Excellent': 'â­â­â­â­â­',
-                'Very Good': 'â­â­â­â­',
-                'Good': 'â­â­â­',
-                'Average': 'â­â­',
-                'Below Average': 'â­'
-            }.get(efficiency_rating, 'â­â­â­')
-            st.metric("Efficiency Rating", f"{efficiency_rating} {rating_emoji}")
-        
-        with col3:
-            comparison = compare_mpg_to_class_average(mpg_data, make, model)
-            comparison_emoji = 'ðŸ“ˆ' if comparison['comparison'] == 'above' else 'ðŸ“‰'
-            st.metric(
-                f"{comparison['class_name']} Comparison",
-                f"{comparison_emoji} {comparison['difference']:.1f} MPG {comparison['comparison']} avg",
-                delta=f"Class avg: {comparison['class_average']:.1f} MPG"
-            )
-        
-        # Display fuel cost estimation if mileage and prices provided
-        if annual_mileage and (fuel_price or electricity_rate):
-            st.markdown("---")
-            st.subheader("ðŸ’° Estimated Annual Fuel Cost")
-            
-            # Use defaults if not provided
-            if not driving_style:
-                driving_style = 'normal'
-            if not terrain:
-                terrain = 'flat'
-            
-            cost_data = estimate_annual_fuel_cost(
-                mpg_data, 
-                annual_mileage, 
-                fuel_price or 3.50,
-                electricity_rate or 0.14,
-                charging_preference,
-                driving_style,
-                terrain
-            )
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Annual Cost", f"${cost_data['annual_cost']:,.0f}")
-            with col2:
-                st.metric("Monthly Cost", f"${cost_data['monthly_cost']:,.0f}")
-            with col3:
-                st.metric("Cost per Mile", f"${cost_data['cost_per_mile']:.2f}")
-        
-        # Data source attribution
-        st.caption(f"ðŸ“Š Data source: {mpg_data['source']}")
-    else:
-        st.info(f"ðŸ’¡ MPG data not available for {year} {make} {model}")
+    """Vehicle efficiency detail output disabled by request."""
+    return

@@ -4,7 +4,6 @@ Maintains user information, location, and insurance settings across multiple car
 """
 
 import streamlit as st
-from vehicle_helpers import display_vehicle_mpg_info
 import re
 from typing import Dict, Any, Tuple, Optional
 from datetime import datetime
@@ -74,18 +73,6 @@ except ImportError:
             'fuel_price': 3.50,
             'electricity_rate': 0.12
         }
-try:
-    from vehicle_mpg_database import (
-        get_vehicle_mpg, 
-        get_mpg_display_text, 
-        get_fuel_efficiency_rating,
-        compare_mpg_to_class_average,
-        estimate_annual_fuel_cost
-    )
-    MPG_DATABASE_AVAILABLE = True
-except ImportError:
-    MPG_DATABASE_AVAILABLE = False
-
 # Persistent settings storage
 def initialize_persistent_settings():
     """Initialize persistent settings in session state"""
@@ -123,6 +110,9 @@ def on_zip_code_change():
                 st.session_state['auto_detected_geography'] = zip_data.get('geography_type', 'Suburban')
                 st.session_state['auto_detected_fuel_price'] = zip_data.get('fuel_price', 3.50)
                 st.session_state['auto_detected_electricity_rate'] = zip_data.get('electricity_rate', 0.15)
+                st.session_state['state_select_reactive'] = zip_data.get('state', '')
+                st.session_state['state_fuel_price'] = zip_data.get('fuel_price', 3.50)
+                st.session_state['state_electricity_rate'] = zip_data.get('electricity_rate', 0.15)
                 st.session_state['zip_code_valid'] = True
                 st.session_state['location_needs_update'] = True
             else:
@@ -738,7 +728,7 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
 # Vehicle condition and pricing section
     if selected_make and selected_model and selected_year and selected_trim:
         st.markdown("---")
-        st.subheader("ðŸ’° Pricing & Condition")
+        st.subheader("Pricing & Condition")
         
         col1, col2 = st.columns(2)
         
@@ -800,7 +790,7 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                         default_price = int(estimated_value)
                         estimated_price = estimated_value
                 except Exception as e:
-                    st.warning(f"âš ï¸ Could not estimate used vehicle value: {str(e)}")
+                    st.warning(f"Could not estimate used vehicle value: {str(e)}")
                     estimated_price = None
         
         # Purchase price input
@@ -904,19 +894,6 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
             'lease_term': lease_term if lease_term is not None else 36
         })
     
-                    # Display MPG information if vehicle is fully selected
-    if selected_make and selected_model and selected_year and selected_trim:
-        if MPG_DATABASE_AVAILABLE:
-            try:
-                mpg_data = display_vehicle_mpg_info(
-                    make=selected_make, 
-                    model=selected_model, 
-                    year=int(selected_year), 
-                    trim=selected_trim
-                )
-            except Exception as e:
-                st.warning(f"âš ï¸ Could not load MPG data: {str(e)}")
-
     return result
     
 def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]:
@@ -928,7 +905,7 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
         vehicle_data: Optional vehicle data to determine if EV and fuel type requirements
     """
     
-    st.subheader(" Location & Regional Settings")
+    st.subheader("Location & Regional Settings")
     
     # Initialize persistent settings
     initialize_persistent_settings()
@@ -949,19 +926,21 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
         trim = vehicle_data.get('trim', '')
         is_electric_vehicle = detect_electric_vehicle(make, model) if make and model else False
     
+    force_all_visible = st.session_state.get('force_all_visible', False)
+
     # Show persistence status
-    if location_settings.get('is_set', False):
-        st.success(f"Ã¢Å“â€¦ Using saved location: {location_settings.get('zip_code', '')} - {location_settings.get('state', '')}")
+    if location_settings.get('is_set', False) and not force_all_visible:
+        st.success(f"Using saved location: {location_settings.get('zip_code', '')} - {location_settings.get('state', '')}")
         
         # Option to modify
-        if st.button(" Update Location Settings", key="update_location"):
+        if st.button("Update Location Settings", key="update_location"):
             st.session_state.show_location_form = True
         else:
             st.session_state.show_location_form = False
     else:
         st.session_state.show_location_form = True
     
-    if st.session_state.get('show_location_form', True):
+    if st.session_state.get('show_location_form', True) or force_all_visible:
         # Initialize reactive state for callbacks
         initialize_reactive_state()
         
@@ -991,7 +970,7 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
                 auto_fuel_price = st.session_state.get('auto_detected_fuel_price', 3.50)
                 auto_electricity_rate = st.session_state.get('auto_detected_electricity_rate', None)
                 if auto_state:
-                    st.success(f"âœ… Auto-detected: {auto_state} - {auto_geography}")
+                    st.success(f"Auto-detected: {auto_state} - {auto_geography}")
             elif zip_code and len(zip_code) == 5:
                 if validate_zip_code(zip_code):
                     zip_data = lookup_zip_code_data(zip_code)
@@ -1000,19 +979,19 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
                         auto_geography = zip_data.get('geography_type', '')
                         auto_fuel_price = zip_data.get('fuel_price', 3.50)
                         auto_electricity_rate = zip_data.get('electricity_rate', None)
-                        st.success(f"âœ… Auto-detected: {auto_state} - {auto_geography}")
+                        st.success(f"Auto-detected: {auto_state} - {auto_geography}")
                     else:
                         auto_state = ''
                         auto_geography = 'Suburban'
                         auto_fuel_price = 3.50
                         auto_electricity_rate = None
-                        st.warning("âš ï¸ ZIP code not found. Please enter manually below.")
+                        st.warning("ZIP code not found. Please enter manually below.")
                 else:
                     auto_state = ''
                     auto_geography = 'Suburban'
                     auto_fuel_price = 3.50
                     auto_electricity_rate = None
-                    st.error("Ã¢ÂÅ’ Invalid ZIP code format")
+                    st.error("Invalid ZIP code format")
             else:
                 auto_state = location_settings.get('state', '')
                 auto_geography = location_settings.get('geography_type', 'Suburban')
@@ -1075,8 +1054,12 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
         # Check if state changed via callback and use updated fuel price
         if st.session_state.get('location_needs_update', False):
             state_fuel = st.session_state.get('state_fuel_price', None)
+            state_electricity = st.session_state.get('state_electricity_rate', None)
             if state_fuel:
                 current_fuel_price = state_fuel
+                st.session_state['fuel_price_input'] = float(current_fuel_price)
+            if state_electricity is not None:
+                st.session_state['electricity_rate_input'] = float(state_electricity)
             st.session_state['location_needs_update'] = False
         
         # PRIORITIZE auto-detected electricity rate from ZIP code lookup
@@ -1106,7 +1089,7 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
         # Show appropriate fields based on vehicle type
         if is_electric_vehicle:
             # EV: Show electricity rate prominently, fuel price hidden
-            st.markdown("** Electric Vehicle Pricing**")
+            st.markdown("**Electric Vehicle Pricing**")
             electricity_rate = st.number_input(
                 "Electricity Rate ($/kWh):",
                 min_value=0.05,
@@ -1122,7 +1105,7 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
             
         else:
             # Gas/Hybrid: Show fuel price with premium detection
-            st.markdown("** Fuel Pricing**")
+            st.markdown("**Fuel Pricing**")
             
             # Display fuel type detection if available
             if fuel_info:
@@ -1132,9 +1115,9 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
                 
                 if requires_premium:
                     st.info(f" **Premium Fuel Required** for {make} {model} {trim if trim else ''}")
-                    st.caption(f"Base regular: ${fuel_info.get('regular_price', 3.50):.2f}/gal Ã¢â€ â€™ Premium: ${detected_fuel_price:.2f}/gal (+$0.40)")
+                    st.caption(f"Base regular: ${fuel_info.get('regular_price', 3.50):.2f}/gal -> Premium: ${detected_fuel_price:.2f}/gal (+$0.40)")
                 else:
-                    st.success(f"Ã¢Å“â€¦ **Regular Fuel** for {make} {model}")
+                    st.success(f"Regular fuel detected for {make} {model}")
                 
                 # Use detected price as default
                 default_fuel_price = detected_fuel_price
@@ -1157,7 +1140,7 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
             electricity_rate = current_electricity_rate
         
         # Save button
-        if st.button("ðŸ’¾ Save Location Settings", key="save_location"):
+        if st.button("Save Location Settings", key="save_location"):
             location_data = {
                 'zip_code': zip_code,
                 'state': selected_state,
@@ -1166,7 +1149,7 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
                 'electricity_rate': electricity_rate
             }
             save_persistent_setting('location', location_data)
-            st.success("Ã¢Å“â€¦ Location settings saved!")
+            st.success("Location settings saved!")
             st.session_state.show_location_form = False
             st.rerun()
     else:
@@ -1220,7 +1203,7 @@ def display_personal_info_form() -> Dict[str, Any]:
         st.session_state.show_personal_form = not personal_settings.get('is_set', False)
     
     # Show persistence status
-    if personal_settings.get('is_set', False):
+    if personal_settings.get('is_set', False) and not st.session_state.get('force_all_visible', False):
         st.success(f"Using saved personal info: Age {personal_settings.get('user_age', 35)}, Income ${personal_settings.get('gross_income', 60000):,}, Mileage {personal_settings.get('annual_mileage', 12000):,}/yr")
         
         # Toggle buttons
@@ -1237,7 +1220,7 @@ def display_personal_info_form() -> Dict[str, Any]:
     
     # CRITICAL FIX: Always show the form and capture current values
     # Initialize with saved values or defaults
-    if st.session_state.get('show_personal_form', True):
+    if st.session_state.get('show_personal_form', True) or st.session_state.get('force_all_visible', False):
         col1, col2 = st.columns(2)
         
         with col1:
@@ -1371,8 +1354,8 @@ def display_insurance_form() -> Dict[str, Any]:
     if 'show_insurance_form' not in st.session_state:
         st.session_state.show_insurance_form = not insurance_settings.get('is_set', False)
     
-    if insurance_settings.get('is_set', False):
-        st.success(f"Ã¢Å“â€¦ Using saved insurance: {insurance_settings.get('coverage_type', 'Full Coverage')}")
+    if insurance_settings.get('is_set', False) and not st.session_state.get('force_all_visible', False):
+        st.success(f"Using saved insurance: {insurance_settings.get('coverage_type', 'Full Coverage')}")
         
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -1385,7 +1368,7 @@ def display_insurance_form() -> Dict[str, Any]:
                     st.session_state.show_insurance_form = True
                     st.rerun()
     
-    if st.session_state.get('show_insurance_form', True):
+    if st.session_state.get('show_insurance_form', True) or st.session_state.get('force_all_visible', False):
         coverage_options = ['Liability Only', 'Full Coverage', 'Premium Coverage']
         current_coverage = insurance_settings.get('coverage_type', 'Full Coverage')
         coverage_index = coverage_options.index(current_coverage) if current_coverage in coverage_options else 1
@@ -1408,13 +1391,13 @@ def display_insurance_form() -> Dict[str, Any]:
             help="Where you plan to service the vehicle"
         )
         
-        if st.button("ðŸ’¾ Save Insurance Settings", key="save_insurance"):
+        if st.button("Save Insurance Settings", key="save_insurance"):
             insurance_data = {
                 'coverage_type': coverage_type,
                 'shop_type': shop_type
             }
             save_persistent_setting('insurance', insurance_data)
-            st.success("Ã¢Å“â€¦ Insurance settings saved!")
+            st.success("Insurance settings saved!")
             st.session_state.show_insurance_form = False
             st.rerun()
     else:
@@ -1444,7 +1427,7 @@ def display_financial_parameters_form(transaction_type: str) -> Dict[str, Any]:
         
         if payment_method == "Cash Purchase":
             # Cash purchase - simple display
-            st.success("ðŸ’° **Cash Purchase Selected**")
+            st.success("Cash purchase selected")
             st.info("No financing needed - you'll pay the full purchase price upfront")
             
             # FIX: Get purchase price from multiple possible sources
@@ -1562,11 +1545,11 @@ def display_financial_parameters_form(transaction_type: str) -> Dict[str, Any]:
                 
                 # Validation warnings
                 if final_down_payment == 0:
-                    st.warning("âš ï¸ Zero down payment will increase monthly payments and total interest")
+                    st.warning("Zero down payment will increase monthly payments and total interest")
                 elif down_payment_percent < 10:
-                    st.warning("âš ï¸ Low down payment may require PMI or higher interest rates")
+                    st.warning("Low down payment may require PMI or higher interest rates")
                 elif down_payment_percent > 50:
-                    st.info("ðŸ’¡ Large down payment will significantly reduce monthly payments")
+                    st.info("Large down payment will significantly reduce monthly payments")
             
             with col2:
                 # Loan terms
@@ -1606,7 +1589,7 @@ def display_financial_parameters_form(transaction_type: str) -> Dict[str, Any]:
                     st.metric("Total Payments", f"${total_payments:,.0f}")
                     
                 elif final_loan_amount == 0:
-                    st.success("ðŸ’° No loan needed - this is essentially a cash purchase!")
+                    st.success("No loan needed - this is essentially a cash purchase")
             
             return {
                 'payment_method': 'financing',
@@ -1714,13 +1697,13 @@ def display_analysis_settings_form(transaction_type: str = "Purchase") -> Dict[s
         )
         
         # Save analysis preferences
-        if st.button("ðŸ’¾ Save Analysis Preferences", key="save_analysis"):
+        if st.button("Save Analysis Preferences", key="save_analysis"):
             analysis_data = {
                 'comparison_priority': comparison_priority.lower(),
                 'default_analysis_years': analysis_years if transaction_type == "Purchase" else 5
             }
             save_persistent_setting('analysis', analysis_data)
-            st.success("Ã¢Å“â€¦ Analysis preferences saved!")
+            st.success("Analysis preferences saved!")
     
     return {
         'analysis_years': analysis_years,
@@ -1824,9 +1807,9 @@ def display_settings_management_sidebar():
         saved_settings.append("  Analysis Prefs")
     
     if saved_settings:
-        st.sidebar.success(f"Ã¢Å“â€¦ Saved: {', '.join(saved_settings)}")
+        st.sidebar.success(f"Saved: {', '.join(saved_settings)}")
     else:
-        st.sidebar.info("ðŸ’¡ No settings saved yet")
+        st.sidebar.info("No settings saved yet")
     
     # Settings management buttons
     col1, col2 = st.sidebar.columns(2)
@@ -1882,7 +1865,7 @@ def display_settings_summary():
                 st.write(f"- Priority: {analysis.get('comparison_priority', 'Not set').title()}")
                 st.write(f"- Default Years: {analysis.get('default_analysis_years', 'Not set')}")
             
-            if st.button("Ã¢ÂÅ’ Close", key="close_settings_summary"):
+            if st.button("Close", key="close_settings_summary"):
                 st.session_state.show_settings_summary = False
                 st.rerun()
 
@@ -1949,12 +1932,18 @@ def display_all_forms_visible() -> Tuple[Dict[str, Any], bool, str]:
     Compatible with existing collect_all_form_data() structure
     Returns same format: (all_data, is_valid, validation_message)
     """
-    
+
+    # Force all form sections open in this workflow
+    st.session_state.show_location_form = True
+    st.session_state.show_personal_form = True
+    st.session_state.show_insurance_form = True
+    st.session_state.force_all_visible = True
+
     # Initialize persistent settings
     initialize_persistent_settings()
     
-    st.markdown("##  Vehicle Analysis Form")
-    st.markdown("*All sections visible - complete in any order*")
+    st.markdown("## Vehicle Analysis Form")
+    st.markdown("All sections are visible; complete in any order.")
     st.markdown("---")
     
     # Section 1: Vehicle Selection

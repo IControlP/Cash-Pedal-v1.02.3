@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from session_manager import initialize_session_state
 from calculator_display import display_calculator
 from theme_utils import apply_theme, get_footer_html
+from terms_agreement import require_terms_acceptance
 
 # Page configuration
 st.set_page_config(
@@ -24,6 +25,10 @@ st.set_page_config(
 
 def main():
  """Single Vehicle Calculator Page"""
+    # Require terms acceptance before using calculator
+    if not require_terms_acceptance():
+        st.stop()
+    
  # Initialize session state
  initialize_session_state()
  

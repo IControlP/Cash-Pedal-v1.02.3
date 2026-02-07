@@ -467,11 +467,11 @@ def show_terms_fullscreen():
     all_checked = disclaimer_check and liability_check and consent_check
     
     if not all_checked:
-        st.warning("[!]  accept the terms and continue.")
+        st.warning("⚠️ Please check all three boxes above to accept the terms and continue.")
     
     # Show last error if any
     if 'last_db_error' in st.session_state and st.session_state.last_db_error:
-        with st.expander("  Database Error Details", expanded=False):
+        with st.expander("⚠️ Database Error Details", expanded=False):
             st.error(st.session_state.last_db_error)
             st.info("Don't worry - your consent was saved to backup storage and the app will work normally.")
     
@@ -479,7 +479,7 @@ def show_terms_fullscreen():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button(
-            "  I Accept These Terms - Continue to CashPedal", 
+            "✓ I Accept These Terms - Continue to CashPedal", 
             type="primary",
             disabled=not all_checked,
             use_container_width=True,

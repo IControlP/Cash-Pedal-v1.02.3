@@ -6,18 +6,14 @@ Main Application - Home Page
 import streamlit as st
 import sys
 import os
-from terms_agreement import require_terms_acceptance
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from session_manager import initialize_session_state
 from theme_utils import apply_theme, get_footer_html
 
-if not require_terms_acceptance():
-    st.stop()
-
 st.set_page_config(
     page_title="CashPedal - Vehicle TCO Calculator",
-    page_icon="ðŸš—",
+    page_icon="🚗",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -27,7 +23,7 @@ def main():
     apply_theme()
     
     # Hero Section
-    st.markdown('<p class="main-header">ðŸš— CashPedal</p>', unsafe_allow_html=True)
+    st.markdown('<p class="main-header">🚗 CashPedal</p>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Vehicle Total Cost of Ownership Calculator</p>', unsafe_allow_html=True)
     st.markdown("---")
     

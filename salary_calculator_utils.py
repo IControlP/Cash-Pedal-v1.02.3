@@ -332,7 +332,8 @@ def estimate_vehicle_costs_simple(
     interest_rate: float = 6.5,
     down_payment_percent: float = 10,
     vehicle_age: int = 0,
-    vehicle_tier: str = 'standard'
+    vehicle_tier: str = 'standard',
+    state: str = ''
 ) -> Dict[str, float]:
     """
     Estimate monthly vehicle costs with reasonable defaults
@@ -364,8 +365,13 @@ def estimate_vehicle_costs_simple(
     age_multiplier = 1 + (vehicle_age * 0.05)  # 5% increase per year
     monthly_maintenance = base_maintenance * age_multiplier
     
-    # Registration/fees (varies by state, using average)
-    monthly_registration = 50
+    # Registration/fees - state-aware lookup with fallback
+    try:
+        from taxes_fees_utils import get_annual_registration
+        annual_reg = get_annual_registration(state) if state else 600
+        monthly_registration = annual_reg / 12
+    except ImportError:
+        monthly_registration = 50
     
     if is_lease:
         monthly_payment = lease_payment

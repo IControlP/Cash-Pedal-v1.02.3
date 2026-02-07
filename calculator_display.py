@@ -1129,69 +1129,106 @@ def display_detailed_results_with_maintenance():
 def display_summary_tab(results: Dict[str, Any], vehicle_data: Dict[str, Any]):
  """Display summary information"""
  
- st.subheader(" Cost Summary")
+ st.subheader("Cost Summary")
  
  # Summary metrics based on transaction type
  if vehicle_data.get('transaction_type') == 'Purchase':
- summary = results['summary']
- 
- col1, col2, col3, col4 = st.columns(4)
- 
- with col1:
- # FIXED: Force out-of-pocket calculation 
- category_totals = results.get('category_totals', {})
- out_of_pocket_total = (
- category_totals.get('maintenance', 0) +
- category_totals.get('insurance', 0) +
- category_totals.get('fuel_energy', 0) +
- category_totals.get('financing', 0)
- )
- st.metric("Total Cost", f"${out_of_pocket_total:,.0f}")
- with col2:
- st.metric("Annual Average", f"${summary['average_annual_cost']:,.0f}")
- with col3:
- st.metric("Cost per Mile", f"${summary['cost_per_mile']:.3f}")
- with col4:
- st.metric("Final Value", f"${summary.get('final_vehicle_value', 0):,.0f}")
+  summary = results['summary']
+  
+  col1, col2, col3, col4 = st.columns(4)
+  
+  with col1:
+   # FIXED: Force out-of-pocket calculation including taxes_fees
+   category_totals = results.get('category_totals', {})
+   out_of_pocket_total = (
+    category_totals.get('maintenance', 0) +
+    category_totals.get('insurance', 0) +
+    category_totals.get('fuel_energy', 0) +
+    category_totals.get('financing', 0) +
+    category_totals.get('taxes_fees', 0)
+   )
+   st.metric("Total Cost", f"${out_of_pocket_total:,.0f}")
+  with col2:
+   st.metric("Annual Average", f"${summary['average_annual_cost']:,.0f}")
+  with col3:
+   st.metric("Cost per Mile", f"${summary['cost_per_mile']:.3f}")
+  with col4:
+   st.metric("Final Value", f"${summary.get('final_vehicle_value', 0):,.0f}")
+  
+  # OTD Price and Taxes/Fees detail section
+  taxes_fees_detail = results.get('taxes_fees_detail')
+  if taxes_fees_detail and taxes_fees_detail.get('total_taxes_and_fees', 0) > 0:
+   st.markdown("---")
+   st.markdown("#### Estimated Out-the-Door Price")
+   
+   purchase_price = results.get('analysis_parameters', {}).get('purchase_price', 0)
+   otd_price = summary.get('otd_price', purchase_price)
+   
+   otd_col1, otd_col2, otd_col3 = st.columns(3)
+   with otd_col1:
+    st.metric("Vehicle Price", f"${purchase_price:,.0f}")
+   with otd_col2:
+    st.metric("Taxes & Fees", f"${taxes_fees_detail['total_taxes_and_fees']:,.0f}")
+   with otd_col3:
+    st.metric("Out-the-Door Price", f"${otd_price:,.0f}")
+   
+   with st.expander("View Taxes & Fees Breakdown"):
+    tf_col1, tf_col2 = st.columns(2)
+    with tf_col1:
+     rate_display = f"{taxes_fees_detail.get('sales_tax_rate', 0)*100:.1f}%"
+     st.markdown(f"**Sales Tax ({rate_display}):** ${taxes_fees_detail.get('sales_tax', 0):,.0f}")
+     st.markdown(f"**Destination Charge:** ${taxes_fees_detail.get('destination_charge', 0):,.0f}")
+     st.markdown(f"**Dealer Doc Fee:** ${taxes_fees_detail.get('doc_fee', 0):,.0f}")
+    with tf_col2:
+     st.markdown(f"**Title Fee:** ${taxes_fees_detail.get('title_fee', 0):,.0f}")
+     st.markdown(f"**Registration Fee:** ${taxes_fees_detail.get('registration_fee', 0):,.0f}")
+    
+    tax_detail = taxes_fees_detail.get('sales_tax_detail', {})
+    notes = tax_detail.get('notes', '')
+    if notes:
+     st.caption(f"Note: {notes}")
+    
+    if not taxes_fees_detail.get('trade_in_credit_allowed', True):
+     st.caption(f"* {taxes_fees_detail.get('state', '')} does not allow trade-in tax credit")
  
  else: # Lease
- summary = results['summary']
- 
- col1, col2, col3, col4 = st.columns(4)
- 
- with col1:
- st.metric("Total Lease Cost", f"${summary['total_lease_cost']:,.0f}")
- with col2:
- st.metric("Monthly Average", f"${summary['average_monthly_cost']:,.0f}")
- with col3:
- st.metric("Cost per Mile", f"${summary['cost_per_mile']:.3f}")
- with col4:
- down_payment = summary.get('down_payment', 0)
- st.metric("Down Payment", f"${down_payment:,.0f}")
+  summary = results['summary']
+  
+  col1, col2, col3, col4 = st.columns(4)
+  
+  with col1:
+   st.metric("Total Lease Cost", f"${summary['total_lease_cost']:,.0f}")
+  with col2:
+   st.metric("Monthly Average", f"${summary['average_monthly_cost']:,.0f}")
+  with col3:
+   st.metric("Cost per Mile", f"${summary['cost_per_mile']:.3f}")
+  with col4:
+   down_payment = summary.get('down_payment', 0)
+   st.metric("Down Payment", f"${down_payment:,.0f}")
  
  # Category breakdown
  st.markdown("#### Cost Categories")
  category_totals = results.get('category_totals', {})
  
  if category_totals:
- categories = list(category_totals.keys())
- mid_point = len(categories) // 2
- 
- col1, col2 = st.columns(2)
- 
- with col1:
- for category in categories[:mid_point]:
- st.metric(
- category.replace('_', ' ').title(),
- f"${category_totals[category]:,.0f}"
- )
- 
- with col2:
- for category in categories[mid_point:]:
- st.metric(
- category.replace('_', ' ').title(),
- f"${category_totals[category]:,.0f}"
- )
+  categories = list(category_totals.keys())
+  mid_point = len(categories) // 2
+  
+  col1, col2 = st.columns(2)
+  
+  with col1:
+   for category in categories[:mid_point]:
+    st.metric(
+     category.replace('_', ' ').title(),
+     f"${category_totals[category]:,.0f}"
+    )
+  
+  with col2:
+   for category in categories[mid_point:]:
+    st.metric(
+     category.replace('_', ' ').title(),
+     f"${category_totals[category]:,.0f}"
+    )
 
 def display_visualizations(results: Dict[str, Any], vehicle_data: Dict[str, Any]):
  """Display charts and visualizations"""

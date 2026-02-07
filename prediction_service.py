@@ -17,6 +17,12 @@ from financial_analysis import FinancialAnalysisService
 from vehicle_database import get_vehicle_characteristics
 from zip_code_utils import get_regional_cost_multiplier, get_climate_data_for_zip
 
+try:
+    from taxes_fees_utils import VehicleTaxesFeesCalculator
+    TAXES_FEES_AVAILABLE = True
+except ImportError:
+    TAXES_FEES_AVAILABLE = False
+
 class PredictionService:
     """Main service for orchestrating TCO predictions"""
     
@@ -27,6 +33,7 @@ class PredictionService:
         self.fuel_calculator = FuelCostCalculator()
         self.ev_calculator = EVCostCalculator()
         self.financial_service = FinancialAnalysisService()
+        self.taxes_fees_calculator = VehicleTaxesFeesCalculator() if TAXES_FEES_AVAILABLE else None
     
     def calculate_total_cost_of_ownership(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -137,13 +144,30 @@ class PredictionService:
         analysis_years = input_data.get('analysis_years', 5)
         current_mileage = input_data.get('current_mileage', 0)
         
+        # Calculate taxes and fees (upfront + recurring registration)
+        taxes_fees_result = None
+        annual_registration_renewal = 0
+        if self.taxes_fees_calculator:
+            is_new = not input_data.get('is_used', False)
+            taxes_fees_result = self.taxes_fees_calculator.calculate_all_taxes_fees(
+                purchase_price=purchase_price,
+                state=input_data.get('state', ''),
+                make=input_data.get('make', ''),
+                is_new=is_new,
+                trade_in_value=input_data.get('trade_in_value', 0.0),
+            )
+            annual_registration_renewal = self.taxes_fees_calculator.get_annual_registration_renewal(
+                input_data.get('state', '')
+            )
+        
         # Initialize category totals
         category_totals = {
             'depreciation': 0,
             'maintenance': 0,
             'insurance': 0,
             'fuel_energy': 0,
-            'financing': 0
+            'financing': 0,
+            'taxes_fees': 0
         }
         
         # Calculate depreciation schedule
@@ -309,8 +333,18 @@ class PredictionService:
             if financing_schedule and year <= len(financing_schedule):
                 annual_financing = financing_schedule[year-1].get('annual_payment', 0)
             
+            # Taxes and fees
+            annual_taxes_fees = 0
+            if taxes_fees_result:
+                if year == 1:
+                    # Year 1: all upfront taxes + fees + first-year registration
+                    annual_taxes_fees = taxes_fees_result.get('total_taxes_and_fees', 0)
+                else:
+                    # Years 2+: recurring annual registration renewal only
+                    annual_taxes_fees = annual_registration_renewal
+            
             # Total annual cost
-            total_annual = annual_depreciation + annual_maintenance + annual_insurance + annual_fuel + annual_financing
+            total_annual = annual_depreciation + annual_maintenance + annual_insurance + annual_fuel + annual_financing + annual_taxes_fees
             
             # Store breakdown
             annual_breakdown.append({
@@ -325,6 +359,7 @@ class PredictionService:
                 'insurance': annual_insurance,
                 'fuel_energy': annual_fuel,
                 'financing': annual_financing,
+                'taxes_fees': annual_taxes_fees,
                 'total_annual_cost': total_annual
             })
             
@@ -334,6 +369,7 @@ class PredictionService:
             category_totals['insurance'] += annual_insurance
             category_totals['fuel_energy'] += annual_fuel
             category_totals['financing'] += annual_financing
+            category_totals['taxes_fees'] += annual_taxes_fees
         
         # Calculate final metrics
         total_tco = sum(category_totals.values())
@@ -341,7 +377,8 @@ class PredictionService:
             category_totals['maintenance'] +
             category_totals['insurance'] +
             category_totals['fuel_energy'] +
-            category_totals['financing']
+            category_totals['financing'] +
+            category_totals['taxes_fees']
         )
         
         average_annual_tco = total_tco / analysis_years
@@ -359,6 +396,11 @@ class PredictionService:
             transaction_type='purchase'
         )
         
+        # Calculate OTD price for summary display
+        otd_price = purchase_price
+        if taxes_fees_result:
+            otd_price = taxes_fees_result.get('otd_price', purchase_price)
+        
         return {
             'summary': {
                 'total_tco': total_tco,
@@ -366,7 +408,8 @@ class PredictionService:
                 'average_annual_cost': average_annual_out_of_pocket,
                 'cost_per_mile': cost_per_mile,
                 'final_vehicle_value': final_vehicle_value,
-                'total_depreciation': category_totals['depreciation']
+                'total_depreciation': category_totals['depreciation'],
+                'otd_price': otd_price
             },
             'annual_breakdown': annual_breakdown,
             'category_totals': category_totals,
@@ -375,6 +418,7 @@ class PredictionService:
             'financing_schedule': financing_schedule,
             'vehicle_characteristics': vehicle_characteristics,
             'affordability': affordability,
+            'taxes_fees_detail': taxes_fees_result,
             'analysis_parameters': {
                 'analysis_years': analysis_years,
                 'annual_mileage': input_data['annual_mileage'],
@@ -606,14 +650,14 @@ class PredictionService:
 
             if is_electric:
                 annual_fuel = self.ev_calculator.calculate_annual_electricity_cost(
-                    annual_mileage=annual_mileage_limit,  # Ã¢Å“â€¦ Use lease mileage limit
+                    annual_mileage=annual_mileage_limit,  # ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Use lease mileage limit
                     vehicle_efficiency=adjusted_ev_efficiency,
                     electricity_rate=input_data.get('electricity_rate', 0.12),
                     charging_preference=input_data.get('charging_preference', 'mixed')
                 )
             else:
                 annual_fuel = self.fuel_calculator.calculate_annual_fuel_cost(
-                    annual_mileage=annual_mileage_limit,  # Ã¢Å“â€¦ Use lease mileage limit
+                    annual_mileage=annual_mileage_limit,  # ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Use lease mileage limit
                     mpg=vehicle_characteristics.get('mpg', 25),
                     fuel_price=input_data.get('fuel_price', 3.50),
                     driving_style=driving_style,

@@ -136,7 +136,6 @@ class PredictionService:
 
         # Calculate taxes and fees (upfront + recurring registration)
         taxes_fees_result = None
-        annual_registration_renewal = 0
         if self.taxes_fees_calculator:
             is_new = not input_data.get('is_used', False)
             taxes_fees_result = self.taxes_fees_calculator.calculate_all_taxes_fees(
@@ -146,9 +145,8 @@ class PredictionService:
                 is_new=is_new,
                 trade_in_value=input_data.get('trade_in_value', 0.0),
             )
-            annual_registration_renewal = self.taxes_fees_calculator.get_annual_registration_renewal(
-                input_data.get('state', '')
-            )
+            # Annual registration renewal is computed per-year in the loop
+            # below using the depreciated vehicle value for VLF calculation.
 
         # Initialize category totals
         category_totals = {
@@ -338,8 +336,15 @@ class PredictionService:
                     # Year 1: all upfront taxes + fees + first-year registration
                     annual_taxes_fees = taxes_fees_result.get('total_taxes_and_fees', 0)
                 else:
-                    # Years 2+: recurring annual registration renewal only
-                    annual_taxes_fees = annual_registration_renewal
+                    # Years 2+: recurring annual DMV registration renewal
+                    # Use depreciated vehicle value for VLF/ad valorem calculation
+                    year_vehicle_value = purchase_price
+                    if depreciation_schedule and year - 1 <= len(depreciation_schedule):
+                        year_vehicle_value = depreciation_schedule[year - 2].get('vehicle_value', purchase_price) if year >= 2 else purchase_price
+                    annual_taxes_fees = self.taxes_fees_calculator.get_annual_registration_renewal(
+                        input_data.get('state', ''),
+                        vehicle_value=year_vehicle_value,
+                    )
             
             # Total annual cost
             total_annual = annual_depreciation + annual_maintenance + annual_insurance + annual_fuel + annual_financing + annual_taxes_fees

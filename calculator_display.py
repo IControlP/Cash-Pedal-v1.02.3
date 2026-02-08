@@ -114,9 +114,22 @@ def display_location_energy_info(
 
 
 def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> None:
-    total_cost = float(results.get("total_cost_of_ownership", 0) or 0)
-    monthly_cost = float(results.get("monthly_total_cost", 0) or 0)
+    summary = results.get("summary", {})
     ownership_years = int(vehicle_data.get("analysis_years", 5) or 5)
+
+    # Purchase results use 'total_tco'; lease results use 'total_lease_cost'
+    total_cost = float(
+        summary.get("total_tco", 0)
+        or summary.get("total_lease_cost", 0)
+        or 0
+    )
+
+    # Derive monthly cost: try summary first, then compute from total
+    monthly_cost = float(
+        summary.get("average_monthly_cost", 0) or 0
+    )
+    if monthly_cost == 0 and total_cost > 0 and ownership_years > 0:
+        monthly_cost = total_cost / (ownership_years * 12)
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Total Cost of Ownership", f"${total_cost:,.0f}")

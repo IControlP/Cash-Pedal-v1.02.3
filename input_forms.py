@@ -1112,19 +1112,24 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
                 requires_premium = fuel_info.get('requires_premium', False)
                 detected_fuel_price = fuel_info.get('fuel_price', current_fuel_price)
                 fuel_type = fuel_info.get('fuel_type', 'regular')
-                
+
                 if requires_premium:
                     st.info(f" **Premium Fuel Required** for {make} {model} {trim if trim else ''}")
                     st.caption(f"Base regular: ${fuel_info.get('regular_price', 3.50):.2f}/gal -> Premium: ${detected_fuel_price:.2f}/gal (+$0.40)")
                 else:
                     st.success(f"Regular fuel detected for {make} {model}")
-                
+
                 # Use detected price as default
                 default_fuel_price = detected_fuel_price
+
+                # Sync session state so the number_input widget reflects
+                # the detected price (Streamlit ignores the value param when
+                # the key already exists in session state).
+                st.session_state['fuel_price_input'] = float(detected_fuel_price)
             else:
                 # No vehicle selected yet, use saved/default price
                 default_fuel_price = current_fuel_price
-            
+
             fuel_price = st.number_input(
                 "Local Fuel Price ($/gallon):",
                 min_value=2.0,

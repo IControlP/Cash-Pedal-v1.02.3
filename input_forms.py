@@ -195,13 +195,9 @@ def estimate_used_vehicle_value(make: str, model: str, year: int, current_mileag
         if year == current_year and current_mileage <= 1000:
             return None
         
-        st.write(f"Debug: {year} {make} {model}, Age = {vehicle_age}, Mileage = {current_mileage:,}")
-        
         # ENHANCED LOGIC FOR CURRENT YEAR VEHICLES WITH MILEAGE
         if vehicle_age == 0 and current_mileage > 1000:
             # CURRENT YEAR VEHICLE WITH SIGNIFICANT MILEAGE - Apply new car depreciation
-            st.write(f"Debug: Current year vehicle with {current_mileage:,} miles - applying new car mileage-based depreciation")
-            
             # First, determine the vehicle segment to get the 1-year baseline
             model_lower = model.lower()
             make_lower = make.lower()
@@ -228,8 +224,6 @@ def estimate_used_vehicle_value(make: str, model: str, year: int, current_mileag
                 segment = 'sedan'
                 one_year_rate = 0.15  # Sedans - reduced from 0.17
             
-            st.write(f"Debug: Vehicle segment: {segment}, 1-year baseline rate: {one_year_rate:.1%}")
-            
             # INTEGRATED Progressive depreciation - never exceed 1-year rates
             # Scale from minimal depreciation to approaching (but not exceeding) 1-year rates
             if current_mileage <= 5000:
@@ -254,9 +248,6 @@ def estimate_used_vehicle_value(make: str, model: str, year: int, current_mileag
                 max_depreciation = one_year_rate * 0.85  # Never exceed 85% of 1-year rate
                 base_depreciation = (one_year_rate * 0.75) + mileage_factor * (max_depreciation - one_year_rate * 0.75)
                 depreciation_type = "heavily used new car"
-            
-            st.write(f"Debug: New car mileage category: {depreciation_type}")
-            st.write(f"Debug: Base mileage depreciation = {base_depreciation:.3f} ({base_depreciation*100:.1f}%)")
             
             # Apply research-validated brand-specific modifiers for new car depreciation
             brand_modifiers = {
@@ -292,20 +283,12 @@ def estimate_used_vehicle_value(make: str, model: str, year: int, current_mileag
             final_depreciation = min(final_depreciation, max_allowed_depreciation)
             final_depreciation = max(final_depreciation, 0.015)  # Min 1.5% depreciation
             
-            st.write(f"Debug: Brand multiplier ({make}): {brand_multiplier:.2f}")
-            st.write(f"Debug: Max allowed (85% of 1-year): {max_allowed_depreciation:.1%}")
-            st.write(f"Debug: Final new car depreciation: {final_depreciation:.3f} ({final_depreciation*100:.1f}%)")
-            
             estimated_value = trim_msrp * (1 - final_depreciation)
-            
-            st.write(f"Debug: MSRP = ${trim_msrp:,}, Final value = ${estimated_value:,.0f}")
-            
+
             return round(estimated_value, 0)
         
         # EXISTING LOGIC FOR OLDER VEHICLES - UPDATED WITH MARKET DATA
         else:
-            st.write(f"Debug: Older vehicle ({vehicle_age} years) - using market-validated depreciation curves")
-            
             # STEP 1: MARKET-VALIDATED DEPRECIATION CURVES (Updated based on 2024-2025 research)
             # KBB states most vehicles lose about 20% first year, then 60% total by year 5
             realistic_curves = {
@@ -382,14 +365,9 @@ def estimate_used_vehicle_value(make: str, model: str, year: int, current_mileag
             curve = realistic_curves[segment]
             base_depreciation = curve.get(vehicle_age, curve.get(15, 0.72))
             
-            st.write(f"Debug: Segment = {segment}")
-            st.write(f"Debug: Base depreciation = {base_depreciation:.3f} ({base_depreciation*100:.1f}%)")
-            
             # STEP 2: MILEAGE ADJUSTMENT (12k miles/year baseline for older vehicles)
             expected_mileage = vehicle_age * 12000
             mileage_difference = current_mileage - expected_mileage
-            
-            st.write(f"Debug: Expected mileage = {expected_mileage:,}, Actual = {current_mileage:,}, Difference = {mileage_difference:,}")
             
             # Improved mileage adjustment logic
             mileage_adjustment = 0.0
@@ -397,21 +375,18 @@ def estimate_used_vehicle_value(make: str, model: str, year: int, current_mileag
             if abs(mileage_difference) <= 10000:
                 # Normal mileage range (+/- 10k from expected)
                 mileage_adjustment = mileage_difference / 200000  # Very gradual adjustment
-                st.write(f"Debug: Normal mileage range, adjustment = {mileage_adjustment:.3f}")
                 
             elif mileage_difference > 10000:
                 # Higher than expected mileage - penalty
                 excess_miles = mileage_difference - 10000
                 mileage_adjustment = 0.08 + (excess_miles / 300000)  # Reduced penalty
                 mileage_adjustment = min(mileage_adjustment, 0.20)  # Cap at 20% additional
-                st.write(f"Debug: High mileage penalty = +{mileage_adjustment:.3f}")
                 
             else:
                 # Lower than expected mileage - bonus
                 missing_miles = abs(mileage_difference) - 10000
                 mileage_adjustment = -0.04 - (missing_miles / 400000)  # Reduced bonus
                 mileage_adjustment = max(mileage_adjustment, -0.12)  # Cap at 12% reduction
-                st.write(f"Debug: Low mileage bonus = {mileage_adjustment:.3f}")
             
             # STEP 3: RESEARCH-VALIDATED BRAND ADJUSTMENT
             brand_multipliers = {
@@ -439,9 +414,6 @@ def estimate_used_vehicle_value(make: str, model: str, year: int, current_mileag
             # Step 4: Combine age + mileage + brand
             adjusted_depreciation = base_depreciation + mileage_adjustment
             final_depreciation = adjusted_depreciation * brand_multiplier
-            
-            st.write(f"Debug: After mileage adj = {adjusted_depreciation:.3f}")
-            st.write(f"Debug: After brand adj = {final_depreciation:.3f}")
             
             # Step 5: Apply realistic caps and floors by segment - FIXED: Age-appropriate bounds
             if vehicle_age <= 3:
@@ -515,20 +487,11 @@ def estimate_used_vehicle_value(make: str, model: str, year: int, current_mileag
             
             final_depreciation = max(floor, min(final_depreciation, cap))
             
-            st.write(f"Debug: Applied cap/floor ({floor:.3f} to {cap:.3f}) = {final_depreciation:.3f}")
-            
             estimated_value = trim_msrp * (1 - final_depreciation)
-            
-            st.write(f"Debug: MSRP = ${trim_msrp:,}, Final value = ${estimated_value:,.0f}")
             
             return round(estimated_value, 0)
         
-    except ImportError:
-        st.error("Enhanced depreciation model not available")
-        return None
-        
-    except Exception as e:
-        st.error(f"Error in depreciation calculation: {str(e)}")
+    except (ImportError, Exception):
         return None
 
 # Fix for display_vehicle_selection_form() in input_forms.py
@@ -789,8 +752,7 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                     if estimated_value:
                         default_price = int(estimated_value)
                         estimated_price = estimated_value
-                except Exception as e:
-                    st.warning(f"Could not estimate used vehicle value: {str(e)}")
+                except Exception:
                     estimated_price = None
         
         # Purchase price input

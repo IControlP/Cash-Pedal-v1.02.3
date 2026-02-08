@@ -116,8 +116,7 @@ class UsedVehicleEstimator:
             
             return round(estimated_value, 0)
             
-        except Exception as e:
-            st.warning(f"Could not estimate vehicle value: {str(e)}")
+        except Exception:
             return None
 
     def _get_original_msrp(self, make: str, model: str, year: int, trim: str) -> Optional[float]:

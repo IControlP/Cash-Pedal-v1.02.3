@@ -1033,26 +1033,17 @@ class EnhancedMaintenanceCalculator:
                             'category': prediction['category']
                         })
             
-            # Add routine maintenance (oil changes, etc.)
-            routine_cost = self._calculate_routine_maintenance_cost(
-                year=year, 
-                vehicle_make=vehicle_make, 
-                annual_mileage=annual_mileage, 
+            # Add individual routine maintenance services (oil changes, filters, etc.)
+            routine_services = self._get_routine_maintenance_services(
+                year=year,
+                vehicle_make=vehicle_make,
+                annual_mileage=annual_mileage,
                 driving_style=driving_style,
                 vehicle_model=vehicle_model,
-                starting_mileage=starting_mileage
+                starting_mileage=starting_mileage,
+                total_mileage=total_mileage,
             )
-            
-            if routine_cost > 0:
-                year_services.append({
-                    'service': 'Routine Maintenance',
-                    'frequency': 1,
-                    'cost_per_service': routine_cost,
-                    'total_cost': routine_cost,
-                    'due_at_mileage': total_mileage,
-                    'interval_based': False,
-                    'category': 'routine'
-                })
+            year_services.extend(routine_services)
             
             # Sort by mileage
             year_services.sort(key=lambda x: x['due_at_mileage'])
@@ -1332,7 +1323,91 @@ class EnhancedMaintenanceCalculator:
         
         return total_cost
     
-    def _service_due_this_year(self, year_start_mileage: int, year_end_mileage: int, 
+    def _get_routine_maintenance_services(self, year: int, vehicle_make: str,
+                                          annual_mileage: int, driving_style: str,
+                                          vehicle_model: str = '',
+                                          starting_mileage: int = 0,
+                                          total_mileage: int = 0) -> list:
+        """Return individual routine maintenance service items for a year.
+
+        Instead of a single 'Routine Maintenance' line item this returns a list
+        of service dicts (oil change, filters, tire rotation, etc.) so the UI
+        can display granular breakdowns.
+        """
+        tier = self._determine_vehicle_tier(vehicle_make, vehicle_model)
+        costs = self._get_tier_multipliers(tier)
+
+        year_start_mileage = starting_mileage + (annual_mileage * (year - 1))
+        year_end_mileage = starting_mileage + (annual_mileage * year)
+
+        style_multipliers = {
+            'gentle': 0.9, 'normal': 1.0, 'average': 1.0,
+            'aggressive': 1.15, 'spirited': 1.15
+        }
+        style_mult = style_multipliers.get(driving_style, 1.0)
+
+        services: list = []
+
+        def _add(name: str, cost: float, at_mileage: int = total_mileage, category: str = 'routine'):
+            adjusted = cost * style_mult
+            if adjusted > 0:
+                services.append({
+                    'service': name,
+                    'frequency': 1,
+                    'cost_per_service': adjusted,
+                    'total_cost': adjusted,
+                    'due_at_mileage': at_mileage,
+                    'interval_based': False,
+                    'category': category,
+                })
+
+        # Oil changes
+        oil_changes_per_year = max(1, int(annual_mileage / costs['oil_interval']))
+        if annual_mileage < costs['oil_interval']:
+            oil_changes_per_year = 1
+        _add('Oil Change', costs['oil_change_cost'] * oil_changes_per_year)
+
+        # Air & cabin filters
+        if tier == 'luxury' or year % 2 == 0 or annual_mileage > 15000:
+            _add('Air & Cabin Filters', costs['filter_cost'])
+
+        # Tire rotations
+        rotations = max(2, int(annual_mileage / 6000))
+        _add('Tire Rotation', costs['tire_rotation_cost'] * rotations)
+
+        # Brake inspection
+        _add('Brake Inspection', costs['brake_inspection_cost'])
+
+        # Wiper blades (annual)
+        _add('Wiper Blade Replacement', costs['wiper_cost'])
+
+        # Brake fluid flush
+        bf_interval = 24000 if tier in ['luxury', 'premium'] else 30000
+        if self._service_due_this_year(year_start_mileage, year_end_mileage, bf_interval, starting_mileage):
+            _add('Brake Fluid Flush', costs['brake_fluid_flush_cost'])
+
+        # Transmission fluid service
+        trans_interval = 60000 if tier == 'luxury' else 80000
+        if self._service_due_this_year(year_start_mileage, year_end_mileage, trans_interval, starting_mileage):
+            _add('Transmission Fluid Service', costs['trans_fluid_cost'])
+
+        # Coolant flush
+        coolant_interval = 60000 if tier == 'luxury' else 80000
+        if self._service_due_this_year(year_start_mileage, year_end_mileage, coolant_interval, starting_mileage):
+            _add('Coolant Flush', costs['coolant_flush_cost'])
+
+        # Spark plugs
+        spark_interval = 60000 if tier in ['luxury', 'premium'] else 90000
+        if self._service_due_this_year(year_start_mileage, year_end_mileage, spark_interval, starting_mileage):
+            _add('Spark Plugs', costs['spark_plug_cost'])
+
+        # Wheel alignment (every 2 years)
+        if year % 2 == 0:
+            _add('Wheel Alignment', costs['alignment_cost'])
+
+        return services
+
+    def _service_due_this_year(self, year_start_mileage: int, year_end_mileage: int,
                                service_interval: int, ownership_start_mileage: int) -> bool:
         """
         Determine if a mileage-based service is due during this year.

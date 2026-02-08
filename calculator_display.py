@@ -114,6 +114,8 @@ def display_location_energy_info(
 
 
 def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> None:
+    import pandas as pd
+
     summary = results.get("summary", {})
     ownership_years = int(vehicle_data.get("analysis_years", 5) or 5)
 
@@ -131,16 +133,73 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
     if monthly_cost == 0 and total_cost > 0 and ownership_years > 0:
         monthly_cost = total_cost / (ownership_years * 12)
 
+    # --- Summary metrics ---
     col1, col2, col3 = st.columns(3)
     col1.metric("Total Cost of Ownership", f"${total_cost:,.0f}")
     col2.metric("Monthly Ownership Cost", f"${monthly_cost:,.0f}")
     col3.metric("Analysis Horizon", f"{ownership_years} years")
 
-    breakdown = results.get("category_totals", {})
-    if isinstance(breakdown, dict) and breakdown:
-        st.subheader("Cost Breakdown")
-        for k, v in breakdown.items():
-            st.write(f"- **{k.replace('_', ' ').title()}**: ${float(v):,.0f}")
+    # --- Tabs ---
+    tab_breakdown, tab_annual, tab_maintenance = st.tabs(
+        ["Cost Breakdown", "Annual Costs", "Maintenance Schedule"]
+    )
+
+    # ---- Tab 1: Category totals ----
+    category_totals = results.get("category_totals", {})
+    with tab_breakdown:
+        if isinstance(category_totals, dict) and category_totals:
+            for k, v in category_totals.items():
+                st.write(f"- **{k.replace('_', ' ').title()}**: ${float(v):,.0f}")
+        else:
+            st.info("No cost breakdown data available.")
+
+    # ---- Tab 2: Year-by-year cost table ----
+    annual_breakdown = results.get("annual_breakdown", [])
+    with tab_annual:
+        if annual_breakdown:
+            cost_categories = [
+                "depreciation", "maintenance", "insurance",
+                "fuel_energy", "financing", "taxes_fees",
+            ]
+            rows: List[Dict[str, Any]] = []
+            for entry in annual_breakdown:
+                row: Dict[str, Any] = {"Year": int(entry.get("year", 0))}
+                for cat in cost_categories:
+                    row[cat.replace("_", " ").title()] = float(entry.get(cat, 0))
+                row["Annual Total"] = float(entry.get("total_annual_cost", 0))
+                rows.append(row)
+
+            df = pd.DataFrame(rows).set_index("Year")
+            st.dataframe(
+                df.style.format("${:,.0f}"),
+                use_container_width=True,
+            )
+        else:
+            st.info("No annual breakdown data available.")
+
+    # ---- Tab 3: Maintenance schedule per year ----
+    with tab_maintenance:
+        if annual_breakdown:
+            for entry in annual_breakdown:
+                yr = entry.get("year", "?")
+                activities = entry.get("maintenance_activities", [])
+                cleaned = clean_maintenance_services(activities)
+                year_total = float(entry.get("maintenance", 0))
+
+                with st.expander(
+                    f"Year {yr}  —  ${year_total:,.0f}", expanded=(yr == 1)
+                ):
+                    if cleaned:
+                        for svc in cleaned:
+                            name = svc.get("service", "Service")
+                            cost = float(
+                                svc.get("total_cost", svc.get("cost_per_service", 0))
+                            )
+                            st.write(f"- {name}: **${cost:,.0f}**")
+                    else:
+                        st.caption("No scheduled services this year.")
+        else:
+            st.info("No maintenance schedule data available.")
 
 
 def display_calculator() -> None:

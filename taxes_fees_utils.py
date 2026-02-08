@@ -197,6 +197,45 @@ DEFAULT_REGISTRATION_FEE = (50, 0)
 
 
 # ========================================================================
+# ANNUAL VEHICLE LICENSE FEE / AD VALOREM TAX RATES BY STATE (2025)
+# Many states charge an annual fee based on vehicle value at DMV renewal.
+# Format: state_code -> (rate_as_decimal, additional_flat_fees)
+# rate_as_decimal: percentage of vehicle value charged annually
+# additional_flat_fees: smog/emissions, highway patrol, county fees, etc.
+# States not listed charge no value-based annual fee.
+# ========================================================================
+
+STATE_ANNUAL_VLF_RATES = {
+    'CA': (0.0065, 51),     # 0.65% VLF + ~$51 CHP/smog/county fees
+    'VA': (0.0401, 0),      # 4.01% personal property tax (varies by county avg)
+    'CT': (0.0070, 0),      # ~70 mills property tax (varies by town)
+    'KS': (0.010, 0),       # ~1.0% property tax on vehicles
+    'KY': (0.006, 0),       # 0.6% motor vehicle usage tax (annual)
+    'MN': (0.0125, 0),      # 1.25% registration tax on value
+    'MS': (0.005, 0),       # 0.5% ad valorem tax
+    'MO': (0.0033, 0),      # 0.33% personal property tax
+    'MT': (0.0, 40),        # Flat county fees, no value-based tax
+    'NC': (0.006, 0),       # ~0.6% county property tax (varies)
+    'RI': (0.0, 15),        # Excise tax being phased out; flat misc fees
+    'SC': (0.005, 0),       # 0.5% personal property tax
+    'WV': (0.006, 0),       # ~0.6% ad valorem property tax
+    'WY': (0.003, 0),       # ~0.3% county assessed value
+    'AZ': (0.005, 0),       # Vehicle License Tax ~0.5% of assessed value
+    'CO': (0.003, 15),      # Ownership tax ~0.3% + emissions/county fees
+    'GA': (0.0, 25),        # TAVT is one-time but $25 misc annual fees
+    'IA': (0.01, 0),        # ~1% of value for new, decreasing by year
+    'MA': (0.025, 0),       # 2.5% excise tax on value
+    'NH': (0.0, 20),        # Municipal vehicle registration fees vary
+    'NV': (0.008, 0),       # Governmental services tax ~0.8% of value
+    'NY': (0.0, 20),        # Supplemental MV fees
+    'TX': (0.0, 7.50),      # $7.50 inspection fee
+    'WA': (0.003, 0),       # 0.3% RTA tax (in applicable areas)
+}
+
+DEFAULT_ANNUAL_VLF_RATE = (0.0, 0)
+
+
+# ========================================================================
 # STATES WITHOUT TRADE-IN TAX CREDIT
 # In these states, tax is on full price regardless of trade-in
 # ========================================================================
@@ -253,8 +292,8 @@ class VehicleTaxesFeesCalculator:
         # 4) Title fee
         title_fee = self.get_title_fee(state)
 
-        # 5) Registration fee (first-year estimate)
-        reg_result = self.get_registration_fee(state)
+        # 5) Registration fee (first-year estimate, includes VLF based on value)
+        reg_result = self.get_registration_fee(state, vehicle_value=purchase_price)
         registration_fee = reg_result['total']
 
         # ---- Aggregate ----
@@ -502,28 +541,35 @@ class VehicleTaxesFeesCalculator:
     # Registration Fee (first-year estimate)
     # ------------------------------------------------------------------
 
-    def get_registration_fee(self, state: str) -> Dict[str, float]:
-        """Return estimated first-year registration + plate fees."""
+    def get_registration_fee(self, state: str, vehicle_value: float = 0.0) -> Dict[str, float]:
+        """Return estimated first-year registration + plate fees + VLF."""
         state = state.upper().strip() if state else ''
         base, plate = STATE_REGISTRATION_FEES.get(state, DEFAULT_REGISTRATION_FEE)
+        vlf_rate, vlf_flat = STATE_ANNUAL_VLF_RATES.get(state, DEFAULT_ANNUAL_VLF_RATE)
+        vlf = vehicle_value * vlf_rate + vlf_flat
         return {
             'base_fee': base,
             'plate_fee': plate,
-            'total': base + plate,
+            'vlf': round(vlf, 2),
+            'total': base + plate + vlf,
         }
 
     # ------------------------------------------------------------------
     # Annual Registration Cost (for recurring TCO years 2+)
     # ------------------------------------------------------------------
 
-    def get_annual_registration_renewal(self, state: str) -> float:
+    def get_annual_registration_renewal(self, state: str, vehicle_value: float = 0.0) -> float:
         """
-        Estimate annual registration renewal cost.
-        Typically lower than first-year since plate fees are one-time.
+        Estimate annual registration renewal cost including DMV fees.
+        Includes base registration fee plus any value-based Vehicle License
+        Fee (VLF) or ad valorem tax charged by the state at annual renewal.
+        Plate fees are excluded (one-time at first registration).
         """
         state = state.upper().strip() if state else ''
         base, _ = STATE_REGISTRATION_FEES.get(state, DEFAULT_REGISTRATION_FEE)
-        return base
+        vlf_rate, vlf_flat = STATE_ANNUAL_VLF_RATES.get(state, DEFAULT_ANNUAL_VLF_RATE)
+        vlf = vehicle_value * vlf_rate + vlf_flat
+        return base + vlf
 
     # ------------------------------------------------------------------
     # Helper: Amortize upfront costs over ownership period
@@ -540,7 +586,8 @@ class VehicleTaxesFeesCalculator:
         """
         total = taxes_fees_result.get('total_taxes_and_fees', 0)
         annual_registration = self.get_annual_registration_renewal(
-            taxes_fees_result.get('state', '')
+            taxes_fees_result.get('state', ''),
+            vehicle_value=taxes_fees_result.get('purchase_price', 0),
         )
 
         # One-time costs (tax, destination, doc, title, first-year registration)
@@ -631,9 +678,9 @@ def get_destination_charge(make: str) -> int:
     return _calculator.get_destination_charge(make)
 
 
-def get_annual_registration(state: str) -> float:
+def get_annual_registration(state: str, vehicle_value: float = 0.0) -> float:
     """Quick helper: returns annual registration renewal estimate."""
-    return _calculator.get_annual_registration_renewal(state)
+    return _calculator.get_annual_registration_renewal(state, vehicle_value=vehicle_value)
 
 
 def amortize_taxes_fees(

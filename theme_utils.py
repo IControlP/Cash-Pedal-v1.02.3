@@ -275,9 +275,47 @@ def get_theme_css():
     }}
 
     /* =============================================
+       INPUT FIELD TEXT VISIBILITY FIX
+       Ensures text is not clipped in number inputs,
+       text inputs, and select boxes on all screen sizes
+       ============================================= */
+
+    .stNumberInput input {{
+        height: auto !important;
+        min-height: 42px !important;
+        padding: 8px 12px !important;
+        line-height: 1.6 !important;
+        font-size: 14px !important;
+        box-sizing: border-box !important;
+    }}
+
+    .stTextInput input {{
+        height: auto !important;
+        min-height: 42px !important;
+        padding: 8px 12px !important;
+        line-height: 1.6 !important;
+        font-size: 14px !important;
+        box-sizing: border-box !important;
+    }}
+
+    .stSelectbox [data-baseweb="select"] {{
+        min-height: 42px !important;
+    }}
+
+    .stSelectbox [data-baseweb="select"] > div {{
+        min-height: 40px !important;
+        padding: 6px 12px !important;
+        line-height: 1.6 !important;
+        font-size: 14px !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        align-items: center !important;
+    }}
+
+    /* =============================================
        STREAMLIT COMPONENT OVERRIDES
        ============================================= */
-    
+
     /* Button styling - Light mode */
     .stButton > button {{
         background: linear-gradient(135deg, {light["primary"]}, #C07800) !important;

@@ -969,17 +969,16 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
                 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
             ]
             
-            # Use auto-detected state or saved state
+            # Use auto-detected state or saved state – set default via session
+            # state only on first render to avoid the Streamlit
+            # "default value vs Session State API" warning.
             current_state = auto_state if auto_state else location_settings.get('state', '')
-            if current_state in state_options:
-                state_index = state_options.index(current_state) + 1
-            else:
-                state_index = 0
-                
+            if 'state_select_reactive' not in st.session_state:
+                st.session_state['state_select_reactive'] = current_state if current_state in state_options else ''
+
             selected_state = st.selectbox(
                 "State:",
                 [''] + state_options,
-                index=state_index,
                 help="State for insurance and tax calculations",
                 key="state_select_reactive",
                 on_change=on_state_change

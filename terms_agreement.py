@@ -7,6 +7,7 @@ Storage: PostgreSQL (Railway) with JSON file fallback for local dev
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 import os
 import json
 import hashlib
@@ -195,8 +196,43 @@ def init_postgres_table():
 # SESSION STATE
 # ======================
 
+def _inject_localstorage_check():
+    """Inject JS to check localStorage for prior terms acceptance and redirect."""
+    components.html(f"""
+    <script>
+    (function() {{
+        try {{
+            var accepted = localStorage.getItem('cashpedal_terms_accepted');
+            var version = localStorage.getItem('cashpedal_terms_version');
+            if (accepted === 'true' && version === '{TERMS_VERSION}') {{
+                var url = new URL(window.parent.location.href);
+                if (url.searchParams.get('terms_accepted') !== 'true') {{
+                    url.searchParams.set('terms_accepted', 'true');
+                    window.parent.location.replace(url.toString());
+                }}
+            }}
+        }} catch(e) {{}}
+    }})();
+    </script>
+    """, height=0)
+
+
+def _inject_localstorage_set():
+    """Inject JS to persist terms acceptance in localStorage."""
+    components.html(f"""
+    <script>
+    (function() {{
+        try {{
+            localStorage.setItem('cashpedal_terms_accepted', 'true');
+            localStorage.setItem('cashpedal_terms_version', '{TERMS_VERSION}');
+        }} catch(e) {{}}
+    }})();
+    </script>
+    """, height=0)
+
+
 def initialize_terms_state():
-    """Initialize session state with query param persistence"""
+    """Initialize session state with query param + localStorage persistence"""
     # Check URL query parameters for acceptance flag
     query_params = st.query_params
     terms_param_raw = query_params.get("terms_accepted", None)
@@ -204,7 +240,7 @@ def initialize_terms_state():
         terms_param = terms_param_raw[0] if terms_param_raw else None
     else:
         terms_param = terms_param_raw
-    
+
     if 'terms_accepted' not in st.session_state:
         # Check if URL indicates acceptance
         st.session_state.terms_accepted = (terms_param == "true")
@@ -217,6 +253,10 @@ def initialize_terms_state():
         st.session_state.session_id = str(uuid.uuid4())
     if 'consent_record_id' not in st.session_state:
         st.session_state.consent_record_id = None
+
+    # If not yet accepted via query params, ask JS to check localStorage
+    if not st.session_state.terms_accepted:
+        _inject_localstorage_check()
 
 def has_accepted_terms() -> bool:
     """Check if user accepted current T&C version"""
@@ -499,10 +539,13 @@ def show_terms_fullscreen():
                 st.session_state.terms_accepted = True
                 st.session_state.terms_version_accepted = TERMS_VERSION
                 st.session_state.consent_record_id = record_id
-                
+
                 # Set query parameter to persist acceptance across page loads
                 st.query_params["terms_accepted"] = "true"
-                
+
+                # Persist to localStorage so returning visitors skip the terms
+                _inject_localstorage_set()
+
                 st.success("Terms accepted. Redirecting to CashPedal...")
                 st.rerun()
             else:

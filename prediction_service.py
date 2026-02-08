@@ -126,24 +126,14 @@ class PredictionService:
         
         return schedule
 
-    def _calculate_purchase_tco(self, input_data: Dict[str, Any], 
+    def _calculate_purchase_tco(self, input_data: Dict[str, Any],
                                 vehicle_characteristics: Dict[str, Any],
                                 regional_multiplier: float) -> Dict[str, Any]:
         """Calculate TCO for purchase scenario with FIXED EV efficiency"""
-                # DEBUG: Print what we're getting
-        print(f"\n=== DEBUG PURCHASE TCO ===")
-        print(f"Make: {input_data.get('make')}")
-        print(f"Model: {input_data.get('model')}")
-        print(f"is_electric from input_data: {input_data.get('is_electric')}")
-        print(f"is_electric from vehicle_characteristics: {vehicle_characteristics.get('is_electric')}")
-        print(f"electricity_rate: {input_data.get('electricity_rate')}")
-        print(f"charging_preference: {input_data.get('charging_preference')}")
-        print(f"fuel_price: {input_data.get('fuel_price')}")
-        print(f"========================\n")
         purchase_price = input_data.get('price', input_data.get('trim_msrp', 30000))
         analysis_years = input_data.get('analysis_years', 5)
         current_mileage = input_data.get('current_mileage', 0)
-        
+
         # Calculate taxes and fees (upfront + recurring registration)
         taxes_fees_result = None
         annual_registration_renewal = 0
@@ -159,7 +149,7 @@ class PredictionService:
             annual_registration_renewal = self.taxes_fees_calculator.get_annual_registration_renewal(
                 input_data.get('state', '')
             )
-        
+
         # Initialize category totals
         category_totals = {
             'depreciation': 0,
@@ -169,16 +159,24 @@ class PredictionService:
             'financing': 0,
             'taxes_fees': 0
         }
-        
+
         # Calculate depreciation schedule
-        depreciation_schedule = self.depreciation_model.calculate_depreciation_schedule(
-            purchase_price,                    # initial_value
-            input_data['make'],                # vehicle_make
-            input_data['model'],               # vehicle_model
-            input_data['year'],                # model_year
-            input_data['annual_mileage'],      # annual_mileage
-            analysis_years                     # years
-        )
+        # For used vehicles, use the realistic used-vehicle depreciation model
+        # which avoids double-counting pre-purchase depreciation.
+        is_used = input_data.get('is_used', False)
+        if is_used:
+            depreciation_schedule = self._calculate_realistic_used_vehicle_depreciation(
+                input_data, purchase_price, analysis_years
+            )
+        else:
+            depreciation_schedule = self.depreciation_model.calculate_depreciation_schedule(
+                purchase_price,                    # initial_value
+                input_data['make'],                # vehicle_make
+                input_data['model'],               # vehicle_model
+                input_data['year'],                # model_year
+                input_data['annual_mileage'],      # annual_mileage
+                analysis_years                     # years
+            )
         
         # In _calculate_purchase_tco method, build lifestyle factors dictionary:
 

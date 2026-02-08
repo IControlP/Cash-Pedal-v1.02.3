@@ -120,24 +120,26 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
     ownership_years = int(vehicle_data.get("analysis_years", 5) or 5)
 
     # Purchase results use 'total_tco'; lease results use 'total_lease_cost'
-    total_cost = float(
+    total_tco = float(
         summary.get("total_tco", 0)
         or summary.get("total_lease_cost", 0)
         or 0
     )
 
-    # Derive monthly cost: try summary first, then compute from total
-    monthly_cost = float(
-        summary.get("average_monthly_cost", 0) or 0
-    )
-    if monthly_cost == 0 and total_cost > 0 and ownership_years > 0:
-        monthly_cost = total_cost / (ownership_years * 12)
+    # Out-of-pocket total (TCO minus depreciation)
+    category_totals = results.get("category_totals", {})
+    total_depreciation = float(category_totals.get("depreciation", 0))
+    total_out_of_pocket = total_tco - total_depreciation
+
+    # Monthly out-of-pocket cost (what you actually pay each month)
+    monthly_oop = total_out_of_pocket / (ownership_years * 12) if ownership_years > 0 else 0
 
     # --- Summary metrics ---
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Total Cost of Ownership", f"${total_cost:,.0f}")
-    col2.metric("Monthly Ownership Cost", f"${monthly_cost:,.0f}")
-    col3.metric("Analysis Horizon", f"{ownership_years} years")
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Total Cost of Ownership", f"${total_tco:,.0f}")
+    col2.metric("Total Out-of-Pocket Cost", f"${total_out_of_pocket:,.0f}")
+    col3.metric("Monthly Out-of-Pocket", f"${monthly_oop:,.0f}")
+    col4.metric("Analysis Horizon", f"{ownership_years} years")
 
     # --- Tabs ---
     tab_breakdown, tab_annual, tab_maintenance = st.tabs(
@@ -157,22 +159,32 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
     annual_breakdown = results.get("annual_breakdown", [])
     with tab_annual:
         if annual_breakdown:
-            cost_categories = [
-                "depreciation", "maintenance", "insurance",
+            # Out-of-pocket categories (depreciation is informational, not cash spent)
+            oop_categories = [
+                "maintenance", "insurance",
                 "fuel_energy", "financing", "taxes_fees",
             ]
             rows: List[Dict[str, Any]] = []
             for entry in annual_breakdown:
                 row: Dict[str, Any] = {"Year": int(entry.get("year", 0))}
-                for cat in cost_categories:
+                # Show depreciation for reference but exclude from the total
+                row["Depreciation*"] = float(entry.get("depreciation", 0))
+                for cat in oop_categories:
                     row[cat.replace("_", " ").title()] = float(entry.get(cat, 0))
-                row["Annual Total"] = float(entry.get("total_annual_cost", 0))
+                # Annual total = only out-of-pocket costs
+                row["Annual Total"] = sum(
+                    float(entry.get(cat, 0)) for cat in oop_categories
+                )
                 rows.append(row)
 
             df = pd.DataFrame(rows).set_index("Year")
             st.dataframe(
                 df.style.format("${:,.0f}"),
                 use_container_width=True,
+            )
+            st.caption(
+                r"\*Depreciation is shown for reference but is **not** included "
+                "in the Annual Total. It represents value loss, not an out-of-pocket expense."
             )
         else:
             st.info("No annual breakdown data available.")

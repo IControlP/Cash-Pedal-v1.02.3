@@ -4,6 +4,7 @@ A fun, interactive quiz that matches users with their ideal vehicle
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 import sys
 import os
 
@@ -300,7 +301,7 @@ def display_result_card(vehicle_type, score, rank):
     
     if rank == 1:
         st.markdown(f"""
-        <div style="
+        <div class="result-card-primary" style="
             background: linear-gradient(135deg, {profile.get('color', '#1E88E5')}22, {profile.get('color', '#1E88E5')}11);
             border-left: 5px solid {profile.get('color', '#1E88E5')};
             border-radius: 10px;
@@ -310,25 +311,21 @@ def display_result_card(vehicle_type, score, rank):
             <h2 style="margin:0; color: {profile.get('color', '#1E88E5')}">
                 #{rank} Match: {profile.get('name', vehicle_type.title())}
             </h2>
-            <p style="font-size: 1.3rem; font-style: italic; margin: 0.5rem 0; color: #555;">
+            <p class="tagline" style="font-size: 1.3rem; font-style: italic; margin: 0.5rem 0;">
                 "{profile.get('tagline', '')}"
             </p>
-            <p style="margin: 1rem 0;">{profile.get('description', '')}</p>
+            <p class="description" style="margin: 1rem 0;">{profile.get('description', '')}</p>
         </div>
         """, unsafe_allow_html=True)
     else:
         st.markdown(f"""
-        <div style="
-            background-color: #f8f9fa;
+        <div class="result-card-secondary" style="
             border-left: 4px solid {profile.get('color', '#666')};
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 0.5rem;
         ">
             <h3 style="margin:0; color: {profile.get('color', '#333')}">
                 #{rank}: {profile.get('name', vehicle_type.title())}
             </h3>
-            <p style="font-style: italic; margin: 0.3rem 0; color: #666; font-size: 0.95rem;">
+            <p style="font-style: italic; margin: 0.3rem 0; font-size: 0.95rem;">
                 "{profile.get('tagline', '')}"
             </p>
         </div>
@@ -416,6 +413,56 @@ def main():
             border-radius: 15px;
             color: white;
             margin-bottom: 2rem;
+        }
+        .top-pick-card {
+            background: #f0f0f0;
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .top-pick-card strong {
+            color: #1a1a1a;
+        }
+        .top-pick-card small {
+            color: #555;
+        }
+        .result-card-primary p.tagline {
+            color: #555;
+        }
+        .result-card-primary p.description {
+            color: #333;
+        }
+        .result-card-secondary {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .result-card-secondary p {
+            color: #555;
+        }
+        @media (prefers-color-scheme: dark) {
+            .top-pick-card {
+                background: #2a2a2e;
+            }
+            .top-pick-card strong {
+                color: #f0f0f0;
+            }
+            .top-pick-card small {
+                color: #aaa;
+            }
+            .result-card-primary p.tagline {
+                color: #ccc;
+            }
+            .result-card-primary p.description {
+                color: #ddd;
+            }
+            .result-card-secondary {
+                background-color: #2a2a2e;
+            }
+            .result-card-secondary p {
+                color: #ccc;
+            }
         }
         .stSlider > div > div > div > div {
             background: linear-gradient(90deg, #ef5350, #ffee58, #66bb6a);
@@ -537,7 +584,13 @@ def main():
                 st.rerun()
     
     else:
-        # Results page
+        # Results page - scroll to top
+        components.html("""
+            <script>
+                window.parent.document.querySelector('section.main').scrollTo(0, 0);
+            </script>
+        """, height=0)
+
         st.markdown("""
         <div class="result-header">
             <h1 style="margin:0;">The Results Are In!</h1>
@@ -572,9 +625,9 @@ def main():
                 for idx, pick in enumerate(profile.get("top_picks", [])):
                     with pick_cols[idx]:
                         st.markdown(f"""
-                        <div style="background:#f0f0f0; padding:1rem; border-radius:10px; text-align:center;">
+                        <div class="top-pick-card">
                             <strong>{pick['make']} {pick['model']}</strong><br>
-                            <small style="color:#666;">{pick['why']}</small>
+                            <small>{pick['why']}</small>
                         </div>
                         """, unsafe_allow_html=True)
                 

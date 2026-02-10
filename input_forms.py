@@ -610,10 +610,10 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
         # Year selection with unique key
         current_year = 2025
         if selected_make:
-            # Try to get years for the make (will vary by model)
-            year_options = list(range(current_year, current_year - 20, -1))
+            # Limit years to 2015-2026 range
+            year_options = list(range(min(2026, current_year + 1), 2014, -1))
         else:
-            year_options = list(range(current_year, current_year - 20, -1))
+            year_options = list(range(min(2026, current_year + 1), 2014, -1))
         
         selected_year = st.selectbox(
             "Year:",
@@ -1696,12 +1696,29 @@ def collect_all_form_data() -> Tuple[Dict[str, Any], bool, str]:
     
     # Display location form (passes vehicle_data for premium fuel detection)
     location_data = display_location_form(vehicle_data)
-    
+
     if not location_data['is_valid']:
         return {}, False, "Please complete location information"
-    
+
     st.markdown("---")
-    
+
+    # EV Charging Preferences (if electric vehicle detected)
+    charging_data = {}
+    if vehicle_data.get('is_valid', False):
+        from vehicle_helpers import detect_electric_vehicle
+        from calculator_display import display_charging_preference_form
+
+        make = vehicle_data.get('make', '')
+        model = vehicle_data.get('model', '')
+
+        if detect_electric_vehicle(make, model):
+            charging_data = display_charging_preference_form(
+                electricity_rate=location_data.get('electricity_rate', 0.12),
+                state=location_data.get('state', '')
+            )
+            location_data.update(charging_data)
+            st.markdown("---")
+
     # Display personal info form
     personal_data = display_personal_info_form()
     
@@ -1927,11 +1944,12 @@ def display_all_forms_visible() -> Tuple[Dict[str, Any], bool, str]:
     # Section 2.5: EV Charging Preferences (if electric vehicle detected)
     charging_data = {}
     if vehicle_data.get('is_valid', False):
-        from calculator_display import detect_electric_vehicle, display_charging_preference_form
-        
+        from vehicle_helpers import detect_electric_vehicle
+        from calculator_display import display_charging_preference_form
+
         make = vehicle_data.get('make', '')
         model = vehicle_data.get('model', '')
-        
+
         if detect_electric_vehicle(make, model):
             with st.container():
                 electricity_rate = location_data.get('electricity_rate', 0.12)

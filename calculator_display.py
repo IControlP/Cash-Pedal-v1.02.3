@@ -165,6 +165,60 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
     col3.metric("Monthly Out-of-Pocket", f"${monthly_oop:,.0f}")
     col4.metric("Analysis Horizon", f"{ownership_years} years")
 
+    # --- Affordability Analysis ---
+    affordability = results.get("affordability", {})
+    if affordability:
+        st.markdown("---")
+
+        percentage = affordability.get("percentage_of_income", 0)
+        rating = affordability.get("affordability_rating", "Unknown")
+        is_affordable = affordability.get("is_affordable", False)
+        threshold_desc = affordability.get("threshold_description", "Standard")
+        max_pct = affordability.get("recommended_max_percentage", 20)
+
+        # Determine alert type based on affordability
+        if is_affordable and rating in ["Excellent", "Very Good"]:
+            alert_type = "success"
+            icon = "✅"
+        elif is_affordable:
+            alert_type = "info"
+            icon = "ℹ️"
+        else:
+            alert_type = "warning"
+            icon = "⚠️"
+
+        # Display affordability message
+        affordability_message = f"""
+        {icon} **Affordability Assessment: {rating}**
+
+        Your annual operating costs represent **{percentage:.1f}%** of your gross annual income.
+
+        - **Recommended Maximum:** {max_pct:.1f}% ({threshold_desc})
+        - **Your Monthly Cost:** ${affordability.get('monthly_cost', 0):,.0f}
+        - **Recommended Max Monthly:** ${affordability.get('recommended_max_monthly', 0):,.0f}
+        """
+
+        if alert_type == "success":
+            st.success(affordability_message)
+        elif alert_type == "info":
+            st.info(affordability_message)
+        else:
+            st.warning(affordability_message)
+
+        # Additional context
+        with st.expander("📊 Understanding Affordability Guidelines"):
+            st.markdown("""
+            **Affordability guidelines vary based on your location and age:**
+
+            - **Low Cost of Living States:** Vehicle operating costs should not exceed **20%** of gross annual income
+            - **High Cost of Living States (Under 26):** Up to **27.5%** may be acceptable due to higher housing costs and entry-level salaries
+            - **High Cost of Living States (26+):** Standard **15-20%** range is recommended
+
+            **High Cost of Living States include:** CA, HI, MA, NY, NJ, CT, MD, WA, OR, CO, NH, VA, RI, VT, AK, DC
+
+            These guidelines are based on financial planning best practices and help ensure you can comfortably afford your vehicle while meeting other financial obligations.
+            """)
+
     # --- Tabs ---
     tab_breakdown, tab_annual, tab_maintenance = st.tabs(
         ["Cost Breakdown", "Annual Costs", "Maintenance Schedule"]

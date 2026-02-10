@@ -570,9 +570,9 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
     Supports both Purchase and Lease transactions
     FIXED: Now properly resets dependent fields when parent selections change
     """
-    
-    st.subheader(" Vehicle Selection")
-    
+
+    st.subheader("🚗 Vehicle Selection")
+
     # Transaction type selection
     transaction_type = st.radio(
         "Transaction Type:",
@@ -581,18 +581,44 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
         help="Select whether you're buying or leasing the vehicle",
         key="transaction_type_radio"
     )
-    
+
+    st.markdown("---")
+
+    # Progress indicator
+    selected_make = st.session_state.get('vehicle_make_select', '')
+    selected_model = st.session_state.get('vehicle_model_select', '')
+    selected_year = st.session_state.get('vehicle_year_select', '')
+    selected_trim = st.session_state.get('vehicle_trim_select', '')
+
+    # Calculate progress
+    steps_completed = 0
+    if selected_make: steps_completed += 1
+    if selected_model: steps_completed += 1
+    if selected_year: steps_completed += 1
+    if selected_trim: steps_completed += 1
+
+    # Show progress bar
+    st.progress(steps_completed / 4, text=f"Vehicle Selection Progress: {steps_completed}/4 steps completed")
+    st.caption("👉 **Please follow the steps in order: Make → Model → Year → Trim**")
+
+    st.markdown("---")
+
     col1, col2 = st.columns(2)
 
     with col1:
-        # Make selection with unique key
+        # Step 1: Make selection
+        st.markdown("### 📍 Step 1: Select Make")
         available_makes = get_all_manufacturers()
         selected_make = st.selectbox(
-            "Make:",
+            "Vehicle Manufacturer:",
             [''] + sorted(available_makes),
-            help="Vehicle manufacturer",
-            key="vehicle_make_select"
+            help="Choose the vehicle brand/manufacturer",
+            key="vehicle_make_select",
+            label_visibility="visible"
         )
+
+        if not selected_make:
+            st.info("👆 Start here: Select a vehicle manufacturer")
 
         # CRITICAL: Reset downstream selections if make changed
         if 'previous_make' not in st.session_state:
@@ -607,15 +633,19 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                     del st.session_state[key]
             st.rerun()
 
-        # Model selection (dependent on make) with unique key
+        # Step 2: Model selection (dependent on make)
+        st.markdown("### 📍 Step 2: Select Model")
         if selected_make:
             available_models = get_models_for_manufacturer(selected_make)
             selected_model = st.selectbox(
-                "Model:",
+                "Vehicle Model:",
                 [''] + sorted(available_models),
-                help="Vehicle model",
+                help="Choose the specific model",
                 key="vehicle_model_select"
             )
+
+            if not selected_model:
+                st.info("👆 Next: Select a model from this manufacturer")
 
             # CRITICAL: Reset year and trim selection if model changed
             if 'previous_model' not in st.session_state:
@@ -629,16 +659,18 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                         del st.session_state[key]
                 st.rerun()
         else:
-            selected_model = st.selectbox(
-                "Model:",
+            st.selectbox(
+                "Vehicle Model:",
                 [''],
                 help="Select a make first",
-                key="vehicle_model_select_disabled"
+                key="vehicle_model_select_disabled",
+                disabled=True
             )
-            selected_model = ""
+            st.warning("⚠️ Please select a make first")
 
     with col2:
-        # Year selection (dependent on make and model) with unique key
+        # Step 3: Year selection (dependent on make and model)
+        st.markdown("### 📍 Step 3: Select Year")
         if selected_make and selected_model:
             # Get actual production years for this specific model
             available_years = get_available_years_for_model(selected_make, selected_model)
@@ -646,19 +678,23 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                 # Sort in descending order (newest first)
                 year_options = sorted(available_years, reverse=True)
                 selected_year = st.selectbox(
-                    "Year:",
+                    "Model Year:",
                     [''] + year_options,
-                    help="Model year (limited to production years for this model)",
+                    help=f"Production years: {min(available_years)}-{max(available_years)}",
                     key="vehicle_year_select"
                 )
+
+                if not selected_year:
+                    st.info(f"👆 Available: {min(available_years)}-{max(available_years)}")
             else:
                 selected_year = st.selectbox(
-                    "Year:",
+                    "Model Year:",
                     [''],
                     help="No years available for this model",
                     key="vehicle_year_select_empty"
                 )
                 selected_year = ""
+                st.error("❌ No production years available")
 
             # CRITICAL: Reset trim selection if year changed
             if 'previous_year' not in st.session_state:
@@ -671,25 +707,30 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                     del st.session_state['vehicle_trim_select']
                 st.rerun()
         else:
-            selected_year = st.selectbox(
-                "Year:",
+            st.selectbox(
+                "Model Year:",
                 [''],
                 help="Select make and model first",
-                key="vehicle_year_select_disabled"
+                key="vehicle_year_select_disabled",
+                disabled=True
             )
-            selected_year = ""
+            st.warning("⚠️ Please select make and model first")
 
-        # Trim selection (dependent on model and year) with unique key
+        # Step 4: Trim selection (dependent on model and year)
+        st.markdown("### 📍 Step 4: Select Trim")
         if selected_make and selected_model and selected_year:
             trims = get_trims_for_vehicle(selected_make, selected_model, int(selected_year))
             if trims:
                 trim_options = [''] + list(trims.keys())
                 selected_trim = st.selectbox(
-                    "Trim:",
+                    "Trim Level:",
                     trim_options,
-                    help="Vehicle trim level",
+                    help="Vehicle trim level and features",
                     key="vehicle_trim_select"
                 )
+
+                if not selected_trim:
+                    st.info("👆 Final step: Select a trim level")
 
                 # Get MSRP for selected trim
                 if selected_trim:
@@ -697,28 +738,34 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                 else:
                     trim_msrp = 0
             else:
-                selected_trim = st.selectbox(
-                    "Trim:",
+                st.selectbox(
+                    "Trim Level:",
                     [''],
                     help="No trims available",
-                    key="vehicle_trim_select_empty"
+                    key="vehicle_trim_select_empty",
+                    disabled=True
                 )
                 selected_trim = ""
                 trim_msrp = 0
+                st.error("❌ No trims available for this model/year")
         else:
-            selected_trim = st.selectbox(
-                "Trim:",
+            st.selectbox(
+                "Trim Level:",
                 [''],
                 help="Select make, model, and year first",
-                key="vehicle_trim_select_disabled"
+                key="vehicle_trim_select_disabled",
+                disabled=True
             )
             selected_trim = ""
             trim_msrp = 0
+            st.warning("⚠️ Please complete steps 1-3 first")
     
 # Vehicle condition and pricing section
     if selected_make and selected_model and selected_year and selected_trim:
         st.markdown("---")
-        st.subheader("Pricing & Condition")
+        st.success(f"✅ Vehicle Selected: {selected_year} {selected_make} {selected_model} {selected_trim}")
+        st.markdown("---")
+        st.subheader("💰 Pricing & Condition")
         
         col1, col2 = st.columns(2)
         

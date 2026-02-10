@@ -42,7 +42,7 @@ def main():
             st.warning("No vehicles to compare")
             st.info("""
             **To add vehicles:**
-            1. Go to Single Vehicle Calculator
+            1. Go to Single Car Ownership Calculator
             2. Configure and calculate a vehicle
             3. Click "Add to Comparison"
             """)
@@ -95,7 +95,7 @@ def main():
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.info("Add at least 2 vehicles to see comparison results.")
-            if st.button("🔧 Go to Single Vehicle Calculator", use_container_width=True):
+            if st.button("🔧 Go to Single Car Ownership Calculator", use_container_width=True):
                 st.switch_page("pages/1___Single_Vehicle_Calculator.py")
     
     # Footer

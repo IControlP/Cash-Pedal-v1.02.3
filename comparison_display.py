@@ -29,7 +29,7 @@ def display_comparison():
         display_comparison_results()
     else:
         st.info("Add at least 2 vehicles to see comparison results.")
-        st.markdown(" **Tip:** Use the Single Vehicle Calculator to analyze and add vehicles to comparison.")
+        st.markdown(" **Tip:** Use the Single Car Ownership Calculator to analyze and add vehicles to comparison.")
 
 def display_empty_comparison():
     """Display interface when no vehicles are in comparison"""
@@ -41,7 +41,7 @@ def display_empty_comparison():
     with col1:
         st.markdown("""
         ### How to Add Vehicles:
-        1. Go to **Single Vehicle Calculator**
+        1. Go to **Single Car Ownership Calculator**
         2. Configure a vehicle and calculate TCO
         3. Click **"Add to Comparison"**
         4. Repeat for additional vehicles (up to 5)
@@ -60,7 +60,7 @@ def display_empty_comparison():
     # Quick add section (if we had a simplified form)
     with st.expander(" Quick Add Vehicle", expanded=False):
         st.markdown("*Quick vehicle addition coming in future update*")
-        st.info("For now, please use the Single Vehicle Calculator to add vehicles.")
+        st.info("For now, please use the Single Car Ownership Calculator to add vehicles.")
 
 
 def display_comparison_summary():

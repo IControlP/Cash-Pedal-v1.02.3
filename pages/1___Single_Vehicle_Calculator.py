@@ -1,5 +1,5 @@
 """
-Single Vehicle Calculator Page
+Single Car Ownership Calculator Page
 Handles individual vehicle TCO analysis
 """
 
@@ -18,15 +18,15 @@ from theme_utils import apply_theme, get_footer_html
 
 # Page configuration
 st.set_page_config(
-    page_title="Single Vehicle Calculator - CashPedal",
-    page_icon="🔧",
+    page_title="Single Car Ownership Calculator - CashPedal",
+    page_icon="🧮",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 
 def main():
-    """Single Vehicle Calculator Page"""
+    """Single Car Ownership Calculator Page"""
     # Require terms acceptance before using calculator
     if not require_terms_acceptance():
         st.stop()
@@ -38,8 +38,8 @@ def main():
     apply_theme()
 
     # Page header
-    st.title("Single Vehicle Calculator")
-    st.markdown("Analyze the total cost of ownership for an individual vehicle.")
+    st.title("Single Car Ownership Calculator")
+    st.markdown("Analyze the complete cost of owning a single vehicle over time.")
     st.markdown("---")
 
     # Sidebar content specific to this page

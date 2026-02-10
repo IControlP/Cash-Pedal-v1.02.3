@@ -68,7 +68,7 @@ def main():
                 f"{len(st.session_state.comparison_vehicles)} vehicles in comparison"
             )
             if st.button("View Comparison"):
-                st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
+                st.switch_page("pages/5_______Multi_Vehicle_Comparison.py")
         else:
             st.info("No vehicles in comparison yet")
             st.caption(

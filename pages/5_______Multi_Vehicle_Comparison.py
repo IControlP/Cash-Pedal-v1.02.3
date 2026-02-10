@@ -47,7 +47,7 @@ def main():
             3. Click "Add to Comparison"
             """)
             if st.button("➕ Add a Vehicle"):
-                st.switch_page("pages/1___Single_Vehicle_Calculator.py")
+                st.switch_page("pages/4______Single_Car_Ownership_Calculator.py")
         else:
             st.success(f"✅ {vehicle_count} vehicle(s) ready")
             
@@ -60,7 +60,7 @@ def main():
             if vehicle_count < 5:
                 st.caption(f"You can add {5 - vehicle_count} more vehicle(s)")
                 if st.button("➕ Add Another Vehicle"):
-                    st.switch_page("pages/1___Single_Vehicle_Calculator.py")
+                    st.switch_page("pages/4______Single_Car_Ownership_Calculator.py")
         
         st.markdown("---")
         
@@ -96,7 +96,7 @@ def main():
         with col2:
             st.info("Add at least 2 vehicles to see comparison results.")
             if st.button("🔧 Go to Single Car Ownership Calculator", use_container_width=True):
-                st.switch_page("pages/1___Single_Vehicle_Calculator.py")
+                st.switch_page("pages/4______Single_Car_Ownership_Calculator.py")
     
     # Footer
     st.markdown("---")

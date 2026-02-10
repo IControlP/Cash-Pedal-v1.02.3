@@ -60,7 +60,7 @@ def main():
         """)
 
         if st.button("🧮 Calculate Single Car Costs", key="nav_single", use_container_width=True):
-            st.switch_page("pages/1___Single_Vehicle_Calculator.py")
+            st.switch_page("pages/4______Single_Car_Ownership_Calculator.py")
 
     with col2:
         st.markdown("""
@@ -76,7 +76,7 @@ def main():
         """)
 
         if st.button("⚖️ Compare Multiple Vehicles", key="nav_compare", use_container_width=True):
-            st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
+            st.switch_page("pages/5_______Multi_Vehicle_Comparison.py")
 
     st.markdown("---")
 
@@ -99,7 +99,7 @@ def main():
         """)
 
         if st.button("🎯 Take the Car Survey", key="nav_survey", use_container_width=True):
-            st.switch_page("pages/4_____Find_Your_Car.py")
+            st.switch_page("pages/2____Car_Survey.py")
 
     with tool_col2:
         st.markdown("""
@@ -115,7 +115,7 @@ def main():
         """)
 
         if st.button("💵 Check Salary Requirements", key="nav_salary", use_container_width=True):
-            st.switch_page("pages/5_______Salary_Calculator.py")
+            st.switch_page("pages/3_____Salary_Calculator.py")
 
     st.markdown("---")
 

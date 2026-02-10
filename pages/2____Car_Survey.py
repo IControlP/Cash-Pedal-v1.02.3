@@ -499,9 +499,9 @@ def main():
         st.markdown("---")
         st.header("Quick Links")
         if st.button("Vehicle Calculator"):
-            st.switch_page("pages/1___Single_Vehicle_Calculator.py")
+            st.switch_page("pages/4______Single_Car_Ownership_Calculator.py")
         if st.button("Compare Vehicles"):
-            st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
+            st.switch_page("pages/5_______Multi_Vehicle_Comparison.py")
     
     # Main content
     if not st.session_state.quiz_started and not st.session_state.quiz_complete:
@@ -650,11 +650,11 @@ def main():
         
         with col1:
             if st.button("Calculate Costs", use_container_width=True):
-                st.switch_page("pages/1___Single_Vehicle_Calculator.py")
+                st.switch_page("pages/4______Single_Car_Ownership_Calculator.py")
         
         with col2:
             if st.button("Compare Vehicles", use_container_width=True):
-                st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
+                st.switch_page("pages/5_______Multi_Vehicle_Comparison.py")
         
         with col3:
             if st.button("Retake Quiz", use_container_width=True):

@@ -44,9 +44,9 @@ def main() -> None:
         st.markdown("---")
         st.header("Quick Links")
         if st.button("Single Car Ownership Calculator"):
-            st.switch_page("pages/1___Single_Vehicle_Calculator.py")
+            st.switch_page("pages/4______Single_Car_Ownership_Calculator.py")
         if st.button("Multi-Vehicle Comparison"):
-            st.switch_page("pages/2____Multi_Vehicle_Comparison.py")
+            st.switch_page("pages/5_______Multi_Vehicle_Comparison.py")
 
     st.header("What We Do")
     st.write(

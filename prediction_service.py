@@ -596,18 +596,24 @@ class PredictionService:
                             vehicle_characteristics: Dict[str, Any],
                             regional_multiplier: float) -> Dict[str, Any]:
         """Calculate TCO for lease scenario - FIXED: All required defaults added"""
-        
-        # FIXED: Provide safe defaults for all fields
-        lease_term = input_data.get('lease_term', input_data.get('analysis_years', 3))
+
+        # FIXED: lease_term should be in MONTHS (not years!)
+        # If not provided, default to 36 months (3 years)
+        lease_term = input_data.get('lease_term', 36)
+
+        # Validate lease_term is reasonable (12-60 months)
+        if lease_term < 12 or lease_term > 60:
+            lease_term = 36  # Default to 3 years if invalid
+
         monthly_payment = input_data.get('monthly_payment', 400)
         down_payment = input_data.get('down_payment', 0)
         annual_mileage_limit = input_data.get('annual_mileage_limit', 12000)
-        
+
         # FIXED: Safe access to driving parameters
         driving_style = input_data.get('driving_style', 'normal')
         terrain = input_data.get('terrain', 'flat')
         fuel_price = input_data.get('fuel_price', 3.50)
-        
+
         category_totals = {
             'lease_payments': 0,
             'maintenance': 0,
@@ -615,26 +621,31 @@ class PredictionService:
             'fuel_energy': 0,
             'fees_penalties': 0
         }
-        
+
+        # Convert lease_term from months to years for maintenance schedule
+        lease_years = int(lease_term / 12)
+        if lease_years < 1:
+            lease_years = 1
+
         # Calculate lease maintenance schedule with safe defaults
         lease_maintenance_schedule = self.maintenance_calculator.get_maintenance_schedule(
             annual_mileage=annual_mileage_limit,
-            years=lease_term,
+            years=lease_years,
             starting_mileage=0,
             vehicle_make=input_data.get('make', 'Unknown'),
             driving_style=driving_style,
             vehicle_model=input_data.get('model', 'Unknown')
         )
-        
+
         annual_breakdown = []
-        
-        for year in range(1, lease_term + 1):
+
+        for year in range(1, lease_years + 1):
             ownership_year = 2025 + (year - 1)
             current_mileage = annual_mileage_limit * year
-            
-            # Lease payments
+
+            # Lease payments (12 months per year)
             annual_lease_payment = monthly_payment * 12
-            
+
             # Maintenance
             if year <= len(lease_maintenance_schedule):
                 annual_maintenance = lease_maintenance_schedule[year-1]['total_year_cost']
@@ -642,9 +653,9 @@ class PredictionService:
             else:
                 annual_maintenance = 0
                 maintenance_activities = []
-            
-            # Insurance - with safe defaults
-            vehicle_value = input_data.get('trim_msrp', input_data.get('purchase_price', 40000))
+
+            # Insurance - FIXED: Use trim_msrp for leases (don't use purchase_price)
+            vehicle_value = input_data.get('trim_msrp', 40000)
             annual_insurance = self.insurance_calculator.calculate_annual_premium(
                 vehicle_value=vehicle_value,
                 vehicle_make=input_data.get('make', 'Unknown'),
@@ -654,7 +665,8 @@ class PredictionService:
                 coverage_type='comprehensive',
                 annual_mileage=annual_mileage_limit,
                 num_vehicles=input_data.get('num_household_vehicles', 1),
-                regional_multiplier=regional_multiplier
+                regional_multiplier=regional_multiplier,
+                vehicle_model=input_data.get('model', 'Unknown')
             )
             
             # ============================================================================
@@ -743,18 +755,18 @@ class PredictionService:
         
         # Calculate summary metrics
         total_lease_cost = sum(category_totals.values()) + down_payment
-        average_annual_cost = total_lease_cost / lease_term if lease_term > 0 else 0
-        average_monthly_cost = total_lease_cost / (lease_term * 12) if lease_term > 0 else 0
-        total_miles = annual_mileage_limit * lease_term
+        average_annual_cost = total_lease_cost / lease_years if lease_years > 0 else 0
+        average_monthly_cost = total_lease_cost / lease_term if lease_term > 0 else 0  # Use months for monthly average
+        total_miles = annual_mileage_limit * lease_years
         cost_per_mile = total_lease_cost / total_miles if total_miles > 0 else 0
-        
+
         # Affordability calculation with safe defaults
         affordability = self._calculate_affordability(
             annual_cost=average_annual_cost,
             gross_income=input_data.get('gross_income', 60000),
             transaction_type='lease'
         )
-        
+
         return {
             'summary': {
                 'total_lease_cost': total_lease_cost,
@@ -769,7 +781,8 @@ class PredictionService:
             'vehicle_characteristics': vehicle_characteristics,
             'affordability': affordability,
             'analysis_parameters': {
-                'lease_term': lease_term,
+                'lease_term_months': lease_term,  # Store in months
+                'lease_term_years': lease_years,  # Store in years for clarity
                 'monthly_payment': monthly_payment,
                 'annual_mileage_limit': annual_mileage_limit,
                 'driving_style': driving_style,

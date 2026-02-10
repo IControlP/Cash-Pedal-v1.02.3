@@ -857,6 +857,9 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                 """)
         
         else:  # Lease
+            # Show vehicle MSRP for reference (used in insurance calculations)
+            st.info(f"**Vehicle MSRP:** ${trim_msrp:,}\n\n_This MSRP is used for insurance calculations._")
+
             monthly_payment = st.number_input(
                 "Monthly Lease Payment ($):",
                 min_value=100,
@@ -866,7 +869,7 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                 help="Monthly lease payment amount",
                 key="lease_payment_input"
             )
-            
+
             down_payment = st.number_input(
                 "Down Payment ($):",
                 min_value=0,
@@ -876,16 +879,21 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                 help="Initial down payment for lease",
                 key="lease_down_payment_input"
             )
-            
+
             lease_term = st.number_input(
                 "Lease Term (months):",
                 min_value=12,
                 max_value=60,
                 value=36,
                 step=12,
-                help="Length of lease agreement",
+                help="Length of lease agreement (analysis will be based on this term)",
                 key="lease_term_input"
             )
+
+            # Show calculated lease summary
+            total_payments = monthly_payment * lease_term
+            total_lease_cost = total_payments + down_payment
+            st.caption(f"📊 **Lease Summary:** {lease_term} months × ${monthly_payment:,.0f}/month + ${down_payment:,.0f} down = **${total_lease_cost:,.0f} total payments**")
     else:
         # No complete selection yet
         current_mileage = 0

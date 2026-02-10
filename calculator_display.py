@@ -137,6 +137,96 @@ def display_location_energy_info(
     )
 
 
+def _find_affordable_alternatives(
+    current_vehicle: Dict[str, Any],
+    affordability: Dict[str, Any],
+    max_monthly_affordable: float,
+    ownership_years: int = 5
+) -> List[Dict[str, Any]]:
+    """Find affordable alternative vehicles based on affordability constraints
+
+    Args:
+        current_vehicle: Current vehicle data including make, model, year, price
+        affordability: Affordability analysis results
+        max_monthly_affordable: Maximum affordable monthly cost
+        ownership_years: Analysis period in years
+
+    Returns:
+        List of alternative vehicle recommendations
+    """
+    from vehicle_database import search_vehicles_by_price_range, get_vehicle_characteristics
+    from recommendation_engine import RecommendationEngine
+
+    # Calculate target annual cost (convert monthly to annual)
+    target_annual_cost = max_monthly_affordable * 12
+
+    # Get current vehicle price and segment
+    current_price = current_vehicle.get('price', current_vehicle.get('trim_msrp', 30000))
+    current_segment = current_vehicle.get('market_segment', 'sedan')
+    current_year = current_vehicle.get('year', 2024)
+
+    # Search for vehicles with lower purchase price
+    # Target vehicles that cost 20-40% less to achieve meaningful savings
+    target_price_reduction = 0.30  # 30% reduction
+    max_alternative_price = current_price * (1 - target_price_reduction)
+    min_alternative_price = max(15000, max_alternative_price * 0.5)  # Don't go too low
+
+    # Find vehicles in target price range
+    alternative_vehicles = search_vehicles_by_price_range(
+        min_price=min_alternative_price,
+        max_price=max_alternative_price,
+        year=current_year
+    )
+
+    # Get recommendation engine for reliability scores
+    rec_engine = RecommendationEngine()
+
+    # Score and filter alternatives
+    recommendations = []
+    for vehicle in alternative_vehicles[:50]:  # Limit to first 50 to avoid excessive processing
+        make = vehicle['make']
+        model = vehicle['model']
+
+        # Get vehicle characteristics
+        try:
+            characteristics = get_vehicle_characteristics(make, model, current_year)
+            vehicle_segment = characteristics.get('market_segment', 'sedan')
+
+            # Get reliability score
+            reliability = rec_engine.brand_reliability.get(make, 3.5)
+
+            # Calculate estimated annual operating cost reduction
+            # Rough estimate: lower price = lower insurance, depreciation
+            price_ratio = vehicle['price'] / current_price
+            estimated_savings_pct = (1 - price_ratio) * 0.4  # 40% of price difference affects operating costs
+
+            # Prefer vehicles in similar segment and higher reliability
+            segment_match = 1.0 if vehicle_segment == current_segment else 0.7
+            reliability_score = reliability / 5.0  # Normalize to 0-1
+
+            # Overall score
+            overall_score = (estimated_savings_pct * 0.5 + reliability_score * 0.3 + segment_match * 0.2)
+
+            recommendations.append({
+                'make': make,
+                'model': model,
+                'year': vehicle['year'],
+                'trim': vehicle['trim'],
+                'price': vehicle['price'],
+                'estimated_savings_pct': estimated_savings_pct * 100,
+                'segment': vehicle_segment,
+                'reliability': reliability,
+                'score': overall_score
+            })
+        except Exception:
+            # Skip vehicles that cause errors
+            continue
+
+    # Sort by score and return top recommendations
+    recommendations.sort(key=lambda x: x['score'], reverse=True)
+    return recommendations[:5]  # Return top 5 alternatives
+
+
 def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> None:
     import pandas as pd
 
@@ -218,6 +308,65 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
 
             These guidelines are based on financial planning best practices and help ensure you can comfortably afford your vehicle while meeting other financial obligations.
             """)
+
+        # Show alternative recommendations if vehicle is unaffordable
+        if not is_affordable:
+            st.markdown("---")
+            st.subheader("💡 More Affordable Alternative Vehicles")
+
+            with st.spinner("Finding affordable alternatives..."):
+                try:
+                    alternatives = _find_affordable_alternatives(
+                        current_vehicle=vehicle_data,
+                        affordability=affordability,
+                        max_monthly_affordable=affordability.get('recommended_max_monthly', 0),
+                        ownership_years=ownership_years
+                    )
+
+                    if alternatives:
+                        st.info(
+                            f"Based on your budget of **${affordability.get('recommended_max_monthly', 0):,.0f}/month**, "
+                            "here are some vehicles that may be more affordable:"
+                        )
+
+                        for i, alt in enumerate(alternatives, 1):
+                            with st.expander(
+                                f"**{i}. {alt['year']} {alt['make']} {alt['model']} {alt['trim']}** - "
+                                f"${alt['price']:,.0f} (Est. {alt['estimated_savings_pct']:.0f}% savings)",
+                                expanded=(i == 1)  # Expand first recommendation
+                            ):
+                                col1, col2, col3 = st.columns(3)
+
+                                with col1:
+                                    st.metric("MSRP", f"${alt['price']:,.0f}")
+                                    st.caption(f"**Segment:** {alt['segment'].title()}")
+
+                                with col2:
+                                    st.metric("Est. Annual Savings", f"{alt['estimated_savings_pct']:.0f}%")
+                                    st.caption("vs. current selection")
+
+                                with col3:
+                                    st.metric("Reliability Score", f"{alt['reliability']:.1f}/5.0")
+                                    st.caption(f"**Brand:** {alt['make']}")
+
+                                st.markdown("---")
+                                st.caption(
+                                    f"💡 **Why this alternative?** Lower purchase price typically means lower insurance, "
+                                    f"depreciation, and financing costs. The {alt['make']} {alt['model']} has a strong "
+                                    f"reliability rating of {alt['reliability']:.1f}/5.0, making it a dependable choice."
+                                )
+
+                        st.info(
+                            "💡 **Tip:** These are rough estimates. To see exact TCO calculations for any of these "
+                            "vehicles, select them in the calculator above and run a new analysis."
+                        )
+                    else:
+                        st.info(
+                            "No specific alternatives found in our database at this time. Consider looking for vehicles "
+                            "with lower MSRP, better fuel efficiency, or models known for lower insurance costs."
+                        )
+                except Exception as e:
+                    st.error(f"Unable to generate recommendations at this time. Error: {str(e)}")
 
     # --- Tabs ---
     tab_breakdown, tab_annual, tab_maintenance = st.tabs(

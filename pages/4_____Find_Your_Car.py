@@ -1,5 +1,5 @@
 """
-Find Your Perfect Car - Personality Quiz Page
+Car Survey - Personality Quiz Page
 A fun, interactive quiz that matches users with their ideal vehicle
 """
 
@@ -16,8 +16,8 @@ from theme_utils import apply_theme, get_footer_html
 
 # Page configuration
 st.set_page_config(
-    page_title="Find Your Perfect Car - CashPedal",
-    page_icon="car",
+    page_title="Car Survey - CashPedal",
+    page_icon="🎯",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -473,7 +473,7 @@ def main():
     # Header
     st.markdown("""
         <div class="quiz-header">
-            <p class="quiz-title">Find Your Perfect Car</p>
+            <p class="quiz-title">Car Survey</p>
             <p class="quiz-subtitle">10 totally scientific* questions to discover your automotive soulmate</p>
             <p style="font-size: 0.8rem; color: #999;">*not actually scientific</p>
         </div>

@@ -211,48 +211,75 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
                 "in the Annual Total. It represents value loss, not an out-of-pocket expense."
             )
 
-            # Year 1 Detailed Taxes & Fees Breakdown
+            # Annual Taxes & Fees Breakdown for All Years
+            st.markdown("---")
+            st.subheader("Annual Taxes & Fees Breakdown")
+
+            # Year 1 - Detailed upfront costs
             year_1_data = annual_breakdown[0] if annual_breakdown else None
             if year_1_data and year_1_data.get("taxes_fees_detail"):
-                st.markdown("---")
-                st.subheader("Year 1 Taxes & Fees - Detailed Breakdown")
-                detail = year_1_data["taxes_fees_detail"]
+                with st.expander("📋 Year 1 - Purchase Taxes & Fees", expanded=True):
+                    detail = year_1_data["taxes_fees_detail"]
 
-                col1, col2, col3 = st.columns(3)
+                    col1, col2, col3 = st.columns(3)
 
-                with col1:
-                    st.metric("Sales Tax", f"${detail.get('sales_tax', 0):,.0f}")
-                    if detail.get('sales_tax_rate'):
-                        st.caption(f"Rate: {detail['sales_tax_rate']*100:.2f}%")
+                    with col1:
+                        st.metric("Sales Tax", f"${detail.get('sales_tax', 0):,.0f}")
+                        if detail.get('sales_tax_rate'):
+                            st.caption(f"Rate: {detail['sales_tax_rate']*100:.2f}%")
 
-                with col2:
-                    st.metric("Destination Charge", f"${detail.get('destination_charge', 0):,.0f}")
+                    with col2:
+                        st.metric("Destination Charge", f"${detail.get('destination_charge', 0):,.0f}")
 
-                with col3:
-                    st.metric("Registration Fee", f"${detail.get('registration_fee', 0):,.0f}")
+                    with col3:
+                        st.metric("Registration Fee", f"${detail.get('registration_fee', 0):,.0f}")
 
-                col4, col5, col6 = st.columns(3)
+                    col4, col5, col6 = st.columns(3)
 
-                with col4:
-                    st.metric("Doc Fee", f"${detail.get('doc_fee', 0):,.0f}")
+                    with col4:
+                        st.metric("Doc Fee", f"${detail.get('doc_fee', 0):,.0f}")
 
-                with col5:
-                    st.metric("Title Fee", f"${detail.get('title_fee', 0):,.0f}")
+                    with col5:
+                        st.metric("Title Fee", f"${detail.get('title_fee', 0):,.0f}")
 
-                with col6:
-                    st.metric("Total Year 1 Taxes & Fees", f"${detail.get('total_taxes_and_fees', 0):,.0f}")
+                    with col6:
+                        st.metric("Total Year 1", f"${detail.get('total_taxes_and_fees', 0):,.0f}")
 
-                # Additional details in expander
-                with st.expander("View More Details"):
-                    st.write(f"**Purchase Price:** ${detail.get('purchase_price', 0):,.0f}")
-                    st.write(f"**Out-the-Door Price:** ${detail.get('otd_price', 0):,.0f}")
-                    st.write(f"**State:** {detail.get('state', 'N/A')}")
-                    st.write(f"**Vehicle Status:** {'New' if detail.get('is_new', True) else 'Used'}")
+                    # Additional details
+                    st.caption(f"**State:** {detail.get('state', 'N/A')} | **Vehicle Status:** {'New' if detail.get('is_new', True) else 'Used'}")
+                    if detail.get('trade_in_applied') and not detail.get('trade_in_credit_allowed'):
+                        st.caption("⚠️ Note: This state does not allow trade-in credit to reduce sales tax.")
 
-                    if detail.get('trade_in_applied'):
-                        st.write(f"**Trade-in Credit:** Applied")
-                        if not detail.get('trade_in_credit_allowed'):
-                            st.caption("⚠️ Note: This state does not allow trade-in credit to reduce sales tax.")
+            # Years 2+ - Annual recurring fees
+            for entry in annual_breakdown[1:]:
+                year_num = entry.get('year', 0)
+                detail = entry.get('taxes_fees_detail')
+
+                if detail:
+                    reg_fee = detail.get('registration_renewal', 0)
+                    smog_fee = detail.get('smog_test', 0)
+                    total = detail.get('total', reg_fee + smog_fee)
+                    vehicle_age = detail.get('vehicle_age', 0)
+
+                    with st.expander(f"🔄 Year {year_num} - Annual Government Fees (Vehicle Age: {vehicle_age} years)"):
+                        col1, col2, col3 = st.columns(3)
+
+                        with col1:
+                            st.metric("DMV Registration Renewal", f"${reg_fee:,.0f}")
+
+                        with col2:
+                            if smog_fee > 0:
+                                st.metric("Smog/Emissions Test", f"${smog_fee:,.0f}")
+                            else:
+                                st.metric("Smog/Emissions Test", "Not Required")
+
+                        with col3:
+                            st.metric("Total Year " + str(year_num), f"${total:,.0f}")
+
+                        if smog_fee == 0:
+                            st.caption("💨 Smog test not required this year (check your state's requirements)")
+                        else:
+                            st.caption(f"💨 Smog test required in {detail.get('state', 'your state')}")
         else:
             st.info("No annual breakdown data available.")
 

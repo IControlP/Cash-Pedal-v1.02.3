@@ -433,7 +433,9 @@ class PredictionService:
         affordability = self._calculate_affordability(
             annual_cost=average_annual_out_of_pocket,
             gross_income=input_data.get('gross_income', 60000),
-            transaction_type='purchase'
+            transaction_type='purchase',
+            state=input_data.get('state', ''),
+            driver_age=input_data.get('driver_age', 35)
         )
         
         # Calculate OTD price for summary display
@@ -764,7 +766,9 @@ class PredictionService:
         affordability = self._calculate_affordability(
             annual_cost=average_annual_cost,
             gross_income=input_data.get('gross_income', 60000),
-            transaction_type='lease'
+            transaction_type='lease',
+            state=input_data.get('state', ''),
+            driver_age=input_data.get('driver_age', 35)
         )
 
         return {
@@ -873,37 +877,76 @@ class PredictionService:
         
         return annual_fees
 
-    def _calculate_affordability(self, annual_cost: float, gross_income: float, 
-                                transaction_type: str) -> Dict[str, Any]:
-        """Calculate affordability metrics"""
-        
+    def _calculate_affordability(self, annual_cost: float, gross_income: float,
+                                transaction_type: str, state: str = '', driver_age: int = 35) -> Dict[str, Any]:
+        """Calculate affordability metrics based on location cost of living and age
+
+        Guidelines:
+        - Low cost of living states: Up to 20% of gross annual income is affordable
+        - High cost of living states (under 26): Up to 27.5% is acceptable
+        - High cost of living states (26+): Standard 15-20% range
+        """
+
+        # Define high cost of living states
+        high_col_states = {
+            'CA', 'HI', 'MA', 'NY', 'NJ', 'CT', 'MD', 'WA', 'OR', 'CO',
+            'NH', 'VA', 'RI', 'VT', 'AK', 'DC'
+        }
+
+        is_high_col = state.upper() in high_col_states
+        is_young = driver_age < 26
+
         monthly_cost = annual_cost / 12
         monthly_income = gross_income / 12
-        
+
         percentage_of_income = (monthly_cost / monthly_income * 100) if monthly_income > 0 else 0
-        
+
+        # Determine affordability thresholds based on location and age
+        if is_high_col and is_young:
+            # Young drivers in high cost of living states: 27.5% threshold
+            max_affordable_pct = 27.5
+            guideline_pct = 0.275
+            threshold_description = "27.5% (High COL, Under 26)"
+        elif not is_high_col:
+            # Low cost of living states: 20% threshold
+            max_affordable_pct = 20.0
+            guideline_pct = 0.20
+            threshold_description = "20% (Low COL)"
+        else:
+            # High cost of living states, 26+: Standard 15-20% range
+            max_affordable_pct = 20.0
+            guideline_pct = 0.175  # Use 17.5% as middle of range
+            threshold_description = "15-20% (High COL, 26+)"
+
         # Determine affordability rating
         if percentage_of_income <= 10:
             affordability_rating = 'Excellent'
             is_affordable = True
         elif percentage_of_income <= 15:
-            affordability_rating = 'Good'
+            affordability_rating = 'Very Good'
             is_affordable = True
-        elif percentage_of_income <= 20:
-            affordability_rating = 'Fair'
+        elif percentage_of_income <= max_affordable_pct:
+            affordability_rating = 'Affordable'
             is_affordable = True
-        else:
+        elif percentage_of_income <= max_affordable_pct + 5:
             affordability_rating = 'Stretched'
             is_affordable = False
-        
+        else:
+            affordability_rating = 'Over Budget'
+            is_affordable = False
+
         return {
             'monthly_cost': monthly_cost,
             'monthly_income': monthly_income,
             'percentage_of_income': percentage_of_income,
             'affordability_rating': affordability_rating,
             'is_affordable': is_affordable,
-            'recommended_max_monthly': monthly_income * 0.15,  # 15% guideline
-            'over_budget': percentage_of_income > 15
+            'recommended_max_monthly': monthly_income * guideline_pct,
+            'recommended_max_percentage': max_affordable_pct,
+            'threshold_description': threshold_description,
+            'over_budget': percentage_of_income > max_affordable_pct,
+            'is_high_col_state': is_high_col,
+            'driver_age': driver_age
         }
 
     def _get_calculation_assumptions(self, input_data: Dict[str, Any], 

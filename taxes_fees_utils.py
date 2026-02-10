@@ -236,6 +236,47 @@ DEFAULT_ANNUAL_VLF_RATE = (0.0, 0)
 
 
 # ========================================================================
+# SMOG/EMISSIONS TEST REQUIREMENTS BY STATE (2025)
+# Format: state_code -> (test_required, frequency_years, cost, exemption_years)
+# exemption_years: new vehicles exempt for this many years
+# ========================================================================
+
+STATE_SMOG_REQUIREMENTS = {
+    'CA': (True, 2, 50, 8),      # Required every 2 years, $50, exempt first 8 years
+    'AZ': (True, 2, 27, 5),      # Required every 2 years in certain areas
+    'CO': (True, 1, 25, 7),      # Required annually in certain counties
+    'CT': (True, 2, 20, 2),      # Required every 2 years
+    'DE': (True, 1, 35, 2),      # Required annually
+    'GA': (True, 1, 25, 3),      # Required annually in certain counties
+    'IL': (True, 2, 35, 4),      # Required every 2 years in certain counties
+    'IN': (True, 2, 28, 2),      # Required every 2 years in Lake/Porter counties
+    'LA': (True, 2, 20, 2),      # Required every 2 years in certain parishes
+    'ME': (True, 1, 18, 1),      # Required annually
+    'MD': (True, 2, 32, 2),      # Required every 2 years
+    'MA': (True, 1, 35, 1),      # Required annually
+    'MO': (True, 2, 24, 2),      # Required every 2 years in certain counties
+    'NV': (True, 1, 28, 1),      # Required annually
+    'NH': (True, 1, 40, 1),      # Safety + emissions annually
+    'NJ': (True, 2, 0, 5),       # Required, no fee (state-funded)
+    'NM': (True, 1, 10, 2),      # Required annually in Bernalillo county
+    'NY': (True, 1, 37, 2),      # Required annually
+    'NC': (True, 1, 30, 3),      # Required annually
+    'OH': (True, 2, 30, 4),      # Required every 2 years in certain counties
+    'OR': (True, 2, 21, 5),      # Required every 2 years in certain areas
+    'PA': (True, 1, 39, 1),      # Required annually
+    'RI': (True, 2, 55, 2),      # Required every 2 years
+    'TX': (True, 1, 25, 2),      # Required annually in certain counties
+    'UT': (True, 2, 33, 2),      # Required every 2 years in certain counties
+    'VT': (True, 1, 29, 1),      # Required annually
+    'VA': (True, 2, 28, 2),      # Required every 2 years
+    'WA': (True, 2, 15, 4),      # Required every 2 years in certain areas
+    'WI': (True, 2, 20, 2),      # Required every 2 years in certain counties
+}
+
+# States not in this map don't require emissions testing
+
+
+# ========================================================================
 # STATES WITHOUT TRADE-IN TAX CREDIT
 # In these states, tax is on full price regardless of trade-in
 # ========================================================================
@@ -570,6 +611,75 @@ class VehicleTaxesFeesCalculator:
         vlf_rate, vlf_flat = STATE_ANNUAL_VLF_RATES.get(state, DEFAULT_ANNUAL_VLF_RATE)
         vlf = vehicle_value * vlf_rate + vlf_flat
         return base + vlf
+
+    def get_smog_test_cost(self, state: str, vehicle_age: int, is_electric: bool = False) -> float:
+        """
+        Calculate smog/emissions test cost if required for this state and vehicle.
+
+        Args:
+            state: Two-letter state code
+            vehicle_age: Age of vehicle in years
+            is_electric: Whether vehicle is electric (EVs typically exempt)
+
+        Returns:
+            Cost of smog test if required, 0 otherwise
+        """
+        # Electric vehicles are typically exempt from emissions testing
+        if is_electric:
+            return 0.0
+
+        state = state.upper().strip() if state else ''
+        smog_data = STATE_SMOG_REQUIREMENTS.get(state)
+
+        if not smog_data:
+            return 0.0  # State doesn't require emissions testing
+
+        required, frequency, cost, exemption_years = smog_data
+
+        # Check if vehicle is exempt due to age
+        if vehicle_age < exemption_years:
+            return 0.0
+
+        # If this is an "inspection year" based on frequency
+        # For simplicity, we'll return the cost - caller determines if it's due this year
+        return cost
+
+    def is_smog_test_due(self, state: str, vehicle_age: int, ownership_year: int, is_electric: bool = False) -> bool:
+        """
+        Determine if smog test is due this year.
+
+        Args:
+            state: Two-letter state code
+            vehicle_age: Age of vehicle in years
+            ownership_year: Current year of ownership (1, 2, 3, etc.)
+            is_electric: Whether vehicle is electric
+
+        Returns:
+            True if smog test is due this year
+        """
+        if is_electric:
+            return False
+
+        state = state.upper().strip() if state else ''
+        smog_data = STATE_SMOG_REQUIREMENTS.get(state)
+
+        if not smog_data:
+            return False
+
+        required, frequency, cost, exemption_years = smog_data
+
+        # Check if vehicle is exempt due to age
+        if vehicle_age < exemption_years:
+            return False
+
+        # Check if test is due based on frequency
+        # For frequency of 1, it's every year
+        # For frequency of 2, it's every other year
+        if frequency == 1:
+            return True
+        else:
+            # For biennial testing, test in even years of vehicle age
+            return vehicle_age % frequency == 0
 
     # ------------------------------------------------------------------
     # Helper: Amortize upfront costs over ownership period

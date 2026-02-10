@@ -338,15 +338,44 @@ class PredictionService:
                     annual_taxes_fees = taxes_fees_result.get('total_taxes_and_fees', 0)
                     taxes_fees_detail = taxes_fees_result  # Store full detail for year 1
                 else:
-                    # Years 2+: recurring annual DMV registration renewal
+                    # Years 2+: recurring annual DMV registration renewal + smog test
                     # Use depreciated vehicle value for VLF/ad valorem calculation
                     year_vehicle_value = purchase_price
                     if depreciation_schedule and year - 1 <= len(depreciation_schedule):
                         year_vehicle_value = depreciation_schedule[year - 2].get('vehicle_value', purchase_price) if year >= 2 else purchase_price
-                    annual_taxes_fees = self.taxes_fees_calculator.get_annual_registration_renewal(
+
+                    # Calculate registration renewal
+                    registration_renewal = self.taxes_fees_calculator.get_annual_registration_renewal(
                         input_data.get('state', ''),
                         vehicle_value=year_vehicle_value,
                     )
+
+                    # Calculate smog test cost if applicable
+                    vehicle_age = ownership_year - input_data['year']
+                    smog_cost = 0
+                    if self.taxes_fees_calculator.is_smog_test_due(
+                        input_data.get('state', ''),
+                        vehicle_age,
+                        year,
+                        is_electric
+                    ):
+                        smog_cost = self.taxes_fees_calculator.get_smog_test_cost(
+                            input_data.get('state', ''),
+                            vehicle_age,
+                            is_electric
+                        )
+
+                    annual_taxes_fees = registration_renewal + smog_cost
+
+                    # Create detail for years 2+
+                    taxes_fees_detail = {
+                        'registration_renewal': registration_renewal,
+                        'smog_test': smog_cost,
+                        'total': annual_taxes_fees,
+                        'year': year,
+                        'vehicle_age': vehicle_age,
+                        'state': input_data.get('state', ''),
+                    }
 
             # Total annual cost
             total_annual = annual_depreciation + annual_maintenance + annual_insurance + annual_fuel + annual_financing + annual_taxes_fees
@@ -368,8 +397,8 @@ class PredictionService:
                 'total_annual_cost': total_annual
             }
 
-            # Add detailed breakdown for year 1 taxes and fees
-            if year == 1 and taxes_fees_detail:
+            # Add detailed breakdown for taxes and fees for all years
+            if taxes_fees_detail:
                 year_data['taxes_fees_detail'] = taxes_fees_detail
 
             annual_breakdown.append(year_data)

@@ -583,7 +583,7 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
     )
     
     col1, col2 = st.columns(2)
-    
+
     with col1:
         # Make selection with unique key
         available_makes = get_all_manufacturers()
@@ -593,11 +593,11 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
             help="Vehicle manufacturer",
             key="vehicle_make_select"
         )
-        
+
         # CRITICAL: Reset downstream selections if make changed
         if 'previous_make' not in st.session_state:
             st.session_state.previous_make = selected_make
-        
+
         if st.session_state.previous_make != selected_make:
             # Make changed - reset all dependent fields
             st.session_state.previous_make = selected_make
@@ -606,23 +606,7 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                 if key in st.session_state:
                     del st.session_state[key]
             st.rerun()
-        
-        # Year selection with unique key
-        current_year = 2025
-        if selected_make:
-            # Limit years to 2015-2026 range
-            year_options = list(range(min(2026, current_year + 1), 2014, -1))
-        else:
-            year_options = list(range(min(2026, current_year + 1), 2014, -1))
-        
-        selected_year = st.selectbox(
-            "Year:",
-            [''] + year_options,
-            help="Model year",
-            key="vehicle_year_select"
-        )
-    
-    with col2:
+
         # Model selection (dependent on make) with unique key
         if selected_make:
             available_models = get_models_for_manufacturer(selected_make)
@@ -632,26 +616,69 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                 help="Vehicle model",
                 key="vehicle_model_select"
             )
-            
-            # CRITICAL: Reset trim selection if model changed
+
+            # CRITICAL: Reset year and trim selection if model changed
             if 'previous_model' not in st.session_state:
                 st.session_state.previous_model = selected_model
-            
+
             if st.session_state.previous_model != selected_model:
-                # Model changed - reset trim
+                # Model changed - reset year and trim
                 st.session_state.previous_model = selected_model
-                if 'vehicle_trim_select' in st.session_state:
-                    del st.session_state['vehicle_trim_select']
+                for key in ['vehicle_year_select', 'vehicle_trim_select']:
+                    if key in st.session_state:
+                        del st.session_state[key]
                 st.rerun()
         else:
             selected_model = st.selectbox(
-                "Model:", 
-                [''], 
+                "Model:",
+                [''],
                 help="Select a make first",
                 key="vehicle_model_select_disabled"
             )
             selected_model = ""
-        
+
+    with col2:
+        # Year selection (dependent on make and model) with unique key
+        if selected_make and selected_model:
+            # Get actual production years for this specific model
+            available_years = get_available_years_for_model(selected_make, selected_model)
+            if available_years:
+                # Sort in descending order (newest first)
+                year_options = sorted(available_years, reverse=True)
+                selected_year = st.selectbox(
+                    "Year:",
+                    [''] + year_options,
+                    help="Model year (limited to production years for this model)",
+                    key="vehicle_year_select"
+                )
+            else:
+                selected_year = st.selectbox(
+                    "Year:",
+                    [''],
+                    help="No years available for this model",
+                    key="vehicle_year_select_empty"
+                )
+                selected_year = ""
+
+            # CRITICAL: Reset trim selection if year changed
+            if 'previous_year' not in st.session_state:
+                st.session_state.previous_year = selected_year
+
+            if st.session_state.previous_year != selected_year:
+                # Year changed - reset trim
+                st.session_state.previous_year = selected_year
+                if 'vehicle_trim_select' in st.session_state:
+                    del st.session_state['vehicle_trim_select']
+                st.rerun()
+        else:
+            selected_year = st.selectbox(
+                "Year:",
+                [''],
+                help="Select make and model first",
+                key="vehicle_year_select_disabled"
+            )
+            selected_year = ""
+
         # Trim selection (dependent on model and year) with unique key
         if selected_make and selected_model and selected_year:
             trims = get_trims_for_vehicle(selected_make, selected_model, int(selected_year))
@@ -663,7 +690,7 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                     help="Vehicle trim level",
                     key="vehicle_trim_select"
                 )
-                
+
                 # Get MSRP for selected trim
                 if selected_trim:
                     trim_msrp = trims.get(selected_trim, 30000)
@@ -671,8 +698,8 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                     trim_msrp = 0
             else:
                 selected_trim = st.selectbox(
-                    "Trim:", 
-                    [''], 
+                    "Trim:",
+                    [''],
                     help="No trims available",
                     key="vehicle_trim_select_empty"
                 )
@@ -680,8 +707,8 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                 trim_msrp = 0
         else:
             selected_trim = st.selectbox(
-                "Trim:", 
-                [''], 
+                "Trim:",
+                [''],
                 help="Select make, model, and year first",
                 key="vehicle_trim_select_disabled"
             )

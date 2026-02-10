@@ -1042,6 +1042,7 @@ class EnhancedMaintenanceCalculator:
                 vehicle_model=vehicle_model,
                 starting_mileage=starting_mileage,
                 total_mileage=total_mileage,
+                vehicle_type=vehicle_type,
             )
             year_services.extend(routine_services)
             
@@ -1217,12 +1218,13 @@ class EnhancedMaintenanceCalculator:
     
     def _calculate_routine_maintenance_cost(self, year: int, vehicle_make: str,
                                           annual_mileage: int, driving_style: str,
-                                          vehicle_model: str = '', 
-                                          starting_mileage: int = 0) -> float:
+                                          vehicle_model: str = '',
+                                          starting_mileage: int = 0,
+                                          vehicle_type: str = 'gasoline') -> float:
         """
         Calculate routine maintenance costs based on vehicle tier and mileage.
-        
-        Includes:
+
+        Includes (for gas/diesel vehicles):
         - Oil changes (based on interval and tier)
         - Air and cabin filter replacement
         - Tire rotations
@@ -1233,7 +1235,9 @@ class EnhancedMaintenanceCalculator:
         - Wiper blades (annual)
         - Brake inspection
         - Wheel alignment check
-        
+
+        Electric vehicles skip: oil changes, transmission fluid, coolant, spark plugs
+
         Args:
             year: Year of ownership (1, 2, 3, etc.)
             vehicle_make: Vehicle manufacturer
@@ -1241,26 +1245,28 @@ class EnhancedMaintenanceCalculator:
             driving_style: 'gentle', 'normal', or 'aggressive'
             vehicle_model: Vehicle model (for tier detection)
             starting_mileage: Odometer reading at start of ownership
-        
+            vehicle_type: Type of vehicle ('electric', 'gasoline', 'diesel', 'hybrid')
+
         Returns:
             Total routine maintenance cost for the year
         """
         # Determine vehicle tier and get cost multipliers
         tier = self._determine_vehicle_tier(vehicle_make, vehicle_model)
         costs = self._get_tier_multipliers(tier)
-        
+
         # Calculate cumulative mileage at end of this year
         total_mileage = starting_mileage + (annual_mileage * year)
         year_start_mileage = starting_mileage + (annual_mileage * (year - 1))
-        
+
         total_cost = 0.0
-        
-        # === OIL CHANGES ===
-        oil_changes_per_year = max(1, int(annual_mileage / costs['oil_interval']))
-        # Minimum 1 oil change per year even for low-mileage drivers
-        if annual_mileage < costs['oil_interval']:
-            oil_changes_per_year = 1
-        total_cost += costs['oil_change_cost'] * oil_changes_per_year
+
+        # === OIL CHANGES === (NOT for electric vehicles)
+        if vehicle_type != 'electric':
+            oil_changes_per_year = max(1, int(annual_mileage / costs['oil_interval']))
+            # Minimum 1 oil change per year even for low-mileage drivers
+            if annual_mileage < costs['oil_interval']:
+                oil_changes_per_year = 1
+            total_cost += costs['oil_change_cost'] * oil_changes_per_year
         
         # === AIR & CABIN FILTERS ===
         # Every 15,000-20,000 miles or annually for luxury
@@ -1282,28 +1288,31 @@ class EnhancedMaintenanceCalculator:
         total_cost += costs['wiper_cost']
         
         # === BRAKE FLUID FLUSH ===
-        # Every 2 years or 24,000-30,000 miles
+        # Every 2 years or 24,000-30,000 miles (all vehicles)
         brake_fluid_interval = 24000 if tier in ['luxury', 'premium'] else 30000
         if self._service_due_this_year(year_start_mileage, total_mileage, brake_fluid_interval, starting_mileage):
             total_cost += costs['brake_fluid_flush_cost']
-        
-        # === TRANSMISSION FLUID SERVICE ===
+
+        # === TRANSMISSION FLUID SERVICE === (NOT for electric vehicles)
         # Every 60,000-80,000 miles depending on tier
-        trans_interval = 60000 if tier == 'luxury' else 80000
-        if self._service_due_this_year(year_start_mileage, total_mileage, trans_interval, starting_mileage):
-            total_cost += costs['trans_fluid_cost']
-        
-        # === COOLANT FLUSH ===
+        if vehicle_type != 'electric':
+            trans_interval = 60000 if tier == 'luxury' else 80000
+            if self._service_due_this_year(year_start_mileage, total_mileage, trans_interval, starting_mileage):
+                total_cost += costs['trans_fluid_cost']
+
+        # === COOLANT FLUSH === (NOT for electric vehicles)
         # Every 60,000-100,000 miles
-        coolant_interval = 60000 if tier == 'luxury' else 80000
-        if self._service_due_this_year(year_start_mileage, total_mileage, coolant_interval, starting_mileage):
-            total_cost += costs['coolant_flush_cost']
-        
-        # === SPARK PLUGS ===
+        if vehicle_type != 'electric':
+            coolant_interval = 60000 if tier == 'luxury' else 80000
+            if self._service_due_this_year(year_start_mileage, total_mileage, coolant_interval, starting_mileage):
+                total_cost += costs['coolant_flush_cost']
+
+        # === SPARK PLUGS === (NOT for electric vehicles)
         # Every 60,000-100,000 miles (iridium/platinum plugs)
-        spark_interval = 60000 if tier in ['luxury', 'premium'] else 90000
-        if self._service_due_this_year(year_start_mileage, total_mileage, spark_interval, starting_mileage):
-            total_cost += costs['spark_plug_cost']
+        if vehicle_type != 'electric':
+            spark_interval = 60000 if tier in ['luxury', 'premium'] else 90000
+            if self._service_due_this_year(year_start_mileage, total_mileage, spark_interval, starting_mileage):
+                total_cost += costs['spark_plug_cost']
         
         # === WHEEL ALIGNMENT CHECK ===
         # Every 2 years or after tire replacement
@@ -1327,7 +1336,8 @@ class EnhancedMaintenanceCalculator:
                                           annual_mileage: int, driving_style: str,
                                           vehicle_model: str = '',
                                           starting_mileage: int = 0,
-                                          total_mileage: int = 0) -> list:
+                                          total_mileage: int = 0,
+                                          vehicle_type: str = 'gasoline') -> list:
         """Return individual routine maintenance service items for a year.
 
         Instead of a single 'Routine Maintenance' line item this returns a list
@@ -1361,47 +1371,51 @@ class EnhancedMaintenanceCalculator:
                     'category': category,
                 })
 
-        # Oil changes
-        oil_changes_per_year = max(1, int(annual_mileage / costs['oil_interval']))
-        if annual_mileage < costs['oil_interval']:
-            oil_changes_per_year = 1
-        _add('Oil Change', costs['oil_change_cost'] * oil_changes_per_year)
+        # Oil changes (NOT for electric vehicles)
+        if vehicle_type != 'electric':
+            oil_changes_per_year = max(1, int(annual_mileage / costs['oil_interval']))
+            if annual_mileage < costs['oil_interval']:
+                oil_changes_per_year = 1
+            _add('Oil Change', costs['oil_change_cost'] * oil_changes_per_year)
 
-        # Air & cabin filters
+        # Air & cabin filters (all vehicles)
         if tier == 'luxury' or year % 2 == 0 or annual_mileage > 15000:
             _add('Air & Cabin Filters', costs['filter_cost'])
 
-        # Tire rotations
+        # Tire rotations (all vehicles)
         rotations = max(2, int(annual_mileage / 6000))
         _add('Tire Rotation', costs['tire_rotation_cost'] * rotations)
 
-        # Brake inspection
+        # Brake inspection (all vehicles)
         _add('Brake Inspection', costs['brake_inspection_cost'])
 
-        # Wiper blades (annual)
+        # Wiper blades (all vehicles, annual)
         _add('Wiper Blade Replacement', costs['wiper_cost'])
 
-        # Brake fluid flush
+        # Brake fluid flush (all vehicles)
         bf_interval = 24000 if tier in ['luxury', 'premium'] else 30000
         if self._service_due_this_year(year_start_mileage, year_end_mileage, bf_interval, starting_mileage):
             _add('Brake Fluid Flush', costs['brake_fluid_flush_cost'])
 
-        # Transmission fluid service
-        trans_interval = 60000 if tier == 'luxury' else 80000
-        if self._service_due_this_year(year_start_mileage, year_end_mileage, trans_interval, starting_mileage):
-            _add('Transmission Fluid Service', costs['trans_fluid_cost'])
+        # Transmission fluid service (NOT for electric vehicles - EVs don't have traditional transmissions)
+        if vehicle_type != 'electric':
+            trans_interval = 60000 if tier == 'luxury' else 80000
+            if self._service_due_this_year(year_start_mileage, year_end_mileage, trans_interval, starting_mileage):
+                _add('Transmission Fluid Service', costs['trans_fluid_cost'])
 
-        # Coolant flush
-        coolant_interval = 60000 if tier == 'luxury' else 80000
-        if self._service_due_this_year(year_start_mileage, year_end_mileage, coolant_interval, starting_mileage):
-            _add('Coolant Flush', costs['coolant_flush_cost'])
+        # Coolant flush (NOT for electric vehicles - though some EVs have coolant, it's different)
+        if vehicle_type != 'electric':
+            coolant_interval = 60000 if tier == 'luxury' else 80000
+            if self._service_due_this_year(year_start_mileage, year_end_mileage, coolant_interval, starting_mileage):
+                _add('Coolant Flush', costs['coolant_flush_cost'])
 
-        # Spark plugs
-        spark_interval = 60000 if tier in ['luxury', 'premium'] else 90000
-        if self._service_due_this_year(year_start_mileage, year_end_mileage, spark_interval, starting_mileage):
-            _add('Spark Plugs', costs['spark_plug_cost'])
+        # Spark plugs (NOT for electric vehicles - EVs don't have spark plugs)
+        if vehicle_type != 'electric':
+            spark_interval = 60000 if tier in ['luxury', 'premium'] else 90000
+            if self._service_due_this_year(year_start_mileage, year_end_mileage, spark_interval, starting_mileage):
+                _add('Spark Plugs', costs['spark_plug_cost'])
 
-        # Wheel alignment (every 2 years)
+        # Wheel alignment (all vehicles, every 2 years)
         if year % 2 == 0:
             _add('Wheel Alignment', costs['alignment_cost'])
 

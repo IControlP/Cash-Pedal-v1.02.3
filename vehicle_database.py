@@ -169,10 +169,23 @@ def get_models_for_manufacturer(make):
     return sorted(list(vehicle_database.get(make, {}).keys()))
 
 def get_available_years_for_model(make, model):
-    """Get available years for a specific model"""
+    """Get available years for a specific model (limited to 2015-2026)"""
     model_data = vehicle_database.get(make, {}).get(model, {})
     production_years = model_data.get('production_years', (2000, 2025))
     start_year, end_year = production_years[0], production_years[1]
+
+    # Limit to 2015-2026 range as requested
+    MIN_YEAR = 2015
+    MAX_YEAR = 2026
+
+    # Constrain to the allowed range
+    start_year = max(start_year, MIN_YEAR)
+    end_year = min(end_year, MAX_YEAR)
+
+    # If the model's production years don't overlap with our range, return empty list
+    if start_year > MAX_YEAR or end_year < MIN_YEAR:
+        return []
+
     return list(range(start_year, end_year + 1))
 
 def get_trims_for_vehicle(make, model, year):

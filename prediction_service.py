@@ -331,10 +331,12 @@ class PredictionService:
             
             # Taxes and fees
             annual_taxes_fees = 0
+            taxes_fees_detail = None
             if taxes_fees_result:
                 if year == 1:
                     # Year 1: all upfront taxes + fees + first-year registration
                     annual_taxes_fees = taxes_fees_result.get('total_taxes_and_fees', 0)
+                    taxes_fees_detail = taxes_fees_result  # Store full detail for year 1
                 else:
                     # Years 2+: recurring annual DMV registration renewal
                     # Use depreciated vehicle value for VLF/ad valorem calculation
@@ -345,12 +347,12 @@ class PredictionService:
                         input_data.get('state', ''),
                         vehicle_value=year_vehicle_value,
                     )
-            
+
             # Total annual cost
             total_annual = annual_depreciation + annual_maintenance + annual_insurance + annual_fuel + annual_financing + annual_taxes_fees
-            
+
             # Store breakdown
-            annual_breakdown.append({
+            year_data = {
                 'year': year,
                 'ownership_year': ownership_year,
                 'vehicle_age': ownership_year - input_data['year'],
@@ -364,7 +366,13 @@ class PredictionService:
                 'financing': annual_financing,
                 'taxes_fees': annual_taxes_fees,
                 'total_annual_cost': total_annual
-            })
+            }
+
+            # Add detailed breakdown for year 1 taxes and fees
+            if year == 1 and taxes_fees_detail:
+                year_data['taxes_fees_detail'] = taxes_fees_detail
+
+            annual_breakdown.append(year_data)
             
             # Add to totals
             category_totals['depreciation'] += annual_depreciation

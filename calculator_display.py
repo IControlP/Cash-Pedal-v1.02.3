@@ -56,14 +56,38 @@ def display_charging_preference_form(
 ) -> Dict[str, Any]:
     """Render EV charging preference controls and return selected settings."""
     default_rate = electricity_rate if electricity_rate is not None else get_electricity_rate_from_location(state=state)
-    charging_preference = st.selectbox(
-        "Charging Preference",
-        ["home_primary", "mixed", "public_heavy"],
-        index=1,
-        help="Home charging is usually cheaper than public fast charging.",
+
+    # User-friendly charging preference options
+    charging_options = {
+        "Mostly home charging (80% home, 20% public)": "home_primary",
+        "Mix of home and public charging (60% home, 40% public)": "mixed",
+        "Mostly public charging (40% home, 60% public)": "public_heavy"
+    }
+
+    st.subheader("EV Charging Breakdown")
+    st.write("How do you plan to charge your electric vehicle?")
+
+    selected_label = st.radio(
+        "Select your charging preference:",
+        options=list(charging_options.keys()),
+        index=1,  # Default to "mixed"
+        help="Home charging is typically cheaper than public fast charging. Your selection affects electricity cost estimates.",
     )
+
+    # Map the user-friendly label back to internal key
+    charging_preference = charging_options[selected_label]
+
     blended = calculate_blended_electricity_rate(default_rate, charging_preference)
-    st.caption(f"Estimated blended electricity rate: ${blended['blended_rate']:.3f}/kWh")
+
+    # Show rate breakdown
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Base Home Rate", f"${default_rate:.3f}/kWh")
+    with col2:
+        st.metric("Blended Rate", f"${blended['blended_rate']:.3f}/kWh")
+
+    st.caption("💡 The blended rate accounts for higher costs when using public charging stations.")
+
     return {
         "charging_preference": charging_preference,
         "electricity_rate": default_rate,
@@ -186,6 +210,49 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
                 r"\*Depreciation is shown for reference but is **not** included "
                 "in the Annual Total. It represents value loss, not an out-of-pocket expense."
             )
+
+            # Year 1 Detailed Taxes & Fees Breakdown
+            year_1_data = annual_breakdown[0] if annual_breakdown else None
+            if year_1_data and year_1_data.get("taxes_fees_detail"):
+                st.markdown("---")
+                st.subheader("Year 1 Taxes & Fees - Detailed Breakdown")
+                detail = year_1_data["taxes_fees_detail"]
+
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+                    st.metric("Sales Tax", f"${detail.get('sales_tax', 0):,.0f}")
+                    if detail.get('sales_tax_rate'):
+                        st.caption(f"Rate: {detail['sales_tax_rate']*100:.2f}%")
+
+                with col2:
+                    st.metric("Destination Charge", f"${detail.get('destination_charge', 0):,.0f}")
+
+                with col3:
+                    st.metric("Registration Fee", f"${detail.get('registration_fee', 0):,.0f}")
+
+                col4, col5, col6 = st.columns(3)
+
+                with col4:
+                    st.metric("Doc Fee", f"${detail.get('doc_fee', 0):,.0f}")
+
+                with col5:
+                    st.metric("Title Fee", f"${detail.get('title_fee', 0):,.0f}")
+
+                with col6:
+                    st.metric("Total Year 1 Taxes & Fees", f"${detail.get('total_taxes_and_fees', 0):,.0f}")
+
+                # Additional details in expander
+                with st.expander("View More Details"):
+                    st.write(f"**Purchase Price:** ${detail.get('purchase_price', 0):,.0f}")
+                    st.write(f"**Out-the-Door Price:** ${detail.get('otd_price', 0):,.0f}")
+                    st.write(f"**State:** {detail.get('state', 'N/A')}")
+                    st.write(f"**Vehicle Status:** {'New' if detail.get('is_new', True) else 'Used'}")
+
+                    if detail.get('trade_in_applied'):
+                        st.write(f"**Trade-in Credit:** Applied")
+                        if not detail.get('trade_in_credit_allowed'):
+                            st.caption("⚠️ Note: This state does not allow trade-in credit to reduce sales tax.")
         else:
             st.info("No annual breakdown data available.")
 

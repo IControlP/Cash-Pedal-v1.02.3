@@ -218,7 +218,9 @@ class ComparisonService:
             'by_seats': sorted([v for v in successful_results if v.get('seats', 0) > 0],
                              key=lambda x: x['seats'], reverse=True),
             'by_cargo': sorted([v for v in successful_results if v.get('cargo_cu_ft', 0) > 0],
-                             key=lambda x: x['cargo_cu_ft'], reverse=True)
+                             key=lambda x: x['cargo_cu_ft'], reverse=True),
+            'by_retention_value': sorted([v for v in successful_results if v.get('final_value', 0) > 0],
+                                        key=lambda x: x['final_value'], reverse=True)
         }
 
         # Add best/worst for each category
@@ -232,6 +234,7 @@ class ComparisonService:
         rankings['best_mpg'] = rankings['by_mpg'][0] if rankings['by_mpg'] else None
         rankings['most_seats'] = rankings['by_seats'][0] if rankings['by_seats'] else None
         rankings['most_cargo'] = rankings['by_cargo'][0] if rankings['by_cargo'] else None
+        rankings['best_retention'] = rankings['by_retention_value'][0] if rankings['by_retention_value'] else None
 
         return rankings
     

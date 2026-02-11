@@ -504,6 +504,7 @@ def display_specs_comparison(comparison_results: Dict[str, Any]):
             'MPG (Combined)': vehicle.get('mpg_combined', 0),
             'Seats': vehicle.get('seats', 0),
             'Cargo Space (cu ft)': vehicle.get('cargo_cu_ft', 0.0),
+            'Retention Value': vehicle.get('final_value', 0),
         }
         specs_data.append(row)
 
@@ -519,6 +520,10 @@ def display_specs_comparison(comparison_results: Dict[str, Any]):
             df_specs[col] = df_specs[col].apply(
                 lambda x: str(int(x)) if isinstance(x, (int, float)) and x > 0 else "N/A"
             )
+    if 'Retention Value' in df_specs.columns:
+        df_specs['Retention Value'] = df_specs['Retention Value'].apply(
+            lambda x: f"${x:,.0f}" if isinstance(x, (int, float)) and x > 0 else "N/A"
+        )
 
     st.dataframe(df_specs, use_container_width=True)
 
@@ -562,6 +567,23 @@ def display_specs_comparison(comparison_results: Dict[str, Any]):
             for i, v in enumerate(rankings['by_cargo']):
                 medal = ["", "", ""][i] if i < 3 else f"  {i+1}."
                 st.markdown(f"{medal} {v['vehicle_name']}: {v.get('cargo_cu_ft', 0):.1f} cu ft")
+
+    # Retention Value Rankings (only for purchases)
+    retention_vehicles = [v for v in vehicles if v.get('final_value', 0) > 0]
+    if retention_vehicles and rankings.get('by_retention_value'):
+        st.markdown("---")
+        st.markdown("**💰 Retention Value Rankings:**")
+        st.caption("Shows estimated vehicle value after ownership period (Purchase transactions only)")
+
+        cols = st.columns(len(retention_vehicles) if len(retention_vehicles) <= 3 else 3)
+        for i, v in enumerate(rankings['by_retention_value'][:3]):
+            with cols[i]:
+                medal = ["🥇", "🥈", "🥉"][i]
+                st.metric(
+                    f"{medal} {v['vehicle_name']}",
+                    f"${v.get('final_value', 0):,.0f}",
+                    help="Estimated resale/trade-in value"
+                )
 
     # Specs visualization - grouped bar chart
     vehicles_with_specs = [v for v in vehicles if v.get('horsepower', 0) > 0]

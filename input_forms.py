@@ -18,6 +18,16 @@ except ImportError:
             return False
         def estimate_current_value(self, make, model, year, trim, mileage):
             return None
+
+try:
+    from lease_terms_calculator import LeaseTermsCalculator
+except ImportError:
+    # Fallback if calculator not available
+    class LeaseTermsCalculator:
+        def __init__(self):
+            pass
+        def get_complete_lease_analysis(self, make, model, trim, msrp, lease_term_months=36, down_payment=0, sales_tax_rate=0, credit_tier='good'):
+            return {'payment': {'monthly_payment_pretax': 399}}
 # Import with error handling (keeping your existing structure)
 # Import with error handling to match your existing structure
 try:
@@ -806,30 +816,48 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
         col1, col2 = st.columns(2)
         
         with col1:
-            # AUTO-ESTIMATE MILEAGE based on vehicle age
+            # AUTO-ESTIMATE MILEAGE based on vehicle age and transaction type
             current_year_val = datetime.now().year
             vehicle_age = current_year_val - int(selected_year)
-            
-            # Calculate estimated mileage (12,000 miles/year standard)
-            # For new/current year vehicles, default to 0
-            if vehicle_age == 0:
-                estimated_mileage = 0
-            else:
-                estimated_mileage = vehicle_age * 12000
-            
+
+            # Calculate estimated mileage differently for lease vs purchase
+            # For LEASE: New or last year's model should have minimal mileage (demo miles)
+            # For PURCHASE: Use 12,000 miles/year standard for used vehicles
+            if transaction_type == "Lease":
+                # For lease vehicles, especially new or last year's model
+                if vehicle_age == 0:
+                    estimated_mileage = 0  # Brand new
+                elif vehicle_age == 1:
+                    estimated_mileage = 500  # Demo/test drive miles only
+                else:
+                    # Older lease returns might have more miles
+                    estimated_mileage = vehicle_age * 12000
+            else:  # Purchase
+                # For purchase, use standard 12,000 miles/year estimation
+                if vehicle_age == 0:
+                    estimated_mileage = 0
+                else:
+                    estimated_mileage = vehicle_age * 12000
+
             # Current mileage input with auto-estimated default
+            mileage_help_text = (
+                "For lease: Enter actual odometer reading (typically low for new/demo vehicles). "
+                if transaction_type == "Lease"
+                else "Auto-estimated at 12,000 miles/year. Adjust to actual odometer reading."
+            )
+
             current_mileage = st.number_input(
                 "Current Mileage:",
                 min_value=0,
                 max_value=300000,
                 value=estimated_mileage,
                 step=1000,
-                help=f"Auto-estimated at 12,000 miles/year. Adjust to actual odometer reading.",
+                help=mileage_help_text,
                 key="current_mileage_input"
             )
-            
-            # Show estimation note for used vehicles
-            if vehicle_age > 0:
+
+            # Show estimation note for used vehicles (skip for new lease vehicles)
+            if vehicle_age > 0 and not (transaction_type == "Lease" and vehicle_age <= 1):
                 avg_annual = current_mileage / vehicle_age if vehicle_age > 0 else 0
                 if avg_annual < 10000:
                     mileage_note = " Below average mileage"
@@ -894,15 +922,37 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
         
         else:  # Lease
             # Show vehicle MSRP for reference (used in insurance calculations)
-            st.info(f"**Vehicle MSRP:** ${trim_msrp:,}\n\n_This MSRP is used for insurance calculations._")
+            st.info(f"**Vehicle MSRP:** ${trim_msrp:,}\n\n_This MSRP is used for insurance calculations and lease payment estimation._")
+
+            # Calculate realistic lease payment using LeaseTermsCalculator
+            try:
+                lease_calculator = LeaseTermsCalculator()
+                # Use 36-month term for initial calculation
+                lease_analysis = lease_calculator.get_complete_lease_analysis(
+                    make=selected_make,
+                    model=selected_model,
+                    trim=selected_trim,
+                    msrp=float(trim_msrp),
+                    lease_term_months=36,
+                    down_payment=0,  # Calculate with 0 down first
+                    sales_tax_rate=0.08,  # Average US sales tax
+                    credit_tier='good'  # Assume good credit
+                )
+                calculated_monthly = int(lease_analysis['payment']['monthly_payment_pretax'])
+                # Suggested down payment: ~10% of MSRP or $2000, whichever is less
+                suggested_down = min(int(trim_msrp * 0.10), 2000)
+            except Exception:
+                # Fallback to reasonable defaults if calculation fails
+                calculated_monthly = 399
+                suggested_down = 2000
 
             monthly_payment = st.number_input(
                 "Monthly Lease Payment ($):",
                 min_value=100,
                 max_value=3000,
-                value=399,
+                value=calculated_monthly,
                 step=50,
-                help="Monthly lease payment amount",
+                help=f"Estimated monthly lease payment based on vehicle MSRP. Adjust to match your actual lease offer.",
                 key="lease_payment_input"
             )
 
@@ -910,9 +960,9 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                 "Down Payment ($):",
                 min_value=0,
                 max_value=20000,
-                value=2000,
+                value=suggested_down,
                 step=500,
-                help="Initial down payment for lease",
+                help="Initial down payment for lease (typically 0-10% of MSRP)",
                 key="lease_down_payment_input"
             )
 

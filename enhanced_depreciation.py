@@ -47,11 +47,12 @@ class EnhancedDepreciationModel:
             'Land Rover': 1.20,
             
             # Poor Retention - Luxury (1.15-1.30)
+            # Note: Luxury brands vary by segment - SUVs retain better than sedans
             'BMW': 1.22,
             'Mercedes-Benz': 1.25,
             'Audi': 1.18,
-            'Cadillac': 1.20,
-            'Lincoln': 1.25,
+            'Cadillac': 1.15,  # Improved from 1.20 - Cadillac SUVs hold value well
+            'Lincoln': 1.22,   # Improved from 1.25
             'Genesis': 1.15,
             
             # Poor Retention - Others (1.20-1.35)
@@ -75,7 +76,7 @@ class EnhancedDepreciationModel:
                 6: 0.55,   7: 0.59,   8: 0.63,   9: 0.66,   10: 0.69,
                 11: 0.71,  12: 0.73,  13: 0.74,  14: 0.75,  15: 0.76
             },
-            
+
             # NEW: Hybrid vehicles segment (Prius, Accord Hybrid, etc.)
             # Hybrids hold value better than gas but worse than pure EVs initially
             'hybrid': {
@@ -83,12 +84,19 @@ class EnhancedDepreciationModel:
                 6: 0.49,   7: 0.53,   8: 0.57,   9: 0.60,   10: 0.63,
                 11: 0.65,  12: 0.67,  13: 0.68,  14: 0.69,  15: 0.70
             },
-            
-            # Luxury vehicles
+
+            # Luxury vehicles (sedans/coupes)
             'luxury': {
                 1: 0.18,   2: 0.31,   3: 0.40,   4: 0.47,   5: 0.53,
                 6: 0.58,   7: 0.62,   8: 0.66,   9: 0.69,   10: 0.72,
                 11: 0.74,  12: 0.76,  13: 0.77,  14: 0.78,  15: 0.79
+            },
+
+            # NEW: Luxury SUVs - Hold value better than luxury sedans
+            'luxury_suv': {
+                1: 0.15,   2: 0.26,   3: 0.35,   4: 0.42,   5: 0.48,
+                6: 0.53,   7: 0.57,   8: 0.61,   9: 0.64,   10: 0.67,
+                11: 0.69,  12: 0.71,  13: 0.72,  14: 0.73,  15: 0.74
             },
             
             # Trucks - excellent retention
@@ -141,16 +149,19 @@ class EnhancedDepreciationModel:
             'Subaru': ['Outback', 'Forester', 'Crosstrek'],
             'Jeep': ['Wrangler', 'Gladiator'],
             'Ford': ['F-150', 'Bronco'],
-            'Chevrolet': ['Silverado', 'Corvette'],
-            'Porsche': ['911', 'Cayenne']
+            'Chevrolet': ['Silverado', 'Corvette', 'Tahoe', 'Suburban'],
+            'GMC': ['Yukon', 'Sierra'],
+            'Cadillac': ['Escalade'],  # Escalade holds value very well for luxury SUVs
+            'Lincoln': ['Navigator'],  # Navigator also retains well
+            'Porsche': ['911', 'Cayenne', 'Macan']
         }
-        
+
         self.poor_retention_models = {
             'BMW': ['7 Series', 'X7', 'i3'],
             'Mercedes-Benz': ['S-Class', 'E-Class', 'GLS'],
             'Audi': ['A8', 'Q7', 'Q8'],
-            'Cadillac': ['Escalade', 'CT6'],
-            'Lincoln': ['Navigator', 'Aviator'],
+            'Cadillac': ['CT4', 'CT5', 'CT6'],  # Removed Escalade - sedans depreciate faster
+            'Lincoln': ['MKZ', 'Continental'],  # Removed Navigator, Aviator - sedans depreciate faster
             'Jaguar': ['XJ', 'F-Type'],
             'Land Rover': ['Range Rover', 'Discovery']
         }
@@ -303,9 +314,46 @@ class EnhancedDepreciationModel:
             return 'hybrid'
         
         # PRIORITY 3: Check luxury brands (but not if already classified as EV/Hybrid)
-        if make_lower in ['bmw', 'mercedes-benz', 'audi', 'lexus', 'acura', 
-                          'infiniti', 'cadillac', 'lincoln', 'jaguar', 'land rover',
-                          'porsche', 'maserati', 'alfa romeo', 'genesis']:
+        # NEW: Detect luxury SUVs separately - they hold value better than luxury sedans
+        luxury_brands = ['bmw', 'mercedes-benz', 'audi', 'lexus', 'acura',
+                        'infiniti', 'cadillac', 'lincoln', 'jaguar', 'land rover',
+                        'porsche', 'maserati', 'alfa romeo', 'genesis']
+
+        if make_lower in luxury_brands:
+            # Check if it's an SUV - luxury SUVs get special treatment
+            luxury_suv_keywords = [
+                # Cadillac SUVs
+                'escalade', 'xt4', 'xt5', 'xt6',
+                # BMW SUVs
+                'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7',
+                # Mercedes SUVs
+                'gla', 'glb', 'glc', 'gle', 'gls', 'g-class', 'g-wagon',
+                # Audi SUVs
+                'q3', 'q4', 'q5', 'q7', 'q8',
+                # Lexus SUVs
+                'ux', 'nx', 'rx', 'gx', 'lx',
+                # Acura SUVs
+                'rdx', 'mdx',
+                # Infiniti SUVs
+                'qx50', 'qx55', 'qx60', 'qx80',
+                # Lincoln SUVs
+                'navigator', 'nautilus', 'aviator', 'corsair',
+                # Porsche SUVs
+                'cayenne', 'macan',
+                # Jaguar SUVs
+                'e-pace', 'f-pace', 'i-pace',
+                # Land Rover SUVs (all models)
+                'range rover', 'discovery', 'defender', 'evoque',
+                # Genesis SUVs
+                'gv60', 'gv70', 'gv80',
+                # Maserati SUVs
+                'levante', 'grecale'
+            ]
+
+            if any(keyword in model_lower for keyword in luxury_suv_keywords):
+                return 'luxury_suv'
+
+            # Otherwise, it's a luxury sedan/coupe
             return 'luxury'
         
         # PRIORITY 4: Check trucks
@@ -454,8 +502,8 @@ class EnhancedDepreciationModel:
             
             # Apply caps
             max_depreciation = {
-                'luxury': 0.90, 'electric': 0.92, 'hybrid': 0.82, 'economy': 0.88,
-                'sedan': 0.85, 'compact': 0.85, 'suv': 0.82,
+                'luxury': 0.90, 'luxury_suv': 0.82, 'electric': 0.92, 'hybrid': 0.82,
+                'economy': 0.88, 'sedan': 0.85, 'compact': 0.85, 'suv': 0.82,
                 'truck': 0.80, 'sports': 0.88
             }
             cap = max_depreciation.get(segment, 0.85)
@@ -536,6 +584,7 @@ class EnhancedDepreciationModel:
             # Get the 1-year baseline depreciation rate for this segment
             one_year_baseline = {
                 'luxury': 0.15,
+                'luxury_suv': 0.12,  # Luxury SUVs hold value better
                 'truck': 0.10,
                 'suv': 0.13,
                 'sports': 0.16,
@@ -602,8 +651,8 @@ class EnhancedDepreciationModel:
         
         # Apply caps
         max_depreciation = {
-            'luxury': 0.90, 'electric': 0.92, 'hybrid': 0.82, 'economy': 0.88,
-            'sedan': 0.85, 'compact': 0.85, 'suv': 0.82,
+            'luxury': 0.90, 'luxury_suv': 0.82, 'electric': 0.92, 'hybrid': 0.82,
+            'economy': 0.88, 'sedan': 0.85, 'compact': 0.85, 'suv': 0.82,
             'truck': 0.80, 'sports': 0.88
         }
         cap = max_depreciation.get(segment, 0.85)

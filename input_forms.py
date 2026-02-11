@@ -582,6 +582,18 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
         key="transaction_type_radio"
     )
 
+    # Reset year and trim selection if transaction type changed (lease has year restrictions)
+    if 'previous_transaction_type' not in st.session_state:
+        st.session_state.previous_transaction_type = transaction_type
+
+    if st.session_state.previous_transaction_type != transaction_type:
+        st.session_state.previous_transaction_type = transaction_type
+        # Reset year and trim when switching between purchase and lease
+        for key in ['vehicle_year_select', 'vehicle_trim_select']:
+            if key in st.session_state:
+                del st.session_state[key]
+        st.rerun()
+
     st.markdown("---")
 
     # Progress indicator
@@ -677,15 +689,39 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
             if available_years:
                 # Sort in descending order (newest first)
                 year_options = sorted(available_years, reverse=True)
+
+                # Filter years for lease - only new cars (current year or prior year if current not available)
+                if transaction_type == "Lease":
+                    from datetime import datetime
+                    current_year = datetime.now().year
+
+                    # Filter to only current year or prior year
+                    lease_eligible_years = [y for y in year_options if y >= current_year - 1]
+
+                    if lease_eligible_years:
+                        year_options = lease_eligible_years
+                        help_text = f"Lease available for: {min(lease_eligible_years)}-{max(lease_eligible_years)} (new cars only)"
+                    else:
+                        # No eligible years for lease
+                        year_options = []
+                        help_text = "No new model years available for lease"
+                else:
+                    help_text = f"Production years: {min(available_years)}-{max(available_years)}"
+
                 selected_year = st.selectbox(
                     "Model Year:",
                     [''] + year_options,
-                    help=f"Production years: {min(available_years)}-{max(available_years)}",
+                    help=help_text,
                     key="vehicle_year_select"
                 )
 
                 if not selected_year:
-                    st.info(f"👆 Available: {min(available_years)}-{max(available_years)}")
+                    if transaction_type == "Lease" and year_options:
+                        st.info(f"👆 Available for lease: {min(year_options)}-{max(year_options)} (new cars only)")
+                    elif transaction_type == "Lease" and not year_options:
+                        st.warning("⚠️ No new model years available for lease. Consider purchasing.")
+                    else:
+                        st.info(f"👆 Available: {min(available_years)}-{max(available_years)}")
             else:
                 selected_year = st.selectbox(
                     "Model Year:",

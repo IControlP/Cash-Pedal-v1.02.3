@@ -86,6 +86,9 @@ class ComparisonService:
         else:
             value_score = 0
         
+        # Fetch vehicle specs (horsepower, seats, cargo)
+        specs = self._fetch_vehicle_specs(vehicle)
+
         return {
             'vehicle_name': f"{vehicle['year']} {vehicle['make']} {vehicle['model']} {vehicle['trim']}",
             'make': vehicle['make'],
@@ -106,12 +109,30 @@ class ComparisonService:
             'annual_mileage': vehicle.get('annual_mileage', 0),
             'purchase_price': vehicle.get('purchase_price', vehicle.get('trim_msrp', 0)),
             'calculation_successful': True,
-            'raw_results': tco_results
+            'raw_results': tco_results,
+            'horsepower': specs.get('horsepower', 0),
+            'mpg_combined': specs.get('mpg_combined', 0),
+            'seats': specs.get('seats', 0),
+            'cargo_cu_ft': specs.get('cargo_cu_ft', 0.0)
         }
     
+    def _fetch_vehicle_specs(self, vehicle: Dict[str, Any]) -> Dict[str, Any]:
+        """Fetch vehicle specs from the specs database"""
+        default_specs = {'horsepower': 0, 'mpg_combined': 0, 'seats': 0, 'cargo_cu_ft': 0.0}
+        try:
+            from vehicle_specs_database import get_vehicle_specs
+            specs = get_vehicle_specs(
+                vehicle['make'], vehicle['model'],
+                vehicle['year'], vehicle.get('trim')
+            )
+            return specs if specs else default_specs
+        except Exception as e:
+            print(f"Specs lookup error for {vehicle.get('make', '')} {vehicle.get('model', '')}: {e}")
+            return default_specs
+
     def _create_error_result(self, vehicle: Dict[str, Any], error_message: str) -> Dict[str, Any]:
         """Create error result for failed calculations"""
-        
+
         return {
             'vehicle_name': f"{vehicle['year']} {vehicle['make']} {vehicle['model']} {vehicle['trim']}",
             'make': vehicle['make'],
@@ -130,7 +151,11 @@ class ComparisonService:
             'cost_categories': {},
             'analysis_years': 0,
             'calculation_successful': False,
-            'error_message': error_message
+            'error_message': error_message,
+            'horsepower': 0,
+            'mpg_combined': 0,
+            'seats': 0,
+            'cargo_cu_ft': 0.0
         }
     
     def _analyze_vehicle_comparison(self, vehicle_results: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -181,19 +206,33 @@ class ComparisonService:
             'by_annual_cost': sorted(successful_results, key=lambda x: x['annual_cost']),
             'by_total_cost': sorted(successful_results, key=lambda x: x['total_cost']),
             'by_value_score': sorted(successful_results, key=lambda x: x['value_score'], reverse=True),
-            'by_affordability': sorted([v for v in successful_results if v['affordability_score'] > 0], 
+            'by_affordability': sorted([v for v in successful_results if v['affordability_score'] > 0],
                                      key=lambda x: x['affordability_score']),
-            'by_cost_per_mile': sorted([v for v in successful_results if v['cost_per_mile'] > 0], 
-                                     key=lambda x: x['cost_per_mile'])
+            'by_cost_per_mile': sorted([v for v in successful_results if v['cost_per_mile'] > 0],
+                                     key=lambda x: x['cost_per_mile']),
+            # Vehicle specs rankings
+            'by_horsepower': sorted([v for v in successful_results if v.get('horsepower', 0) > 0],
+                                   key=lambda x: x['horsepower'], reverse=True),
+            'by_mpg': sorted([v for v in successful_results if v.get('mpg_combined', 0) > 0],
+                           key=lambda x: x['mpg_combined'], reverse=True),
+            'by_seats': sorted([v for v in successful_results if v.get('seats', 0) > 0],
+                             key=lambda x: x['seats'], reverse=True),
+            'by_cargo': sorted([v for v in successful_results if v.get('cargo_cu_ft', 0) > 0],
+                             key=lambda x: x['cargo_cu_ft'], reverse=True)
         }
-        
+
         # Add best/worst for each category
         rankings['best_annual_cost'] = rankings['by_annual_cost'][0] if rankings['by_annual_cost'] else None
         rankings['best_total_cost'] = rankings['by_total_cost'][0] if rankings['by_total_cost'] else None
         rankings['best_value'] = rankings['by_value_score'][0] if rankings['by_value_score'] else None
         rankings['most_affordable'] = rankings['by_affordability'][0] if rankings['by_affordability'] else None
         rankings['best_efficiency'] = rankings['by_cost_per_mile'][0] if rankings['by_cost_per_mile'] else None
-        
+        # Vehicle specs winners
+        rankings['most_powerful'] = rankings['by_horsepower'][0] if rankings['by_horsepower'] else None
+        rankings['best_mpg'] = rankings['by_mpg'][0] if rankings['by_mpg'] else None
+        rankings['most_seats'] = rankings['by_seats'][0] if rankings['by_seats'] else None
+        rankings['most_cargo'] = rankings['by_cargo'][0] if rankings['by_cargo'] else None
+
         return rankings
     
     def _generate_comparison_insights(self, vehicle_results: List[Dict[str, Any]], 

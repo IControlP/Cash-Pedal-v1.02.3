@@ -551,6 +551,15 @@ def display_specs_comparison(comparison_results: Dict[str, Any]):
                 medal = ["", "", ""][i] if i < 3 else f"  {i+1}."
                 st.markdown(f"{medal} {v['vehicle_name']}: {v.get('horsepower', 0):,} hp")
 
+        # Full MPG ranking
+        if rankings.get('by_mpg'):
+            st.markdown("**Fuel Economy Ranking:**")
+            for i, v in enumerate(rankings['by_mpg']):
+                medal = ["", "", ""][i] if i < 3 else f"  {i+1}."
+                mpg = v.get('mpg_combined', 0)
+                if mpg > 0:
+                    st.markdown(f"{medal} {v['vehicle_name']}: {mpg} mpg")
+
     with col2:
         st.markdown("**Capacity & Space:**")
 
@@ -560,6 +569,13 @@ def display_specs_comparison(comparison_results: Dict[str, Any]):
         if rankings.get('most_cargo'):
             v = rankings['most_cargo']
             st.markdown(f"**Most Cargo Space:** {v['vehicle_name']} ({v.get('cargo_cu_ft', 0):.1f} cu ft)")
+
+        # Full seats ranking
+        if rankings.get('by_seats'):
+            st.markdown("**Seating Capacity Ranking:**")
+            for i, v in enumerate(rankings['by_seats']):
+                medal = ["", "", ""][i] if i < 3 else f"  {i+1}."
+                st.markdown(f"{medal} {v['vehicle_name']}: {v.get('seats', 0)} seats")
 
         # Full cargo ranking
         if rankings.get('by_cargo'):

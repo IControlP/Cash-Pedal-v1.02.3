@@ -540,8 +540,12 @@ def display_calculator() -> None:
         _render_results(results, vehicle_data)
 
         if st.button("Add to Comparison"):
-            add_vehicle_to_comparison(vehicle_data, results)
-            st.success("Vehicle added to comparison list.")
+            success, message = add_vehicle_to_comparison(vehicle_data, results)
+            if success:
+                st.success(message)
+                st.rerun()
+            else:
+                st.error(message)
 
 
 # Backward-compatible entry points used elsewhere in the app

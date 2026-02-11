@@ -278,9 +278,10 @@ def display_comparison_tabs(comparison_results: Dict[str, Any],
             st.rerun()
     
     # Tabs for different views
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "  Executive Summary", 
         "  Cost Comparison", 
+        "  Vehicle Specs",
         " Visualizations", 
         " Recommendations"
     ])
@@ -292,9 +293,12 @@ def display_comparison_tabs(comparison_results: Dict[str, Any],
         display_cost_comparison_table(comparison_results)
     
     with tab3:
-        display_comparison_visualizations(comparison_results)
-    
+        display_specs_comparison(comparison_results)
+
     with tab4:
+        display_comparison_visualizations(comparison_results)
+
+    with tab5:
         display_recommendations_detailed(recommendations)
 
 
@@ -473,6 +477,166 @@ def display_cost_comparison_table(comparison_results: Dict[str, Any]):
                 st.markdown(f"{emoji} {vehicle['vehicle_name']}: {income_pct:.1f}%")
         else:
             st.info("Income data not available for ranking")
+
+def display_specs_comparison(comparison_results: Dict[str, Any]):
+    """Display vehicle specifications comparison with rankings"""
+
+    st.subheader("Vehicle Specifications Comparison")
+
+    vehicles = comparison_results.get('vehicles', [])
+    if not vehicles:
+        st.warning("No specs data available.")
+        return
+
+    # Check if any vehicles have specs data
+    has_specs = any(v.get('horsepower', 0) > 0 for v in vehicles)
+
+    if not has_specs:
+        st.info("Vehicle specifications data is not yet available for the selected vehicles.")
+        return
+
+    # Create specs comparison table
+    specs_data = []
+    for vehicle in vehicles:
+        row = {
+            'Vehicle': vehicle['vehicle_name'],
+            'Horsepower (hp)': vehicle.get('horsepower', 0),
+            'MPG (Combined)': vehicle.get('mpg_combined', 0),
+            'Seats': vehicle.get('seats', 0),
+            'Cargo Space (cu ft)': vehicle.get('cargo_cu_ft', 0.0),
+        }
+        specs_data.append(row)
+
+    df_specs = pd.DataFrame(specs_data)
+
+    # Format columns
+    if 'Cargo Space (cu ft)' in df_specs.columns:
+        df_specs['Cargo Space (cu ft)'] = df_specs['Cargo Space (cu ft)'].apply(
+            lambda x: f"{x:.1f}" if isinstance(x, (int, float)) and x > 0 else "N/A"
+        )
+    for col in ['Horsepower (hp)', 'MPG (Combined)', 'Seats']:
+        if col in df_specs.columns:
+            df_specs[col] = df_specs[col].apply(
+                lambda x: str(int(x)) if isinstance(x, (int, float)) and x > 0 else "N/A"
+            )
+
+    st.dataframe(df_specs, use_container_width=True)
+
+    # Specs Rankings
+    st.markdown("#### Specs Rankings")
+
+    rankings = comparison_results.get('rankings', {})
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("**Performance & Efficiency:**")
+
+        if rankings.get('most_powerful'):
+            v = rankings['most_powerful']
+            st.markdown(f"**Most Powerful:** {v['vehicle_name']} ({v.get('horsepower', 0):,} hp)")
+        if rankings.get('best_mpg'):
+            v = rankings['best_mpg']
+            st.markdown(f"**Best Fuel Economy:** {v['vehicle_name']} ({v.get('mpg_combined', 0)} mpg)")
+
+        # Full horsepower ranking
+        if rankings.get('by_horsepower'):
+            st.markdown("**Horsepower Ranking:**")
+            for i, v in enumerate(rankings['by_horsepower']):
+                medal = ["", "", ""][i] if i < 3 else f"  {i+1}."
+                st.markdown(f"{medal} {v['vehicle_name']}: {v.get('horsepower', 0):,} hp")
+
+    with col2:
+        st.markdown("**Capacity & Space:**")
+
+        if rankings.get('most_seats'):
+            v = rankings['most_seats']
+            st.markdown(f"**Most Passenger Space:** {v['vehicle_name']} ({v.get('seats', 0)} seats)")
+        if rankings.get('most_cargo'):
+            v = rankings['most_cargo']
+            st.markdown(f"**Most Cargo Space:** {v['vehicle_name']} ({v.get('cargo_cu_ft', 0):.1f} cu ft)")
+
+        # Full cargo ranking
+        if rankings.get('by_cargo'):
+            st.markdown("**Cargo Space Ranking:**")
+            for i, v in enumerate(rankings['by_cargo']):
+                medal = ["", "", ""][i] if i < 3 else f"  {i+1}."
+                st.markdown(f"{medal} {v['vehicle_name']}: {v.get('cargo_cu_ft', 0):.1f} cu ft")
+
+    # Specs visualization - grouped bar chart
+    vehicles_with_specs = [v for v in vehicles if v.get('horsepower', 0) > 0]
+    if vehicles_with_specs:
+        st.markdown("#### Specs Visual Comparison")
+
+        vehicle_names = [v['vehicle_name'] for v in vehicles_with_specs]
+
+        # Normalized bar chart so different units are comparable
+        fig_specs = go.Figure()
+
+        # Get max values for normalization
+        max_hp = max(v.get('horsepower', 1) for v in vehicles_with_specs)
+        max_mpg = max(v.get('mpg_combined', 1) for v in vehicles_with_specs)
+        max_seats = max(v.get('seats', 1) for v in vehicles_with_specs)
+        max_cargo = max(v.get('cargo_cu_ft', 1) for v in vehicles_with_specs)
+
+        # Horsepower bars
+        fig_specs.add_trace(go.Bar(
+            name='Horsepower',
+            x=vehicle_names,
+            y=[v.get('horsepower', 0) for v in vehicles_with_specs],
+            text=[f"{v.get('horsepower', 0)} hp" for v in vehicles_with_specs],
+            textposition='auto'
+        ))
+
+        fig_specs.update_layout(
+            title="Horsepower Comparison",
+            yaxis_title="Horsepower (hp)",
+            height=350,
+            barmode='group'
+        )
+        st.plotly_chart(fig_specs, use_container_width=True)
+
+        # MPG comparison
+        fig_mpg = go.Figure()
+        fig_mpg.add_trace(go.Bar(
+            name='MPG (Combined)',
+            x=vehicle_names,
+            y=[v.get('mpg_combined', 0) for v in vehicles_with_specs],
+            text=[f"{v.get('mpg_combined', 0)} mpg" for v in vehicles_with_specs],
+            textposition='auto',
+            marker_color='green'
+        ))
+        fig_mpg.update_layout(
+            title="Fuel Economy Comparison",
+            yaxis_title="MPG (Combined)",
+            height=350
+        )
+        st.plotly_chart(fig_mpg, use_container_width=True)
+
+        # Seats + Cargo side by side
+        fig_capacity = go.Figure()
+        fig_capacity.add_trace(go.Bar(
+            name='Seats',
+            x=vehicle_names,
+            y=[v.get('seats', 0) for v in vehicles_with_specs],
+            text=[f"{v.get('seats', 0)} seats" for v in vehicles_with_specs],
+            textposition='auto'
+        ))
+        fig_capacity.add_trace(go.Bar(
+            name='Cargo (cu ft)',
+            x=vehicle_names,
+            y=[v.get('cargo_cu_ft', 0) for v in vehicles_with_specs],
+            text=[f"{v.get('cargo_cu_ft', 0):.1f} cu ft" for v in vehicles_with_specs],
+            textposition='auto'
+        ))
+        fig_capacity.update_layout(
+            title="Passenger & Cargo Capacity",
+            yaxis_title="Value",
+            height=400,
+            barmode='group'
+        )
+        st.plotly_chart(fig_capacity, use_container_width=True)
+
 
 def display_comparison_visualizations(comparison_results: Dict[str, Any]):
     """Display comparison charts and visualizations - using line graphs with overlaid data points"""

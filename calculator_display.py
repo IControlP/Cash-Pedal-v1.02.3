@@ -673,13 +673,20 @@ def display_calculator() -> None:
             results = service.calculate_total_cost_of_ownership(vehicle_data)
 
         save_calculation_results(vehicle_data, results)
-        _render_results(results, vehicle_data)
+        st.rerun()  # Rerun to display results from session state
 
-        if st.button("Add to Comparison"):
-            success, message = add_vehicle_to_comparison(vehicle_data, results)
+    # Display results if they exist in session state (outside the button block)
+    if 'current_results' in st.session_state and st.session_state.current_results:
+        current_vehicle = st.session_state.get('current_vehicle', vehicle_data)
+        _render_results(st.session_state.current_results, current_vehicle)
+
+        # Add to Comparison button (now outside the Calculate TCO button block)
+        if st.button("Add to Comparison", type="primary"):
+            success, message = add_vehicle_to_comparison(current_vehicle, st.session_state.current_results)
             if success:
                 st.success(message)
-                st.rerun()
+                # Keep financial and location info but allow adding another vehicle
+                # No st.rerun() here to preserve the form state
             else:
                 st.error(message)
 

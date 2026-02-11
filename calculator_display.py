@@ -82,9 +82,21 @@ def display_charging_preference_form(
     # Show rate breakdown
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("Base Home Rate", f"${default_rate:.3f}/kWh")
+        st.markdown(f"""
+        <div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; text-align: center;">
+            <p style="margin: 0; color: #2e7d32; font-size: 11px; font-weight: bold;">BASE HOME RATE</p>
+            <p style="margin: 5px 0; font-size: 24px; font-weight: bold; color: #2e7d32;">${default_rate:.3f}</p>
+            <p style="margin: 0; color: #666; font-size: 11px;">per kWh</p>
+        </div>
+        """, unsafe_allow_html=True)
     with col2:
-        st.metric("Blended Rate", f"${blended['blended_rate']:.3f}/kWh")
+        st.markdown(f"""
+        <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center;">
+            <p style="margin: 0; color: #1565c0; font-size: 11px; font-weight: bold;">BLENDED RATE</p>
+            <p style="margin: 5px 0; font-size: 24px; font-weight: bold; color: #1565c0;">${blended['blended_rate']:.3f}</p>
+            <p style="margin: 0; color: #666; font-size: 11px;">per kWh (with public charging)</p>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.caption("💡 The blended rate accounts for higher costs when using public charging stations.")
 
@@ -250,10 +262,42 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
 
     # --- Summary metrics ---
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Total Cost of Ownership", f"${total_tco:,.0f}")
-    col2.metric("Total Out-of-Pocket Cost", f"${total_out_of_pocket:,.0f}")
-    col3.metric("Monthly Out-of-Pocket", f"${monthly_oop:,.0f}")
-    col4.metric("Analysis Horizon", f"{ownership_years} years")
+
+    with col1:
+        st.markdown(f"""
+        <div style="background-color: #e3f2fd; padding: 20px; border-radius: 10px; border-left: 5px solid #2196f3; text-align: center;">
+            <p style="color: #1565c0; font-weight: bold; margin: 0; font-size: 12px;">TOTAL COST OF OWNERSHIP</p>
+            <h2 style="margin: 10px 0; color: #1565c0; font-size: 28px;">${total_tco:,.0f}</h2>
+            <p style="margin: 0; color: #666; font-size: 11px;">Over {ownership_years} years</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown(f"""
+        <div style="background-color: #e8f5e9; padding: 20px; border-radius: 10px; border-left: 5px solid #4caf50; text-align: center;">
+            <p style="color: #2e7d32; font-weight: bold; margin: 0; font-size: 12px;">TOTAL OUT-OF-POCKET</p>
+            <h2 style="margin: 10px 0; color: #2e7d32; font-size: 28px;">${total_out_of_pocket:,.0f}</h2>
+            <p style="margin: 0; color: #666; font-size: 11px;">Actual cash spent</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown(f"""
+        <div style="background-color: #fff3e0; padding: 20px; border-radius: 10px; border-left: 5px solid #ff9800; text-align: center;">
+            <p style="color: #e65100; font-weight: bold; margin: 0; font-size: 12px;">MONTHLY OUT-OF-POCKET</p>
+            <h2 style="margin: 10px 0; color: #e65100; font-size: 28px;">${monthly_oop:,.0f}</h2>
+            <p style="margin: 0; color: #666; font-size: 11px;">Average per month</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col4:
+        st.markdown(f"""
+        <div style="background-color: #f3e5f5; padding: 20px; border-radius: 10px; border-left: 5px solid #9c27b0; text-align: center;">
+            <p style="color: #6a1b9a; font-weight: bold; margin: 0; font-size: 12px;">ANALYSIS HORIZON</p>
+            <h2 style="margin: 10px 0; color: #6a1b9a; font-size: 28px;">{ownership_years}</h2>
+            <p style="margin: 0; color: #666; font-size: 11px;">years</p>
+        </div>
+        """, unsafe_allow_html=True)
 
     # --- Affordability Analysis ---
     affordability = results.get("affordability", {})
@@ -277,23 +321,41 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
             alert_type = "warning"
             icon = "⚠️"
 
-        # Display affordability message
-        affordability_message = f"""
+        # Display affordability assessment header
+        affordability_header = f"""
         {icon} **Affordability Assessment: {rating}**
 
         Your annual operating costs represent **{percentage:.1f}%** of your gross annual income.
-
-        - **Recommended Maximum:** {max_pct:.1f}% ({threshold_desc})
-        - **Your Monthly Cost:** ${affordability.get('monthly_cost', 0):,.0f}
-        - **Recommended Max Monthly:** ${affordability.get('recommended_max_monthly', 0):,.0f}
+        Recommended Maximum: **{max_pct:.1f}%** ({threshold_desc})
         """
 
         if alert_type == "success":
-            st.success(affordability_message)
+            st.success(affordability_header)
         elif alert_type == "info":
-            st.info(affordability_message)
+            st.info(affordability_header)
         else:
-            st.warning(affordability_message)
+            st.warning(affordability_header)
+
+        # Display cost comparison with highlighted boxes
+        cost_col1, cost_col2 = st.columns(2)
+
+        with cost_col1:
+            st.markdown(f"""
+            <div style="background-color: #f0f7ff; padding: 15px; border-radius: 8px; text-align: center; margin-top: 10px;">
+                <p style="margin: 0; color: #666; font-size: 12px; font-weight: bold;">YOUR MONTHLY COST</p>
+                <p style="margin: 5px 0; font-size: 24px; font-weight: bold; color: #1565c0;">${affordability.get('monthly_cost', 0):,.0f}</p>
+                <p style="margin: 0; color: #888; font-size: 11px;">Current vehicle</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with cost_col2:
+            st.markdown(f"""
+            <div style="background-color: #f0f7ff; padding: 15px; border-radius: 8px; text-align: center; margin-top: 10px;">
+                <p style="margin: 0; color: #666; font-size: 12px; font-weight: bold;">RECOMMENDED MAX MONTHLY</p>
+                <p style="margin: 5px 0; font-size: 24px; font-weight: bold; color: #2e7d32;">${affordability.get('recommended_max_monthly', 0):,.0f}</p>
+                <p style="margin: 0; color: #888; font-size: 11px;">Based on income</p>
+            </div>
+            """, unsafe_allow_html=True)
 
         # Additional context
         with st.expander("📊 Understanding Affordability Guidelines"):
@@ -338,16 +400,31 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
                                 col1, col2, col3 = st.columns(3)
 
                                 with col1:
-                                    st.metric("MSRP", f"${alt['price']:,.0f}")
-                                    st.caption(f"**Segment:** {alt['segment'].title()}")
+                                    st.markdown(f"""
+                                    <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center;">
+                                        <p style="margin: 0; color: #666; font-size: 11px; font-weight: bold;">MSRP</p>
+                                        <p style="margin: 5px 0; font-size: 22px; font-weight: bold; color: #1565c0;">${alt['price']:,.0f}</p>
+                                        <p style="margin: 0; color: #888; font-size: 11px;">Segment: {alt['segment'].title()}</p>
+                                    </div>
+                                    """, unsafe_allow_html=True)
 
                                 with col2:
-                                    st.metric("Est. Annual Savings", f"{alt['estimated_savings_pct']:.0f}%")
-                                    st.caption("vs. current selection")
+                                    st.markdown(f"""
+                                    <div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; text-align: center;">
+                                        <p style="margin: 0; color: #666; font-size: 11px; font-weight: bold;">EST. ANNUAL SAVINGS</p>
+                                        <p style="margin: 5px 0; font-size: 22px; font-weight: bold; color: #2e7d32;">{alt['estimated_savings_pct']:.0f}%</p>
+                                        <p style="margin: 0; color: #888; font-size: 11px;">vs. current selection</p>
+                                    </div>
+                                    """, unsafe_allow_html=True)
 
                                 with col3:
-                                    st.metric("Reliability Score", f"{alt['reliability']:.1f}/5.0")
-                                    st.caption(f"**Brand:** {alt['make']}")
+                                    st.markdown(f"""
+                                    <div style="background-color: #fff3e0; padding: 15px; border-radius: 8px; text-align: center;">
+                                        <p style="margin: 0; color: #666; font-size: 11px; font-weight: bold;">RELIABILITY SCORE</p>
+                                        <p style="margin: 5px 0; font-size: 22px; font-weight: bold; color: #e65100;">{alt['reliability']:.1f}/5.0</p>
+                                        <p style="margin: 0; color: #888; font-size: 11px;">Brand: {alt['make']}</p>
+                                    </div>
+                                    """, unsafe_allow_html=True)
 
                                 st.markdown("---")
                                 st.caption(
@@ -427,26 +504,61 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
                     col1, col2, col3 = st.columns(3)
 
                     with col1:
-                        st.metric("Sales Tax", f"${detail.get('sales_tax', 0):,.0f}")
-                        if detail.get('sales_tax_rate'):
-                            st.caption(f"Rate: {detail['sales_tax_rate']*100:.2f}%")
+                        sales_tax_rate = f"Rate: {detail['sales_tax_rate']*100:.2f}%" if detail.get('sales_tax_rate') else ""
+                        st.markdown(f"""
+                        <div style="background-color: #fff8e1; padding: 12px; border-radius: 8px; text-align: center;">
+                            <p style="margin: 0; color: #666; font-size: 11px; font-weight: bold;">SALES TAX</p>
+                            <p style="margin: 5px 0; font-size: 20px; font-weight: bold; color: #f57c00;">${detail.get('sales_tax', 0):,.0f}</p>
+                            <p style="margin: 0; color: #888; font-size: 10px;">{sales_tax_rate}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
 
                     with col2:
-                        st.metric("Destination Charge", f"${detail.get('destination_charge', 0):,.0f}")
+                        st.markdown(f"""
+                        <div style="background-color: #f3e5f5; padding: 12px; border-radius: 8px; text-align: center;">
+                            <p style="margin: 0; color: #666; font-size: 11px; font-weight: bold;">DESTINATION CHARGE</p>
+                            <p style="margin: 5px 0; font-size: 20px; font-weight: bold; color: #7b1fa2;">${detail.get('destination_charge', 0):,.0f}</p>
+                            <p style="margin: 0; color: #888; font-size: 10px;">&nbsp;</p>
+                        </div>
+                        """, unsafe_allow_html=True)
 
                     with col3:
-                        st.metric("Registration Fee", f"${detail.get('registration_fee', 0):,.0f}")
+                        st.markdown(f"""
+                        <div style="background-color: #e1f5fe; padding: 12px; border-radius: 8px; text-align: center;">
+                            <p style="margin: 0; color: #666; font-size: 11px; font-weight: bold;">REGISTRATION FEE</p>
+                            <p style="margin: 5px 0; font-size: 20px; font-weight: bold; color: #0277bd;">${detail.get('registration_fee', 0):,.0f}</p>
+                            <p style="margin: 0; color: #888; font-size: 10px;">&nbsp;</p>
+                        </div>
+                        """, unsafe_allow_html=True)
 
                     col4, col5, col6 = st.columns(3)
 
                     with col4:
-                        st.metric("Doc Fee", f"${detail.get('doc_fee', 0):,.0f}")
+                        st.markdown(f"""
+                        <div style="background-color: #fce4ec; padding: 12px; border-radius: 8px; text-align: center;">
+                            <p style="margin: 0; color: #666; font-size: 11px; font-weight: bold;">DOC FEE</p>
+                            <p style="margin: 5px 0; font-size: 20px; font-weight: bold; color: #c2185b;">${detail.get('doc_fee', 0):,.0f}</p>
+                            <p style="margin: 0; color: #888; font-size: 10px;">&nbsp;</p>
+                        </div>
+                        """, unsafe_allow_html=True)
 
                     with col5:
-                        st.metric("Title Fee", f"${detail.get('title_fee', 0):,.0f}")
+                        st.markdown(f"""
+                        <div style="background-color: #e8f5e9; padding: 12px; border-radius: 8px; text-align: center;">
+                            <p style="margin: 0; color: #666; font-size: 11px; font-weight: bold;">TITLE FEE</p>
+                            <p style="margin: 5px 0; font-size: 20px; font-weight: bold; color: #388e3c;">${detail.get('title_fee', 0):,.0f}</p>
+                            <p style="margin: 0; color: #888; font-size: 10px;">&nbsp;</p>
+                        </div>
+                        """, unsafe_allow_html=True)
 
                     with col6:
-                        st.metric("Total Year 1", f"${detail.get('total_taxes_and_fees', 0):,.0f}")
+                        st.markdown(f"""
+                        <div style="background-color: #e3f2fd; padding: 12px; border-radius: 8px; text-align: center; border: 2px solid #2196f3;">
+                            <p style="margin: 0; color: #1565c0; font-size: 11px; font-weight: bold;">TOTAL YEAR 1</p>
+                            <p style="margin: 5px 0; font-size: 20px; font-weight: bold; color: #1565c0;">${detail.get('total_taxes_and_fees', 0):,.0f}</p>
+                            <p style="margin: 0; color: #888; font-size: 10px;">&nbsp;</p>
+                        </div>
+                        """, unsafe_allow_html=True)
 
                     # Additional details
                     st.caption(f"**State:** {detail.get('state', 'N/A')} | **Vehicle Status:** {'New' if detail.get('is_new', True) else 'Used'}")
@@ -468,16 +580,40 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
                         col1, col2, col3 = st.columns(3)
 
                         with col1:
-                            st.metric("DMV Registration Renewal", f"${reg_fee:,.0f}")
+                            st.markdown(f"""
+                            <div style="background-color: #e8eaf6; padding: 12px; border-radius: 8px; text-align: center;">
+                                <p style="margin: 0; color: #666; font-size: 11px; font-weight: bold;">DMV REGISTRATION RENEWAL</p>
+                                <p style="margin: 5px 0; font-size: 20px; font-weight: bold; color: #3f51b5;">${reg_fee:,.0f}</p>
+                                <p style="margin: 0; color: #888; font-size: 10px;">&nbsp;</p>
+                            </div>
+                            """, unsafe_allow_html=True)
 
                         with col2:
                             if smog_fee > 0:
-                                st.metric("Smog/Emissions Test", f"${smog_fee:,.0f}")
+                                st.markdown(f"""
+                                <div style="background-color: #fff8e1; padding: 12px; border-radius: 8px; text-align: center;">
+                                    <p style="margin: 0; color: #666; font-size: 11px; font-weight: bold;">SMOG/EMISSIONS TEST</p>
+                                    <p style="margin: 5px 0; font-size: 20px; font-weight: bold; color: #f57c00;">${smog_fee:,.0f}</p>
+                                    <p style="margin: 0; color: #888; font-size: 10px;">&nbsp;</p>
+                                </div>
+                                """, unsafe_allow_html=True)
                             else:
-                                st.metric("Smog/Emissions Test", "Not Required")
+                                st.markdown(f"""
+                                <div style="background-color: #e8f5e9; padding: 12px; border-radius: 8px; text-align: center;">
+                                    <p style="margin: 0; color: #666; font-size: 11px; font-weight: bold;">SMOG/EMISSIONS TEST</p>
+                                    <p style="margin: 5px 0; font-size: 18px; font-weight: bold; color: #4caf50;">Not Required</p>
+                                    <p style="margin: 0; color: #888; font-size: 10px;">&nbsp;</p>
+                                </div>
+                                """, unsafe_allow_html=True)
 
                         with col3:
-                            st.metric("Total Year " + str(year_num), f"${total:,.0f}")
+                            st.markdown(f"""
+                            <div style="background-color: #e3f2fd; padding: 12px; border-radius: 8px; text-align: center; border: 2px solid #2196f3;">
+                                <p style="margin: 0; color: #1565c0; font-size: 11px; font-weight: bold;">TOTAL YEAR {year_num}</p>
+                                <p style="margin: 5px 0; font-size: 20px; font-weight: bold; color: #1565c0;">${total:,.0f}</p>
+                                <p style="margin: 0; color: #888; font-size: 10px;">&nbsp;</p>
+                            </div>
+                            """, unsafe_allow_html=True)
 
                         if smog_fee == 0:
                             st.caption("💨 Smog test not required this year (check your state's requirements)")

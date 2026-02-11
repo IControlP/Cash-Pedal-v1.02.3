@@ -279,6 +279,11 @@ def is_comparison_ready():
 
 def save_calculation_results(vehicle_data: Dict[str, Any], results: Dict[str, Any]):
     """Save calculation results for a vehicle"""
+    # Save to current vehicle and results for display
+    st.session_state.current_vehicle = vehicle_data.copy()
+    st.session_state.current_results = results.copy()
+
+    # Also save to comparison_results for backward compatibility
     vehicle_key = f"{vehicle_data.get('make')}_{vehicle_data.get('model')}_{vehicle_data.get('year')}_{vehicle_data.get('trim')}_{vehicle_data.get('transaction_type')}"
     st.session_state.comparison_results[vehicle_key] = {
         'vehicle_data': vehicle_data,

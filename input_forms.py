@@ -702,7 +702,6 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
 
                 # Filter years for lease - only new cars (current year or prior year if current not available)
                 if transaction_type == "Lease":
-                    from datetime import datetime
                     current_year = datetime.now().year
 
                     # Filter to only current year or prior year

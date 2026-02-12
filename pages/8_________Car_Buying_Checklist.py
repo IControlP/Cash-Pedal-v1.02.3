@@ -19,10 +19,18 @@ try:
     from vehicle_database import (
         get_all_manufacturers,
         get_models_for_manufacturer,
+        get_trims_for_vehicle,
     )
     VEHICLE_DATABASE_AVAILABLE = True
 except ImportError:
     VEHICLE_DATABASE_AVAILABLE = False
+
+# Try to import used vehicle estimator
+try:
+    from used_vehicle_estimator import UsedVehicleEstimator
+    VEHICLE_ESTIMATOR_AVAILABLE = True
+except ImportError:
+    VEHICLE_ESTIMATOR_AVAILABLE = False
 
 # Page configuration
 st.set_page_config(
@@ -147,15 +155,8 @@ def display_manual_entry():
                 placeholder="e.g., Camry, Accord, 3 Series"
             )
 
-        # Trim
-        trim = st.text_input(
-            "Trim (optional)",
-            value=extracted_info.get('trim', '') if extracted_info.get('trim') else '',
-            placeholder="e.g., LE, EX, Sport"
-        )
-
     with col2:
-        # Year
+        # Year (moved before trim since trim depends on year)
         year = st.number_input(
             "Year *",
             min_value=1990,
@@ -164,6 +165,35 @@ def display_manual_entry():
             step=1,
             help="Model year of the vehicle"
         )
+
+        # Trim selection (dropdown when database available)
+        if VEHICLE_DATABASE_AVAILABLE and make and model and year:
+            trims_dict = get_trims_for_vehicle(make, model, year)
+            if trims_dict:
+                trim_options = [''] + list(trims_dict.keys())
+                default_trim_idx = 0
+                if extracted_info.get('trim') in trim_options:
+                    default_trim_idx = trim_options.index(extracted_info['trim'])
+
+                trim = st.selectbox(
+                    "Trim *",
+                    options=trim_options,
+                    index=default_trim_idx,
+                    help="Select the trim level"
+                )
+            else:
+                # Fallback to text input if no trims found
+                trim = st.text_input(
+                    "Trim (optional)",
+                    value=extracted_info.get('trim', '') if extracted_info.get('trim') else '',
+                    placeholder="e.g., LE, EX, Sport"
+                )
+        else:
+            trim = st.text_input(
+                "Trim (optional)",
+                value=extracted_info.get('trim', '') if extracted_info.get('trim') else '',
+                placeholder="e.g., LE, EX, Sport"
+            )
 
         # Mileage
         mileage = st.number_input(
@@ -184,6 +214,61 @@ def display_manual_entry():
             step=500,
             help="Seller's asking price"
         )
+
+    # Show estimated vehicle value if all info is available
+    if VEHICLE_ESTIMATOR_AVAILABLE and make and model and year and trim and mileage:
+        try:
+            estimator = UsedVehicleEstimator()
+            estimated_value = estimator.estimate_current_value(make, model, year, trim, mileage)
+
+            if estimated_value:
+                st.markdown("---")
+                st.markdown("### 💰 Estimated Vehicle Value")
+
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric(
+                        "Estimated Market Value",
+                        format_currency(estimated_value),
+                        help="Based on depreciation model and current mileage"
+                    )
+
+                if asking_price > 0:
+                    with col2:
+                        st.metric("Asking Price", format_currency(asking_price))
+
+                    with col3:
+                        difference = asking_price - estimated_value
+                        difference_pct = (difference / estimated_value) * 100
+
+                        if difference > 0:
+                            st.metric(
+                                "Price Difference",
+                                format_currency(difference),
+                                f"+{difference_pct:.1f}% above market",
+                                delta_color="inverse"
+                            )
+                        else:
+                            st.metric(
+                                "Price Difference",
+                                format_currency(abs(difference)),
+                                f"{abs(difference_pct):.1f}% below market",
+                                delta_color="normal"
+                            )
+
+                    # Price analysis
+                    if difference_pct > 10:
+                        st.error(f"⚠️ Asking price is **{difference_pct:.1f}% above** estimated market value. Consider negotiating.")
+                    elif difference_pct > 5:
+                        st.warning(f"💡 Asking price is **{difference_pct:.1f}% above** market value. Room for negotiation.")
+                    elif difference_pct < -5:
+                        st.success(f"✅ Good deal! Asking price is **{abs(difference_pct):.1f}% below** market value.")
+                    else:
+                        st.info(f"📊 Asking price is within market range ({difference_pct:+.1f}%).")
+
+        except Exception as e:
+            # Silently fail if estimation not possible
+            pass
 
     st.markdown("---")
 

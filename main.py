@@ -84,7 +84,7 @@ def main():
     st.subheader("🤖 AI-Powered Assistant")
 
     st.markdown("""
-    ### 🤖 Wheel-Zarad AI Agent
+    ### 🧙 Wheel-Zard AI Agent
     **Your intelligent vehicle advisor powered by ChatGPT**
 
     Get personalized recommendations and insights for your car buying journey:
@@ -95,8 +95,8 @@ def main():
     - 🔍 Navigate complex decisions with AI guidance
     """)
 
-    if st.button("🤖 Chat with Wheel-Zarad", key="nav_wheel_zarad", use_container_width=True):
-        st.switch_page("pages/9__________Wheel_Zarad_Agent.py")
+    if st.button("🧙 Chat with Wheel-Zard", key="nav_wheel_zard", use_container_width=True):
+        st.switch_page("pages/9__________Wheel_Zard_Agent.py")
 
     st.markdown("---")
 
@@ -213,7 +213,7 @@ def main():
         - ⚖️ Multi-Vehicle Comparison
 
         **AI Assistant:**
-        - 🤖 Wheel-Zarad Agent
+        - 🧙 Wheel-Zard Agent
 
         **Planning Tools:**
         - 🎯 Car Survey

@@ -83,7 +83,7 @@ def main():
     # Additional Tools Section
     st.subheader("🛠️ Additional Tools")
 
-    tool_col1, tool_col2 = st.columns(2)
+    tool_col1, tool_col2, tool_col3 = st.columns(3)
 
     with tool_col1:
         st.markdown("""
@@ -116,6 +116,22 @@ def main():
 
         if st.button("💵 Check Salary Requirements", key="nav_salary", use_container_width=True):
             st.switch_page("pages/3_____Salary_Calculator.py")
+
+    with tool_col3:
+        st.markdown("""
+        ### ✅ Car Buying Checklist
+        **Buying a used car? Know what to look for!**
+
+        Get a maintenance checklist based on the car's mileage
+        and critical questions to ask the seller.
+
+        - 🔧 Maintenance history needed
+        - 📋 Inspection questions
+        - 💡 Buying insights
+        """)
+
+        if st.button("✅ Get Buying Checklist", key="nav_checklist", use_container_width=True):
+            st.switch_page("pages/8_________Car_Buying_Checklist.py")
 
     st.markdown("---")
 
@@ -179,6 +195,7 @@ def main():
         **Planning Tools:**
         - 🎯 Car Survey
         - 💵 Salary Calculator
+        - ✅ Car Buying Checklist
 
         **More:**
         - 📖 About & FAQ

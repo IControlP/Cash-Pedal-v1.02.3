@@ -15,7 +15,10 @@ scipy>=1.11.0,<2.0.0
 # Database (PostgreSQL for consent records)
 psycopg2-binary>=2.9.0
 
+# Web Scraping (for car buying checklist)
+requests>=2.31.0         # For HTTP requests
+beautifulsoup4>=4.12.0   # For HTML parsing
+
 # Optional: Add these if you need them later
 # openpyxl>=3.1.0          # For Excel file export
-# requests>=2.31.0         # For API calls
 # python-dotenv>=1.0.0     # For environment variables

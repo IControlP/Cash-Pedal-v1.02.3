@@ -80,6 +80,26 @@ def main():
 
     st.markdown("---")
 
+    # AI Agent Section
+    st.subheader("🤖 AI-Powered Assistant")
+
+    st.markdown("""
+    ### 🤖 Wheel-Zarad AI Agent
+    **Your intelligent vehicle advisor powered by ChatGPT**
+
+    Get personalized recommendations and insights for your car buying journey:
+    - 💬 Chat with an AI expert about vehicle ownership
+    - 🎯 Personalized recommendations based on your needs
+    - 📊 Data-driven insights from CashPedal's database
+    - 💡 Smart answers to all your car buying questions
+    - 🔍 Navigate complex decisions with AI guidance
+    """)
+
+    if st.button("🤖 Chat with Wheel-Zarad", key="nav_wheel_zarad", use_container_width=True):
+        st.switch_page("pages/9__________Wheel_Zarad_Agent.py")
+
+    st.markdown("---")
+
     # Additional Tools Section
     st.subheader("🛠️ Additional Tools")
 
@@ -191,6 +211,9 @@ def main():
         **Main Tools:**
         - 🧮 Single Car Calculator
         - ⚖️ Multi-Vehicle Comparison
+
+        **AI Assistant:**
+        - 🤖 Wheel-Zarad Agent
 
         **Planning Tools:**
         - 🎯 Car Survey

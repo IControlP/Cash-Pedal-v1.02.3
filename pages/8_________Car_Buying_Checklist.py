@@ -254,6 +254,45 @@ def display_checklist(checklist_data: dict):
     else:
         st.success("✅ No major maintenance services expected yet for this mileage.")
 
+    # Recent maintenance (prior 12 months) - CRITICAL FOR BUYERS
+    st.markdown("### ⚠️ Recent Maintenance (Should Have Been Done in Prior 12 Months)")
+    st.markdown("**🔍 Ask the seller for proof of these recent services:**")
+
+    recent = checklist_data.get('recent_services', [])
+    if recent:
+        total_recent = sum(s['cost'] for s in recent)
+        st.error(f"⚠️ **CRITICAL:** The seller should have records for approximately **{format_currency(total_recent)}** in maintenance from the past year")
+
+        # Group by category
+        recent_by_category = {}
+        for service in recent:
+            category = service.get('category', 'Other')
+            if category not in recent_by_category:
+                recent_by_category[category] = []
+            recent_by_category[category].append(service)
+
+        for category, services in recent_by_category.items():
+            with st.expander(f"🔧 {category} - {len(services)} service(s)", expanded=True):
+                for service in services:
+                    col1, col2, col3 = st.columns([3, 1, 1])
+                    with col1:
+                        st.write(f"✓ **{service['service_name']}**")
+                    with col2:
+                        if service['miles_ago'] == 0:
+                            st.write(f"Due now")
+                        else:
+                            st.write(f"{service['miles_ago']:,} mi ago")
+                    with col3:
+                        st.write(format_currency(service['cost']))
+
+                    st.caption(f"Should have been done at {format_mileage(service['due_at_mileage'])}")
+
+        st.warning("💡 **Tip:** If the seller cannot provide records for these services, factor the costs into your negotiation or budget for catching up on maintenance.")
+    else:
+        st.success("✅ No critical maintenance services were due in the past 12 months")
+
+    st.markdown("---")
+
     # Upcoming maintenance
     st.markdown("### 🔜 Upcoming Maintenance (Next 12 Months)")
 

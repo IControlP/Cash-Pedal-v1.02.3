@@ -159,6 +159,9 @@ class CarBuyingChecklist:
         # Get upcoming services (next 12k miles)
         upcoming_services = self._get_upcoming_services(make, model, mileage)
 
+        # Get recent services (prior 12 months / ~12k miles)
+        recent_services = self._get_recent_services(make, model, mileage)
+
         # Generate insights
         insights = self._generate_buying_insights(
             make, model, year, mileage, vehicle_age, services_due
@@ -180,6 +183,7 @@ class CarBuyingChecklist:
             'categorized_services': categorized_services,
             'total_expected_maintenance_cost': total_expected_cost,
             'upcoming_services': upcoming_services,
+            'recent_services': recent_services,
             'insights': insights,
             'checklist_questions': self._get_inspection_questions(make, vehicle_age, mileage)
         }
@@ -240,6 +244,41 @@ class CarBuyingChecklist:
                 })
 
         return sorted(upcoming, key=lambda x: x['miles_until_due'])
+
+    def _get_recent_services(self, make: str, model: str,
+                            current_mileage: int) -> List[Dict[str, Any]]:
+        """Get services that should have been done in the prior 12 months (~12,000 miles)"""
+
+        # Calculate the mileage range for the prior year
+        prior_year_start_mileage = max(0, current_mileage - 12000)
+
+        # Get all applicable services for this vehicle
+        applicable_services = self.maintenance_calculator.get_applicable_services(make, model)
+
+        recent = []
+
+        for service_type in applicable_services:
+            # Get service interval
+            interval = self.maintenance_calculator.get_service_interval(service_type, make)
+
+            # Calculate how many times this service should have been done in the prior 12k miles
+            # Check if a service was due within the prior year range
+            last_service_due = (current_mileage // interval) * interval
+
+            # If the last service due is within the prior 12 months
+            if prior_year_start_mileage <= last_service_due <= current_mileage:
+                base_cost = self.maintenance_calculator.service_costs.get(service_type, 50)
+
+                recent.append({
+                    'service_name': service_type.replace('_', ' ').title(),
+                    'due_at_mileage': last_service_due,
+                    'cost': base_cost,
+                    'interval': interval,
+                    'miles_ago': current_mileage - last_service_due,
+                    'category': self._categorize_service(service_type.replace('_', ' ').title())
+                })
+
+        return sorted(recent, key=lambda x: x['miles_ago'])
 
     def _generate_buying_insights(self, make: str, model: str, year: int,
                                   mileage: int, age: int,

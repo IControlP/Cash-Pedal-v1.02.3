@@ -270,6 +270,12 @@ def main():
 
     # Sidebar
     with st.sidebar:
+        # Display CashPedal logo at the top
+        logo_path = ASSETS_DIR / "logo_sidebar.svg"
+        if logo_path.exists():
+            st.image(str(logo_path), use_container_width=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+
         st.header("📱 Navigation")
         st.info("Use the sidebar menu or the buttons on this page to get started!")
 

@@ -1,0 +1,32 @@
+[theme]
+# CashPedal Theme Configuration
+# Base theme - use "light" as default for better readability
+base = "light"
+
+# Primary brand color - CashPedal orange
+primaryColor = "#F5A623"
+
+# Main background color - Clean white for light mode
+backgroundColor = "#FFFFFF"
+
+# Secondary background color - Light purple/gray for cards and sidebar
+secondaryBackgroundColor = "#F5F3F9"
+
+# Text color - Dark for maximum readability on light backgrounds
+textColor = "#1A1625"
+
+# Font family
+font = "sans serif"
+
+[server]
+# Enable file watcher for development
+fileWatcherType = "auto"
+
+# Max upload size (200MB)
+maxUploadSize = 200
+
+# Enable CORS for development
+enableCORS = false
+
+# Enable XSS protection
+enableXsrfProtection = true

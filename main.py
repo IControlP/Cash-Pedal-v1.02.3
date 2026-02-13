@@ -270,6 +270,12 @@ def main():
 
     # Sidebar
     with st.sidebar:
+        # Add logo at the top of sidebar
+        logo_path = ASSETS_DIR / "logo_sidebar.svg"
+        if logo_path.exists():
+            st.image(str(logo_path), use_container_width=True)
+            st.markdown("<div style='margin-bottom: 1.5rem;'></div>", unsafe_allow_html=True)
+
         st.header("📱 Navigation")
         st.info("Use the sidebar menu or the buttons on this page to get started!")
 

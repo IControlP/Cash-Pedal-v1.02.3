@@ -363,19 +363,146 @@ def get_theme_css():
     }}
     
     /* Sidebar styling */
-    [data-testid="stSidebar"] > div:first-child {{
-        background-color: {light["secondary_bg"]};
+    [data-testid="stSidebar"] {{
+        background-color: {light["secondary_bg"]} !important;
     }}
-    
+
+    [data-testid="stSidebar"] > div:first-child {{
+        background-color: {light["secondary_bg"]} !important;
+    }}
+
+    /* Sidebar text - Light mode - CRITICAL for readability */
+    [data-testid="stSidebar"] * {{
+        color: {light["text"]} !important;
+    }}
+
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {{
+        color: {light["primary"]} !important;
+    }}
+
+    /* Sidebar navigation links - Light mode */
+    [data-testid="stSidebarNav"] ul {{
+        padding: 0 !important;
+        margin: 0 !important;
+    }}
+
+    [data-testid="stSidebarNav"] li {{
+        list-style: none !important;
+        margin: 4px 0 !important;
+    }}
+
+    [data-testid="stSidebarNav"] a,
+    [data-testid="stSidebarNav"] a span {{
+        color: {light["text"]} !important;
+        background-color: transparent !important;
+        padding: 0.75rem 1rem !important;
+        border-radius: 8px !important;
+        display: block !important;
+        text-decoration: none !important;
+        font-weight: 500 !important;
+        font-size: 0.95rem !important;
+        transition: all 0.2s ease !important;
+        border: 1px solid transparent !important;
+    }}
+
+    [data-testid="stSidebarNav"] a:hover,
+    [data-testid="stSidebarNav"] a:hover span {{
+        background-color: {light["card_bg"]} !important;
+        color: {light["primary"]} !important;
+        border-color: {light["primary"]} !important;
+    }}
+
+    [data-testid="stSidebarNav"] a[aria-current="page"],
+    [data-testid="stSidebarNav"] a[aria-current="page"] span {{
+        background: linear-gradient(135deg, {light["primary"]}, #C07800) !important;
+        color: white !important;
+        font-weight: 600 !important;
+        box-shadow: 0 2px 8px rgba(212, 136, 15, 0.3) !important;
+    }}
+
+    /* Sidebar markdown text */
+    [data-testid="stSidebar"] .stMarkdown {{
+        color: {light["text"]} !important;
+    }}
+
+    [data-testid="stSidebar"] p {{
+        color: {light["text"]} !important;
+    }}
+
+    [data-testid="stSidebar"] li {{
+        color: {light["text"]} !important;
+    }}
+
+    /* Dark mode sidebar */
     @media (prefers-color-scheme: dark) {{
+        [data-testid="stSidebar"] {{
+            background-color: {dark["secondary_bg"]} !important;
+        }}
+
         [data-testid="stSidebar"] > div:first-child {{
-            background-color: {dark["secondary_bg"]};
+            background-color: {dark["secondary_bg"]} !important;
+        }}
+
+        [data-testid="stSidebar"] * {{
+            color: {dark["text"]} !important;
+        }}
+
+        [data-testid="stSidebar"] h1,
+        [data-testid="stSidebar"] h2,
+        [data-testid="stSidebar"] h3 {{
+            color: {dark["primary"]} !important;
+        }}
+
+        [data-testid="stSidebarNav"] a,
+        [data-testid="stSidebarNav"] a span {{
+            color: {dark["text"]} !important;
+        }}
+
+        [data-testid="stSidebarNav"] a:hover,
+        [data-testid="stSidebarNav"] a:hover span {{
+            background-color: {dark["card_bg"]} !important;
+            color: {dark["primary"]} !important;
+            border-color: {dark["primary"]} !important;
+        }}
+
+        [data-testid="stSidebarNav"] a[aria-current="page"],
+        [data-testid="stSidebarNav"] a[aria-current="page"] span {{
+            background: linear-gradient(135deg, {dark["primary"]}, #E09000) !important;
+            color: {dark["background"]} !important;
+            box-shadow: 0 2px 8px rgba(245, 166, 35, 0.3) !important;
+        }}
+
+        [data-testid="stSidebar"] .stMarkdown {{
+            color: {dark["text"]} !important;
+        }}
+
+        [data-testid="stSidebar"] p {{
+            color: {dark["text"]} !important;
+        }}
+
+        [data-testid="stSidebar"] li {{
+            color: {dark["text"]} !important;
         }}
     }}
     
     /* Info/Warning box styling */
     .stAlert {{
         border-radius: 10px !important;
+    }}
+
+    /* Sidebar alert boxes - ensure dark text in light mode */
+    [data-testid="stSidebar"] .stAlert p,
+    [data-testid="stSidebar"] .stAlert {{
+        color: {light["text"]} !important;
+    }}
+
+    @media (prefers-color-scheme: dark) {{
+        [data-testid="stSidebar"] .stAlert p,
+        [data-testid="stSidebar"] .stAlert {{
+            color: {dark["text"]} !important;
+        }}
     }}
     
     /* Divider styling */
@@ -394,10 +521,22 @@ def get_theme_css():
     a {{
         color: {light["primary"]};
     }}
-    
+
     @media (prefers-color-scheme: dark) {{
         a {{
             color: {dark["primary"]};
+        }}
+    }}
+
+    /* Sidebar link override - ensure readability */
+    [data-testid="stSidebar"] a:not([data-testid="stSidebarNav"] a) {{
+        color: {light["primary"]} !important;
+        font-weight: 500 !important;
+    }}
+
+    @media (prefers-color-scheme: dark) {{
+        [data-testid="stSidebar"] a:not([data-testid="stSidebarNav"] a) {{
+            color: {dark["primary"]} !important;
         }}
     }}
     

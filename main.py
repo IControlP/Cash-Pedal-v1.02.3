@@ -6,14 +6,18 @@ Main Application - Home Page
 import streamlit as st
 import sys
 import os
+from pathlib import Path
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from session_manager import initialize_session_state
-from theme_utils import apply_theme, get_footer_html
+from theme_utils import apply_theme, get_footer_html, get_logo_html
+
+# Get absolute path to assets
+ASSETS_DIR = Path(__file__).parent / "assets"
 
 st.set_page_config(
     page_title="CashPedal - Vehicle TCO Calculator",
-    page_icon="🚗",
+    page_icon=str(ASSETS_DIR / "favicon.svg"),
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -22,9 +26,8 @@ def main():
     initialize_session_state()
     apply_theme()
 
-    # Hero Section
-    st.markdown('<p class="main-header">🚗 CashPedal</p>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">Make Smarter Vehicle Ownership Decisions</p>', unsafe_allow_html=True)
+    # Hero Section with Logo
+    st.markdown(get_logo_html(), unsafe_allow_html=True)
     st.markdown("---")
 
     # Welcome Message
@@ -270,7 +273,7 @@ def main():
 
     # Sidebar
     with st.sidebar:
-        # Display CashPedal logo at the top
+        # Display sidebar logo using st.image for better compatibility
         logo_path = ASSETS_DIR / "logo_sidebar.svg"
         if logo_path.exists():
             st.image(str(logo_path), use_container_width=True)

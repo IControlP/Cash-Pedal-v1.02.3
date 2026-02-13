@@ -17,8 +17,8 @@ serverAddress = "0.0.0.0"
 [theme]
 # CashPedal brand theme colors
 primaryColor = "#F5A623"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F5F3F9"
+backgroundColor = "#F8F7F4"
+secondaryBackgroundColor = "#EEEDEA"
 textColor = "#1A1625"
 font = "sans serif"
 

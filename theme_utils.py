@@ -380,10 +380,57 @@ def get_theme_css():
     [data-testid="stSidebar"] > div:first-child {{
         background-color: {light["secondary_bg"]};
     }}
-    
+
     @media (prefers-color-scheme: dark) {{
         [data-testid="stSidebar"] > div:first-child {{
             background-color: {dark["secondary_bg"]};
+        }}
+    }}
+
+    /* Sidebar navigation links - Light mode */
+    [data-testid="stSidebarNav"] ul {{
+        padding: 0 !important;
+    }}
+
+    [data-testid="stSidebarNav"] li {{
+        list-style: none !important;
+    }}
+
+    [data-testid="stSidebarNav"] a {{
+        color: {light["text"]} !important;
+        text-decoration: none !important;
+        padding: 0.5rem 1rem !important;
+        display: block !important;
+        border-radius: 6px !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+    }}
+
+    [data-testid="stSidebarNav"] a:hover {{
+        background-color: {light["card_bg"]} !important;
+        color: {light["primary"]} !important;
+    }}
+
+    [data-testid="stSidebarNav"] a[aria-current="page"] {{
+        background-color: {light["primary"]} !important;
+        color: white !important;
+        font-weight: 600 !important;
+    }}
+
+    /* Sidebar navigation links - Dark mode */
+    @media (prefers-color-scheme: dark) {{
+        [data-testid="stSidebarNav"] a {{
+            color: {dark["text"]} !important;
+        }}
+
+        [data-testid="stSidebarNav"] a:hover {{
+            background-color: {dark["card_bg"]} !important;
+            color: {dark["primary"]} !important;
+        }}
+
+        [data-testid="stSidebarNav"] a[aria-current="page"] {{
+            background-color: {dark["primary"]} !important;
+            color: {dark["background"]} !important;
         }}
     }}
     
@@ -466,22 +513,25 @@ def get_logo_html(center: bool = True) -> str:
     Returns:
         HTML string with the logo and tagline
     """
+    import base64
+
     assets_dir = Path(__file__).parent / "assets"
     logo_path = assets_dir / "logo.svg"
 
-    # Read the SVG content
+    # Read and encode the SVG content as base64 for better compatibility
     if logo_path.exists():
-        with open(logo_path, "r") as f:
-            logo_svg = f.read()
+        with open(logo_path, "rb") as f:
+            logo_data = base64.b64encode(f.read()).decode()
+        logo_html = f'<img src="data:image/svg+xml;base64,{logo_data}" style="max-width: 400px; width: 100%; height: auto;" alt="CashPedal Logo">'
     else:
         # Fallback if logo file doesn't exist
-        logo_svg = '<p class="main-header">🚗 CashPedal</p>'
+        logo_html = '<p class="main-header">🚗 CashPedal</p><p class="sub-header">Make Smarter Vehicle Ownership Decisions</p>'
 
     alignment = "center" if center else "left"
 
     return f"""
     <div style="text-align: {alignment}; padding: 2rem 0 1rem 0;">
-        {logo_svg}
+        {logo_html}
     </div>
     """
 

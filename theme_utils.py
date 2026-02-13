@@ -5,6 +5,7 @@ Provides consistent styling across all pages using pure CSS media queries
 """
 
 import streamlit as st
+from pathlib import Path
 
 # CashPedal Theme Colors
 THEME_COLORS = {
@@ -123,6 +124,19 @@ def get_theme_css():
     
     .footer a:hover {{
         text-decoration: underline;
+    }}
+
+    /* Logo container styling */
+    .logo-container {{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem 0 1rem 0;
+    }}
+
+    .logo-container svg {{
+        max-width: 100%;
+        height: auto;
     }}
 
     /* =============================================
@@ -442,14 +456,66 @@ def apply_theme():
     st.markdown(get_theme_css(), unsafe_allow_html=True)
 
 
+def get_logo_html(center: bool = True) -> str:
+    """
+    Get the CashPedal logo HTML for the hero section.
+
+    Args:
+        center: Whether to center the logo (default: True)
+
+    Returns:
+        HTML string with the logo and tagline
+    """
+    assets_dir = Path(__file__).parent / "assets"
+    logo_path = assets_dir / "logo.svg"
+
+    # Read the SVG content
+    if logo_path.exists():
+        with open(logo_path, "r") as f:
+            logo_svg = f.read()
+    else:
+        # Fallback if logo file doesn't exist
+        logo_svg = '<p class="main-header">🚗 CashPedal</p>'
+
+    alignment = "center" if center else "left"
+
+    return f"""
+    <div style="text-align: {alignment}; padding: 2rem 0 1rem 0;">
+        {logo_svg}
+    </div>
+    """
+
+
 def get_footer_html(version: str = "1.02.3") -> str:
     """
-    Get the standard CashPedal footer HTML.
+    Get the standard CashPedal footer HTML with branding.
+
+    Args:
+        version: Version number to display
+
+    Returns:
+        HTML string for the footer
     """
     return f"""
-    <div class="footer">
-    CashPedal - Vehicle TCO Calculator v{version} | 
-    Powered by Streamlit | 
-    <a href='https://www.cashpedal.io'>www.cashpedal.io</a>
+    <div class="footer" style="
+        text-align: center;
+        padding: 2rem 0 1rem 0;
+        margin-top: 3rem;
+        border-top: 2px solid #D0C9E0;
+    ">
+        <div style="margin-bottom: 1rem;">
+            <strong style="color: #F5A623; font-size: 16px;">CashPedal</strong>
+            <span style="color: #666666; font-size: 14px;"> - Vehicle TCO Calculator v{version}</span>
+        </div>
+        <div style="color: #666666; font-size: 12px; margin-bottom: 0.5rem;">
+            Make Smarter Vehicle Ownership Decisions
+        </div>
+        <div style="color: #666666; font-size: 12px;">
+            Powered by Streamlit |
+            <a href='https://www.cashpedal.io' style="color: #F5A623; text-decoration: none;">www.cashpedal.io</a>
+        </div>
+        <div style="color: #999999; font-size: 11px; margin-top: 1rem;">
+            © 2026 CashPedal. All rights reserved.
+        </div>
     </div>
     """

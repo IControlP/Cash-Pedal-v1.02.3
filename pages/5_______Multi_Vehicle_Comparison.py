@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from session_manager import initialize_session_state, clear_session_state
 from comparison_display import display_comparison
+from theme_utils import apply_theme
 
 # Page configuration
 st.set_page_config(
@@ -25,6 +26,7 @@ def main():
     """Multi-Vehicle Comparison Page"""
     # Initialize session state
     initialize_session_state()
+    apply_theme()
     
     # Page header
     st.title("⚖️ Multi-Vehicle Comparison")

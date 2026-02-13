@@ -25,13 +25,13 @@ THEME_COLORS = {
     "light": {
         "primary": "#D4880F",
         "primary_light": "#F5A623",
-        "background": "#FFFFFF",
-        "secondary_bg": "#F5F3F9",
-        "card_bg": "#EDE9F5",
+        "background": "#F8F7F4",
+        "secondary_bg": "#EEEDEA",
+        "card_bg": "#E5E3DD",
         "text": "#1A1625",
-        "text_secondary": "#333333",
-        "text_muted": "#666666",
-        "border": "#D0C9E0",
+        "text_secondary": "#2D2640",
+        "text_muted": "#555555",
+        "border": "#D0C9C0",
     }
 }
 
@@ -551,7 +551,7 @@ def get_footer_html(version: str = "1.02.3") -> str:
         text-align: center;
         padding: 2rem 0 1rem 0;
         margin-top: 3rem;
-        border-top: 2px solid #D0C9E0;
+        border-top: 2px solid #D0C9C0;
     ">
         <div style="margin-bottom: 1rem;">
             <strong style="color: #F5A623; font-size: 16px;">CashPedal</strong>

@@ -273,15 +273,11 @@ def main():
 
     # Sidebar
     with st.sidebar:
-        # Display sidebar logo
+        # Display sidebar logo using st.image for better compatibility
         logo_path = ASSETS_DIR / "logo_sidebar.svg"
         if logo_path.exists():
-            with open(logo_path, "r") as f:
-                logo_svg = f.read()
-            st.markdown(
-                f'<div style="text-align: center; margin-bottom: 2rem;">{logo_svg}</div>',
-                unsafe_allow_html=True
-            )
+            st.image(str(logo_path), use_container_width=True)
+            st.markdown("<br>", unsafe_allow_html=True)
 
         st.header("📱 Navigation")
         st.info("Use the sidebar menu or the buttons on this page to get started!")

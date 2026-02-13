@@ -97,7 +97,7 @@ def main():
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.info("Add at least 2 vehicles to see comparison results.")
-            if st.button("🔧 Go to Single Car Ownership Calculator", use_container_width=True):
+            if st.button("🔧 Go to Single Car Ownership Calculator", width="stretch"):
                 st.switch_page("pages/4______Single_Car_Ownership_Calculator.py")
     
     # Footer

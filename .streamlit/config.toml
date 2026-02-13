@@ -1,6 +1,6 @@
 [server]
-# Enable CORS for custom domain
-enableCORS = false
+# Enable CORS for custom domain - must be true when XSRF protection is enabled
+enableCORS = true
 enableXsrfProtection = true
 
 # Production server settings
@@ -25,8 +25,3 @@ font = "sans serif"
 [client]
 # Toolbar mode options: auto, developer, viewer, minimal
 toolbarMode = "minimal"
-
-[ui]
-# Hide hamburger menu and footer for cleaner look
-hideTopBar = false
-hideSidebarNav = false

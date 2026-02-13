@@ -484,7 +484,7 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
             df = pd.DataFrame(rows).set_index("Year")
             st.dataframe(
                 df.style.format("${:,.0f}"),
-                use_container_width=True,
+                width="stretch",
             )
             st.caption(
                 r"\*Depreciation is shown for reference but is **not** included "

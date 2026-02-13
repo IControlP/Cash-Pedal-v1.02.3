@@ -526,7 +526,7 @@ def show_terms_fullscreen():
             "✓ I Accept These Terms - Continue to CashPedal", 
             type="primary",
             disabled=not all_checked,
-            use_container_width=True,
+            width="stretch",
             key="accept_terms_button"
         ):
             record_id, error_msg = save_consent_record(

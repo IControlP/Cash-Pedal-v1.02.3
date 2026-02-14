@@ -22,10 +22,21 @@ class CarBuyingChecklist:
         Returns dict with make, model, year, mileage, trim, and other details
         """
         try:
+            # Enhanced headers to appear more like a real browser
             headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'DNT': '1',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Cache-Control': 'max-age=0'
             }
-            response = requests.get(url, headers=headers, timeout=10)
+            response = requests.get(url, headers=headers, timeout=15, allow_redirects=True)
             response.raise_for_status()
 
             soup = BeautifulSoup(response.content, 'html.parser')
@@ -49,18 +60,62 @@ class CarBuyingChecklist:
 
             # Extract information using regex patterns
             # Try priority text first, fallback to full text
+            make = self._extract_make(priority_text, soup) or self._extract_make(text_content, soup)
+            model = self._extract_model(priority_text, soup) or self._extract_model(text_content, soup)
+            year = self._extract_year(priority_text, soup) or self._extract_year(text_content, soup)
+            mileage = self._extract_mileage(priority_text, soup) or self._extract_mileage(text_content, soup)
+            trim = self._extract_trim(priority_text, soup) or self._extract_trim(text_content, soup)
+
             car_info = {
-                'make': self._extract_make(priority_text, soup) or self._extract_make(text_content, soup),
-                'model': self._extract_model(priority_text, soup) or self._extract_model(text_content, soup),
-                'year': self._extract_year(priority_text, soup) or self._extract_year(text_content, soup),
-                'mileage': self._extract_mileage(priority_text, soup) or self._extract_mileage(text_content, soup),
-                'trim': self._extract_trim(priority_text, soup) or self._extract_trim(text_content, soup),
+                'make': make,
+                'model': model,
+                'year': year,
+                'mileage': mileage,
+                'trim': trim,
                 'url': url,
-                'extraction_success': True
+                'extraction_success': True,
+                'debug_info': {
+                    'title': title_text[:100] if title_text else 'None',
+                    'meta_desc': meta_desc[:100] if meta_desc else 'None',
+                    'found_make': bool(make),
+                    'found_model': bool(model),
+                    'found_year': bool(year),
+                    'found_mileage': bool(mileage)
+                }
             }
 
             return car_info
 
+        except requests.exceptions.HTTPError as e:
+            error_msg = f"HTTP Error {e.response.status_code}: "
+            if e.response.status_code == 403:
+                error_msg += "Access denied. The website may be blocking automated requests. Try copying the listing details manually."
+            elif e.response.status_code == 404:
+                error_msg += "Listing not found. The URL may be invalid or the listing has been removed."
+            else:
+                error_msg += "Unable to access the page."
+
+            return {
+                'make': None,
+                'model': None,
+                'year': None,
+                'mileage': None,
+                'trim': None,
+                'url': url,
+                'extraction_success': False,
+                'error': error_msg
+            }
+        except requests.exceptions.Timeout:
+            return {
+                'make': None,
+                'model': None,
+                'year': None,
+                'mileage': None,
+                'trim': None,
+                'url': url,
+                'extraction_success': False,
+                'error': "Request timed out. The website may be slow or unavailable."
+            }
         except Exception as e:
             return {
                 'make': None,
@@ -70,7 +125,7 @@ class CarBuyingChecklist:
                 'trim': None,
                 'url': url,
                 'extraction_success': False,
-                'error': str(e)
+                'error': f"Extraction failed: {str(e)}"
             }
 
     def _extract_year(self, text: str, soup: BeautifulSoup) -> Optional[int]:

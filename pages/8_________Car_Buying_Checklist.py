@@ -103,11 +103,31 @@ def display_url_scraper():
                 with col4:
                     st.metric("Mileage", format_mileage(car_info.get('mileage', 0)) if car_info.get('mileage') else 'N/A')
 
+                # Show debug info if some fields are missing
                 if not all([car_info.get('make'), car_info.get('model'), car_info.get('year'), car_info.get('mileage')]):
                     st.warning("⚠️ Some information couldn't be extracted. Please fill in the missing details below.")
+
+                    # Show debug info in expander
+                    if car_info.get('debug_info'):
+                        with st.expander("🔍 Debug Info (for troubleshooting)"):
+                            debug = car_info['debug_info']
+                            st.caption(f"**Page Title:** {debug.get('title', 'Not found')}")
+                            st.caption(f"**Meta Description:** {debug.get('meta_desc', 'Not found')}")
+                            st.caption(f"**Found Make:** {'✓' if debug.get('found_make') else '✗'}")
+                            st.caption(f"**Found Model:** {'✓' if debug.get('found_model') else '✗'}")
+                            st.caption(f"**Found Year:** {'✓' if debug.get('found_year') else '✗'}")
+                            st.caption(f"**Found Mileage:** {'✓' if debug.get('found_mileage') else '✗'}")
             else:
-                st.error(f"❌ Couldn't extract vehicle information. Error: {car_info.get('error', 'Unknown error')}")
-                st.info("💡 Please use the manual entry option below instead.")
+                st.error(f"❌ Couldn't extract vehicle information.")
+                st.error(f"**Error:** {car_info.get('error', 'Unknown error')}")
+
+                # Provide helpful guidance based on error
+                if '403' in str(car_info.get('error', '')):
+                    st.info("💡 **Tip:** This dealership website is blocking automated requests. Please copy and paste the vehicle details manually below.")
+                elif '404' in str(car_info.get('error', '')):
+                    st.info("💡 **Tip:** The listing may have been removed or the URL is incorrect. Please check the link and try again.")
+                else:
+                    st.info("💡 **Tip:** Please use the manual entry option below instead.")
 
 
 def display_manual_entry():

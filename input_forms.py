@@ -2242,3 +2242,573 @@ def get_default_form_data(vehicle_override: Dict[str, Any] = None) -> Dict[str, 
         base_data.update(vehicle_override)
     
     return base_data
+
+
+# ====================
+# PROGRESSIVE FORMS (SALARY CALCULATOR STYLE)
+# ====================
+
+def display_progressive_forms():
+    """
+    Progressive form display inspired by salary calculator
+    Sections are grayed out/disabled until prerequisites are completed
+    Returns same format: (all_data, is_valid, validation_message)
+    """
+
+    initialize_persistent_settings()
+    initialize_reactive_state()
+
+    # =========================================================================
+    # STEP 1: LOCATION INFORMATION
+    # =========================================================================
+    st.subheader("Step 1: Where are you located?")
+    st.markdown("**Enter your ZIP code** to get accurate fuel prices, electricity rates, and tax information.")
+
+    # ZIP Code input
+    zip_code = st.text_input(
+        "ZIP Code",
+        value="",
+        max_chars=5,
+        help="Your 5-digit ZIP code for location-based estimates",
+        key="zip_code_progressive"
+    )
+
+    # Initialize location data
+    location_valid = False
+    location_data = {
+        'zip_code': zip_code,
+        'state': '',
+        'geography_type': 'Suburban',
+        'fuel_price': 3.50,
+        'electricity_rate': 0.12,
+        'is_valid': False
+    }
+
+    # Validate and lookup ZIP code
+    if zip_code and len(zip_code) == 5 and zip_code.isdigit():
+        if validate_zip_code(zip_code):
+            zip_data = lookup_zip_code_data(zip_code)
+            if zip_data:
+                location_data.update({
+                    'state': zip_data.get('state', ''),
+                    'geography_type': zip_data.get('geography_type', 'Suburban'),
+                    'fuel_price': zip_data.get('fuel_price', 3.50),
+                    'electricity_rate': zip_data.get('electricity_rate', 0.12),
+                    'is_valid': True
+                })
+                location_valid = True
+                st.success(f"✓ Location detected: {zip_data.get('state', '')} - {zip_data.get('geography_type', 'Suburban')}")
+            else:
+                st.error("ZIP code not found in our database")
+        else:
+            st.error("Invalid ZIP code")
+    elif zip_code:
+        st.warning("Please enter a valid 5-digit ZIP code")
+
+    st.markdown("---")
+
+    # =========================================================================
+    # STEP 2: VEHICLE SELECTION
+    # =========================================================================
+    st.subheader("Step 2: Select your vehicle")
+
+    vehicle_valid = False
+    vehicle_data = {
+        'make': '',
+        'model': '',
+        'year': 2025,
+        'trim': '',
+        'trim_msrp': 0,
+        'transaction_type': 'Purchase',
+        'is_used': False,
+        'current_mileage': 0,
+        'is_valid': False
+    }
+
+    if not location_valid:
+        st.info("📍 Complete Step 1 (Location) first to proceed with vehicle selection")
+
+        # Show disabled vehicle selection fields
+        col1, col2 = st.columns(2)
+        with col1:
+            st.selectbox("Make", ["-- Complete Step 1 first --"], disabled=True, key="make_disabled")
+            st.selectbox("Year", ["-- Complete Step 1 first --"], disabled=True, key="year_disabled")
+        with col2:
+            st.selectbox("Model", ["-- Complete Step 1 first --"], disabled=True, key="model_disabled")
+            st.selectbox("Trim", ["-- Complete Step 1 first --"], disabled=True, key="trim_disabled")
+    else:
+        # Show active vehicle selection
+        st.markdown("**Select the vehicle** you want to analyze")
+
+        # Transaction type
+        transaction_type = st.radio(
+            "Transaction Type:",
+            ["Purchase", "Lease"],
+            horizontal=True,
+            key="transaction_type_progressive"
+        )
+        vehicle_data['transaction_type'] = transaction_type
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            # Make selection
+            manufacturers = get_all_manufacturers()
+            make = st.selectbox(
+                "Make",
+                [''] + sorted(manufacturers),
+                key="make_progressive"
+            )
+
+            if make:
+                # Year selection
+                if transaction_type == "Lease":
+                    year = 2025
+                    st.selectbox("Year", [2025], key="year_progressive_lease", disabled=True)
+                    st.caption("Leases are only available for 2025 model year")
+                else:
+                    years = get_available_years_for_model(make, "")  # Get all years for make
+                    if not years:
+                        years = list(range(2015, 2026))
+                    year = st.selectbox("Year", sorted(years, reverse=True), key="year_progressive")
+
+        with col2:
+            if make:
+                # Model selection
+                models = get_models_for_manufacturer(make)
+                model = st.selectbox(
+                    "Model",
+                    [''] + sorted(models),
+                    key="model_progressive"
+                )
+
+                if model and make:
+                    # Trim selection
+                    trims = get_trims_for_vehicle(make, model, year)
+                    if trims:
+                        trim = st.selectbox("Trim", list(trims.keys()), key="trim_progressive")
+                        trim_msrp = trims.get(trim, 0)
+                    else:
+                        trim = st.selectbox("Trim", ["Base"], key="trim_progressive_default")
+                        trim_msrp = 30000
+            else:
+                st.selectbox("Model", ["-- Select Make first --"], disabled=True, key="model_progressive_disabled")
+                st.selectbox("Trim", ["-- Select Make and Model first --"], disabled=True, key="trim_progressive_disabled")
+
+        # If vehicle fully selected, show summary and mark as valid
+        if make and model and trim_msrp > 0:
+            # Estimate current value for used vehicles
+            estimated_value = None
+            is_used = False
+            current_mileage = 0
+
+            if year < 2025:
+                is_used = True
+                vehicle_age = 2025 - year
+                estimated_mileage = vehicle_age * 12000
+
+                estimated_value = estimate_used_vehicle_value(
+                    make, model, year, estimated_mileage, trim_msrp
+                )
+                current_mileage = estimated_mileage
+
+            vehicle_data.update({
+                'make': make,
+                'model': model,
+                'year': year,
+                'trim': trim,
+                'trim_msrp': trim_msrp,
+                'is_used': is_used,
+                'current_mileage': current_mileage,
+                'is_valid': True
+            })
+            vehicle_valid = True
+
+            # Show vehicle summary
+            if estimated_value and estimated_value > 0:
+                st.success(f"✓ Selected: {year} {make} {model} {trim} - Est. Value: ${estimated_value:,.0f} (MSRP: ${trim_msrp:,.0f})")
+            else:
+                st.success(f"✓ Selected: {year} {make} {model} {trim} - MSRP: ${trim_msrp:,.0f}")
+
+    st.markdown("---")
+
+    # =========================================================================
+    # STEP 3: PERSONAL INFORMATION
+    # =========================================================================
+    st.subheader("Step 3: Personal Information")
+
+    personal_valid = False
+    personal_data = {
+        'user_age': 35,
+        'gross_income': 60000,
+        'credit_score_range': '670-739 (Good)',
+        'annual_mileage': 12000,
+        'driving_style': 'normal',
+        'terrain': 'flat',
+        'num_household_vehicles': 2,
+        'is_valid': False
+    }
+
+    if not vehicle_valid:
+        st.info("🚗 Complete Step 2 (Vehicle Selection) first to proceed with personal information")
+
+        # Show disabled fields
+        col1, col2 = st.columns(2)
+        with col1:
+            st.number_input("Age", value=35, disabled=True, key="age_disabled")
+            st.number_input("Annual Mileage", value=12000, disabled=True, key="mileage_disabled")
+        with col2:
+            st.number_input("Gross Annual Income", value=60000, disabled=True, key="income_disabled")
+            st.selectbox("Credit Score", ["-- Complete Step 2 first --"], disabled=True, key="credit_disabled")
+    else:
+        st.markdown("**Provide your personal information** for accurate insurance and financing estimates")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            user_age = st.number_input(
+                "Your Age",
+                min_value=16,
+                max_value=100,
+                value=35,
+                help="Your age affects insurance rates",
+                key="age_progressive"
+            )
+
+            annual_mileage = st.number_input(
+                "Annual Mileage",
+                min_value=1000,
+                max_value=50000,
+                value=12000,
+                step=1000,
+                help="Expected miles driven per year",
+                key="mileage_progressive"
+            )
+
+            driving_style = st.selectbox(
+                "Driving Style",
+                ["conservative", "normal", "aggressive"],
+                index=1,
+                help="How you drive affects fuel efficiency",
+                key="driving_style_progressive"
+            )
+
+        with col2:
+            gross_income = st.number_input(
+                "Gross Annual Income ($)",
+                min_value=0,
+                max_value=1000000,
+                value=60000,
+                step=5000,
+                help="Your yearly income before taxes",
+                key="income_progressive"
+            )
+
+            credit_score_range = st.selectbox(
+                "Credit Score Range",
+                [
+                    '800-850 (Excellent)',
+                    '740-799 (Very Good)',
+                    '670-739 (Good)',
+                    '580-669 (Fair)',
+                    '300-579 (Poor)'
+                ],
+                index=2,
+                help="Your credit score affects financing rates",
+                key="credit_progressive"
+            )
+
+            terrain = st.selectbox(
+                "Terrain",
+                ["flat", "hilly", "mountainous"],
+                help="Your area's terrain affects fuel efficiency",
+                key="terrain_progressive"
+            )
+
+        num_household_vehicles = st.number_input(
+            "Number of Household Vehicles",
+            min_value=1,
+            max_value=10,
+            value=2,
+            help="Total vehicles in your household (affects insurance)",
+            key="household_vehicles_progressive"
+        )
+
+        personal_data.update({
+            'user_age': user_age,
+            'gross_income': gross_income,
+            'credit_score_range': credit_score_range,
+            'annual_mileage': annual_mileage,
+            'driving_style': driving_style,
+            'terrain': terrain,
+            'num_household_vehicles': num_household_vehicles,
+            'is_valid': True
+        })
+        personal_valid = True
+
+    st.markdown("---")
+
+    # =========================================================================
+    # STEP 4: FINANCIAL PARAMETERS
+    # =========================================================================
+    st.subheader("Step 4: Financial Parameters")
+
+    financial_valid = False
+    financial_data = {
+        'down_payment': 0,
+        'down_payment_percent': 20,
+        'trade_in_value': 0,
+        'trade_in_owed': 0,
+        'interest_rate': 6.5,
+        'loan_term_years': 5,
+        'lease_term_months': 36,
+        'lease_down_payment': 0,
+        'lease_annual_mileage': 12000,
+        'is_valid': False
+    }
+
+    if not personal_valid:
+        st.info("👤 Complete Step 3 (Personal Information) first to proceed with financial parameters")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.number_input("Down Payment %", value=20, disabled=True, key="down_pmt_disabled")
+        with col2:
+            st.number_input("Loan Term (years)", value=5, disabled=True, key="loan_term_disabled")
+    else:
+        transaction_type = vehicle_data.get('transaction_type', 'Purchase')
+
+        if transaction_type == "Purchase":
+            st.markdown("**Set your purchase financing** terms")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                down_payment_percent = st.slider(
+                    "Down Payment (%)",
+                    min_value=0,
+                    max_value=100,
+                    value=20,
+                    step=5,
+                    help="Percentage of vehicle price to pay upfront",
+                    key="down_payment_progressive"
+                )
+
+                trade_in_value = st.number_input(
+                    "Trade-In Value ($)",
+                    min_value=0,
+                    max_value=200000,
+                    value=0,
+                    step=1000,
+                    help="Value of vehicle you're trading in",
+                    key="trade_in_progressive"
+                )
+
+            with col2:
+                loan_term_years = st.slider(
+                    "Loan Term (years)",
+                    min_value=1,
+                    max_value=8,
+                    value=5,
+                    help="Length of auto loan",
+                    key="loan_term_progressive"
+                )
+
+                trade_in_owed = st.number_input(
+                    "Amount Owed on Trade-In ($)",
+                    min_value=0,
+                    max_value=200000,
+                    value=0,
+                    step=1000,
+                    help="Outstanding loan on trade-in",
+                    key="trade_in_owed_progressive"
+                )
+
+            # Calculate down payment amount
+            vehicle_price = vehicle_data.get('trim_msrp', 30000)
+            down_payment = vehicle_price * (down_payment_percent / 100)
+
+            financial_data.update({
+                'down_payment': down_payment,
+                'down_payment_percent': down_payment_percent,
+                'trade_in_value': trade_in_value,
+                'trade_in_owed': trade_in_owed,
+                'loan_term_years': loan_term_years,
+                'interest_rate': 6.5,  # Default, will be adjusted based on credit
+                'is_valid': True
+            })
+            financial_valid = True
+
+        else:  # Lease
+            st.markdown("**Set your lease** terms")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                lease_term_months = st.selectbox(
+                    "Lease Term",
+                    [24, 36, 48],
+                    index=1,
+                    help="Length of lease in months",
+                    key="lease_term_progressive"
+                )
+
+                lease_annual_mileage = st.selectbox(
+                    "Annual Mileage Allowance",
+                    [10000, 12000, 15000, 18000],
+                    index=1,
+                    help="Miles per year allowed under lease",
+                    key="lease_mileage_progressive"
+                )
+
+            with col2:
+                lease_down_payment = st.number_input(
+                    "Lease Down Payment ($)",
+                    min_value=0,
+                    max_value=20000,
+                    value=0,
+                    step=500,
+                    help="Initial payment at lease signing",
+                    key="lease_down_progressive"
+                )
+
+            financial_data.update({
+                'lease_term_months': lease_term_months,
+                'lease_down_payment': lease_down_payment,
+                'lease_annual_mileage': lease_annual_mileage,
+                'is_valid': True
+            })
+            financial_valid = True
+
+    st.markdown("---")
+
+    # =========================================================================
+    # STEP 5: INSURANCE
+    # =========================================================================
+    st.subheader("Step 5: Insurance Coverage")
+
+    insurance_valid = False
+    insurance_data = {
+        'coverage_type': 'Full Coverage',
+        'shop_type': 'independent',
+        'is_valid': False
+    }
+
+    if not financial_valid:
+        st.info("💰 Complete Step 4 (Financial Parameters) first to proceed with insurance")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.selectbox("Coverage Type", ["-- Complete Step 4 first --"], disabled=True, key="coverage_disabled")
+        with col2:
+            st.selectbox("Repair Shop", ["-- Complete Step 4 first --"], disabled=True, key="shop_disabled")
+    else:
+        st.markdown("**Select your insurance coverage** preferences")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            coverage_type = st.selectbox(
+                "Coverage Type",
+                ["Full Coverage", "Liability Only"],
+                help="Full coverage includes comprehensive and collision",
+                key="coverage_progressive"
+            )
+
+        with col2:
+            shop_type = st.selectbox(
+                "Preferred Repair Shop",
+                [
+                    ("Independent Shop", "independent"),
+                    ("Dealer Service", "dealer")
+                ],
+                format_func=lambda x: x[0] if isinstance(x, tuple) else x,
+                help="Independent shops typically cost less",
+                key="shop_progressive"
+            )
+            if isinstance(shop_type, tuple):
+                shop_type = shop_type[1]
+
+        insurance_data.update({
+            'coverage_type': coverage_type,
+            'shop_type': shop_type,
+            'is_valid': True
+        })
+        insurance_valid = True
+
+    st.markdown("---")
+
+    # =========================================================================
+    # STEP 6: ANALYSIS SETTINGS
+    # =========================================================================
+    st.subheader("Step 6: Analysis Settings")
+
+    analysis_valid = False
+    analysis_data = {
+        'analysis_years': 5,
+        'comparison_priority': 'cost',
+        'is_valid': False
+    }
+
+    if not insurance_valid:
+        st.info("🛡️ Complete Step 5 (Insurance) first to finalize analysis settings")
+
+        st.slider("Analysis Period (years)", 1, 10, 5, disabled=True, key="analysis_years_disabled")
+    else:
+        st.markdown("**Configure analysis** period and priorities")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            analysis_years = st.slider(
+                "Analysis Period (years)",
+                min_value=1,
+                max_value=10,
+                value=5,
+                help="How many years to analyze ownership costs",
+                key="analysis_years_progressive"
+            )
+
+        with col2:
+            comparison_priority = st.selectbox(
+                "Comparison Priority",
+                ["cost", "value", "performance"],
+                help="What matters most when comparing vehicles",
+                key="comparison_priority_progressive"
+            )
+
+        analysis_data.update({
+            'analysis_years': analysis_years,
+            'comparison_priority': comparison_priority,
+            'is_valid': True
+        })
+        analysis_valid = True
+
+    # =========================================================================
+    # COMBINE ALL DATA AND VALIDATE
+    # =========================================================================
+    all_data = {
+        **location_data,
+        **vehicle_data,
+        **personal_data,
+        **financial_data,
+        **insurance_data,
+        **analysis_data
+    }
+
+    # Overall validation
+    is_valid = all([
+        location_valid,
+        vehicle_valid,
+        personal_valid,
+        financial_valid,
+        insurance_valid,
+        analysis_valid
+    ])
+
+    if is_valid:
+        validation_message = "✓ All steps completed - ready to calculate"
+    else:
+        validation_message = "Please complete all steps to proceed with calculation"
+
+    return all_data, is_valid, validation_message

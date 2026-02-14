@@ -29,15 +29,32 @@ class CarBuyingChecklist:
             response.raise_for_status()
 
             soup = BeautifulSoup(response.content, 'html.parser')
+
+            # Try to extract from title and meta tags first (usually more structured)
+            title_text = ''
+            title_tag = soup.find('title')
+            if title_tag:
+                title_text = title_tag.get_text().lower()
+
+            # Get meta description
+            meta_desc = ''
+            meta_tag = soup.find('meta', attrs={'name': 'description'})
+            if meta_tag and meta_tag.get('content'):
+                meta_desc = meta_tag.get('content').lower()
+
+            # Combine title, meta, and full text for extraction
+            priority_text = title_text + ' ' + meta_desc
             text_content = soup.get_text().lower()
+            full_text = priority_text + ' ' + text_content
 
             # Extract information using regex patterns
+            # Try priority text first, fallback to full text
             car_info = {
-                'make': self._extract_make(text_content, soup),
-                'model': self._extract_model(text_content, soup),
-                'year': self._extract_year(text_content, soup),
-                'mileage': self._extract_mileage(text_content, soup),
-                'trim': self._extract_trim(text_content, soup),
+                'make': self._extract_make(priority_text, soup) or self._extract_make(text_content, soup),
+                'model': self._extract_model(priority_text, soup) or self._extract_model(text_content, soup),
+                'year': self._extract_year(priority_text, soup) or self._extract_year(text_content, soup),
+                'mileage': self._extract_mileage(priority_text, soup) or self._extract_mileage(text_content, soup),
+                'trim': self._extract_trim(priority_text, soup) or self._extract_trim(text_content, soup),
                 'url': url,
                 'extraction_success': True
             }
@@ -105,20 +122,109 @@ class CarBuyingChecklist:
 
     def _extract_model(self, text: str, soup: BeautifulSoup) -> Optional[str]:
         """Extract car model from text"""
-        # This is more complex and would require make-specific logic
-        # For now, return a placeholder that can be filled manually
+        # Make-specific model lists
+        make_models = {
+            'Toyota': ['Camry', 'Corolla', 'RAV4', 'Highlander', 'Tacoma', 'Tundra', '4Runner',
+                      'Sienna', 'Prius', 'Avalon', 'C-HR', 'Venza', 'Sequoia', 'Land Cruiser',
+                      'GR86', 'Supra', 'Mirai', 'Crown', 'Grand Highlander', 'bZ4X'],
+            'Honda': ['Civic', 'Accord', 'CR-V', 'Pilot', 'Odyssey', 'Ridgeline', 'HR-V',
+                     'Passport', 'Insight', 'Fit', 'Clarity'],
+            'Ford': ['F-150', 'F-250', 'F-350', 'Mustang', 'Explorer', 'Escape', 'Edge', 'Expedition',
+                    'Bronco', 'Ranger', 'Maverick', 'EcoSport', 'Flex', 'Transit', 'Super Duty'],
+            'Chevrolet': ['Silverado', 'Equinox', 'Tahoe', 'Suburban', 'Traverse', 'Malibu', 'Camaro',
+                         'Blazer', 'Trax', 'Colorado', 'Corvette', 'Bolt', 'Trailblazer'],
+            'Nissan': ['Altima', 'Sentra', 'Rogue', 'Pathfinder', 'Murano', 'Maxima', 'Frontier',
+                      'Titan', 'Kicks', 'Armada', 'Versa', 'Leaf', 'Ariya', 'Z'],
+            'BMW': ['3 Series', '5 Series', '7 Series', 'X3', 'X5', 'X7', 'X1', 'X2', 'X4', 'X6',
+                   'M3', 'M5', 'i4', 'iX', 'Z4', '2 Series', '4 Series', '8 Series'],
+            'Mercedes-Benz': ['C-Class', 'E-Class', 'S-Class', 'GLA', 'GLB', 'GLC', 'GLE', 'GLS',
+                             'A-Class', 'CLA', 'CLS', 'G-Class', 'AMG GT', 'EQS', 'EQE', 'EQB'],
+            'Audi': ['A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'Q3', 'Q5', 'Q7', 'Q8', 'e-tron', 'TT', 'R8'],
+            'Hyundai': ['Elantra', 'Sonata', 'Tucson', 'Santa Fe', 'Palisade', 'Kona', 'Venue',
+                       'Ioniq', 'Santa Cruz', 'Accent'],
+            'Kia': ['Forte', 'K5', 'Optima', 'Sportage', 'Sorento', 'Telluride', 'Soul', 'Seltos',
+                   'Carnival', 'Stinger', 'EV6', 'Niro'],
+            'Mazda': ['Mazda3', 'Mazda6', 'CX-3', 'CX-5', 'CX-9', 'CX-30', 'CX-50', 'CX-90', 'MX-5 Miata'],
+            'Subaru': ['Outback', 'Forester', 'Crosstrek', 'Impreza', 'Legacy', 'Ascent', 'WRX', 'BRZ', 'Solterra'],
+            'Volkswagen': ['Jetta', 'Passat', 'Golf', 'Tiguan', 'Atlas', 'Taos', 'ID.4', 'Arteon', 'GTI'],
+            'Lexus': ['ES', 'IS', 'LS', 'GS', 'RX', 'NX', 'GX', 'LX', 'UX', 'LC', 'RC'],
+            'Tesla': ['Model 3', 'Model S', 'Model X', 'Model Y', 'Cybertruck'],
+            'Jeep': ['Wrangler', 'Grand Cherokee', 'Cherokee', 'Compass', 'Renegade', 'Gladiator', 'Wagoneer', 'Grand Wagoneer'],
+            'Ram': ['1500', '2500', '3500', 'ProMaster'],
+            'GMC': ['Sierra', 'Canyon', 'Terrain', 'Acadia', 'Yukon', 'Hummer EV'],
+            'Cadillac': ['Escalade', 'XT4', 'XT5', 'XT6', 'CT4', 'CT5', 'Lyriq'],
+            'Dodge': ['Charger', 'Challenger', 'Durango', 'Hornet'],
+            'Acura': ['Integra', 'TLX', 'MDX', 'RDX', 'NSX'],
+            'Infiniti': ['Q50', 'Q60', 'QX50', 'QX55', 'QX60', 'QX80'],
+            'Volvo': ['S60', 'S90', 'V60', 'V90', 'XC40', 'XC60', 'XC90', 'C40'],
+            'Porsche': ['911', 'Cayenne', 'Macan', 'Panamera', 'Taycan', 'Boxster', 'Cayman'],
+            'Genesis': ['G70', 'G80', 'G90', 'GV70', 'GV80'],
+            'Mitsubishi': ['Outlander', 'Eclipse Cross', 'Mirage', 'Outlander Sport'],
+        }
+
+        # First, try to find the make in the text
+        detected_make = None
+        for make in make_models.keys():
+            if make.lower() in text:
+                detected_make = make
+                break
+
+        # If no make detected, try all models from all makes
+        if not detected_make:
+            all_models = []
+            for models in make_models.values():
+                all_models.extend(models)
+
+            for model in all_models:
+                # Use word boundary to avoid partial matches
+                pattern = r'\b' + re.escape(model.lower()) + r'\b'
+                if re.search(pattern, text):
+                    return model
+        else:
+            # Search for models specific to the detected make
+            for model in make_models.get(detected_make, []):
+                # Use word boundary to avoid partial matches
+                pattern = r'\b' + re.escape(model.lower()) + r'\b'
+                if re.search(pattern, text):
+                    return model
+
         return None
 
     def _extract_trim(self, text: str, soup: BeautifulSoup) -> Optional[str]:
         """Extract trim level from text"""
-        common_trims = [
-            'base', 'sport', 'luxury', 'premium', 'touring', 'limited', 'se', 'ex',
-            'lx', 'le', 'xle', 'sr5', 'trd', 'rs', 'ss', 'gt', 'amg', 'm sport'
+        # Priority 1: Actual trim levels (search these first)
+        trim_levels = [
+            'Platinum', 'Limited', 'Premium', 'Luxury', 'Sport', 'Touring', 'Base',
+            'SE', 'SEL', 'SXT', 'SRT', 'EX', 'EX-L', 'LX', 'LE', 'XLE', 'XSE',
+            'SR', 'SR5', 'TRD Pro', 'TRD Sport', 'TRD Off-Road', 'Nightshade',
+            'RS', 'SS', 'LT', 'LTZ', 'LS', 'Premier', 'High Country',
+            'GT', 'GT-Line', 'SX', 'S', 'Prestige', 'Technik', 'Komfort',
+            'M Sport', 'xDrive', 'sDrive', 'AMG', 'Hybrid', 'Plug-in Hybrid'
         ]
 
-        for trim in common_trims:
-            if trim in text:
-                return trim.title()
+        # Priority 2: Drivetrain/transmission (only if no trim found)
+        drivetrain_options = [
+            'FWD', 'AWD', '4WD', 'RWD', '2WD', '4x4', '4x2',
+            'CVT', 'Automatic', 'Manual'
+        ]
+
+        # Sort by length (longest first) to match multi-word trims first
+        trim_levels.sort(key=len, reverse=True)
+        drivetrain_options.sort(key=len, reverse=True)
+
+        # Try to find actual trim levels first
+        for trim in trim_levels:
+            # Use word boundary for better matching
+            pattern = r'\b' + re.escape(trim) + r'\b'
+            if re.search(pattern, text, re.IGNORECASE):
+                return trim
+
+        # If no trim found, check drivetrain (lower priority)
+        for option in drivetrain_options:
+            pattern = r'\b' + re.escape(option) + r'\b'
+            if re.search(pattern, text, re.IGNORECASE):
+                return option
+
         return None
 
     def generate_maintenance_checklist(self, make: str, model: str, year: int,

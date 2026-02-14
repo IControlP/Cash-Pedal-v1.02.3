@@ -2259,81 +2259,10 @@ def display_progressive_forms():
     initialize_reactive_state()
 
     # =========================================================================
-    # STEP 1: LOCATION INFORMATION
+    # STEP 1: VEHICLE SELECTION
     # =========================================================================
-    st.subheader("Step 1: Where are you located?")
-    st.markdown("**Enter your ZIP code** to get accurate fuel prices, electricity rates, and tax information.")
-
-    # ZIP Code input
-    zip_code = st.text_input(
-        "ZIP Code",
-        value="",
-        max_chars=5,
-        help="Your 5-digit ZIP code for location-based estimates",
-        key="zip_code_progressive"
-    )
-
-    # Initialize location data
-    location_valid = False
-    location_data = {
-        'zip_code': zip_code,
-        'state': '',
-        'geography_type': 'Suburban',
-        'fuel_price': 3.50,
-        'electricity_rate': 0.12,
-        'is_valid': False
-    }
-
-    # Validate and lookup ZIP code
-    if zip_code and len(zip_code) == 5 and zip_code.isdigit():
-        if validate_zip_code(zip_code):
-            zip_data = lookup_zip_code_data(zip_code)
-            if zip_data:
-                location_data.update({
-                    'state': zip_data.get('state', ''),
-                    'geography_type': zip_data.get('geography_type', 'Suburban'),
-                    'fuel_price': zip_data.get('fuel_price', 3.50),
-                    'electricity_rate': zip_data.get('electricity_rate', 0.12),
-                    'is_valid': True
-                })
-                location_valid = True
-
-                # Display location info with fuel and electricity prices
-                fuel_price = zip_data.get('fuel_price', 3.50)
-                electricity_rate = zip_data.get('electricity_rate', 0.12)
-
-                st.success(f"✓ Location detected: {zip_data.get('state', '')} - {zip_data.get('geography_type', 'Suburban')}")
-
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.markdown(f"""
-                    <div style="background-color: #fff3e0; padding: 15px; border-radius: 8px; text-align: center;">
-                        <p style="margin: 0; color: #e65100; font-size: 11px; font-weight: bold;">FUEL PRICE</p>
-                        <p style="margin: 5px 0; font-size: 24px; font-weight: bold; color: #e65100;">${fuel_price:.2f}</p>
-                        <p style="margin: 0; color: #666; font-size: 11px;">per gallon</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                with col2:
-                    st.markdown(f"""
-                    <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center;">
-                        <p style="margin: 0; color: #1565c0; font-size: 11px; font-weight: bold;">ELECTRICITY RATE</p>
-                        <p style="margin: 5px 0; font-size: 24px; font-weight: bold; color: #1565c0;">${electricity_rate:.3f}</p>
-                        <p style="margin: 0; color: #666; font-size: 11px;">per kWh</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-            else:
-                st.error("ZIP code not found in our database")
-        else:
-            st.error("Invalid ZIP code")
-    elif zip_code:
-        st.warning("Please enter a valid 5-digit ZIP code")
-
-    st.markdown("---")
-
-    # =========================================================================
-    # STEP 2: VEHICLE SELECTION
-    # =========================================================================
-    st.subheader("Step 2: Select your vehicle")
+    st.subheader("Step 1: Select your vehicle")
+    st.markdown("**Select the vehicle** you want to analyze")
 
     vehicle_valid = False
     vehicle_data = {
@@ -2348,127 +2277,202 @@ def display_progressive_forms():
         'is_valid': False
     }
 
-    if not location_valid:
-        st.info("📍 Complete Step 1 (Location) first to proceed with vehicle selection")
+    # Transaction type
+    transaction_type = st.radio(
+        "Transaction Type:",
+        ["Purchase", "Lease"],
+        horizontal=True,
+        key="transaction_type_progressive"
+    )
+    vehicle_data['transaction_type'] = transaction_type
 
-        # Show disabled vehicle selection fields
-        col1, col2 = st.columns(2)
-        with col1:
-            st.selectbox("Make", ["-- Complete Step 1 first --"], disabled=True, key="make_disabled")
-            st.selectbox("Year", ["-- Complete Step 1 first --"], disabled=True, key="year_disabled")
-        with col2:
-            st.selectbox("Model", ["-- Complete Step 1 first --"], disabled=True, key="model_disabled")
-            st.selectbox("Trim", ["-- Complete Step 1 first --"], disabled=True, key="trim_disabled")
-    else:
-        # Show active vehicle selection
-        st.markdown("**Select the vehicle** you want to analyze")
+    col1, col2 = st.columns(2)
 
-        # Transaction type
-        transaction_type = st.radio(
-            "Transaction Type:",
-            ["Purchase", "Lease"],
-            horizontal=True,
-            key="transaction_type_progressive"
+    with col1:
+        # Make selection
+        manufacturers = get_all_manufacturers()
+        make = st.selectbox(
+            "Make",
+            [''] + sorted(manufacturers),
+            key="make_progressive"
         )
-        vehicle_data['transaction_type'] = transaction_type
 
-        col1, col2 = st.columns(2)
-
-        with col1:
-            # Make selection
-            manufacturers = get_all_manufacturers()
-            make = st.selectbox(
-                "Make",
-                [''] + sorted(manufacturers),
-                key="make_progressive"
+        # Model selection
+        if make:
+            models = get_models_for_manufacturer(make)
+            model = st.selectbox(
+                "Model",
+                [''] + sorted(models),
+                key="model_progressive"
             )
+        else:
+            st.selectbox("Model", ["-- Select Make first --"], disabled=True, key="model_progressive_disabled")
+            model = ''
 
-            # Model selection
-            if make:
-                models = get_models_for_manufacturer(make)
-                model = st.selectbox(
-                    "Model",
-                    [''] + sorted(models),
-                    key="model_progressive"
-                )
+    with col2:
+        # Year selection (depends on make and model)
+        if make and model:
+            if transaction_type == "Lease":
+                year = 2025
+                st.selectbox("Year", [2025], key="year_progressive_lease", disabled=True)
+                st.caption("Leases are only available for 2025 model year")
             else:
-                st.selectbox("Model", ["-- Select Make first --"], disabled=True, key="model_progressive_disabled")
-                model = ''
+                # Get years for the specific make/model, limited to last 10 years
+                from datetime import datetime
+                current_year = datetime.now().year
+                ten_years_ago = current_year - 10
 
-        with col2:
-            # Year selection (depends on make and model)
-            if make and model:
-                if transaction_type == "Lease":
-                    year = 2025
-                    st.selectbox("Year", [2025], key="year_progressive_lease", disabled=True)
-                    st.caption("Leases are only available for 2025 model year")
+                years = get_available_years_for_model(make, model)
+                if not years:
+                    years = list(range(ten_years_ago, current_year + 2))  # Default to last 10 years + next year
                 else:
-                    # Get years for the specific make/model, limited to last 10 years
-                    from datetime import datetime
-                    current_year = datetime.now().year
-                    ten_years_ago = current_year - 10
+                    # Filter to only last 10 years
+                    years = [y for y in years if y >= ten_years_ago and y <= current_year + 1]
 
-                    years = get_available_years_for_model(make, model)
-                    if not years:
-                        years = list(range(ten_years_ago, current_year + 2))  # Default to last 10 years + next year
-                    else:
-                        # Filter to only last 10 years
-                        years = [y for y in years if y >= ten_years_ago and y <= current_year + 1]
+                # Add empty option at beginning (no default)
+                year = st.selectbox("Year", [''] + sorted(years, reverse=True), key="year_progressive")
+        else:
+            st.selectbox("Year", ["-- Select Make and Model first --"], disabled=True, key="year_progressive_disabled")
+            year = ''
 
-                    # Add empty option at beginning (no default)
-                    year = st.selectbox("Year", [''] + sorted(years, reverse=True), key="year_progressive")
+        # Trim selection (depends on make, model, and year)
+        if make and model and year:
+            trims = get_trims_for_vehicle(make, model, year)
+            if trims:
+                trim = st.selectbox("Trim", list(trims.keys()), key="trim_progressive")
+                trim_msrp = trims.get(trim, 0)
             else:
-                st.selectbox("Year", ["-- Select Make and Model first --"], disabled=True, key="year_progressive_disabled")
-                year = ''
+                trim = st.selectbox("Trim", ["Base"], key="trim_progressive_default")
+                trim_msrp = 30000
+        else:
+            st.selectbox("Trim", ["-- Select Make, Model, and Year first --"], disabled=True, key="trim_progressive_disabled")
+            trim = ''
+            trim_msrp = 0
 
-            # Trim selection (depends on make, model, and year)
-            if make and model and year:
-                trims = get_trims_for_vehicle(make, model, year)
-                if trims:
-                    trim = st.selectbox("Trim", list(trims.keys()), key="trim_progressive")
-                    trim_msrp = trims.get(trim, 0)
+    # If vehicle fully selected, show summary and mark as valid
+    if make and model and trim_msrp > 0:
+        # Estimate current value for used vehicles
+        estimated_value = None
+        is_used = False
+        current_mileage = 0
+
+        if year < 2025:
+            is_used = True
+            vehicle_age = 2025 - year
+            estimated_mileage = vehicle_age * 12000
+
+            estimated_value = estimate_used_vehicle_value(
+                make, model, year, estimated_mileage, trim_msrp
+            )
+            current_mileage = estimated_mileage
+
+        vehicle_data.update({
+            'make': make,
+            'model': model,
+            'year': year,
+            'trim': trim,
+            'trim_msrp': trim_msrp,
+            'is_used': is_used,
+            'current_mileage': current_mileage,
+            'is_valid': True
+        })
+        vehicle_valid = True
+
+        # Show vehicle summary
+        if estimated_value and estimated_value > 0:
+            st.success(f"✓ Selected: {year} {make} {model} {trim} - Est. Value: ${estimated_value:,.0f} (MSRP: ${trim_msrp:,.0f})")
+        else:
+            st.success(f"✓ Selected: {year} {make} {model} {trim} - MSRP: ${trim_msrp:,.0f}")
+
+    st.markdown("---")
+
+    # =========================================================================
+    # STEP 2: LOCATION INFORMATION
+    # =========================================================================
+    st.subheader("Step 2: Where are you located?")
+
+    location_valid = False
+    location_data = {
+        'zip_code': '',
+        'state': '',
+        'geography_type': 'Suburban',
+        'fuel_price': 3.50,
+        'electricity_rate': 0.12,
+        'is_valid': False
+    }
+
+    if not vehicle_valid:
+        st.info("🚗 Complete Step 1 (Vehicle Selection) first to proceed with location")
+        st.text_input("ZIP Code", value="", disabled=True, key="zip_code_disabled")
+    else:
+        st.markdown("**Enter your ZIP code** to get accurate fuel prices, electricity rates, and tax information.")
+
+        # ZIP Code input
+        zip_code = st.text_input(
+            "ZIP Code",
+            value="",
+            max_chars=5,
+            help="Your 5-digit ZIP code for location-based estimates",
+            key="zip_code_progressive"
+        )
+
+        location_data['zip_code'] = zip_code
+
+        # Validate and lookup ZIP code
+        if zip_code and len(zip_code) == 5 and zip_code.isdigit():
+            if validate_zip_code(zip_code):
+                zip_data = lookup_zip_code_data(zip_code)
+                if zip_data:
+                    # Get base fuel price from ZIP data
+                    base_fuel_price = zip_data.get('fuel_price', 3.50)
+                    electricity_rate_default = zip_data.get('electricity_rate', 0.12)
+
+                    # Check if vehicle requires premium fuel (simplified check - can be enhanced)
+                    # You can add logic here to check vehicle specs for premium fuel requirement
+                    fuel_type = "Regular"  # Default
+                    # If premium required, adjust price (typically $0.50-$0.70 more)
+                    # fuel_price_display = base_fuel_price + 0.60 if premium else base_fuel_price
+
+                    st.success(f"✓ Location detected: {zip_data.get('state', '')} - {zip_data.get('geography_type', 'Suburban')}")
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        fuel_price = st.number_input(
+                            f"Fuel Price (${fuel_type}, per gallon)",
+                            min_value=0.0,
+                            max_value=10.0,
+                            value=float(base_fuel_price),
+                            step=0.10,
+                            format="%.2f",
+                            help="Edit if you know your local fuel price differs",
+                            key="fuel_price_progressive"
+                        )
+                    with col2:
+                        electricity_rate = st.number_input(
+                            "Electricity Rate (per kWh)",
+                            min_value=0.0,
+                            max_value=1.0,
+                            value=float(electricity_rate_default),
+                            step=0.01,
+                            format="%.3f",
+                            help="Edit if you know your local electricity rate differs",
+                            key="electricity_rate_progressive"
+                        )
+
+                    location_data.update({
+                        'state': zip_data.get('state', ''),
+                        'geography_type': zip_data.get('geography_type', 'Suburban'),
+                        'fuel_price': fuel_price,
+                        'electricity_rate': electricity_rate,
+                        'is_valid': True
+                    })
+                    location_valid = True
                 else:
-                    trim = st.selectbox("Trim", ["Base"], key="trim_progressive_default")
-                    trim_msrp = 30000
+                    st.error("ZIP code not found in our database")
             else:
-                st.selectbox("Trim", ["-- Select Make, Model, and Year first --"], disabled=True, key="trim_progressive_disabled")
-                trim = ''
-                trim_msrp = 0
-
-        # If vehicle fully selected, show summary and mark as valid
-        if make and model and trim_msrp > 0:
-            # Estimate current value for used vehicles
-            estimated_value = None
-            is_used = False
-            current_mileage = 0
-
-            if year < 2025:
-                is_used = True
-                vehicle_age = 2025 - year
-                estimated_mileage = vehicle_age * 12000
-
-                estimated_value = estimate_used_vehicle_value(
-                    make, model, year, estimated_mileage, trim_msrp
-                )
-                current_mileage = estimated_mileage
-
-            vehicle_data.update({
-                'make': make,
-                'model': model,
-                'year': year,
-                'trim': trim,
-                'trim_msrp': trim_msrp,
-                'is_used': is_used,
-                'current_mileage': current_mileage,
-                'is_valid': True
-            })
-            vehicle_valid = True
-
-            # Show vehicle summary
-            if estimated_value and estimated_value > 0:
-                st.success(f"✓ Selected: {year} {make} {model} {trim} - Est. Value: ${estimated_value:,.0f} (MSRP: ${trim_msrp:,.0f})")
-            else:
-                st.success(f"✓ Selected: {year} {make} {model} {trim} - MSRP: ${trim_msrp:,.0f}")
+                st.error("Invalid ZIP code")
+        elif zip_code:
+            st.warning("Please enter a valid 5-digit ZIP code")
 
     st.markdown("---")
 
@@ -2489,8 +2493,8 @@ def display_progressive_forms():
         'is_valid': False
     }
 
-    if not vehicle_valid:
-        st.info("🚗 Complete Step 2 (Vehicle Selection) first to proceed with personal information")
+    if not location_valid:
+        st.info("📍 Complete Step 2 (Location) first to proceed with personal information")
 
         # Show disabled fields
         col1, col2 = st.columns(2)
@@ -2651,6 +2655,10 @@ def display_progressive_forms():
                     key="down_payment_progressive"
                 )
 
+                # Calculate and display down payment amount
+                down_payment_amount = purchase_price * (down_payment_percent / 100)
+                st.caption(f"Down Payment: **${down_payment_amount:,.0f}**")
+
                 trade_in_value = st.number_input(
                     "Trade-In Value ($)",
                     min_value=0,
@@ -2718,14 +2726,24 @@ def display_progressive_forms():
                     key="lease_mileage_progressive"
                 )
 
+                lease_monthly_payment = st.number_input(
+                    "Monthly Lease Payment ($)",
+                    min_value=0,
+                    max_value=5000,
+                    value=0,
+                    step=50,
+                    help="Expected monthly lease payment",
+                    key="lease_monthly_payment_progressive"
+                )
+
             with col2:
                 lease_down_payment = st.number_input(
-                    "Lease Down Payment ($)",
+                    "Down Payment at Signing ($)",
                     min_value=0,
                     max_value=20000,
                     value=0,
                     step=500,
-                    help="Initial payment at lease signing",
+                    help="Initial payment due at lease signing (down payment + fees)",
                     key="lease_down_progressive"
                 )
 
@@ -2733,6 +2751,7 @@ def display_progressive_forms():
                 'lease_term_months': lease_term_months,
                 'lease_down_payment': lease_down_payment,
                 'lease_annual_mileage': lease_annual_mileage,
+                'lease_monthly_payment': lease_monthly_payment,
                 'is_valid': True
             })
             financial_valid = True

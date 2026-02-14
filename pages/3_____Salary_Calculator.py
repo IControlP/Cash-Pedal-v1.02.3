@@ -579,7 +579,7 @@ def main():
         
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            if st.button("Try the Full Vehicle Cost Calculator", type="primary", use_container_width=True):
+            if st.button("Try the Full Vehicle Cost Calculator", type="primary", width="stretch"):
                 st.switch_page("pages/4______Single_Car_Ownership_Calculator.py")
     
     else:

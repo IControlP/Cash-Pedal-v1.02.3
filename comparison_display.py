@@ -264,15 +264,15 @@ def display_comparison_tabs(comparison_results: Dict[str, Any],
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        if st.button("  Refresh Comparison", use_container_width=True):
+        if st.button("  Refresh Comparison", width="stretch"):
             st.rerun()
     
     with col2:
-        if st.button(" Export Report", use_container_width=True):
+        if st.button(" Export Report", width="stretch"):
             export_comparison_report(comparison_results, recommendations)
     
     with col3:
-        if st.button(" Clear All", use_container_width=True):
+        if st.button(" Clear All", width="stretch"):
             from session_manager import clear_session_state
             st.session_state.comparison_vehicles = []
             st.rerun()
@@ -428,7 +428,7 @@ def display_cost_comparison_table(comparison_results: Dict[str, Any]):
         df['% of Income'] = df['% of Income'].apply(lambda x: f"{x:.1f}%" if x > 0 else "N/A")
     
     # Display table
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(df, width="stretch")
     
     # Enhanced ranking section with income percentage
     st.markdown("####  Rankings")
@@ -525,7 +525,7 @@ def display_specs_comparison(comparison_results: Dict[str, Any]):
             lambda x: f"${x:,.0f}" if isinstance(x, (int, float)) and x > 0 else "N/A"
         )
 
-    st.dataframe(df_specs, use_container_width=True)
+    st.dataframe(df_specs, width="stretch")
 
     # Specs Rankings
     st.markdown("#### Specs Rankings")
@@ -632,7 +632,7 @@ def display_specs_comparison(comparison_results: Dict[str, Any]):
             height=350,
             barmode='group'
         )
-        st.plotly_chart(fig_specs, use_container_width=True)
+        st.plotly_chart(fig_specs, width="stretch")
 
         # MPG comparison
         fig_mpg = go.Figure()
@@ -649,7 +649,7 @@ def display_specs_comparison(comparison_results: Dict[str, Any]):
             yaxis_title="MPG (Combined)",
             height=350
         )
-        st.plotly_chart(fig_mpg, use_container_width=True)
+        st.plotly_chart(fig_mpg, width="stretch")
 
         # Seats + Cargo side by side
         fig_capacity = go.Figure()
@@ -673,7 +673,7 @@ def display_specs_comparison(comparison_results: Dict[str, Any]):
             height=400,
             barmode='group'
         )
-        st.plotly_chart(fig_capacity, use_container_width=True)
+        st.plotly_chart(fig_capacity, width="stretch")
 
 
 def display_comparison_visualizations(comparison_results: Dict[str, Any]):
@@ -736,7 +736,7 @@ def display_comparison_visualizations(comparison_results: Dict[str, Any]):
         showlegend=True
     )
     
-    st.plotly_chart(fig_total, use_container_width=True)
+    st.plotly_chart(fig_total, width="stretch")
     
     # Annual cost comparison - OVERLAID BAR CHART
     fig_annual = go.Figure()
@@ -761,7 +761,7 @@ def display_comparison_visualizations(comparison_results: Dict[str, Any]):
         showlegend=True
     )
     
-    st.plotly_chart(fig_annual, use_container_width=True)
+    st.plotly_chart(fig_annual, width="stretch")
     
     # Cost breakdown by category (if available) - STACKED BAR CHART
     if len(fixed_vehicles) > 0 and fixed_vehicles[0].get('cost_categories'):
@@ -799,7 +799,7 @@ def display_comparison_visualizations(comparison_results: Dict[str, Any]):
             xaxis={'categoryorder': 'total descending'}
         )
         
-        st.plotly_chart(fig_stack, use_container_width=True)
+        st.plotly_chart(fig_stack, width="stretch")
     
     # Dot plot: Cost comparison with all metrics
     fig_dot = go.Figure()
@@ -832,7 +832,7 @@ def display_comparison_visualizations(comparison_results: Dict[str, Any]):
         showlegend=True
     )
     
-    st.plotly_chart(fig_dot, use_container_width=True)
+    st.plotly_chart(fig_dot, width="stretch")
 
 def display_recommendations_detailed(recommendations: Dict[str, Any]):
     """Display detailed recommendations for each vehicle"""

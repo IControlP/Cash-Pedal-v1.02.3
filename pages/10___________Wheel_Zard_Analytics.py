@@ -228,7 +228,7 @@ def main():
                 data=csv_data,
                 file_name=f"wheel_zard_questions_{datetime.now().strftime('%Y%m%d')}.csv",
                 mime="text/csv",
-                use_container_width=True
+                width="stretch"
             )
 
         st.markdown("---")
@@ -237,7 +237,7 @@ def main():
         st.header("📋 All Questions")
         st.dataframe(
             df[['timestamp', 'question', 'session_id', 'response_type']],
-            use_container_width=True,
+            width="stretch",
             height=400
         )
 
@@ -266,10 +266,10 @@ def main():
         st.markdown("---")
 
         st.header("🔗 Quick Links")
-        if st.button("🧙 Back to Wheel-Zard", use_container_width=True):
+        if st.button("🧙 Back to Wheel-Zard", width="stretch"):
             st.switch_page("pages/9__________Wheel_Zard_Agent.py")
 
-        if st.button("🏠 Home", use_container_width=True):
+        if st.button("🏠 Home", width="stretch"):
             st.switch_page("main.py")
 
         st.markdown("---")

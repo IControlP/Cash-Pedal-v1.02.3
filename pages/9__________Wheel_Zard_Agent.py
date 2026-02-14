@@ -318,13 +318,6 @@ def main():
         message_count = len(st.session_state.wheel_zard_messages) - 1  # Exclude welcome
         st.info(f"💬 Messages: {message_count}")
 
-        st.markdown("---")
-
-        # Admin Analytics Link
-        st.header("📊 Admin")
-        if st.button("📊 View Analytics Dashboard", use_container_width=True):
-            st.switch_page("pages/10___________Wheel_Zard_Analytics.py")
-
     # Footer
     st.markdown("---")
     st.markdown(f"""

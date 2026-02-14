@@ -30,6 +30,45 @@ st.set_page_config(
 LOGS_DIR = Path("data/wheel_zard_logs")
 QUESTIONS_LOG_FILE = LOGS_DIR / "user_questions.csv"
 
+# Admin password (change this to your secure password)
+ADMIN_PASSWORD = "CashPedal2026!"  # TODO: Change this password for production
+
+
+def check_authentication():
+    """Check if user is authenticated to view analytics."""
+    if 'analytics_authenticated' not in st.session_state:
+        st.session_state.analytics_authenticated = False
+
+    return st.session_state.analytics_authenticated
+
+
+def authenticate_user():
+    """Display login form and authenticate user."""
+    st.markdown('<p class="main-header">🔒 Analytics Dashboard Login</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Admin Access Only</p>', unsafe_allow_html=True)
+    st.markdown("---")
+
+    st.warning("⚠️ This dashboard is for admin use only. Please enter the password to continue.")
+
+    with st.form("login_form"):
+        password = st.text_input("Password", type="password")
+        submit = st.form_submit_button("Login")
+
+        if submit:
+            if password == ADMIN_PASSWORD:
+                st.session_state.analytics_authenticated = True
+                st.success("✅ Authentication successful! Redirecting...")
+                st.rerun()
+            else:
+                st.error("❌ Invalid password. Access denied.")
+
+    st.markdown("---")
+    st.info("💡 **Note:** This dashboard contains sensitive user data and is password-protected for privacy.")
+
+    # Back button
+    if st.button("🏠 Back to Home"):
+        st.switch_page("main.py")
+
 
 def load_question_logs():
     """Load question logs from CSV file."""
@@ -73,6 +112,11 @@ def main():
     """Render the Analytics Dashboard."""
     initialize_session_state()
     apply_theme()
+
+    # Check authentication first
+    if not check_authentication():
+        authenticate_user()
+        return
 
     # Header
     st.markdown('<p class="main-header">📊 Wheel-Zard Analytics Dashboard</p>', unsafe_allow_html=True)
@@ -199,6 +243,15 @@ def main():
 
     # Sidebar
     with st.sidebar:
+        st.header("🔒 Admin Dashboard")
+        st.success("✅ Authenticated as Admin")
+
+        if st.button("🚪 Logout", use_container_width=True, type="secondary"):
+            st.session_state.analytics_authenticated = False
+            st.rerun()
+
+        st.markdown("---")
+
         st.header("📊 Analytics Info")
         st.markdown("""
         This dashboard shows all questions asked by users in the Wheel-Zard chat interface.

@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 
 import streamlit as st
 
-from input_forms import collect_all_form_data, display_all_forms_visible
+from input_forms import collect_all_form_data, display_all_forms_visible, display_progressive_forms
 from prediction_service import PredictionService
 from session_manager import add_vehicle_to_comparison, save_calculation_results
 from vehicle_helpers import (
@@ -650,16 +650,18 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
 def display_calculator() -> None:
     """Primary calculator UI used by the single-vehicle page."""
     st.subheader("Vehicle TCO Calculator")
+    st.markdown("""
+    Complete each step below to calculate the **total cost of ownership** for your vehicle.
+    Sections unlock as you complete previous steps.
+    """)
+    st.markdown("---")
 
-    mode = st.radio("Form Mode", ["Step-by-step", "All sections"], horizontal=True)
-    if mode == "All sections":
-        vehicle_data, is_valid, validation_message = display_all_forms_visible()
-    else:
-        vehicle_data, is_valid, validation_message = collect_all_form_data()
+    # Use progressive forms (salary calculator style)
+    vehicle_data, is_valid, validation_message = display_progressive_forms()
 
     if not is_valid:
         if validation_message:
-            st.warning(validation_message)
+            st.info(validation_message)
         return
 
     make = vehicle_data.get("make", "")

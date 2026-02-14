@@ -19,7 +19,7 @@ serverAddress = "0.0.0.0"
 primaryColor = "#F5A623"
 backgroundColor = "#F8F7F4"
 secondaryBackgroundColor = "#EEEDEA"
-textColor = "#1A1625"
+textColor = "#C07800"
 font = "sans serif"
 
 [client]

@@ -47,9 +47,44 @@ def get_theme_css():
     css = f"""
     <style>
     /* =============================================
+       FORCE BACKGROUND COLORS ON ALL DEVICES
+       Including mobile where config.toml may not apply
+       ============================================= */
+
+    /* Main app background */
+    .stApp {{
+        background-color: {light["background"]} !important;
+    }}
+
+    /* Main content area */
+    .main .block-container {{
+        background-color: {light["background"]} !important;
+    }}
+
+    /* Ensure body background matches */
+    body {{
+        background-color: {light["background"]} !important;
+    }}
+
+    /* Dark mode overrides */
+    @media (prefers-color-scheme: dark) {{
+        .stApp {{
+            background-color: {dark["background"]} !important;
+        }}
+
+        .main .block-container {{
+            background-color: {dark["background"]} !important;
+        }}
+
+        body {{
+            background-color: {dark["background"]} !important;
+        }}
+    }}
+
+    /* =============================================
        LIGHT MODE (Default for desktop)
        ============================================= */
-    
+
     .main-header {{
         font-size: 2.5rem;
         font-weight: bold;

@@ -2297,7 +2297,30 @@ def display_progressive_forms():
                     'is_valid': True
                 })
                 location_valid = True
+
+                # Display location info with fuel and electricity prices
+                fuel_price = zip_data.get('fuel_price', 3.50)
+                electricity_rate = zip_data.get('electricity_rate', 0.12)
+
                 st.success(f"✓ Location detected: {zip_data.get('state', '')} - {zip_data.get('geography_type', 'Suburban')}")
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown(f"""
+                    <div style="background-color: #fff3e0; padding: 15px; border-radius: 8px; text-align: center;">
+                        <p style="margin: 0; color: #e65100; font-size: 11px; font-weight: bold;">FUEL PRICE</p>
+                        <p style="margin: 5px 0; font-size: 24px; font-weight: bold; color: #e65100;">${fuel_price:.2f}</p>
+                        <p style="margin: 0; color: #666; font-size: 11px;">per gallon</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col2:
+                    st.markdown(f"""
+                    <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center;">
+                        <p style="margin: 0; color: #1565c0; font-size: 11px; font-weight: bold;">ELECTRICITY RATE</p>
+                        <p style="margin: 5px 0; font-size: 24px; font-weight: bold; color: #1565c0;">${electricity_rate:.3f}</p>
+                        <p style="margin: 0; color: #666; font-size: 11px;">per kWh</p>
+                    </div>
+                    """, unsafe_allow_html=True)
             else:
                 st.error("ZIP code not found in our database")
         else:
@@ -2360,40 +2383,57 @@ def display_progressive_forms():
                 key="make_progressive"
             )
 
+            # Model selection
             if make:
-                # Year selection
-                if transaction_type == "Lease":
-                    year = 2025
-                    st.selectbox("Year", [2025], key="year_progressive_lease", disabled=True)
-                    st.caption("Leases are only available for 2025 model year")
-                else:
-                    years = get_available_years_for_model(make, "")  # Get all years for make
-                    if not years:
-                        years = list(range(2015, 2026))
-                    year = st.selectbox("Year", sorted(years, reverse=True), key="year_progressive")
-
-        with col2:
-            if make:
-                # Model selection
                 models = get_models_for_manufacturer(make)
                 model = st.selectbox(
                     "Model",
                     [''] + sorted(models),
                     key="model_progressive"
                 )
-
-                if model and make:
-                    # Trim selection
-                    trims = get_trims_for_vehicle(make, model, year)
-                    if trims:
-                        trim = st.selectbox("Trim", list(trims.keys()), key="trim_progressive")
-                        trim_msrp = trims.get(trim, 0)
-                    else:
-                        trim = st.selectbox("Trim", ["Base"], key="trim_progressive_default")
-                        trim_msrp = 30000
             else:
                 st.selectbox("Model", ["-- Select Make first --"], disabled=True, key="model_progressive_disabled")
-                st.selectbox("Trim", ["-- Select Make and Model first --"], disabled=True, key="trim_progressive_disabled")
+                model = ''
+
+        with col2:
+            # Year selection (depends on make and model)
+            if make and model:
+                if transaction_type == "Lease":
+                    year = 2025
+                    st.selectbox("Year", [2025], key="year_progressive_lease", disabled=True)
+                    st.caption("Leases are only available for 2025 model year")
+                else:
+                    # Get years for the specific make/model, limited to last 10 years
+                    from datetime import datetime
+                    current_year = datetime.now().year
+                    ten_years_ago = current_year - 10
+
+                    years = get_available_years_for_model(make, model)
+                    if not years:
+                        years = list(range(ten_years_ago, current_year + 2))  # Default to last 10 years + next year
+                    else:
+                        # Filter to only last 10 years
+                        years = [y for y in years if y >= ten_years_ago and y <= current_year + 1]
+
+                    # Add empty option at beginning (no default)
+                    year = st.selectbox("Year", [''] + sorted(years, reverse=True), key="year_progressive")
+            else:
+                st.selectbox("Year", ["-- Select Make and Model first --"], disabled=True, key="year_progressive_disabled")
+                year = ''
+
+            # Trim selection (depends on make, model, and year)
+            if make and model and year:
+                trims = get_trims_for_vehicle(make, model, year)
+                if trims:
+                    trim = st.selectbox("Trim", list(trims.keys()), key="trim_progressive")
+                    trim_msrp = trims.get(trim, 0)
+                else:
+                    trim = st.selectbox("Trim", ["Base"], key="trim_progressive_default")
+                    trim_msrp = 30000
+            else:
+                st.selectbox("Trim", ["-- Select Make, Model, and Year first --"], disabled=True, key="trim_progressive_disabled")
+                trim = ''
+                trim_msrp = 0
 
         # If vehicle fully selected, show summary and mark as valid
         if make and model and trim_msrp > 0:
@@ -2439,13 +2479,13 @@ def display_progressive_forms():
 
     personal_valid = False
     personal_data = {
-        'user_age': 35,
+        'user_age': 25,
         'gross_income': 60000,
         'credit_score_range': '670-739 (Good)',
         'annual_mileage': 12000,
         'driving_style': 'normal',
         'terrain': 'flat',
-        'num_household_vehicles': 2,
+        'num_household_vehicles': 1,
         'is_valid': False
     }
 
@@ -2455,7 +2495,7 @@ def display_progressive_forms():
         # Show disabled fields
         col1, col2 = st.columns(2)
         with col1:
-            st.number_input("Age", value=35, disabled=True, key="age_disabled")
+            st.number_input("Age", value=25, disabled=True, key="age_disabled")
             st.number_input("Annual Mileage", value=12000, disabled=True, key="mileage_disabled")
         with col2:
             st.number_input("Gross Annual Income", value=60000, disabled=True, key="income_disabled")
@@ -2470,7 +2510,7 @@ def display_progressive_forms():
                 "Your Age",
                 min_value=16,
                 max_value=100,
-                value=35,
+                value=25,
                 help="Your age affects insurance rates",
                 key="age_progressive"
             )
@@ -2529,7 +2569,7 @@ def display_progressive_forms():
             "Number of Household Vehicles",
             min_value=1,
             max_value=10,
-            value=2,
+            value=1,
             help="Total vehicles in your household (affects insurance)",
             key="household_vehicles_progressive"
         )
@@ -2555,6 +2595,7 @@ def display_progressive_forms():
 
     financial_valid = False
     financial_data = {
+        'purchase_price': 0,
         'down_payment': 0,
         'down_payment_percent': 20,
         'trade_in_value': 0,
@@ -2581,6 +2622,22 @@ def display_progressive_forms():
         if transaction_type == "Purchase":
             st.markdown("**Set your purchase financing** terms")
 
+            # Purchase price input (for tax calculations)
+            msrp = vehicle_data.get('trim_msrp', 30000)
+            st.markdown(f"*MSRP: ${msrp:,.0f}*")
+
+            purchase_price = st.number_input(
+                "Actual Purchase Price ($)",
+                min_value=0,
+                max_value=500000,
+                value=int(msrp),
+                step=100,
+                help="The actual price you're paying (may differ from MSRP). This is used for tax calculations.",
+                key="purchase_price_progressive"
+            )
+
+            st.markdown("---")
+
             col1, col2 = st.columns(2)
 
             with col1:
@@ -2590,7 +2647,7 @@ def display_progressive_forms():
                     max_value=100,
                     value=20,
                     step=5,
-                    help="Percentage of vehicle price to pay upfront",
+                    help="Percentage of purchase price to pay upfront",
                     key="down_payment_progressive"
                 )
 
@@ -2624,11 +2681,11 @@ def display_progressive_forms():
                     key="trade_in_owed_progressive"
                 )
 
-            # Calculate down payment amount
-            vehicle_price = vehicle_data.get('trim_msrp', 30000)
-            down_payment = vehicle_price * (down_payment_percent / 100)
+            # Calculate down payment amount based on purchase price
+            down_payment = purchase_price * (down_payment_percent / 100)
 
             financial_data.update({
+                'purchase_price': purchase_price,
                 'down_payment': down_payment,
                 'down_payment_percent': down_payment_percent,
                 'trade_in_value': trade_in_value,

@@ -23,14 +23,14 @@ THEME_COLORS = {
     },
     # Light mode colors
     "light": {
-        "primary": "#D4880F",
-        "primary_light": "#F5A623",
+        "primary": "#F5A623",
+        "primary_light": "#FFB84D",
         "background": "#F8F7F4",
         "secondary_bg": "#EEEDEA",
         "card_bg": "#E5E3DD",
-        "text": "#1A1625",
-        "text_secondary": "#2D2640",
-        "text_muted": "#555555",
+        "text": "#C07800",
+        "text_secondary": "#D4880F",
+        "text_muted": "#996600",
         "border": "#D0C9C0",
     }
 }

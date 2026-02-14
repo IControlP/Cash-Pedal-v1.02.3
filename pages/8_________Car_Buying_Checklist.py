@@ -87,7 +87,10 @@ def display_url_scraper():
             car_info = checklist.extract_car_info_from_url(url)
 
             if car_info.get('extraction_success'):
-                st.success("✅ Successfully extracted vehicle information!")
+                if car_info.get('used_playwright'):
+                    st.success("✅ Successfully extracted vehicle information using browser automation!")
+                else:
+                    st.success("✅ Successfully extracted vehicle information!")
 
                 # Store in session state
                 st.session_state['extracted_car_info'] = car_info

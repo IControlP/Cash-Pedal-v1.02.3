@@ -18,6 +18,7 @@ psycopg2-binary>=2.9.0
 # Web Scraping (for car buying checklist)
 requests>=2.31.0         # For HTTP requests
 beautifulsoup4>=4.12.0   # For HTML parsing
+playwright>=1.40.0       # For browser automation (bypasses bot detection)
 
 # Optional: Add these if you need them later
 # openpyxl>=3.1.0          # For Excel file export

@@ -9,12 +9,43 @@ import requests
 from bs4 import BeautifulSoup
 from maintenance.maintenance_utils import MaintenanceCalculator
 
+# Optional: Playwright for sites that block simple requests
+try:
+    from playwright.sync_api import sync_playwright
+    PLAYWRIGHT_AVAILABLE = True
+except ImportError:
+    PLAYWRIGHT_AVAILABLE = False
+
 
 class CarBuyingChecklist:
     """Generates car buying checklists with maintenance items based on mileage"""
 
     def __init__(self):
         self.maintenance_calculator = MaintenanceCalculator()
+
+    def _extract_with_playwright(self, url: str) -> tuple[BeautifulSoup, str, str]:
+        """Use Playwright to render JavaScript and bypass bot detection"""
+        if not PLAYWRIGHT_AVAILABLE:
+            raise ImportError("Playwright not installed")
+
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+
+            # Navigate and wait for content
+            page.goto(url, wait_until='networkidle', timeout=15000)
+
+            # Get the rendered HTML
+            content = page.content()
+
+            # Extract title and meta
+            title = page.title().lower()
+            meta_desc = page.locator('meta[name="description"]').get_attribute('content') or ''
+
+            browser.close()
+
+            soup = BeautifulSoup(content, 'html.parser')
+            return soup, title, meta_desc.lower()
 
     def extract_car_info_from_url(self, url: str) -> Dict[str, Any]:
         """
@@ -87,9 +118,47 @@ class CarBuyingChecklist:
             return car_info
 
         except requests.exceptions.HTTPError as e:
+            # If 403 and Playwright is available, try with browser automation
+            if e.response.status_code == 403 and PLAYWRIGHT_AVAILABLE:
+                try:
+                    soup, title_text, meta_desc = self._extract_with_playwright(url)
+                    priority_text = title_text + ' ' + meta_desc
+                    text_content = soup.get_text().lower()
+
+                    make = self._extract_make(priority_text, soup) or self._extract_make(text_content, soup)
+                    model = self._extract_model(priority_text, soup) or self._extract_model(text_content, soup)
+                    year = self._extract_year(priority_text, soup) or self._extract_year(text_content, soup)
+                    mileage = self._extract_mileage(priority_text, soup) or self._extract_mileage(text_content, soup)
+                    trim = self._extract_trim(priority_text, soup) or self._extract_trim(text_content, soup)
+
+                    return {
+                        'make': make,
+                        'model': model,
+                        'year': year,
+                        'mileage': mileage,
+                        'trim': trim,
+                        'url': url,
+                        'extraction_success': True,
+                        'used_playwright': True,
+                        'debug_info': {
+                            'title': title_text[:100] if title_text else 'None',
+                            'meta_desc': meta_desc[:100] if meta_desc else 'None',
+                            'found_make': bool(make),
+                            'found_model': bool(model),
+                            'found_year': bool(year),
+                            'found_mileage': bool(mileage)
+                        }
+                    }
+                except Exception as pw_error:
+                    # Playwright failed too, return helpful error
+                    pass
+
             error_msg = f"HTTP Error {e.response.status_code}: "
             if e.response.status_code == 403:
-                error_msg += "Access denied. The website may be blocking automated requests. Try copying the listing details manually."
+                if PLAYWRIGHT_AVAILABLE:
+                    error_msg += "Access denied even with browser automation. Try copying the listing details manually."
+                else:
+                    error_msg += "Access denied. Install Playwright for better scraping: pip install playwright && playwright install chromium"
             elif e.response.status_code == 404:
                 error_msg += "Listing not found. The URL may be invalid or the listing has been removed."
             else:

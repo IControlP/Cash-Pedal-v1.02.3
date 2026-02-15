@@ -3040,13 +3040,54 @@ def display_progressive_forms():
                     key="lease_mileage_progressive"
                 )
 
+            # Calculate realistic lease payment using LeaseTermsCalculator
+            # Do this AFTER lease term is selected
+            msrp = vehicle_data.get('trim_msrp', 30000)
+            make = vehicle_data.get('make', '')
+            model = vehicle_data.get('model', '')
+            trim = vehicle_data.get('trim', '')
+
+            try:
+                from lease_terms_calculator import LeaseTermsCalculator
+                lease_calculator = LeaseTermsCalculator()
+                # Use selected lease term for calculation
+                lease_analysis = lease_calculator.get_complete_lease_analysis(
+                    make=make,
+                    model=model,
+                    trim=trim,
+                    msrp=float(msrp),
+                    lease_term_months=lease_term_months,
+                    down_payment=0,  # Calculate with 0 down first
+                    sales_tax_rate=0.08,  # Average US sales tax
+                    credit_tier='good'  # Assume good credit
+                )
+                calculated_monthly = int(lease_analysis['payment']['monthly_payment_pretax'])
+                # Suggested down payment: ~10% of MSRP or $2000, whichever is less
+                suggested_down = min(int(msrp * 0.10), 2000)
+            except Exception:
+                # Fallback to reasonable defaults if calculation fails
+                calculated_monthly = 399
+                suggested_down = 2000
+
+            # Detect vehicle/term changes and update lease payment
+            current_lease_key = f"{make}|{model}|{trim}|{msrp}|{lease_term_months}"
+            previous_lease_key = st.session_state.get('previous_lease_key_progressive', '')
+            lease_params_changed = (current_lease_key != previous_lease_key)
+
+            # Update lease payment when vehicle or term changes
+            if lease_params_changed or 'lease_monthly_payment_progressive' not in st.session_state:
+                st.session_state['lease_monthly_payment_progressive'] = calculated_monthly
+                st.session_state['lease_down_progressive'] = suggested_down
+                st.session_state['previous_lease_key_progressive'] = current_lease_key
+
+            with col1:
                 lease_monthly_payment = st.number_input(
                     "Monthly Lease Payment ($)",
                     min_value=0,
                     max_value=5000,
-                    value=0,
+                    value=st.session_state.get('lease_monthly_payment_progressive', calculated_monthly),
                     step=50,
-                    help="Expected monthly lease payment",
+                    help="Expected monthly lease payment (auto-calculated based on MSRP and lease term)",
                     key="lease_monthly_payment_progressive"
                 )
 
@@ -3055,9 +3096,9 @@ def display_progressive_forms():
                     "Down Payment at Signing ($)",
                     min_value=0,
                     max_value=20000,
-                    value=0,
+                    value=st.session_state.get('lease_down_progressive', suggested_down),
                     step=500,
-                    help="Initial payment due at lease signing (down payment + fees)",
+                    help="Initial payment due at lease signing (typically ~10% of MSRP)",
                     key="lease_down_progressive"
                 )
 

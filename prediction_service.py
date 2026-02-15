@@ -205,6 +205,9 @@ class PredictionService:
             }
         }
 
+        # Get regional labor rate from input data (defaults to $100/hr if not provided)
+        labor_rate = input_data.get('labor_rate', 100.0)
+
         # Pass to maintenance calculator
         maintenance_schedule = self.maintenance_calculator.get_maintenance_schedule(
             annual_mileage=input_data['annual_mileage'],
@@ -213,7 +216,8 @@ class PredictionService:
             vehicle_make=input_data['make'],
             driving_style=input_data.get('driving_style', 'normal'),
             vehicle_model=input_data['model'],
-            lifestyle_factors=lifestyle_factors  # New parameter
+            lifestyle_factors=lifestyle_factors,  # New parameter
+            labor_rate=labor_rate  # Regional labor rate from ZIP code
         )
          
         # Calculate financing if applicable - FIXED to check multiple conditions
@@ -629,6 +633,9 @@ class PredictionService:
         if lease_years < 1:
             lease_years = 1
 
+        # Get regional labor rate from input data (defaults to $100/hr if not provided)
+        labor_rate = input_data.get('labor_rate', 100.0)
+
         # Calculate lease maintenance schedule with safe defaults
         lease_maintenance_schedule = self.maintenance_calculator.get_maintenance_schedule(
             annual_mileage=annual_mileage_limit,
@@ -636,7 +643,8 @@ class PredictionService:
             starting_mileage=0,
             vehicle_make=input_data.get('make', 'Unknown'),
             driving_style=driving_style,
-            vehicle_model=input_data.get('model', 'Unknown')
+            vehicle_model=input_data.get('model', 'Unknown'),
+            labor_rate=labor_rate  # Regional labor rate from ZIP code
         )
 
         annual_breakdown = []

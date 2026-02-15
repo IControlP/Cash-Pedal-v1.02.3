@@ -85,18 +85,20 @@ class ComponentDatabase:
         """
         Initialize component database with:
         - baseline_interval: Typical replacement mileage (miles)
-        - cost: Average replacement cost (USD)
+        - cost: Average replacement cost (USD) - includes parts only
+        - labor_hours: Typical labor hours for replacement
         - beta: Weibull shape parameter
         - eta: Weibull scale parameter (miles)
         - category: Component classification
         - severity_sensitive: Whether severe service significantly affects interval
         """
-        
+
         self.components = {
             # MAJOR POWERTRAIN COMPONENTS
             'engine': {
                 'baseline_interval': 225000,
-                'cost': 4500,
+                'cost': 3200,  # Parts cost (reduced from total)
+                'labor_hours': 12.0,  # Engine R&R typically 10-14 hours
                 'beta': 2.2,
                 'eta': 250000,
                 'category': 'major_powertrain',
@@ -105,7 +107,8 @@ class ComponentDatabase:
             },
             'automatic_transmission': {
                 'baseline_interval': 175000,
-                'cost': 3500,
+                'cost': 2500,  # Parts cost
+                'labor_hours': 10.0,  # Transmission R&R 8-12 hours
                 'beta': 2.0,
                 'eta': 200000,
                 'category': 'major_powertrain',
@@ -114,7 +117,8 @@ class ComponentDatabase:
             },
             'manual_transmission': {
                 'baseline_interval': 135000,
-                'cost': 2200,
+                'cost': 1600,  # Parts cost
+                'labor_hours': 6.0,  # Manual trans R&R 5-7 hours
                 'beta': 1.8,
                 'eta': 150000,
                 'category': 'major_powertrain',
@@ -123,18 +127,20 @@ class ComponentDatabase:
             },
             'clutch': {
                 'baseline_interval': 80000,
-                'cost': 1200,
+                'cost': 900,  # Parts cost
+                'labor_hours': 4.0,  # Clutch replacement 3-5 hours
                 'beta': 2.5,
                 'eta': 90000,
                 'category': 'major_powertrain',
                 'severity_sensitive': True,
                 'applies_to': ['manual']
             },
-            
+
             # SUSPENSION COMPONENTS
             'shocks_struts': {
                 'baseline_interval': 100000,
-                'cost': 850,
+                'cost': 600,  # Parts cost (4 units)
+                'labor_hours': 2.5,  # Front strut replacement ~2-3 hours
                 'beta': 2.3,
                 'eta': 110000,
                 'category': 'suspension',
@@ -143,7 +149,8 @@ class ComponentDatabase:
             },
             'ball_joints': {
                 'baseline_interval': 110000,
-                'cost': 450,
+                'cost': 300,  # Parts cost
+                'labor_hours': 1.5,  # Ball joint replacement 1-2 hours per side
                 'beta': 1.5,
                 'eta': 125000,
                 'category': 'suspension',
@@ -152,18 +159,20 @@ class ComponentDatabase:
             },
             'control_arms': {
                 'baseline_interval': 120000,
-                'cost': 600,
+                'cost': 400,  # Parts cost
+                'labor_hours': 2.0,  # Control arm replacement 1.5-2.5 hours per side
                 'beta': 1.8,
                 'eta': 140000,
                 'category': 'suspension',
                 'severity_sensitive': True,
                 'applies_to': ['all']
             },
-            
+
             # BRAKE SYSTEM
             'brake_pads_front': {
                 'baseline_interval': 60000,
-                'cost': 280,
+                'cost': 150,  # Parts cost
+                'labor_hours': 1.0,  # Front brake pad replacement ~1 hour
                 'beta': 2.5,
                 'eta': 70000,
                 'category': 'brakes',
@@ -172,7 +181,8 @@ class ComponentDatabase:
             },
             'brake_pads_rear': {
                 'baseline_interval': 70000,
-                'cost': 250,
+                'cost': 130,  # Parts cost
+                'labor_hours': 1.0,  # Rear brake pad replacement ~1 hour
                 'beta': 2.5,
                 'eta': 80000,
                 'category': 'brakes',
@@ -181,7 +191,8 @@ class ComponentDatabase:
             },
             'brake_rotors_front': {
                 'baseline_interval': 80000,
-                'cost': 450,
+                'cost': 300,  # Parts cost
+                'labor_hours': 1.5,  # Rotor replacement 1-2 hours
                 'beta': 2.3,
                 'eta': 90000,
                 'category': 'brakes',
@@ -190,7 +201,8 @@ class ComponentDatabase:
             },
             'brake_rotors_rear': {
                 'baseline_interval': 90000,
-                'cost': 380,
+                'cost': 250,  # Parts cost
+                'labor_hours': 1.5,  # Rotor replacement 1-2 hours
                 'beta': 2.3,
                 'eta': 100000,
                 'category': 'brakes',
@@ -199,18 +211,20 @@ class ComponentDatabase:
             },
             'brake_calipers': {
                 'baseline_interval': 120000,
-                'cost': 650,
+                'cost': 450,  # Parts cost
+                'labor_hours': 2.0,  # Caliper replacement 1.5-2.5 hours per side
                 'beta': 1.8,
                 'eta': 140000,
                 'category': 'brakes',
                 'severity_sensitive': False,
                 'applies_to': ['all']
             },
-            
+
             # ELECTRICAL SYSTEM
             'battery_12v': {
                 'baseline_interval': 65000,  # 5 years @ 13k miles/year
-                'cost': 180,
+                'cost': 180,  # Parts cost
+                'labor_hours': 0.3,  # Battery replacement 15-30 min
                 'beta': 2.8,
                 'eta': 75000,
                 'category': 'electrical',
@@ -219,7 +233,8 @@ class ComponentDatabase:
             },
             'alternator': {
                 'baseline_interval': 140000,
-                'cost': 550,
+                'cost': 400,  # Parts cost
+                'labor_hours': 1.5,  # Alternator replacement 1-2 hours
                 'beta': 2.0,
                 'eta': 160000,
                 'category': 'electrical',
@@ -228,18 +243,20 @@ class ComponentDatabase:
             },
             'starter': {
                 'baseline_interval': 125000,
-                'cost': 450,
+                'cost': 300,  # Parts cost
+                'labor_hours': 1.5,  # Starter replacement 1-2 hours
                 'beta': 1.9,
                 'eta': 145000,
                 'category': 'electrical',
                 'severity_sensitive': False,
                 'applies_to': ['gasoline', 'diesel']
             },
-            
+
             # EV-SPECIFIC COMPONENTS
             'ev_battery_pack': {
                 'baseline_interval': 175000,  # 15-20 years
-                'cost': 8500,  # Decreasing over time
+                'cost': 8000,  # Parts cost (decreasing over time)
+                'labor_hours': 5.0,  # Battery pack replacement 4-6 hours
                 'beta': 1.5,
                 'eta': 200000,
                 'category': 'ev_powertrain',
@@ -248,29 +265,32 @@ class ComponentDatabase:
             },
             'ev_motor': {
                 'baseline_interval': 300000,
-                'cost': 3500,
+                'cost': 3000,  # Parts cost
+                'labor_hours': 5.0,  # Motor replacement 4-6 hours
                 'beta': 1.3,
                 'eta': 350000,
                 'category': 'ev_powertrain',
                 'severity_sensitive': False,
                 'applies_to': ['electric']
             },
-            
+
             # HVAC SYSTEM
             'hvac_compressor': {
                 'baseline_interval': 135000,
-                'cost': 850,
+                'cost': 600,  # Parts cost
+                'labor_hours': 2.5,  # AC compressor replacement 2-3 hours
                 'beta': 2.1,
                 'eta': 155000,
                 'category': 'hvac',
                 'severity_sensitive': False,
                 'applies_to': ['all']
             },
-            
+
             # ENGINE ACCESSORIES
             'water_pump': {
                 'baseline_interval': 110000,
-                'cost': 450,
+                'cost': 300,  # Parts cost
+                'labor_hours': 1.5,  # Water pump replacement 1-2 hours
                 'beta': 2.2,
                 'eta': 125000,
                 'category': 'engine_accessories',
@@ -279,18 +299,20 @@ class ComponentDatabase:
             },
             'fuel_pump': {
                 'baseline_interval': 150000,
-                'cost': 550,
+                'cost': 400,  # Parts cost
+                'labor_hours': 1.5,  # Fuel pump replacement 1-2 hours
                 'beta': 1.9,
                 'eta': 175000,
                 'category': 'engine_accessories',
                 'severity_sensitive': False,
                 'applies_to': ['gasoline', 'diesel']
             },
-            
+
             # TIMING COMPONENTS
             'timing_belt': {
                 'baseline_interval': 82500,  # 75k-90k range
-                'cost': 800,
+                'cost': 400,  # Parts cost
+                'labor_hours': 4.0,  # Timing belt service 3-5 hours
                 'beta': 3.0,  # Very predictable wear-out
                 'eta': 92000,
                 'category': 'timing',
@@ -299,18 +321,20 @@ class ComponentDatabase:
             },
             'timing_chain': {
                 'baseline_interval': 200000,  # Lifetime on many vehicles
-                'cost': 1500,
+                'cost': 800,  # Parts cost
+                'labor_hours': 7.0,  # Timing chain service 6-8 hours
                 'beta': 1.5,
                 'eta': 250000,
                 'category': 'timing',
                 'severity_sensitive': True,
                 'applies_to': ['chain_engine']
             },
-            
+
             # BELTS AND HOSES
             'serpentine_belt': {
                 'baseline_interval': 90000,
-                'cost': 130,
+                'cost': 80,  # Parts cost
+                'labor_hours': 0.5,  # Belt replacement 30 min
                 'beta': 2.8,
                 'eta': 100000,
                 'category': 'belts_hoses',
@@ -319,18 +343,20 @@ class ComponentDatabase:
             },
             'radiator_hoses': {
                 'baseline_interval': 110000,
-                'cost': 250,
+                'cost': 150,  # Parts cost
+                'labor_hours': 1.0,  # Hose replacement ~1 hour
                 'beta': 2.5,
                 'eta': 125000,
                 'category': 'belts_hoses',
                 'severity_sensitive': False,
                 'applies_to': ['gasoline', 'diesel']
             },
-            
+
             # IGNITION SYSTEM
             'spark_plugs_copper': {
                 'baseline_interval': 30000,
-                'cost': 120,
+                'cost': 80,  # Parts cost
+                'labor_hours': 0.5,  # Spark plug replacement 30-45 min
                 'beta': 2.8,
                 'eta': 35000,
                 'category': 'ignition',
@@ -339,7 +365,8 @@ class ComponentDatabase:
             },
             'spark_plugs_platinum': {
                 'baseline_interval': 90000,
-                'cost': 180,
+                'cost': 120,  # Parts cost
+                'labor_hours': 0.6,  # Spark plug replacement 30-60 min
                 'beta': 2.6,
                 'eta': 105000,
                 'category': 'ignition',
@@ -348,7 +375,8 @@ class ComponentDatabase:
             },
             'spark_plugs_iridium': {
                 'baseline_interval': 100000,
-                'cost': 220,
+                'cost': 150,  # Parts cost
+                'labor_hours': 0.7,  # Spark plug replacement 30-60 min
                 'beta': 2.5,
                 'eta': 115000,
                 'category': 'ignition',
@@ -357,18 +385,20 @@ class ComponentDatabase:
             },
             'ignition_coils': {
                 'baseline_interval': 120000,
-                'cost': 450,
+                'cost': 300,  # Parts cost
+                'labor_hours': 1.5,  # Coil replacement 1-2 hours
                 'beta': 2.0,
                 'eta': 140000,
                 'category': 'ignition',
                 'severity_sensitive': False,
                 'applies_to': ['gasoline']
             },
-            
+
             # EXHAUST SYSTEM
             'catalytic_converter': {
                 'baseline_interval': 150000,
-                'cost': 1200,
+                'cost': 900,  # Parts cost
+                'labor_hours': 3.0,  # Cat converter replacement 2-4 hours
                 'beta': 1.8,
                 'eta': 175000,
                 'category': 'exhaust',
@@ -377,7 +407,8 @@ class ComponentDatabase:
             },
             'oxygen_sensors': {
                 'baseline_interval': 110000,
-                'cost': 280,
+                'cost': 180,  # Parts cost
+                'labor_hours': 1.0,  # O2 sensor replacement ~1 hour
                 'beta': 2.2,
                 'eta': 125000,
                 'category': 'exhaust',
@@ -386,18 +417,20 @@ class ComponentDatabase:
             },
             'muffler': {
                 'baseline_interval': 120000,
-                'cost': 450,
+                'cost': 300,  # Parts cost
+                'labor_hours': 1.5,  # Muffler replacement 1-2 hours
                 'beta': 2.0,
                 'eta': 140000,
                 'category': 'exhaust',
                 'severity_sensitive': False,
                 'applies_to': ['gasoline', 'diesel']
             },
-            
+
             # TIRES
             'tire_replacement_set': {
                 'baseline_interval': 60000,
-                'cost': 800,
+                'cost': 600,  # Parts cost (4 tires)
+                'labor_hours': 2.0,  # Tire mounting/balancing ~2 hours for 4 tires
                 'beta': 2.6,
                 'eta': 68000,
                 'category': 'tires',
@@ -732,16 +765,20 @@ class EnhancedMaintenanceCalculator:
             'diy': 0.5
         }
     
-    def predict_component_replacement(self, component_name: str, 
+    def predict_component_replacement(self, component_name: str,
                                      current_mileage: int,
                                      annual_mileage: int,
                                      lifestyle_factors: Dict[str, Any],
                                      vehicle_make: str = 'Toyota',
                                      years_to_project: int = 10,
-                                     vehicle_model: str = '') -> List[Dict[str, Any]]:
+                                     vehicle_model: str = '',
+                                     labor_rate: float = 100.0) -> List[Dict[str, Any]]:
         """
         Predict when a component will need replacement using Weibull model
-        
+
+        Args:
+            labor_rate: Hourly mechanic labor rate for the region (default $100/hr)
+
         Uses baseline_interval as the primary replacement point, with Weibull
         parameters used for confidence bounds. This provides realistic predictions
         based on manufacturer recommendations and industry data.
@@ -816,9 +853,15 @@ class EnhancedMaintenanceCalculator:
                 # Calculate mileage range (Â±10% for realistic variance)
                 mileage_lower = int(next_replacement_mileage * 0.90)
                 mileage_upper = int(next_replacement_mileage * 1.10)
-                
-                # Cost includes tier-based parts and labor premium
-                replacement_cost = component['cost'] * cost_multiplier
+
+                # Cost includes tier-based parts and regional labor
+                # Parts cost with brand multiplier
+                parts_cost = component['cost'] * parts_multiplier
+                # Labor cost with regional hourly rate and brand multiplier
+                labor_hours = component.get('labor_hours', 1.0)  # Fallback to 1 hour if not specified
+                labor_cost = labor_hours * labor_rate * labor_multiplier
+                # Total replacement cost
+                replacement_cost = parts_cost + labor_cost
                 
                 replacements.append({
                     'year': year,
@@ -967,11 +1010,16 @@ class EnhancedMaintenanceCalculator:
     def get_maintenance_schedule(self, annual_mileage: int, years: int,
                                 starting_mileage: int = 0, vehicle_make: str = 'Toyota',
                                 driving_style: str = 'normal', vehicle_model: str = '',
-                                lifestyle_factors: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+                                lifestyle_factors: Dict[str, Any] = None,
+                                labor_rate: float = 100.0) -> List[Dict[str, Any]]:
         """
         Generate comprehensive maintenance schedule with component predictions
         Maintains backward compatibility while adding enhanced predictions
-        
+        Now includes regional labor rate for accurate cost calculation
+
+        Args:
+            labor_rate: Hourly mechanic labor rate for the region (default $100/hr)
+
         Returns schedule in same format as original for display compatibility
         """
         # Determine vehicle type for component filtering
@@ -1006,7 +1054,8 @@ class EnhancedMaintenanceCalculator:
                 lifestyle_factors,
                 vehicle_make,
                 years,
-                vehicle_model
+                vehicle_model,
+                labor_rate
             )
             if predictions:
                 all_predictions[component_name] = predictions

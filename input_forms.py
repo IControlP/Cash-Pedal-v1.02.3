@@ -2430,10 +2430,11 @@ def display_progressive_forms():
                     trim = vehicle_data.get('trim', '')
 
                     # Import fuel detection function
-                    from vehicle_helpers import get_fuel_info_for_vehicle
+                    from vehicle_helpers import determine_fuel_type_and_price
 
                     # Get fuel type for the selected vehicle
-                    fuel_info = get_fuel_info_for_vehicle(make, model, trim, zip_code)
+                    year = vehicle_data.get('year', 2025)
+                    fuel_info = determine_fuel_type_and_price(make, model, year, trim, zip_code)
                     fuel_type = fuel_info.get('fuel_type', 'regular')  # 'electric', 'premium', 'regular'
                     base_fuel_price = fuel_info.get('fuel_price', 3.50)
                     electricity_rate_default = zip_data.get('electricity_rate', 0.12)

@@ -1215,6 +1215,14 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
             if current_electricity_rate == 0.15:  # If still default, try saved
                 current_electricity_rate = location_settings.get('electricity_rate', 0.15)
         
+        # Detect if vehicle has changed (to recalculate fuel price)
+        current_vehicle_key = f"{make}|{model}|{year}|{trim}"
+        previous_vehicle_key = st.session_state.get('previous_vehicle_key_location', '')
+        vehicle_changed = (current_vehicle_key != previous_vehicle_key) and previous_vehicle_key != ''
+
+        # Store current vehicle key for next comparison
+        st.session_state['previous_vehicle_key_location'] = current_vehicle_key
+
         # Determine fuel type requirements if vehicle information is available
         fuel_info = None
         if make and model and selected_state and not is_electric_vehicle:
@@ -1254,7 +1262,13 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
                 detected_fuel_price = fuel_info.get('fuel_price', current_fuel_price)
                 fuel_type = fuel_info.get('fuel_type', 'regular')
 
-                if requires_premium:
+                # Notify user if vehicle changed and fuel price was recalculated
+                if vehicle_changed:
+                    if requires_premium:
+                        st.info(f"🔄 Vehicle changed to {make} {model} {trim if trim else ''} - Updated to **Premium** fuel (${detected_fuel_price:.2f}/gal)")
+                    else:
+                        st.info(f"🔄 Vehicle changed to {make} {model} {trim if trim else ''} - Updated to **Regular** fuel (${detected_fuel_price:.2f}/gal)")
+                elif requires_premium:
                     st.info(f" **Premium Fuel Required** for {make} {model} {trim if trim else ''}")
                     st.caption(f"Base regular: ${fuel_info.get('regular_price', 3.50):.2f}/gal -> Premium: ${detected_fuel_price:.2f}/gal (+$0.40)")
                 else:
@@ -2441,18 +2455,39 @@ def display_progressive_forms():
                     make = vehicle_data.get('make', '')
                     model = vehicle_data.get('model', '')
                     trim = vehicle_data.get('trim', '')
+                    year = vehicle_data.get('year', 2025)
 
                     # Import fuel detection function
                     from vehicle_helpers import determine_fuel_type_and_price
 
-                    # Get fuel type for the selected vehicle
-                    year = vehicle_data.get('year', 2025)
+                    # Detect if vehicle has changed (to recalculate fuel price)
+                    current_vehicle_key = f"{make}|{model}|{year}|{trim}"
+                    previous_vehicle_key = st.session_state.get('previous_vehicle_key', '')
+                    vehicle_changed = (current_vehicle_key != previous_vehicle_key)
+
+                    # Store current vehicle key for next comparison
+                    st.session_state['previous_vehicle_key'] = current_vehicle_key
+
+                    # Get fuel type for the selected vehicle (recalculate if vehicle changed)
                     fuel_info = determine_fuel_type_and_price(make, model, year, trim, zip_code)
                     fuel_type = fuel_info.get('fuel_type', 'regular')  # 'electric', 'premium', 'regular'
                     base_fuel_price = fuel_info.get('fuel_price', 3.50)
                     electricity_rate_default = zip_data.get('electricity_rate', 0.12)
 
+                    # If vehicle changed, reset the fuel price input to the new detected price
+                    if vehicle_changed:
+                        st.session_state['fuel_price_progressive'] = float(base_fuel_price)
+
                     st.success(f"✓ Location detected: {zip_data.get('state', '')} - {zip_data.get('geography_type', 'Suburban')}")
+
+                    # Notify user if vehicle changed and fuel price was recalculated
+                    if vehicle_changed and previous_vehicle_key:
+                        if fuel_type == 'premium':
+                            st.info(f"🔄 Vehicle changed to {make} {model} {trim} - Updated to **Premium** fuel (${base_fuel_price:.2f}/gal)")
+                        elif fuel_type == 'regular':
+                            st.info(f"🔄 Vehicle changed to {make} {model} {trim} - Updated to **Regular** fuel (${base_fuel_price:.2f}/gal)")
+                        elif fuel_type == 'electric':
+                            st.info(f"🔄 Vehicle changed to {make} {model} {trim} - This is an **Electric** vehicle")
 
                     # Show appropriate pricing inputs based on fuel type
                     if fuel_type == 'electric':

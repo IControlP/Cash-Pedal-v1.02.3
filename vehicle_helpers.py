@@ -186,8 +186,9 @@ def determine_fuel_type_and_price(make: str, model: str, year: int, trim: str = 
     # 1. LUXURY BRANDS - All models require premium
     # ========================================================================
     luxury_brands_premium = [
-        'bmw', 'mercedes-benz', 'audi', 'lexus', 'infiniti', 'acura', 
-        'porsche', 'maserati', 'alfa romeo', 'jaguar', 'land rover'
+        'bmw', 'mercedes-benz', 'audi', 'lexus', 'infiniti', 'acura',
+        'porsche', 'maserati', 'alfa romeo', 'jaguar', 'land rover',
+        'cadillac', 'lincoln'  # American luxury brands
     ]
     if make_lower in luxury_brands_premium:
         requires_premium = True

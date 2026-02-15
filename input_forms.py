@@ -1293,6 +1293,11 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
                 state=selected_state
             )
         
+        # Force update session state when location changes (for reactive number_input)
+        # This ensures the widgets reflect new values when zip code is re-entered
+        if 'electricity_rate_input' not in st.session_state or st.session_state.get('location_needs_update', False):
+            st.session_state['electricity_rate_input'] = float(current_electricity_rate)
+
         # Show appropriate fields based on vehicle type
         if is_electric_vehicle:
             # EV: Show electricity rate prominently, fuel price hidden
@@ -1301,7 +1306,7 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
                 "Electricity Rate ($/kWh):",
                 min_value=0.05,
                 max_value=0.50,
-                value=float(current_electricity_rate),
+                value=st.session_state.get('electricity_rate_input', float(current_electricity_rate)),
                 step=0.01,
                 format="%.3f",
                 help="Current local electricity rate for electric vehicles",
@@ -1343,11 +1348,15 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
                 # No vehicle selected yet, use saved/default price
                 default_fuel_price = current_fuel_price
 
+                # Force update session state when location changes
+                if 'fuel_price_input' not in st.session_state or st.session_state.get('location_needs_update', False):
+                    st.session_state['fuel_price_input'] = float(default_fuel_price)
+
             fuel_price = st.number_input(
                 "Local Fuel Price ($/gallon):",
                 min_value=2.0,
                 max_value=7.0,
-                value=float(default_fuel_price),
+                value=st.session_state.get('fuel_price_input', float(default_fuel_price)),
                 step=0.05,
                 format="%.2f",
                 help="Current local fuel price (auto-adjusted for premium fuel requirements)",
@@ -2606,8 +2615,28 @@ def display_progressive_forms():
                 base_fuel_price = fuel_info.get('fuel_price', 3.50)
                 electricity_rate_default = zip_data.get('electricity_rate', 0.12)
 
+                # Detect if ZIP code has changed (to update fuel/electricity rates)
+                current_zip = st.session_state.get('zip_code_input_progressive', '')
+                previous_zip = st.session_state.get('previous_zip_code_progressive', '')
+                zip_changed = (current_zip != previous_zip) and previous_zip != ''
+                st.session_state['previous_zip_code_progressive'] = current_zip
+
                 # If vehicle changed, reset the fuel price input to the new detected price
                 if vehicle_changed:
+                    st.session_state['fuel_price_progressive'] = float(base_fuel_price)
+
+                # If ZIP code changed, update fuel/electricity rates
+                if zip_changed:
+                    st.session_state['fuel_price_progressive'] = float(base_fuel_price)
+                    st.session_state['home_electricity_rate_progressive'] = float(electricity_rate_default)
+                    st.session_state['public_electricity_rate_progressive'] = float(electricity_rate_default * 2.5)
+
+                # Initialize session state if not present
+                if 'home_electricity_rate_progressive' not in st.session_state:
+                    st.session_state['home_electricity_rate_progressive'] = float(electricity_rate_default)
+                if 'public_electricity_rate_progressive' not in st.session_state:
+                    st.session_state['public_electricity_rate_progressive'] = float(electricity_rate_default * 2.5)
+                if 'fuel_price_progressive' not in st.session_state:
                     st.session_state['fuel_price_progressive'] = float(base_fuel_price)
 
                 # Show location detection with informational message if using state-level data
@@ -2644,7 +2673,7 @@ def display_progressive_forms():
                                 "Home Electricity Rate (per kWh)",
                                 min_value=0.0,
                                 max_value=1.0,
-                                value=float(electricity_rate_default),
+                                value=st.session_state.get('home_electricity_rate_progressive', float(electricity_rate_default)),
                                 step=0.01,
                                 format="%.3f",
                                 help="Your home electricity rate",
@@ -2655,7 +2684,7 @@ def display_progressive_forms():
                                 "Public Charging Rate (per kWh)",
                                 min_value=0.0,
                                 max_value=1.0,
-                                value=float(electricity_rate_default * 2.5),  # Public charging typically 2-3x home rate
+                                value=st.session_state.get('public_electricity_rate_progressive', float(electricity_rate_default * 2.5)),
                                 step=0.01,
                                 format="%.3f",
                                 help="Average public/DC fast charging rate",
@@ -2701,7 +2730,7 @@ def display_progressive_forms():
                             f"Fuel Price ({fuel_label}, per gallon)",
                             min_value=0.0,
                             max_value=10.0,
-                            value=float(base_fuel_price),
+                            value=st.session_state.get('fuel_price_progressive', float(base_fuel_price)),
                             step=0.10,
                             format="%.2f",
                             help=f"Current {fuel_label.lower()} price in your area",

@@ -323,52 +323,97 @@ def main():
         # Show vehicle summary if selected
         if make and model and make != "-- Select Make --" and model != "-- Select Model --":
             vehicle_tier = get_vehicle_tier(make)
-            
+
             # Get MPG if available
             if MPG_DATABASE_AVAILABLE:
                 mpg_data = get_vehicle_mpg(make, model, year, trim)
                 if mpg_data:
                     mpg = mpg_data.get('combined', 28)
-            
+
             tier_labels = {
                 'luxury': 'Luxury',
-                'premium': 'Premium', 
+                'premium': 'Premium',
                 'standard': 'Standard',
                 'economy': 'Economy'
             }
-            
+
             # Store original MSRP
             original_msrp = vehicle_price
             estimated_value = None
             is_used_vehicle = False
-            
-            # For used vehicles (not 2025), estimate current market value
-            if year < 2025 and USED_VEHICLE_ESTIMATOR_AVAILABLE:
-                try:
-                    estimator = UsedVehicleEstimator()
-                    # Assume average mileage for estimation (12k miles per year of age)
-                    vehicle_age = 2025 - year
-                    estimated_mileage = vehicle_age * 12000
-                    
-                    estimated_value = estimator.estimate_current_value(
-                        make=make,
-                        model=model,
-                        year=year,
-                        trim=trim,
-                        current_mileage=estimated_mileage
+
+            # Determine if vehicle is used and calculate mileage defaults
+            vehicle_age = 2025 - year if year < 2025 else 0
+
+            # Auto-estimate mileage based on age
+            if vehicle_age == 0:
+                estimated_mileage = 0
+            else:
+                estimated_mileage = vehicle_age * 12000
+
+            # Add mileage input for used vehicles
+            if vehicle_age > 0:
+                st.markdown("---")
+                col_m1, col_m2 = st.columns([1, 1])
+
+                with col_m1:
+                    current_mileage = st.number_input(
+                        "Current Mileage:",
+                        min_value=0,
+                        max_value=300000,
+                        value=estimated_mileage,
+                        step=1000,
+                        help="Enter actual odometer reading (auto-estimated at 12,000 miles/year)",
+                        key="salary_current_mileage"
                     )
-                    
-                    if estimated_value and estimated_value > 0:
-                        vehicle_price = estimated_value
-                        is_used_vehicle = True
-                except Exception as e:
-                    # Fall back to MSRP if estimation fails
-                    pass
-            
+
+                    # Show mileage analysis
+                    avg_annual = current_mileage / vehicle_age if vehicle_age > 0 else 0
+                    if avg_annual < 10000:
+                        mileage_note = "📊 Below average mileage"
+                    elif avg_annual < 15000:
+                        mileage_note = "📊 Average mileage"
+                    else:
+                        mileage_note = "📊 Above average mileage"
+                    st.caption(f"{mileage_note} ({avg_annual:,.0f} miles/year)")
+
+                with col_m2:
+                    # Recalculate value with actual mileage
+                    if USED_VEHICLE_ESTIMATOR_AVAILABLE:
+                        try:
+                            estimator = UsedVehicleEstimator()
+                            estimated_value = estimator.estimate_current_value(
+                                make=make,
+                                model=model,
+                                year=year,
+                                trim=trim,
+                                current_mileage=current_mileage
+                            )
+
+                            if estimated_value and estimated_value > 0:
+                                vehicle_price = estimated_value
+                                is_used_vehicle = True
+
+                                # Show estimated value metric
+                                depreciation_pct = ((original_msrp - estimated_value) / original_msrp * 100) if original_msrp > 0 else 0
+                                st.metric(
+                                    "Estimated Current Value",
+                                    format_currency(estimated_value),
+                                    delta=f"-{depreciation_pct:.1f}% from MSRP",
+                                    delta_color="inverse"
+                                )
+                                st.caption(f"Original MSRP: {format_currency(original_msrp)}")
+                        except Exception:
+                            pass
+            else:
+                # New vehicle - no mileage input needed
+                current_mileage = 0
+
+            st.markdown("---")
+
             # Display vehicle summary
             if is_used_vehicle and estimated_value:
-                st.success(f"**{year} {make} {model} {trim}** - Est. Value: {format_currency(vehicle_price)} (MSRP: {format_currency(original_msrp)}) - Category: {tier_labels.get(vehicle_tier, 'Standard')}")
-                st.caption(f"Estimated value based on {vehicle_age} years of age and ~{estimated_mileage:,} miles (average use)")
+                st.success(f"**{year} {make} {model} {trim}** - Category: {tier_labels.get(vehicle_tier, 'Standard')}")
             else:
                 st.success(f"**{year} {make} {model} {trim}** - MSRP: {format_currency(vehicle_price)} - Category: {tier_labels.get(vehicle_tier, 'Standard')}")
     else:

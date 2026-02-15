@@ -964,11 +964,21 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
         
         # Purchase price input
         if transaction_type == "Purchase":
+            # Detect vehicle/mileage changes and update purchase price
+            current_vehicle_price_key_main = f"{selected_make}|{selected_model}|{selected_year}|{selected_trim}|{current_mileage}|{estimated_price}"
+            previous_vehicle_price_key_main = st.session_state.get('previous_vehicle_price_key_main', '')
+            vehicle_price_changed_main = (current_vehicle_price_key_main != previous_vehicle_price_key_main)
+
+            # Update purchase price when vehicle/mileage/value changes
+            if vehicle_price_changed_main or 'purchase_price_input' not in st.session_state:
+                st.session_state['purchase_price_input'] = int(default_price)
+                st.session_state['previous_vehicle_price_key_main'] = current_vehicle_price_key_main
+
             purchase_price = st.number_input(
                 "Purchase Price ($):",
                 min_value=0,
                 max_value=500000,
-                value=int(default_price),
+                value=st.session_state.get('purchase_price_input', int(default_price)),
                 step=1000,
                 help="Final purchase price...",
                 key="purchase_price_input"
@@ -2602,7 +2612,9 @@ def display_progressive_forms():
                 from vehicle_helpers import determine_fuel_type_and_price
 
                 # Detect if vehicle has changed (to recalculate fuel price)
-                current_vehicle_key = f"{make}|{model}|{year}|{trim}"
+                # Include mileage in key to detect mileage changes too
+                current_mileage = st.session_state.get('current_mileage_progressive', 0)
+                current_vehicle_key = f"{make}|{model}|{year}|{trim}|{current_mileage}"
                 previous_vehicle_key = st.session_state.get('previous_vehicle_key', '')
                 vehicle_changed = (current_vehicle_key != previous_vehicle_key)
 
@@ -2915,11 +2927,27 @@ def display_progressive_forms():
                 st.markdown(f"*MSRP: ${msrp:,.0f}*")
                 default_price = int(msrp)
 
+            # Detect vehicle/mileage changes and update purchase price
+            make = vehicle_data.get('make', '')
+            model = vehicle_data.get('model', '')
+            year = vehicle_data.get('year', '')
+            trim = vehicle_data.get('trim', '')
+            current_mileage = vehicle_data.get('current_mileage', 0)
+
+            current_vehicle_price_key = f"{make}|{model}|{year}|{trim}|{current_mileage}|{estimated_value}"
+            previous_vehicle_price_key = st.session_state.get('previous_vehicle_price_key', '')
+            vehicle_price_changed = (current_vehicle_price_key != previous_vehicle_price_key)
+
+            # Update purchase price when vehicle/mileage/value changes
+            if vehicle_price_changed or 'purchase_price_progressive' not in st.session_state:
+                st.session_state['purchase_price_progressive'] = default_price
+                st.session_state['previous_vehicle_price_key'] = current_vehicle_price_key
+
             purchase_price = st.number_input(
                 "Actual Purchase Price ($)",
                 min_value=0,
                 max_value=500000,
-                value=default_price,
+                value=st.session_state.get('purchase_price_progressive', default_price),
                 step=100,
                 help="The actual price you're paying. This is used for tax calculations.",
                 key="purchase_price_progressive"
@@ -3012,13 +3040,54 @@ def display_progressive_forms():
                     key="lease_mileage_progressive"
                 )
 
+            # Calculate realistic lease payment using LeaseTermsCalculator
+            # Do this AFTER lease term is selected
+            msrp = vehicle_data.get('trim_msrp', 30000)
+            make = vehicle_data.get('make', '')
+            model = vehicle_data.get('model', '')
+            trim = vehicle_data.get('trim', '')
+
+            try:
+                from lease_terms_calculator import LeaseTermsCalculator
+                lease_calculator = LeaseTermsCalculator()
+                # Use selected lease term for calculation
+                lease_analysis = lease_calculator.get_complete_lease_analysis(
+                    make=make,
+                    model=model,
+                    trim=trim,
+                    msrp=float(msrp),
+                    lease_term_months=lease_term_months,
+                    down_payment=0,  # Calculate with 0 down first
+                    sales_tax_rate=0.08,  # Average US sales tax
+                    credit_tier='good'  # Assume good credit
+                )
+                calculated_monthly = int(lease_analysis['payment']['monthly_payment_pretax'])
+                # Suggested down payment: ~10% of MSRP or $2000, whichever is less
+                suggested_down = min(int(msrp * 0.10), 2000)
+            except Exception:
+                # Fallback to reasonable defaults if calculation fails
+                calculated_monthly = 399
+                suggested_down = 2000
+
+            # Detect vehicle/term changes and update lease payment
+            current_lease_key = f"{make}|{model}|{trim}|{msrp}|{lease_term_months}"
+            previous_lease_key = st.session_state.get('previous_lease_key_progressive', '')
+            lease_params_changed = (current_lease_key != previous_lease_key)
+
+            # Update lease payment when vehicle or term changes
+            if lease_params_changed or 'lease_monthly_payment_progressive' not in st.session_state:
+                st.session_state['lease_monthly_payment_progressive'] = calculated_monthly
+                st.session_state['lease_down_progressive'] = suggested_down
+                st.session_state['previous_lease_key_progressive'] = current_lease_key
+
+            with col1:
                 lease_monthly_payment = st.number_input(
                     "Monthly Lease Payment ($)",
                     min_value=0,
                     max_value=5000,
-                    value=0,
+                    value=st.session_state.get('lease_monthly_payment_progressive', calculated_monthly),
                     step=50,
-                    help="Expected monthly lease payment",
+                    help="Expected monthly lease payment (auto-calculated based on MSRP and lease term)",
                     key="lease_monthly_payment_progressive"
                 )
 
@@ -3027,9 +3096,9 @@ def display_progressive_forms():
                     "Down Payment at Signing ($)",
                     min_value=0,
                     max_value=20000,
-                    value=0,
+                    value=st.session_state.get('lease_down_progressive', suggested_down),
                     step=500,
-                    help="Initial payment due at lease signing (down payment + fees)",
+                    help="Initial payment due at lease signing (typically ~10% of MSRP)",
                     key="lease_down_progressive"
                 )
 

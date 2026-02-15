@@ -528,27 +528,47 @@ class MaintenanceCalculator:
         """Get list of services applicable to this vehicle"""
         brand_config = self.get_brand_config(make)
         excluded = brand_config.get('excluded_services', [])
-        
+
         # Start with all services
         applicable = list(self.service_intervals.keys())
-        
+
         # Remove excluded services
         applicable = [s for s in applicable if s not in excluded]
-        
-        # Handle oil change preferences
-        preferred_oil = brand_config.get('preferred_oil')
-        if preferred_oil:
-            # Remove other oil change types
-            oil_types = ['oil_change', 'oil_change_synthetic', 'premium_oil_change']
-            applicable = [s for s in applicable if s not in oil_types or s == preferred_oil]
-        
-        # Add required services for EVs
+
+        # Special handling for Electric Vehicles
         if self.is_electric_vehicle(make, model):
-            required = brand_config.get('required_services', [])
-            for req in required:
-                if req not in applicable:
-                    applicable.append(req)
-        
+            # EVs don't need gas engine services
+            gas_only_services = [
+                'oil_change', 'oil_change_synthetic', 'premium_oil_change',
+                'transmission_fluid', 'spark_plugs', 'timing_belt',
+                'engine_air_filter', 'fuel_filter', 'coolant_flush'
+            ]
+            applicable = [s for s in applicable if s not in gas_only_services]
+
+            # Add EV-specific services
+            ev_services = [
+                'ev_battery_inspection', 'high_voltage_system_check',
+                'cabin_air_filter', 'brake_fluid', 'tire_rotation',
+                'brake_pads', 'wiper_blades', 'tire_replacement_set'
+            ]
+            for svc in ev_services:
+                if svc not in applicable and svc in self.service_intervals:
+                    applicable.append(svc)
+
+        # Special handling for Hybrid Vehicles
+        elif self.is_hybrid_vehicle(make, model):
+            # Hybrids need both some gas services and electric services
+            applicable.append('hybrid_battery_check')
+            # They still need oil changes but less frequently
+
+        # Handle oil change preferences for gas/hybrid vehicles
+        else:
+            preferred_oil = brand_config.get('preferred_oil')
+            if preferred_oil:
+                # Remove other oil change types
+                oil_types = ['oil_change', 'oil_change_synthetic', 'premium_oil_change']
+                applicable = [s for s in applicable if s not in oil_types or s == preferred_oil]
+
         return applicable
 
     def get_service_interval(self, service_type: str, make: str) -> int:

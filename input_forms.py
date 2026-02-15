@@ -649,8 +649,9 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
         if st.session_state.previous_make != selected_make:
             # Make changed - reset all dependent fields
             st.session_state.previous_make = selected_make
-            # Clear cached selections
-            for key in ['vehicle_model_select', 'vehicle_year_select', 'vehicle_trim_select']:
+            # Clear cached selections AND financial data
+            for key in ['vehicle_model_select', 'vehicle_year_select', 'vehicle_trim_select',
+                       'vehicle_purchase_price', 'purchase_price_input']:
                 if key in st.session_state:
                     del st.session_state[key]
             st.rerun()
@@ -674,9 +675,10 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                 st.session_state.previous_model = selected_model
 
             if st.session_state.previous_model != selected_model:
-                # Model changed - reset year and trim
+                # Model changed - reset year and trim AND financial data
                 st.session_state.previous_model = selected_model
-                for key in ['vehicle_year_select', 'vehicle_trim_select']:
+                for key in ['vehicle_year_select', 'vehicle_trim_select',
+                           'vehicle_purchase_price', 'purchase_price_input']:
                     if key in st.session_state:
                         del st.session_state[key]
                 st.rerun()
@@ -746,10 +748,11 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                 st.session_state.previous_year = selected_year
 
             if st.session_state.previous_year != selected_year:
-                # Year changed - reset trim
+                # Year changed - reset trim AND financial data
                 st.session_state.previous_year = selected_year
-                if 'vehicle_trim_select' in st.session_state:
-                    del st.session_state['vehicle_trim_select']
+                for key in ['vehicle_trim_select', 'vehicle_purchase_price', 'purchase_price_input']:
+                    if key in st.session_state:
+                        del st.session_state[key]
                 st.rerun()
         else:
             st.selectbox(
@@ -776,6 +779,18 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
 
                 if not selected_trim:
                     st.info("👆 Final step: Select a trim level")
+
+                # CRITICAL: Reset financial data if trim changed
+                if 'previous_trim' not in st.session_state:
+                    st.session_state.previous_trim = selected_trim
+
+                if st.session_state.previous_trim != selected_trim:
+                    # Trim changed - reset financial data
+                    st.session_state.previous_trim = selected_trim
+                    for key in ['vehicle_purchase_price', 'purchase_price_input']:
+                        if key in st.session_state:
+                            del st.session_state[key]
+                    st.rerun()
 
                 # Get MSRP for selected trim
                 if selected_trim:
@@ -1172,10 +1187,8 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
         # ===================================================================
         # ENHANCED FUEL PRICING WITH AUTOMATIC PREMIUM DETECTION
         # ===================================================================
-        from calculator_display import (
-            get_electricity_rate_from_location,
-            determine_fuel_type_and_price
-        )
+        from calculator_display import get_electricity_rate_from_location
+        from vehicle_helpers import determine_fuel_type_and_price
         
         current_fuel_price = auto_fuel_price if auto_fuel_price else location_settings.get('fuel_price', 3.50)
         

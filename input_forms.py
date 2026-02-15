@@ -2389,22 +2389,94 @@ def display_progressive_forms():
             trim = ''
             trim_msrp = 0
 
-    # If vehicle fully selected, show summary and mark as valid
+    # If vehicle fully selected, show mileage input and pricing
     if make and model and trim_msrp > 0:
-        # Estimate current value for used vehicles
-        estimated_value = None
-        is_used = False
-        current_mileage = 0
+        st.markdown("---")
+        st.markdown("**Vehicle Details**")
 
-        if year < 2025:
-            is_used = True
-            vehicle_age = 2025 - year
-            estimated_mileage = vehicle_age * 12000
+        # Determine if vehicle is used
+        from datetime import datetime
+        current_year = datetime.now().year
+        is_used = (year and int(year) < current_year)
+        vehicle_age = (current_year - int(year)) if year else 0
 
-            estimated_value = estimate_used_vehicle_value(
-                make, model, year, estimated_mileage, trim_msrp
+        # Estimate default mileage
+        if transaction_type == "Lease":
+            if vehicle_age == 0:
+                estimated_mileage = 0  # Brand new
+            elif vehicle_age == 1:
+                estimated_mileage = 500  # Demo/test drive miles
+            else:
+                estimated_mileage = vehicle_age * 12000
+        else:  # Purchase
+            if vehicle_age == 0:
+                estimated_mileage = 0
+            else:
+                estimated_mileage = vehicle_age * 12000
+
+        # Mileage input
+        mileage_help = (
+            "Enter actual odometer reading (typically low for lease vehicles)"
+            if transaction_type == "Lease"
+            else "Auto-estimated at 12,000 miles/year. Adjust to actual odometer reading."
+        )
+
+        col_mile1, col_mile2 = st.columns(2)
+
+        with col_mile1:
+            current_mileage = st.number_input(
+                "Current Mileage:",
+                min_value=0,
+                max_value=300000,
+                value=estimated_mileage,
+                step=1000,
+                help=mileage_help,
+                key="current_mileage_progressive"
             )
-            current_mileage = estimated_mileage
+
+            # Show mileage analysis for used vehicles
+            if vehicle_age > 0 and not (transaction_type == "Lease" and vehicle_age <= 1):
+                avg_annual = current_mileage / vehicle_age if vehicle_age > 0 else 0
+                if avg_annual < 10000:
+                    mileage_note = "📊 Below average mileage"
+                elif avg_annual < 15000:
+                    mileage_note = "📊 Average mileage"
+                else:
+                    mileage_note = "📊 Above average mileage"
+                st.caption(f"{mileage_note} ({avg_annual:,.0f} miles/year)")
+
+        with col_mile2:
+            # Calculate estimated value for used vehicles
+            estimated_value = None
+            if is_used and trim_msrp > 0:
+                # Use mileage-aware estimation
+                try:
+                    from used_vehicle_estimator import UsedVehicleEstimator
+                    estimator = UsedVehicleEstimator()
+
+                    estimated_value = estimator.estimate_current_value(
+                        make,
+                        model,
+                        int(year),
+                        trim,
+                        current_mileage
+                    )
+                except Exception:
+                    # Fallback to basic estimation
+                    estimated_value = estimate_used_vehicle_value(
+                        make, model, int(year), current_mileage, trim_msrp
+                    )
+
+            # Show estimated value
+            if estimated_value and estimated_value > 0:
+                depreciation_pct = ((trim_msrp - estimated_value) / trim_msrp * 100) if trim_msrp > 0 else 0
+                st.metric(
+                    "Estimated Current Value",
+                    f"${estimated_value:,.0f}",
+                    delta=f"-{depreciation_pct:.1f}% from MSRP",
+                    delta_color="inverse"
+                )
+                st.caption(f"Original MSRP: ${trim_msrp:,}")
 
         vehicle_data.update({
             'make': make,
@@ -2420,10 +2492,7 @@ def display_progressive_forms():
         vehicle_valid = True
 
         # Show vehicle summary
-        if estimated_value and estimated_value > 0:
-            st.success(f"✓ Selected: {year} {make} {model} {trim} - Est. Value: ${estimated_value:,.0f} (MSRP: ${trim_msrp:,.0f})")
-        else:
-            st.success(f"✓ Selected: {year} {make} {model} {trim} - MSRP: ${trim_msrp:,.0f}")
+        st.success(f"✓ Selected: {year} {make} {model} {trim}")
 
     st.markdown("---")
 

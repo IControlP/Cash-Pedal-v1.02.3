@@ -964,11 +964,21 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
         
         # Purchase price input
         if transaction_type == "Purchase":
+            # Detect vehicle/mileage changes and update purchase price
+            current_vehicle_price_key_main = f"{selected_make}|{selected_model}|{selected_year}|{selected_trim}|{current_mileage}|{estimated_price}"
+            previous_vehicle_price_key_main = st.session_state.get('previous_vehicle_price_key_main', '')
+            vehicle_price_changed_main = (current_vehicle_price_key_main != previous_vehicle_price_key_main)
+
+            # Update purchase price when vehicle/mileage/value changes
+            if vehicle_price_changed_main or 'purchase_price_input' not in st.session_state:
+                st.session_state['purchase_price_input'] = int(default_price)
+                st.session_state['previous_vehicle_price_key_main'] = current_vehicle_price_key_main
+
             purchase_price = st.number_input(
                 "Purchase Price ($):",
                 min_value=0,
                 max_value=500000,
-                value=int(default_price),
+                value=st.session_state.get('purchase_price_input', int(default_price)),
                 step=1000,
                 help="Final purchase price...",
                 key="purchase_price_input"
@@ -2602,7 +2612,9 @@ def display_progressive_forms():
                 from vehicle_helpers import determine_fuel_type_and_price
 
                 # Detect if vehicle has changed (to recalculate fuel price)
-                current_vehicle_key = f"{make}|{model}|{year}|{trim}"
+                # Include mileage in key to detect mileage changes too
+                current_mileage = st.session_state.get('current_mileage_progressive', 0)
+                current_vehicle_key = f"{make}|{model}|{year}|{trim}|{current_mileage}"
                 previous_vehicle_key = st.session_state.get('previous_vehicle_key', '')
                 vehicle_changed = (current_vehicle_key != previous_vehicle_key)
 
@@ -2915,11 +2927,27 @@ def display_progressive_forms():
                 st.markdown(f"*MSRP: ${msrp:,.0f}*")
                 default_price = int(msrp)
 
+            # Detect vehicle/mileage changes and update purchase price
+            make = vehicle_data.get('make', '')
+            model = vehicle_data.get('model', '')
+            year = vehicle_data.get('year', '')
+            trim = vehicle_data.get('trim', '')
+            current_mileage = vehicle_data.get('current_mileage', 0)
+
+            current_vehicle_price_key = f"{make}|{model}|{year}|{trim}|{current_mileage}|{estimated_value}"
+            previous_vehicle_price_key = st.session_state.get('previous_vehicle_price_key', '')
+            vehicle_price_changed = (current_vehicle_price_key != previous_vehicle_price_key)
+
+            # Update purchase price when vehicle/mileage/value changes
+            if vehicle_price_changed or 'purchase_price_progressive' not in st.session_state:
+                st.session_state['purchase_price_progressive'] = default_price
+                st.session_state['previous_vehicle_price_key'] = current_vehicle_price_key
+
             purchase_price = st.number_input(
                 "Actual Purchase Price ($)",
                 min_value=0,
                 max_value=500000,
-                value=default_price,
+                value=st.session_state.get('purchase_price_progressive', default_price),
                 step=100,
                 help="The actual price you're paying. This is used for tax calculations.",
                 key="purchase_price_progressive"

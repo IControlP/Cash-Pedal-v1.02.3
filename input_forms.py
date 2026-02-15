@@ -1150,31 +1150,26 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
                     st.warning(f"ZIP code not recognized: {zip_data.get('error_message', 'Invalid ZIP code')}")
             else:
                 auto_state = ''
-                    auto_geography = 'Suburban'
-                    auto_fuel_price = 3.50
-                    auto_electricity_rate = None
-                    st.error("Invalid ZIP code format")
-            else:
-                auto_state = location_settings.get('state', '')
-                auto_geography = location_settings.get('geography_type', 'Suburban')
-                auto_fuel_price = location_settings.get('fuel_price', 3.50)
+                auto_geography = 'Suburban'
+                auto_fuel_price = 3.50
                 auto_electricity_rate = None
-            
-            # State selection
-            state_options = [
-                'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
-                'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
-                'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
-                'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-                'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
-            ]
-            
-            # Use auto-detected state or saved state – set default via session
-            # state only on first render to avoid the Streamlit
-            # "default value vs Session State API" warning.
-            current_state = auto_state if auto_state else location_settings.get('state', '')
-            if 'state_select_reactive' not in st.session_state:
-                st.session_state['state_select_reactive'] = current_state if current_state in state_options else ''
+                st.error("Invalid ZIP code format")
+
+        # State selection
+        state_options = [
+            'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+            'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+            'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+            'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+            'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+        ]
+
+        # Use auto-detected state or saved state – set default via session
+        # state only on first render to avoid the Streamlit
+        # "default value vs Session State API" warning.
+        current_state = auto_state if auto_state else location_settings.get('state', '')
+        if 'state_select_reactive' not in st.session_state:
+            st.session_state['state_select_reactive'] = current_state if current_state in state_options else ''
 
             selected_state = st.selectbox(
                 "State:",
@@ -2605,14 +2600,10 @@ def display_progressive_forms():
                             'is_valid': True
                         })
                         location_valid = True
-                else:
-                    st.error("ZIP code not found in our database")
             else:
-                st.error("Invalid ZIP code")
-        elif zip_code:
-            st.warning("Please enter a valid 5-digit ZIP code")
+                st.error("ZIP code not found in our database")
 
-    st.markdown("---")
+        st.markdown("---")
 
     # =========================================================================
     # STEP 3: PERSONAL INFORMATION

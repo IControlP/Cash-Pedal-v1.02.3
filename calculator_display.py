@@ -471,14 +471,15 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
             rows: List[Dict[str, Any]] = []
             for entry in annual_breakdown:
                 row: Dict[str, Any] = {"Year": int(entry.get("year", 0))}
-                # Show depreciation for reference but exclude from the total
-                row["Depreciation*"] = float(entry.get("depreciation", 0))
+                # Add out-of-pocket categories first
                 for cat in oop_categories:
                     row[cat.replace("_", " ").title()] = float(entry.get(cat, 0))
                 # Annual total = only out-of-pocket costs
                 row["Annual Total"] = sum(
                     float(entry.get(cat, 0)) for cat in oop_categories
                 )
+                # Show depreciation for reference at the end (exclude from the total)
+                row["Depreciation*"] = float(entry.get("depreciation", 0))
                 rows.append(row)
 
             df = pd.DataFrame(rows).set_index("Year")

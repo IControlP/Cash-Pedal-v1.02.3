@@ -2374,6 +2374,7 @@ def display_progressive_forms():
             'trim_msrp': trim_msrp,
             'is_used': is_used,
             'current_mileage': current_mileage,
+            'estimated_value': estimated_value if estimated_value else trim_msrp,
             'is_valid': True
         })
         vehicle_valid = True
@@ -2423,50 +2424,115 @@ def display_progressive_forms():
             if validate_zip_code(zip_code):
                 zip_data = lookup_zip_code_data(zip_code)
                 if zip_data:
-                    # Get base fuel price from ZIP data
-                    base_fuel_price = zip_data.get('fuel_price', 3.50)
-                    electricity_rate_default = zip_data.get('electricity_rate', 0.12)
+                    # Get vehicle info from vehicle_data
+                    make = vehicle_data.get('make', '')
+                    model = vehicle_data.get('model', '')
+                    trim = vehicle_data.get('trim', '')
 
-                    # Check if vehicle requires premium fuel (simplified check - can be enhanced)
-                    # You can add logic here to check vehicle specs for premium fuel requirement
-                    fuel_type = "Regular"  # Default
-                    # If premium required, adjust price (typically $0.50-$0.70 more)
-                    # fuel_price_display = base_fuel_price + 0.60 if premium else base_fuel_price
+                    # Import fuel detection function
+                    from vehicle_helpers import get_fuel_info_for_vehicle
+
+                    # Get fuel type for the selected vehicle
+                    fuel_info = get_fuel_info_for_vehicle(make, model, trim, zip_code)
+                    fuel_type = fuel_info.get('fuel_type', 'regular')  # 'electric', 'premium', 'regular'
+                    base_fuel_price = fuel_info.get('fuel_price', 3.50)
+                    electricity_rate_default = zip_data.get('electricity_rate', 0.12)
 
                     st.success(f"✓ Location detected: {zip_data.get('state', '')} - {zip_data.get('geography_type', 'Suburban')}")
 
-                    col1, col2 = st.columns(2)
-                    with col1:
+                    # Show appropriate pricing inputs based on fuel type
+                    if fuel_type == 'electric':
+                        # Electric vehicle - show only electricity pricing with charging modes
+                        st.markdown("**Electricity Pricing** (EV Charging)")
+
+                        charging_mode = st.radio(
+                            "Charging Mode:",
+                            ["Home Only", "Public Only", "Mixed (Home & Public)"],
+                            horizontal=True,
+                            key="charging_mode_progressive"
+                        )
+
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            home_rate = st.number_input(
+                                "Home Electricity Rate (per kWh)",
+                                min_value=0.0,
+                                max_value=1.0,
+                                value=float(electricity_rate_default),
+                                step=0.01,
+                                format="%.3f",
+                                help="Your home electricity rate",
+                                key="home_electricity_rate_progressive"
+                            )
+                        with col2:
+                            public_rate = st.number_input(
+                                "Public Charging Rate (per kWh)",
+                                min_value=0.0,
+                                max_value=1.0,
+                                value=float(electricity_rate_default * 2.5),  # Public charging typically 2-3x home rate
+                                step=0.01,
+                                format="%.3f",
+                                help="Average public/DC fast charging rate",
+                                key="public_electricity_rate_progressive"
+                            )
+
+                        # Calculate blended rate based on charging mode
+                        if charging_mode == "Home Only":
+                            blended_rate = home_rate
+                            mix_pct = "100% home"
+                        elif charging_mode == "Public Only":
+                            blended_rate = public_rate
+                            mix_pct = "100% public"
+                        else:  # Mixed
+                            home_pct = st.slider(
+                                "Percentage of Home Charging",
+                                min_value=0,
+                                max_value=100,
+                                value=80,
+                                step=5,
+                                help="What percentage of your charging is done at home?",
+                                key="home_charging_pct_progressive"
+                            )
+                            blended_rate = (home_rate * home_pct / 100) + (public_rate * (100 - home_pct) / 100)
+                            mix_pct = f"{home_pct}% home / {100-home_pct}% public"
+
+                        st.info(f"**Blended Electricity Rate: ${blended_rate:.3f}/kWh** ({mix_pct})")
+
+                        location_data.update({
+                            'state': zip_data.get('state', ''),
+                            'geography_type': zip_data.get('geography_type', 'Suburban'),
+                            'fuel_price': 0.0,  # No fuel for EVs
+                            'electricity_rate': blended_rate,
+                            'is_valid': True
+                        })
+                        location_valid = True
+
+                    else:
+                        # Gas vehicle (regular or premium) - show only fuel pricing
+                        fuel_label = "Premium Gasoline" if fuel_type == 'premium' else "Regular Gasoline"
+
                         fuel_price = st.number_input(
-                            f"Fuel Price (${fuel_type}, per gallon)",
+                            f"Fuel Price ({fuel_label}, per gallon)",
                             min_value=0.0,
                             max_value=10.0,
                             value=float(base_fuel_price),
                             step=0.10,
                             format="%.2f",
-                            help="Edit if you know your local fuel price differs",
+                            help=f"Current {fuel_label.lower()} price in your area",
                             key="fuel_price_progressive"
                         )
-                    with col2:
-                        electricity_rate = st.number_input(
-                            "Electricity Rate (per kWh)",
-                            min_value=0.0,
-                            max_value=1.0,
-                            value=float(electricity_rate_default),
-                            step=0.01,
-                            format="%.3f",
-                            help="Edit if you know your local electricity rate differs",
-                            key="electricity_rate_progressive"
-                        )
 
-                    location_data.update({
-                        'state': zip_data.get('state', ''),
-                        'geography_type': zip_data.get('geography_type', 'Suburban'),
-                        'fuel_price': fuel_price,
-                        'electricity_rate': electricity_rate,
-                        'is_valid': True
-                    })
-                    location_valid = True
+                        if fuel_type == 'premium':
+                            st.caption(f"ℹ️ This vehicle requires premium fuel (${base_fuel_price:.2f}/gal)")
+
+                        location_data.update({
+                            'state': zip_data.get('state', ''),
+                            'geography_type': zip_data.get('geography_type', 'Suburban'),
+                            'fuel_price': fuel_price,
+                            'electricity_rate': 0.0,  # No electricity for gas vehicles
+                            'is_valid': True
+                        })
+                        location_valid = True
                 else:
                     st.error("ZIP code not found in our database")
             else:
@@ -2628,15 +2694,23 @@ def display_progressive_forms():
 
             # Purchase price input (for tax calculations)
             msrp = vehicle_data.get('trim_msrp', 30000)
-            st.markdown(f"*MSRP: ${msrp:,.0f}*")
+            estimated_value = vehicle_data.get('estimated_value', msrp)
+            is_used = vehicle_data.get('is_used', False)
+
+            if is_used:
+                st.markdown(f"*MSRP: ${msrp:,.0f} | Estimated Current Value: ${estimated_value:,.0f}*")
+                default_price = int(estimated_value)
+            else:
+                st.markdown(f"*MSRP: ${msrp:,.0f}*")
+                default_price = int(msrp)
 
             purchase_price = st.number_input(
                 "Actual Purchase Price ($)",
                 min_value=0,
                 max_value=500000,
-                value=int(msrp),
+                value=default_price,
                 step=100,
-                help="The actual price you're paying (may differ from MSRP). This is used for tax calculations.",
+                help="The actual price you're paying. This is used for tax calculations.",
                 key="purchase_price_progressive"
             )
 
@@ -2694,6 +2768,7 @@ def display_progressive_forms():
 
             financial_data.update({
                 'purchase_price': purchase_price,
+                'price': purchase_price,  # Alias for compatibility with prediction_service
                 'down_payment': down_payment,
                 'down_payment_percent': down_payment_percent,
                 'trade_in_value': trade_in_value,

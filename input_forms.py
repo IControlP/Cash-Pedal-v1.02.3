@@ -651,7 +651,7 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
             st.session_state.previous_make = selected_make
             # Clear cached selections AND financial data
             for key in ['vehicle_model_select', 'vehicle_year_select', 'vehicle_trim_select',
-                       'vehicle_purchase_price', 'purchase_price_input']:
+                       'vehicle_purchase_price', 'purchase_price_input', 'purchase_price_progressive']:
                 if key in st.session_state:
                     del st.session_state[key]
             st.rerun()
@@ -678,7 +678,7 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                 # Model changed - reset year and trim AND financial data
                 st.session_state.previous_model = selected_model
                 for key in ['vehicle_year_select', 'vehicle_trim_select',
-                           'vehicle_purchase_price', 'purchase_price_input']:
+                           'vehicle_purchase_price', 'purchase_price_input', 'purchase_price_progressive']:
                     if key in st.session_state:
                         del st.session_state[key]
                 st.rerun()
@@ -750,7 +750,7 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
             if st.session_state.previous_year != selected_year:
                 # Year changed - reset trim AND financial data
                 st.session_state.previous_year = selected_year
-                for key in ['vehicle_trim_select', 'vehicle_purchase_price', 'purchase_price_input']:
+                for key in ['vehicle_trim_select', 'vehicle_purchase_price', 'purchase_price_input', 'purchase_price_progressive']:
                     if key in st.session_state:
                         del st.session_state[key]
                 st.rerun()
@@ -787,7 +787,7 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                 if st.session_state.previous_trim != selected_trim:
                     # Trim changed - reset financial data
                     st.session_state.previous_trim = selected_trim
-                    for key in ['vehicle_purchase_price', 'purchase_price_input']:
+                    for key in ['vehicle_purchase_price', 'purchase_price_input', 'purchase_price_progressive']:
                         if key in st.session_state:
                             del st.session_state[key]
                     st.rerun()

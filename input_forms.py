@@ -71,7 +71,7 @@ except ImportError:
         return 30000
 
 try:
-    from zip_code_utils import validate_zip_code, lookup_zip_code_data
+    from zip_code_utils import validate_zip_code, lookup_zip_code_data, validate_and_lookup_location
 except ImportError:
     def validate_zip_code(zip_code):
         return len(zip_code) == 5 and zip_code.isdigit()
@@ -110,35 +110,43 @@ def save_persistent_setting(category: str, data: Dict[str, Any]):
 # ============================================
 
 def on_zip_code_change():
-    """Callback when ZIP code changes - auto-populate state and fuel price"""
+    """Callback when ZIP code changes - auto-populate state, fuel price, electricity rate, and labor rate"""
     zip_code = st.session_state.get('zip_code_input_reactive', '')
     if zip_code and len(zip_code) == 5 and zip_code.isdigit():
-        if validate_zip_code(zip_code):
-            zip_data = lookup_zip_code_data(zip_code)
-            if zip_data:
-                st.session_state['auto_detected_state'] = zip_data.get('state', '')
-                st.session_state['auto_detected_geography'] = zip_data.get('geography_type', 'Suburban')
-                st.session_state['auto_detected_fuel_price'] = zip_data.get('fuel_price', 3.50)
-                st.session_state['auto_detected_electricity_rate'] = zip_data.get('electricity_rate', 0.15)
-                st.session_state['state_select_reactive'] = zip_data.get('state', '')
-                st.session_state['state_fuel_price'] = zip_data.get('fuel_price', 3.50)
-                st.session_state['state_electricity_rate'] = zip_data.get('electricity_rate', 0.15)
-                st.session_state['zip_code_valid'] = True
-                st.session_state['location_needs_update'] = True
-            else:
-                st.session_state['zip_code_valid'] = False
+        # Use comprehensive lookup with fallback
+        zip_data = validate_and_lookup_location(zip_code)
+        if zip_data and zip_data.get('is_valid', False):
+            st.session_state['auto_detected_state'] = zip_data.get('state', '')
+            st.session_state['auto_detected_geography'] = zip_data.get('geography_type', 'Suburban')
+            st.session_state['auto_detected_fuel_price'] = zip_data.get('fuel_price', 3.50)
+            st.session_state['auto_detected_electricity_rate'] = zip_data.get('electricity_rate', 0.15)
+            st.session_state['auto_detected_labor_rate'] = zip_data.get('labor_rate', 100)
+            st.session_state['state_select_reactive'] = zip_data.get('state', '')
+            st.session_state['state_fuel_price'] = zip_data.get('fuel_price', 3.50)
+            st.session_state['state_electricity_rate'] = zip_data.get('electricity_rate', 0.15)
+            st.session_state['state_labor_rate'] = zip_data.get('labor_rate', 100)
+            st.session_state['zip_code_valid'] = True
+            st.session_state['location_needs_update'] = True
+
+            # Store any informational messages (like "using state averages")
+            if zip_data.get('error_message'):
+                st.session_state['zip_lookup_message'] = zip_data['error_message']
         else:
             st.session_state['zip_code_valid'] = False
+            st.session_state['zip_lookup_message'] = zip_data.get('error_message', 'Invalid ZIP code')
+    else:
+        st.session_state['zip_code_valid'] = False
 
 
 def on_state_change():
-    """Callback when state selection changes - update fuel pricing"""
+    """Callback when state selection changes - update fuel pricing, electricity rate, and labor rate"""
     selected_state = st.session_state.get('state_select_reactive', '')
     if selected_state:
         try:
-            from zip_code_utils import STATE_FUEL_PRICES, STATE_ELECTRICITY_RATES
+            from zip_code_utils import STATE_FUEL_PRICES, STATE_ELECTRICITY_RATES, STATE_LABOR_RATES
             st.session_state['state_fuel_price'] = STATE_FUEL_PRICES.get(selected_state, 3.50)
             st.session_state['state_electricity_rate'] = STATE_ELECTRICITY_RATES.get(selected_state, 0.15)
+            st.session_state['state_labor_rate'] = STATE_LABOR_RATES.get(selected_state, 100)
         except ImportError:
             # Fallback state fuel prices
             state_fuel_prices = {
@@ -154,6 +162,8 @@ def on_state_change():
                 'VT': 3.70, 'VA': 3.45, 'WV': 3.40, 'WI': 3.45, 'WY': 3.50,
             }
             st.session_state['state_fuel_price'] = state_fuel_prices.get(selected_state, 3.50)
+            st.session_state['state_electricity_rate'] = 0.15
+            st.session_state['state_labor_rate'] = 100
         st.session_state['location_needs_update'] = True
 
 
@@ -1114,24 +1124,32 @@ def display_location_form(vehicle_data: Dict[str, Any] = None) -> Dict[str, Any]
                 auto_fuel_price = st.session_state.get('auto_detected_fuel_price', 3.50)
                 auto_electricity_rate = st.session_state.get('auto_detected_electricity_rate', None)
                 if auto_state:
-                    st.success(f"Auto-detected: {auto_state} - {auto_geography}")
-            elif zip_code and len(zip_code) == 5:
-                if validate_zip_code(zip_code):
-                    zip_data = lookup_zip_code_data(zip_code)
-                    if zip_data:
-                        auto_state = zip_data.get('state', '')
-                        auto_geography = zip_data.get('geography_type', '')
-                        auto_fuel_price = zip_data.get('fuel_price', 3.50)
-                        auto_electricity_rate = zip_data.get('electricity_rate', None)
-                        st.success(f"Auto-detected: {auto_state} - {auto_geography}")
+                    # Show informational message if available
+                    if st.session_state.get('zip_lookup_message'):
+                        st.info(f"Auto-detected: {auto_state} - {auto_geography} ({st.session_state['zip_lookup_message']})")
                     else:
-                        auto_state = ''
-                        auto_geography = 'Suburban'
-                        auto_fuel_price = 3.50
-                        auto_electricity_rate = None
-                        st.warning("ZIP code not found. Please enter manually below.")
+                        st.success(f"Auto-detected: {auto_state} - {auto_geography}")
+            elif zip_code and len(zip_code) == 5:
+                # Use comprehensive lookup with fallback
+                zip_data = validate_and_lookup_location(zip_code)
+                if zip_data and zip_data.get('is_valid', False):
+                    auto_state = zip_data.get('state', '')
+                    auto_geography = zip_data.get('geography_type', 'Suburban')
+                    auto_fuel_price = zip_data.get('fuel_price', 3.50)
+                    auto_electricity_rate = zip_data.get('electricity_rate', None)
+                    # Show informational message if using state-level data
+                    if zip_data.get('error_message'):
+                        st.info(f"Auto-detected: {auto_state} - {auto_geography} ({zip_data['error_message']})")
+                    else:
+                        st.success(f"Auto-detected: {auto_state} - {auto_geography}")
                 else:
                     auto_state = ''
+                    auto_geography = 'Suburban'
+                    auto_fuel_price = 3.50
+                    auto_electricity_rate = None
+                    st.warning(f"ZIP code not recognized: {zip_data.get('error_message', 'Invalid ZIP code')}")
+            else:
+                auto_state = ''
                     auto_geography = 'Suburban'
                     auto_fuel_price = 3.50
                     auto_electricity_rate = None
@@ -2448,37 +2466,42 @@ def display_progressive_forms():
 
         # Validate and lookup ZIP code
         if zip_code and len(zip_code) == 5 and zip_code.isdigit():
-            if validate_zip_code(zip_code):
-                zip_data = lookup_zip_code_data(zip_code)
-                if zip_data:
-                    # Get vehicle info from vehicle_data
-                    make = vehicle_data.get('make', '')
-                    model = vehicle_data.get('model', '')
-                    trim = vehicle_data.get('trim', '')
-                    year = vehicle_data.get('year', 2025)
+            # Use comprehensive lookup with fallback
+            zip_data = validate_and_lookup_location(zip_code)
+            if zip_data and zip_data.get('is_valid', False):
+                # Get vehicle info from vehicle_data
+                make = vehicle_data.get('make', '')
+                model = vehicle_data.get('model', '')
+                trim = vehicle_data.get('trim', '')
+                year = vehicle_data.get('year', 2025)
 
-                    # Import fuel detection function
-                    from vehicle_helpers import determine_fuel_type_and_price
+                # Import fuel detection function
+                from vehicle_helpers import determine_fuel_type_and_price
 
-                    # Detect if vehicle has changed (to recalculate fuel price)
-                    current_vehicle_key = f"{make}|{model}|{year}|{trim}"
-                    previous_vehicle_key = st.session_state.get('previous_vehicle_key', '')
-                    vehicle_changed = (current_vehicle_key != previous_vehicle_key)
+                # Detect if vehicle has changed (to recalculate fuel price)
+                current_vehicle_key = f"{make}|{model}|{year}|{trim}"
+                previous_vehicle_key = st.session_state.get('previous_vehicle_key', '')
+                vehicle_changed = (current_vehicle_key != previous_vehicle_key)
 
-                    # Store current vehicle key for next comparison
-                    st.session_state['previous_vehicle_key'] = current_vehicle_key
+                # Store current vehicle key for next comparison
+                st.session_state['previous_vehicle_key'] = current_vehicle_key
 
-                    # Get fuel type for the selected vehicle (recalculate if vehicle changed)
-                    fuel_info = determine_fuel_type_and_price(make, model, year, trim, zip_code)
-                    fuel_type = fuel_info.get('fuel_type', 'regular')  # 'electric', 'premium', 'regular'
-                    base_fuel_price = fuel_info.get('fuel_price', 3.50)
-                    electricity_rate_default = zip_data.get('electricity_rate', 0.12)
+                # Get fuel type for the selected vehicle (recalculate if vehicle changed)
+                fuel_info = determine_fuel_type_and_price(make, model, year, trim, zip_code)
+                fuel_type = fuel_info.get('fuel_type', 'regular')  # 'electric', 'premium', 'regular'
+                base_fuel_price = fuel_info.get('fuel_price', 3.50)
+                electricity_rate_default = zip_data.get('electricity_rate', 0.12)
 
-                    # If vehicle changed, reset the fuel price input to the new detected price
-                    if vehicle_changed:
-                        st.session_state['fuel_price_progressive'] = float(base_fuel_price)
+                # If vehicle changed, reset the fuel price input to the new detected price
+                if vehicle_changed:
+                    st.session_state['fuel_price_progressive'] = float(base_fuel_price)
 
-                    st.success(f"✓ Location detected: {zip_data.get('state', '')} - {zip_data.get('geography_type', 'Suburban')}")
+                # Show location detection with informational message if using state-level data
+                state_info = f"{zip_data.get('state', '')} - {zip_data.get('geography_type', 'Suburban')}"
+                if zip_data.get('error_message'):
+                    st.info(f"✓ Location detected: {state_info} ({zip_data['error_message']})")
+                else:
+                    st.success(f"✓ Location detected: {state_info}")
 
                     # Notify user if vehicle changed and fuel price was recalculated
                     if vehicle_changed and previous_vehicle_key:

@@ -10,128 +10,129 @@ from typing import Dict, Optional, List, Any, Tuple
 # ========================================================================
 # METROPOLITAN AREA ELECTRICITY RATES (2025)
 # Based on major utility companies and regional averages
-# Format: (zip_start, zip_end, state, metro_name, geography_type, fuel_price, electricity_rate)
+# Format: (zip_start, zip_end, state, metro_name, geography_type, fuel_price, electricity_rate, labor_rate)
+# Labor rate = Average mechanic hourly rate in dollars
 # ========================================================================
 
 METRO_AREA_RATES = [
     # NORTHEAST - High rates due to infrastructure costs and imported energy
-    (2101, 2299, 'MA', 'Boston Metro', 'Urban', 3.80, 0.27),
-    (1701, 1899, 'MA', 'Worcester/Suburbs', 'Suburban', 3.75, 0.26),
-    (6001, 6199, 'CT', 'Connecticut', 'Mixed', 3.75, 0.30),  # Highest in continental US
-    (2801, 2999, 'RI', 'Providence Metro', 'Urban', 3.75, 0.28),
-    (3801, 3999, 'NH', 'New Hampshire', 'Mixed', 3.65, 0.23),
-    (4001, 4999, 'ME', 'Maine', 'Mixed', 3.70, 0.16),
-    (5001, 5999, 'VT', 'Vermont', 'Rural', 3.70, 0.17),
-    
+    (2101, 2299, 'MA', 'Boston Metro', 'Urban', 3.80, 0.27, 145),
+    (1701, 1899, 'MA', 'Worcester/Suburbs', 'Suburban', 3.75, 0.26, 130),
+    (6001, 6199, 'CT', 'Connecticut', 'Mixed', 3.75, 0.30, 140),  # Highest in continental US
+    (2801, 2999, 'RI', 'Providence Metro', 'Urban', 3.75, 0.28, 125),
+    (3801, 3999, 'NH', 'New Hampshire', 'Mixed', 3.65, 0.23, 120),
+    (4001, 4999, 'ME', 'Maine', 'Mixed', 3.70, 0.16, 110),
+    (5001, 5999, 'VT', 'Vermont', 'Rural', 3.70, 0.17, 105),
+
     # NEW YORK - Varies significantly by region
-    (10001, 10499, 'NY', 'Manhattan', 'Urban', 3.95, 0.26),
-    (10500, 10999, 'NY', 'Bronx/Westchester', 'Urban', 3.90, 0.25),
-    (11001, 11999, 'NY', 'Brooklyn/Queens', 'Urban', 3.90, 0.25),
-    (12001, 12999, 'NY', 'Albany/Capital Region', 'Suburban', 3.75, 0.19),
-    (13001, 13999, 'NY', 'Syracuse/Central NY', 'Suburban', 3.70, 0.18),
-    (14001, 14999, 'NY', 'Buffalo/Western NY', 'Suburban', 3.70, 0.17),
-    
+    (10001, 10499, 'NY', 'Manhattan', 'Urban', 3.95, 0.26, 175),
+    (10500, 10999, 'NY', 'Bronx/Westchester', 'Urban', 3.90, 0.25, 155),
+    (11001, 11999, 'NY', 'Brooklyn/Queens', 'Urban', 3.90, 0.25, 150),
+    (12001, 12999, 'NY', 'Albany/Capital Region', 'Suburban', 3.75, 0.19, 115),
+    (13001, 13999, 'NY', 'Syracuse/Central NY', 'Suburban', 3.70, 0.18, 105),
+    (14001, 14999, 'NY', 'Buffalo/Western NY', 'Suburban', 3.70, 0.17, 100),
+
     # NEW JERSEY - High density, high rates
-    (7001, 7999, 'NJ', 'Northern NJ Metro', 'Urban', 3.70, 0.20),
-    (8001, 8999, 'NJ', 'Central/Southern NJ', 'Suburban', 3.65, 0.19),
-    
+    (7001, 7999, 'NJ', 'Northern NJ Metro', 'Urban', 3.70, 0.20, 145),
+    (8001, 8999, 'NJ', 'Central/Southern NJ', 'Suburban', 3.65, 0.19, 130),
+
     # PENNSYLVANIA - Mix of urban and industrial
-    (15001, 15999, 'PA', 'Pittsburgh Metro', 'Urban', 3.65, 0.15),
-    (16001, 17999, 'PA', 'Central PA', 'Suburban', 3.60, 0.14),
-    (18001, 18999, 'PA', 'Northeast PA', 'Suburban', 3.60, 0.15),
-    (19001, 19699, 'PA', 'Philadelphia Metro', 'Urban', 3.65, 0.17),
-    
+    (15001, 15999, 'PA', 'Pittsburgh Metro', 'Urban', 3.65, 0.15, 110),
+    (16001, 17999, 'PA', 'Central PA', 'Suburban', 3.60, 0.14, 95),
+    (18001, 18999, 'PA', 'Northeast PA', 'Suburban', 3.60, 0.15, 100),
+    (19001, 19699, 'PA', 'Philadelphia Metro', 'Urban', 3.65, 0.17, 125),
+
     # DELAWARE & MARYLAND
-    (19700, 19999, 'DE', 'Delaware', 'Suburban', 3.45, 0.14),
-    (20001, 20599, 'DC', 'Washington DC', 'Urban', 3.60, 0.16),
-    (20600, 21999, 'MD', 'Maryland Metro', 'Suburban', 3.55, 0.18),
-    
+    (19700, 19999, 'DE', 'Delaware', 'Suburban', 3.45, 0.14, 115),
+    (20001, 20599, 'DC', 'Washington DC', 'Urban', 3.60, 0.16, 150),
+    (20600, 21999, 'MD', 'Maryland Metro', 'Suburban', 3.55, 0.18, 135),
+
     # VIRGINIA
-    (22001, 22999, 'VA', 'Northern Virginia', 'Suburban', 3.50, 0.14),
-    (23001, 24699, 'VA', 'Central/Coastal VA', 'Suburban', 3.45, 0.13),
-    
+    (22001, 22999, 'VA', 'Northern Virginia', 'Suburban', 3.50, 0.14, 130),
+    (23001, 24699, 'VA', 'Central/Coastal VA', 'Suburban', 3.45, 0.13, 105),
+
     # WEST VIRGINIA
-    (24700, 26999, 'WV', 'West Virginia', 'Rural', 3.40, 0.12),
+    (24700, 26999, 'WV', 'West Virginia', 'Rural', 3.40, 0.12, 85),
     
     # MIDWEST - Generally moderate rates
-    (43001, 43999, 'OH', 'Columbus Metro', 'Urban', 3.40, 0.15),
-    (44001, 44999, 'OH', 'Cleveland Metro', 'Urban', 3.45, 0.16),
-    (45001, 45999, 'OH', 'Cincinnati/Dayton', 'Urban', 3.40, 0.15),
-    (48001, 48999, 'MI', 'Detroit Metro', 'Urban', 3.50, 0.17),
-    (49001, 49999, 'MI', 'West/North Michigan', 'Suburban', 3.45, 0.16),
-    (60001, 60699, 'IL', 'Chicago Metro', 'Urban', 3.60, 0.16),
-    (61001, 62999, 'IL', 'Central/Southern IL', 'Suburban', 3.50, 0.14),
-    (46001, 46999, 'IN', 'Indianapolis Metro', 'Urban', 3.35, 0.14),
-    (47001, 47999, 'IN', 'Southern Indiana', 'Suburban', 3.30, 0.13),
-    (53001, 53999, 'WI', 'Milwaukee/Madison', 'Urban', 3.45, 0.15),
-    (54001, 54999, 'WI', 'Northern Wisconsin', 'Rural', 3.40, 0.14),
-    (55001, 55999, 'MN', 'Minneapolis-St Paul', 'Urban', 3.45, 0.14),
-    (56001, 56799, 'MN', 'Southern Minnesota', 'Rural', 3.40, 0.13),
-    (50001, 52999, 'IA', 'Iowa', 'Mixed', 3.25, 0.12),
-    (63001, 63999, 'MO', 'St Louis Metro', 'Urban', 3.25, 0.13),
-    (64001, 64999, 'MO', 'Kansas City Metro', 'Urban', 3.20, 0.13),
-    (65001, 65899, 'MO', 'Central Missouri', 'Suburban', 3.15, 0.12),
-    (66001, 67999, 'KS', 'Kansas', 'Mixed', 3.15, 0.14),
-    (68001, 69999, 'NE', 'Nebraska', 'Mixed', 3.30, 0.11),
-    (57001, 57999, 'SD', 'South Dakota', 'Rural', 3.35, 0.12),
-    (58001, 58999, 'ND', 'North Dakota', 'Rural', 3.25, 0.11),
+    (43001, 43999, 'OH', 'Columbus Metro', 'Urban', 3.40, 0.15, 105),
+    (44001, 44999, 'OH', 'Cleveland Metro', 'Urban', 3.45, 0.16, 100),
+    (45001, 45999, 'OH', 'Cincinnati/Dayton', 'Urban', 3.40, 0.15, 95),
+    (48001, 48999, 'MI', 'Detroit Metro', 'Urban', 3.50, 0.17, 110),
+    (49001, 49999, 'MI', 'West/North Michigan', 'Suburban', 3.45, 0.16, 95),
+    (60001, 60699, 'IL', 'Chicago Metro', 'Urban', 3.60, 0.16, 135),
+    (61001, 62999, 'IL', 'Central/Southern IL', 'Suburban', 3.50, 0.14, 95),
+    (46001, 46999, 'IN', 'Indianapolis Metro', 'Urban', 3.35, 0.14, 100),
+    (47001, 47999, 'IN', 'Southern Indiana', 'Suburban', 3.30, 0.13, 85),
+    (53001, 53999, 'WI', 'Milwaukee/Madison', 'Urban', 3.45, 0.15, 105),
+    (54001, 54999, 'WI', 'Northern Wisconsin', 'Rural', 3.40, 0.14, 90),
+    (55001, 55999, 'MN', 'Minneapolis-St Paul', 'Urban', 3.45, 0.14, 115),
+    (56001, 56799, 'MN', 'Southern Minnesota', 'Rural', 3.40, 0.13, 95),
+    (50001, 52999, 'IA', 'Iowa', 'Mixed', 3.25, 0.12, 90),
+    (63001, 63999, 'MO', 'St Louis Metro', 'Urban', 3.25, 0.13, 100),
+    (64001, 64999, 'MO', 'Kansas City Metro', 'Urban', 3.20, 0.13, 100),
+    (65001, 65899, 'MO', 'Central Missouri', 'Suburban', 3.15, 0.12, 85),
+    (66001, 67999, 'KS', 'Kansas', 'Mixed', 3.15, 0.14, 90),
+    (68001, 69999, 'NE', 'Nebraska', 'Mixed', 3.30, 0.11, 95),
+    (57001, 57999, 'SD', 'South Dakota', 'Rural', 3.35, 0.12, 85),
+    (58001, 58999, 'ND', 'North Dakota', 'Rural', 3.25, 0.11, 90),
     
     # SOUTH - Generally lower rates except FL
-    (40001, 42799, 'KY', 'Kentucky', 'Mixed', 3.30, 0.11),
-    (37001, 38599, 'TN', 'Tennessee', 'Mixed', 3.20, 0.12),
-    (27001, 28999, 'NC', 'North Carolina', 'Mixed', 3.35, 0.13),
-    (29001, 29999, 'SC', 'South Carolina', 'Mixed', 3.25, 0.14),
-    (30001, 31999, 'GA', 'Atlanta Metro', 'Urban', 3.30, 0.14),
-    (32001, 32999, 'FL', 'Central/North Florida', 'Mixed', 3.40, 0.14),
-    (33001, 33999, 'FL', 'South Florida/Miami', 'Urban', 3.45, 0.15),
-    (34001, 34999, 'FL', 'Southwest Florida', 'Suburban', 3.35, 0.14),
-    (35001, 36999, 'AL', 'Alabama', 'Mixed', 3.20, 0.13),
-    (38601, 39999, 'MS', 'Mississippi', 'Mixed', 3.10, 0.12),
-    (70001, 71499, 'LA', 'Louisiana', 'Mixed', 3.05, 0.11),
-    (71600, 72999, 'AR', 'Arkansas', 'Mixed', 3.10, 0.11),
-    (73001, 74999, 'OK', 'Oklahoma', 'Mixed', 3.15, 0.12),
-    
+    (40001, 42799, 'KY', 'Kentucky', 'Mixed', 3.30, 0.11, 90),
+    (37001, 38599, 'TN', 'Tennessee', 'Mixed', 3.20, 0.12, 95),
+    (27001, 28999, 'NC', 'North Carolina', 'Mixed', 3.35, 0.13, 100),
+    (29001, 29999, 'SC', 'South Carolina', 'Mixed', 3.25, 0.14, 95),
+    (30001, 31999, 'GA', 'Atlanta Metro', 'Urban', 3.30, 0.14, 110),
+    (32001, 32999, 'FL', 'Central/North Florida', 'Mixed', 3.40, 0.14, 105),
+    (33001, 33999, 'FL', 'South Florida/Miami', 'Urban', 3.45, 0.15, 120),
+    (34001, 34999, 'FL', 'Southwest Florida', 'Suburban', 3.35, 0.14, 110),
+    (35001, 36999, 'AL', 'Alabama', 'Mixed', 3.20, 0.13, 85),
+    (38601, 39999, 'MS', 'Mississippi', 'Mixed', 3.10, 0.12, 80),
+    (70001, 71499, 'LA', 'Louisiana', 'Mixed', 3.05, 0.11, 90),
+    (71600, 72999, 'AR', 'Arkansas', 'Mixed', 3.10, 0.11, 85),
+    (73001, 74999, 'OK', 'Oklahoma', 'Mixed', 3.15, 0.12, 90),
+
     # TEXAS - Deregulated market, varies by city
-    (75001, 75499, 'TX', 'Dallas-Fort Worth', 'Urban', 3.25, 0.14),
-    (76001, 76999, 'TX', 'Fort Worth/West', 'Urban', 3.20, 0.13),
-    (77001, 77599, 'TX', 'Houston Metro', 'Urban', 3.20, 0.13),
-    (78001, 78999, 'TX', 'Austin/San Antonio', 'Urban', 3.30, 0.13),
-    (79001, 79999, 'TX', 'West Texas', 'Rural', 3.15, 0.12),
-    
+    (75001, 75499, 'TX', 'Dallas-Fort Worth', 'Urban', 3.25, 0.14, 110),
+    (76001, 76999, 'TX', 'Fort Worth/West', 'Urban', 3.20, 0.13, 105),
+    (77001, 77599, 'TX', 'Houston Metro', 'Urban', 3.20, 0.13, 110),
+    (78001, 78999, 'TX', 'Austin/San Antonio', 'Urban', 3.30, 0.13, 115),
+    (79001, 79999, 'TX', 'West Texas', 'Rural', 3.15, 0.12, 85),
+
     # MOUNTAIN WEST
-    (59001, 59999, 'MT', 'Montana', 'Rural', 3.60, 0.12),
-    (82001, 83199, 'WY', 'Wyoming', 'Rural', 3.50, 0.12),
-    (83200, 83999, 'ID', 'Idaho', 'Rural', 3.65, 0.10),
-    (80001, 81699, 'CO', 'Colorado', 'Mixed', 3.50, 0.14),
-    (87001, 88499, 'NM', 'New Mexico', 'Mixed', 3.40, 0.14),
-    (84001, 84799, 'UT', 'Utah', 'Mixed', 3.75, 0.11),
-    (85001, 86599, 'AZ', 'Arizona', 'Mixed', 3.85, 0.14),
-    (88901, 89999, 'NV', 'Nevada', 'Mixed', 4.05, 0.13),
-    
+    (59001, 59999, 'MT', 'Montana', 'Rural', 3.60, 0.12, 95),
+    (82001, 83199, 'WY', 'Wyoming', 'Rural', 3.50, 0.12, 90),
+    (83200, 83999, 'ID', 'Idaho', 'Rural', 3.65, 0.10, 90),
+    (80001, 81699, 'CO', 'Colorado', 'Mixed', 3.50, 0.14, 120),
+    (87001, 88499, 'NM', 'New Mexico', 'Mixed', 3.40, 0.14, 95),
+    (84001, 84799, 'UT', 'Utah', 'Mixed', 3.75, 0.11, 105),
+    (85001, 86599, 'AZ', 'Arizona', 'Mixed', 3.85, 0.14, 105),
+    (88901, 89999, 'NV', 'Nevada', 'Mixed', 4.05, 0.13, 110),
+
     # PACIFIC NORTHWEST - Low rates due to hydropower
-    (98001, 99399, 'WA', 'Western Washington', 'Mixed', 4.20, 0.10),
-    (99401, 99499, 'WA', 'Eastern Washington', 'Rural', 4.10, 0.09),
-    (97001, 97999, 'OR', 'Oregon', 'Mixed', 4.10, 0.11),
-    
+    (98001, 99399, 'WA', 'Western Washington', 'Mixed', 4.20, 0.10, 125),
+    (99401, 99499, 'WA', 'Eastern Washington', 'Rural', 4.10, 0.09, 100),
+    (97001, 97999, 'OR', 'Oregon', 'Mixed', 4.10, 0.11, 115),
+
     # ALASKA - Highest rates after Hawaii
-    (99500, 99999, 'AK', 'Alaska', 'Rural', 4.15, 0.24),
-    
+    (99500, 99999, 'AK', 'Alaska', 'Rural', 4.15, 0.24, 130),
+
     # CALIFORNIA - Highest rates in continental US for major metros
-    (90001, 90899, 'CA', 'Los Angeles Metro', 'Urban', 4.70, 0.28),
-    (91001, 91899, 'CA', 'LA Suburbs/Valleys', 'Suburban', 4.65, 0.27),
-    (92001, 92199, 'CA', 'San Diego Metro', 'Urban', 4.55, 0.38),  # SDG&E - HIGHEST
-    (92600, 92899, 'CA', 'Orange County', 'Suburban', 4.65, 0.27),
-    (92200, 92599, 'CA', 'Inland Empire', 'Suburban', 4.60, 0.26),
-    (93500, 93599, 'CA', 'Inland Empire East', 'Suburban', 4.55, 0.25),
-    (93001, 93499, 'CA', 'Central Valley', 'Suburban', 4.50, 0.24),
-    (94001, 94999, 'CA', 'San Francisco/Peninsula', 'Urban', 4.85, 0.32),
-    (95001, 95199, 'CA', 'San Jose/Silicon Valley', 'Urban', 4.75, 0.30),
-    (94500, 94799, 'CA', 'East Bay', 'Suburban', 4.70, 0.30),
-    (95200, 95999, 'CA', 'Sacramento/North CA', 'Suburban', 4.60, 0.28),
-    (96001, 96199, 'CA', 'Northern CA', 'Rural', 4.55, 0.27),
-    
+    (90001, 90899, 'CA', 'Los Angeles Metro', 'Urban', 4.70, 0.28, 155),
+    (91001, 91899, 'CA', 'LA Suburbs/Valleys', 'Suburban', 4.65, 0.27, 145),
+    (92001, 92199, 'CA', 'San Diego Metro', 'Urban', 4.55, 0.38, 150),  # SDG&E - HIGHEST
+    (92600, 92899, 'CA', 'Orange County', 'Suburban', 4.65, 0.27, 150),
+    (92200, 92599, 'CA', 'Inland Empire', 'Suburban', 4.60, 0.26, 130),
+    (93500, 93599, 'CA', 'Inland Empire East', 'Suburban', 4.55, 0.25, 125),
+    (93001, 93499, 'CA', 'Central Valley', 'Suburban', 4.50, 0.24, 120),
+    (94001, 94999, 'CA', 'San Francisco/Peninsula', 'Urban', 4.85, 0.32, 175),
+    (95001, 95199, 'CA', 'San Jose/Silicon Valley', 'Urban', 4.75, 0.30, 165),
+    (94500, 94799, 'CA', 'East Bay', 'Suburban', 4.70, 0.30, 155),
+    (95200, 95999, 'CA', 'Sacramento/North CA', 'Suburban', 4.60, 0.28, 135),
+    (96001, 96199, 'CA', 'Northern CA', 'Rural', 4.55, 0.27, 115),
+
     # HAWAII - Highest rates in nation (imported fuel)
-    (96701, 96899, 'HI', 'Hawaii', 'Mixed', 4.95, 0.42),
+    (96701, 96899, 'HI', 'Hawaii', 'Mixed', 4.95, 0.42, 140),
 ]
 
 # State-based fuel price averages (fallback when ZIP not in metro database)
@@ -156,6 +157,18 @@ STATE_ELECTRICITY_RATES = {
     'OK': 0.12, 'OR': 0.11, 'PA': 0.17, 'RI': 0.28, 'SC': 0.14, 'SD': 0.12, 'TN': 0.12,
     'TX': 0.13, 'UT': 0.11, 'VT': 0.17, 'VA': 0.13, 'WA': 0.10, 'WV': 0.12, 'WI': 0.15,
     'WY': 0.12, 'DC': 0.16
+}
+
+# State-based labor rates (average mechanic hourly rate in dollars) - Updated 2025
+STATE_LABOR_RATES = {
+    'AL': 85, 'AK': 130, 'AZ': 105, 'AR': 85, 'CA': 155, 'CO': 120, 'CT': 140,
+    'DE': 115, 'FL': 110, 'GA': 100, 'HI': 140, 'ID': 90, 'IL': 120, 'IN': 95,
+    'IA': 90, 'KS': 90, 'KY': 90, 'LA': 90, 'ME': 110, 'MD': 135, 'MA': 145,
+    'MI': 105, 'MN': 110, 'MS': 80, 'MO': 95, 'MT': 95, 'NE': 95, 'NV': 110,
+    'NH': 120, 'NJ': 145, 'NM': 95, 'NY': 150, 'NC': 100, 'ND': 90, 'OH': 100,
+    'OK': 90, 'OR': 115, 'PA': 110, 'RI': 125, 'SC': 95, 'SD': 85, 'TN': 95,
+    'TX': 110, 'UT': 105, 'VT': 105, 'VA': 115, 'WA': 125, 'WV': 85, 'WI': 105,
+    'WY': 90, 'DC': 150
 }
 
 # Comprehensive ZIP code range mapping for state determination
@@ -222,25 +235,49 @@ def validate_zip_code(zip_code: str) -> bool:
 
 def lookup_zip_code_data(zip_code: str) -> Optional[Dict[str, Any]]:
     """
-    Look up location data for a ZIP code using metropolitan area ranges
-    Returns dict with state, geography_type, fuel_price, electricity_rate
+    Look up location data for a ZIP code using metropolitan area ranges.
+    Now includes comprehensive fallback to state-level data.
+
+    Returns dict with state, geography_type, fuel_price, electricity_rate, labor_rate
     """
     if not validate_zip_code(zip_code):
         return None
-    
+
     zip_int = int(zip_code)
-    
-    # Search through metropolitan area ranges
-    for zip_start, zip_end, state, metro_name, geography_type, fuel_price, electricity_rate in METRO_AREA_RATES:
+
+    # Search through metropolitan area ranges first
+    for entry in METRO_AREA_RATES:
+        # Handle both old (7-item) and new (8-item) tuple formats for backwards compatibility
+        if len(entry) == 8:
+            zip_start, zip_end, state, metro_name, geography_type, fuel_price, electricity_rate, labor_rate = entry
+        elif len(entry) == 7:
+            zip_start, zip_end, state, metro_name, geography_type, fuel_price, electricity_rate = entry
+            labor_rate = STATE_LABOR_RATES.get(state, 100)
+        else:
+            continue
+
         if zip_start <= zip_int <= zip_end:
             return {
                 'state': state,
                 'metro_area': metro_name,
                 'geography_type': geography_type,
                 'fuel_price': fuel_price,
-                'electricity_rate': electricity_rate
+                'electricity_rate': electricity_rate,
+                'labor_rate': labor_rate
             }
-    
+
+    # Fallback to state-level data if ZIP not in metro database
+    state = determine_state_from_zip(zip_code)
+    if state:
+        return {
+            'state': state,
+            'metro_area': '',
+            'geography_type': get_geography_type_from_zip(zip_code),
+            'fuel_price': STATE_FUEL_PRICES.get(state, 3.50),
+            'electricity_rate': STATE_ELECTRICITY_RATES.get(state, 0.15),
+            'labor_rate': STATE_LABOR_RATES.get(state, 100)
+        }
+
     return None
 
 def determine_state_from_zip(zip_code: str) -> Optional[str]:
@@ -371,16 +408,33 @@ def get_electricity_rate_estimate(zip_code: str, state: str = '') -> float:
     zip_data = lookup_zip_code_data(zip_code)
     if zip_data:
         return zip_data.get('electricity_rate', 0.15)
-    
+
     # Fall back to state average
     if state in STATE_ELECTRICITY_RATES:
         return STATE_ELECTRICITY_RATES[state]
-    
+
     # National average fallback
     return 0.15
 
+def get_labor_rate_estimate(zip_code: str, state: str = '') -> float:
+    """Get estimated mechanic labor rate for location ($/hour)"""
+    # Try ZIP code lookup first
+    zip_data = lookup_zip_code_data(zip_code)
+    if zip_data:
+        return zip_data.get('labor_rate', 100)
+
+    # Fall back to state average
+    if state in STATE_LABOR_RATES:
+        return STATE_LABOR_RATES[state]
+
+    # National average fallback
+    return 100
+
 def validate_and_lookup_location(zip_code: str) -> Dict[str, Any]:
-    """Comprehensive location validation and lookup"""
+    """
+    Comprehensive location validation and lookup with improved fallback system.
+    Now includes labor rates and always returns valid data for recognized ZIP codes.
+    """
     result = {
         'is_valid': False,
         'zip_code': zip_code,
@@ -389,39 +443,36 @@ def validate_and_lookup_location(zip_code: str) -> Dict[str, Any]:
         'geography_type': '',
         'fuel_price': 3.50,
         'electricity_rate': 0.15,
+        'labor_rate': 100,
         'error_message': ''
     }
-    
+
     # Validate format
     if not validate_zip_code(zip_code):
         result['error_message'] = 'Invalid ZIP code format. Please enter 5 digits.'
         return result
-    
-    # Try metro area lookup first
+
+    # Use improved lookup_zip_code_data which now includes fallback
     zip_data = lookup_zip_code_data(zip_code)
-    
+
     if zip_data:
         result['is_valid'] = True
-        result['state'] = zip_data['state']
+        result['state'] = zip_data.get('state', '')
         result['metro_area'] = zip_data.get('metro_area', '')
-        geo_type = zip_data['geography_type']
+        geo_type = zip_data.get('geography_type', 'Suburban')
         # Convert "Mixed" to "Suburban" for consistency with existing code
         result['geography_type'] = 'Suburban' if geo_type == 'Mixed' else geo_type
-        result['fuel_price'] = zip_data['fuel_price']
-        result['electricity_rate'] = zip_data['electricity_rate']
+        result['fuel_price'] = zip_data.get('fuel_price', 3.50)
+        result['electricity_rate'] = zip_data.get('electricity_rate', 0.15)
+        result['labor_rate'] = zip_data.get('labor_rate', 100)
+
+        # Set informational message if using state-level fallback
+        if not result['metro_area']:
+            result['error_message'] = f'Using state-level averages for {result["state"]}'
     else:
-        # Fall back to state lookup
-        state = determine_state_from_zip(zip_code)
-        if state:
-            result['is_valid'] = True
-            result['state'] = state
-            result['geography_type'] = get_geography_type_from_zip(zip_code)
-            result['fuel_price'] = STATE_FUEL_PRICES.get(state, 3.50)
-            result['electricity_rate'] = STATE_ELECTRICITY_RATES.get(state, 0.15)
-            result['error_message'] = 'ZIP code recognized but detailed data unavailable. Using state averages.'
-        else:
-            result['error_message'] = f'ZIP code {zip_code} not found in database.'
-    
+        # This should rarely happen now since lookup_zip_code_data has fallback
+        result['error_message'] = f'ZIP code {zip_code} not recognized in US postal database.'
+
     return result
 
 def get_regional_cost_multiplier(geography_type: str, state: str = '') -> float:
@@ -453,18 +504,19 @@ def get_zip_code_coverage_stats() -> Dict[str, Any]:
     """Get statistics about ZIP code coverage"""
     total_metros = len(METRO_AREA_RATES)
     states_covered = len(set([metro[2] for metro in METRO_AREA_RATES]))
-    
+
     # Count by geography type
     geography_counts = {}
     for metro in METRO_AREA_RATES:
-        geo_type = metro[4]
+        geo_type = metro[4] if len(metro) > 4 else 'Unknown'
         geography_counts[geo_type.lower()] = geography_counts.get(geo_type.lower(), 0) + 1
-    
+
     return {
         'total_metro_areas': total_metros,
         'states_covered': states_covered,
         'coverage_by_geography': geography_counts,
-        'states_list': sorted(STATE_ELECTRICITY_RATES.keys())
+        'states_list': sorted(STATE_ELECTRICITY_RATES.keys()),
+        'has_labor_rates': True
     }
 
 def search_nearby_zip_codes(zip_code: str, radius: int = 10) -> List[Dict[str, Any]]:
@@ -525,11 +577,12 @@ def test_zip_code_lookup():
         print(f"  Metro Area: {result['metro_area']}")
         print(f"  State: {result['state']}")
         print(f"  Geography: {result['geography_type']}")
-        print(f"  Fuel Price: ${result['fuel_price']:.2f}")
+        print(f"  Fuel Price: ${result['fuel_price']:.2f}/gal")
         print(f"  Electricity: ${result['electricity_rate']:.3f}/kWh")
+        print(f"  Labor Rate: ${result['labor_rate']:.0f}/hr")
         if result['error_message']:
             print(f"  Message: {result['error_message']}")
-        
+
         # Test regional multiplier
         multiplier = get_regional_cost_multiplier(result['geography_type'], result['state'])
         print(f"  Cost Multiplier: {multiplier:.2f}x")

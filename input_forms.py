@@ -178,8 +178,52 @@ def on_vehicle_model_change():
 
 
 def on_vehicle_year_change():
-    """Callback when vehicle year changes"""
+    """Callback when vehicle year changes - update mileage estimate"""
     st.session_state['vehicle_selection_changed'] = True
+
+    # Auto-update mileage based on vehicle age (12k miles/year)
+    from datetime import datetime
+    current_year = datetime.now().year
+    selected_year = st.session_state.get('vehicle_year_select', current_year)
+
+    if selected_year:
+        vehicle_age = current_year - int(selected_year)
+        if vehicle_age > 0:
+            estimated_mileage = vehicle_age * 12000
+            # Update mileage in session state
+            st.session_state['current_mileage_input'] = estimated_mileage
+        else:
+            st.session_state['current_mileage_input'] = 0
+
+
+def on_year_change_progressive():
+    """Callback for progressive form year changes - update mileage"""
+    from datetime import datetime
+    current_year = datetime.now().year
+    selected_year = st.session_state.get('year_progressive', current_year)
+
+    if selected_year and selected_year != '':
+        vehicle_age = current_year - int(selected_year)
+        if vehicle_age > 0:
+            estimated_mileage = vehicle_age * 12000
+            st.session_state['current_mileage_progressive'] = estimated_mileage
+        else:
+            st.session_state['current_mileage_progressive'] = 0
+
+
+def on_year_change_salary():
+    """Callback for salary calculator year changes - update mileage"""
+    from datetime import datetime
+    current_year = datetime.now().year
+    selected_year = st.session_state.get('salary_year', current_year)
+
+    if selected_year:
+        vehicle_age = current_year - int(selected_year)
+        if vehicle_age > 0:
+            estimated_mileage = vehicle_age * 12000
+            st.session_state['salary_current_mileage'] = estimated_mileage
+        else:
+            st.session_state['salary_current_mileage'] = 0
 
 
 def initialize_reactive_state():
@@ -733,7 +777,8 @@ def display_vehicle_selection_form(display_mode: str = "collect") -> Dict[str, A
                     "Model Year:",
                     [''] + year_options,
                     help=help_text,
-                    key="vehicle_year_select"
+                    key="vehicle_year_select",
+                    on_change=on_vehicle_year_change
                 )
 
                 if not selected_year:
@@ -2370,7 +2415,12 @@ def display_progressive_forms():
                     years = [y for y in years if y >= ten_years_ago and y <= current_year + 1]
 
                 # Add empty option at beginning (no default)
-                year = st.selectbox("Year", [''] + sorted(years, reverse=True), key="year_progressive")
+                year = st.selectbox(
+                    "Year",
+                    [''] + sorted(years, reverse=True),
+                    key="year_progressive",
+                    on_change=on_year_change_progressive
+                )
         else:
             st.selectbox("Year", ["-- Select Make and Model first --"], disabled=True, key="year_progressive_disabled")
             year = ''

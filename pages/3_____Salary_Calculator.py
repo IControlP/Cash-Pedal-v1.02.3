@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from session_manager import initialize_session_state
 from theme_utils import apply_theme, get_footer_html
+from input_forms import on_year_change_salary
 from salary_calculator_utils import (
     calculate_required_salary,
     estimate_vehicle_costs_simple,
@@ -301,7 +302,12 @@ def main():
                     # Purchase: Show all available years
                     years = get_available_years_for_model(make, model)
                     if years:
-                        year = st.selectbox("Year", years, key="salary_year")
+                        year = st.selectbox(
+                            "Year",
+                            years,
+                            key="salary_year",
+                            on_change=on_year_change_salary
+                        )
                     else:
                         year = 2025
                         st.selectbox("Year", [2025], key="salary_year_default")

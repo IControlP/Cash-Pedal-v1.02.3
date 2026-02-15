@@ -166,10 +166,13 @@ def determine_fuel_type_and_price(make: str, model: str, year: int, trim: str = 
     make_lower = make.lower()
     model_lower = model.lower()
     trim_lower = trim.lower() if trim else ""
-    
+
+    # Combine model and trim for better matching (handles split names like "Civic" + "Type R")
+    full_name = f"{model_lower} {trim_lower}".strip()
+
     # Get base regular fuel price for location
     regular_price = get_fuel_price_from_location(zip_code, state)
-    
+
     # Electric vehicles don't use fuel
     if detect_electric_vehicle(make, model):
         return {
@@ -178,71 +181,122 @@ def determine_fuel_type_and_price(make: str, model: str, year: int, trim: str = 
             'requires_premium': False,
             'price_info': f"Electric vehicle - uses electricity instead of fuel"
         }
-    
+
     # Determine if vehicle requires premium fuel
     requires_premium = False
-    
+
     # ========================================================================
     # 1. LUXURY BRANDS - All models require premium
     # ========================================================================
     luxury_brands_premium = [
-        'bmw', 'mercedes-benz', 'audi', 'lexus', 'infiniti', 'acura', 
-        'porsche', 'maserati', 'alfa romeo', 'jaguar', 'land rover'
+        'bmw', 'mercedes-benz', 'audi', 'lexus', 'infiniti', 'acura',
+        'porsche', 'maserati', 'alfa romeo', 'jaguar', 'land rover',
+        'cadillac', 'lincoln', 'genesis'  # Luxury brands
     ]
     if make_lower in luxury_brands_premium:
         requires_premium = True
-    
+
     # ========================================================================
-    # 2. PERFORMANCE VEHICLES - Require premium
+    # 2. PERFORMANCE TRIM INDICATORS - Require premium
+    # ========================================================================
+    # These are trim-level indicators that require premium regardless of base model
+    performance_trim_indicators = [
+        'type r', 'type s', 'type-r', 'type-s',  # Honda/Acura performance
+        'red sport', 'redsport',  # Nissan/Infiniti performance
+        'n line', 'n-line',  # Hyundai performance
+        'st', 'rs', 'gt',  # Ford/Audi/Various performance
+        'srt', 'srt8', 'hellcat', 'demon', 'redeye',  # Dodge performance
+        'ss', 'zl1', 'z28', '1le',  # Chevy performance
+        'shelby', 'gt350', 'gt500', 'mach 1',  # Ford Mustang performance
+        'nismo',  # Nissan performance
+        'm sport', 'm-sport', 'm40i', 'm50i',  # BMW performance (not full M)
+        'amg',  # Mercedes performance
+        's line', 's-line',  # Audi sport
+        'f sport',  # Lexus sport
+        'sport +', 'sport+',  # Various performance
+        'prestige turbo', 'sport turbo',  # Mazda/Various
+    ]
+
+    for indicator in performance_trim_indicators:
+        if indicator in trim_lower or indicator in full_name:
+            requires_premium = True
+            break
+
+    # ========================================================================
+    # 3. PERFORMANCE VEHICLES - Complete model names requiring premium
     # ========================================================================
     performance_models = [
         # Chevrolet
         'corvette', 'camaro ss', 'camaro zl1', 'camaro z28',
         # Ford
-        'mustang gt', 'mustang shelby', 'raptor', 'f-150 raptor',
+        'mustang gt', 'mustang shelby', 'mustang mach 1', 'raptor', 'f-150 raptor',
+        'bronco raptor', 'ranger raptor',
         # Dodge
-        'charger srt', 'charger hellcat', 'challenger srt', 'challenger hellcat',
+        'charger srt', 'charger hellcat', 'charger scat pack', 'charger r/t',
+        'challenger srt', 'challenger hellcat', 'challenger scat pack', 'challenger r/t',
         'viper', 'durango srt',
         # Toyota/Lexus performance
-        'supra', 'gr86', 'is 350', 'is 500', 'rc f', 'gs f', 'lc 500',
+        'supra', 'gr86', 'gr supra', 'gr corolla',
+        'is 350', 'is 500', 'rc f', 'gs f', 'lc 500', 'nx 350',
         # Honda/Acura performance
-        'civic type r', 'nsx', 'tlx type s', 'integra type s',
+        'civic type r', 'civic si', 'accord sport', 'nsx',
+        'tlx type s', 'integra type s', 'mdx type s',
         # Nissan/Infiniti performance
-        'gt-r', 'gtr', '370z', '400z', 'q50 red sport', 'q60 red sport',
+        'gt-r', 'gtr', '370z', '400z', 'z',
+        'q50 red sport', 'q60 red sport', 'qx50 sport', 'qx55',
         # Volkswagen/Audi performance
-        'golf r', 'gti', 'jetta gli', 's3', 's4', 's5', 's6', 's7', 's8',
-        'rs3', 'rs4', 'rs5', 'rs6', 'rs7', 'r8', 'tt rs',
+        'golf r', 'golf gti', 'gti', 'jetta gli', 'gli',
+        's3', 's4', 's5', 's6', 's7', 's8', 'sq5', 'sq7', 'sq8',
+        'rs3', 'rs4', 'rs5', 'rs6', 'rs7', 'r8', 'tt rs', 'rs q8',
         # Subaru performance
-        'wrx', 'sti', 'brz'
+        'wrx', 'sti', 'wrx sti', 'brz',
+        # Mazda performance
+        'mazda3 turbo', 'mazda6 turbo', 'cx-5 turbo', 'cx-9 turbo',
+        'miata', 'mx-5', 'rx-7', 'rx-8',
+        # Hyundai/Kia performance
+        'veloster n', 'elantra n', 'kona n', 'i30 n',
+        'stinger gt', 'forte gt', 'k5 gt',
+        # Mini performance
+        'cooper s', 'jcw', 'john cooper works',
     ]
-    
+
     for perf_model in performance_models:
-        if perf_model in model_lower or perf_model in trim_lower:
+        if perf_model in model_lower or perf_model in full_name:
             requires_premium = True
             break
-    
+
     # ========================================================================
-    # 3. TURBOCHARGED VEHICLES - Many require premium
+    # 4. ENGINE-BASED DETECTION - V8, V6 Turbo, etc.
     # ========================================================================
-    if any(keyword in trim_lower for keyword in ['turbo', 'twin-turbo', 'supercharged']):
-        # Some brands can use regular with turbos (Ford, Chevy)
-        if make_lower not in ['ford', 'chevrolet', 'gmc', 'ram']:
+    # Check for high-performance engines in trim
+    if any(engine in trim_lower for engine in ['v8', 'v-8', '5.0l', '6.2l', '392', 'hemi']):
+        requires_premium = True
+
+    # Turbocharged engines (many require premium for optimal performance)
+    if any(keyword in trim_lower for keyword in ['turbo', 'twin-turbo', 'twin turbo', 'supercharged', 'supercharger']):
+        # Some brands can use regular with turbos (Ford EcoBoost, some Chevy)
+        if make_lower not in ['ford', 'chevrolet', 'gmc', 'ram', 'jeep']:
             requires_premium = True
-    
+        # But high-performance turbo models still need premium even from these brands
+        elif any(perf in full_name for perf in ['raptor', 'st', 'rs', 'ss', 'zl1']):
+            requires_premium = True
+
     # ========================================================================
-    # 4. SPECIFIC MODEL EXCEPTIONS - Regular fuel despite luxury brand
+    # 5. SPECIFIC MODEL EXCEPTIONS - Regular fuel despite luxury brand
     # ========================================================================
     regular_fuel_exceptions = [
-        # BMW
-        'x1', 'x2', '228i',
-        # Mercedes
-        'cla 250', 'a 220', 'gla 250',
-        # Audi (base models)
-        'a3 35', 'q3 35',
+        # BMW (base models)
+        'x1 sdrive28i', 'x1 xdrive28i', 'x2 sdrive28i', '228i', '230i',
+        # Mercedes (base models)
+        'cla 250', 'a 220', 'a 250', 'gla 250',
+        # Audi (base models - non-turbo or low-power turbo)
+        'a3 35', 'q3 35', 'a3 2.0t base',
+        # Lexus (some base models can use regular but premium recommended)
+        # Note: Most Lexus still benefit from premium
     ]
-    
+
     for exception_model in regular_fuel_exceptions:
-        if exception_model in model_lower or exception_model in trim_lower:
+        if exception_model in full_name:
             requires_premium = False
             break
     

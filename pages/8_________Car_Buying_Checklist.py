@@ -48,7 +48,7 @@ def display_sidebar_guide():
 
         st.markdown("""
         ### How It Works
-        1. **Enter vehicle details** manually OR paste a listing URL
+        1. **Enter vehicle details** from the listing
         2. **Review maintenance history** that should have been done
         3. **Get inspection questions** to ask the seller
         4. **See upcoming maintenance** costs
@@ -135,7 +135,7 @@ def display_url_scraper():
 
 def display_manual_entry():
     """Display manual vehicle entry form"""
-    st.subheader("✍️ Option 2: Enter Vehicle Details Manually")
+    st.subheader("📝 Enter Vehicle Details")
 
     # Pre-fill with extracted info if available
     extracted_info = st.session_state.get('extracted_car_info', {})
@@ -469,13 +469,6 @@ def main():
     Know what services should have been done and what questions to ask the seller.
     """)
 
-    st.markdown("---")
-
-    # URL scraper section
-    display_url_scraper()
-
-    st.markdown("---")
-    st.markdown("### OR")
     st.markdown("---")
 
     # Manual entry section

@@ -13,7 +13,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from session_manager import initialize_session_state
 from theme_utils import apply_theme, get_footer_html
 from input_forms import on_year_change_salary
-from terms_agreement import require_terms_acceptance
 from salary_calculator_utils import (
     calculate_required_salary,
     estimate_vehicle_costs_simple,
@@ -54,10 +53,6 @@ try:
     USED_VEHICLE_ESTIMATOR_AVAILABLE = True
 except ImportError:
     USED_VEHICLE_ESTIMATOR_AVAILABLE = False
-
-# CRITICAL: Require terms acceptance BEFORE page config
-if not require_terms_acceptance():
-    st.stop()
 
 # Page configuration
 st.set_page_config(

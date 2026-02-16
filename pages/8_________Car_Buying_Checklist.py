@@ -13,7 +13,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from session_manager import initialize_session_state
 from theme_utils import apply_theme, get_footer_html
 from car_buying_checklist import CarBuyingChecklist, format_currency, format_mileage
-from terms_agreement import require_terms_acceptance
 
 # Try to import vehicle database
 try:
@@ -32,10 +31,6 @@ try:
     VEHICLE_ESTIMATOR_AVAILABLE = True
 except ImportError:
     VEHICLE_ESTIMATOR_AVAILABLE = False
-
-# CRITICAL: Require terms acceptance BEFORE page config
-if not require_terms_acceptance():
-    st.stop()
 
 # Page configuration
 st.set_page_config(

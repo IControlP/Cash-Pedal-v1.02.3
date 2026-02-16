@@ -13,6 +13,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from session_manager import initialize_session_state, clear_session_state
 from comparison_display import display_comparison
 from theme_utils import apply_theme
+from terms_agreement import require_terms_acceptance
+
+# CRITICAL: Require terms acceptance BEFORE page config
+if not require_terms_acceptance():
+    st.stop()
 
 # Page configuration
 st.set_page_config(

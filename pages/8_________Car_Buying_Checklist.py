@@ -319,20 +319,6 @@ def display_manual_entry():
                 else:
                     st.info("ℹ️ **Fair Price:** Asking price matches estimated market value.")
 
-                    # Price analysis
-                    if difference_pct > 10:
-                        st.error(f"⚠️ Asking price is **{difference_pct:.1f}% above** estimated market value. Consider negotiating.")
-                    elif difference_pct > 5:
-                        st.warning(f"💡 Asking price is **{difference_pct:.1f}% above** market value. Room for negotiation.")
-                    elif difference_pct < -5:
-                        st.success(f"✅ Good deal! Asking price is **{abs(difference_pct):.1f}% below** market value.")
-                    else:
-                        st.info(f"📊 Asking price is within market range ({difference_pct:+.1f}%).")
-
-        except Exception as e:
-            # Silently fail if estimation not possible
-            pass
-
     st.markdown("---")
 
     # Generate checklist button

@@ -277,29 +277,51 @@ def display_comparison_tabs(comparison_results: Dict[str, Any],
             st.session_state.comparison_vehicles = []
             st.rerun()
     
-    # Tabs for different views
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "  Executive Summary", 
-        "  Cost Comparison", 
-        "  Vehicle Specs",
-        " Visualizations", 
-        " Recommendations"
-    ])
-    
+    # Tabs for different views - add Lease vs Ownership tab if applicable
+    lease_vs_ownership = comparison_results.get('lease_vs_ownership')
+
+    if lease_vs_ownership:
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+            "  Executive Summary",
+            "  Lease vs Ownership",
+            "  Cost Comparison",
+            "  Vehicle Specs",
+            " Visualizations",
+            " Recommendations"
+        ])
+    else:
+        tab1, tab2, tab3, tab4, tab5 = st.tabs([
+            "  Executive Summary",
+            "  Cost Comparison",
+            "  Vehicle Specs",
+            " Visualizations",
+            " Recommendations"
+        ])
+        tab6 = None
+
     with tab1:
         display_executive_summary(comparison_results, recommendations)
-    
-    with tab2:
-        display_cost_comparison_table(comparison_results)
-    
-    with tab3:
-        display_specs_comparison(comparison_results)
 
-    with tab4:
-        display_comparison_visualizations(comparison_results)
-
-    with tab5:
-        display_recommendations_detailed(recommendations)
+    if lease_vs_ownership and tab6:
+        with tab2:
+            display_lease_vs_ownership_analysis(lease_vs_ownership)
+        with tab3:
+            display_cost_comparison_table(comparison_results)
+        with tab4:
+            display_specs_comparison(comparison_results)
+        with tab5:
+            display_comparison_visualizations(comparison_results)
+        with tab6:
+            display_recommendations_detailed(recommendations)
+    else:
+        with tab2:
+            display_cost_comparison_table(comparison_results)
+        with tab3:
+            display_specs_comparison(comparison_results)
+        with tab4:
+            display_comparison_visualizations(comparison_results)
+        with tab5:
+            display_recommendations_detailed(recommendations)
 
 
 def display_executive_summary(comparison_results: Dict[str, Any], 
@@ -873,7 +895,138 @@ def display_recommendations_detailed(recommendations: Dict[str, Any]):
             if overall_rec:
                 st.markdown(f"** Recommendation:** {overall_rec}")
 
-def export_comparison_report(comparison_results: Dict[str, Any], 
+
+def display_lease_vs_ownership_analysis(lease_vs_ownership: Dict[str, Any]):
+    """Display lease vs ownership cost comparison analysis"""
+
+    st.subheader(" Lease vs Ownership Analysis")
+
+    lease_term_years = lease_vs_ownership.get('lease_term_years', 3)
+
+    st.info(f"""
+    This analysis compares the **out-of-pocket costs** during the {lease_term_years}-year lease term
+    and shows what happens with owned vehicles after the lease period ends.
+    """)
+
+    # Display insights
+    insights = lease_vs_ownership.get('insights', [])
+    if insights:
+        st.markdown("### 🎯 Key Insights")
+        for insight in insights:
+            st.success(f"✓ {insight}")
+        st.markdown("---")
+
+    # During Lease Term Comparison
+    st.markdown(f"### 💰 During Lease Term ({lease_term_years} Years)")
+
+    lease_vehicles = lease_vs_ownership.get('lease_vehicles', [])
+    owned_vehicles_during_lease = lease_vs_ownership.get('owned_vehicles_during_lease_term', [])
+
+    if lease_vehicles and owned_vehicles_during_lease:
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("#### 📋 Lease Options")
+            for lease_vehicle in lease_vehicles:
+                st.markdown(f"**{lease_vehicle['vehicle_name']}**")
+                st.metric("Total Lease Cost", f"${lease_vehicle['total_cost_during_term']:,.0f}")
+                st.metric("Monthly Payment", f"${lease_vehicle['monthly_cost']:,.0f}")
+                st.markdown("---")
+
+        with col2:
+            st.markdown("#### 🚗 Ownership Options")
+            for owned_vehicle in owned_vehicles_during_lease:
+                st.markdown(f"**{owned_vehicle['vehicle_name']}**")
+                st.metric("Out-of-Pocket Cost", f"${owned_vehicle['out_of_pocket_cost']:,.0f}")
+                st.metric("Monthly Cost (Avg)", f"${owned_vehicle['monthly_cost_avg']:,.0f}")
+
+                # Show depreciation and value
+                with st.expander("📊 Value & Depreciation"):
+                    col_a, col_b = st.columns(2)
+                    with col_a:
+                        st.metric("Purchase Price", f"${owned_vehicle['initial_value']:,.0f}")
+                        st.metric("Depreciation", f"${owned_vehicle['depreciation']:,.0f}")
+                    with col_b:
+                        st.metric(f"Value After {lease_term_years} Years", f"${owned_vehicle['value_after_lease_term']:,.0f}")
+                        retention_pct = (owned_vehicle['value_after_lease_term'] / owned_vehicle['initial_value']) * 100 if owned_vehicle['initial_value'] > 0 else 0
+                        st.metric("Value Retention", f"{retention_pct:.1f}%")
+                st.markdown("---")
+
+    # After Lease Term Analysis
+    owned_vehicles_after_lease = lease_vs_ownership.get('owned_vehicles_after_lease_term', [])
+
+    if owned_vehicles_after_lease:
+        st.markdown(f"### 🔄 After Lease Term (Ownership Continues)")
+
+        st.info("""
+        **Leased vehicles:** Must be returned or purchased at residual value. New lease or purchase required.
+        **Owned vehicles:** Continue driving with no monthly payments. Only pay for maintenance, insurance, and fuel.
+        """)
+
+        for owned_vehicle in owned_vehicles_after_lease:
+            remaining_years = owned_vehicle['remaining_years']
+            st.markdown(f"**{owned_vehicle['vehicle_name']}** - Years {lease_term_years + 1} to {lease_term_years + remaining_years}")
+
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Total Cost", f"${owned_vehicle['total_cost']:,.0f}")
+            with col2:
+                st.metric("Annual Cost (Avg)", f"${owned_vehicle['annual_cost_avg']:,.0f}")
+            with col3:
+                st.metric("Final Value", f"${owned_vehicle['final_vehicle_value']:,.0f}")
+
+            # Year-by-year breakdown
+            with st.expander("📅 Year-by-Year Costs"):
+                yearly_data = []
+                for year_breakdown in owned_vehicle.get('yearly_breakdown', []):
+                    yearly_data.append({
+                        'Year': f"Year {year_breakdown['year']}",
+                        'Cost': f"${year_breakdown['total_cost']:,.0f}"
+                    })
+                if yearly_data:
+                    st.table(yearly_data)
+
+            st.markdown("---")
+
+    # Summary comparison table
+    st.markdown("### 📊 Cost Comparison Summary")
+
+    comparison_data = []
+
+    for lease_vehicle in lease_vehicles:
+        comparison_data.append({
+            'Vehicle': lease_vehicle['vehicle_name'],
+            'Type': 'Lease',
+            f'{lease_term_years}-Year Cost': f"${lease_vehicle['total_cost_during_term']:,.0f}",
+            'Monthly Cost': f"${lease_vehicle['monthly_cost']:,.0f}",
+            'Value After Term': '$0'
+        })
+
+    for owned_vehicle in owned_vehicles_during_lease:
+        # Get total cost including remaining years if available
+        total_lifetime_cost = owned_vehicle['out_of_pocket_cost']
+
+        # Find matching vehicle in after-lease data
+        for after_vehicle in owned_vehicles_after_lease:
+            if after_vehicle['vehicle_name'] == owned_vehicle['vehicle_name']:
+                total_lifetime_cost += after_vehicle['total_cost']
+                break
+
+        comparison_data.append({
+            'Vehicle': owned_vehicle['vehicle_name'],
+            'Type': 'Own',
+            f'{lease_term_years}-Year Cost': f"${owned_vehicle['out_of_pocket_cost']:,.0f}",
+            'Monthly Cost': f"${owned_vehicle['monthly_cost_avg']:,.0f}",
+            'Value After Term': f"${owned_vehicle['value_after_lease_term']:,.0f}"
+        })
+
+    if comparison_data:
+        import pandas as pd
+        df = pd.DataFrame(comparison_data)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+
+
+def export_comparison_report(comparison_results: Dict[str, Any],
                            recommendations: Dict[str, Any]):
     """Export detailed comparison report"""
     

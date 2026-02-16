@@ -19,7 +19,9 @@ try:
     from vehicle_database import (
         get_all_manufacturers,
         get_models_for_manufacturer,
+        get_available_years_for_model,
         get_trims_for_vehicle,
+        get_vehicle_trim_price,
     )
     VEHICLE_DATABASE_AVAILABLE = True
 except ImportError:
@@ -179,15 +181,43 @@ def display_manual_entry():
             )
 
     with col2:
-        # Year (moved before trim since trim depends on year)
-        year = st.number_input(
-            "Year *",
-            min_value=1990,
-            max_value=2027,
-            value=extracted_info.get('year', 2020) if extracted_info.get('year') else 2020,
-            step=1,
-            help="Model year of the vehicle"
-        )
+        # Year selection (dropdown when database available and make/model selected)
+        if VEHICLE_DATABASE_AVAILABLE and make and model:
+            available_years = get_available_years_for_model(make, model)
+            if available_years:
+                # Sort years in descending order (newest first)
+                years = [''] + sorted(available_years, reverse=True)
+                default_year_idx = 0
+                if extracted_info.get('year') in available_years:
+                    default_year_idx = years.index(extracted_info['year'])
+
+                year_str = st.selectbox(
+                    "Year *",
+                    options=years,
+                    index=default_year_idx,
+                    help="Select the model year"
+                )
+                year = int(year_str) if year_str else None
+            else:
+                # Fallback to number input if no years found
+                year = st.number_input(
+                    "Year *",
+                    min_value=1990,
+                    max_value=2027,
+                    value=extracted_info.get('year', 2020) if extracted_info.get('year') else 2020,
+                    step=1,
+                    help="Model year of the vehicle"
+                )
+        else:
+            # Fallback to number input if database not available or make/model not selected
+            year = st.number_input(
+                "Year *",
+                min_value=1990,
+                max_value=2027,
+                value=extracted_info.get('year', 2020) if extracted_info.get('year') else 2020,
+                step=1,
+                help="Model year of the vehicle"
+            )
 
         # Trim selection (dropdown when database available)
         if VEHICLE_DATABASE_AVAILABLE and make and model and year:
@@ -238,46 +268,56 @@ def display_manual_entry():
             help="Seller's asking price"
         )
 
-    # Show estimated vehicle value if all info is available
-    if VEHICLE_ESTIMATOR_AVAILABLE and make and model and year and trim and mileage:
-        try:
-            estimator = UsedVehicleEstimator()
-            estimated_value = estimator.estimate_current_value(make, model, year, trim, mileage)
+    # Show vehicle pricing information if available
+    if make and model and year and trim:
+        st.markdown("---")
+        st.markdown("### 💰 Vehicle Pricing")
 
+        # Get original MSRP from database
+        original_msrp = None
+        if VEHICLE_DATABASE_AVAILABLE:
+            try:
+                original_msrp = get_vehicle_trim_price(make, model, trim, year)
+            except Exception as e:
+                print(f"Could not get MSRP: {e}")
+
+        # Get estimated current value if mileage is available
+        estimated_value = None
+        if VEHICLE_ESTIMATOR_AVAILABLE and mileage:
+            try:
+                estimator = UsedVehicleEstimator()
+                estimated_value = estimator.estimate_current_value(make, model, year, trim, mileage)
+            except Exception as e:
+                print(f"Could not estimate value: {e}")
+
+        # Display pricing metrics
+        if original_msrp or estimated_value:
+            # Determine number of columns based on what data we have
+            metrics_to_show = []
+            if original_msrp:
+                metrics_to_show.append(('Original MSRP', original_msrp, 'New vehicle price when launched'))
             if estimated_value:
+                metrics_to_show.append(('Estimated Market Value', estimated_value, 'Based on depreciation and current mileage'))
+            if asking_price > 0:
+                metrics_to_show.append(('Asking Price', asking_price, 'Seller\'s listed price'))
+
+            cols = st.columns(len(metrics_to_show))
+            for idx, (label, value, help_text) in enumerate(metrics_to_show):
+                with cols[idx]:
+                    st.metric(label, format_currency(value), help=help_text)
+
+            # Show price analysis if we have estimated value and asking price
+            if estimated_value and asking_price > 0:
                 st.markdown("---")
-                st.markdown("### 💰 Estimated Vehicle Value")
+                difference = asking_price - estimated_value
+                difference_pct = (difference / estimated_value) * 100
 
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric(
-                        "Estimated Market Value",
-                        format_currency(estimated_value),
-                        help="Based on depreciation model and current mileage"
-                    )
-
-                if asking_price > 0:
-                    with col2:
-                        st.metric("Asking Price", format_currency(asking_price))
-
-                    with col3:
-                        difference = asking_price - estimated_value
-                        difference_pct = (difference / estimated_value) * 100
-
-                        if difference > 0:
-                            st.metric(
-                                "Price Difference",
-                                format_currency(difference),
-                                f"+{difference_pct:.1f}% above market",
-                                delta_color="inverse"
-                            )
-                        else:
-                            st.metric(
-                                "Price Difference",
-                                format_currency(abs(difference)),
-                                f"{abs(difference_pct):.1f}% below market",
-                                delta_color="normal"
-                            )
+                if difference > 0:
+                    st.warning(f"⚠️ **Above Market:** Asking price is **{format_currency(difference)}** ({difference_pct:.1f}%) above estimated market value.")
+                elif difference < 0:
+                    st.success(f"✅ **Good Deal:** Asking price is **{format_currency(abs(difference))}** ({abs(difference_pct):.1f}%) below estimated market value.")
+                else:
+                    st.info("ℹ️ **Fair Price:** Asking price matches estimated market value.")
 
                     # Price analysis
                     if difference_pct > 10:

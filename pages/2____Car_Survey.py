@@ -527,7 +527,7 @@ def main():
             
             st.markdown("<br>", unsafe_allow_html=True)
             
-            if st.button("Let's Do This!", use_container_width=True, type="primary"):
+            if st.button("Let's Do This!", width="stretch", type="primary"):
                 st.session_state.quiz_started = True
                 st.session_state.quiz_answers = {}
                 st.rerun()
@@ -579,7 +579,7 @@ def main():
         st.markdown("---")
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            if st.button("Reveal My Car Soulmate!", use_container_width=True, type="primary"):
+            if st.button("Reveal My Car Soulmate!", width="stretch", type="primary"):
                 st.session_state.quiz_complete = True
                 st.rerun()
     
@@ -649,15 +649,15 @@ def main():
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            if st.button("Calculate Costs", use_container_width=True):
+            if st.button("Calculate Costs", width="stretch"):
                 st.switch_page("pages/4______Single_Car_Ownership_Calculator.py")
         
         with col2:
-            if st.button("Compare Vehicles", use_container_width=True):
+            if st.button("Compare Vehicles", width="stretch"):
                 st.switch_page("pages/5_______Multi_Vehicle_Comparison.py")
         
         with col3:
-            if st.button("Retake Quiz", use_container_width=True):
+            if st.button("Retake Quiz", width="stretch"):
                 st.session_state.quiz_started = False
                 st.session_state.quiz_complete = False
                 st.session_state.quiz_answers = {}

@@ -1,0 +1,27 @@
+[server]
+# Enable CORS for custom domain - must be true when XSRF protection is enabled
+enableCORS = true
+enableXsrfProtection = true
+
+# Production server settings
+headless = true
+port = 8501
+
+# Allow connections from your custom domain
+# Railway will handle the domain mapping
+[browser]
+# Don't try to open browser
+gatherUsageStats = false
+serverAddress = "0.0.0.0"
+
+[theme]
+# CashPedal brand theme colors
+primaryColor = "#F5A623"
+backgroundColor = "#F8F7F4"
+secondaryBackgroundColor = "#EEEDEA"
+textColor = "#C07800"
+font = "sans serif"
+
+[client]
+# Toolbar mode options: auto, developer, viewer, minimal
+toolbarMode = "minimal"

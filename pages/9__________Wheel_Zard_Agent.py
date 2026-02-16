@@ -238,9 +238,9 @@ def main():
         """)
     with col2:
         st.markdown("###")  # Spacing
-        if st.button("🚀 Open Full GPT", use_container_width=True, type="primary"):
+        if st.button("🚀 Open Full GPT", width="stretch", type="primary"):
             st.markdown(f'<meta http-equiv="refresh" content="0; url={WHEEL_ZARD_GPT_URL}" />', unsafe_allow_html=True)
-            st.link_button("Open Full Wheel-Zard GPT", WHEEL_ZARD_GPT_URL, use_container_width=True)
+            st.link_button("Open Full Wheel-Zard GPT", WHEEL_ZARD_GPT_URL, width="stretch")
 
     st.markdown("---")
 
@@ -266,8 +266,8 @@ def main():
         st.markdown("""
         For complex questions and personalized guidance, use my full GPT version:
         """)
-        if st.button("🧙 Open Full Wheel-Zard GPT", key="sidebar_gpt", use_container_width=True, type="primary"):
-            st.link_button("Launch Full GPT", WHEEL_ZARD_GPT_URL, use_container_width=True)
+        if st.button("🧙 Open Full Wheel-Zard GPT", key="sidebar_gpt", width="stretch", type="primary"):
+            st.link_button("Launch Full GPT", WHEEL_ZARD_GPT_URL, width="stretch")
 
         st.markdown("---")
 
@@ -293,22 +293,22 @@ def main():
         st.markdown("---")
 
         st.header("🔗 Quick Tools")
-        if st.button("🧮 Single Car Calculator", use_container_width=True):
+        if st.button("🧮 Single Car Calculator", width="stretch"):
             st.switch_page("pages/4______Single_Car_Ownership_Calculator.py")
 
-        if st.button("⚖️ Compare Vehicles", use_container_width=True):
+        if st.button("⚖️ Compare Vehicles", width="stretch"):
             st.switch_page("pages/5_______Multi_Vehicle_Comparison.py")
 
-        if st.button("🎯 Car Survey", use_container_width=True):
+        if st.button("🎯 Car Survey", width="stretch"):
             st.switch_page("pages/2____Car_Survey.py")
 
-        if st.button("💵 Salary Calculator", use_container_width=True):
+        if st.button("💵 Salary Calculator", width="stretch"):
             st.switch_page("pages/3_____Salary_Calculator.py")
 
         st.markdown("---")
 
         st.header("⚙️ Chat Controls")
-        if st.button("🗑️ Clear Chat History", use_container_width=True):
+        if st.button("🗑️ Clear Chat History", width="stretch"):
             st.session_state.wheel_zard_messages = [
                 st.session_state.wheel_zard_messages[0]  # Keep welcome message
             ]

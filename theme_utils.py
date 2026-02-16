@@ -5,6 +5,7 @@ Provides consistent styling across all pages using pure CSS media queries
 """
 
 import streamlit as st
+from pathlib import Path
 
 # CashPedal Theme Colors
 THEME_COLORS = {
@@ -22,15 +23,15 @@ THEME_COLORS = {
     },
     # Light mode colors
     "light": {
-        "primary": "#D4880F",
-        "primary_light": "#F5A623",
-        "background": "#FFFFFF",
-        "secondary_bg": "#F5F3F9",
-        "card_bg": "#EDE9F5",
-        "text": "#1A1625",
-        "text_secondary": "#333333",
-        "text_muted": "#666666",
-        "border": "#D0C9E0",
+        "primary": "#F5A623",
+        "primary_light": "#FFB84D",
+        "background": "#F8F7F4",
+        "secondary_bg": "#EEEDEA",
+        "card_bg": "#E5E3DD",
+        "text": "#C07800",
+        "text_secondary": "#D4880F",
+        "text_muted": "#996600",
+        "border": "#D0C9C0",
     }
 }
 
@@ -46,9 +47,44 @@ def get_theme_css():
     css = f"""
     <style>
     /* =============================================
+       FORCE BACKGROUND COLORS ON ALL DEVICES
+       Including mobile where config.toml may not apply
+       ============================================= */
+
+    /* Main app background */
+    .stApp {{
+        background-color: {light["background"]} !important;
+    }}
+
+    /* Main content area */
+    .main .block-container {{
+        background-color: {light["background"]} !important;
+    }}
+
+    /* Ensure body background matches */
+    body {{
+        background-color: {light["background"]} !important;
+    }}
+
+    /* Dark mode overrides */
+    @media (prefers-color-scheme: dark) {{
+        .stApp {{
+            background-color: {dark["background"]} !important;
+        }}
+
+        .main .block-container {{
+            background-color: {dark["background"]} !important;
+        }}
+
+        body {{
+            background-color: {dark["background"]} !important;
+        }}
+    }}
+
+    /* =============================================
        LIGHT MODE (Default for desktop)
        ============================================= */
-    
+
     .main-header {{
         font-size: 2.5rem;
         font-weight: bold;
@@ -123,6 +159,19 @@ def get_theme_css():
     
     .footer a:hover {{
         text-decoration: underline;
+    }}
+
+    /* Logo container styling */
+    .logo-container {{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem 0 1rem 0;
+    }}
+
+    .logo-container svg {{
+        max-width: 100%;
+        height: auto;
     }}
 
     /* =============================================
@@ -366,10 +415,57 @@ def get_theme_css():
     [data-testid="stSidebar"] > div:first-child {{
         background-color: {light["secondary_bg"]};
     }}
-    
+
     @media (prefers-color-scheme: dark) {{
         [data-testid="stSidebar"] > div:first-child {{
             background-color: {dark["secondary_bg"]};
+        }}
+    }}
+
+    /* Sidebar navigation links - Light mode */
+    [data-testid="stSidebarNav"] ul {{
+        padding: 0 !important;
+    }}
+
+    [data-testid="stSidebarNav"] li {{
+        list-style: none !important;
+    }}
+
+    [data-testid="stSidebarNav"] a {{
+        color: {light["text"]} !important;
+        text-decoration: none !important;
+        padding: 0.5rem 1rem !important;
+        display: block !important;
+        border-radius: 6px !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+    }}
+
+    [data-testid="stSidebarNav"] a:hover {{
+        background-color: {light["card_bg"]} !important;
+        color: {light["primary"]} !important;
+    }}
+
+    [data-testid="stSidebarNav"] a[aria-current="page"] {{
+        background-color: {light["primary"]} !important;
+        color: white !important;
+        font-weight: 600 !important;
+    }}
+
+    /* Sidebar navigation links - Dark mode */
+    @media (prefers-color-scheme: dark) {{
+        [data-testid="stSidebarNav"] a {{
+            color: {dark["text"]} !important;
+        }}
+
+        [data-testid="stSidebarNav"] a:hover {{
+            background-color: {dark["card_bg"]} !important;
+            color: {dark["primary"]} !important;
+        }}
+
+        [data-testid="stSidebarNav"] a[aria-current="page"] {{
+            background-color: {dark["primary"]} !important;
+            color: {dark["background"]} !important;
         }}
     }}
     
@@ -442,14 +538,69 @@ def apply_theme():
     st.markdown(get_theme_css(), unsafe_allow_html=True)
 
 
+def get_logo_html(center: bool = True) -> str:
+    """
+    Get the CashPedal logo HTML for the hero section.
+
+    Args:
+        center: Whether to center the logo (default: True)
+
+    Returns:
+        HTML string with the logo and tagline
+    """
+    import base64
+
+    assets_dir = Path(__file__).parent / "assets"
+    logo_path = assets_dir / "logo.svg"
+
+    # Read and encode the SVG content as base64 for better compatibility
+    if logo_path.exists():
+        with open(logo_path, "rb") as f:
+            logo_data = base64.b64encode(f.read()).decode()
+        logo_html = f'<img src="data:image/svg+xml;base64,{logo_data}" style="max-width: 400px; width: 100%; height: auto;" alt="CashPedal Logo">'
+    else:
+        # Fallback if logo file doesn't exist
+        logo_html = '<p class="main-header">🚗 CashPedal</p><p class="sub-header">Make Smarter Vehicle Ownership Decisions</p>'
+
+    alignment = "center" if center else "left"
+
+    return f"""
+    <div style="text-align: {alignment}; padding: 2rem 0 1rem 0;">
+        {logo_html}
+    </div>
+    """
+
+
 def get_footer_html(version: str = "1.02.3") -> str:
     """
-    Get the standard CashPedal footer HTML.
+    Get the standard CashPedal footer HTML with branding.
+
+    Args:
+        version: Version number to display
+
+    Returns:
+        HTML string for the footer
     """
     return f"""
-    <div class="footer">
-    CashPedal - Vehicle TCO Calculator v{version} | 
-    Powered by Streamlit | 
-    <a href='https://www.cashpedal.io'>www.cashpedal.io</a>
+    <div class="footer" style="
+        text-align: center;
+        padding: 2rem 0 1rem 0;
+        margin-top: 3rem;
+        border-top: 2px solid #D0C9C0;
+    ">
+        <div style="margin-bottom: 1rem;">
+            <strong style="color: #F5A623; font-size: 16px;">CashPedal</strong>
+            <span style="color: #666666; font-size: 14px;"> - Vehicle TCO Calculator v{version}</span>
+        </div>
+        <div style="color: #666666; font-size: 12px; margin-bottom: 0.5rem;">
+            Make Smarter Vehicle Ownership Decisions
+        </div>
+        <div style="color: #666666; font-size: 12px;">
+            Powered by Streamlit |
+            <a href='https://www.cashpedal.io' style="color: #F5A623; text-decoration: none;">www.cashpedal.io</a>
+        </div>
+        <div style="color: #999999; font-size: 11px; margin-top: 1rem;">
+            © 2026 CashPedal. All rights reserved.
+        </div>
     </div>
     """

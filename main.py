@@ -6,14 +6,18 @@ Main Application - Home Page
 import streamlit as st
 import sys
 import os
+from pathlib import Path
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from session_manager import initialize_session_state
-from theme_utils import apply_theme, get_footer_html
+from theme_utils import apply_theme, get_footer_html, get_logo_html
+
+# Get absolute path to assets
+ASSETS_DIR = Path(__file__).parent / "assets"
 
 st.set_page_config(
     page_title="CashPedal - Vehicle TCO Calculator",
-    page_icon="🚗",
+    page_icon=str(ASSETS_DIR / "favicon.svg"),
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -22,9 +26,8 @@ def main():
     initialize_session_state()
     apply_theme()
 
-    # Hero Section
-    st.markdown('<p class="main-header">🚗 CashPedal</p>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">Make Smarter Vehicle Ownership Decisions</p>', unsafe_allow_html=True)
+    # Hero Section with Logo
+    st.markdown(get_logo_html(), unsafe_allow_html=True)
     st.markdown("---")
 
     # Welcome Message
@@ -57,9 +60,11 @@ def main():
         - 🔧 Maintenance projections
         - 🛡️ Insurance estimates
         - 📊 Buy vs. Lease analysis
+
+        **How to use:** Enter your ZIP code, select a vehicle from our database, configure purchase details (price, down payment, loan term), set annual mileage, and review the comprehensive 5-year cost breakdown.
         """)
 
-        if st.button("🧮 Calculate Single Car Costs", key="nav_single", use_container_width=True):
+        if st.button("🧮 Calculate Single Car Costs", key="nav_single", width="stretch"):
             st.switch_page("pages/4______Single_Car_Ownership_Calculator.py")
 
     with col2:
@@ -73,9 +78,11 @@ def main():
         - 🎯 Automated recommendations
         - 📄 Export detailed reports
         - ✅ Pros and cons breakdown
+
+        **How to use:** Add 2-5 vehicles with their details (same process as single calculator), then view side-by-side comparisons of total costs, monthly expenses, and key metrics with interactive charts and data export options.
         """)
 
-        if st.button("⚖️ Compare Multiple Vehicles", key="nav_compare", use_container_width=True):
+        if st.button("⚖️ Compare Multiple Vehicles", key="nav_compare", width="stretch"):
             st.switch_page("pages/5_______Multi_Vehicle_Comparison.py")
 
     st.markdown("---")
@@ -83,20 +90,43 @@ def main():
     # AI Agent Section
     st.subheader("🤖 AI-Powered Assistant")
 
-    st.markdown("""
-    ### 🧙 Wheel-Zard AI Agent
-    **Your intelligent vehicle advisor powered by ChatGPT**
+    ai_col1, ai_col2 = st.columns(2)
 
-    Get personalized recommendations and insights for your car buying journey:
-    - 💬 Chat with an AI expert about vehicle ownership
-    - 🎯 Personalized recommendations based on your needs
-    - 📊 Data-driven insights from CashPedal's database
-    - 💡 Smart answers to all your car buying questions
-    - 🔍 Navigate complex decisions with AI guidance
-    """)
+    with ai_col1:
+        st.markdown("""
+        ### 🧙 Wheel-Zard AI Agent
+        **Your intelligent vehicle advisor powered by ChatGPT**
 
-    if st.button("🧙 Chat with Wheel-Zard", key="nav_wheel_zard", use_container_width=True):
-        st.switch_page("pages/9__________Wheel_Zard_Agent.py")
+        Get personalized recommendations and insights for your car buying journey:
+        - 💬 Chat with an AI expert about vehicle ownership
+        - 🎯 Personalized recommendations based on your needs
+        - 📊 Data-driven insights from CashPedal's database
+        - 💡 Smart answers to all your car buying questions
+        - 🔍 Navigate complex decisions with AI guidance
+
+        **How to use:** Simply type your question and get instant AI-powered advice on vehicle selection, budgeting, and ownership decisions.
+        """)
+
+        if st.button("🧙 Chat with Wheel-Zard", key="nav_wheel_zard", width="stretch"):
+            st.switch_page("pages/9__________Wheel_Zard_Agent.py")
+
+    with ai_col2:
+        st.markdown("""
+        ### 📊 Wheel-Zard Analytics
+        **Track and analyze user questions for insights**
+
+        Analytics dashboard for understanding user behavior:
+        - 📈 View all questions asked by users
+        - 🔍 Identify most common keywords and topics
+        - 📅 Track question trends over time
+        - 📥 Export data for deeper analysis
+        - 💡 Discover feature gaps and user needs
+
+        **How to use:** Access the analytics dashboard to see what questions users are asking, identify patterns, and download data for external analysis.
+        """)
+
+        if st.button("📊 View Analytics Dashboard", key="nav_analytics", width="stretch"):
+            st.switch_page("pages/10___________Wheel_Zard_Analytics.py")
 
     st.markdown("---")
 
@@ -116,9 +146,11 @@ def main():
         - ✨ Fun, interactive quiz
         - 🚗 Personalized recommendations
         - ⏱️ Takes just 2 minutes
+
+        **How to use:** Answer questions about your daily commute, family size, budget priorities, and lifestyle preferences. Get matched with ideal vehicle types based on your responses.
         """)
 
-        if st.button("🎯 Take the Car Survey", key="nav_survey", use_container_width=True):
+        if st.button("🎯 Take the Car Survey", key="nav_survey", width="stretch"):
             st.switch_page("pages/2____Car_Survey.py")
 
     with tool_col2:
@@ -132,9 +164,11 @@ def main():
         - 💰 Income requirements
         - 📈 Affordability analysis
         - 🎯 Financial guidance
+
+        **How to use:** Enter the vehicle price and loan details. The calculator applies the 20/4/10 rule (20% down, 4-year max loan, 10% of income) to determine minimum required salary for responsible ownership.
         """)
 
-        if st.button("💵 Check Salary Requirements", key="nav_salary", use_container_width=True):
+        if st.button("💵 Check Salary Requirements", key="nav_salary", width="stretch"):
             st.switch_page("pages/3_____Salary_Calculator.py")
 
     with tool_col3:
@@ -148,10 +182,54 @@ def main():
         - 🔧 Maintenance history needed
         - 📋 Inspection questions
         - 💡 Buying insights
+
+        **How to use:** Enter the vehicle's current mileage to get a detailed list of maintenance items that should have been completed and key questions to ask the seller.
         """)
 
-        if st.button("✅ Get Buying Checklist", key="nav_checklist", use_container_width=True):
+        if st.button("✅ Get Buying Checklist", key="nav_checklist", width="stretch"):
             st.switch_page("pages/8_________Car_Buying_Checklist.py")
+
+    st.markdown("---")
+
+    # Resources & Information Section
+    st.subheader("📚 Resources & Information")
+
+    res_col1, res_col2 = st.columns(2)
+
+    with res_col1:
+        st.markdown("""
+        ### 🚗 Take it to the Next Gear
+        **Trusted resources for your car buying journey**
+
+        Access curated affiliate resources for every step:
+        - 🏪 Vehicle shopping platforms (CarMax, Carvana, AutoTrader)
+        - 💰 Financing options (LendingTree, Capital One)
+        - 🛡️ Insurance comparison tools (The Zebra, GEICO)
+        - 🔧 Maintenance services (RepairPal, Tire Rack)
+
+        **How to use:** Browse organized categories of trusted partners for shopping, financing, insurance, and maintenance. Each resource includes a description to help you choose the right service.
+        """)
+
+        if st.button("🚗 Explore Resources", key="nav_resources", width="stretch"):
+            st.switch_page("pages/7_________Take_it_to_the_next_gear.py")
+
+    with res_col2:
+        st.markdown("""
+        ### ℹ️ About & FAQ
+        **Learn how CashPedal works**
+
+        Understand our methodology and features:
+        - 📖 What we do and how it works
+        - 🔍 What's included in our calculations
+        - ⚠️ Important disclaimers
+        - ❓ Frequently asked questions
+        - 📊 Step-by-step usage guide
+
+        **How to use:** Read this page to understand CashPedal's cost estimation methodology, data sources, and what factors are included in vehicle ownership calculations.
+        """)
+
+        if st.button("ℹ️ Learn More About CashPedal", key="nav_about", width="stretch"):
+            st.switch_page("pages/6________About.py")
 
     st.markdown("---")
 
@@ -195,6 +273,12 @@ def main():
 
     # Sidebar
     with st.sidebar:
+        # Display sidebar logo using st.image for better compatibility
+        logo_path = ASSETS_DIR / "logo_sidebar.svg"
+        if logo_path.exists():
+            st.image(str(logo_path), width="stretch")
+            st.markdown("<br>", unsafe_allow_html=True)
+
         st.header("📱 Navigation")
         st.info("Use the sidebar menu or the buttons on this page to get started!")
 
@@ -209,19 +293,21 @@ def main():
         st.header("🔗 Quick Access")
         st.markdown("""
         **Main Tools:**
-        - 🧮 Single Car Calculator
-        - ⚖️ Multi-Vehicle Comparison
+        - 🧮 Single Car Calculator - Calculate TCO for one vehicle
+        - ⚖️ Multi-Vehicle Comparison - Compare up to 5 vehicles
 
         **AI Assistant:**
-        - 🧙 Wheel-Zard Agent
+        - 🧙 Wheel-Zard Agent - Ask AI about cars
+        - 📊 Analytics Dashboard - View user question trends
 
         **Planning Tools:**
-        - 🎯 Car Survey
-        - 💵 Salary Calculator
-        - ✅ Car Buying Checklist
+        - 🎯 Car Survey - Find your ideal vehicle type
+        - 💵 Salary Calculator - Check affordability
+        - ✅ Car Buying Checklist - Used car inspection guide
 
-        **More:**
-        - 📖 About & FAQ
+        **Resources:**
+        - 🚗 Next Gear Resources - Shopping & financing partners
+        - ℹ️ About & FAQ - Learn how CashPedal works
         """)
 
     # How to Use - Made more engaging

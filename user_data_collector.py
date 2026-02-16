@@ -364,8 +364,8 @@ def show_collector_form_modal():
     st.markdown("""
     <p style='text-align: center; color: #666; font-size: 1rem; line-height: 1.5; margin-bottom: 20px;'>
         You've completed <strong>6 vehicle calculations</strong>!
-        To help us improve CashPedal and keep you updated with valuable insights,
-        please share your contact information.
+        We'd love to stay in touch to keep you updated on our services
+        and help you along your car buying journey.
     </p>
     """, unsafe_allow_html=True)
 
@@ -402,7 +402,7 @@ def show_collector_form_modal():
         st.markdown("""
         <p style="font-size: 0.85rem; color: #666; text-align: center; margin: 15px 0;">
             🔒 Your information is secure and will never be sold to third parties.
-            We'll only use it to improve your CashPedal experience.
+            We'll use it to keep you updated on our services and support your car buying journey.
         </p>
         """, unsafe_allow_html=True)
 

@@ -15,37 +15,41 @@ class ComparisonService:
     
     def compare_vehicles(self, vehicles: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Compare multiple vehicles and generate comprehensive analysis"""
-        
+
         vehicle_results = []
-        
+
         for vehicle in vehicles:
             try:
                 # Calculate TCO using prediction service
                 tco_results = self.prediction_service.calculate_total_cost_of_ownership(vehicle)
-                
+
                 # Extract key metrics for comparison
                 vehicle_result = self._extract_comparison_metrics(vehicle, tco_results)
                 vehicle_results.append(vehicle_result)
-                
+
             except Exception as e:
                 # Handle calculation errors gracefully
                 vehicle_result = self._create_error_result(vehicle, str(e))
                 vehicle_results.append(vehicle_result)
-        
+
         # Generate comparison analysis
         comparison_analysis = self._analyze_vehicle_comparison(vehicle_results)
-        
+
         # Create rankings
         rankings = self._create_vehicle_rankings(vehicle_results)
-        
+
         # Generate insights
         insights = self._generate_comparison_insights(vehicle_results, comparison_analysis)
-        
+
+        # Analyze lease vs ownership if applicable
+        lease_vs_ownership_analysis = self._analyze_lease_vs_ownership(vehicle_results)
+
         return {
             'vehicles': vehicle_results,
             'analysis': comparison_analysis,
             'rankings': rankings,
             'insights': insights,
+            'lease_vs_ownership': lease_vs_ownership_analysis,
             'summary': self._create_comparison_summary(vehicle_results, rankings),
             'best_overall': rankings.get('best_annual_cost'),
             'cost_range': comparison_analysis.get('cost_statistics', {}).get('cost_range', 0),
@@ -309,14 +313,14 @@ class ComparisonService:
     
     def _generate_overall_recommendation(self, rankings: Dict[str, Any]) -> str:
         """Generate overall recommendation based on rankings"""
-        
+
         best_annual = rankings.get('best_annual_cost')
         most_affordable = rankings.get('most_affordable')
         best_value = rankings.get('best_value')
-        
+
         if not best_annual:
             return "Unable to generate recommendation due to insufficient data"
-        
+
         # Check if the same vehicle wins multiple categories
         if best_annual and most_affordable and best_annual['vehicle_name'] == most_affordable['vehicle_name']:
             return f"Clear winner: {best_annual['vehicle_name']} offers both lowest cost and best affordability"
@@ -326,6 +330,148 @@ class ComparisonService:
             return f"Cost-effective option: {best_annual['vehicle_name']} has the lowest annual ownership cost"
         else:
             return "Consider your priorities: cost, affordability, or overall value when making your decision"
+
+    def _analyze_lease_vs_ownership(self, vehicle_results: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Analyze lease vs ownership costs to help users understand affordability.
+        Shows ownership costs for the lease term and remaining period.
+        """
+        successful_results = [v for v in vehicle_results if v.get('calculation_successful', False)]
+
+        if not successful_results:
+            return None
+
+        # Separate lease and ownership vehicles
+        lease_vehicles = [v for v in successful_results if v['transaction_type'].lower() == 'lease']
+        owned_vehicles = [v for v in successful_results if v['transaction_type'].lower() != 'lease']
+
+        # Only run this analysis if we have both lease and ownership vehicles
+        if not lease_vehicles or not owned_vehicles:
+            return None
+
+        # Get the lease term (in years) from the first lease vehicle
+        # Lease term is stored as months in the raw results
+        lease_term_years = lease_vehicles[0]['analysis_years']
+
+        # Analyze costs during the lease term
+        lease_term_comparison = {
+            'lease_term_years': lease_term_years,
+            'lease_vehicles': [],
+            'owned_vehicles_during_lease_term': [],
+            'owned_vehicles_after_lease_term': []
+        }
+
+        # Process lease vehicles
+        for lease_vehicle in lease_vehicles:
+            lease_total = lease_vehicle['total_cost']
+            lease_annual_avg = lease_vehicle['annual_cost']
+
+            lease_term_comparison['lease_vehicles'].append({
+                'vehicle_name': lease_vehicle['vehicle_name'],
+                'total_cost_during_term': lease_total,
+                'annual_cost': lease_annual_avg,
+                'monthly_cost': lease_vehicle['monthly_cost']
+            })
+
+        # Process owned vehicles - extract costs for lease term period
+        for owned_vehicle in owned_vehicles:
+            annual_breakdown = owned_vehicle.get('raw_results', {}).get('annual_breakdown', [])
+
+            if not annual_breakdown:
+                continue
+
+            # Calculate costs during the lease term period
+            lease_term_cost = 0
+            lease_term_breakdown = []
+
+            for year_data in annual_breakdown[:lease_term_years]:
+                year_total = (
+                    year_data.get('maintenance', 0) +
+                    year_data.get('insurance', 0) +
+                    year_data.get('fuel_energy', 0) +
+                    year_data.get('financing', 0) +
+                    year_data.get('registration', 0)
+                )
+                lease_term_cost += year_total
+                lease_term_breakdown.append({
+                    'year': year_data.get('year', 0),
+                    'total_cost': year_total
+                })
+
+            # Calculate costs for remaining period (after lease term)
+            remaining_period_cost = 0
+            remaining_breakdown = []
+
+            for year_data in annual_breakdown[lease_term_years:]:
+                year_total = (
+                    year_data.get('maintenance', 0) +
+                    year_data.get('insurance', 0) +
+                    year_data.get('fuel_energy', 0) +
+                    year_data.get('financing', 0) +
+                    year_data.get('registration', 0)
+                )
+                remaining_period_cost += year_total
+                remaining_breakdown.append({
+                    'year': year_data.get('year', 0),
+                    'total_cost': year_total
+                })
+
+            # Get depreciation during lease term
+            depreciation_schedule = owned_vehicle.get('raw_results', {}).get('depreciation_schedule', [])
+            initial_value = owned_vehicle['purchase_price']
+            value_after_lease_term = initial_value
+
+            if depreciation_schedule and len(depreciation_schedule) >= lease_term_years:
+                value_after_lease_term = depreciation_schedule[lease_term_years - 1]['vehicle_value']
+
+            depreciation_during_lease_term = initial_value - value_after_lease_term
+
+            lease_term_comparison['owned_vehicles_during_lease_term'].append({
+                'vehicle_name': owned_vehicle['vehicle_name'],
+                'out_of_pocket_cost': lease_term_cost,
+                'annual_cost_avg': lease_term_cost / lease_term_years if lease_term_years > 0 else 0,
+                'monthly_cost_avg': (lease_term_cost / lease_term_years / 12) if lease_term_years > 0 else 0,
+                'depreciation': depreciation_during_lease_term,
+                'value_after_lease_term': value_after_lease_term,
+                'initial_value': initial_value,
+                'yearly_breakdown': lease_term_breakdown
+            })
+
+            # Only add remaining period data if there are years beyond the lease term
+            remaining_years = owned_vehicle['analysis_years'] - lease_term_years
+            if remaining_years > 0:
+                lease_term_comparison['owned_vehicles_after_lease_term'].append({
+                    'vehicle_name': owned_vehicle['vehicle_name'],
+                    'remaining_years': remaining_years,
+                    'total_cost': remaining_period_cost,
+                    'annual_cost_avg': remaining_period_cost / remaining_years if remaining_years > 0 else 0,
+                    'monthly_cost_avg': (remaining_period_cost / remaining_years / 12) if remaining_years > 0 else 0,
+                    'yearly_breakdown': remaining_breakdown,
+                    'final_vehicle_value': owned_vehicle.get('final_value', 0)
+                })
+
+        # Generate insights
+        insights = []
+
+        # Compare average costs during lease term
+        if lease_term_comparison['lease_vehicles'] and lease_term_comparison['owned_vehicles_during_lease_term']:
+            avg_lease_cost = sum(v['total_cost_during_term'] for v in lease_term_comparison['lease_vehicles']) / len(lease_term_comparison['lease_vehicles'])
+            avg_owned_cost = sum(v['out_of_pocket_cost'] for v in lease_term_comparison['owned_vehicles_during_lease_term']) / len(lease_term_comparison['owned_vehicles_during_lease_term'])
+
+            if avg_lease_cost < avg_owned_cost:
+                savings = avg_owned_cost - avg_lease_cost
+                insights.append(f"During the {lease_term_years}-year lease term, leasing saves an average of ${savings:,.0f} in out-of-pocket costs compared to ownership")
+            else:
+                savings = avg_lease_cost - avg_owned_cost
+                insights.append(f"During the {lease_term_years}-year lease term, ownership costs an average of ${savings:,.0f} less in out-of-pocket costs compared to leasing")
+
+            # Add insight about total ownership value
+            if lease_term_comparison['owned_vehicles_after_lease_term']:
+                insights.append(f"However, owned vehicles retain value and can be driven beyond the {lease_term_years}-year lease term, providing long-term savings")
+
+        lease_term_comparison['insights'] = insights
+
+        return lease_term_comparison
     
     def export_comparison_csv(self, comparison_results: Dict[str, Any]) -> str:
         """Export comparison results to CSV format"""

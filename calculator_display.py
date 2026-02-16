@@ -454,6 +454,10 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
     # ---- Tab 1: Category totals ----
     category_totals = results.get("category_totals", {})
     with tab_breakdown:
+        # Add header clarifying the time period
+        st.markdown(f"**Total Costs Over {ownership_years} Year{'s' if ownership_years != 1 else ''}**")
+        st.markdown("---")
+
         if isinstance(category_totals, dict) and category_totals:
             for k, v in category_totals.items():
                 st.write(f"- **{k.replace('_', ' ').title()}**: ${float(v):,.0f}")
@@ -464,6 +468,13 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
     annual_breakdown = results.get("annual_breakdown", [])
     with tab_annual:
         if annual_breakdown:
+            # Determine if this is a lease or purchase based on results structure
+            is_lease = 'lease_payment' in annual_breakdown[0] if annual_breakdown else False
+
+            # Add header clarifying the time period
+            st.markdown(f"**Annual Costs Over {ownership_years} Year{'s' if ownership_years != 1 else ''} of {'Lease' if is_lease else 'Ownership'}**")
+            st.markdown("---")
+
             # Out-of-pocket categories (depreciation is informational, not cash spent)
             oop_categories = [
                 "maintenance", "insurance",
@@ -474,13 +485,41 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
                 row: Dict[str, Any] = {"Year": int(entry.get("year", 0))}
                 # Add out-of-pocket categories first
                 for cat in oop_categories:
-                    row[cat.replace("_", " ").title()] = float(entry.get(cat, 0))
+                    if cat == "financing":
+                        # For leases, use lease_payment; for purchases, use financing
+                        if is_lease:
+                            row["Financing"] = float(entry.get("lease_payment", 0))
+                        else:
+                            row["Financing"] = float(entry.get("financing", 0))
+                    elif cat == "taxes_fees":
+                        # For leases, use fees_penalties; for purchases, use taxes_fees
+                        if is_lease:
+                            row["Taxes Fees"] = float(entry.get("fees_penalties", 0))
+                        else:
+                            row["Taxes Fees"] = float(entry.get("taxes_fees", 0))
+                    else:
+                        row[cat.replace("_", " ").title()] = float(entry.get(cat, 0))
+
                 # Annual total = only out-of-pocket costs
-                row["Annual Total"] = sum(
-                    float(entry.get(cat, 0)) for cat in oop_categories
-                )
+                # For leases, sum includes lease_payment and fees_penalties
+                # For purchases, sum includes financing and taxes_fees
+                if is_lease:
+                    row["Annual Total"] = (
+                        float(entry.get("maintenance", 0)) +
+                        float(entry.get("insurance", 0)) +
+                        float(entry.get("fuel_energy", 0)) +
+                        float(entry.get("lease_payment", 0)) +
+                        float(entry.get("fees_penalties", 0))
+                    )
+                else:
+                    row["Annual Total"] = sum(
+                        float(entry.get(cat, 0)) for cat in oop_categories
+                    )
+
                 # Show depreciation for reference at the end (exclude from the total)
-                row["Depreciation*"] = float(entry.get("depreciation", 0))
+                # Only show for purchases (leases don't have depreciation)
+                if not is_lease:
+                    row["Depreciation*"] = float(entry.get("depreciation", 0))
                 rows.append(row)
 
             df = pd.DataFrame(rows).set_index("Year")
@@ -488,10 +527,18 @@ def _render_results(results: Dict[str, Any], vehicle_data: Dict[str, Any]) -> No
                 df.style.format("${:,.0f}"),
                 width="stretch",
             )
-            st.caption(
-                r"\*Depreciation is shown for reference but is **not** included "
-                "in the Annual Total. It represents value loss, not an out-of-pocket expense."
-            )
+
+            # Add explanatory caption
+            if is_lease:
+                st.caption(
+                    "💡 **Financing** column shows annual lease payments. "
+                    "Leased vehicles do not include depreciation as you don't own the vehicle."
+                )
+            else:
+                st.caption(
+                    r"\*Depreciation is shown for reference but is **not** included "
+                    "in the Annual Total. It represents value loss, not an out-of-pocket expense."
+                )
 
             # Annual Taxes & Fees Breakdown for All Years
             st.markdown("---")

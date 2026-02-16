@@ -7,6 +7,7 @@ import streamlit as st
 from input_forms import collect_all_form_data, display_all_forms_visible, display_progressive_forms
 from prediction_service import PredictionService
 from session_manager import add_vehicle_to_comparison, save_calculation_results
+from user_data_collector import increment_calculation_count, check_and_show_collector_form
 from vehicle_helpers import (
     detect_electric_vehicle,
     determine_fuel_type_and_price,
@@ -676,12 +677,16 @@ def display_calculator() -> None:
             results = service.calculate_total_cost_of_ownership(vehicle_data)
 
         save_calculation_results(vehicle_data, results)
+        increment_calculation_count()  # Track calculation count
         st.rerun()  # Rerun to display results from session state
 
     # Display results if they exist in session state (outside the button block)
     if 'current_results' in st.session_state and st.session_state.current_results:
         current_vehicle = st.session_state.get('current_vehicle', vehicle_data)
         _render_results(st.session_state.current_results, current_vehicle)
+
+        # Check if user data collector form should be shown
+        check_and_show_collector_form()
 
         # Add to Comparison button (now outside the Calculate TCO button block)
         if st.button("Add to Comparison", type="primary"):

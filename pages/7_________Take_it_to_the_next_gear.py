@@ -19,78 +19,28 @@ st.set_page_config(
 )
 
 
-def _resource_card(title: str, description: str, key: str) -> None:
-    st.subheader(title)
-    st.write(description)
-    if st.button(f"Open {title}", key=key):
-        st.info("Affiliate link would open here.")
-
-
 def main() -> None:
     """Render partner resource links."""
     initialize_session_state()
     apply_theme()
 
     st.title("Take it to the Next Gear")
-    st.markdown(
-        "Trusted resources for shopping, financing, insurance, and maintenance."
-    )
     st.markdown("---")
 
     with st.sidebar:
-        st.header("Page Sections")
-        st.markdown(
-            """
-            - [Vehicle Shopping](#vehicle-shopping)
-            - [Financing](#financing)
-            - [Insurance](#insurance)
-            - [Maintenance](#maintenance)
-            """
-        )
-        st.markdown("---")
         st.header("Quick Links")
         if st.button("Calculator"):
             st.switch_page("pages/4______Single_Car_Ownership_Calculator.py")
         if st.button("Comparison"):
             st.switch_page("pages/5_______Multi_Vehicle_Comparison.py")
 
-    st.info(
-        "Disclosure: CashPedal may earn affiliate commissions at no additional cost to you."
+    st.info("Affiliate resources are not currently available.")
+    st.markdown(
+        """
+        This page will feature trusted resources for vehicle shopping, financing,
+        insurance, and maintenance once affiliate partnerships are established.
+        """
     )
-
-    st.header("Vehicle Shopping")
-    col1, col2 = st.columns(2)
-    with col1:
-        _resource_card("CarMax", "Large used inventory with no-haggle pricing.", "carmax")
-        _resource_card("Carvana", "Online-first buying and delivery.", "carvana")
-    with col2:
-        _resource_card("Cars.com", "Compare dealer listings nationwide.", "cars")
-        _resource_card("Autotrader", "Research and browse new and used cars.", "autotrader")
-
-    st.header("Financing")
-    col1, col2 = st.columns(2)
-    with col1:
-        _resource_card("LendingTree", "Compare auto loan offers.", "lendingtree")
-    with col2:
-        _resource_card(
-            "Capital One Auto Navigator",
-            "Pre-qualify and shop with a budget.",
-            "capital_one",
-        )
-
-    st.header("Insurance")
-    col1, col2 = st.columns(2)
-    with col1:
-        _resource_card("The Zebra", "Compare quotes from many insurers.", "zebra")
-    with col2:
-        _resource_card("GEICO", "Fast quote flow and national coverage.", "geico")
-
-    st.header("Maintenance")
-    col1, col2 = st.columns(2)
-    with col1:
-        _resource_card("RepairPal", "Repair estimates and nearby shops.", "repairpal")
-    with col2:
-        _resource_card("Tire Rack", "Tires and accessories.", "tirerack")
 
     st.markdown("---")
     st.markdown(get_footer_html(), unsafe_allow_html=True)

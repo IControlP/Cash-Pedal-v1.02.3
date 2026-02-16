@@ -64,10 +64,7 @@ def authenticate_user():
 
     st.markdown("---")
     st.info("💡 **Note:** This dashboard contains sensitive user data and is password-protected for privacy.")
-
-    # Back button
-    if st.button("🏠 Back to Home"):
-        st.switch_page("main.py")
+    st.info("🔐 **Access:** This admin dashboard is separate from the main app. Return to your CashPedal deployment URL to access the main application.")
 
 
 def load_question_logs():
@@ -266,11 +263,11 @@ def main():
         st.markdown("---")
 
         st.header("🔗 Quick Links")
-        if st.button("🧙 Back to Wheel-Zard", width="stretch"):
-            st.switch_page("pages/9__________Wheel_Zard_Agent.py")
-
-        if st.button("🏠 Home", width="stretch"):
-            st.switch_page("main.py")
+        st.markdown("""
+        **Return to Main App:**
+        - Navigate back to your CashPedal deployment URL
+        - Or run: `streamlit run main.py`
+        """)
 
         st.markdown("---")
 

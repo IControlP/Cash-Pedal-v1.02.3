@@ -24,23 +24,61 @@ class CarBuyingChecklist:
         self.maintenance_calculator = MaintenanceCalculator()
 
     def _extract_with_playwright(self, url: str) -> tuple[BeautifulSoup, str, str]:
-        """Use Playwright to render JavaScript and bypass bot detection"""
+        """Use Playwright with stealth techniques to bypass bot detection"""
         if not PLAYWRIGHT_AVAILABLE:
             raise ImportError("Playwright not installed")
 
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
+            # Launch with stealth settings
+            browser = p.chromium.launch(
+                headless=True,
+                args=[
+                    '--disable-blink-features=AutomationControlled',
+                    '--disable-dev-shm-usage',
+                    '--no-sandbox'
+                ]
+            )
 
-            # Navigate and wait for content
-            page.goto(url, wait_until='networkidle', timeout=15000)
+            # Create context with realistic settings
+            context = browser.new_context(
+                viewport={'width': 1920, 'height': 1080},
+                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                locale='en-US',
+                timezone_id='America/New_York'
+            )
+
+            page = context.new_page()
+
+            # Hide webdriver detection
+            page.add_init_script("""
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined
+                });
+                window.chrome = {
+                    runtime: {}
+                };
+                Object.defineProperty(navigator, 'plugins', {
+                    get: () => [1, 2, 3, 4, 5]
+                });
+                Object.defineProperty(navigator, 'languages', {
+                    get: () => ['en-US', 'en']
+                });
+            """)
+
+            # Navigate with realistic timing
+            page.goto(url, wait_until='networkidle', timeout=20000)
+            page.wait_for_timeout(2000)  # Wait 2 seconds like a human
 
             # Get the rendered HTML
             content = page.content()
-
-            # Extract title and meta
             title = page.title().lower()
-            meta_desc = page.locator('meta[name="description"]').get_attribute('content') or ''
+
+            meta_desc = ''
+            try:
+                meta_elem = page.locator('meta[name="description"]').first
+                meta_desc = meta_elem.get_attribute('content') or ''
+            except:
+                pass
 
             browser.close()
 

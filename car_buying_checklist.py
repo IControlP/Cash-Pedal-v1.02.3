@@ -188,8 +188,27 @@ class CarBuyingChecklist:
                         }
                     }
                 except Exception as pw_error:
-                    # Playwright failed too, return helpful error
-                    pass
+                    # Playwright failed too, log what happened
+                    error_details = str(pw_error)
+
+                    # Check if it's a specific blocking mechanism
+                    if 'timeout' in error_details.lower():
+                        error_msg = "Site took too long to load (likely CAPTCHA or advanced blocking)"
+                    elif 'net::ERR' in error_details:
+                        error_msg = "Site actively blocking browser automation"
+                    else:
+                        error_msg = f"Browser automation blocked: {error_details[:100]}"
+
+                    return {
+                        'make': None,
+                        'model': None,
+                        'year': None,
+                        'mileage': None,
+                        'trim': None,
+                        'url': url,
+                        'extraction_success': False,
+                        'error': f"HTTP 403 + Playwright failed: {error_msg}"
+                    }
 
             error_msg = f"HTTP Error {e.response.status_code}: "
             if e.response.status_code == 403:

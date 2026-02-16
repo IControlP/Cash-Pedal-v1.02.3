@@ -356,79 +356,17 @@ def save_user_data(
 # COLLECTOR FORM MODAL
 # ======================
 
+@st.dialog("🎉 You're Making Smart Decisions!", width="large")
 def show_collector_form_modal():
-    """Display modal form to collect user data"""
+    """Display modal dialog to collect user data"""
 
-    # Apply CSS for modal overlay
+    # Header message
     st.markdown("""
-    <style>
-    /* Modal overlay */
-    .user-data-modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        z-index: 9998;
-        backdrop-filter: blur(3px);
-    }
-
-    /* Modal container */
-    .user-data-modal {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: white;
-        padding: 40px;
-        border-radius: 16px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        z-index: 9999;
-        max-width: 500px;
-        width: 90%;
-        max-height: 90vh;
-        overflow-y: auto;
-    }
-
-    .modal-header {
-        text-align: center;
-        margin-bottom: 25px;
-    }
-
-    .modal-header h2 {
-        color: #1f77b4;
-        margin-bottom: 10px;
-        font-size: 1.8rem;
-    }
-
-    .modal-header p {
-        color: #666;
-        font-size: 1rem;
-        line-height: 1.5;
-    }
-
-    .form-field {
-        margin-bottom: 20px;
-    }
-
-    /* Hide sidebar while modal is open */
-    section[data-testid="stSidebar"] {
-        display: none !important;
-    }
-    </style>
-
-    <div class="user-data-modal-overlay"></div>
-    """, unsafe_allow_html=True)
-
-    # Modal content
-    st.markdown("""
-    <div class="modal-header">
-        <h2>🎉 You're Making Smart Decisions!</h2>
-        <p>You've completed <strong>6 vehicle calculations</strong>!
+    <p style='text-align: center; color: #666; font-size: 1rem; line-height: 1.5; margin-bottom: 20px;'>
+        You've completed <strong>6 vehicle calculations</strong>!
         To help us improve CashPedal and keep you updated with valuable insights,
-        please share your contact information.</p>
-    </div>
+        please share your contact information.
+    </p>
     """, unsafe_allow_html=True)
 
     # Form fields

@@ -108,7 +108,7 @@ def _inject_localstorage_set_user_data():
     """, height=0)
 
 def _inject_increment_calculation_count():
-    """Inject JS to increment calculation count in localStorage"""
+    """Inject JS to increment calculation count in localStorage and sync to URL"""
     components.html("""
     <script>
     (function() {
@@ -116,6 +116,11 @@ def _inject_increment_calculation_count():
             var count = parseInt(localStorage.getItem('cashpedal_calculation_count') || '0');
             count += 1;
             localStorage.setItem('cashpedal_calculation_count', count.toString());
+
+            // Update query param to match
+            var url = new URL(window.parent.location.href);
+            url.searchParams.set('calc_count', count.toString());
+            window.parent.history.replaceState({}, '', url.toString());
         } catch(e) {}
     })();
     </script>
@@ -129,9 +134,12 @@ def _inject_get_calculation_count():
         try {
             var count = localStorage.getItem('cashpedal_calculation_count') || '0';
             var url = new URL(window.parent.location.href);
-            if (url.searchParams.get('calc_count') !== count) {
+            var currentCount = url.searchParams.get('calc_count');
+
+            // If counts don't match, update URL and reload to sync with Streamlit
+            if (currentCount !== count) {
                 url.searchParams.set('calc_count', count);
-                window.parent.history.replaceState({}, '', url.toString());
+                window.parent.location.replace(url.toString());
             }
         } catch(e) {}
     })();

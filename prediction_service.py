@@ -711,6 +711,17 @@ class PredictionService:
             combined_multiplier = style_multiplier * terrain_multiplier
 
             if is_electric:
+                # Get EV efficiency in kWh per 100 miles
+                ev_efficiency = self.ev_calculator.estimate_ev_efficiency(
+                    input_data['make'],
+                    input_data['model'],
+                    input_data['year']
+                )
+
+                # Apply driving adjustments to EV efficiency
+                # For EVs: worse driving = MORE kWh needed, so DIVIDE by multiplier
+                adjusted_ev_efficiency = ev_efficiency / combined_multiplier
+
                 annual_fuel = self.ev_calculator.calculate_annual_electricity_cost(
                     annual_mileage=annual_mileage_limit,  # ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Use lease mileage limit
                     vehicle_efficiency=adjusted_ev_efficiency,

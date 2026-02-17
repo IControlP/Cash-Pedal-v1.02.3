@@ -36,8 +36,9 @@ def main() -> None:
             """
             - [What We Do](#what-we-do)
             - [How It Works](#how-it-works)
-            - [What’s Included](#whats-included)
+            - [What's Included](#whats-included)
             - [Disclaimers](#disclaimers)
+            - [Contact & Stay Connected](#contact-stay-connected)
             """
         )
 
@@ -79,6 +80,37 @@ def main() -> None:
         "Results are estimates, not financial advice. Real-world costs vary by market, "
         "driving behavior, and vehicle condition."
     )
+
+    st.markdown("---")
+
+    st.header("Contact & Stay Connected")
+    st.write(
+        "Have a question, feedback, or just want to say hello? We'd love to hear from you."
+    )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("Get in Touch")
+        st.markdown(
+            "Reach out to us directly at **[support@cashpedal.io](mailto:support@cashpedal.io)**"
+        )
+        st.markdown(
+            "We're here to help with questions about calculations, data sources, "
+            "or anything else CashPedal-related."
+        )
+
+    with col2:
+        st.subheader("Stay in the Loop")
+        st.write(
+            "Sign up for our email list to get the latest news, feature updates, "
+            "and tips for smarter vehicle ownership decisions."
+        )
+        st.link_button(
+            "Subscribe to Our Email List",
+            "mailto:support@cashpedal.io?subject=Subscribe%20to%20CashPedal%20Updates"
+            "&body=Please%20add%20me%20to%20the%20CashPedal%20email%20list.",
+        )
 
     st.markdown("---")
     st.markdown(get_footer_html(), unsafe_allow_html=True)

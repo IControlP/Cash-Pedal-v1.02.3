@@ -273,10 +273,19 @@ def main():
 
     # Sidebar
     with st.sidebar:
-        # Display sidebar logo using st.image for better compatibility
+        # Display sidebar logo using base64 inline HTML to avoid Streamlit's
+        # in-memory media file storage (which is cleared on server restart,
+        # causing MediaFileStorageError for cached browser URLs).
+        import base64
         logo_path = ASSETS_DIR / "logo_sidebar.svg"
         if logo_path.exists():
-            st.image(str(logo_path), width="stretch")
+            with open(logo_path, "rb") as _f:
+                _logo_b64 = base64.b64encode(_f.read()).decode()
+            st.markdown(
+                f'<img src="data:image/svg+xml;base64,{_logo_b64}" '
+                f'style="max-width:100%;height:auto;" alt="CashPedal">',
+                unsafe_allow_html=True,
+            )
             st.markdown("<br>", unsafe_allow_html=True)
 
         st.header("📱 Navigation")

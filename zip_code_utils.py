@@ -302,17 +302,17 @@ def get_geography_type_from_zip(zip_code: str) -> str:
     """Determine geography type from ZIP code"""
     if not validate_zip_code(zip_code):
         return 'Suburban'
-    
-    # First try metro area lookup
-    zip_data = lookup_zip_code_data(zip_code)
-    if zip_data:
-        geo_type = zip_data.get('geography_type', 'Suburban')
-        # Convert "Mixed" to "Suburban" for consistency
-        return 'Suburban' if geo_type == 'Mixed' else geo_type
-    
-    # Fallback to basic classification
+
     zip_int = int(zip_code)
-    
+
+    # Search METRO_AREA_RATES directly to avoid mutual recursion with lookup_zip_code_data
+    for entry in METRO_AREA_RATES:
+        if len(entry) >= 5:
+            zip_start, zip_end, geography_type = entry[0], entry[1], entry[4]
+            if zip_start <= zip_int <= zip_end:
+                return 'Suburban' if geography_type == 'Mixed' else geography_type
+
+    # Fallback to basic classification
     # Major urban centers
     urban_zip_ranges = [
         (10001, 10299), (11201, 11299), (11101, 11199),  # NYC

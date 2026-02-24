@@ -168,23 +168,34 @@ class AdvancedInsuranceCalculator:
         """Get brand-based insurance multiplier"""
         # Some brands are more expensive to insure due to repair costs, theft rates, etc.
         brand_multipliers = {
+            # Luxury / premium — higher repair costs
             'BMW': 1.25,
-            'Mercedes-Benz': 1.3,
-            'Audi': 1.2,
+            'Mercedes-Benz': 1.30,
+            'Audi': 1.20,
             'Lexus': 1.15,
-            'Acura': 1.1,
-            'Infiniti': 1.1,
+            'Acura': 1.10,
+            'Infiniti': 1.10,
             'Cadillac': 1.15,
-            'Toyota': 0.9,
-            'Honda': 0.9,
+            'Porsche': 1.35,
+            'Genesis': 1.18,
+            # EV luxury — high repair + specialized parts
+            'Lucid': 1.40,
+            'Rivian': 1.25,
+            'Polestar': 1.20,
+            # Mainstream reliable — lower claim frequency
+            'Toyota': 0.90,
+            'Honda': 0.90,
             'Hyundai': 0.85,
             'Kia': 0.85,
             'Subaru': 0.95,
             'Mazda': 0.95,
-            'Chevrolet': 1.0,
+            'Mitsubishi': 0.92,
+            # American mainstream
+            'Chevrolet': 1.00,
             'Ford': 1.05,
-            'Ram': 1.1,
-            'Jeep': 1.1
+            'Ram': 1.10,
+            'Jeep': 1.10,
+            'Dodge': 1.15,
         }
         
         return brand_multipliers.get(make, 1.0)

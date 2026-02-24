@@ -218,7 +218,8 @@ class RecommendationEngine:
             return "Budget-conscious buyers seeking reliable transportation"
         
         # Luxury buyers
-        elif make in ['bmw', 'mercedes-benz', 'audi', 'lexus']:
+        elif make in ['bmw', 'mercedes-benz', 'audi', 'lexus', 'genesis',
+                      'lucid', 'polestar', 'porsche', 'lincoln', 'cadillac']:
             return "Buyers prioritizing luxury features and brand prestige"
         
         # Lease-specific scenarios

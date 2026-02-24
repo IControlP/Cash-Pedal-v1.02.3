@@ -756,6 +756,7 @@ class EnhancedMaintenanceCalculator:
             'Tesla': 0.70,  # Lower traditional maintenance
             'Rivian': 0.75,
             'Lucid': 0.75,
+            'Polestar': 0.72,  # Volvo-backed EV, lower maintenance
         }
         
         self.shop_multipliers = {

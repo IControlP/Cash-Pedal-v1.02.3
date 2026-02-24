@@ -55,6 +55,7 @@ class EnhancedDepreciationModel:
             'Infiniti': 1.08,    # Luxury brand struggles - QX60 okay
 
             # BELOW AVERAGE Retention (1.10-1.20) - Below Market
+            'Mitsubishi': 1.10,  # Limited US lineup, Outlander PHEV helps
             'Cadillac': 1.12,    # Escalade helps, sedans hurt (was 1.15, adjusted)
             'Volkswagen': 1.14,  # Reliability concerns persist - ID.4 weak
             'Audi': 1.15,        # Better than BMW/MB but still luxury depreciation

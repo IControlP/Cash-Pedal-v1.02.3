@@ -1477,6 +1477,174 @@ MANUFACTURERS_M = {
                 }
             }
         },
+        'Lancer': {
+            'production_years': (2002, 2017),
+            'trims_by_year': {
+                2002: {'Lancer ES': 13497, 'Lancer LS': 15297, 'Lancer OZ Rally': 16997},
+                2003: {'Lancer ES': 13697, 'Lancer LS': 15497, 'Lancer OZ Rally': 17197, 'Lancer Evolution': 27990},
+                2004: {'Lancer ES': 13997, 'Lancer LS': 15797, 'Lancer Ralliart': 21197, 'Lancer Evolution': 29990},
+                2005: {'Lancer ES': 14197, 'Lancer LS': 15997, 'Lancer Ralliart': 21397, 'Lancer Evolution': 30990},
+                2006: {'Lancer ES': 14397, 'Lancer LS': 16197, 'Lancer Ralliart': 21597, 'Lancer Evolution': 31490},
+                2007: {'Lancer ES': 14697, 'Lancer GTS': 17997, 'Lancer Evolution': 32990},
+                2008: {
+                    'Lancer DE': 15390,
+                    'Lancer ES': 16890,
+                    'Lancer GTS': 18990,
+                    'Lancer Ralliart': 24490,
+                    'Lancer Evolution GSR': 32990,
+                    'Lancer Evolution MR': 38990
+                },
+                2009: {
+                    'Lancer DE': 15590,
+                    'Lancer ES': 17090,
+                    'Lancer GTS': 19190,
+                    'Lancer Ralliart': 24690,
+                    'Lancer Evolution GSR': 33490,
+                    'Lancer Evolution MR': 39490
+                },
+                2010: {
+                    'Lancer DE': 15790,
+                    'Lancer ES': 17290,
+                    'Lancer GTS': 19390,
+                    'Lancer Ralliart': 24890,
+                    'Lancer Evolution GSR': 33990,
+                    'Lancer Evolution MR': 39990
+                },
+                2011: {
+                    'Lancer DE': 15990,
+                    'Lancer ES': 17490,
+                    'Lancer GTS': 19590,
+                    'Lancer Ralliart': 25090,
+                    'Lancer Evolution GSR': 34490,
+                    'Lancer Evolution MR': 40490
+                },
+                2012: {
+                    'Lancer DE': 16190,
+                    'Lancer ES': 17690,
+                    'Lancer SE': 19990,
+                    'Lancer GT': 21990,
+                    'Lancer Ralliart': 25290,
+                    'Lancer Evolution GSR': 34990,
+                    'Lancer Evolution MR': 40990
+                },
+                2013: {
+                    'Lancer DE': 16490,
+                    'Lancer ES': 17990,
+                    'Lancer SE': 20290,
+                    'Lancer GT': 22290,
+                    'Lancer Ralliart': 25590,
+                    'Lancer Evolution GSR': 35495,
+                    'Lancer Evolution MR': 41495
+                },
+                2014: {
+                    'Lancer DE': 16690,
+                    'Lancer ES': 18190,
+                    'Lancer SE': 20490,
+                    'Lancer GT': 22490,
+                    'Lancer Ralliart': 25790,
+                    'Lancer Evolution GSR': 35995,
+                    'Lancer Evolution MR': 41995
+                },
+                2015: {
+                    'Lancer ES': 17990,
+                    'Lancer SE': 20990,
+                    'Lancer GT': 23490,
+                    'Lancer Ralliart': 26490,
+                    'Lancer Evolution GSR': 36990,
+                    'Lancer Evolution MR': 42990
+                },
+                2016: {
+                    'Lancer ES': 18290,
+                    'Lancer SE': 21290,
+                    'Lancer GT': 23790,
+                    'Lancer Ralliart': 26790,
+                    'Lancer Evolution GSR': 37990,
+                    'Lancer Evolution MR': 43990
+                },
+                2017: {
+                    'Lancer ES': 18590,
+                    'Lancer SE': 21590,
+                    'Lancer GT': 24090,
+                    'Lancer LE': 25090
+                }
+            }
+        },
+        'Galant': {
+            'production_years': (1994, 2012),
+            'trims_by_year': {
+                2000: {'Galant DE': 18497, 'Galant ES': 20497, 'Galant LS': 22497, 'Galant GTZ': 25497},
+                2001: {'Galant DE': 18697, 'Galant ES': 20697, 'Galant LS': 22697, 'Galant GTZ': 25697},
+                2002: {'Galant ES': 19297, 'Galant LS': 21297, 'Galant GTZ': 24297},
+                2003: {'Galant ES': 19497, 'Galant LS': 21497, 'Galant GTZ': 24497},
+                2004: {'Galant DE': 18997, 'Galant ES': 21497, 'Galant LS': 23497, 'Galant GTS': 25497, 'Galant Ralliart': 26997},
+                2005: {'Galant DE': 19197, 'Galant ES': 21697, 'Galant LS': 23697, 'Galant GTS': 25697, 'Galant Ralliart': 27197},
+                2006: {'Galant DE': 19397, 'Galant ES': 21897, 'Galant LS': 23897, 'Galant GTS': 25897, 'Galant Ralliart': 27397},
+                2007: {'Galant DE': 19597, 'Galant ES': 22097, 'Galant LS': 24097, 'Galant SE': 25597, 'Galant Ralliart': 27597},
+                2008: {'Galant DE': 19797, 'Galant ES': 22297, 'Galant LS': 24297, 'Galant SE': 25797, 'Galant Ralliart': 27797},
+                2009: {'Galant ES': 21195, 'Galant SE': 24895, 'Galant Sport': 26895},
+                2010: {'Galant ES': 21495, 'Galant SE': 25195, 'Galant Sport': 27195},
+                2011: {'Galant ES': 21795, 'Galant SE': 25495, 'Galant Sport': 27495},
+                2012: {'Galant ES': 22095, 'Galant SE': 25795, 'Galant Sport': 27795}
+            }
+        },
+        'Mirage G4': {
+            'production_years': (2017, 2026),
+            'trims_by_year': {
+                2017: {'Mirage G4 ES': 14995, 'Mirage G4 SE': 16795, 'Mirage G4 GT': 18395},
+                2018: {'Mirage G4 ES': 15295, 'Mirage G4 SE': 17095, 'Mirage G4 GT': 18695},
+                2019: {'Mirage G4 ES': 15595, 'Mirage G4 SE': 17395, 'Mirage G4 GT': 18995},
+                2020: {'Mirage G4 ES': 15895, 'Mirage G4 SE': 17695, 'Mirage G4 GT': 19295},
+                2021: {'Mirage G4 ES': 16195, 'Mirage G4 SE': 17995, 'Mirage G4 GT': 19595},
+                2022: {'Mirage G4 ES': 16695, 'Mirage G4 SE': 18495, 'Mirage G4 GT': 20095},
+                2023: {'Mirage G4 ES': 17190, 'Mirage G4 SE': 18990, 'Mirage G4 GT': 20590},
+                2024: {'Mirage G4 ES': 17690, 'Mirage G4 SE': 19490, 'Mirage G4 GT': 21090},
+                2025: {'Mirage G4 ES': 18190, 'Mirage G4 SE': 19990, 'Mirage G4 GT': 21590},
+                2026: {'Mirage G4 ES': 18600, 'Mirage G4 SE': 20500, 'Mirage G4 GT': 22100}
+            }
+        },
+        'Outlander PHEV': {
+            'production_years': (2014, 2026),
+            'trims_by_year': {
+                2014: {'Outlander PHEV SE': 35495, 'Outlander PHEV GT': 40495},
+                2015: {'Outlander PHEV SE': 35995, 'Outlander PHEV GT': 40995},
+                2016: {'Outlander PHEV SE': 36495, 'Outlander PHEV GT': 41495},
+                2017: {'Outlander PHEV SE': 36995, 'Outlander PHEV GT': 41995},
+                2018: {'Outlander PHEV SEL': 37495, 'Outlander PHEV GT': 42495},
+                2019: {'Outlander PHEV SEL': 37995, 'Outlander PHEV GT': 42995},
+                2020: {'Outlander PHEV SEL': 38495, 'Outlander PHEV GT': 43495},
+                2021: {'Outlander PHEV SEL': 38995, 'Outlander PHEV GT': 43995},
+                2022: {
+                    'Outlander PHEV ES': 38495,
+                    'Outlander PHEV SE': 40495,
+                    'Outlander PHEV SEL': 43495,
+                    'Outlander PHEV GT': 46495
+                },
+                2023: {
+                    'Outlander PHEV ES': 39790,
+                    'Outlander PHEV SE': 41790,
+                    'Outlander PHEV SEL': 44790,
+                    'Outlander PHEV GT': 47790
+                },
+                2024: {
+                    'Outlander PHEV ES': 40490,
+                    'Outlander PHEV SE': 42490,
+                    'Outlander PHEV SEL': 45490,
+                    'Outlander PHEV GT': 48490
+                },
+                2025: {
+                    'Outlander PHEV ES': 41190,
+                    'Outlander PHEV SE': 43190,
+                    'Outlander PHEV SEL': 46190,
+                    'Outlander PHEV GT': 49190
+                },
+                2026: {
+                    'Outlander PHEV ES': 41900,
+                    'Outlander PHEV SE': 43900,
+                    'Outlander PHEV SEL': 46900,
+                    'Outlander PHEV GT': 49900
+                }
+            }
+        },
         'Outlander': {
             'production_years': (2003, 2026),
             'trims_by_year': {
@@ -1598,6 +1766,12 @@ MANUFACTURERS_M = {
                     'Outlander SE': 31390,
                     'Outlander SEL': 33390,
                     'Outlander GT': 35390
+                },
+                2026: {
+                    'Outlander ES': 28590,
+                    'Outlander SE': 32090,
+                    'Outlander SEL': 34090,
+                    'Outlander GT': 36090
                 }
             }
         }

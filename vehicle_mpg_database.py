@@ -444,6 +444,303 @@ VEHICLE_MPG_DATABASE = {
                 }
             }
         }
+    },
+    'Mitsubishi': {
+        'Eclipse Cross': {
+            'base_mpg': {'city': 26, 'highway': 28, 'combined': 27},
+            'years': {
+                (2018, 2026): {
+                    'Eclipse Cross ES': {'city': 26, 'highway': 28, 'combined': 27},
+                    'Eclipse Cross LE': {'city': 26, 'highway': 28, 'combined': 27},
+                    'Eclipse Cross SE': {'city': 25, 'highway': 27, 'combined': 26},
+                    'Eclipse Cross SEL': {'city': 25, 'highway': 27, 'combined': 26}
+                }
+            }
+        },
+        'Galant': {
+            'base_mpg': {'city': 21, 'highway': 30, 'combined': 24},
+            'years': {
+                (2004, 2012): {
+                    'Galant DE': {'city': 21, 'highway': 30, 'combined': 24},
+                    'Galant ES': {'city': 21, 'highway': 30, 'combined': 24},
+                    'Galant LS': {'city': 21, 'highway': 30, 'combined': 24},
+                    'Galant GTS': {'city': 19, 'highway': 27, 'combined': 22},
+                    'Galant Ralliart': {'city': 19, 'highway': 27, 'combined': 22}
+                }
+            }
+        },
+        'Lancer': {
+            'base_mpg': {'city': 28, 'highway': 36, 'combined': 31},
+            'years': {
+                (2008, 2017): {
+                    'Lancer DE': {'city': 28, 'highway': 36, 'combined': 31},
+                    'Lancer ES': {'city': 28, 'highway': 36, 'combined': 31},
+                    'Lancer GTS': {'city': 25, 'highway': 34, 'combined': 29},
+                    'Lancer SE': {'city': 25, 'highway': 34, 'combined': 29},
+                    'Lancer GT': {'city': 25, 'highway': 34, 'combined': 29},
+                    'Lancer Ralliart': {'city': 21, 'highway': 29, 'combined': 24},
+                    'Lancer Evolution GSR': {'city': 17, 'highway': 23, 'combined': 19},
+                    'Lancer Evolution MR': {'city': 17, 'highway': 23, 'combined': 19}
+                }
+            }
+        },
+        'Mirage': {
+            'base_mpg': {'city': 36, 'highway': 43, 'combined': 39},
+            'years': {
+                (2014, 2026): {
+                    'Mirage ES': {'city': 36, 'highway': 43, 'combined': 39},
+                    'Mirage SE': {'city': 36, 'highway': 43, 'combined': 39},
+                    'Mirage GT': {'city': 36, 'highway': 43, 'combined': 39}
+                }
+            }
+        },
+        'Mirage G4': {
+            'base_mpg': {'city': 35, 'highway': 41, 'combined': 37},
+            'years': {
+                (2017, 2026): {
+                    'Mirage G4 ES': {'city': 35, 'highway': 41, 'combined': 37},
+                    'Mirage G4 SE': {'city': 35, 'highway': 41, 'combined': 37},
+                    'Mirage G4 GT': {'city': 35, 'highway': 41, 'combined': 37}
+                }
+            }
+        },
+        'Outlander': {
+            'base_mpg': {'city': 24, 'highway': 30, 'combined': 26},
+            'years': {
+                (2022, 2026): {
+                    'Outlander ES': {'city': 24, 'highway': 30, 'combined': 26},
+                    'Outlander SE': {'city': 24, 'highway': 30, 'combined': 26},
+                    'Outlander SEL': {'city': 24, 'highway': 30, 'combined': 26},
+                    'Outlander GT': {'city': 23, 'highway': 29, 'combined': 25}
+                },
+                (2014, 2021): {
+                    'Outlander ES': {'city': 25, 'highway': 30, 'combined': 27},
+                    'Outlander SE': {'city': 25, 'highway': 30, 'combined': 27},
+                    'Outlander GT': {'city': 22, 'highway': 27, 'combined': 24}
+                }
+            }
+        },
+        'Outlander PHEV': {
+            'base_mpg': {'city': 0, 'highway': 0, 'combined': 0},
+            'mpge': {'city': 74, 'highway': 64, 'combined': 69},
+            'years': {
+                (2022, 2026): {
+                    'Outlander PHEV ES': {'mpge_combined': 74, 'is_electric': False},
+                    'Outlander PHEV SE': {'mpge_combined': 74, 'is_electric': False},
+                    'Outlander PHEV SEL': {'mpge_combined': 74, 'is_electric': False},
+                    'Outlander PHEV GT': {'mpge_combined': 74, 'is_electric': False}
+                },
+                (2014, 2021): {
+                    'Outlander PHEV SE': {'mpge_combined': 62, 'is_electric': False},
+                    'Outlander PHEV SEL': {'mpge_combined': 62, 'is_electric': False},
+                    'Outlander PHEV GT': {'mpge_combined': 62, 'is_electric': False}
+                }
+            }
+        }
+    },
+    'Rivian': {
+        'R1T': {
+            'base_mpg': {'city': 0, 'highway': 0, 'combined': 0},
+            'mpge': {'city': 74, 'highway': 66, 'combined': 70},
+            'years': {
+                (2022, 2023): {
+                    'R1T Explore': {'mpge_combined': 73},
+                    'R1T Adventure': {'mpge_combined': 65},
+                    'R1T Launch Edition': {'mpge_combined': 65}
+                },
+                (2024, 2026): {
+                    'R1T Standard': {'mpge_combined': 86},
+                    'R1T Large': {'mpge_combined': 74},
+                    'R1T Max': {'mpge_combined': 62},
+                    'R1T Performance Dual-Motor': {'mpge_combined': 61},
+                    'R1T Performance Tri-Motor': {'mpge_combined': 55}
+                }
+            }
+        },
+        'R1S': {
+            'base_mpg': {'city': 0, 'highway': 0, 'combined': 0},
+            'mpge': {'city': 71, 'highway': 65, 'combined': 68},
+            'years': {
+                (2022, 2023): {
+                    'R1S Explore': {'mpge_combined': 70},
+                    'R1S Adventure': {'mpge_combined': 61},
+                    'R1S Launch Edition': {'mpge_combined': 61}
+                },
+                (2024, 2026): {
+                    'R1S Standard': {'mpge_combined': 82},
+                    'R1S Large': {'mpge_combined': 71},
+                    'R1S Max': {'mpge_combined': 60},
+                    'R1S Performance Dual-Motor': {'mpge_combined': 58},
+                    'R1S Performance Tri-Motor': {'mpge_combined': 52}
+                }
+            }
+        },
+        'R2': {
+            'base_mpg': {'city': 0, 'highway': 0, 'combined': 0},
+            'mpge': {'city': 102, 'highway': 94, 'combined': 98},
+            'years': {
+                (2026, 2026): {
+                    'R2 Standard': {'mpge_combined': 102},
+                    'R2 Large': {'mpge_combined': 98},
+                    'R2 Performance Dual-Motor': {'mpge_combined': 89},
+                    'R2 Performance Tri-Motor': {'mpge_combined': 79}
+                }
+            }
+        }
+    },
+    'Polestar': {
+        'Polestar 2': {
+            'base_mpg': {'city': 0, 'highway': 0, 'combined': 0},
+            'mpge': {'city': 107, 'highway': 94, 'combined': 101},
+            'years': {
+                (2022, 2023): {
+                    'Long Range Single Motor': {'mpge_combined': 107},
+                    'Long Range Single Motor Plus': {'mpge_combined': 107},
+                    'Long Range Dual Motor': {'mpge_combined': 89},
+                    'Long Range Dual Motor Plus': {'mpge_combined': 86}
+                },
+                (2024, 2026): {
+                    'Long Range Single Motor': {'mpge_combined': 107},
+                    'Long Range Single Motor Plus': {'mpge_combined': 107},
+                    'Long Range Dual Motor': {'mpge_combined': 92},
+                    'Long Range Dual Motor Plus': {'mpge_combined': 89},
+                    'BST Edition 270': {'mpge_combined': 82}
+                }
+            }
+        },
+        'Polestar 3': {
+            'base_mpg': {'city': 0, 'highway': 0, 'combined': 0},
+            'mpge': {'city': 79, 'highway': 73, 'combined': 76},
+            'years': {
+                (2024, 2026): {
+                    'Long Range Dual Motor': {'mpge_combined': 79},
+                    'Long Range Dual Motor Plus': {'mpge_combined': 79},
+                    'Long Range Dual Motor with Performance Pack': {'mpge_combined': 73}
+                }
+            }
+        },
+        'Polestar 4': {
+            'base_mpg': {'city': 0, 'highway': 0, 'combined': 0},
+            'mpge': {'city': 96, 'highway': 87, 'combined': 91},
+            'years': {
+                (2025, 2026): {
+                    'Long Range Single Motor': {'mpge_combined': 96},
+                    'Long Range Dual Motor': {'mpge_combined': 87},
+                    'Long Range Dual Motor BST': {'mpge_combined': 83}
+                }
+            }
+        }
+    },
+    'Genesis': {
+        'G70': {
+            'base_mpg': {'city': 22, 'highway': 30, 'combined': 25},
+            'years': {
+                (2019, 2026): {
+                    'G70 2.0T': {'city': 22, 'highway': 30, 'combined': 25},
+                    'G70 2.0T Sport': {'city': 22, 'highway': 30, 'combined': 25},
+                    'G70 3.3T Sport': {'city': 18, 'highway': 26, 'combined': 21},
+                    'G70 3.3T Sport Advanced': {'city': 18, 'highway': 26, 'combined': 21}
+                }
+            }
+        },
+        'G80': {
+            'base_mpg': {'city': 19, 'highway': 27, 'combined': 22},
+            'years': {
+                (2017, 2026): {
+                    'G80 2.5T': {'city': 21, 'highway': 29, 'combined': 24},
+                    'G80 2.5T Sport': {'city': 21, 'highway': 29, 'combined': 24},
+                    'G80 3.5T': {'city': 17, 'highway': 25, 'combined': 20},
+                    'G80 3.5T Sport': {'city': 17, 'highway': 25, 'combined': 20}
+                }
+            }
+        },
+        'G90': {
+            'base_mpg': {'city': 17, 'highway': 24, 'combined': 20},
+            'years': {
+                (2017, 2026): {
+                    'G90 3.3T': {'city': 17, 'highway': 24, 'combined': 20},
+                    'G90 3.3T Sport': {'city': 17, 'highway': 24, 'combined': 20},
+                    'G90 5.0': {'city': 15, 'highway': 22, 'combined': 17}
+                }
+            }
+        },
+        'GV70': {
+            'base_mpg': {'city': 22, 'highway': 28, 'combined': 25},
+            'years': {
+                (2022, 2026): {
+                    'GV70 2.5T': {'city': 22, 'highway': 28, 'combined': 25},
+                    'GV70 3.5T': {'city': 19, 'highway': 26, 'combined': 22},
+                    'GV70 3.5T Sport': {'city': 19, 'highway': 26, 'combined': 22}
+                }
+            }
+        },
+        'GV80': {
+            'base_mpg': {'city': 20, 'highway': 25, 'combined': 22},
+            'years': {
+                (2021, 2026): {
+                    'GV80 2.5T': {'city': 20, 'highway': 25, 'combined': 22},
+                    'GV80 3.5T': {'city': 18, 'highway': 24, 'combined': 20},
+                    'GV80 Coupe 3.5T': {'city': 18, 'highway': 24, 'combined': 20}
+                }
+            }
+        },
+        'GV60': {
+            'base_mpg': {'city': 0, 'highway': 0, 'combined': 0},
+            'mpge': {'city': 100, 'highway': 87, 'combined': 94},
+            'years': {
+                (2023, 2026): {
+                    'GV60 Advanced': {'mpge_combined': 100},
+                    'GV60 Performance': {'mpge_combined': 88},
+                    'GV60 Magma': {'mpge_combined': 83}
+                }
+            }
+        },
+        'Electrified G80': {
+            'base_mpg': {'city': 0, 'highway': 0, 'combined': 0},
+            'mpge': {'city': 87, 'highway': 76, 'combined': 82},
+            'years': {
+                (2022, 2026): {
+                    'Electrified G80': {'mpge_combined': 82}
+                }
+            }
+        },
+        'Electrified GV70': {
+            'base_mpg': {'city': 0, 'highway': 0, 'combined': 0},
+            'mpge': {'city': 88, 'highway': 77, 'combined': 83},
+            'years': {
+                (2023, 2026): {
+                    'Electrified GV70': {'mpge_combined': 83}
+                }
+            }
+        }
+    },
+    'Lucid': {
+        'Air': {
+            'base_mpg': {'city': 0, 'highway': 0, 'combined': 0},
+            'mpge': {'city': 146, 'highway': 131, 'combined': 138},
+            'years': {
+                (2022, 2026): {
+                    'Air Pure': {'mpge_combined': 131},
+                    'Air Touring': {'mpge_combined': 131},
+                    'Air Grand Touring': {'mpge_combined': 138},
+                    'Air Grand Touring Performance': {'mpge_combined': 117},
+                    'Air Dream Edition Range': {'mpge_combined': 113},
+                    'Air Dream Edition Performance': {'mpge_combined': 109},
+                    'Air Sapphire': {'mpge_combined': 99}
+                }
+            }
+        },
+        'Gravity': {
+            'base_mpg': {'city': 0, 'highway': 0, 'combined': 0},
+            'mpge': {'city': 105, 'highway': 92, 'combined': 98},
+            'years': {
+                (2025, 2026): {
+                    'Gravity Grand Touring': {'mpge_combined': 98},
+                    'Gravity Grand Touring Ultra': {'mpge_combined': 98},
+                    'Gravity Sapphire': {'mpge_combined': 88}
+                }
+            }
+        }
     }
 }
 
@@ -535,9 +832,12 @@ def assign_default_mpg_by_category(make: str, model: str, trim: str = None) -> d
     full_name = f"{model_lower} {trim_lower}".strip()
     
     # ==================== ELECTRIC VEHICLES ====================
-    if make_lower == 'tesla' or any(kw in full_name for kw in [
+    all_electric_makes = {'tesla', 'rivian', 'lucid', 'polestar', 'fisker'}
+    if make_lower in all_electric_makes or any(kw in full_name for kw in [
         ' ev', 'leaf', 'bolt', 'ioniq 5', 'ioniq 6', 'bz4x', 'rz',
-        'ariya', 'ev6', 'ev9', 'lyriq', 'id.4', 'mach-e', 'lightning']):
+        'ariya', 'ev6', 'ev9', 'lyriq', 'id.4', 'mach-e', 'lightning',
+        'r1t', 'r1s', 'r2', 'polestar 2', 'polestar 3', 'polestar 4',
+        'air pure', 'air touring', 'air grand', 'gravity grand']):
         return {
             'city': 0, 'highway': 0, 'combined': 0,
             'mpge_combined': 120, 'is_electric': True,

@@ -896,6 +896,64 @@ MANUFACTURERS_L = {
                 2011: {'Town Car Signature': 45500, 'Town Car Signature L': 47500, 'Town Car Designer Series': 50500}
             }
         }
+    },
+
+    'Lucid': {
+        'Air': {
+            'production_years': (2022, 2026),
+            'trims_by_year': {
+                2022: {
+                    'Air Pure': 87400,
+                    'Air Touring': 107400,
+                    'Air Grand Touring': 138000,
+                    'Air Grand Touring Performance': 180000,
+                    'Air Dream Edition Range': 161500,
+                    'Air Dream Edition Performance': 169000
+                },
+                2023: {
+                    'Air Pure': 69900,
+                    'Air Touring': 95000,
+                    'Air Grand Touring': 138000,
+                    'Air Grand Touring Performance': 176000,
+                    'Air Sapphire': 249000
+                },
+                2024: {
+                    'Air Pure': 69900,
+                    'Air Touring': 95000,
+                    'Air Grand Touring': 138000,
+                    'Air Grand Touring Performance': 176000,
+                    'Air Sapphire': 249000
+                },
+                2025: {
+                    'Air Pure': 71900,
+                    'Air Touring': 97500,
+                    'Air Grand Touring': 141000,
+                    'Air Grand Touring Performance': 180000,
+                    'Air Sapphire': 252000
+                },
+                2026: {
+                    'Air Pure': 73500,
+                    'Air Touring': 99500,
+                    'Air Grand Touring': 144000,
+                    'Air Grand Touring Performance': 183000,
+                    'Air Sapphire': 255000
+                }
+            }
+        },
+        'Gravity': {
+            'production_years': (2025, 2026),
+            'trims_by_year': {
+                2025: {
+                    'Gravity Grand Touring': 94900,
+                    'Gravity Grand Touring Ultra': 121900
+                },
+                2026: {
+                    'Gravity Grand Touring': 97500,
+                    'Gravity Grand Touring Ultra': 124900,
+                    'Gravity Sapphire': 165000
+                }
+            }
+        }
     }
 }
 

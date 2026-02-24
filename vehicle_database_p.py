@@ -330,6 +330,84 @@ MANUFACTURERS_P = {
                     'Taycan': 90350, 'Taycan 4S': 114850, 'Taycan Turbo': 161850, 'Taycan Turbo S': 195950,
                     'Taycan Cross Turismo': 101350, 'Taycan 4S Cross Turismo': 115550, 'Taycan Turbo Cross Turismo': 161550, 'Taycan Turbo S Cross Turismo': 196850,
                     'Taycan GTS': 140050, 'Taycan GTS Sport Turismo': 143150
+                },
+                2026: {
+                    'Taycan': 93000, 'Taycan 4S': 117900, 'Taycan Turbo': 165200, 'Taycan Turbo S': 199400,
+                    'Taycan Cross Turismo': 104100, 'Taycan 4S Cross Turismo': 118600, 'Taycan Turbo Cross Turismo': 164900, 'Taycan Turbo S Cross Turismo': 200300,
+                    'Taycan GTS': 143800, 'Taycan GTS Sport Turismo': 146900
+                }
+            }
+        }
+    },
+
+    'Polestar': {
+        'Polestar 2': {
+            'production_years': (2022, 2026),
+            'trims_by_year': {
+                2022: {
+                    'Long Range Single Motor': 45900,
+                    'Long Range Dual Motor': 53900,
+                    'Long Range Dual Motor Plus': 57900
+                },
+                2023: {
+                    'Long Range Single Motor': 47495,
+                    'Long Range Single Motor Plus': 49495,
+                    'Long Range Dual Motor': 55900,
+                    'Long Range Dual Motor Plus': 59900
+                },
+                2024: {
+                    'Long Range Single Motor': 47495,
+                    'Long Range Single Motor Plus': 50495,
+                    'Long Range Dual Motor': 55900,
+                    'Long Range Dual Motor Plus': 60900
+                },
+                2025: {
+                    'Long Range Single Motor': 45900,
+                    'Long Range Single Motor Plus': 48900,
+                    'Long Range Dual Motor': 54900,
+                    'Long Range Dual Motor Plus': 59900,
+                    'BST Edition 270': 67900
+                },
+                2026: {
+                    'Long Range Single Motor': 46900,
+                    'Long Range Single Motor Plus': 49900,
+                    'Long Range Dual Motor': 56200,
+                    'Long Range Dual Motor Plus': 61200,
+                    'BST Edition 270': 69500
+                }
+            }
+        },
+        'Polestar 3': {
+            'production_years': (2024, 2026),
+            'trims_by_year': {
+                2024: {
+                    'Long Range Dual Motor': 73400,
+                    'Long Range Dual Motor with Performance Pack': 81400
+                },
+                2025: {
+                    'Long Range Dual Motor': 75900,
+                    'Long Range Dual Motor with Performance Pack': 83900,
+                    'Long Range Dual Motor Plus': 79900
+                },
+                2026: {
+                    'Long Range Dual Motor': 78500,
+                    'Long Range Dual Motor Plus': 82500,
+                    'Long Range Dual Motor with Performance Pack': 86500
+                }
+            }
+        },
+        'Polestar 4': {
+            'production_years': (2025, 2026),
+            'trims_by_year': {
+                2025: {
+                    'Long Range Single Motor': 56300,
+                    'Long Range Dual Motor': 65300,
+                    'Long Range Dual Motor BST': 73300
+                },
+                2026: {
+                    'Long Range Single Motor': 57900,
+                    'Long Range Dual Motor': 67200,
+                    'Long Range Dual Motor BST': 75200
                 }
             }
         }

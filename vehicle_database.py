@@ -14,16 +14,16 @@ def safe_import_manufacturers():
         'C': 'vehicle_database_c', # Cadillac, Chevrolet, Chrysler
         'D': 'vehicle_database_d', # Dodge
         'F': 'vehicle_database_f', # Ford, Fiat
-        'G': 'vehicle_database_g', # GMC
-        'H': 'vehicle_database_h', # Honda, Hyundai 
+        'G': 'vehicle_database_g', # Genesis, GMC
+        'H': 'vehicle_database_h', # Honda, Hyundai
         'I': 'vehicle_database_i', # Infiniti
         'J': 'vehicle_database_j', # Jaguar, Jeep
         'K': 'vehicle_database_k', # Kia
-        'L': 'vehicle_database_l', # Lexus, Lincoln
+        'L': 'vehicle_database_l', # Lexus, Lincoln, Lucid
         'M': 'vehicle_database_m', # Mazda, Mercedes-Benz, Mini, Mitsubishi
         'N': 'vehicle_database_n', # Nissan
-        'P': 'vehicle_database_p', # Porsche
-        'R': 'vehicle_database_r', # Ram
+        'P': 'vehicle_database_p', # Polestar, Porsche
+        'R': 'vehicle_database_r', # Ram, Rivian
         'S': 'vehicle_database_s', # Subaru
         'T': 'vehicle_database_t', # Tesla, Toyota
         'V': 'vehicle_database_v', # Volkswagen, Volvo
@@ -276,8 +276,9 @@ def get_vehicle_characteristics(make, model, year, trim=None):
     
     if make_lower in ['toyota', 'honda', 'hyundai']:
         characteristics['reliability_score'] = 4.0
-    elif make_lower in ['bmw', 'mercedes-benz', 'audi', 'lexus', 'acura', 
-                        'infiniti', 'cadillac', 'lincoln', 'porsche', 'genesis']:
+    elif make_lower in ['bmw', 'mercedes-benz', 'audi', 'lexus', 'acura',
+                        'infiniti', 'cadillac', 'lincoln', 'porsche', 'genesis',
+                        'lucid']:
         characteristics['market_segment'] = 'luxury'
     
     # STEP 4: Model-specific segment adjustments (segment only, NOT mpg)

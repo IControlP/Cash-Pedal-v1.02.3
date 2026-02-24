@@ -1422,9 +1422,13 @@ VEHICLE_SPECS_DATABASE = {
         'Countryman': {'default_specs': {'horsepower': 189, 'seats': 5, 'cargo_cu_ft': 17.6}, 'years': {(2017, 2025): {'Countryman Cooper': {'horsepower': 134, 'seats': 5, 'cargo_cu_ft': 17.6}, 'Countryman Cooper S': {'horsepower': 189, 'seats': 5, 'cargo_cu_ft': 17.6}, 'Countryman JCW': {'horsepower': 301, 'seats': 5, 'cargo_cu_ft': 17.6}}}}
     },
     'Mitsubishi': {
-        'Eclipse Cross': {'default_specs': {'horsepower': 152, 'seats': 5, 'cargo_cu_ft': 23.4}, 'years': {(2018, 2025): {'Eclipse Cross ES': {'horsepower': 152, 'seats': 5, 'cargo_cu_ft': 23.4}, 'Eclipse Cross SE': {'horsepower': 152, 'seats': 5, 'cargo_cu_ft': 23.4}, 'Eclipse Cross SEL': {'horsepower': 152, 'seats': 5, 'cargo_cu_ft': 23.4}}}},
-        'Mirage': {'default_specs': {'horsepower': 78, 'seats': 5, 'cargo_cu_ft': 17.1}, 'years': {(2014, 2025): {'Mirage ES': {'horsepower': 78, 'seats': 5, 'cargo_cu_ft': 17.1}, 'Mirage LE': {'horsepower': 78, 'seats': 5, 'cargo_cu_ft': 17.1}, 'Mirage SE': {'horsepower': 78, 'seats': 5, 'cargo_cu_ft': 17.1}}}},
-        'Outlander': {'default_specs': {'horsepower': 181, 'seats': 7, 'cargo_cu_ft': 33.5}, 'years': {(2022, 2025): {'Outlander ES': {'horsepower': 181, 'seats': 7, 'cargo_cu_ft': 33.5}, 'Outlander SE': {'horsepower': 181, 'seats': 7, 'cargo_cu_ft': 33.5}, 'Outlander SEL': {'horsepower': 181, 'seats': 7, 'cargo_cu_ft': 33.5}}}}
+        'Eclipse Cross': {'default_specs': {'horsepower': 152, 'seats': 5, 'cargo_cu_ft': 23.4}, 'years': {(2018, 2026): {'Eclipse Cross ES': {'horsepower': 152, 'seats': 5, 'cargo_cu_ft': 23.4}, 'Eclipse Cross SE': {'horsepower': 152, 'seats': 5, 'cargo_cu_ft': 23.4}, 'Eclipse Cross SEL': {'horsepower': 152, 'seats': 5, 'cargo_cu_ft': 23.4}}}},
+        'Galant': {'default_specs': {'horsepower': 160, 'seats': 5, 'cargo_cu_ft': 13.4}, 'years': {(2004, 2012): {'Galant DE': {'horsepower': 160, 'seats': 5, 'cargo_cu_ft': 13.4}, 'Galant ES': {'horsepower': 160, 'seats': 5, 'cargo_cu_ft': 13.4}, 'Galant LS': {'horsepower': 160, 'seats': 5, 'cargo_cu_ft': 13.4}, 'Galant GTS': {'horsepower': 238, 'seats': 5, 'cargo_cu_ft': 13.4}, 'Galant Ralliart': {'horsepower': 238, 'seats': 5, 'cargo_cu_ft': 13.4}}}},
+        'Lancer': {'default_specs': {'horsepower': 148, 'seats': 5, 'cargo_cu_ft': 11.9}, 'years': {(2008, 2017): {'Lancer DE': {'horsepower': 148, 'seats': 5, 'cargo_cu_ft': 11.9}, 'Lancer ES': {'horsepower': 148, 'seats': 5, 'cargo_cu_ft': 11.9}, 'Lancer GTS': {'horsepower': 168, 'seats': 5, 'cargo_cu_ft': 11.9}, 'Lancer Ralliart': {'horsepower': 237, 'seats': 5, 'cargo_cu_ft': 11.9}, 'Lancer Evolution GSR': {'horsepower': 291, 'seats': 5, 'cargo_cu_ft': 12.3}, 'Lancer Evolution MR': {'horsepower': 291, 'seats': 5, 'cargo_cu_ft': 12.3}}}},
+        'Mirage': {'default_specs': {'horsepower': 78, 'seats': 5, 'cargo_cu_ft': 17.1}, 'years': {(2014, 2026): {'Mirage ES': {'horsepower': 78, 'seats': 5, 'cargo_cu_ft': 17.1}, 'Mirage LE': {'horsepower': 78, 'seats': 5, 'cargo_cu_ft': 17.1}, 'Mirage SE': {'horsepower': 78, 'seats': 5, 'cargo_cu_ft': 17.1}, 'Mirage GT': {'horsepower': 78, 'seats': 5, 'cargo_cu_ft': 17.1}}}},
+        'Mirage G4': {'default_specs': {'horsepower': 78, 'seats': 5, 'cargo_cu_ft': 13.2}, 'years': {(2017, 2026): {'Mirage G4 ES': {'horsepower': 78, 'seats': 5, 'cargo_cu_ft': 13.2}, 'Mirage G4 SE': {'horsepower': 78, 'seats': 5, 'cargo_cu_ft': 13.2}, 'Mirage G4 GT': {'horsepower': 78, 'seats': 5, 'cargo_cu_ft': 13.2}}}},
+        'Outlander': {'default_specs': {'horsepower': 181, 'seats': 7, 'cargo_cu_ft': 33.5}, 'years': {(2022, 2026): {'Outlander ES': {'horsepower': 181, 'seats': 7, 'cargo_cu_ft': 33.5}, 'Outlander SE': {'horsepower': 181, 'seats': 7, 'cargo_cu_ft': 33.5}, 'Outlander SEL': {'horsepower': 181, 'seats': 7, 'cargo_cu_ft': 33.5}, 'Outlander GT': {'horsepower': 181, 'seats': 7, 'cargo_cu_ft': 33.5}}, (2003, 2021): {'Outlander ES': {'horsepower': 148, 'seats': 7, 'cargo_cu_ft': 33.5}, 'Outlander SE': {'horsepower': 148, 'seats': 7, 'cargo_cu_ft': 33.5}, 'Outlander GT': {'horsepower': 224, 'seats': 7, 'cargo_cu_ft': 33.5}}}},
+        'Outlander PHEV': {'default_specs': {'horsepower': 221, 'seats': 7, 'cargo_cu_ft': 30.4}, 'years': {(2022, 2026): {'Outlander PHEV ES': {'horsepower': 221, 'seats': 7, 'cargo_cu_ft': 30.4}, 'Outlander PHEV SE': {'horsepower': 221, 'seats': 7, 'cargo_cu_ft': 30.4}, 'Outlander PHEV SEL': {'horsepower': 221, 'seats': 7, 'cargo_cu_ft': 30.4}, 'Outlander PHEV GT': {'horsepower': 221, 'seats': 7, 'cargo_cu_ft': 30.4}}, (2014, 2021): {'Outlander PHEV SE': {'horsepower': 197, 'seats': 5, 'cargo_cu_ft': 30.4}, 'Outlander PHEV SEL': {'horsepower': 197, 'seats': 5, 'cargo_cu_ft': 30.4}, 'Outlander PHEV GT': {'horsepower': 197, 'seats': 5, 'cargo_cu_ft': 30.4}}}}
     },
     'Nissan': {
         '370Z': {'default_specs': {'horsepower': 332, 'seats': 2, 'cargo_cu_ft': 6.9}, 'years': {(2009, 2020): {'370Z Base': {'horsepower': 332, 'seats': 2, 'cargo_cu_ft': 6.9}, '370Z Sport': {'horsepower': 332, 'seats': 2, 'cargo_cu_ft': 6.9}, '370Z Nismo': {'horsepower': 350, 'seats': 2, 'cargo_cu_ft': 6.9}}}},
@@ -1453,9 +1457,117 @@ VEHICLE_SPECS_DATABASE = {
         'ProMaster': {'default_specs': {'horsepower': 276, 'seats': 2, 'cargo_cu_ft': 420.0}, 'years': {(2014, 2025): {'ProMaster 1500': {'horsepower': 276, 'seats': 2, 'cargo_cu_ft': 283.0}, 'ProMaster 2500': {'horsepower': 276, 'seats': 2, 'cargo_cu_ft': 374.0}, 'ProMaster 3500': {'horsepower': 276, 'seats': 2, 'cargo_cu_ft': 420.0}}}}
     },
     'Rivian': {
-        'R1S': {'default_specs': {'horsepower': 835, 'seats': 7, 'cargo_cu_ft': 17.0}, 'years': {(2022, 2025): {'R1S Adventure': {'horsepower': 835, 'seats': 7, 'cargo_cu_ft': 17.0}, 'R1S Explore': {'horsepower': 600, 'seats': 7, 'cargo_cu_ft': 17.0}}}},
-        'R1T': {'default_specs': {'horsepower': 835, 'seats': 5, 'cargo_cu_ft': 11.0}, 'years': {(2022, 2025): {'R1T Adventure': {'horsepower': 835, 'seats': 5, 'cargo_cu_ft': 11.0}, 'R1T Explore': {'horsepower': 600, 'seats': 5, 'cargo_cu_ft': 11.0}}}},
-        'R2': {'default_specs': {'horsepower': 500, 'seats': 5, 'cargo_cu_ft': 30.0}, 'years': {(2026, 2026): {'R2 Base': {'horsepower': 500, 'seats': 5, 'cargo_cu_ft': 30.0}}}}
+        'R1S': {
+            'default_specs': {'horsepower': 835, 'seats': 7, 'cargo_cu_ft': 17.0},
+            'years': {
+                (2022, 2023): {
+                    'R1S Adventure': {'horsepower': 835, 'seats': 7, 'cargo_cu_ft': 17.0},
+                    'R1S Explore': {'horsepower': 600, 'seats': 7, 'cargo_cu_ft': 17.0},
+                    'R1S Launch Edition': {'horsepower': 835, 'seats': 7, 'cargo_cu_ft': 17.0}
+                },
+                (2024, 2026): {
+                    'R1S Standard': {'horsepower': 533, 'seats': 7, 'cargo_cu_ft': 17.0},
+                    'R1S Large': {'horsepower': 533, 'seats': 7, 'cargo_cu_ft': 17.0},
+                    'R1S Max': {'horsepower': 533, 'seats': 7, 'cargo_cu_ft': 17.0},
+                    'R1S Performance Dual-Motor': {'horsepower': 665, 'seats': 7, 'cargo_cu_ft': 17.0},
+                    'R1S Performance Tri-Motor': {'horsepower': 1025, 'seats': 7, 'cargo_cu_ft': 17.0}
+                }
+            }
+        },
+        'R1T': {
+            'default_specs': {'horsepower': 835, 'seats': 5, 'cargo_cu_ft': 11.0},
+            'years': {
+                (2022, 2023): {
+                    'R1T Adventure': {'horsepower': 835, 'seats': 5, 'cargo_cu_ft': 11.0},
+                    'R1T Explore': {'horsepower': 600, 'seats': 5, 'cargo_cu_ft': 11.0},
+                    'R1T Launch Edition': {'horsepower': 835, 'seats': 5, 'cargo_cu_ft': 11.0}
+                },
+                (2024, 2026): {
+                    'R1T Standard': {'horsepower': 533, 'seats': 5, 'cargo_cu_ft': 11.0},
+                    'R1T Large': {'horsepower': 533, 'seats': 5, 'cargo_cu_ft': 11.0},
+                    'R1T Max': {'horsepower': 533, 'seats': 5, 'cargo_cu_ft': 11.0},
+                    'R1T Performance Dual-Motor': {'horsepower': 665, 'seats': 5, 'cargo_cu_ft': 11.0},
+                    'R1T Performance Tri-Motor': {'horsepower': 1025, 'seats': 5, 'cargo_cu_ft': 11.0}
+                }
+            }
+        },
+        'R2': {
+            'default_specs': {'horsepower': 500, 'seats': 5, 'cargo_cu_ft': 30.0},
+            'years': {
+                (2026, 2026): {
+                    'R2 Standard': {'horsepower': 402, 'seats': 5, 'cargo_cu_ft': 30.0},
+                    'R2 Large': {'horsepower': 402, 'seats': 5, 'cargo_cu_ft': 30.0},
+                    'R2 Performance Dual-Motor': {'horsepower': 500, 'seats': 5, 'cargo_cu_ft': 30.0},
+                    'R2 Performance Tri-Motor': {'horsepower': 630, 'seats': 5, 'cargo_cu_ft': 30.0}
+                }
+            }
+        }
+    },
+    'Polestar': {
+        'Polestar 2': {
+            'default_specs': {'horsepower': 476, 'seats': 5, 'cargo_cu_ft': 14.3},
+            'years': {
+                (2022, 2023): {
+                    'Long Range Single Motor': {'horsepower': 231, 'seats': 5, 'cargo_cu_ft': 14.3},
+                    'Long Range Single Motor Plus': {'horsepower': 231, 'seats': 5, 'cargo_cu_ft': 14.3},
+                    'Long Range Dual Motor': {'horsepower': 476, 'seats': 5, 'cargo_cu_ft': 14.3},
+                    'Long Range Dual Motor Plus': {'horsepower': 476, 'seats': 5, 'cargo_cu_ft': 14.3}
+                },
+                (2024, 2026): {
+                    'Long Range Single Motor': {'horsepower': 299, 'seats': 5, 'cargo_cu_ft': 14.3},
+                    'Long Range Single Motor Plus': {'horsepower': 299, 'seats': 5, 'cargo_cu_ft': 14.3},
+                    'Long Range Dual Motor': {'horsepower': 476, 'seats': 5, 'cargo_cu_ft': 14.3},
+                    'Long Range Dual Motor Plus': {'horsepower': 476, 'seats': 5, 'cargo_cu_ft': 14.3},
+                    'BST Edition 270': {'horsepower': 544, 'seats': 5, 'cargo_cu_ft': 14.3}
+                }
+            }
+        },
+        'Polestar 3': {
+            'default_specs': {'horsepower': 489, 'seats': 5, 'cargo_cu_ft': 28.8},
+            'years': {
+                (2024, 2026): {
+                    'Long Range Dual Motor': {'horsepower': 489, 'seats': 5, 'cargo_cu_ft': 28.8},
+                    'Long Range Dual Motor Plus': {'horsepower': 489, 'seats': 5, 'cargo_cu_ft': 28.8},
+                    'Long Range Dual Motor with Performance Pack': {'horsepower': 517, 'seats': 5, 'cargo_cu_ft': 28.8}
+                }
+            }
+        },
+        'Polestar 4': {
+            'default_specs': {'horsepower': 544, 'seats': 5, 'cargo_cu_ft': 24.0},
+            'years': {
+                (2025, 2026): {
+                    'Long Range Single Motor': {'horsepower': 272, 'seats': 5, 'cargo_cu_ft': 24.0},
+                    'Long Range Dual Motor': {'horsepower': 544, 'seats': 5, 'cargo_cu_ft': 24.0},
+                    'Long Range Dual Motor BST': {'horsepower': 544, 'seats': 5, 'cargo_cu_ft': 24.0}
+                }
+            }
+        }
+    },
+    'Lucid': {
+        'Air': {
+            'default_specs': {'horsepower': 819, 'seats': 5, 'cargo_cu_ft': 16.0},
+            'years': {
+                (2022, 2026): {
+                    'Air Pure': {'horsepower': 430, 'seats': 5, 'cargo_cu_ft': 16.0},
+                    'Air Touring': {'horsepower': 620, 'seats': 5, 'cargo_cu_ft': 16.0},
+                    'Air Grand Touring': {'horsepower': 819, 'seats': 5, 'cargo_cu_ft': 16.0},
+                    'Air Grand Touring Performance': {'horsepower': 1050, 'seats': 5, 'cargo_cu_ft': 16.0},
+                    'Air Dream Edition Range': {'horsepower': 933, 'seats': 5, 'cargo_cu_ft': 16.0},
+                    'Air Dream Edition Performance': {'horsepower': 1111, 'seats': 5, 'cargo_cu_ft': 16.0},
+                    'Air Sapphire': {'horsepower': 1234, 'seats': 5, 'cargo_cu_ft': 16.0}
+                }
+            }
+        },
+        'Gravity': {
+            'default_specs': {'horsepower': 828, 'seats': 7, 'cargo_cu_ft': 24.3},
+            'years': {
+                (2025, 2026): {
+                    'Gravity Grand Touring': {'horsepower': 828, 'seats': 7, 'cargo_cu_ft': 24.3},
+                    'Gravity Grand Touring Ultra': {'horsepower': 828, 'seats': 7, 'cargo_cu_ft': 24.3},
+                    'Gravity Sapphire': {'horsepower': 1234, 'seats': 7, 'cargo_cu_ft': 24.3}
+                }
+            }
+        }
     },
     'Subaru': {
         'Ascent': {'default_specs': {'horsepower': 260, 'seats': 8, 'cargo_cu_ft': 17.6}, 'years': {(2019, 2025): {'Ascent Base': {'horsepower': 260, 'seats': 8, 'cargo_cu_ft': 17.6}, 'Ascent Premium': {'horsepower': 260, 'seats': 8, 'cargo_cu_ft': 17.6}, 'Ascent Limited': {'horsepower': 260, 'seats': 7, 'cargo_cu_ft': 17.6}, 'Ascent Touring': {'horsepower': 260, 'seats': 7, 'cargo_cu_ft': 17.6}}}},

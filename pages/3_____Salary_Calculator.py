@@ -27,7 +27,8 @@ try:
         get_all_manufacturers,
         get_models_for_manufacturer,
         get_trims_for_vehicle,
-        get_available_years_for_model
+        get_available_years_for_model,
+        get_vehicle_characteristics,
     )
     VEHICLE_DATABASE_AVAILABLE = True
 except ImportError:
@@ -526,7 +527,17 @@ def main():
     if make and model and make != "-- Select Make --" and model != "-- Select Model --":
         
         # Calculate vehicle costs with defaults
-        annual_mileage = 12000  # Average mileage
+        # Use vehicle-specific annual mileage when available (e.g. F1 cars use
+        # mileage computed from the actual FIA race calendar), otherwise fall
+        # back to the standard 12,000 mi/year industry average.
+        annual_mileage = 12000  # default
+        if VEHICLE_DATABASE_AVAILABLE:
+            try:
+                _chars = get_vehicle_characteristics(make, model, year)
+                if _chars.get('typical_annual_miles'):
+                    annual_mileage = _chars['typical_annual_miles']
+            except Exception:
+                pass
         fuel_price = 3.50  # National average
         
         if is_lease:
@@ -568,27 +579,28 @@ def main():
         st.subheader(f"Salary Required for {year} {make} {model}")
         
         # Show calculation summary
+        mileage_label = f"{annual_mileage:,} miles/year"
         if is_lease:
             st.markdown(f"""
-            Based on **{format_currency(monthly_cost)}/month** in total ownership costs 
-            (lease, 12,000 miles/year, normal driving):
+            Based on **{format_currency(monthly_cost)}/month** in total ownership costs
+            (lease, {mileage_label}, normal driving):
             """)
         else:
             # Check if this is a used vehicle with estimated value
             price_basis = ""
             if is_used_vehicle:
                 price_basis = f" on est. value of {format_currency(vehicle_price)}"
-            
+
             if down_payment_percent > 0:
                 st.markdown(f"""
-                Based on **{format_currency(monthly_cost)}/month** in total ownership costs 
-                ({down_payment_percent}% down payment of {format_currency(down_payment_amount)}{price_basis}, 
-                5-year loan at 6.5% APR, 12,000 miles/year):
+                Based on **{format_currency(monthly_cost)}/month** in total ownership costs
+                ({down_payment_percent}% down payment of {format_currency(down_payment_amount)}{price_basis},
+                5-year loan at 6.5% APR, {mileage_label}):
                 """)
             else:
                 st.markdown(f"""
-                Based on **{format_currency(monthly_cost)}/month** in total ownership costs 
-                (no down payment{price_basis}, 5-year loan at 6.5% APR, 12,000 miles/year):
+                Based on **{format_currency(monthly_cost)}/month** in total ownership costs
+                (no down payment{price_basis}, 5-year loan at 6.5% APR, {mileage_label}):
                 """)
         
         # Show monthly cost breakdown summary

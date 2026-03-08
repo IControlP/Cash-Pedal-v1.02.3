@@ -267,8 +267,19 @@ def get_vehicle_characteristics(make, model, year, trim=None):
         'market_segment': 'standard',
         'is_electric': is_electric,
         'mpg': actual_mpg,
-        'mpge': mpge_value
+        'mpge': mpge_value,
+        'typical_annual_miles': None,  # None means "use user-supplied default"
     }
+
+    # STEP 2b: Pull vehicle-specific annual mileage if the entry defines it
+    # (Currently used for F1 cars whose mileage is computed from the race calendar)
+    try:
+        make_entry = vehicle_database.get(make, {})
+        model_entry = make_entry.get(model, {})
+        if 'typical_annual_miles' in model_entry:
+            characteristics['typical_annual_miles'] = model_entry['typical_annual_miles']
+    except Exception:
+        pass
     
     # STEP 3: Brand-specific adjustments (reliability and segment only, NOT mpg)
     make_lower = make.lower()

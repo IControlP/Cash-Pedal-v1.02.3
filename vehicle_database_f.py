@@ -1,6 +1,95 @@
 # vehicle_database_f.py - Manufacturers F (Ferrari, Ford, Fiat)
 # Vehicle database for manufacturers starting with letter F
 
+# =============================================================================
+# F1 ANNUAL MILEAGE — derived from the 2025 FIA Formula 1 World Championship
+#
+# Methodology
+# -----------
+# Each race weekend contributes:
+#   Normal weekend  : (FP1 + FP2 + FP3 + Qualifying + Race) laps × circuit_km
+#   Sprint weekend  : (FP1 + Sprint Qualifying + Qualifying + Race) laps
+#                     × circuit_km  +  sprint_race_km (≈100 km, fixed distance)
+#
+# Session lap estimates (conservative, based on published timing sheets):
+#   FP1              28 laps   (60-minute session)
+#   FP2              30 laps   (60-minute session, normal weekends only)
+#   FP3              24 laps   (60-minute session, normal weekends only)
+#   Qualifying       17 laps   (Q1 ≈ 7, Q2 ≈ 6, Q3 ≈ 4, combined outlaps)
+#   Sprint Quali.    12 laps   (SQ1 ≈ 5, SQ2 ≈ 4, SQ3 ≈ 3, sprint weekends)
+#   Sprint Race     100 km     (fixed distance per FIA regulation)
+#
+# Pre-season testing: Bahrain International Circuit, 3 days, ~100 laps/day
+#
+# Sources: FIA Sporting Regulations, official F1 timing data, Wikipedia.
+# =============================================================================
+
+_F1_SESSION = {
+    'fp1': 28, 'fp2': 30, 'fp3': 24, 'qualifying': 17,
+    'sprint_quali': 12, 'sprint_race_km': 100,
+}
+
+# 2025 FIA F1 calendar: (circuit_name, country, km_per_lap, race_laps, is_sprint)
+_F1_2025_CIRCUITS = [
+    ('Bahrain International Circuit',       'Bahrain',       5.412, 57, False),
+    ('Jeddah Corniche Circuit',             'Saudi Arabia',  6.174, 50, False),
+    ('Albert Park Circuit',                 'Australia',     5.278, 58, False),
+    ('Suzuka Circuit',                      'Japan',         5.807, 53, False),
+    ('Shanghai International Circuit',      'China',         5.451, 56, True ),  # Sprint
+    ('Miami International Autodrome',       'United States', 5.412, 57, True ),  # Sprint
+    ('Autodromo Enzo e Dino Ferrari',       'Italy (Imola)', 4.909, 63, False),
+    ('Circuit de Monaco',                   'Monaco',        3.337, 78, False),
+    ('Circuit de Barcelona-Catalunya',      'Spain',         4.675, 66, False),
+    ('Circuit Gilles Villeneuve',           'Canada',        4.361, 70, False),
+    ('Red Bull Ring',                       'Austria',       4.318, 71, True ),  # Sprint
+    ('Silverstone Circuit',                 'Great Britain', 5.891, 52, False),
+    ('Circuit de Spa-Francorchamps',        'Belgium',       7.004, 44, False),
+    ('Hungaroring',                         'Hungary',       4.381, 70, False),
+    ('Circuit Zandvoort',                   'Netherlands',   4.259, 72, False),
+    ('Autodromo Nazionale Monza',           'Italy (Monza)', 5.793, 53, False),
+    ('Baku City Circuit',                   'Azerbaijan',    6.003, 51, False),
+    ('Marina Bay Street Circuit',           'Singapore',     4.940, 62, False),
+    ('Circuit of the Americas',             'United States', 5.513, 56, True ),  # Sprint
+    ('Autodromo Hermanos Rodriguez',        'Mexico',        4.304, 71, False),
+    ('Autodromo Jose Carlos Pace',          'Brazil',        4.309, 71, True ),  # Sprint
+    ('Las Vegas Street Circuit',            'United States', 6.120, 50, False),
+    ('Lusail International Circuit',        'Qatar',         5.380, 57, True ),  # Sprint
+    ('Yas Marina Circuit',                  'Abu Dhabi',     5.281, 58, False),
+]
+
+# Pre-season Bahrain test (3 days × 100 laps × 5.412 km = 1,623.6 km)
+_F1_2025_PRESEASON_KM = 3 * 100 * 5.412
+
+def _compute_f1_season_km(circuits, session, preseason_km):
+    """Calculate total km for a full F1 season including all sessions."""
+    total_km = preseason_km
+    normal_non_race = session['fp1'] + session['fp2'] + session['fp3'] + session['qualifying']
+    sprint_non_race = session['fp1'] + session['sprint_quali'] + session['qualifying']
+    for _name, _country, track_km, race_laps, is_sprint in circuits:
+        if is_sprint:
+            total_km += (sprint_non_race + race_laps) * track_km + session['sprint_race_km']
+        else:
+            total_km += (normal_non_race + race_laps) * track_km
+    return total_km
+
+_F1_2025_TOTAL_KM = _compute_f1_season_km(_F1_2025_CIRCUITS, _F1_SESSION, _F1_2025_PRESEASON_KM)
+# _F1_2025_TOTAL_KM ≈ 20,576 km → 12,783 miles
+
+F1_TYPICAL_ANNUAL_MILES_2025 = round(_F1_2025_TOTAL_KM / 1.60934)
+
+# Public summary dict — consumed by vehicle_database.get_vehicle_characteristics()
+F1_2025_SEASON_DATA = {
+    'season':         2025,
+    'rounds':         len(_F1_2025_CIRCUITS),
+    'sprint_rounds':  sum(1 for c in _F1_2025_CIRCUITS if c[4]),
+    'total_km':       round(_F1_2025_TOTAL_KM, 1),
+    'typical_annual_miles': F1_TYPICAL_ANNUAL_MILES_2025,
+    'circuits':       _F1_2025_CIRCUITS,
+    'session_laps':   _F1_SESSION,
+    'preseason_km':   round(_F1_2025_PRESEASON_KM, 1),
+}
+
+
 MANUFACTURERS_F = {
     "Ferrari": {
         # -----------------------------------------------------------------------
@@ -25,6 +114,10 @@ MANUFACTURERS_F = {
         # -----------------------------------------------------------------------
         "SF-24": {
             "production_years": (2024, 2025),
+            # Mileage = full 2025 FIA calendar (24 rounds, 6 sprint weekends)
+            # Race km + all practice/qualifying sessions + pre-season Bahrain test
+            # = ~20,576 km → computed via F1_TYPICAL_ANNUAL_MILES_2025
+            "typical_annual_miles": F1_TYPICAL_ANNUAL_MILES_2025,
             "trims_by_year": {
                 2024: {
                     # Full WDC-spec car (Charles Leclerc / Carlos Sainz livery)
@@ -42,6 +135,9 @@ MANUFACTURERS_F = {
         },
         "SF-23": {
             "production_years": (2023, 2024),
+            # Mileage = 2024 FIA calendar (24 rounds, 6 sprint weekends)
+            # Essentially identical structure to 2025 → 12,500 mi est.
+            "typical_annual_miles": 12500,
             "trims_by_year": {
                 2023: {
                     "Client Racing - Race Spec":       3800000,
@@ -55,6 +151,9 @@ MANUFACTURERS_F = {
         },
         "SF21": {
             "production_years": (2021, 2022),
+            # Mileage = 2021 FIA calendar (23 rounds, 3 sprint weekends)
+            # Fewer races + no FP2/FP3 replacement for most sprints → 11,800 mi est.
+            "typical_annual_miles": 11800,
             "trims_by_year": {
                 2021: {
                     "Client Racing - Race Spec":       2800000,

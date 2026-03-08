@@ -13,7 +13,7 @@ def safe_import_manufacturers():
         'B': 'vehicle_database_b', # BMW, Buick
         'C': 'vehicle_database_c', # Cadillac, Chevrolet, Chrysler
         'D': 'vehicle_database_d', # Dodge
-        'F': 'vehicle_database_f', # Ford, Fiat
+        'F': 'vehicle_database_f', # Ferrari (F1), Ford, Fiat
         'G': 'vehicle_database_g', # GMC
         'H': 'vehicle_database_h', # Honda, Hyundai 
         'I': 'vehicle_database_i', # Infiniti

@@ -1228,6 +1228,38 @@ VEHICLE_SPECS_DATABASE = {
         }
     },
 
+    'Ferrari': {
+        # F1 cars produce ~1,000 hp combined (ICE + ERS hybrid system).
+        # Seats: 1 (driver only). Cargo: 0.0 cu ft (there is no trunk).
+        'SF-24': {
+            'default_specs': {'horsepower': 1000, 'seats': 1, 'cargo_cu_ft': 0.0},
+            'years': {
+                (2024, 2025): {
+                    'Client Racing - Race Spec': {'horsepower': 1000, 'seats': 1, 'cargo_cu_ft': 0.0},
+                    'Client Racing - Show Car':  {'horsepower': 0,    'seats': 1, 'cargo_cu_ft': 0.0}
+                }
+            }
+        },
+        'SF-23': {
+            'default_specs': {'horsepower': 995, 'seats': 1, 'cargo_cu_ft': 0.0},
+            'years': {
+                (2023, 2024): {
+                    'Client Racing - Race Spec': {'horsepower': 995, 'seats': 1, 'cargo_cu_ft': 0.0},
+                    'Client Racing - Show Car':  {'horsepower': 0,   'seats': 1, 'cargo_cu_ft': 0.0}
+                }
+            }
+        },
+        'SF21': {
+            'default_specs': {'horsepower': 975, 'seats': 1, 'cargo_cu_ft': 0.0},
+            'years': {
+                (2021, 2022): {
+                    'Client Racing - Race Spec': {'horsepower': 975, 'seats': 1, 'cargo_cu_ft': 0.0},
+                    'Client Racing - Show Car':  {'horsepower': 0,   'seats': 1, 'cargo_cu_ft': 0.0}
+                }
+            }
+        }
+    },
+
     'Fiat': {
         '124 Spider': {
             'default_specs': {'horsepower': 160, 'seats': 2, 'cargo_cu_ft': 4.9},

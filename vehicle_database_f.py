@@ -1,7 +1,72 @@
-# vehicle_database_f.py - Manufacturers F (Ford, Fiat)
+# vehicle_database_f.py - Manufacturers F (Ferrari, Ford, Fiat)
 # Vehicle database for manufacturers starting with letter F
 
 MANUFACTURERS_F = {
+    "Ferrari": {
+        # -----------------------------------------------------------------------
+        # Formula 1 Race Car - For the absolute speed enthusiast
+        #
+        # Purchase prices reflect the Ferrari "Client Racing" program for
+        # previous-season F1 machinery. A current-season car cannot be purchased
+        # directly; these are historical/previous-season examples.
+        #
+        # REALISTIC ANNUAL OPERATING COSTS (private owner, ~10 track days/year):
+        #   Power unit service interval:  every ~1,500 km  (~$350,000/rebuild)
+        #   Tires (Pirelli F1 slicks):    ~$8,000/set x 30 sets = $240,000
+        #   Specialist F1 mechanics:      ~$400,000/year (2 full-time engineers)
+        #   High-octane fuel (98 RON+):   ~$120/gal x 1,200 gal = $144,000
+        #   Bodywork / carbon parts:      ~$500,000/year (inevitable damage)
+        #   Secure climate storage:       ~$36,000/year
+        #   Transport (race transporter): ~$200,000/year
+        #   Specialty insurance:          ~$2,500,000/year
+        #   Track rental & logistics:     ~$150,000/year
+        #   -------------------------------------------
+        #   ESTIMATED ANNUAL TOTAL:       ~$4,320,000+
+        # -----------------------------------------------------------------------
+        "SF-24": {
+            "production_years": (2024, 2025),
+            "trims_by_year": {
+                2024: {
+                    # Full WDC-spec car (Charles Leclerc / Carlos Sainz livery)
+                    # Sold via Ferrari Client Racing at end of season
+                    "Client Racing - Race Spec":       4500000,
+                    # Show car - non-running display model with full bodywork
+                    "Client Racing - Show Car":        850000
+                },
+                2025: {
+                    # 2025 SF-25 new-regulation car (estimated availability)
+                    "Client Racing - Race Spec":       5200000,
+                    "Client Racing - Show Car":        950000
+                }
+            }
+        },
+        "SF-23": {
+            "production_years": (2023, 2024),
+            "trims_by_year": {
+                2023: {
+                    "Client Racing - Race Spec":       3800000,
+                    "Client Racing - Show Car":        750000
+                },
+                2024: {
+                    "Client Racing - Race Spec":       3500000,
+                    "Client Racing - Show Car":        700000
+                }
+            }
+        },
+        "SF21": {
+            "production_years": (2021, 2022),
+            "trims_by_year": {
+                2021: {
+                    "Client Racing - Race Spec":       2800000,
+                    "Client Racing - Show Car":        600000
+                },
+                2022: {
+                    "Client Racing - Race Spec":       2600000,
+                    "Client Racing - Show Car":        575000
+                }
+            }
+        }
+    },
     "Ford": {
         "F-150": {
             "production_years": (2000, 2025),

@@ -213,6 +213,40 @@ VEHICLE_MPG_DATABASE = {
             }
         }
     },
+    'Ferrari': {
+        # F1 cars do not have EPA ratings. These figures are real-world estimates
+        # from race-weekend fuel consumption data (FIA mandates max 110 kg fuel
+        # per race, ~52 liters/100 km at race pace). On track days with lower
+        # average speeds fuel economy improves slightly.
+        # "City" = pit-lane / slow zone speed.  "Highway" = sustained race pace.
+        'SF-24': {
+            'base_mpg': {'city': 3, 'highway': 6, 'combined': 4},
+            'years': {
+                (2024, 2025): {
+                    'Client Racing - Race Spec': {'city': 3, 'highway': 6, 'combined': 4},
+                    'Client Racing - Show Car':  {'city': 0, 'highway': 0, 'combined': 0}
+                }
+            }
+        },
+        'SF-23': {
+            'base_mpg': {'city': 3, 'highway': 6, 'combined': 4},
+            'years': {
+                (2023, 2024): {
+                    'Client Racing - Race Spec': {'city': 3, 'highway': 6, 'combined': 4},
+                    'Client Racing - Show Car':  {'city': 0, 'highway': 0, 'combined': 0}
+                }
+            }
+        },
+        'SF21': {
+            'base_mpg': {'city': 3, 'highway': 5, 'combined': 4},
+            'years': {
+                (2021, 2022): {
+                    'Client Racing - Race Spec': {'city': 3, 'highway': 5, 'combined': 4},
+                    'Client Racing - Show Car':  {'city': 0, 'highway': 0, 'combined': 0}
+                }
+            }
+        }
+    },
     'Ford': {
         'F-150': {
             'base_mpg': {'city': 19, 'highway': 24, 'combined': 21},

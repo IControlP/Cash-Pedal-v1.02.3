@@ -84,7 +84,63 @@ def get_vehicle_tier(make: str) -> str:
 
 def get_maintenance_estimate(make: str, model: str, vehicle_tier: str, annual_mileage: int = 12000) -> dict:
     """Get maintenance cost estimates for the vehicle"""
-    
+
+    # -------------------------------------------------------------------------
+    # F1 cars: completely different cost structure from road cars.
+    # Numbers reflect a privateer running the full FIA calendar (~20,576 km/yr).
+    #
+    # Power unit (ICE + MGU-H + MGU-K + Turbo + ES + CE):
+    #   Privateers typically cycle through 4 PU sets per season.
+    #   Ferrari Client Racing charges ~$400,000–$450,000 per rebuild.
+    #   → 4 × $437,500 = $1,750,000/yr
+    #
+    # Pirelli F1 slick tires:
+    #   ~100 sets per full season × $7,000/set = $700,000/yr
+    #
+    # Carbon fiber brake system (discs, pads, calipers):
+    #   Changed every 3–4 race weekends; ~$350,000/yr total
+    #
+    # Specialist F1 mechanics & trackside engineers:
+    #   2 full-time engineers + pit-crew support = ~$500,000/yr
+    #
+    # Bodywork, aerodynamic components & spares reserve:
+    #   Carbon-fibre crash repairs, replacement wings, floor sections
+    #   = ~$800,000/yr
+    # -------------------------------------------------------------------------
+    _F1_MODELS = {'SF-24', 'SF-23', 'SF21', 'SF90', 'SF71H'}
+    if make == 'Ferrari' and model in _F1_MODELS:
+        pu_service     = 1_750_000   # Power unit rebuilds (4 sets × ~$437,500)
+        tires          = 700_000     # Pirelli F1 slicks (~100 sets × $7,000)
+        brakes         = 350_000     # Carbon brake system (discs/pads/calipers)
+        mechanics      = 500_000     # Specialist F1 mechanics & trackside engineers
+        bodywork       = 800_000     # Bodywork, aero parts & spares reserve
+        annual_total   = pu_service + tires + brakes + mechanics + bodywork
+        return {
+            'monthly_total': annual_total / 12,
+            'annual_total':  annual_total,
+            'oil_changes':   pu_service,
+            'tires':         tires,
+            'brakes':        brakes,
+            'scheduled_maintenance': mechanics,
+            'repairs_reserve':       bodywork,
+            'custom_labels': {
+                'oil_changes':            'Power Unit Rebuilds (4 sets/season)',
+                'tires':                  'Pirelli F1 Slick Tires (~100 sets)',
+                'brakes':                 'Carbon Fiber Brake System',
+                'scheduled_maintenance':  'Specialist Mechanics & Engineers',
+                'repairs_reserve':        'Bodywork & Aero Parts Reserve',
+                'routine_header':         'Powertrain & Consumables:',
+                'other_header':           'Personnel & Structural Costs:',
+            },
+            'tier_description': (
+                'Formula 1 cars require continuous factory-level servicing. '
+                'Power units are rebuilt every ~1,500 km; tires, brakes, and '
+                'carbon-fibre components are replaced on a race-weekend cycle. '
+                'Figures reflect a full FIA calendar season via Ferrari\'s '
+                'Client Racing programme.'
+            ),
+        }
+
     # Base monthly maintenance by tier
     base_maintenance = {
         'luxury': 180,
@@ -174,26 +230,35 @@ def display_salary_results(monthly_cost: float, state: str, filing_status: str =
 
 def display_maintenance_breakdown(maintenance: dict, vehicle_tier: str):
     """Display maintenance cost breakdown"""
-    
+
     st.markdown(f"""
     <div style="background-color: #f5f5f5; padding: 20px; border-radius: 10px; margin-top: 20px;">
         <h4 style="margin-top: 0;">Estimated Annual Maintenance Costs</h4>
         <p style="color: #666; font-style: italic;">{maintenance['tier_description']}</p>
     </div>
     """, unsafe_allow_html=True)
-    
+
+    labels = maintenance.get('custom_labels', {})
+    routine_header = labels.get('routine_header', 'Routine Maintenance:')
+    other_header   = labels.get('other_header',   'Other Costs:')
+    label_oil      = labels.get('oil_changes',           'Oil Changes')
+    label_tires    = labels.get('tires',                 'Tires (amortized)')
+    label_brakes   = labels.get('brakes',                'Brakes (amortized)')
+    label_sched    = labels.get('scheduled_maintenance', 'Scheduled Service')
+    label_reserve  = labels.get('repairs_reserve',       'Repairs Reserve')
+
     col1, col2 = st.columns(2)
-    
+
     with col1:
-        st.markdown("**Routine Maintenance:**")
-        st.markdown(f"- Oil Changes: {format_currency(maintenance['oil_changes'])}/year")
-        st.markdown(f"- Tires (amortized): {format_currency(maintenance['tires'])}/year")
-        st.markdown(f"- Brakes (amortized): {format_currency(maintenance['brakes'])}/year")
-    
+        st.markdown(f"**{routine_header}**")
+        st.markdown(f"- {label_oil}: {format_currency(maintenance['oil_changes'])}/year")
+        st.markdown(f"- {label_tires}: {format_currency(maintenance['tires'])}/year")
+        st.markdown(f"- {label_brakes}: {format_currency(maintenance['brakes'])}/year")
+
     with col2:
-        st.markdown("**Other Costs:**")
-        st.markdown(f"- Scheduled Service: {format_currency(maintenance['scheduled_maintenance'])}/year")
-        st.markdown(f"- Repairs Reserve: {format_currency(maintenance['repairs_reserve'])}/year")
+        st.markdown(f"**{other_header}**")
+        st.markdown(f"- {label_sched}: {format_currency(maintenance['scheduled_maintenance'])}/year")
+        st.markdown(f"- {label_reserve}: {format_currency(maintenance['repairs_reserve'])}/year")
     
     st.markdown(f"""
     <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 15px; text-align: center;">

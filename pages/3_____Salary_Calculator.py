@@ -104,38 +104,52 @@ def get_maintenance_estimate(make: str, model: str, vehicle_tier: str, annual_mi
     #   2 full-time engineers + pit-crew support = ~$500,000/yr
     #
     # Bodywork, aerodynamic components & spares reserve:
-    #   Carbon-fibre crash repairs, replacement wings, floor sections
-    #   = ~$800,000/yr
+    #   Scheduled replacement of worn aero surfaces = ~$800,000/yr
+    #
+    # Crash damage repairs (2024–2025 season average):
+    #   Source: MostlyF1 / PlanetF1 field-wide tracking data.
+    #   2024 full field: ~€47M across 20 cars → €2.35M/car mean (~$2.54M).
+    #   Ferrari-specific 2024 two-car total: €4,892,600 → €2.45M/car (~$2.64M).
+    #   2025 is tracking at a similar pace.
+    #   James Vowles (Williams): "If a wheel hits the wall you can almost
+    #   certainly expect a million in damage." He called 3 major crashes a
+    #   "normal season." (ESPN/Crash.net, 2024)
+    #   Conservative mid-point for a Ferrari car: $2,500,000/yr.
     # -------------------------------------------------------------------------
     _F1_MODELS = {'SF-24', 'SF-23', 'SF21', 'SF90', 'SF71H'}
     if make == 'Ferrari' and model in _F1_MODELS:
-        pu_service     = 1_750_000   # Power unit rebuilds (4 sets × ~$437,500)
-        tires          = 700_000     # Pirelli F1 slicks (~100 sets × $7,000)
-        brakes         = 350_000     # Carbon brake system (discs/pads/calipers)
-        mechanics      = 500_000     # Specialist F1 mechanics & trackside engineers
-        bodywork       = 800_000     # Bodywork, aero parts & spares reserve
-        annual_total   = pu_service + tires + brakes + mechanics + bodywork
+        pu_service    = 1_750_000   # Power unit rebuilds (4 sets × ~$437,500)
+        tires         = 700_000     # Pirelli F1 slicks (~100 sets × $7,000)
+        brakes        = 350_000     # Carbon brake system (discs/pads/calipers)
+        mechanics     = 500_000     # Specialist F1 mechanics & trackside engineers
+        bodywork      = 800_000     # Bodywork & scheduled aero parts reserve
+        crash_damage  = 2_500_000   # Crash repairs — 2024–2025 Ferrari avg per car
+        annual_total  = pu_service + tires + brakes + mechanics + bodywork + crash_damage
         return {
-            'monthly_total': annual_total / 12,
-            'annual_total':  annual_total,
-            'oil_changes':   pu_service,
-            'tires':         tires,
-            'brakes':        brakes,
+            'monthly_total':  annual_total / 12,
+            'annual_total':   annual_total,
+            'oil_changes':    pu_service,
+            'tires':          tires,
+            'brakes':         brakes,
             'scheduled_maintenance': mechanics,
             'repairs_reserve':       bodywork,
+            'crash_damage':          crash_damage,
             'custom_labels': {
                 'oil_changes':            'Power Unit Rebuilds (4 sets/season)',
                 'tires':                  'Pirelli F1 Slick Tires (~100 sets)',
                 'brakes':                 'Carbon Fiber Brake System',
                 'scheduled_maintenance':  'Specialist Mechanics & Engineers',
                 'repairs_reserve':        'Bodywork & Aero Parts Reserve',
+                'crash_damage':           'Crash Damage Repairs (2024–25 avg)',
                 'routine_header':         'Powertrain & Consumables:',
-                'other_header':           'Personnel & Structural Costs:',
+                'other_header':           'Personnel, Structural & Incident Costs:',
             },
             'tier_description': (
                 'Formula 1 cars require continuous factory-level servicing. '
                 'Power units are rebuilt every ~1,500 km; tires, brakes, and '
                 'carbon-fibre components are replaced on a race-weekend cycle. '
+                'Crash damage is based on the 2024–2025 Ferrari per-car average '
+                '(~€2.45M/car, source: MostlyF1/PlanetF1 field tracking). '
                 'Figures reflect a full FIA calendar season via Ferrari\'s '
                 'Client Racing programme.'
             ),
@@ -246,6 +260,7 @@ def display_maintenance_breakdown(maintenance: dict, vehicle_tier: str):
     label_brakes   = labels.get('brakes',                'Brakes (amortized)')
     label_sched    = labels.get('scheduled_maintenance', 'Scheduled Service')
     label_reserve  = labels.get('repairs_reserve',       'Repairs Reserve')
+    label_crash    = labels.get('crash_damage',          'Crash Damage Repairs')
 
     col1, col2 = st.columns(2)
 
@@ -259,6 +274,8 @@ def display_maintenance_breakdown(maintenance: dict, vehicle_tier: str):
         st.markdown(f"**{other_header}**")
         st.markdown(f"- {label_sched}: {format_currency(maintenance['scheduled_maintenance'])}/year")
         st.markdown(f"- {label_reserve}: {format_currency(maintenance['repairs_reserve'])}/year")
+        if 'crash_damage' in maintenance:
+            st.markdown(f"- {label_crash}: {format_currency(maintenance['crash_damage'])}/year")
     
     st.markdown(f"""
     <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 15px; text-align: center;">

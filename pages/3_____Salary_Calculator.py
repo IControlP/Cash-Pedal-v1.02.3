@@ -655,8 +655,22 @@ def main():
                 vehicle_tier=vehicle_tier
             )
         
+        # Override maintenance cost for F1 cars — the generic estimator uses road-car
+        # tier logic (~$150/month) which is wildly inaccurate for Formula 1 machinery.
+        # Re-compute the derived totals so the salary calculator sees the real figure.
+        _F1_MODELS = {'SF-24', 'SF-23', 'SF21', 'SF90', 'SF71H'}
+        if make == 'Ferrari' and model in _F1_MODELS:
+            f1_maint = get_maintenance_estimate(make, model, vehicle_tier, annual_mileage)
+            f1_monthly_maint = f1_maint['monthly_total']
+            old_maint = costs['maintenance_cost']
+            delta = f1_monthly_maint - old_maint
+            costs['maintenance_cost'] = f1_monthly_maint
+            costs['total_cash_costs'] = costs['total_cash_costs'] + delta
+            costs['total_with_depreciation'] = costs['total_with_depreciation'] + delta
+            costs['recommended_monthly_cost'] = costs['recommended_monthly_cost'] + delta
+
         monthly_cost = costs['recommended_monthly_cost']
-        
+
         # Display Results Header
         st.subheader(f"Salary Required for {year} {make} {model}")
         

@@ -21,17 +21,17 @@ THEME_COLORS = {
         "text_muted": "#B8B5C4",
         "border": "#4A4363",
     },
-    # Light mode colors
+    # Light mode colors - unified gold + purple theme
     "light": {
         "primary": "#F5A623",
         "primary_light": "#FFB84D",
-        "background": "#F8F7F4",
-        "secondary_bg": "#EEEDEA",
-        "card_bg": "#E5E3DD",
-        "text": "#C07800",
-        "text_secondary": "#D4880F",
-        "text_muted": "#996600",
-        "border": "#D0C9C0",
+        "background": "#1A1625",
+        "secondary_bg": "#2D2640",
+        "card_bg": "#352F4D",
+        "text": "#FAFAFA",
+        "text_secondary": "#E0E0E0",
+        "text_muted": "#B8B5C4",
+        "border": "#4A4363",
     }
 }
 
@@ -367,7 +367,7 @@ def get_theme_css():
 
     /* Button styling - Light mode */
     .stButton > button {{
-        background: linear-gradient(135deg, {light["primary"]}, #C07800) !important;
+        background: linear-gradient(135deg, {light["primary"]}, #E09000) !important;
         color: white !important;
         border: none !important;
         font-weight: 600 !important;
@@ -586,20 +586,20 @@ def get_footer_html(version: str = "1.02.3") -> str:
         text-align: center;
         padding: 2rem 0 1rem 0;
         margin-top: 3rem;
-        border-top: 2px solid #D0C9C0;
+        border-top: 2px solid #4A4363;
     ">
         <div style="margin-bottom: 1rem;">
             <strong style="color: #F5A623; font-size: 16px;">CashPedal</strong>
-            <span style="color: #666666; font-size: 14px;"> - Vehicle TCO Calculator v{version}</span>
+            <span style="color: #B8B5C4; font-size: 14px;"> - Vehicle TCO Calculator v{version}</span>
         </div>
-        <div style="color: #666666; font-size: 12px; margin-bottom: 0.5rem;">
+        <div style="color: #B8B5C4; font-size: 12px; margin-bottom: 0.5rem;">
             Make Smarter Vehicle Ownership Decisions
         </div>
-        <div style="color: #666666; font-size: 12px;">
+        <div style="color: #B8B5C4; font-size: 12px;">
             Powered by Streamlit |
             <a href='https://www.cashpedal.io' style="color: #F5A623; text-decoration: none;">www.cashpedal.io</a>
         </div>
-        <div style="color: #999999; font-size: 11px; margin-top: 1rem;">
+        <div style="color: #B8B5C4; font-size: 11px; margin-top: 1rem;">
             © 2026 CashPedal. All rights reserved.
         </div>
     </div>

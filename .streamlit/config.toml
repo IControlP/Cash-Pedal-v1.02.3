@@ -15,11 +15,11 @@ gatherUsageStats = false
 serverAddress = "0.0.0.0"
 
 [theme]
-# CashPedal brand theme colors
+# CashPedal brand theme colors - unified gold + purple
 primaryColor = "#F5A623"
-backgroundColor = "#F8F7F4"
-secondaryBackgroundColor = "#EEEDEA"
-textColor = "#C07800"
+backgroundColor = "#1A1625"
+secondaryBackgroundColor = "#2D2640"
+textColor = "#FAFAFA"
 font = "sans serif"
 
 [client]

@@ -1,9 +1,17 @@
 """
 Car Buying Checklist Page
 Generates maintenance checklist for used car purchases based on vehicle info
+
+Access model
+------------
+Free tier : 3 checklists (tracked per browser via localStorage UUID)
+10-pack   : $5  — 10 additional checklists, no expiry
+Monthly   : $10 — unlimited checklists for 30 days
+Payments  : Stripe Checkout (verified on success redirect, no webhook needed)
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 import sys
 import os
 
@@ -13,6 +21,288 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from session_manager import initialize_session_state
 from theme_utils import apply_theme, get_footer_html
 from car_buying_checklist import CarBuyingChecklist, format_currency, format_mileage
+from checklist_access import (
+    get_access_status,
+    record_checklist_use,
+    create_stripe_checkout_session,
+    verify_and_activate_purchase,
+    is_stripe_configured,
+    FREE_CHECKLIST_LIMIT,
+    PACK_PRICE_CENTS,
+    MONTHLY_PRICE_CENTS,
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ANONYMOUS USER-ID HELPERS
+# ──────────────────────────────────────────────────────────────────────────────
+# We identify anonymous users by a UUID stored in browser localStorage.
+# On first load the UUID doesn't exist in the URL query params yet, so we
+# generate one in Python session state and inject JS to:
+#   1. Persist it to localStorage under 'cashpedal_checklist_uid'
+#   2. Mirror it into the URL via replaceState so Streamlit can read it on
+#      subsequent interactions / page loads.
+
+_CHECKLIST_UID_PARAM = "checklist_uid"
+
+
+def _inject_uid_sync_js(uid: str) -> None:
+    """Inject JS that reads/writes the checklist UID from/to localStorage."""
+    components.html(f"""
+    <script>
+    (function() {{
+        try {{
+            var stored = localStorage.getItem('cashpedal_checklist_uid');
+            if (!stored) {{
+                // First visit — persist the server-generated UUID
+                localStorage.setItem('cashpedal_checklist_uid', '{uid}');
+                stored = '{uid}';
+            }}
+            // Mirror into URL so Streamlit picks it up on next interaction
+            var url = new URL(window.parent.location.href);
+            if (url.searchParams.get('{_CHECKLIST_UID_PARAM}') !== stored) {{
+                url.searchParams.set('{_CHECKLIST_UID_PARAM}', stored);
+                window.parent.history.replaceState({{}}, '', url.toString());
+            }}
+        }} catch(e) {{}}
+    }})();
+    </script>
+    """, height=0)
+
+
+def get_checklist_user_id() -> str:
+    """
+    Return a stable anonymous user ID for this browser.
+
+    Priority:
+      1. URL query param  (set by localStorage JS on previous interactions)
+      2. Streamlit session_state  (generated this session, not yet in URL)
+      3. Generate a new UUID, store in session_state, inject JS for localStorage
+    """
+    # 1. Already resolved this session
+    if "checklist_uid" in st.session_state:
+        uid = st.session_state["checklist_uid"]
+        _inject_uid_sync_js(uid)
+        return uid
+
+    # 2. URL param set by localStorage sync JS on a previous interaction
+    uid_from_param = st.query_params.get(_CHECKLIST_UID_PARAM, None)
+    if uid_from_param:
+        st.session_state["checklist_uid"] = uid_from_param
+        _inject_uid_sync_js(uid_from_param)
+        return uid_from_param
+
+    # 3. Brand-new visitor — generate UUID
+    import uuid as _uuid_mod
+    new_uid = str(_uuid_mod.uuid4())
+    st.session_state["checklist_uid"] = new_uid
+    _inject_uid_sync_js(new_uid)
+    return new_uid
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# APP BASE URL  (used when building Stripe success / cancel URLs)
+# ──────────────────────────────────────────────────────────────────────────────
+# Set APP_BASE_URL in your environment to your deployed URL.
+# e.g.  APP_BASE_URL=https://cash-pedal.up.railway.app
+# Falls back to localhost for local development.
+
+def _get_app_base_url() -> str:
+    base = os.environ.get("APP_BASE_URL", "").rstrip("/")
+    if not base:
+        # Try Railway's auto-injected public domain
+        domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
+        if domain:
+            base = f"https://{domain}"
+        else:
+            base = "http://localhost:8501"
+    return base
+
+
+# The Streamlit page URL path for this page.
+# Streamlit derives the path from the filename by stripping leading digits,
+# collapsing underscores, and title-casing each word.
+_CHECKLIST_PAGE_PATH = "/Car_Buying_Checklist"
+
+
+def _checklist_page_url() -> str:
+    return _get_app_base_url() + _CHECKLIST_PAGE_PATH
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# PAYWALL UI
+# ──────────────────────────────────────────────────────────────────────────────
+
+def display_paywall(user_id: str) -> None:
+    """Show upgrade options when the user has exhausted their free checklists."""
+    st.markdown("---")
+    st.error(
+        "🔒 **You've used all 3 free checklists.**  \n"
+        "Purchase a pass below to keep going — all payments are processed "
+        "securely by Stripe."
+    )
+
+    st.markdown("### 🛒 Choose a Plan")
+
+    col_pack, col_monthly = st.columns(2, gap="large")
+
+    with col_pack:
+        st.markdown(
+            """
+            <div style="border:1px solid #e0e0e0; border-radius:10px; padding:20px; text-align:center;">
+                <h3 style="margin:0 0 8px 0;">10 Checklist Credits</h3>
+                <p style="font-size:2rem; font-weight:bold; margin:0; color:#1a73e8;">$5.00</p>
+                <p style="color:#666; margin:8px 0 16px 0;">One-time · Credits never expire</p>
+                <ul style="text-align:left; color:#444; padding-left:18px; margin:0 0 20px 0;">
+                    <li>10 additional checklists</li>
+                    <li>Use at your own pace</li>
+                    <li>No subscription</li>
+                </ul>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button(
+            "Buy 10 Credits — $5.00",
+            key="buy_pack",
+            type="primary",
+            use_container_width=True,
+        ):
+            _handle_purchase_button(user_id, "10_pack")
+
+    with col_monthly:
+        st.markdown(
+            """
+            <div style="border:2px solid #1a73e8; border-radius:10px; padding:20px; text-align:center; background:#f0f7ff;">
+                <h3 style="margin:0 0 8px 0;">1-Month Unlimited ⭐</h3>
+                <p style="font-size:2rem; font-weight:bold; margin:0; color:#1a73e8;">$10.00</p>
+                <p style="color:#666; margin:8px 0 16px 0;">30 days · Best for active shoppers</p>
+                <ul style="text-align:left; color:#444; padding-left:18px; margin:0 0 20px 0;">
+                    <li>Unlimited checklists</li>
+                    <li>Great for comparing many cars</li>
+                    <li>Valid for 30 days</li>
+                </ul>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button(
+            "Buy Monthly Access — $10.00",
+            key="buy_monthly",
+            type="primary",
+            use_container_width=True,
+        ):
+            _handle_purchase_button(user_id, "monthly")
+
+    st.markdown("---")
+    st.caption(
+        "🔒 Payments secured by [Stripe](https://stripe.com).  "
+        "Your card details are never stored on our servers.  \n"
+        "⚠️ Access is tied to this browser. Clearing browser data will reset your free-use counter."
+    )
+
+
+def _handle_purchase_button(user_id: str, purchase_type: str) -> None:
+    """Create a Stripe Checkout session and redirect the user to it."""
+    if not is_stripe_configured():
+        st.error(
+            "Payment processing is not available right now. "
+            "Please try again later or contact support."
+        )
+        return
+
+    base_url    = _checklist_page_url()
+    success_url = base_url + "?payment=success"
+    cancel_url  = base_url + "?payment=cancelled"
+
+    with st.spinner("Setting up secure checkout…"):
+        checkout_url, error = create_stripe_checkout_session(
+            user_id       = user_id,
+            purchase_type = purchase_type,
+            success_url   = success_url,  # Stripe appends &stripe_session_id=… &uid=… &pid=…
+            cancel_url    = cancel_url,
+        )
+
+    if checkout_url:
+        # Redirect to Stripe-hosted checkout in the same tab
+        st.session_state["_stripe_redirect_url"] = checkout_url
+        st.rerun()
+    else:
+        st.error(f"Could not create checkout session: {error}")
+
+
+def _execute_stripe_redirect_if_pending() -> None:
+    """If a Stripe checkout URL is queued, redirect via JS and clear it."""
+    url = st.session_state.pop("_stripe_redirect_url", None)
+    if url:
+        components.html(
+            f'<script>window.parent.location.href = "{url}";</script>',
+            height=0,
+        )
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# STRIPE SUCCESS / CANCEL HANDLER
+# ──────────────────────────────────────────────────────────────────────────────
+
+def handle_stripe_return(user_id: str) -> bool:
+    """
+    Inspect query params for Stripe return signals.
+    Returns True when the page should stop rendering (success/cancel handled).
+    """
+    params = st.query_params
+    payment_status = params.get("payment", "")
+
+    if payment_status == "success":
+        stripe_session_id = params.get("stripe_session_id", "")
+        uid_param         = params.get("uid", user_id)
+        purchase_id       = params.get("pid", "")
+
+        # Use whichever uid is available
+        resolved_uid = uid_param or user_id
+
+        if stripe_session_id and purchase_id:
+            with st.spinner("Verifying your payment…"):
+                ok, msg = verify_and_activate_purchase(
+                    stripe_session_id = stripe_session_id,
+                    user_id           = resolved_uid,
+                    purchase_id       = purchase_id,
+                )
+
+            if ok:
+                # Store the verified uid so the rest of the page uses it
+                st.session_state["checklist_uid"] = resolved_uid
+
+                # Clear Stripe params from URL to prevent re-verification on reload
+                st.query_params.clear()
+                st.session_state["_purchase_success_msg"] = (
+                    "🎉 **Payment confirmed!** Your access has been activated. "
+                    "Generate a checklist below."
+                )
+                st.rerun()
+            else:
+                st.error(f"Payment verification failed: {msg}")
+                st.info(
+                    "If you were charged, please contact support with your "
+                    f"Stripe session ID: `{stripe_session_id}`"
+                )
+                return True
+        else:
+            # success URL hit but params missing — possibly a test / direct nav
+            st.query_params.clear()
+            st.rerun()
+
+    elif payment_status == "cancelled":
+        st.query_params.clear()
+        st.info("💳 Purchase cancelled — no charge was made. You can try again any time.")
+
+    return False
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# VEHICLE DATABASE / ESTIMATOR IMPORTS
+# ──────────────────────────────────────────────────────────────────────────────
 
 # Try to import vehicle database
 try:
@@ -43,8 +333,8 @@ st.set_page_config(
 )
 
 
-def display_sidebar_guide():
-    """Display sidebar with guide and tips"""
+def display_sidebar_guide(user_id: str) -> None:
+    """Display sidebar with guide, tips, and access status."""
     with st.sidebar:
         st.header("📋 Buying Guide")
 
@@ -68,9 +358,69 @@ def display_sidebar_guide():
         - Verify no warning lights on dashboard
         """)
 
-        # Session status
+        # ── Access Status ──────────────────────────────────────────────
+        st.markdown("---")
+        st.markdown("### 🎟️ Your Access")
+        _display_access_badge(user_id)
+
         st.markdown("---")
         st.caption("🚗 Smart Car Buying Tool")
+
+
+def _display_access_badge(user_id: str) -> None:
+    """Render a compact access-status pill in the sidebar."""
+    status = get_access_status(user_id)
+    reason = status["reason"]
+    purchase = status.get("active_purchase")
+
+    if reason == "free":
+        remaining = status["free_remaining"]
+        color = "#28a745" if remaining > 1 else "#fd7e14"
+        st.markdown(
+            f"<div style='background:{color};color:white;padding:6px 12px;"
+            f"border-radius:8px;text-align:center;font-weight:bold;'>"
+            f"Free — {remaining} of {FREE_CHECKLIST_LIMIT} remaining</div>",
+            unsafe_allow_html=True,
+        )
+    elif reason == "10_pack":
+        left = purchase.get("uses_remaining", "?")
+        st.markdown(
+            f"<div style='background:#1a73e8;color:white;padding:6px 12px;"
+            f"border-radius:8px;text-align:center;font-weight:bold;'>"
+            f"10-Pack — {left} credit(s) left</div>",
+            unsafe_allow_html=True,
+        )
+    elif reason == "monthly":
+        from datetime import datetime, timezone
+        expires_str = ""
+        if purchase and purchase.get("expires_at"):
+            try:
+                exp = datetime.fromisoformat(str(purchase["expires_at"]))
+                if exp.tzinfo is None:
+                    from datetime import timezone as _tz
+                    exp = exp.replace(tzinfo=_tz.utc)
+                days_left = max(0, (exp - datetime.now(timezone.utc)).days)
+                expires_str = f" · {days_left}d left"
+            except Exception:
+                pass
+        st.markdown(
+            f"<div style='background:#6f42c1;color:white;padding:6px 12px;"
+            f"border-radius:8px;text-align:center;font-weight:bold;'>"
+            f"Monthly Pass{expires_str}</div>",
+            unsafe_allow_html=True,
+        )
+    else:  # blocked
+        st.markdown(
+            "<div style='background:#dc3545;color:white;padding:6px 12px;"
+            "border-radius:8px;text-align:center;font-weight:bold;'>"
+            "No Access — Upgrade below</div>",
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f"<small style='color:#888;'>Free tier: {FREE_CHECKLIST_LIMIT} checklists  "
+            f"| 10-pack: $5  |  Monthly: $10</small>",
+            unsafe_allow_html=True,
+        )
 
 
 def display_url_scraper():
@@ -335,9 +685,15 @@ def display_manual_entry():
     return None
 
 
+def _maintenance_status_key(service: dict) -> str:
+    """Unique session-state key for a maintenance status widget."""
+    return f"maint_status_{service['service_name']}_{service.get('due_at_mileage', 0)}"
+
+
 def display_checklist(checklist_data: dict):
     """Display the generated checklist"""
     vehicle_info = checklist_data['vehicle_info']
+    insights = checklist_data['insights']
 
     # Vehicle header
     st.markdown("---")
@@ -354,19 +710,36 @@ def display_checklist(checklist_data: dict):
     with col4:
         st.metric("Expected Maintenance", format_currency(checklist_data['total_expected_maintenance_cost']))
 
-    # Insights
-    st.markdown("### 💡 Buying Insights")
-    for insight in checklist_data['insights']:
-        st.info(insight)
+    # ── Vehicle Assessment ──────────────────────────────────────────────────
+    st.markdown("### 🔍 Vehicle Assessment")
 
-    # Maintenance history that SHOULD have been done
+    # Separate insights by severity
+    critical_insights = [i for i in insights if i.get('severity') == 'critical']
+    warning_insights  = [i for i in insights if i.get('severity') == 'warning']
+    info_insights     = [i for i in insights if i.get('severity') == 'info']
+
+    if critical_insights:
+        st.error("🚨 **Red Flags — Address Before Buying**")
+        for insight in critical_insights:
+            st.error(f"• {insight['text']}")
+
+    if warning_insights:
+        st.warning("⚠️ **Caution Items — Verify with Seller**")
+        for insight in warning_insights:
+            st.warning(f"• {insight['text']}")
+
+    if info_insights:
+        with st.expander("ℹ️ General Insights", expanded=not critical_insights):
+            for insight in info_insights:
+                st.info(f"• {insight['text']}")
+
+    # ── Maintenance History ─────────────────────────────────────────────────
     st.markdown("### 🔧 Maintenance That Should Have Been Completed")
     st.markdown(f"*Based on {format_mileage(vehicle_info['mileage'])} of driving*")
 
     categorized_services = checklist_data['categorized_services']
 
     if categorized_services:
-        # Display by category
         tabs = st.tabs(list(categorized_services.keys()))
 
         for idx, (category, services) in enumerate(categorized_services.items()):
@@ -382,84 +755,155 @@ def display_checklist(checklist_data: dict):
                             st.markdown(f"**Due at:** {format_mileage(service['due_at_mileage'])}")
                         with col2:
                             st.markdown(f"**Service Interval:** Every {format_mileage(service['interval'])}")
-
                         st.markdown(f"**Cost:** {format_currency(service['cost'])}")
-                        st.markdown("**Action:** Ask seller for proof of this service")
+                        st.markdown("**Action:** Ask seller for documented proof of this service")
     else:
         st.success("✅ No major maintenance services expected yet for this mileage.")
 
-    # Recent maintenance (prior 12 months) - CRITICAL FOR BUYERS
-    st.markdown("### ⚠️ Recent Maintenance (Should Have Been Done in Prior 12 Months)")
-    st.markdown("**🔍 Ask the seller for proof of these recent services:**")
+    # ── Recent Maintenance Tracker (prior 12 months) ────────────────────────
+    st.markdown("### ⚠️ Recent Maintenance Tracker — Prior 12 Months")
+    st.markdown(
+        "Mark each item as the seller responds. Unconfirmed costs roll up into your "
+        "**Negotiation Leverage** total below."
+    )
 
     recent = checklist_data.get('recent_services', [])
     if recent:
         total_recent = sum(s['cost'] for s in recent)
-        st.error(f"⚠️ **CRITICAL:** The seller should have records for approximately **{format_currency(total_recent)}** in maintenance from the past year")
+        st.info(
+            f"📋 **{len(recent)} service(s)** were due in the past year "
+            f"(estimated value: **{format_currency(total_recent)}**). "
+            "Ask the seller for receipts or a service history printout."
+        )
 
         # Group by category
-        recent_by_category = {}
+        recent_by_category: dict = {}
         for service in recent:
-            category = service.get('category', 'Other')
-            if category not in recent_by_category:
-                recent_by_category[category] = []
-            recent_by_category[category].append(service)
+            cat = service.get('category', 'Other')
+            recent_by_category.setdefault(cat, []).append(service)
 
         for category, services in recent_by_category.items():
-            with st.expander(f"🔧 {category} - {len(services)} service(s)", expanded=True):
+            with st.expander(f"🔧 {category} — {len(services)} service(s)", expanded=True):
+                header_cols = st.columns([3, 2, 1, 2])
+                header_cols[0].caption("Service")
+                header_cols[1].caption("Due At")
+                header_cols[2].caption("Cost")
+                header_cols[3].caption("Status")
+                st.markdown("---")
+
                 for service in services:
-                    col1, col2, col3 = st.columns([3, 1, 1])
-                    with col1:
-                        st.write(f"✓ **{service['service_name']}**")
-                    with col2:
-                        if service['miles_ago'] == 0:
-                            st.write(f"Due now")
-                        else:
-                            st.write(f"{service['miles_ago']:,} mi ago")
-                    with col3:
-                        st.write(format_currency(service['cost']))
-
-                    st.caption(f"Should have been done at {format_mileage(service['due_at_mileage'])}")
-
-        st.warning("💡 **Tip:** If the seller cannot provide records for these services, factor the costs into your negotiation or budget for catching up on maintenance.")
+                    sk = _maintenance_status_key(service)
+                    row = st.columns([3, 2, 1, 2])
+                    row[0].write(f"**{service['service_name']}**")
+                    row[1].write(format_mileage(service['due_at_mileage']))
+                    row[2].write(format_currency(service['cost']))
+                    row[3].selectbox(
+                        "Status",
+                        options=["❓ Unknown", "✅ Seller Confirmed", "❌ Not Done"],
+                        key=sk,
+                        label_visibility="collapsed"
+                    )
     else:
-        st.success("✅ No critical maintenance services were due in the past 12 months")
+        st.success("✅ No maintenance services were due in the past 12 months")
 
     st.markdown("---")
 
-    # Upcoming maintenance
-    st.markdown("### 🔜 Upcoming Maintenance (Next 12 Months)")
+    # ── Upcoming Maintenance ────────────────────────────────────────────────
+    st.markdown("### 🔜 Upcoming Maintenance — Next 12 Months")
 
     upcoming = checklist_data['upcoming_services']
     if upcoming:
         total_upcoming = sum(s['cost'] for s in upcoming)
-        st.warning(f"💰 Expect to spend approximately **{format_currency(total_upcoming)}** in the next year")
+        st.warning(
+            f"💰 Budget approximately **{format_currency(total_upcoming)}** "
+            "for maintenance in the next year after purchase"
+        )
 
-        for service in upcoming[:5]:  # Show top 5
-            col1, col2, col3 = st.columns([3, 1, 1])
-            with col1:
-                st.write(f"🔧 {service['service_name']}")
-            with col2:
-                st.write(f"In {service['miles_until_due']:,} mi")
-            with col3:
-                st.write(format_currency(service['cost']))
+        header_cols = st.columns([3, 2, 1])
+        header_cols[0].caption("Service")
+        header_cols[1].caption("Miles Until Due")
+        header_cols[2].caption("Est. Cost")
+        st.markdown("---")
+        for service in upcoming[:5]:
+            row = st.columns([3, 2, 1])
+            row[0].write(f"🔧 {service['service_name']}")
+            row[1].write(f"In {service['miles_until_due']:,} mi")
+            row[2].write(format_currency(service['cost']))
     else:
         st.success("✅ No major services due in the next 12,000 miles")
 
-    # Inspection questions
+    # ── Negotiation Leverage Calculator ────────────────────────────────────
+    st.markdown("---")
+    st.markdown("### 💰 Negotiation Leverage Calculator")
+
+    if recent:
+        confirmed_cost    = 0
+        not_done_cost     = 0
+        unknown_cost      = 0
+
+        for service in recent:
+            sk     = _maintenance_status_key(service)
+            status = st.session_state.get(sk, "❓ Unknown")
+            cost   = service['cost']
+            if status == "✅ Seller Confirmed":
+                confirmed_cost += cost
+            elif status == "❌ Not Done":
+                not_done_cost += cost
+            else:
+                unknown_cost += cost
+
+        upcoming_cost = sum(s['cost'] for s in (upcoming or []))
+
+        nc1, nc2, nc3, nc4 = st.columns(4)
+        nc1.metric("Seller Confirmed ✅", format_currency(confirmed_cost),
+                   help="Maintenance the seller has documented records for")
+        nc2.metric("Not Done ❌", format_currency(not_done_cost),
+                   help="Maintenance seller confirmed was skipped — negotiate off asking price")
+        nc3.metric("Unknown ❓", format_currency(unknown_cost),
+                   help="Items with no information yet — push seller for records")
+        nc4.metric("Upcoming (next year) 🔜", format_currency(upcoming_cost),
+                   help="Services you'll need to pay for after purchase")
+
+        negotiate_off = not_done_cost + (unknown_cost * 0.5)
+        total_ownership_gap = not_done_cost + unknown_cost + upcoming_cost
+
+        if negotiate_off > 0:
+            st.error(
+                f"🔴 **Suggested price reduction: {format_currency(negotiate_off)}**  \n"
+                f"({format_currency(not_done_cost)} skipped maintenance + "
+                f"50% of {format_currency(unknown_cost)} unverified items)"
+            )
+        else:
+            st.success(
+                "✅ All recent maintenance has been confirmed by the seller — "
+                "no price reduction needed for deferred maintenance."
+            )
+
+        with st.expander("📊 Full Ownership Cost Breakdown"):
+            st.markdown(f"- **Recent maintenance not done:** {format_currency(not_done_cost)}")
+            st.markdown(f"- **Unverified recent maintenance (50%):** {format_currency(unknown_cost * 0.5)}")
+            st.markdown(f"- **Upcoming maintenance (next year):** {format_currency(upcoming_cost)}")
+            st.markdown(f"---")
+            st.markdown(f"**Total first-year maintenance exposure: {format_currency(total_ownership_gap)}**")
+            st.caption(
+                "Tip: Present confirmed 'Not Done' items to the seller by name and mileage. "
+                "Factual, specific requests carry more weight than a generic discount ask."
+            )
+    else:
+        st.info("No recent maintenance items to evaluate — negotiation leverage is minimal for maintenance.")
+
+    # ── Inspection Questions ────────────────────────────────────────────────
+    st.markdown("---")
     st.markdown("### ❓ Critical Questions to Ask the Seller")
 
     questions = checklist_data['checklist_questions']
-    question_categories = {}
+    question_categories: dict = {}
 
     for q in questions:
-        category = q['category']
-        if category not in question_categories:
-            question_categories[category] = []
-        question_categories[category].append(q)
+        question_categories.setdefault(q['category'], []).append(q)
 
     for category, qs in question_categories.items():
-        with st.expander(f"📌 {category} Questions ({len(qs)})", expanded=True):
+        with st.expander(f"📌 {category} ({len(qs)})", expanded=True):
             for q in qs:
                 importance_emoji = {
                     'Critical': '🔴',
@@ -469,9 +913,18 @@ def display_checklist(checklist_data: dict):
 
                 st.markdown(f"{importance_emoji} **{q['question']}**")
                 st.markdown(f"*Why this matters:* {q['why']}")
+
+                # Notes field for recording seller's answer
+                notes_key = f"q_notes_{q['question'][:40]}"
+                st.text_input(
+                    "Seller's answer / notes",
+                    key=notes_key,
+                    placeholder="Record what the seller said…",
+                    label_visibility="collapsed"
+                )
                 st.markdown("---")
 
-    # Download/Print option
+    # ── Save Checklist ──────────────────────────────────────────────────────
     st.markdown("### 💾 Save This Checklist")
     st.info("💡 Take screenshots or print this page to bring with you when inspecting the vehicle")
 
@@ -479,48 +932,92 @@ def display_checklist(checklist_data: dict):
 def main():
     """Main application logic"""
 
-    # Initialize session state
+    # ── Bootstrap ─────────────────────────────────────────────────────────────
     initialize_session_state()
-
-    # Apply theme
     apply_theme()
 
-    # Display sidebar
-    display_sidebar_guide()
+    # Resolve anonymous user ID (localStorage UUID ↔ URL param ↔ session state)
+    user_id = get_checklist_user_id()
 
-    # Main content
+    # ── Handle any pending Stripe redirect (must run before any other output) ──
+    _execute_stripe_redirect_if_pending()
+
+    # ── Handle Stripe return (success / cancel query params) ──────────────────
+    if handle_stripe_return(user_id):
+        st.markdown(get_footer_html(), unsafe_allow_html=True)
+        return
+
+    # ── Sidebar ───────────────────────────────────────────────────────────────
+    display_sidebar_guide(user_id)
+
+    # ── Page header ───────────────────────────────────────────────────────────
     st.title("🚗 Car Buying Checklist Generator")
-    st.markdown("""
-    Get a comprehensive maintenance checklist before buying a used car.
-    Know what services should have been done and what questions to ask the seller.
-    """)
+    st.markdown(
+        "Get a comprehensive maintenance checklist before buying a used car.  \n"
+        "Know what services should have been done and what questions to ask the seller."
+    )
+
+    # Show purchase-success banner (one-time, cleared after display)
+    success_msg = st.session_state.pop("_purchase_success_msg", None)
+    if success_msg:
+        st.success(success_msg)
 
     st.markdown("---")
 
-    # Manual entry section
+    # ── Check access ──────────────────────────────────────────────────────────
+    access = get_access_status(user_id)
+
+    if not access["can_use"]:
+        # User is on the free tier and has run out — show paywall and stop
+        display_paywall(user_id)
+        st.markdown("---")
+        st.markdown(get_footer_html(), unsafe_allow_html=True)
+        return
+
+    # ── Show remaining-credit banner for free-tier users ─────────────────────
+    if access["reason"] == "free":
+        remaining = access["free_remaining"]
+        if remaining == 1:
+            st.warning(
+                f"⚠️ This is your **last free checklist** ({remaining} of "
+                f"{FREE_CHECKLIST_LIMIT} remaining). "
+                "After this you'll need to purchase access to continue."
+            )
+        else:
+            st.info(
+                f"🎟️ **{remaining} free checklist(s) remaining** "
+                f"(out of {FREE_CHECKLIST_LIMIT}). "
+                "Upgrade any time for more."
+            )
+
+    # ── Vehicle entry form ────────────────────────────────────────────────────
     vehicle_data = display_manual_entry()
 
-    # Generate and display checklist
+    # ── Generate checklist ────────────────────────────────────────────────────
     if vehicle_data:
-        with st.spinner("🔍 Analyzing vehicle and generating checklist..."):
+        with st.spinner("🔍 Analyzing vehicle and generating checklist…"):
             try:
                 checklist = CarBuyingChecklist()
                 checklist_data = checklist.generate_maintenance_checklist(
-                    make=vehicle_data['make'],
-                    model=vehicle_data['model'],
-                    year=vehicle_data['year'],
-                    mileage=vehicle_data['mileage'],
-                    trim=vehicle_data['trim']
+                    make    = vehicle_data["make"],
+                    model   = vehicle_data["model"],
+                    year    = vehicle_data["year"],
+                    mileage = vehicle_data["mileage"],
+                    trim    = vehicle_data["trim"],
                 )
 
-                # Display the checklist
+                # ── Consume one credit ────────────────────────────────────────
+                record_checklist_use(user_id)
+                # Refresh access status for the sidebar badge on next render
+                # (session_state is already updated via record_checklist_use)
+
                 display_checklist(checklist_data)
 
             except Exception as e:
                 st.error(f"❌ Error generating checklist: {str(e)}")
                 st.exception(e)
 
-    # Footer
+    # ── Footer ────────────────────────────────────────────────────────────────
     st.markdown("---")
     st.markdown(get_footer_html(), unsafe_allow_html=True)
 

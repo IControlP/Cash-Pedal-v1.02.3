@@ -569,47 +569,101 @@ class CarBuyingChecklist:
 
     def _generate_buying_insights(self, make: str, model: str, year: int,
                                   mileage: int, age: int,
-                                  services_due: List[Dict]) -> List[str]:
-        """Generate insights for the buyer"""
+                                  services_due: List[Dict]) -> List[Dict[str, str]]:
+        """Generate structured insights for the buyer with severity levels.
+
+        Each insight is a dict with keys:
+          - text: Human-readable insight string
+          - severity: 'critical' | 'warning' | 'info'
+        """
         insights = []
 
         # Mileage insights
         avg_annual_mileage = mileage / max(age, 1)
         if avg_annual_mileage > 15000:
-            insights.append(f"High mileage vehicle ({avg_annual_mileage:,.0f} miles/year avg) - expect more wear")
+            insights.append({
+                'text': f"High mileage vehicle ({avg_annual_mileage:,.0f} miles/year avg) — expect accelerated wear on consumables",
+                'severity': 'warning'
+            })
         elif avg_annual_mileage < 8000:
-            insights.append(f"Low mileage vehicle ({avg_annual_mileage:,.0f} miles/year avg) - good condition likely")
+            insights.append({
+                'text': f"Low mileage vehicle ({avg_annual_mileage:,.0f} miles/year avg) — likely good condition, but verify fluid-based service hasn't been skipped",
+                'severity': 'info'
+            })
         else:
-            insights.append(f"Average mileage ({avg_annual_mileage:,.0f} miles/year avg)")
+            insights.append({
+                'text': f"Average mileage ({avg_annual_mileage:,.0f} miles/year avg) — typical wear expected",
+                'severity': 'info'
+            })
+
+        # Very high total mileage
+        if mileage >= 150000:
+            insights.append({
+                'text': f"Very high odometer ({mileage:,} miles) — budget for suspension, seals, and other long-life components",
+                'severity': 'critical'
+            })
+        elif mileage >= 100000:
+            insights.append({
+                'text': f"Over 100,000 miles — confirm timing belt/chain and transmission service history",
+                'severity': 'warning'
+            })
 
         # Age insights
         if age <= 3:
-            insights.append("Still under typical manufacturer warranty period")
+            insights.append({
+                'text': "Still within typical manufacturer basic warranty window — confirm coverage transfer to new owner",
+                'severity': 'info'
+            })
         elif age <= 5:
-            insights.append("Out of basic warranty - check extended warranty options")
+            insights.append({
+                'text': "Basic warranty has likely expired — ask about extended warranty or CPO coverage",
+                'severity': 'info'
+            })
         else:
-            insights.append("Older vehicle - thorough pre-purchase inspection recommended")
+            insights.append({
+                'text': f"Vehicle is {age} years old — a pre-purchase inspection by an independent mechanic is strongly recommended",
+                'severity': 'warning'
+            })
 
         # Major service milestones
         if 55000 <= mileage <= 65000:
-            insights.append("⚠ Near 60k mile major service milestone")
-        elif 85000 <= mileage <= 95000:
-            insights.append("⚠ Near 90k mile major service milestone (timing belt if applicable)")
-        elif 95000 <= mileage <= 105000:
-            insights.append("⚠ Near 100k mile major service milestone")
+            insights.append({
+                'text': "Approaching 60k-mile major service milestone — confirm spark plugs, transmission fluid, and coolant have been serviced",
+                'severity': 'warning'
+            })
+        elif 85000 <= mileage <= 100000:
+            insights.append({
+                'text': "Approaching 90k–100k-mile milestone — verify timing belt replacement if the engine uses one (interference engines risk catastrophic damage if overdue)",
+                'severity': 'critical'
+            })
+        elif 115000 <= mileage <= 125000:
+            insights.append({
+                'text': "Approaching 120k-mile interval — spark plugs, belts, and coolant service are commonly due",
+                'severity': 'warning'
+            })
 
         # Brand-specific insights
         brand_multiplier = self.maintenance_calculator.brand_multipliers.get(make, 1.0)
         if brand_multiplier < 0.95:
-            insights.append(f"{make} has excellent reliability ratings")
+            insights.append({
+                'text': f"{make} has above-average reliability ratings — lower long-term maintenance risk",
+                'severity': 'info'
+            })
         elif brand_multiplier > 1.3:
-            insights.append(f"{make} has higher than average maintenance costs")
+            insights.append({
+                'text': f"{make} carries higher-than-average maintenance costs — factor this into your ownership budget",
+                'severity': 'warning'
+            })
 
-        # Service history importance
+        # Critical services in history
         critical_services = [s for s in services_due if 'timing' in s['service_name'].lower()
                            or 'transmission' in s['service_name'].lower()]
         if critical_services:
-            insights.append("⚠ Ask for proof of critical maintenance services")
+            names = ', '.join(s['service_name'] for s in critical_services[:3])
+            insights.append({
+                'text': f"Critical services are due based on mileage ({names}) — demand documented proof before purchasing",
+                'severity': 'critical'
+            })
 
         return insights
 

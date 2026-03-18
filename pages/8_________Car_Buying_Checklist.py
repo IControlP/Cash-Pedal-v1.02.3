@@ -335,9 +335,15 @@ def display_manual_entry():
     return None
 
 
+def _maintenance_status_key(service: dict) -> str:
+    """Unique session-state key for a maintenance status widget."""
+    return f"maint_status_{service['service_name']}_{service.get('due_at_mileage', 0)}"
+
+
 def display_checklist(checklist_data: dict):
     """Display the generated checklist"""
     vehicle_info = checklist_data['vehicle_info']
+    insights = checklist_data['insights']
 
     # Vehicle header
     st.markdown("---")
@@ -354,19 +360,36 @@ def display_checklist(checklist_data: dict):
     with col4:
         st.metric("Expected Maintenance", format_currency(checklist_data['total_expected_maintenance_cost']))
 
-    # Insights
-    st.markdown("### 💡 Buying Insights")
-    for insight in checklist_data['insights']:
-        st.info(insight)
+    # ── Vehicle Assessment ──────────────────────────────────────────────────
+    st.markdown("### 🔍 Vehicle Assessment")
 
-    # Maintenance history that SHOULD have been done
+    # Separate insights by severity
+    critical_insights = [i for i in insights if i.get('severity') == 'critical']
+    warning_insights  = [i for i in insights if i.get('severity') == 'warning']
+    info_insights     = [i for i in insights if i.get('severity') == 'info']
+
+    if critical_insights:
+        st.error("🚨 **Red Flags — Address Before Buying**")
+        for insight in critical_insights:
+            st.error(f"• {insight['text']}")
+
+    if warning_insights:
+        st.warning("⚠️ **Caution Items — Verify with Seller**")
+        for insight in warning_insights:
+            st.warning(f"• {insight['text']}")
+
+    if info_insights:
+        with st.expander("ℹ️ General Insights", expanded=not critical_insights):
+            for insight in info_insights:
+                st.info(f"• {insight['text']}")
+
+    # ── Maintenance History ─────────────────────────────────────────────────
     st.markdown("### 🔧 Maintenance That Should Have Been Completed")
     st.markdown(f"*Based on {format_mileage(vehicle_info['mileage'])} of driving*")
 
     categorized_services = checklist_data['categorized_services']
 
     if categorized_services:
-        # Display by category
         tabs = st.tabs(list(categorized_services.keys()))
 
         for idx, (category, services) in enumerate(categorized_services.items()):
@@ -382,84 +405,155 @@ def display_checklist(checklist_data: dict):
                             st.markdown(f"**Due at:** {format_mileage(service['due_at_mileage'])}")
                         with col2:
                             st.markdown(f"**Service Interval:** Every {format_mileage(service['interval'])}")
-
                         st.markdown(f"**Cost:** {format_currency(service['cost'])}")
-                        st.markdown("**Action:** Ask seller for proof of this service")
+                        st.markdown("**Action:** Ask seller for documented proof of this service")
     else:
         st.success("✅ No major maintenance services expected yet for this mileage.")
 
-    # Recent maintenance (prior 12 months) - CRITICAL FOR BUYERS
-    st.markdown("### ⚠️ Recent Maintenance (Should Have Been Done in Prior 12 Months)")
-    st.markdown("**🔍 Ask the seller for proof of these recent services:**")
+    # ── Recent Maintenance Tracker (prior 12 months) ────────────────────────
+    st.markdown("### ⚠️ Recent Maintenance Tracker — Prior 12 Months")
+    st.markdown(
+        "Mark each item as the seller responds. Unconfirmed costs roll up into your "
+        "**Negotiation Leverage** total below."
+    )
 
     recent = checklist_data.get('recent_services', [])
     if recent:
         total_recent = sum(s['cost'] for s in recent)
-        st.error(f"⚠️ **CRITICAL:** The seller should have records for approximately **{format_currency(total_recent)}** in maintenance from the past year")
+        st.info(
+            f"📋 **{len(recent)} service(s)** were due in the past year "
+            f"(estimated value: **{format_currency(total_recent)}**). "
+            "Ask the seller for receipts or a service history printout."
+        )
 
         # Group by category
-        recent_by_category = {}
+        recent_by_category: dict = {}
         for service in recent:
-            category = service.get('category', 'Other')
-            if category not in recent_by_category:
-                recent_by_category[category] = []
-            recent_by_category[category].append(service)
+            cat = service.get('category', 'Other')
+            recent_by_category.setdefault(cat, []).append(service)
 
         for category, services in recent_by_category.items():
-            with st.expander(f"🔧 {category} - {len(services)} service(s)", expanded=True):
+            with st.expander(f"🔧 {category} — {len(services)} service(s)", expanded=True):
+                header_cols = st.columns([3, 2, 1, 2])
+                header_cols[0].caption("Service")
+                header_cols[1].caption("Due At")
+                header_cols[2].caption("Cost")
+                header_cols[3].caption("Status")
+                st.markdown("---")
+
                 for service in services:
-                    col1, col2, col3 = st.columns([3, 1, 1])
-                    with col1:
-                        st.write(f"✓ **{service['service_name']}**")
-                    with col2:
-                        if service['miles_ago'] == 0:
-                            st.write(f"Due now")
-                        else:
-                            st.write(f"{service['miles_ago']:,} mi ago")
-                    with col3:
-                        st.write(format_currency(service['cost']))
-
-                    st.caption(f"Should have been done at {format_mileage(service['due_at_mileage'])}")
-
-        st.warning("💡 **Tip:** If the seller cannot provide records for these services, factor the costs into your negotiation or budget for catching up on maintenance.")
+                    sk = _maintenance_status_key(service)
+                    row = st.columns([3, 2, 1, 2])
+                    row[0].write(f"**{service['service_name']}**")
+                    row[1].write(format_mileage(service['due_at_mileage']))
+                    row[2].write(format_currency(service['cost']))
+                    row[3].selectbox(
+                        "Status",
+                        options=["❓ Unknown", "✅ Seller Confirmed", "❌ Not Done"],
+                        key=sk,
+                        label_visibility="collapsed"
+                    )
     else:
-        st.success("✅ No critical maintenance services were due in the past 12 months")
+        st.success("✅ No maintenance services were due in the past 12 months")
 
     st.markdown("---")
 
-    # Upcoming maintenance
-    st.markdown("### 🔜 Upcoming Maintenance (Next 12 Months)")
+    # ── Upcoming Maintenance ────────────────────────────────────────────────
+    st.markdown("### 🔜 Upcoming Maintenance — Next 12 Months")
 
     upcoming = checklist_data['upcoming_services']
     if upcoming:
         total_upcoming = sum(s['cost'] for s in upcoming)
-        st.warning(f"💰 Expect to spend approximately **{format_currency(total_upcoming)}** in the next year")
+        st.warning(
+            f"💰 Budget approximately **{format_currency(total_upcoming)}** "
+            "for maintenance in the next year after purchase"
+        )
 
-        for service in upcoming[:5]:  # Show top 5
-            col1, col2, col3 = st.columns([3, 1, 1])
-            with col1:
-                st.write(f"🔧 {service['service_name']}")
-            with col2:
-                st.write(f"In {service['miles_until_due']:,} mi")
-            with col3:
-                st.write(format_currency(service['cost']))
+        header_cols = st.columns([3, 2, 1])
+        header_cols[0].caption("Service")
+        header_cols[1].caption("Miles Until Due")
+        header_cols[2].caption("Est. Cost")
+        st.markdown("---")
+        for service in upcoming[:5]:
+            row = st.columns([3, 2, 1])
+            row[0].write(f"🔧 {service['service_name']}")
+            row[1].write(f"In {service['miles_until_due']:,} mi")
+            row[2].write(format_currency(service['cost']))
     else:
         st.success("✅ No major services due in the next 12,000 miles")
 
-    # Inspection questions
+    # ── Negotiation Leverage Calculator ────────────────────────────────────
+    st.markdown("---")
+    st.markdown("### 💰 Negotiation Leverage Calculator")
+
+    if recent:
+        confirmed_cost    = 0
+        not_done_cost     = 0
+        unknown_cost      = 0
+
+        for service in recent:
+            sk     = _maintenance_status_key(service)
+            status = st.session_state.get(sk, "❓ Unknown")
+            cost   = service['cost']
+            if status == "✅ Seller Confirmed":
+                confirmed_cost += cost
+            elif status == "❌ Not Done":
+                not_done_cost += cost
+            else:
+                unknown_cost += cost
+
+        upcoming_cost = sum(s['cost'] for s in (upcoming or []))
+
+        nc1, nc2, nc3, nc4 = st.columns(4)
+        nc1.metric("Seller Confirmed ✅", format_currency(confirmed_cost),
+                   help="Maintenance the seller has documented records for")
+        nc2.metric("Not Done ❌", format_currency(not_done_cost),
+                   help="Maintenance seller confirmed was skipped — negotiate off asking price")
+        nc3.metric("Unknown ❓", format_currency(unknown_cost),
+                   help="Items with no information yet — push seller for records")
+        nc4.metric("Upcoming (next year) 🔜", format_currency(upcoming_cost),
+                   help="Services you'll need to pay for after purchase")
+
+        negotiate_off = not_done_cost + (unknown_cost * 0.5)
+        total_ownership_gap = not_done_cost + unknown_cost + upcoming_cost
+
+        if negotiate_off > 0:
+            st.error(
+                f"🔴 **Suggested price reduction: {format_currency(negotiate_off)}**  \n"
+                f"({format_currency(not_done_cost)} skipped maintenance + "
+                f"50% of {format_currency(unknown_cost)} unverified items)"
+            )
+        else:
+            st.success(
+                "✅ All recent maintenance has been confirmed by the seller — "
+                "no price reduction needed for deferred maintenance."
+            )
+
+        with st.expander("📊 Full Ownership Cost Breakdown"):
+            st.markdown(f"- **Recent maintenance not done:** {format_currency(not_done_cost)}")
+            st.markdown(f"- **Unverified recent maintenance (50%):** {format_currency(unknown_cost * 0.5)}")
+            st.markdown(f"- **Upcoming maintenance (next year):** {format_currency(upcoming_cost)}")
+            st.markdown(f"---")
+            st.markdown(f"**Total first-year maintenance exposure: {format_currency(total_ownership_gap)}**")
+            st.caption(
+                "Tip: Present confirmed 'Not Done' items to the seller by name and mileage. "
+                "Factual, specific requests carry more weight than a generic discount ask."
+            )
+    else:
+        st.info("No recent maintenance items to evaluate — negotiation leverage is minimal for maintenance.")
+
+    # ── Inspection Questions ────────────────────────────────────────────────
+    st.markdown("---")
     st.markdown("### ❓ Critical Questions to Ask the Seller")
 
     questions = checklist_data['checklist_questions']
-    question_categories = {}
+    question_categories: dict = {}
 
     for q in questions:
-        category = q['category']
-        if category not in question_categories:
-            question_categories[category] = []
-        question_categories[category].append(q)
+        question_categories.setdefault(q['category'], []).append(q)
 
     for category, qs in question_categories.items():
-        with st.expander(f"📌 {category} Questions ({len(qs)})", expanded=True):
+        with st.expander(f"📌 {category} ({len(qs)})", expanded=True):
             for q in qs:
                 importance_emoji = {
                     'Critical': '🔴',
@@ -469,9 +563,18 @@ def display_checklist(checklist_data: dict):
 
                 st.markdown(f"{importance_emoji} **{q['question']}**")
                 st.markdown(f"*Why this matters:* {q['why']}")
+
+                # Notes field for recording seller's answer
+                notes_key = f"q_notes_{q['question'][:40]}"
+                st.text_input(
+                    "Seller's answer / notes",
+                    key=notes_key,
+                    placeholder="Record what the seller said…",
+                    label_visibility="collapsed"
+                )
                 st.markdown("---")
 
-    # Download/Print option
+    # ── Save Checklist ──────────────────────────────────────────────────────
     st.markdown("### 💾 Save This Checklist")
     st.info("💡 Take screenshots or print this page to bring with you when inspecting the vehicle")
 

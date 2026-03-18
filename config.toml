@@ -1,6 +1,6 @@
 [server]
 # Enable CORS for custom domain
-enableCORS = false
+enableCORS = true
 enableXsrfProtection = true
 
 # Production server settings

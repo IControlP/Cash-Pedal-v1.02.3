@@ -2658,108 +2658,108 @@ def display_progressive_forms():
                 else:
                     st.success(f"✓ Location detected: {state_info}")
 
-                    # Notify user if vehicle changed and fuel price was recalculated
-                    if vehicle_changed and previous_vehicle_key:
-                        if fuel_type == 'premium':
-                            st.info(f"🔄 Vehicle changed to {make} {model} {trim} - Updated to **Premium** fuel (${base_fuel_price:.2f}/gal)")
-                        elif fuel_type == 'regular':
-                            st.info(f"🔄 Vehicle changed to {make} {model} {trim} - Updated to **Regular** fuel (${base_fuel_price:.2f}/gal)")
-                        elif fuel_type == 'electric':
-                            st.info(f"🔄 Vehicle changed to {make} {model} {trim} - This is an **Electric** vehicle")
+                # Notify user if vehicle changed and fuel price was recalculated
+                if vehicle_changed and previous_vehicle_key:
+                    if fuel_type == 'premium':
+                        st.info(f"🔄 Vehicle changed to {make} {model} {trim} - Updated to **Premium** fuel (${base_fuel_price:.2f}/gal)")
+                    elif fuel_type == 'regular':
+                        st.info(f"🔄 Vehicle changed to {make} {model} {trim} - Updated to **Regular** fuel (${base_fuel_price:.2f}/gal)")
+                    elif fuel_type == 'electric':
+                        st.info(f"🔄 Vehicle changed to {make} {model} {trim} - This is an **Electric** vehicle")
 
-                    # Show appropriate pricing inputs based on fuel type
-                    if fuel_type == 'electric':
-                        # Electric vehicle - show only electricity pricing with charging modes
-                        st.markdown("**Electricity Pricing** (EV Charging)")
+                # Show appropriate pricing inputs based on fuel type
+                if fuel_type == 'electric':
+                    # Electric vehicle - show only electricity pricing with charging modes
+                    st.markdown("**Electricity Pricing** (EV Charging)")
 
-                        charging_mode = st.radio(
-                            "Charging Mode:",
-                            ["Home Only", "Public Only", "Mixed (Home & Public)"],
-                            horizontal=True,
-                            key="charging_mode_progressive"
-                        )
+                    charging_mode = st.radio(
+                        "Charging Mode:",
+                        ["Home Only", "Public Only", "Mixed (Home & Public)"],
+                        horizontal=True,
+                        key="charging_mode_progressive"
+                    )
 
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            home_rate = st.number_input(
-                                "Home Electricity Rate (per kWh)",
-                                min_value=0.0,
-                                max_value=1.0,
-                                value=st.session_state.get('home_electricity_rate_progressive', float(electricity_rate_default)),
-                                step=0.01,
-                                format="%.3f",
-                                help="Your home electricity rate",
-                                key="home_electricity_rate_progressive"
-                            )
-                        with col2:
-                            public_rate = st.number_input(
-                                "Public Charging Rate (per kWh)",
-                                min_value=0.0,
-                                max_value=1.0,
-                                value=st.session_state.get('public_electricity_rate_progressive', float(electricity_rate_default * 2.5)),
-                                step=0.01,
-                                format="%.3f",
-                                help="Average public/DC fast charging rate",
-                                key="public_electricity_rate_progressive"
-                            )
-
-                        # Calculate blended rate based on charging mode
-                        if charging_mode == "Home Only":
-                            blended_rate = home_rate
-                            mix_pct = "100% home"
-                        elif charging_mode == "Public Only":
-                            blended_rate = public_rate
-                            mix_pct = "100% public"
-                        else:  # Mixed
-                            home_pct = st.slider(
-                                "Percentage of Home Charging",
-                                min_value=0,
-                                max_value=100,
-                                value=80,
-                                step=5,
-                                help="What percentage of your charging is done at home?",
-                                key="home_charging_pct_progressive"
-                            )
-                            blended_rate = (home_rate * home_pct / 100) + (public_rate * (100 - home_pct) / 100)
-                            mix_pct = f"{home_pct}% home / {100-home_pct}% public"
-
-                        st.info(f"**Blended Electricity Rate: ${blended_rate:.3f}/kWh** ({mix_pct})")
-
-                        location_data.update({
-                            'state': zip_data.get('state', ''),
-                            'geography_type': zip_data.get('geography_type', 'Suburban'),
-                            'fuel_price': 0.0,  # No fuel for EVs
-                            'electricity_rate': blended_rate,
-                            'is_valid': True
-                        })
-                        location_valid = True
-
-                    else:
-                        # Gas vehicle (regular or premium) - show only fuel pricing
-                        fuel_label = "Premium Gasoline" if fuel_type == 'premium' else "Regular Gasoline"
-
-                        fuel_price = st.number_input(
-                            f"Fuel Price ({fuel_label}, per gallon)",
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        home_rate = st.number_input(
+                            "Home Electricity Rate (per kWh)",
                             min_value=0.0,
-                            max_value=10.0,
-                            value=st.session_state.get('fuel_price_progressive', float(base_fuel_price)),
-                            step=0.10,
-                            format="%.2f",
-                            help=f"Current {fuel_label.lower()} price in your area",
-                            key="fuel_price_progressive"
+                            max_value=1.0,
+                            value=st.session_state.get('home_electricity_rate_progressive', float(electricity_rate_default)),
+                            step=0.01,
+                            format="%.3f",
+                            help="Your home electricity rate",
+                            key="home_electricity_rate_progressive"
+                        )
+                    with col2:
+                        public_rate = st.number_input(
+                            "Public Charging Rate (per kWh)",
+                            min_value=0.0,
+                            max_value=1.0,
+                            value=st.session_state.get('public_electricity_rate_progressive', float(electricity_rate_default * 2.5)),
+                            step=0.01,
+                            format="%.3f",
+                            help="Average public/DC fast charging rate",
+                            key="public_electricity_rate_progressive"
                         )
 
-                        if fuel_type == 'premium':
-                            st.caption(f"ℹ️ This vehicle requires premium fuel (${base_fuel_price:.2f}/gal)")
+                    # Calculate blended rate based on charging mode
+                    if charging_mode == "Home Only":
+                        blended_rate = home_rate
+                        mix_pct = "100% home"
+                    elif charging_mode == "Public Only":
+                        blended_rate = public_rate
+                        mix_pct = "100% public"
+                    else:  # Mixed
+                        home_pct = st.slider(
+                            "Percentage of Home Charging",
+                            min_value=0,
+                            max_value=100,
+                            value=80,
+                            step=5,
+                            help="What percentage of your charging is done at home?",
+                            key="home_charging_pct_progressive"
+                        )
+                        blended_rate = (home_rate * home_pct / 100) + (public_rate * (100 - home_pct) / 100)
+                        mix_pct = f"{home_pct}% home / {100-home_pct}% public"
 
-                        location_data.update({
-                            'state': zip_data.get('state', ''),
-                            'geography_type': zip_data.get('geography_type', 'Suburban'),
-                            'fuel_price': fuel_price,
-                            'electricity_rate': 0.0,  # No electricity for gas vehicles
-                            'is_valid': True
-                        })
-                        location_valid = True
+                    st.info(f"**Blended Electricity Rate: ${blended_rate:.3f}/kWh** ({mix_pct})")
+
+                    location_data.update({
+                        'state': zip_data.get('state', ''),
+                        'geography_type': zip_data.get('geography_type', 'Suburban'),
+                        'fuel_price': 0.0,  # No fuel for EVs
+                        'electricity_rate': blended_rate,
+                        'is_valid': True
+                    })
+                    location_valid = True
+
+                else:
+                    # Gas vehicle (regular or premium) - show only fuel pricing
+                    fuel_label = "Premium Gasoline" if fuel_type == 'premium' else "Regular Gasoline"
+
+                    fuel_price = st.number_input(
+                        f"Fuel Price ({fuel_label}, per gallon)",
+                        min_value=0.0,
+                        max_value=10.0,
+                        value=st.session_state.get('fuel_price_progressive', float(base_fuel_price)),
+                        step=0.10,
+                        format="%.2f",
+                        help=f"Current {fuel_label.lower()} price in your area",
+                        key="fuel_price_progressive"
+                    )
+
+                    if fuel_type == 'premium':
+                        st.caption(f"ℹ️ This vehicle requires premium fuel (${base_fuel_price:.2f}/gal)")
+
+                    location_data.update({
+                        'state': zip_data.get('state', ''),
+                        'geography_type': zip_data.get('geography_type', 'Suburban'),
+                        'fuel_price': fuel_price,
+                        'electricity_rate': 0.0,  # No electricity for gas vehicles
+                        'is_valid': True
+                    })
+                    location_valid = True
             else:
                 st.error("ZIP code not found in our database")
 

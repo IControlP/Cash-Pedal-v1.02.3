@@ -1,12 +1,13 @@
 [build]
 builder = "nixpacks"
+buildCommand = "npm install && npm run build"
 
 [deploy]
-startCommand = "streamlit run main.py --server.port=$PORT --server.address=0.0.0.0 --server.enableCORS=true --server.enableXsrfProtection=true"
+startCommand = "npm run start"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
 
 [deploy.healthcheck]
-path = "/_stcore/health"
+path = "/"
 timeout = 300
 interval = 30

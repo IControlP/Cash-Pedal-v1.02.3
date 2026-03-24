@@ -386,7 +386,7 @@ function VehiclePicker({ make, model, year, trim, onChange, onClear }) {
 }
 
 // ── Terms & data-collection constants ─────────────────
-const TERMS_VERSION       = '1.0.0'
+const TERMS_VERSION       = '2.0.0'
 const CALC_TRIGGER        = 6
 const LS_TERMS_ACCEPTED   = 'cashpedal_terms_accepted'
 const LS_TERMS_VERSION    = 'cashpedal_terms_version'

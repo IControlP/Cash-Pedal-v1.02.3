@@ -453,7 +453,7 @@ function TermsGate({ onAccepted }) {
   ]
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[var(--bg)] flex items-start justify-center py-12 px-4">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm flex items-start justify-center py-12 px-4">
       <div className="card w-full max-w-2xl">
 
         {/* Header */}

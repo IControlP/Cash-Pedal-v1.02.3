@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import ResultCard from '../components/ResultCard'
@@ -385,6 +385,291 @@ function VehiclePicker({ make, model, year, trim, onChange, onClear }) {
   )
 }
 
+// ── Terms & data-collection constants ─────────────────
+const TERMS_VERSION       = '1.0.0'
+const CALC_TRIGGER        = 6
+const LS_TERMS_ACCEPTED   = 'cashpedal_terms_accepted'
+const LS_TERMS_VERSION    = 'cashpedal_terms_version'
+const LS_SESSION_ID       = 'cashpedal_session_id'
+const LS_CALC_COUNT       = 'cashpedal_calculation_count'
+const LS_USER_SUBMITTED   = 'cashpedal_user_data_submitted'
+
+function getSessionId() {
+  let sid = localStorage.getItem(LS_SESSION_ID)
+  if (!sid) {
+    sid = crypto.randomUUID()
+    localStorage.setItem(LS_SESSION_ID, sid)
+  }
+  return sid
+}
+
+// ── Terms Gate ────────────────────────────────────────
+function TermsGate({ onAccepted }) {
+  const [check1, setCheck1] = useState(false)
+  const [check2, setCheck2] = useState(false)
+  const [check3, setCheck3] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const allChecked = check1 && check2 && check3
+
+  async function handleAccept() {
+    if (!allChecked) return
+    setSaving(true)
+    try {
+      await fetch('/api/consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          record_id: crypto.randomUUID(),
+          session_id: getSessionId(),
+          terms_version: TERMS_VERSION,
+          disclaimers_acknowledged: check1,
+          liability_acknowledged: check2,
+          final_consent_given: check3,
+        }),
+      })
+    } catch (e) {
+      console.warn('[terms] consent save failed:', e)
+    }
+    localStorage.setItem(LS_TERMS_ACCEPTED, 'true')
+    localStorage.setItem(LS_TERMS_VERSION, TERMS_VERSION)
+    setSaving(false)
+    onAccepted()
+  }
+
+  const checkboxes = [
+    {
+      checked: check1, onChange: setCheck1,
+      label: 'I understand that CashPedal provides cost estimates for informational and educational purposes only. These are approximations and not guarantees.',
+    },
+    {
+      checked: check2, onChange: setCheck2,
+      label: 'I acknowledge the limitation of liability and assumption of risk. CashPedal is not liable for any decisions I make based on these estimates.',
+    },
+    {
+      checked: check3, onChange: setCheck3,
+      label: 'I have read, understood, and agree to be bound by the complete Terms and Conditions above.',
+    },
+  ]
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[var(--bg)] flex items-start justify-center py-12 px-4">
+      <div className="card w-full max-w-2xl">
+
+        {/* Header */}
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-[var(--accent)] uppercase tracking-wider mb-3">
+            <span className="w-4 h-px bg-[var(--accent)]" /> CashPedal
+          </div>
+          <h1 className="font-display font-extrabold text-white text-2xl sm:text-3xl">Welcome to CashPedal</h1>
+          <p className="text-[var(--text-muted)] mt-2 text-sm">
+            Please review and accept our Terms and Conditions to continue
+          </p>
+        </div>
+
+        {/* Expandable full terms */}
+        <details className="mb-6 rounded-xl border border-[var(--border)] overflow-hidden">
+          <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-[var(--accent)] select-none hover:bg-[var(--surface-hover)] transition-colors">
+            View Full Terms and Conditions
+          </summary>
+          <div className="px-4 pb-4 pt-2 max-h-60 overflow-y-auto text-[var(--text-muted)] text-xs space-y-3 border-t border-[var(--border)]">
+            <p className="text-white font-semibold">Terms and Conditions — Version {TERMS_VERSION} — Last Updated: January 2025</p>
+
+            <p><strong className="text-white">1. Acceptance of Terms</strong><br />
+            By accessing and using CashPedal.io ("the Service"), you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions. If you do not agree to these terms, you must not use the Service.</p>
+
+            <p><strong className="text-white">2. Service Description</strong><br />
+            CashPedal provides vehicle Total Cost of Ownership (TCO) calculations and estimates for informational purposes only.</p>
+
+            <p><strong className="text-white">3. Disclaimer of Warranties</strong><br />
+            THE SERVICE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND. All estimates are approximations based on statistical models. Actual costs may vary significantly. We do not guarantee accuracy, completeness, or reliability.</p>
+
+            <p><strong className="text-white">4. Not Financial Advice</strong><br />
+            CashPedal does NOT provide financial, legal, or professional advice. Information is for educational purposes only. Consult qualified professionals before making financial decisions. Reliance on this information is at your own risk.</p>
+
+            <p><strong className="text-white">5. Limitation of Liability</strong><br />
+            TO THE MAXIMUM EXTENT PERMITTED BY LAW: CashPedal shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages. We are not liable for decisions made based on our estimates. Our total liability shall not exceed the amount paid for the Service (if any).</p>
+
+            <p><strong className="text-white">6. Indemnification</strong><br />
+            You agree to indemnify and hold harmless CashPedal from any claims, damages, or expenses arising from your use of the Service or violation of these Terms.</p>
+
+            <p><strong className="text-white">7. Assumption of Risk</strong><br />
+            By using this Service, you acknowledge that vehicle decisions involve financial risks, estimates are not guarantees, and you are responsible for verifying information.</p>
+
+            <p><strong className="text-white">8. Privacy</strong><br />
+            We log your acceptance of these Terms for legal compliance. We do not sell your personal information.</p>
+
+            <p><strong className="text-white">9. Modifications</strong><br />
+            We may modify these Terms at any time. Continued use constitutes acceptance.</p>
+
+            <p><strong className="text-white">10. Contact</strong><br />
+            Questions? Email <strong>support@cashpedal.io</strong></p>
+          </div>
+        </details>
+
+        <div className="h-px bg-[var(--border)] mb-6" />
+
+        <p className="text-white font-semibold text-sm mb-4">
+          Required Acknowledgments — check all boxes to proceed:
+        </p>
+
+        {/* Checkboxes */}
+        <div className="flex flex-col gap-3 mb-5">
+          {checkboxes.map(({ checked, onChange, label }, i) => (
+            <label key={i}
+              className="flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors"
+              style={{
+                borderColor: checked ? 'rgba(200,255,0,0.4)' : 'var(--border)',
+                background: checked ? 'rgba(200,255,0,0.04)' : 'var(--surface)',
+              }}>
+              <input
+                type="checkbox" checked={checked}
+                onChange={e => onChange(e.target.checked)}
+                className="mt-0.5 h-4 w-4 flex-shrink-0"
+                style={{ accentColor: 'var(--accent)' }}
+              />
+              <span className="text-sm text-[var(--text-muted)] leading-relaxed">{label}</span>
+            </label>
+          ))}
+        </div>
+
+        {!allChecked && (
+          <p className="text-xs text-yellow-400 mb-4">
+            Please check all three boxes above to accept the terms.
+          </p>
+        )}
+
+        <button
+          onClick={handleAccept}
+          disabled={!allChecked || saving}
+          className="btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {saving ? 'Saving…' : 'I Accept These Terms — Continue to CashPedal'}
+        </button>
+
+        <p className="text-center text-[var(--text-muted)] text-xs mt-4">
+          Questions? Contact <strong className="text-white">support@cashpedal.io</strong>
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ── User Data Collector Modal ─────────────────────────
+function UserDataModal({ calcCount, onClose }) {
+  const [firstName, setFirstName] = useState('')
+  const [lastName,  setLastName]  = useState('')
+  const [email,     setEmail]     = useState('')
+  const [saving,    setSaving]    = useState(false)
+  const [errors,    setErrors]    = useState([])
+  const [done,      setDone]      = useState(false)
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    const errs = []
+    if (firstName.trim().length < 2) errs.push('Please enter a valid first name (at least 2 letters)')
+    if (lastName.trim().length  < 2) errs.push('Please enter a valid last name (at least 2 letters)')
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) errs.push('Please enter a valid email address')
+    if (errs.length) { setErrors(errs); return }
+
+    setSaving(true)
+    setErrors([])
+    try {
+      await fetch('/api/user-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          record_id:         crypto.randomUUID(),
+          session_id:        getSessionId(),
+          first_name:        firstName.trim(),
+          last_name:         lastName.trim(),
+          email:             email.trim().toLowerCase(),
+          calculation_count: calcCount,
+        }),
+      })
+    } catch (e) {
+      console.warn('[user-data] save failed:', e)
+    }
+    localStorage.setItem(LS_USER_SUBMITTED, 'true')
+    setSaving(false)
+    setDone(true)
+    setTimeout(onClose, 1500)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+      <div className="card w-full max-w-md">
+        {done ? (
+          <div className="text-center py-8">
+            <div className="text-5xl mb-4">🎉</div>
+            <p className="text-white font-bold text-xl font-display">Thank you!</p>
+            <p className="text-[var(--text-muted)] text-sm mt-2">Your information has been saved.</p>
+          </div>
+        ) : (
+          <>
+            <div className="text-center mb-6">
+              <h2 className="font-display font-bold text-white text-xl">
+                You're Making Smart Decisions!
+              </h2>
+              <p className="text-[var(--text-muted)] text-sm mt-2 leading-relaxed">
+                You've completed <strong className="text-white">6 vehicle calculations</strong>!
+                Share your contact info to get valuable insights from CashPedal.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-2">
+                  <label className="input-label">First Name *</label>
+                  <input className="input-field" value={firstName}
+                    onChange={e => setFirstName(e.target.value)}
+                    placeholder="John" maxLength={100} />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="input-label">Last Name *</label>
+                  <input className="input-field" value={lastName}
+                    onChange={e => setLastName(e.target.value)}
+                    placeholder="Doe" maxLength={100} />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="input-label">Email Address *</label>
+                <input className="input-field" type="email" value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="john.doe@example.com" maxLength={255} />
+              </div>
+
+              {errors.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  {errors.map((err, i) => (
+                    <p key={i} className="text-xs text-red-400">{err}</p>
+                  ))}
+                </div>
+              )}
+
+              <p className="text-center text-[var(--text-muted)] text-xs">
+                Your information is secure and will never be sold to third parties.
+              </p>
+
+              <div className="flex gap-3">
+                <button type="button" onClick={onClose}
+                  className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-muted)] text-sm hover:border-[var(--accent)] transition-colors">
+                  Skip
+                </button>
+                <button type="submit" disabled={saving}
+                  className="flex-1 btn-primary disabled:opacity-40">
+                  {saving ? 'Saving…' : 'Submit & Continue'}
+                </button>
+              </div>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 const loanTermOptions = [
   { value: 24, label: '24 months (2 years)' },
   { value: 36, label: '36 months (3 years)' },
@@ -406,6 +691,34 @@ const ownershipOptions = [
 
 // ── Main page ─────────────────────────────────────────
 export default function TCOCalculator() {
+  // ── Terms acceptance ──
+  const [termsAccepted, setTermsAccepted] = useState(() =>
+    localStorage.getItem(LS_TERMS_ACCEPTED) === 'true' &&
+    localStorage.getItem(LS_TERMS_VERSION) === TERMS_VERSION
+  )
+
+  // ── User data collection ──
+  const [calcCount, setCalcCount] = useState(() =>
+    parseInt(localStorage.getItem(LS_CALC_COUNT) || '0', 10)
+  )
+  const [userDataSubmitted] = useState(() =>
+    localStorage.getItem(LS_USER_SUBMITTED) === 'true'
+  )
+  const [showUserDataModal, setShowUserDataModal] = useState(false)
+  const countIncrementedRef = useRef(false)
+
+  // Increment visit count once per page load (after terms accepted)
+  useEffect(() => {
+    if (!termsAccepted || countIncrementedRef.current) return
+    countIncrementedRef.current = true
+    const newCount = calcCount + 1
+    setCalcCount(newCount)
+    localStorage.setItem(LS_CALC_COUNT, String(newCount))
+    if (newCount >= CALC_TRIGGER && !userDataSubmitted) {
+      setShowUserDataModal(true)
+    }
+  }, [termsAccepted]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const [price, setPrice]           = useState(30000)
   const [downPayment, setDownPayment] = useState(5000)
   const [loanTerm, setLoanTerm]     = useState(60)
@@ -447,6 +760,13 @@ export default function TCOCalculator() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">
+      {!termsAccepted && <TermsGate onAccepted={() => setTermsAccepted(true)} />}
+      {showUserDataModal && (
+        <UserDataModal
+          calcCount={calcCount}
+          onClose={() => setShowUserDataModal(false)}
+        />
+      )}
       <Navbar />
       <main className="flex-1 pt-20 pb-16">
         {/* Header */}

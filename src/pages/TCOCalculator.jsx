@@ -725,6 +725,12 @@ export default function TCOCalculator() {
   const [rate, setRate]             = useState(6.5)
   const [ownershipYears, setOwnershipYears] = useState(5)
 
+  // Annual operating costs (pre-filled with national averages)
+  const [annualInsurance,    setAnnualInsurance]    = useState(2000)
+  const [annualFuel,         setAnnualFuel]         = useState(2000)
+  const [annualMaintenance,  setAnnualMaintenance]  = useState(1200)
+  const [annualRegistration, setAnnualRegistration] = useState(300)
+
   const [selMake,  setSelMake]  = useState('')
   const [selModel, setSelModel] = useState('')
   const [selYear,  setSelYear]  = useState('')
@@ -732,6 +738,25 @@ export default function TCOCalculator() {
 
   // Derived model data (type, specs, mpg, isEV)
   const modelData = useMemo(() => getModelData(selMake, selModel), [selMake, selModel])
+
+  // Auto-update fuel & maintenance defaults when vehicle changes
+  useEffect(() => {
+    if (!modelData) return
+    const ANNUAL_MILES = 15000
+    const GAS_PRICE    = 3.50
+    const ELEC_PRICE   = 0.16
+    const KWH_PER_GAL  = 33.7
+    if (modelData.is_ev) {
+      const mpge = modelData.mpg?.mpge_combined ?? 100
+      const annualKwh = (ANNUAL_MILES / (mpge / KWH_PER_GAL))
+      setAnnualFuel(Math.round(annualKwh * ELEC_PRICE / 50) * 50)
+      setAnnualMaintenance(700)
+    } else {
+      const mpg = modelData.mpg?.combined ?? 28
+      setAnnualFuel(Math.round((ANNUAL_MILES / mpg) * GAS_PRICE / 50) * 50)
+      setAnnualMaintenance(1200)
+    }
+  }, [modelData])
 
   const handlePickerChange = useCallback((level, value) => {
     if (level === 'make')  { setSelMake(value); setSelModel(''); setSelYear(''); setSelTrim('') }
@@ -754,6 +779,9 @@ export default function TCOCalculator() {
     price, downPayment: Math.min(downPayment, price),
     loanTermMonths: loanTerm, annualRatePercent: rate, ownershipYears,
   }), [price, downPayment, loanTerm, rate, ownershipYears])
+
+  const annualOperatingCost = annualInsurance + annualFuel + annualMaintenance + annualRegistration
+  const totalAnnualCost     = results.trueAnnualCost + annualOperatingCost
 
   const safeDown = Math.min(downPayment, price)
   const usingMSRP = !!(selMake && selModel && selYear && selTrim)
@@ -845,6 +873,28 @@ export default function TCOCalculator() {
 
               <SelectInput label="Ownership Duration" value={ownershipYears}
                 onChange={setOwnershipYears} options={ownershipOptions} />
+
+              <div className="h-px bg-[var(--border)]" />
+
+              {/* Annual Operating Costs */}
+              <div>
+                <h2 className="font-display font-bold text-white text-lg mb-1">Annual Operating Costs</h2>
+                <p className="text-[var(--text-muted)] text-sm mb-1">
+                  National averages pre-filled{modelData ? (modelData.is_ev ? ' — adjusted for EV' : ' — adjusted for your vehicle\'s MPG') : ''}. Adjust to match your situation.
+                </p>
+              </div>
+
+              <SliderInput label="Insurance" value={annualInsurance} onChange={setAnnualInsurance}
+                min={500} max={6000} step={100} prefix="$" suffix="/yr" />
+
+              <SliderInput label={modelData?.is_ev ? 'Charging (electricity)' : 'Fuel'} value={annualFuel} onChange={setAnnualFuel}
+                min={0} max={6000} step={50} prefix="$" suffix="/yr" />
+
+              <SliderInput label="Maintenance &amp; Repairs" value={annualMaintenance} onChange={setAnnualMaintenance}
+                min={0} max={5000} step={50} prefix="$" suffix="/yr" />
+
+              <SliderInput label="Registration &amp; Fees" value={annualRegistration} onChange={setAnnualRegistration}
+                min={0} max={2000} step={25} prefix="$" suffix="/yr" />
             </div>
 
             {/* ── Results ── */}
@@ -871,20 +921,53 @@ export default function TCOCalculator() {
               <div className="grid grid-cols-1 gap-4 anim-5">
                 <ResultCard label="Total Interest Paid"  value={results.totalInterestPaid}  delay={60}  />
                 <ResultCard label="Total Cost of Loan"   value={results.totalCostOfLoan}    delay={120} />
-                <ResultCard label="True Cost Per Year"   value={results.trueAnnualCost}     delay={180} />
+                <ResultCard label="Loan Cost Per Year"   value={results.trueAnnualCost}     delay={180} />
+              </div>
+
+              {/* Annual cost breakdown */}
+              <div className="rounded-xl border p-4 flex flex-col gap-3"
+                style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+                  Annual Cost Breakdown
+                </p>
+                <div className="flex flex-col gap-2 text-sm">
+                  {[
+                    { label: 'Loan payments',          value: results.trueAnnualCost },
+                    { label: 'Insurance',              value: annualInsurance },
+                    { label: modelData?.is_ev ? 'Charging' : 'Fuel', value: annualFuel },
+                    { label: 'Maintenance & repairs',  value: annualMaintenance },
+                    { label: 'Registration & fees',    value: annualRegistration },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="flex justify-between items-center">
+                      <span className="text-[var(--text-muted)]">{label}</span>
+                      <span className="text-white font-medium">{formatCurrency(value)}</span>
+                    </div>
+                  ))}
+                  <div className="h-px bg-[var(--border)] my-1" />
+                  <div className="flex justify-between items-center">
+                    <span className="text-white font-bold">Total per year</span>
+                    <span className="font-display font-bold text-lg" style={{ color: 'var(--accent)' }}>
+                      {formatCurrency(totalAnnualCost)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[var(--text-muted)]">Total over {ownershipYears} yr{ownershipYears !== 1 ? 's' : ''}</span>
+                    <span className="text-[var(--text-muted)] font-medium">{formatCurrency(totalAnnualCost * ownershipYears)}</span>
+                  </div>
+                </div>
               </div>
 
               {/* Summary */}
               <div className="rounded-xl p-4 border text-sm leading-relaxed"
                 style={{ background:'rgba(200,255,0,0.04)', borderColor:'rgba(200,255,0,0.15)', color:'var(--text-muted)' }}>
                 <span className="text-[var(--accent)] font-semibold">The real picture: </span>
-                Over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}, you'll pay{' '}
+                Over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}, loan payments total{' '}
                 <span className="text-white font-semibold">
                   {formatCurrency(results.monthlyPayment * Math.min(ownershipYears * 12, loanTerm))}
                 </span>{' '}
-                in loan payments — that's{' '}
-                <span className="text-white font-semibold">{formatCurrency(results.totalInterestPaid)}</span>{' '}
-                in interest on a {formatCurrency(results.loanAmount)} loan.
+                ({formatCurrency(results.totalInterestPaid)} in interest). Add insurance, fuel, maintenance, and fees and your{' '}
+                <span className="text-white font-semibold">all-in annual cost is {formatCurrency(totalAnnualCost)}</span>{' '}
+                — or {formatCurrency(totalAnnualCost * ownershipYears)} over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}.
               </div>
             </div>
 

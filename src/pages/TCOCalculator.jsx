@@ -4,6 +4,25 @@ import Footer from '../components/Footer'
 import ResultCard from '../components/ResultCard'
 import VEHICLES from '../data/vehicles.json'
 
+// ── Depreciation & insurance estimate ─────────────────
+// Year-by-year depreciation: 20% yr1, 15% yr2, 10% yr3-5, 8% thereafter
+const DEPRECIATION_RATES = [0.20, 0.15, 0.10, 0.10, 0.10]
+function depreciateCar(originalPrice, ageYears) {
+  let value = originalPrice
+  for (let i = 0; i < ageYears; i++) {
+    value *= 1 - (DEPRECIATION_RATES[i] ?? 0.08)
+  }
+  return Math.max(value, originalPrice * 0.05)
+}
+
+// Insurance ≈ $800 base (liability) + 4% of current car value
+function estimateInsurance(purchasePrice, modelYear) {
+  const currentYear = new Date().getFullYear()
+  const ageYears    = modelYear ? Math.max(0, currentYear - parseInt(modelYear)) : 0
+  const currentVal  = depreciateCar(purchasePrice, ageYears)
+  return Math.round((800 + currentVal * 0.04) / 50) * 50
+}
+
 // ── Loan math ────────────────────────────────────────
 function calculateLoan({ price, downPayment, loanTermMonths, annualRatePercent, ownershipYears }) {
   const loanAmount = price - downPayment
@@ -739,6 +758,11 @@ export default function TCOCalculator() {
   // Derived model data (type, specs, mpg, isEV)
   const modelData = useMemo(() => getModelData(selMake, selModel), [selMake, selModel])
 
+  // Auto-update insurance when price or vehicle year changes
+  useEffect(() => {
+    setAnnualInsurance(estimateInsurance(price, selYear || null))
+  }, [price, selYear])
+
   // Auto-update fuel & maintenance defaults when vehicle changes
   useEffect(() => {
     if (!modelData) return
@@ -782,6 +806,10 @@ export default function TCOCalculator() {
 
   const annualOperatingCost = annualInsurance + annualFuel + annualMaintenance + annualRegistration
   const totalAnnualCost     = results.trueAnnualCost + annualOperatingCost
+
+  // For the insurance note: estimated current market value after depreciation
+  const carAge              = selYear ? Math.max(0, new Date().getFullYear() - parseInt(selYear)) : 0
+  const estimatedCarValue   = selYear ? depreciateCar(price, carAge) : price
 
   const safeDown = Math.min(downPayment, price)
   const usingMSRP = !!(selMake && selModel && selYear && selTrim)
@@ -884,8 +912,16 @@ export default function TCOCalculator() {
                 </p>
               </div>
 
-              <SliderInput label="Insurance" value={annualInsurance} onChange={setAnnualInsurance}
-                min={500} max={6000} step={100} prefix="$" suffix="/yr" />
+              <div className="flex flex-col gap-1">
+                <SliderInput label="Insurance" value={annualInsurance} onChange={setAnnualInsurance}
+                  min={500} max={6000} step={100} prefix="$" suffix="/yr" />
+                <p className="text-[10px] text-[var(--text-muted)] pl-1">
+                  {selYear
+                    ? <>Based on est. current value of <span className="text-white">{formatCurrency(estimatedCarValue)}</span> ({carAge === 0 ? 'new' : `${carAge} yr${carAge !== 1 ? 's' : ''} depreciation`} from {formatCurrency(price)} MSRP)</>
+                    : <>Based on vehicle price — select a year for depreciation-adjusted estimate</>
+                  }
+                </p>
+              </div>
 
               <SliderInput label={modelData?.is_ev ? 'Charging (electricity)' : 'Fuel'} value={annualFuel} onChange={setAnnualFuel}
                 min={0} max={6000} step={50} prefix="$" suffix="/yr" />

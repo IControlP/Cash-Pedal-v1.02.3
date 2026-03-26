@@ -4,6 +4,135 @@ import Footer from '../components/Footer'
 import ResultCard from '../components/ResultCard'
 import VEHICLES from '../data/vehicles.json'
 
+// ── Enhanced Depreciation Model ───────────────────────
+// Ported from enhanced_depreciation.py + advanced_insurance.py
+// Sources: iSeeCars 2024, KBB 2024 Best Resale Value, Edmunds TCO, CarEdge, Black Book
+
+// Brand multipliers — lower = better retention
+const BRAND_DEPRECIATION_MULT = {
+  Toyota: 0.75, Lexus: 0.78, Porsche: 0.79, Honda: 0.82, Subaru: 0.85,
+  Jeep: 0.86, Mazda: 0.88, Acura: 0.89,
+  Hyundai: 0.93, Kia: 0.95, GMC: 0.96, Ford: 0.98, Buick: 1.04,
+  Chevrolet: 1.00, Ram: 1.02, Nissan: 1.05, Genesis: 1.06, Volvo: 1.07, Infiniti: 1.08,
+  Cadillac: 1.12, Volkswagen: 1.14, Audi: 1.15, Mini: 1.16, BMW: 1.18, Lincoln: 1.18,
+  'Mercedes-Benz': 1.22, 'Land Rover': 1.24, Dodge: 1.26, Jaguar: 1.28,
+  Chrysler: 1.32, 'Alfa Romeo': 1.35, Fiat: 1.38,
+  Tesla: 0.90, Rivian: 1.20, Lucid: 1.28, Polestar: 1.22,
+  Maserati: 1.42,
+}
+
+// Cumulative depreciation from MSRP by segment and year (from segment_curves)
+const SEGMENT_CURVES = {
+  truck:      {1:.10,2:.18,3:.26,4:.33,5:.40,6:.45,7:.49,8:.53,9:.56,10:.59,11:.61,12:.63,13:.65,14:.66,15:.68},
+  sports:     {1:.14,2:.25,3:.35,4:.44,5:.52,6:.58,7:.63,8:.67,9:.70,10:.73,11:.75,12:.77,13:.78,14:.79,15:.80},
+  suv:        {1:.13,2:.23,3:.32,4:.39,5:.46,6:.51,7:.55,8:.59,9:.62,10:.65,11:.67,12:.69,13:.70,14:.71,15:.72},
+  luxury_suv: {1:.15,2:.26,3:.36,4:.44,5:.52,6:.57,7:.61,8:.65,9:.68,10:.71,11:.73,12:.75,13:.76,14:.77,15:.78},
+  hybrid:     {1:.13,2:.23,3:.32,4:.40,5:.48,6:.53,7:.57,8:.61,9:.64,10:.67,11:.69,12:.71,13:.72,14:.73,15:.74},
+  compact:    {1:.15,2:.26,3:.36,4:.44,5:.52,6:.57,7:.61,8:.65,9:.68,10:.71,11:.73,12:.75,13:.76,14:.77,15:.78},
+  sedan:      {1:.16,2:.28,3:.38,4:.46,5:.54,6:.59,7:.63,8:.67,9:.70,10:.73,11:.75,12:.77,13:.78,14:.79,15:.80},
+  luxury:     {1:.20,2:.34,3:.46,4:.54,5:.62,6:.67,7:.71,8:.74,9:.77,10:.79,11:.81,12:.82,13:.83,14:.84,15:.85},
+  economy:    {1:.20,2:.34,3:.45,4:.54,5:.62,6:.67,7:.71,8:.75,9:.78,10:.80,11:.82,12:.84,13:.85,14:.86,15:.87},
+  electric:   {1:.22,2:.38,3:.50,4:.58,5:.65,6:.70,7:.74,8:.77,9:.79,10:.81,11:.83,12:.84,13:.85,14:.86,15:.87},
+}
+const SEGMENT_MAX_DEPR = {
+  truck:.68, suv:.72, hybrid:.74, luxury_suv:.78, compact:.78,
+  sports:.80, sedan:.80, luxury:.85, economy:.87, electric:.87,
+}
+
+// Model-specific retention boosts / penalties (×0.88 or ×1.12)
+const HIGH_RETENTION = {
+  Toyota: ['4Runner','Tacoma','Tundra','Land Cruiser','Sequoia','RAV4','Highlander','Sienna','Camry','Corolla'],
+  Honda: ['Pilot','Ridgeline','Odyssey','CR-V','Accord','Civic'],
+  Subaru: ['Outback','Forester','Crosstrek','Ascent','WRX'],
+  Jeep: ['Wrangler','Gladiator'],
+  Ford: ['F-150','F-250','F-350','Bronco','Bronco Sport','Mustang'],
+  Chevrolet: ['Silverado','Tahoe','Suburban','Corvette','Colorado'],
+  GMC: ['Yukon','Yukon XL','Sierra','Canyon'],
+  Ram: ['1500','2500','3500'],
+  Lexus: ['GX','LX','RX','NX','ES','IS'],
+  Porsche: ['911','Cayenne','Macan','Boxster','Cayman'],
+  Cadillac: ['Escalade','XT5','XT6'],
+  Lincoln: ['Navigator','Aviator'],
+  Mazda: ['CX-5','CX-9','CX-50','Mazda3'],
+  Hyundai: ['Palisade','Santa Fe','Tucson'],
+  Kia: ['Telluride','Sorento','Sportage'],
+  Acura: ['MDX','RDX'],
+  Tesla: ['Model Y','Model 3'],
+}
+const POOR_RETENTION = {
+  BMW: ['7 Series','X7','i3','i4','8 Series'],
+  'Mercedes-Benz': ['S-Class','E-Class','CLS','AMG GT','EQS','EQE'],
+  Audi: ['A8','A7','Q8','e-tron','e-tron GT'],
+  Cadillac: ['CT4','CT5','CT6','Lyriq'],
+  Nissan: ['Altima','Maxima','Sentra','Leaf'],
+  Jaguar: ['XJ','XF','F-Type','I-PACE'],
+  'Land Rover': ['Range Rover','Discovery','Defender'],
+  Dodge: ['Durango','Journey'],
+  Volkswagen: ['Passat','Arteon','ID.4'],
+  Maserati: ['Ghibli','Quattroporte','Levante'],
+}
+
+function classifySegment(make, model) {
+  const m = (model ?? '').toLowerCase()
+  const mk = (make ?? '').toLowerCase()
+  if (mk === 'tesla' || ['rivian','lucid','polestar','fisker'].includes(mk)) return 'electric'
+  const evKw = ['leaf','ariya','bolt ev','bolt euv','equinox ev','blazer ev','lyriq','ioniq 5','ioniq 6','ioniq electric','kona electric','niro ev','ev6','ev9','gv60','i3 ','i4','i5','i7',' ix','e-tron','taycan','id.4','id.3','mach-e','lightning','eqb','eqc','eqe','eqs','bz4x',' rz ','solterra','mx-30','i-pace','prologue','zdx']
+  if (evKw.some(k => m.includes(k))) return 'electric'
+  if (['prius','insight','sienna','maverick'].some(k => m.includes(k))) return 'hybrid'
+  if (m.includes('hybrid') || m.includes('phev') || m.includes('4xe') || m.includes('plug-in')) return 'hybrid'
+  const sportsKw = ['corvette','mustang','camaro','challenger','charger','911','cayman','boxster','z4','supra','miata','mx-5','gt-r','370z','400z','brz','gr86','nsx']
+  if (sportsKw.some(k => m.includes(k))) return 'sports'
+  const luxBrands = ['bmw','mercedes-benz','audi','lexus','acura','infiniti','cadillac','lincoln','jaguar','land rover','porsche','maserati','alfa romeo','genesis']
+  if (luxBrands.includes(mk)) {
+    const luxSuvKw = ['escalade','xt4','xt5','xt6','x1','x2','x3','x4','x5','x6','x7','gla','glb','glc','gle','gls','g-class','q3','q4','q5','q7','q8','ux','nx','rx','gx','lx','rdx','mdx','qx50','qx55','qx60','qx80','navigator','nautilus','aviator','corsair','cayenne','macan','e-pace','f-pace','range rover','discovery','defender','evoque','gv60','gv70','gv80','levante','grecale']
+    return luxSuvKw.some(k => m.includes(k)) ? 'luxury_suv' : 'luxury'
+  }
+  const truckKw = ['f-150','f-250','f-350','silverado','sierra','ram 1500','ram 2500','tundra','tacoma','frontier','ridgeline','gladiator','ranger','colorado','canyon','titan']
+  if (truckKw.some(k => m.includes(k))) return 'truck'
+  const suvKw = ['suburban','tahoe','yukon','pilot','highlander','rav4','cr-v','explorer','expedition','escape','equinox','traverse','pathfinder','armada','palisade','telluride','sorento','santa fe','tucson','cx-5','cx-9','outback','forester','ascent','wrangler','grand cherokee','durango','atlas','tiguan','4runner','sequoia','land cruiser']
+  if (suvKw.some(k => m.includes(k))) return 'suv'
+  if (['civic','corolla','elantra','sentra','forte','jetta','golf','mazda3','impreza','crosstrek'].some(k => m.includes(k))) return 'compact'
+  if (['spark','mirage','rio','versa','accent','yaris','fit'].some(k => m.includes(k))) return 'economy'
+  return 'sedan'
+}
+
+function applyModelAdjustments(make, model, brandMult) {
+  const ml = (model ?? '').toLowerCase()
+  if (HIGH_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 0.88
+  if (POOR_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 1.12
+  return brandMult
+}
+
+function estimateCurrentValue(originalPrice, make, model, ageYears) {
+  const segment  = (make && model) ? classifySegment(make, model) : 'sedan'
+  const rawBrand = BRAND_DEPRECIATION_MULT[make] ?? 1.0
+  const adjBrand = (make && model) ? applyModelAdjustments(make, model, rawBrand) : rawBrand
+  const curve    = SEGMENT_CURVES[segment] ?? SEGMENT_CURVES.sedan
+  const baseRate = ageYears <= 15 ? (curve[ageYears] ?? curve[15]) : Math.min(0.96, curve[15] + (ageYears - 15) * 0.005)
+  const cap      = SEGMENT_MAX_DEPR[segment] ?? 0.80
+  const finalRate = Math.min(baseRate * adjBrand, cap)
+  return Math.max(originalPrice * (1 - finalRate), originalPrice * 0.10)
+}
+
+// Insurance estimate — ported from advanced_insurance.py (AdvancedInsuranceCalculator)
+// Uses national avg base rate × vehicle-value bracket × brand-specific multiplier
+const INSURANCE_BASE_RATE = 1300 // national average annual premium
+const INSURANCE_VALUE_BRACKETS = [[0,15000,.85],[15000,30000,1.00],[30000,50000,1.15],[50000,80000,1.35],[80000,Infinity,1.60]]
+const INSURANCE_BRAND_MULT = {
+  BMW: 1.25, 'Mercedes-Benz': 1.30, Audi: 1.20, Lexus: 1.15, Acura: 1.10,
+  Infiniti: 1.10, Cadillac: 1.15, Toyota: 0.90, Honda: 0.90,
+  Hyundai: 0.85, Kia: 0.85, Subaru: 0.95, Mazda: 0.95,
+  Chevrolet: 1.00, Ford: 1.05, Ram: 1.10, Jeep: 1.10,
+}
+
+function estimateInsurance(purchasePrice, make, model, modelYear) {
+  const ageYears  = modelYear ? Math.max(0, new Date().getFullYear() - parseInt(modelYear)) : 0
+  const currentVal = estimateCurrentValue(purchasePrice, make || null, model || null, ageYears)
+  const [,,valueMult] = INSURANCE_VALUE_BRACKETS.find(([mn, mx]) => currentVal >= mn && currentVal < mx) ?? [0,0,1.0]
+  const brandMult  = INSURANCE_BRAND_MULT[make] ?? 1.0
+  return Math.round((INSURANCE_BASE_RATE * valueMult * brandMult) / 50) * 50
+}
+
 // ── Loan math ────────────────────────────────────────
 function calculateLoan({ price, downPayment, loanTermMonths, annualRatePercent, ownershipYears }) {
   const loanAmount = price - downPayment
@@ -725,6 +854,12 @@ export default function TCOCalculator() {
   const [rate, setRate]             = useState(6.5)
   const [ownershipYears, setOwnershipYears] = useState(5)
 
+  // Annual operating costs (pre-filled with national averages)
+  const [annualInsurance,    setAnnualInsurance]    = useState(2000)
+  const [annualFuel,         setAnnualFuel]         = useState(2000)
+  const [annualMaintenance,  setAnnualMaintenance]  = useState(1200)
+  const [annualRegistration, setAnnualRegistration] = useState(300)
+
   const [selMake,  setSelMake]  = useState('')
   const [selModel, setSelModel] = useState('')
   const [selYear,  setSelYear]  = useState('')
@@ -732,6 +867,30 @@ export default function TCOCalculator() {
 
   // Derived model data (type, specs, mpg, isEV)
   const modelData = useMemo(() => getModelData(selMake, selModel), [selMake, selModel])
+
+  // Auto-update insurance when price, make, model, or year changes
+  useEffect(() => {
+    setAnnualInsurance(estimateInsurance(price, selMake || null, selModel || null, selYear || null))
+  }, [price, selMake, selModel, selYear])
+
+  // Auto-update fuel & maintenance defaults when vehicle changes
+  useEffect(() => {
+    if (!modelData) return
+    const ANNUAL_MILES = 15000
+    const GAS_PRICE    = 3.50
+    const ELEC_PRICE   = 0.16
+    const KWH_PER_GAL  = 33.7
+    if (modelData.is_ev) {
+      const mpge = modelData.mpg?.mpge_combined ?? 100
+      const annualKwh = (ANNUAL_MILES / (mpge / KWH_PER_GAL))
+      setAnnualFuel(Math.round(annualKwh * ELEC_PRICE / 50) * 50)
+      setAnnualMaintenance(700)
+    } else {
+      const mpg = modelData.mpg?.combined ?? 28
+      setAnnualFuel(Math.round((ANNUAL_MILES / mpg) * GAS_PRICE / 50) * 50)
+      setAnnualMaintenance(1200)
+    }
+  }, [modelData])
 
   const handlePickerChange = useCallback((level, value) => {
     if (level === 'make')  { setSelMake(value); setSelModel(''); setSelYear(''); setSelTrim('') }
@@ -754,6 +913,15 @@ export default function TCOCalculator() {
     price, downPayment: Math.min(downPayment, price),
     loanTermMonths: loanTerm, annualRatePercent: rate, ownershipYears,
   }), [price, downPayment, loanTerm, rate, ownershipYears])
+
+  const annualOperatingCost = annualInsurance + annualFuel + annualMaintenance + annualRegistration
+  const totalAnnualCost     = results.trueAnnualCost + annualOperatingCost
+
+  // For the insurance note: estimated current market value after depreciation
+  const carAge            = selYear ? Math.max(0, new Date().getFullYear() - parseInt(selYear)) : 0
+  const estimatedCarValue = selYear
+    ? estimateCurrentValue(price, selMake || null, selModel || null, carAge)
+    : price
 
   const safeDown = Math.min(downPayment, price)
   const usingMSRP = !!(selMake && selModel && selYear && selTrim)
@@ -845,6 +1013,39 @@ export default function TCOCalculator() {
 
               <SelectInput label="Ownership Duration" value={ownershipYears}
                 onChange={setOwnershipYears} options={ownershipOptions} />
+
+              <div className="h-px bg-[var(--border)]" />
+
+              {/* Annual Operating Costs */}
+              <div>
+                <h2 className="font-display font-bold text-white text-lg mb-1">Annual Operating Costs</h2>
+                <p className="text-[var(--text-muted)] text-sm mb-1">
+                  National averages pre-filled{modelData ? (modelData.is_ev ? ' — adjusted for EV' : ' — adjusted for your vehicle\'s MPG') : ''}. Adjust to match your situation.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <SliderInput label="Insurance" value={annualInsurance} onChange={setAnnualInsurance}
+                  min={500} max={6000} step={100} prefix="$" suffix="/yr" />
+                <p className="text-[10px] text-[var(--text-muted)] pl-1">
+                  {selYear
+                    ? <>Based on est. current value of <span className="text-white">{formatCurrency(estimatedCarValue)}</span>{' '}
+                        ({carAge === 0 ? 'new' : `${carAge} yr${carAge !== 1 ? 's' : ''} depreciation`} from {formatCurrency(price)} MSRP
+                        {selMake && selModel ? ` · ${classifySegment(selMake, selModel)} segment` : ''})
+                      </>
+                    : <>Based on vehicle price — select a year for depreciation-adjusted estimate</>
+                  }
+                </p>
+              </div>
+
+              <SliderInput label={modelData?.is_ev ? 'Charging (electricity)' : 'Fuel'} value={annualFuel} onChange={setAnnualFuel}
+                min={0} max={6000} step={50} prefix="$" suffix="/yr" />
+
+              <SliderInput label="Maintenance &amp; Repairs" value={annualMaintenance} onChange={setAnnualMaintenance}
+                min={0} max={5000} step={50} prefix="$" suffix="/yr" />
+
+              <SliderInput label="Registration &amp; Fees" value={annualRegistration} onChange={setAnnualRegistration}
+                min={0} max={2000} step={25} prefix="$" suffix="/yr" />
             </div>
 
             {/* ── Results ── */}
@@ -871,20 +1072,53 @@ export default function TCOCalculator() {
               <div className="grid grid-cols-1 gap-4 anim-5">
                 <ResultCard label="Total Interest Paid"  value={results.totalInterestPaid}  delay={60}  />
                 <ResultCard label="Total Cost of Loan"   value={results.totalCostOfLoan}    delay={120} />
-                <ResultCard label="True Cost Per Year"   value={results.trueAnnualCost}     delay={180} />
+                <ResultCard label="Loan Cost Per Year"   value={results.trueAnnualCost}     delay={180} />
+              </div>
+
+              {/* Annual cost breakdown */}
+              <div className="rounded-xl border p-4 flex flex-col gap-3"
+                style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+                  Annual Cost Breakdown
+                </p>
+                <div className="flex flex-col gap-2 text-sm">
+                  {[
+                    { label: 'Loan payments',          value: results.trueAnnualCost },
+                    { label: 'Insurance',              value: annualInsurance },
+                    { label: modelData?.is_ev ? 'Charging' : 'Fuel', value: annualFuel },
+                    { label: 'Maintenance & repairs',  value: annualMaintenance },
+                    { label: 'Registration & fees',    value: annualRegistration },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="flex justify-between items-center">
+                      <span className="text-[var(--text-muted)]">{label}</span>
+                      <span className="text-white font-medium">{formatCurrency(value)}</span>
+                    </div>
+                  ))}
+                  <div className="h-px bg-[var(--border)] my-1" />
+                  <div className="flex justify-between items-center">
+                    <span className="text-white font-bold">Total per year</span>
+                    <span className="font-display font-bold text-lg" style={{ color: 'var(--accent)' }}>
+                      {formatCurrency(totalAnnualCost)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[var(--text-muted)]">Total over {ownershipYears} yr{ownershipYears !== 1 ? 's' : ''}</span>
+                    <span className="text-[var(--text-muted)] font-medium">{formatCurrency(totalAnnualCost * ownershipYears)}</span>
+                  </div>
+                </div>
               </div>
 
               {/* Summary */}
               <div className="rounded-xl p-4 border text-sm leading-relaxed"
                 style={{ background:'rgba(200,255,0,0.04)', borderColor:'rgba(200,255,0,0.15)', color:'var(--text-muted)' }}>
                 <span className="text-[var(--accent)] font-semibold">The real picture: </span>
-                Over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}, you'll pay{' '}
+                Over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}, loan payments total{' '}
                 <span className="text-white font-semibold">
                   {formatCurrency(results.monthlyPayment * Math.min(ownershipYears * 12, loanTerm))}
                 </span>{' '}
-                in loan payments — that's{' '}
-                <span className="text-white font-semibold">{formatCurrency(results.totalInterestPaid)}</span>{' '}
-                in interest on a {formatCurrency(results.loanAmount)} loan.
+                ({formatCurrency(results.totalInterestPaid)} in interest). Add insurance, fuel, maintenance, and fees and your{' '}
+                <span className="text-white font-semibold">all-in annual cost is {formatCurrency(totalAnnualCost)}</span>{' '}
+                — or {formatCurrency(totalAnnualCost * ownershipYears)} over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}.
               </div>
             </div>
 

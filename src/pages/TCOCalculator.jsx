@@ -1091,6 +1091,41 @@ export default function TCOCalculator() {
             {/* ── Inputs ── */}
             <div className="card anim-3 flex flex-col gap-7">
 
+              {/* Location */}
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="font-display font-bold text-white text-lg">Your Location</h2>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded"
+                    style={{ color:'var(--accent)', border:'1px solid rgba(200,255,0,0.3)' }}>
+                    Required
+                  </span>
+                </div>
+                <p className="text-[var(--text-muted)] text-sm mb-4">
+                  Used for state-specific insurance rates, fuel prices, and registration fees.
+                </p>
+                <div className="flex flex-col gap-2">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      className="input-field pr-24"
+                      placeholder="ZIP code or state (e.g., 90210 or CA)"
+                      value={locationInput}
+                      onChange={e => handleLocationInput(e.target.value)}
+                      maxLength={5}
+                    />
+                    {resolvedState && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold px-2 py-0.5 rounded"
+                        style={{ color:'var(--accent)', background:'rgba(200,255,0,0.1)', border:'1px solid rgba(200,255,0,0.25)' }}>
+                        {locationLabel}
+                      </span>
+                    )}
+                  </div>
+                  {locationError && <p className="text-xs text-amber-400">{locationError}</p>}
+                </div>
+              </div>
+
+              <div className="h-px bg-[var(--border)]" />
+
               {/* Vehicle selector */}
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -1118,7 +1153,7 @@ export default function TCOCalculator() {
                   {usingMSRP && (
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded"
                       style={{ color:'#C8FF00', background:'rgba(200,255,0,0.08)', border:'1px solid rgba(200,255,0,0.2)' }}>
-                      Using MSRP
+                      {origMsrp && carAge > 0 ? 'Est. Current Value' : 'Using MSRP'}
                     </span>
                   )}
                 </div>
@@ -1129,6 +1164,13 @@ export default function TCOCalculator() {
 
               <SliderInput label="Vehicle Purchase Price" value={price} onChange={setPrice}
                 min={5000} max={150000} step={500} prefix="$" />
+
+              {origMsrp && carAge > 0 && (
+                <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                  Auto-set to estimated {carAge}-year depreciated value — original MSRP was{' '}
+                  <span className="text-white">{formatCurrency(origMsrp)}</span>
+                </p>
+              )}
 
               <SliderInput label="Down Payment" value={safeDown}
                 onChange={v => setDownPayment(Math.min(v, price))}
@@ -1151,34 +1193,75 @@ export default function TCOCalculator() {
 
               {/* Annual Operating Costs */}
               <div>
-                <h2 className="font-display font-bold text-white text-lg mb-1">Annual Operating Costs</h2>
-                <p className="text-[var(--text-muted)] text-sm mb-1">
-                  National averages pre-filled{modelData ? (modelData.is_ev ? ' — adjusted for EV' : ' — adjusted for your vehicle\'s MPG') : ''}. Adjust to match your situation.
-                </p>
+                <div className="flex items-center justify-between mb-1">
+                  <h2 className="font-display font-bold text-white text-lg">Annual Operating Costs</h2>
+                  {resolvedState && (
+                    <button
+                      onClick={() => setCustomCosts(c => !c)}
+                      className="text-xs px-3 py-1 rounded-lg border transition-colors"
+                      style={{
+                        borderColor: customCosts ? 'var(--accent)' : 'var(--border)',
+                        color: customCosts ? 'var(--accent)' : 'var(--text-muted)',
+                      }}>
+                      {customCosts ? 'Use estimates' : 'Customize'}
+                    </button>
+                  )}
+                </div>
+                {!resolvedState ? (
+                  <p className="text-sm text-amber-400/80">
+                    Enter your location above to see state-specific cost estimates.
+                  </p>
+                ) : (
+                  <p className="text-[var(--text-muted)] text-sm">
+                    {customCosts
+                      ? 'Adjust any cost to match your situation.'
+                      : `Estimated for ${resolvedState}${modelData ? (modelData.is_ev ? ' · EV rates' : ` · ${modelData.mpg?.combined ?? 28} MPG`) : ''}.`}
+                  </p>
+                )}
               </div>
 
-              <div className="flex flex-col gap-1">
-                <SliderInput label="Insurance" value={annualInsurance} onChange={setAnnualInsurance}
-                  min={500} max={6000} step={100} prefix="$" suffix="/yr" />
-                <p className="text-[10px] text-[var(--text-muted)] pl-1">
-                  {selYear
-                    ? <>Based on est. current value of <span className="text-white">{formatCurrency(estimatedCarValue)}</span>{' '}
-                        ({carAge === 0 ? 'new' : `${carAge} yr${carAge !== 1 ? 's' : ''} depreciation`} from {formatCurrency(price)} MSRP
-                        {selMake && selModel ? ` · ${classifySegment(selMake, selModel)} segment` : ''})
-                      </>
-                    : <>Based on vehicle price — select a year for depreciation-adjusted estimate</>
-                  }
-                </p>
-              </div>
+              {resolvedState && !customCosts && (
+                <div className="rounded-xl border divide-y"
+                  style={{ borderColor:'var(--border)', background:'var(--surface)' }}>
+                  {[
+                    { label: 'Insurance',              value: annualInsurance,    note: `${resolvedState} rate · ${selMake || 'avg'} brand` },
+                    { label: modelData?.is_ev ? 'Charging' : 'Fuel', value: annualFuel, note: modelData?.is_ev ? `$${STATE_ELEC_RATES[resolvedState] ?? 0.16}/kWh` : `$${STATE_FUEL_PRICES[resolvedState] ?? 3.50}/gal` },
+                    { label: 'Maintenance & Repairs',  value: annualMaintenance,  note: modelData?.is_ev ? 'EV avg' : 'gas avg' },
+                    { label: 'Registration & Fees',    value: annualRegistration, note: `${resolvedState} DMV` },
+                  ].map(({ label, value, note }) => (
+                    <div key={label} className="flex items-center justify-between px-4 py-3">
+                      <div>
+                        <span className="text-sm text-white">{label}</span>
+                        <span className="ml-2 text-[10px] text-[var(--text-muted)]">{note}</span>
+                      </div>
+                      <span className="font-display font-semibold text-white text-sm">{formatCurrency(value)}/yr</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
-              <SliderInput label={modelData?.is_ev ? 'Charging (electricity)' : 'Fuel'} value={annualFuel} onChange={setAnnualFuel}
-                min={0} max={6000} step={50} prefix="$" suffix="/yr" />
-
-              <SliderInput label="Maintenance &amp; Repairs" value={annualMaintenance} onChange={setAnnualMaintenance}
-                min={0} max={5000} step={50} prefix="$" suffix="/yr" />
-
-              <SliderInput label="Registration &amp; Fees" value={annualRegistration} onChange={setAnnualRegistration}
-                min={0} max={2000} step={25} prefix="$" suffix="/yr" />
+              {resolvedState && customCosts && (
+                <>
+                  <div className="flex flex-col gap-1">
+                    <SliderInput label="Insurance" value={annualInsurance} onChange={setAnnualInsurance}
+                      min={500} max={6000} step={100} prefix="$" suffix="/yr" />
+                    <p className="text-[10px] text-[var(--text-muted)] pl-1">
+                      {selYear
+                        ? <>Est. current value <span className="text-white">{formatCurrency(estimatedCarValue)}</span>
+                            {' '}({carAge === 0 ? 'new' : `${carAge}yr depreciation`} · {classifySegment(selMake||'', selModel||'')} segment)
+                          </>
+                        : `${resolvedState} base rate · adjust for your coverage level`
+                      }
+                    </p>
+                  </div>
+                  <SliderInput label={modelData?.is_ev ? 'Charging (electricity)' : 'Fuel'} value={annualFuel} onChange={setAnnualFuel}
+                    min={0} max={6000} step={50} prefix="$" suffix="/yr" />
+                  <SliderInput label="Maintenance &amp; Repairs" value={annualMaintenance} onChange={setAnnualMaintenance}
+                    min={0} max={5000} step={50} prefix="$" suffix="/yr" />
+                  <SliderInput label="Registration &amp; Fees" value={annualRegistration} onChange={setAnnualRegistration}
+                    min={0} max={2000} step={25} prefix="$" suffix="/yr" />
+                </>
+              )}
             </div>
 
             {/* ── Results ── */}

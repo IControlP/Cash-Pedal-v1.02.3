@@ -125,12 +125,122 @@ const INSURANCE_BRAND_MULT = {
   Chevrolet: 1.00, Ford: 1.05, Ram: 1.10, Jeep: 1.10,
 }
 
-function estimateInsurance(purchasePrice, make, model, modelYear) {
-  const ageYears  = modelYear ? Math.max(0, new Date().getFullYear() - parseInt(modelYear)) : 0
+function estimateInsurance(purchasePrice, make, model, modelYear, state) {
+  const ageYears   = modelYear ? Math.max(0, new Date().getFullYear() - parseInt(modelYear)) : 0
   const currentVal = estimateCurrentValue(purchasePrice, make || null, model || null, ageYears)
   const [,,valueMult] = INSURANCE_VALUE_BRACKETS.find(([mn, mx]) => currentVal >= mn && currentVal < mx) ?? [0,0,1.0]
   const brandMult  = INSURANCE_BRAND_MULT[make] ?? 1.0
-  return Math.round((INSURANCE_BASE_RATE * valueMult * brandMult) / 50) * 50
+  const stateBase  = STATE_INS_BASE[state] ?? INSURANCE_BASE_RATE
+  return Math.round((stateBase * valueMult * brandMult) / 50) * 50
+}
+
+// ── Location data (from zip_code_utils.py, advanced_insurance.py, taxes_fees_utils.py) ─
+const STATE_FUEL_PRICES = {
+  AL:3.20,AK:4.15,AZ:3.85,AR:3.10,CA:4.65,CO:3.50,CT:3.75,
+  DE:3.45,FL:3.40,GA:3.30,HI:4.95,ID:3.65,IL:3.60,IN:3.35,
+  IA:3.25,KS:3.15,KY:3.30,LA:3.05,ME:3.70,MD:3.55,MA:3.80,
+  MI:3.50,MN:3.45,MS:3.10,MO:3.20,MT:3.60,NE:3.30,NV:4.05,
+  NH:3.65,NJ:3.70,NM:3.40,NY:3.90,NC:3.35,ND:3.25,OH:3.40,
+  OK:3.15,OR:4.10,PA:3.65,RI:3.75,SC:3.25,SD:3.35,TN:3.20,
+  TX:3.25,UT:3.75,VT:3.70,VA:3.45,WA:4.20,WV:3.40,WI:3.45,
+  WY:3.50,DC:3.60,
+}
+const STATE_ELEC_RATES = {
+  AL:0.13,AK:0.24,AZ:0.14,AR:0.11,CA:0.33,CO:0.14,CT:0.30,
+  DE:0.14,FL:0.14,GA:0.14,HI:0.42,ID:0.10,IL:0.16,IN:0.14,
+  IA:0.12,KS:0.14,KY:0.11,LA:0.11,ME:0.16,MD:0.18,MA:0.27,
+  MI:0.17,MN:0.14,MS:0.12,MO:0.13,MT:0.12,NE:0.11,NV:0.13,
+  NH:0.23,NJ:0.20,NM:0.14,NY:0.20,NC:0.13,ND:0.11,OH:0.15,
+  OK:0.12,OR:0.11,PA:0.17,RI:0.28,SC:0.14,SD:0.12,TN:0.12,
+  TX:0.13,UT:0.11,VT:0.17,VA:0.13,WA:0.10,WV:0.12,WI:0.15,
+  WY:0.12,DC:0.16,
+}
+// State insurance base annual premiums (from advanced_insurance.py state_base_rates)
+const STATE_INS_BASE = {
+  AL:1420,AK:1180,AZ:1290,AR:1380,CA:1760,CO:1340,CT:1510,
+  DE:1440,FL:2059,GA:1450,HI:1200,ID:1050,IL:1240,IN:1080,
+  IA:1050,KS:1150,KY:1350,LA:2298,ME:1020,MD:1380,MA:1175,
+  MI:1980,MN:1240,MS:1350,MO:1250,MT:1220,NE:1180,NV:1368,
+  NH:1050,NJ:1590,NM:1300,NY:1470,NC:1100,ND:1240,OH:1050,
+  OK:1420,OR:1180,PA:1340,RI:1470,SC:1340,SD:1240,TN:1180,
+  TX:1550,UT:1170,VT:1050,VA:1180,WA:1240,WV:1390,WI:1100,WY:1240,
+}
+// Annual registration base fees (from taxes_fees_utils.py STATE_REGISTRATION_FEES base amounts)
+const STATE_REG_FEE = {
+  AL:50,AK:50,AZ:32,AR:25,CA:65,CO:75,CT:60,DE:40,DC:72,FL:56,
+  GA:20,HI:50,ID:68,IL:151,IN:45,IA:50,KS:42,KY:21,LA:30,ME:35,
+  MD:135,MA:60,MI:50,MN:53,MS:14,MO:33,MT:140,NE:37,NV:41,NH:48,
+  NJ:50,NM:40,NY:75,NC:60,ND:49,OH:31,OK:50,OR:268,PA:42,RI:73,
+  SC:40,SD:36,TN:28,TX:51,UT:51,VT:76,VA:36,WA:87,WV:52,WI:89,WY:30,
+}
+// States with value-based annual VLF/ad-valorem fees: [rate, flat] (from STATE_ANNUAL_VLF_RATES)
+const STATE_VLF = {
+  CA:[0.0065,51],VA:[0.0401,0],CT:[0.007,0],KS:[0.01,0],KY:[0.006,0],
+  MN:[0.0125,0],MS:[0.005,0],MO:[0.0033,0],MT:[0,40],NC:[0.006,0],
+  SC:[0.005,0],WV:[0.006,0],WY:[0.003,0],AZ:[0.005,0],CO:[0.003,15],
+  IA:[0.01,0],MA:[0.025,0],NV:[0.008,0],WA:[0.003,0],
+}
+// ZIP→state ranges (from ZIP_CODE_RANGES in zip_code_utils.py)
+const ZIP_RANGES = [
+  ['AL',[[35000,36999]]],['AK',[[99500,99999]]],['AZ',[[85000,86599]]],
+  ['AR',[[71600,72999]]],['CA',[[90000,96199]]],['CO',[[80000,81699]]],
+  ['CT',[[6000,6999]]],['DE',[[19700,19999]]],['DC',[[20000,20599]]],
+  ['FL',[[32000,34999]]],['GA',[[30000,31999],[39800,39999]]],
+  ['HI',[[96700,96899]]],['ID',[[83200,83999]]],['IL',[[60000,62999]]],
+  ['IN',[[46000,47999]]],['IA',[[50000,52999]]],['KS',[[66000,67999]]],
+  ['KY',[[40000,42799]]],['LA',[[70000,71499]]],['ME',[[3900,4999]]],
+  ['MD',[[20600,21999]]],['MA',[[1000,2799]]],['MI',[[48000,49999]]],
+  ['MN',[[55000,56799]]],['MS',[[38600,39999]]],['MO',[[63000,65899]]],
+  ['MT',[[59000,59999]]],['NE',[[68000,69999]]],['NV',[[88900,89999]]],
+  ['NH',[[3000,3899]]],['NJ',[[7000,8999]]],['NM',[[87000,88499]]],
+  ['NY',[[10000,14999]]],['NC',[[27000,28999]]],['ND',[[58000,58999]]],
+  ['OH',[[43000,45999]]],['OK',[[73000,74999]]],['OR',[[97000,97999]]],
+  ['PA',[[15000,19699]]],['RI',[[2800,2999]]],['SC',[[29000,29999]]],
+  ['SD',[[57000,57999]]],['TN',[[37000,38599]]],
+  ['TX',[[73301,73301],[75000,79999],[88500,88599]]],
+  ['UT',[[84000,84799]]],['VT',[[5000,5999]]],
+  ['VA',[[20100,20199],[22000,24699]]],['WA',[[98000,99499]]],
+  ['WV',[[24700,26999]]],['WI',[[53000,54999]]],['WY',[[82000,83199]]],
+]
+
+function zipToState(zip) {
+  if (!/^\d{5}$/.test(zip)) return null
+  const z = parseInt(zip)
+  for (const [state, ranges] of ZIP_RANGES) {
+    for (const [lo, hi] of ranges) {
+      if (z >= lo && z <= hi) return state
+    }
+  }
+  return null
+}
+
+// Returns { state, label } or null
+function resolveLocation(input) {
+  const t = input.trim().toUpperCase()
+  if (/^\d{5}$/.test(t)) {
+    const state = zipToState(t)
+    return state ? { state, label: `${t} (${state})` } : null
+  }
+  if (/^[A-Z]{2}$/.test(t) && STATE_FUEL_PRICES[t]) return { state: t, label: t }
+  return null
+}
+
+function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state) {
+  const MILES = 15000
+  const KWH_PER_GAL = 33.7
+  if (isEV) {
+    const mpge = mpgeCombined ?? 100
+    const annualKwh = MILES / (mpge / KWH_PER_GAL)
+    return Math.round(annualKwh * (STATE_ELEC_RATES[state] ?? 0.16) / 50) * 50
+  }
+  const mpg = mpgCombined ?? 28
+  return Math.round((MILES / mpg) * (STATE_FUEL_PRICES[state] ?? 3.50) / 50) * 50
+}
+
+function computeAnnualRegistration(state, vehicleValue) {
+  const base = STATE_REG_FEE[state] ?? 50
+  const [rate, flat] = STATE_VLF[state] ?? [0, 0]
+  return Math.round((base + vehicleValue * rate + flat) / 25) * 25
 }
 
 // ── Loan math ────────────────────────────────────────
@@ -865,48 +975,71 @@ export default function TCOCalculator() {
   const [selYear,  setSelYear]  = useState('')
   const [selTrim,  setSelTrim]  = useState('')
 
+  // Location
+  const [locationInput,  setLocationInput]  = useState('')
+  const [resolvedState,  setResolvedState]  = useState(null)   // 2-letter state code
+  const [locationLabel,  setLocationLabel]  = useState('')
+  const [locationError,  setLocationError]  = useState('')
+  // Operating costs mode
+  const [customCosts,    setCustomCosts]    = useState(false)
+  // Track original MSRP separately from price (which may be depreciation-adjusted)
+  const [origMsrp,       setOrigMsrp]       = useState(null)
+
   // Derived model data (type, specs, mpg, isEV)
   const modelData = useMemo(() => getModelData(selMake, selModel), [selMake, selModel])
 
-  // Auto-update insurance when price, make, model, or year changes
   useEffect(() => {
-    setAnnualInsurance(estimateInsurance(price, selMake || null, selModel || null, selYear || null))
-  }, [price, selMake, selModel, selYear])
-
-  // Auto-update fuel & maintenance defaults when vehicle changes
-  useEffect(() => {
-    if (!modelData) return
-    const ANNUAL_MILES = 15000
-    const GAS_PRICE    = 3.50
-    const ELEC_PRICE   = 0.16
-    const KWH_PER_GAL  = 33.7
-    if (modelData.is_ev) {
-      const mpge = modelData.mpg?.mpge_combined ?? 100
-      const annualKwh = (ANNUAL_MILES / (mpge / KWH_PER_GAL))
-      setAnnualFuel(Math.round(annualKwh * ELEC_PRICE / 50) * 50)
-      setAnnualMaintenance(700)
+    if (customCosts) return
+    setAnnualInsurance(estimateInsurance(price, selMake||null, selModel||null, selYear||null, resolvedState||null))
+    if (modelData) {
+      setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState))
+      setAnnualMaintenance(modelData.is_ev ? 700 : 1200)
     } else {
-      const mpg = modelData.mpg?.combined ?? 28
-      setAnnualFuel(Math.round((ANNUAL_MILES / mpg) * GAS_PRICE / 50) * 50)
-      setAnnualMaintenance(1200)
+      setAnnualFuel(computeAnnualFuel(false, 28, null, resolvedState))
     }
-  }, [modelData])
+    const currentVal = (selYear && (selMake || selModel))
+      ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)))
+      : price
+    setAnnualRegistration(computeAnnualRegistration(resolvedState, currentVal))
+  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleLocationInput = useCallback((val) => {
+    setLocationInput(val)
+    setLocationError('')
+    const resolved = resolveLocation(val)
+    if (resolved) {
+      setResolvedState(resolved.state)
+      setLocationLabel(resolved.label)
+    } else {
+      setResolvedState(null)
+      setLocationLabel('')
+      if (val.trim().length >= 2 && !resolved) {
+        setLocationError('Enter a 5-digit ZIP code or 2-letter state (e.g., 90210 or CA)')
+      }
+    }
+  }, [])
 
   const handlePickerChange = useCallback((level, value) => {
-    if (level === 'make')  { setSelMake(value); setSelModel(''); setSelYear(''); setSelTrim('') }
-    if (level === 'model') { setSelModel(value); setSelYear(''); setSelTrim('') }
-    if (level === 'year')  { setSelYear(value); setSelTrim('') }
+    if (level === 'make')  { setSelMake(value); setSelModel(''); setSelYear(''); setSelTrim(''); setOrigMsrp(null) }
+    if (level === 'model') { setSelModel(value); setSelYear(''); setSelTrim(''); setOrigMsrp(null) }
+    if (level === 'year')  { setSelYear(value); setSelTrim(''); setOrigMsrp(null) }
     if (level === 'trim') {
       setSelTrim(value)
       if (selMake && selModel && selYear) {
         const t = getTrims(selMake, selModel, selYear)
-        if (t[value]) setPrice(t[value])
+        if (t[value]) {
+          const msrp = t[value]
+          setOrigMsrp(msrp)
+          const ageYrs = Math.max(0, new Date().getFullYear() - parseInt(selYear))
+          const estimated = ageYrs > 0 ? estimateCurrentValue(msrp, selMake, selModel, ageYrs) : msrp
+          setPrice(Math.round(estimated / 500) * 500)
+        }
       }
     }
   }, [selMake, selModel, selYear])
 
   const handleClear = useCallback(() => {
-    setSelMake(''); setSelModel(''); setSelYear(''); setSelTrim('')
+    setSelMake(''); setSelModel(''); setSelYear(''); setSelTrim(''); setOrigMsrp(null)
   }, [])
 
   const results = useMemo(() => calculateLoan({
@@ -958,6 +1091,41 @@ export default function TCOCalculator() {
             {/* ── Inputs ── */}
             <div className="card anim-3 flex flex-col gap-7">
 
+              {/* Location */}
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="font-display font-bold text-white text-lg">Your Location</h2>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded"
+                    style={{ color:'var(--accent)', border:'1px solid rgba(200,255,0,0.3)' }}>
+                    Required
+                  </span>
+                </div>
+                <p className="text-[var(--text-muted)] text-sm mb-4">
+                  Used for state-specific insurance rates, fuel prices, and registration fees.
+                </p>
+                <div className="flex flex-col gap-2">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      className="input-field pr-24"
+                      placeholder="ZIP code or state (e.g., 90210 or CA)"
+                      value={locationInput}
+                      onChange={e => handleLocationInput(e.target.value)}
+                      maxLength={5}
+                    />
+                    {resolvedState && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold px-2 py-0.5 rounded"
+                        style={{ color:'var(--accent)', background:'rgba(200,255,0,0.1)', border:'1px solid rgba(200,255,0,0.25)' }}>
+                        {locationLabel}
+                      </span>
+                    )}
+                  </div>
+                  {locationError && <p className="text-xs text-amber-400">{locationError}</p>}
+                </div>
+              </div>
+
+              <div className="h-px bg-[var(--border)]" />
+
               {/* Vehicle selector */}
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -985,7 +1153,7 @@ export default function TCOCalculator() {
                   {usingMSRP && (
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded"
                       style={{ color:'#C8FF00', background:'rgba(200,255,0,0.08)', border:'1px solid rgba(200,255,0,0.2)' }}>
-                      Using MSRP
+                      {origMsrp && carAge > 0 ? 'Est. Current Value' : 'Using MSRP'}
                     </span>
                   )}
                 </div>
@@ -996,6 +1164,13 @@ export default function TCOCalculator() {
 
               <SliderInput label="Vehicle Purchase Price" value={price} onChange={setPrice}
                 min={5000} max={150000} step={500} prefix="$" />
+
+              {origMsrp && carAge > 0 && (
+                <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                  Auto-set to estimated {carAge}-year depreciated value — original MSRP was{' '}
+                  <span className="text-white">{formatCurrency(origMsrp)}</span>
+                </p>
+              )}
 
               <SliderInput label="Down Payment" value={safeDown}
                 onChange={v => setDownPayment(Math.min(v, price))}
@@ -1018,34 +1193,75 @@ export default function TCOCalculator() {
 
               {/* Annual Operating Costs */}
               <div>
-                <h2 className="font-display font-bold text-white text-lg mb-1">Annual Operating Costs</h2>
-                <p className="text-[var(--text-muted)] text-sm mb-1">
-                  National averages pre-filled{modelData ? (modelData.is_ev ? ' — adjusted for EV' : ' — adjusted for your vehicle\'s MPG') : ''}. Adjust to match your situation.
-                </p>
+                <div className="flex items-center justify-between mb-1">
+                  <h2 className="font-display font-bold text-white text-lg">Annual Operating Costs</h2>
+                  {resolvedState && (
+                    <button
+                      onClick={() => setCustomCosts(c => !c)}
+                      className="text-xs px-3 py-1 rounded-lg border transition-colors"
+                      style={{
+                        borderColor: customCosts ? 'var(--accent)' : 'var(--border)',
+                        color: customCosts ? 'var(--accent)' : 'var(--text-muted)',
+                      }}>
+                      {customCosts ? 'Use estimates' : 'Customize'}
+                    </button>
+                  )}
+                </div>
+                {!resolvedState ? (
+                  <p className="text-sm text-amber-400/80">
+                    Enter your location above to see state-specific cost estimates.
+                  </p>
+                ) : (
+                  <p className="text-[var(--text-muted)] text-sm">
+                    {customCosts
+                      ? 'Adjust any cost to match your situation.'
+                      : `Estimated for ${resolvedState}${modelData ? (modelData.is_ev ? ' · EV rates' : ` · ${modelData.mpg?.combined ?? 28} MPG`) : ''}.`}
+                  </p>
+                )}
               </div>
 
-              <div className="flex flex-col gap-1">
-                <SliderInput label="Insurance" value={annualInsurance} onChange={setAnnualInsurance}
-                  min={500} max={6000} step={100} prefix="$" suffix="/yr" />
-                <p className="text-[10px] text-[var(--text-muted)] pl-1">
-                  {selYear
-                    ? <>Based on est. current value of <span className="text-white">{formatCurrency(estimatedCarValue)}</span>{' '}
-                        ({carAge === 0 ? 'new' : `${carAge} yr${carAge !== 1 ? 's' : ''} depreciation`} from {formatCurrency(price)} MSRP
-                        {selMake && selModel ? ` · ${classifySegment(selMake, selModel)} segment` : ''})
-                      </>
-                    : <>Based on vehicle price — select a year for depreciation-adjusted estimate</>
-                  }
-                </p>
-              </div>
+              {resolvedState && !customCosts && (
+                <div className="rounded-xl border divide-y"
+                  style={{ borderColor:'var(--border)', background:'var(--surface)' }}>
+                  {[
+                    { label: 'Insurance',              value: annualInsurance,    note: `${resolvedState} rate · ${selMake || 'avg'} brand` },
+                    { label: modelData?.is_ev ? 'Charging' : 'Fuel', value: annualFuel, note: modelData?.is_ev ? `$${STATE_ELEC_RATES[resolvedState] ?? 0.16}/kWh` : `$${STATE_FUEL_PRICES[resolvedState] ?? 3.50}/gal` },
+                    { label: 'Maintenance & Repairs',  value: annualMaintenance,  note: modelData?.is_ev ? 'EV avg' : 'gas avg' },
+                    { label: 'Registration & Fees',    value: annualRegistration, note: `${resolvedState} DMV` },
+                  ].map(({ label, value, note }) => (
+                    <div key={label} className="flex items-center justify-between px-4 py-3">
+                      <div>
+                        <span className="text-sm text-white">{label}</span>
+                        <span className="ml-2 text-[10px] text-[var(--text-muted)]">{note}</span>
+                      </div>
+                      <span className="font-display font-semibold text-white text-sm">{formatCurrency(value)}/yr</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
-              <SliderInput label={modelData?.is_ev ? 'Charging (electricity)' : 'Fuel'} value={annualFuel} onChange={setAnnualFuel}
-                min={0} max={6000} step={50} prefix="$" suffix="/yr" />
-
-              <SliderInput label="Maintenance &amp; Repairs" value={annualMaintenance} onChange={setAnnualMaintenance}
-                min={0} max={5000} step={50} prefix="$" suffix="/yr" />
-
-              <SliderInput label="Registration &amp; Fees" value={annualRegistration} onChange={setAnnualRegistration}
-                min={0} max={2000} step={25} prefix="$" suffix="/yr" />
+              {resolvedState && customCosts && (
+                <>
+                  <div className="flex flex-col gap-1">
+                    <SliderInput label="Insurance" value={annualInsurance} onChange={setAnnualInsurance}
+                      min={500} max={6000} step={100} prefix="$" suffix="/yr" />
+                    <p className="text-[10px] text-[var(--text-muted)] pl-1">
+                      {selYear
+                        ? <>Est. current value <span className="text-white">{formatCurrency(estimatedCarValue)}</span>
+                            {' '}({carAge === 0 ? 'new' : `${carAge}yr depreciation`} · {classifySegment(selMake||'', selModel||'')} segment)
+                          </>
+                        : `${resolvedState} base rate · adjust for your coverage level`
+                      }
+                    </p>
+                  </div>
+                  <SliderInput label={modelData?.is_ev ? 'Charging (electricity)' : 'Fuel'} value={annualFuel} onChange={setAnnualFuel}
+                    min={0} max={6000} step={50} prefix="$" suffix="/yr" />
+                  <SliderInput label="Maintenance &amp; Repairs" value={annualMaintenance} onChange={setAnnualMaintenance}
+                    min={0} max={5000} step={50} prefix="$" suffix="/yr" />
+                  <SliderInput label="Registration &amp; Fees" value={annualRegistration} onChange={setAnnualRegistration}
+                    min={0} max={2000} step={25} prefix="$" suffix="/yr" />
+                </>
+              )}
             </div>
 
             {/* ── Results ── */}

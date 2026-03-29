@@ -4,6 +4,20 @@ import Footer from '../components/Footer'
 import PaywallModal from '../components/PaywallModal'
 import { useSubscription } from '../hooks/useSubscription'
 import { maintenanceItems, sellerQuestions } from '../data/checklistData'
+import VEHICLES from '../data/vehicles.json'
+
+const MAKES = Object.keys(VEHICLES).sort()
+function getModels(make) { return make ? Object.keys(VEHICLES[make] ?? {}).sort() : [] }
+function getAvailableYears(make, model) {
+  const d = VEHICLES[make]?.[model]
+  if (!d) return []
+  return Object.keys(d.trims_by_year).sort((a, b) => b - a)
+}
+function getTrims(make, model, year) {
+  const d = VEHICLES[make]?.[model]
+  if (!d || !year) return {}
+  return d.trims_by_year[year] ?? {}
+}
 
 const FREE_CHECKLIST_LIMIT = 5
 const LS_CHECKLIST_COUNT   = 'cashpedal_checklist_count'
@@ -33,7 +47,7 @@ export default function CarBuyingChecklist() {
   const [showPaywall, setShowPaywall] = useState(false)
 
   const [step, setStep] = useState('input') // input | checklist
-  const [vehicleInfo, setVehicleInfo] = useState({ year: '', make: '', model: '', mileage: 80000, price: '' })
+  const [vehicleInfo, setVehicleInfo] = useState({ year: '', make: '', model: '', trim: '', mileage: 80000, price: '' })
   const [statuses, setStatuses] = useState({})
   const [notes, setNotes] = useState({})
   const [activeTab, setActiveTab] = useState('maintenance')
@@ -108,40 +122,71 @@ export default function CarBuyingChecklist() {
               <h2 className="font-display font-bold text-white text-lg">Vehicle Info</h2>
               <div className="h-px bg-[var(--border)]" />
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="input-label">Year</label>
-                  <input
-                    type="number"
-                    value={vehicleInfo.year}
-                    onChange={e => setVehicleInfo(v => ({ ...v, year: e.target.value }))}
-                    placeholder="2018"
-                    min={1990} max={new Date().getFullYear()}
-                    className="input-field"
-                  />
-                </div>
-                <div>
-                  <label className="input-label">Make</label>
-                  <input
-                    type="text"
-                    value={vehicleInfo.make}
-                    onChange={e => setVehicleInfo(v => ({ ...v, make: e.target.value }))}
-                    placeholder="Toyota"
-                    className="input-field"
-                  />
-                </div>
+              {/* Make */}
+              <div>
+                <label className="input-label">Make</label>
+                <select
+                  className="input-field"
+                  value={vehicleInfo.make}
+                  onChange={e => setVehicleInfo(v => ({ ...v, make: e.target.value, model: '', year: '', trim: '' }))}
+                  required
+                >
+                  <option value="">Select make…</option>
+                  {MAKES.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
               </div>
 
-              <div>
-                <label className="input-label">Model</label>
-                <input
-                  type="text"
-                  value={vehicleInfo.model}
-                  onChange={e => setVehicleInfo(v => ({ ...v, model: e.target.value }))}
-                  placeholder="Camry"
-                  className="input-field"
-                />
-              </div>
+              {/* Model */}
+              {vehicleInfo.make && (
+                <div>
+                  <label className="input-label">Model</label>
+                  <select
+                    className="input-field"
+                    value={vehicleInfo.model}
+                    onChange={e => setVehicleInfo(v => ({ ...v, model: e.target.value, year: '', trim: '' }))}
+                    required
+                  >
+                    <option value="">Select model…</option>
+                    {getModels(vehicleInfo.make).map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {/* Year */}
+              {vehicleInfo.model && (
+                <div>
+                  <label className="input-label">Year</label>
+                  <select
+                    className="input-field"
+                    value={vehicleInfo.year}
+                    onChange={e => setVehicleInfo(v => ({ ...v, year: e.target.value, trim: '' }))}
+                    required
+                  >
+                    <option value="">Select year…</option>
+                    {getAvailableYears(vehicleInfo.make, vehicleInfo.model).map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Trim */}
+              {vehicleInfo.year && (
+                <div>
+                  <label className="input-label">Trim</label>
+                  <select
+                    className="input-field"
+                    value={vehicleInfo.trim}
+                    onChange={e => setVehicleInfo(v => ({ ...v, trim: e.target.value }))}
+                    required
+                  >
+                    <option value="">Select trim…</option>
+                    {Object.entries(getTrims(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year)).map(([t, price]) => (
+                      <option key={t} value={t}>{t} — ${price.toLocaleString()}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -194,7 +239,7 @@ export default function CarBuyingChecklist() {
     )
   }
 
-  const vehicleLabel = [vehicleInfo.year, vehicleInfo.make, vehicleInfo.model].filter(Boolean).join(' ') || 'Your Vehicle'
+  const vehicleLabel = [vehicleInfo.year, vehicleInfo.make, vehicleInfo.model, vehicleInfo.trim].filter(Boolean).join(' ') || 'Your Vehicle'
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">

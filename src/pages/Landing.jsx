@@ -101,7 +101,7 @@ export default function Landing() {
             className="pointer-events-none absolute inset-0"
             style={{
               background:
-                'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(200,255,0,0.07) 0%, transparent 70%)',
+                'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(138,43,226,0.15) 0%, transparent 70%)',
             }}
           />
 
@@ -126,7 +126,7 @@ export default function Landing() {
           </p>
 
           <div className="anim-3 mt-10 flex flex-col sm:flex-row items-center gap-4">
-            <Link to="/tco" className="btn-primary text-base px-8 py-4 shadow-[0_4px_20px_rgba(200,255,0,0.3)]">
+            <Link to="/tco" className="btn-primary text-base px-8 py-4 shadow-[0_4px_20px_rgba(255,184,0,0.3)]">
               Try the TCO Calculator →
             </Link>
             <a
@@ -158,7 +158,7 @@ export default function Landing() {
                   key={tool.to}
                   to={tool.to}
                   className={`card group hover:border-[var(--accent)] transition-all duration-200 flex flex-col gap-3 anim-${i + 2}`}
-                  style={{ background: 'rgba(200,255,0,0.03)' }}
+                  style={{ background: 'rgba(255,184,0,0.03)' }}
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-3xl">{tool.emoji}</span>
@@ -231,7 +231,7 @@ export default function Landing() {
             </p>
             <Link
               to="/tco"
-              className="btn-primary text-base px-8 py-4 shadow-[0_4px_20px_rgba(200,255,0,0.3)]"
+              className="btn-primary text-base px-8 py-4 shadow-[0_4px_20px_rgba(255,184,0,0.3)]"
             >
               Open the Calculator →
             </Link>

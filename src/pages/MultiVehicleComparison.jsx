@@ -80,7 +80,7 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
       {vehicle.isFromTCO && (
         <div className="flex items-center gap-1.5 -mt-2">
           <span className="text-[10px] font-semibold px-2 py-0.5 rounded"
-            style={{ color: 'var(--accent)', background: 'rgba(200,255,0,0.1)', border: '1px solid rgba(200,255,0,0.25)' }}>
+            style={{ color: 'var(--accent)', background: 'rgba(255,184,0,0.1)', border: '1px solid rgba(255,184,0,0.25)' }}>
             Imported from TCO
           </span>
         </div>
@@ -370,7 +370,7 @@ export default function MultiVehicleComparison() {
           {/* Import banner */}
           {importBanner && (
             <div className="mb-5 anim-2 flex items-center justify-between rounded-xl border px-4 py-3 text-sm"
-              style={{ borderColor: 'rgba(200,255,0,0.25)', background: 'rgba(200,255,0,0.05)' }}>
+              style={{ borderColor: 'rgba(255,184,0,0.25)', background: 'rgba(255,184,0,0.05)' }}>
               <span style={{ color: 'var(--accent)' }} className="font-semibold">
                 {importBanner.count} vehicle{importBanner.count !== 1 ? 's' : ''} imported from TCO Calculator
               </span>
@@ -392,9 +392,9 @@ export default function MultiVehicleComparison() {
                   onClick={() => toggleRankParam(p.key)}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all"
                   style={{
-                    borderColor: activeRankParams[p.key] ? 'rgba(200,255,0,0.5)' : 'var(--border)',
+                    borderColor: activeRankParams[p.key] ? 'rgba(255,184,0,0.5)' : 'var(--border)',
                     color:       activeRankParams[p.key] ? 'var(--accent)' : 'var(--text-muted)',
-                    background:  activeRankParams[p.key] ? 'rgba(200,255,0,0.06)' : 'transparent',
+                    background:  activeRankParams[p.key] ? 'rgba(255,184,0,0.06)' : 'transparent',
                   }}>
                   <span>{activeRankParams[p.key] ? '✓' : '+'}</span>
                   {p.label}

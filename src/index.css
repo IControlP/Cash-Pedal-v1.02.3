@@ -3,15 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --accent: #C8FF00;
-  --accent-dim: #a8d900;
-  --accent-muted: rgba(200, 255, 0, 0.12);
-  --bg: #080809;
-  --surface: #111113;
-  --surface-hover: #1a1a1e;
-  --border: #242428;
+  --accent: #FFB800;
+  --accent-dim: #e0a000;
+  --accent-muted: rgba(255, 184, 0, 0.12);
+  --bg: #0f0520;
+  --surface: #1a0a30;
+  --surface-hover: #231040;
+  --border: #3a1a5c;
   --text: #f0f0f0;
-  --text-muted: #888;
+  --text-muted: #a08cbf;
 }
 
 * {
@@ -62,7 +62,7 @@ body {
 .btn-primary:hover {
   background: var(--accent-dim);
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(200, 255, 0, 0.25);
+  box-shadow: 0 6px 24px rgba(255, 184, 0, 0.25);
 }
 
 .btn-primary:active {
@@ -103,7 +103,7 @@ body {
 
 .input-field {
   width: 100%;
-  background: #0d0d0f;
+  background: #120820;
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.75rem 1rem;
@@ -118,7 +118,7 @@ body {
 
 .input-field:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(200, 255, 0, 0.12);
+  box-shadow: 0 0 0 3px rgba(255, 184, 0, 0.12);
 }
 
 .input-field::placeholder {
@@ -161,7 +161,7 @@ input[type='range']::-webkit-slider-thumb {
 
 input[type='range']::-webkit-slider-thumb:hover {
   transform: scale(1.2);
-  box-shadow: 0 0 0 6px rgba(200, 255, 0, 0.2);
+  box-shadow: 0 0 0 6px rgba(255, 184, 0, 0.2);
 }
 
 input[type='range']::-moz-range-thumb {
@@ -227,4 +227,4 @@ select.input-field {
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #3a3a3e; }
+::-webkit-scrollbar-thumb:hover { background: #5a2a80; }

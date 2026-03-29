@@ -219,7 +219,7 @@ export default function CarSurvey() {
           </div>
 
           {/* Top match card */}
-          <div className="card border-[var(--accent)] mb-6 anim-3" style={{ background: 'rgba(200,255,0,0.04)' }}>
+          <div className="card border-[var(--accent)] mb-6 anim-3" style={{ background: 'rgba(255,184,0,0.04)' }}>
             <p className="text-[var(--text-muted)] text-sm leading-relaxed mb-6">{topMatch?.profile.description}</p>
 
             <div className="grid sm:grid-cols-2 gap-6">

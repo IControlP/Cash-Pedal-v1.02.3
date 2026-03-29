@@ -272,7 +272,7 @@ export default function SalaryCalculator() {
                 <div
                   key={label}
                   className={`card transition-all ${highlight ? 'border-[var(--accent)]' : 'hover:border-[#3a3a3e]'}`}
-                  style={highlight ? { background: 'rgba(200,255,0,0.04)' } : {}}
+                  style={highlight ? { background: 'rgba(255,184,0,0.04)' } : {}}
                 >
                   <div className="flex items-start justify-between mb-1">
                     <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: highlight ? 'var(--accent)' : 'var(--text-muted)' }}>

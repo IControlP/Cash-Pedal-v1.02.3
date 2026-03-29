@@ -145,7 +145,7 @@ export default function Subscribe() {
           {/* ── Payment success banner ── */}
           {success && (
             <div className="anim-2 mb-8 rounded-xl border p-5"
-              style={{ borderColor: 'rgba(200,255,0,0.3)', background: 'rgba(200,255,0,0.06)' }}>
+              style={{ borderColor: 'rgba(255,184,0,0.3)', background: 'rgba(255,184,0,0.06)' }}>
               {verifying ? (
                 <div className="flex items-center gap-3">
                   <div className="w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin shrink-0" />
@@ -283,7 +283,7 @@ export default function Subscribe() {
                 {cancelErr && <p className="text-xs text-red-400">{cancelErr}</p>}
                 {cancelMsg && (
                   <div className="rounded-lg border p-3 text-sm"
-                    style={{ borderColor: 'rgba(200,255,0,0.2)', background: 'rgba(200,255,0,0.04)' }}>
+                    style={{ borderColor: 'rgba(255,184,0,0.2)', background: 'rgba(255,184,0,0.04)' }}>
                     <p className="text-[var(--accent)] font-semibold mb-0.5">Subscription canceled</p>
                     <p className="text-[var(--text-muted)]">{cancelMsg}</p>
                   </div>

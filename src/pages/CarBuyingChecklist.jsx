@@ -265,7 +265,7 @@ export default function CarBuyingChecklist() {
           {/* Negotiation leverage banner */}
           <div
             className="rounded-xl p-5 mb-6 border"
-            style={{ background: 'rgba(200,255,0,0.04)', borderColor: 'rgba(200,255,0,0.2)' }}
+            style={{ background: 'rgba(255,184,0,0.04)', borderColor: 'rgba(255,184,0,0.2)' }}
           >
             <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)] mb-3">Negotiation Leverage</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

@@ -8,6 +8,7 @@ import CarBuyingChecklist from './pages/CarBuyingChecklist'
 import WheelZard from './pages/WheelZard'
 import Resources from './pages/Resources'
 import About from './pages/About'
+import Subscribe from './pages/Subscribe'
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/wheelzard" element={<WheelZard />} />
         <Route path="/resources" element={<Resources />} />
         <Route path="/about" element={<About />} />
+        <Route path="/subscribe" element={<Subscribe />} />
       </Routes>
     </BrowserRouter>
   )

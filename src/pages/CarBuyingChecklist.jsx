@@ -1,7 +1,12 @@
 import { useState, useMemo } from 'react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import PaywallModal from '../components/PaywallModal'
+import { useSubscription } from '../hooks/useSubscription'
 import { maintenanceItems, sellerQuestions } from '../data/checklistData'
+
+const FREE_CHECKLIST_LIMIT = 5
+const LS_CHECKLIST_COUNT   = 'cashpedal_checklist_count'
 
 function fmt(n) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
@@ -20,6 +25,13 @@ const importanceBadge = {
 }
 
 export default function CarBuyingChecklist() {
+  const { isSubscribed } = useSubscription()
+
+  const [checklistCount, setChecklistCount] = useState(() =>
+    parseInt(localStorage.getItem(LS_CHECKLIST_COUNT) || '0', 10)
+  )
+  const [showPaywall, setShowPaywall] = useState(false)
+
   const [step, setStep] = useState('input') // input | checklist
   const [vehicleInfo, setVehicleInfo] = useState({ year: '', make: '', model: '', mileage: 80000, price: '' })
   const [statuses, setStatuses] = useState({})
@@ -59,12 +71,27 @@ export default function CarBuyingChecklist() {
 
   function handleStart(e) {
     e.preventDefault()
+    if (!isSubscribed && checklistCount >= FREE_CHECKLIST_LIMIT) {
+      setShowPaywall(true)
+      return
+    }
+    const next = checklistCount + 1
+    setChecklistCount(next)
+    localStorage.setItem(LS_CHECKLIST_COUNT, String(next))
     setStep('checklist')
   }
 
   if (step === 'input') {
     return (
       <div className="min-h-screen flex flex-col bg-[var(--bg)]">
+        {showPaywall && (
+          <PaywallModal
+            feature="checklist"
+            usedCount={FREE_CHECKLIST_LIMIT}
+            cancelPath="/checklist"
+            onUnlocked={() => setShowPaywall(false)}
+          />
+        )}
         <Navbar />
         <main className="flex-1 flex items-center justify-center px-4 sm:px-6 pt-20 pb-16">
           <div className="max-w-xl w-full">
@@ -150,6 +177,15 @@ export default function CarBuyingChecklist() {
               <button type="submit" className="btn-primary justify-center py-4">
                 Generate My Checklist →
               </button>
+
+              {!isSubscribed && (
+                <p className="text-center text-[var(--text-muted)] text-xs mt-1">
+                  {Math.max(0, FREE_CHECKLIST_LIMIT - checklistCount)} of {FREE_CHECKLIST_LIMIT} free checklists remaining
+                  {checklistCount >= FREE_CHECKLIST_LIMIT && (
+                    <> · <a href="/subscribe" className="text-[var(--accent)] hover:underline">Subscribe for unlimited</a></>
+                  )}
+                </p>
+              )}
             </form>
           </div>
         </main>

@@ -1,7 +1,10 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import ResultCard from '../components/ResultCard'
+import PaywallModal from '../components/PaywallModal'
+import { useSubscription } from '../hooks/useSubscription'
 import VEHICLES from '../data/vehicles.json'
 
 // ── Enhanced Depreciation Model ───────────────────────
@@ -795,6 +798,10 @@ const LS_SESSION_ID       = 'cashpedal_session_id'
 const LS_CALC_COUNT       = 'cashpedal_calculation_count'
 const LS_USER_SUBMITTED   = 'cashpedal_user_data_submitted'
 
+// ── Paywall constants ─────────────────────────────────
+const FREE_DETAILED_LIMIT  = 3
+const LS_DETAILED_COUNT    = 'cashpedal_detailed_calc_count'
+
 function getSessionId() {
   let sid = localStorage.getItem(LS_SESSION_ID)
   if (!sid) {
@@ -1149,6 +1156,9 @@ const ownershipOptions = [
 
 // ── Main page ─────────────────────────────────────────
 export default function TCOCalculator() {
+  const navigate = useNavigate()
+  const { isSubscribed } = useSubscription()
+
   // ── Terms acceptance ──
   const [termsAccepted, setTermsAccepted] = useState(() =>
     localStorage.getItem(LS_TERMS_ACCEPTED) === 'true' &&
@@ -1164,6 +1174,32 @@ export default function TCOCalculator() {
   )
   const [showUserDataModal, setShowUserDataModal] = useState(false)
   const countIncrementedRef = useRef(false)
+
+  // ── Detailed-calc paywall ──
+  const [detailedCalcCount, setDetailedCalcCount] = useState(() =>
+    parseInt(localStorage.getItem(LS_DETAILED_COUNT) || '0', 10)
+  )
+  const [showPaywall,  setShowPaywall]  = useState(false)
+  const detailedCountedRef = useRef(false) // don't double-count within one session
+
+  // Returns true if the action is allowed; false if blocked (paywall shown)
+  const checkDetailedLimit = useCallback(() => {
+    if (isSubscribed) return true
+    if (detailedCountedRef.current) {
+      // Already counted this session — just check if they're still under limit
+      return detailedCalcCount <= FREE_DETAILED_LIMIT
+    }
+    // Haven't counted this session yet
+    const next = detailedCalcCount + 1
+    if (next > FREE_DETAILED_LIMIT) {
+      setShowPaywall(true)
+      return false
+    }
+    detailedCountedRef.current = true
+    setDetailedCalcCount(next)
+    localStorage.setItem(LS_DETAILED_COUNT, String(next))
+    return true
+  }, [isSubscribed, detailedCalcCount])
 
   // Increment visit count once per page load (after terms accepted)
   useEffect(() => {
@@ -1275,6 +1311,8 @@ export default function TCOCalculator() {
     if (level === 'model') { setSelModel(value); setSelYear(''); setSelTrim(''); setOrigMsrp(null) }
     if (level === 'year')  { setSelYear(value); setSelTrim(''); setOrigMsrp(null) }
     if (level === 'trim') {
+      // Selecting a specific trim triggers a detailed calc — check limit
+      if (!checkDetailedLimit()) return
       setSelTrim(value)
       if (selMake && selModel && selYear) {
         const t = getTrims(selMake, selModel, selYear)
@@ -1287,7 +1325,7 @@ export default function TCOCalculator() {
         }
       }
     }
-  }, [selMake, selModel, selYear])
+  }, [selMake, selModel, selYear, checkDetailedLimit])
 
   const handleClear = useCallback(() => {
     setSelMake(''); setSelModel(''); setSelYear(''); setSelTrim(''); setOrigMsrp(null)
@@ -1314,6 +1352,62 @@ export default function TCOCalculator() {
   const catInfoForRender = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
   const effIsEV = modelData ? modelData.is_ev : (catInfoForRender?.isEV ?? false)
 
+  // Whether the detailed results are currently blocked by the paywall
+  const isDetailBlocked = !isSubscribed && detailedCalcCount > FREE_DETAILED_LIMIT
+
+  // Save this TCO result to localStorage so the comparison page can import it
+  function handleAddToComparison() {
+    const futureAgeYrs = carAge + ownershipYears
+    const futureValue  = origMsrp
+      ? estimateCurrentValue(origMsrp, selMake || null, selModel || null, futureAgeYrs)
+      : null
+    const retentionPct = origMsrp && futureValue != null
+      ? Math.round((futureValue / origMsrp) * 100)
+      : null
+
+    const entry = {
+      id:                crypto.randomUUID(),
+      name:              selMake && selModel
+        ? [selYear, selMake, selModel, selTrim].filter(Boolean).join(' ')
+        : 'Custom Vehicle',
+      addedAt:           new Date().toISOString(),
+      // Loan inputs
+      price,
+      downPayment:       safeDown,
+      loanTerm,
+      rate,
+      ownershipYears,
+      // Loan results
+      monthlyPayment:    results.monthlyPayment,
+      totalInterest:     results.totalInterestPaid,
+      totalCostOfLoan:   results.totalCostOfLoan,
+      trueAnnualCost:    results.trueAnnualCost,
+      // Operating costs
+      annualInsurance,
+      annualFuel,
+      annualMaintenance,
+      annualRegistration,
+      totalAnnualCost,
+      totalOwnershipCost: totalAnnualCost * ownershipYears,
+      // Vehicle identity
+      make: selMake, model: selModel, year: selYear, trim: selTrim,
+      // Specs (may be null for category-only or no-picker entries)
+      mpgCombined:    modelData?.mpg?.combined ?? null,
+      cargoSqFt:      modelData?.specs?.cargo_cu_ft ?? null,
+      seats:          modelData?.specs?.seats ?? null,
+      isEV:           effIsEV,
+      // Value retention
+      futureValue,
+      valueRetentionPct: retentionPct,
+    }
+
+    const existing = JSON.parse(localStorage.getItem('cashpedal_tco_for_comparison') || '[]')
+    // Keep at most 5 entries (max comparison slots)
+    const updated = [...existing.filter(e => e.id !== entry.id), entry].slice(-5)
+    localStorage.setItem('cashpedal_tco_for_comparison', JSON.stringify(updated))
+    navigate('/compare')
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">
       {!termsAccepted && <TermsGate onAccepted={() => setTermsAccepted(true)} />}
@@ -1321,6 +1415,14 @@ export default function TCOCalculator() {
         <UserDataModal
           calcCount={calcCount}
           onClose={() => setShowUserDataModal(false)}
+        />
+      )}
+      {showPaywall && (
+        <PaywallModal
+          feature="tco"
+          usedCount={FREE_DETAILED_LIMIT}
+          cancelPath="/tco"
+          onUnlocked={() => setShowPaywall(false)}
         />
       )}
       <Navbar />
@@ -1481,7 +1583,10 @@ export default function TCOCalculator() {
                   {resolvedState && (
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => setDetailedMode(d => !d)}
+                        onClick={() => {
+                          if (!detailedMode && !checkDetailedLimit()) return
+                          setDetailedMode(d => !d)
+                        }}
                         className="text-xs px-3 py-1 rounded-lg border transition-colors"
                         style={{
                           borderColor: detailedMode ? 'rgba(200,255,0,0.5)' : 'var(--border)',
@@ -1833,6 +1938,20 @@ export default function TCOCalculator() {
                 <span className="text-white font-semibold">all-in annual cost is {formatCurrency(totalAnnualCost)}</span>{' '}
                 — or {formatCurrency(totalAnnualCost * ownershipYears)} over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}.
               </div>
+
+              {/* Add to Comparison */}
+              <button
+                onClick={handleAddToComparison}
+                className="btn-primary w-full text-sm flex items-center justify-center gap-2">
+                <span>＋</span> Add to Multi-Vehicle Comparison
+              </button>
+              {!isSubscribed && detailedCalcCount > 0 && (
+                <p className="text-center text-[var(--text-muted)] text-xs">
+                  {Math.max(0, FREE_DETAILED_LIMIT - detailedCalcCount)} detailed {FREE_DETAILED_LIMIT - detailedCalcCount === 1 ? 'analysis' : 'analyses'} remaining free
+                  {' · '}
+                  <a href="/subscribe" className="text-[var(--accent)] hover:underline">Subscribe for unlimited</a>
+                </p>
+              )}
             </div>
 
           </div>

@@ -1095,6 +1095,21 @@ function UserDataModal({ calcCount, onClose }) {
   )
 }
 
+// ── Vehicle categories (used when no specific make/model is selected) ─────
+// Each entry provides a SVG silhouette type, maintenance segment, and default MPG
+const VEHICLE_CATEGORIES = [
+  { value: 'sedan',    label: 'Sedan',                svgType: 'sedan',     segment: 'sedan',   mpg: 30,  mpge: null, isEV: false },
+  { value: 'compact',  label: 'Compact / Crossover',  svgType: 'sedan',     segment: 'compact', mpg: 32,  mpge: null, isEV: false },
+  { value: 'suv',      label: 'SUV',                  svgType: 'suv',       segment: 'suv',     mpg: 25,  mpge: null, isEV: false },
+  { value: 'suv_large',label: 'Large SUV',            svgType: 'suv_large', segment: 'suv',     mpg: 18,  mpge: null, isEV: false },
+  { value: 'truck',    label: 'Truck / Pickup',       svgType: 'truck',     segment: 'truck',   mpg: 20,  mpge: null, isEV: false },
+  { value: 'minivan',  label: 'Minivan',              svgType: 'minivan',   segment: 'sedan',   mpg: 22,  mpge: null, isEV: false },
+  { value: 'sports',   label: 'Sports Car',           svgType: 'sports',    segment: 'sports',  mpg: 25,  mpge: null, isEV: false },
+  { value: 'luxury',   label: 'Luxury',               svgType: 'sedan',     segment: 'luxury',  mpg: 22,  mpge: null, isEV: false },
+  { value: 'economy',  label: 'Economy / Subcompact', svgType: 'sedan',     segment: 'economy', mpg: 36,  mpge: null, isEV: false },
+  { value: 'electric', label: 'Electric (EV)',        svgType: 'sedan',     segment: 'electric',mpg: null,mpge: 100,  isEV: true  },
+]
+
 const loanTermOptions = [
   { value: 24, label: '24 months (2 years)' },
   { value: 36, label: '36 months (3 years)' },
@@ -1170,7 +1185,8 @@ export default function TCOCalculator() {
   const [customCosts,    setCustomCosts]    = useState(false)
   // Detailed estimates mode
   const [detailedMode,   setDetailedMode]   = useState(false)
-  const [annualMileage,  setAnnualMileage]  = useState(15000)
+  const [annualMileage,  setAnnualMileage]  = useState(12000)
+  const [vehicleCategory,setVehicleCategory]= useState('')      // used when no make/model selected
   const [customFuelPrice,setCustomFuelPrice]= useState('')      // empty = use state avg
   const [multiCarPolicy, setMultiCarPolicy] = useState(false)
   // Track original MSRP separately from price (which may be depreciation-adjusted)
@@ -1193,19 +1209,24 @@ export default function TCOCalculator() {
         setAnnualMaintenance(modelData.is_ev ? 700 : 1200)
       }
     } else {
-      setAnnualFuel(computeAnnualFuel(false, 28, null, resolvedState, annualMileage, fuelOverride))
+      const catInfo = VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)
+      const catIsEV = catInfo?.isEV ?? false
+      const catMpg  = catInfo?.mpg  ?? 28
+      const catMpge = catInfo?.mpge ?? null
+      setAnnualFuel(computeAnnualFuel(catIsEV, catMpg, catMpge, resolvedState, annualMileage, fuelOverride))
       if (detailedMode) {
-        const services = generateMaintenanceServices(false, annualMileage, 'sedan', '')
+        const catSeg = catInfo?.segment ?? 'sedan'
+        const services = generateMaintenanceServices(catIsEV, annualMileage, catSeg, '')
         setAnnualMaintenance(services.reduce((s, x) => s + x.annual, 0))
       } else {
-        setAnnualMaintenance(1200)
+        setAnnualMaintenance(catIsEV ? 700 : 1200)
       }
     }
     const currentVal = (selYear && (selMake || selModel))
       ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)))
       : price
     setAnnualRegistration(computeAnnualRegistration(resolvedState, currentVal))
-  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLocationInput = useCallback((val) => {
     setLocationInput(val)
@@ -1224,7 +1245,7 @@ export default function TCOCalculator() {
   }, [])
 
   const handlePickerChange = useCallback((level, value) => {
-    if (level === 'make')  { setSelMake(value); setSelModel(''); setSelYear(''); setSelTrim(''); setOrigMsrp(null) }
+    if (level === 'make')  { setSelMake(value); setSelModel(''); setSelYear(''); setSelTrim(''); setOrigMsrp(null); setVehicleCategory('') }
     if (level === 'model') { setSelModel(value); setSelYear(''); setSelTrim(''); setOrigMsrp(null) }
     if (level === 'year')  { setSelYear(value); setSelTrim(''); setOrigMsrp(null) }
     if (level === 'trim') {
@@ -1346,6 +1367,34 @@ export default function TCOCalculator() {
                   make={selMake} model={selModel} year={selYear} trim={selTrim}
                   onChange={handlePickerChange} onClear={handleClear}
                 />
+
+                {/* Category picker — shown only when no make is selected */}
+                {!selMake && (
+                  <div className="mt-4 pt-4 border-t border-[var(--border)] flex flex-col gap-2">
+                    <label className="input-label">
+                      No specific vehicle? Pick a category for default estimates
+                    </label>
+                    <select
+                      className="input-field"
+                      value={vehicleCategory}
+                      onChange={e => setVehicleCategory(e.target.value)}
+                    >
+                      <option value="">Select category…</option>
+                      {VEHICLE_CATEGORIES.map(c => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
+                    {vehicleCategory && (() => {
+                      const cat = VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)
+                      return (
+                        <p className="text-[10px] text-[var(--text-muted)]">
+                          Using {cat.label} defaults —{' '}
+                          {cat.isEV ? '100 MPGe (EV avg)' : `${cat.mpg} MPG avg`}
+                        </p>
+                      )
+                    })()}
+                  </div>
+                )}
               </div>
 
               <div className="h-px bg-[var(--border)]" />
@@ -1431,12 +1480,26 @@ export default function TCOCalculator() {
                   <p className="text-[var(--text-muted)] text-sm">
                     {customCosts
                       ? 'Adjust any cost to match your situation.'
-                      : detailedMode
-                        ? `Detailed estimates for ${resolvedState} · ${annualMileage.toLocaleString()} mi/yr${modelData ? (modelData.is_ev ? ' · EV' : ` · ${modelData.mpg?.combined ?? 28} MPG`) : ''}.`
-                        : `Estimated for ${resolvedState}${modelData ? (modelData.is_ev ? ' · EV rates' : ` · ${modelData.mpg?.combined ?? 28} MPG`) : ''}.`}
+                      : (() => {
+                          const catInfo = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
+                          const effIsEV = modelData ? modelData.is_ev : (catInfo?.isEV ?? false)
+                          const effMpg  = modelData ? (modelData.mpg?.combined ?? 28) : (catInfo?.mpg ?? 28)
+                          const mpgNote = effIsEV ? ' · EV' : ` · ${effMpg} MPG${catInfo && !modelData ? ' avg' : ''}`
+                          return `${detailedMode ? 'Detailed estimates' : 'Estimated'} for ${resolvedState} · ${annualMileage.toLocaleString()} mi/yr${mpgNote}.`
+                        })()}
                   </p>
                 )}
               </div>
+
+              {/* Annual miles slider — always visible when location is set */}
+              {resolvedState && !customCosts && (
+                <SliderInput
+                  label="Annual Miles Driven"
+                  value={annualMileage}
+                  onChange={setAnnualMileage}
+                  min={3000} max={30000} step={500} suffix=" mi"
+                />
+              )}
 
               {/* Detailed inputs panel */}
               {resolvedState && detailedMode && !customCosts && (
@@ -1445,14 +1508,6 @@ export default function TCOCalculator() {
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)]">
                     Detailed Parameters
                   </p>
-
-                  {/* Annual mileage */}
-                  <SliderInput
-                    label="Annual Miles Driven"
-                    value={annualMileage}
-                    onChange={setAnnualMileage}
-                    min={3000} max={30000} step={500} suffix=" mi"
-                  />
 
                   {/* Custom fuel/electricity price */}
                   <div className="flex flex-col gap-2">
@@ -1511,21 +1566,25 @@ export default function TCOCalculator() {
               )}
 
               {resolvedState && !customCosts && (() => {
-                const fuelNote = modelData?.is_ev
+                const catInfo = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
+                const effIsEV = modelData ? modelData.is_ev : (catInfo?.isEV ?? false)
+                const fuelNote = effIsEV
                   ? `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${STATE_ELEC_RATES[resolvedState] ?? 0.16}`}/kWh`
                   : `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${STATE_FUEL_PRICES[resolvedState] ?? 3.50}`}/gal`
                 const insNote = `${resolvedState} · ${selMake || 'avg'}${detailedMode && multiCarPolicy ? ' · multi-car' : ''}`
                 const maintNote = detailedMode
-                  ? (modelData?.is_ev ? 'EV · itemized' : 'gas · itemized')
-                  : (modelData?.is_ev ? 'EV avg' : 'gas avg')
-                const maintenanceSegment = classifySegment(selMake||'', selModel||'')
+                  ? (effIsEV ? 'EV · itemized' : 'gas · itemized')
+                  : (effIsEV ? 'EV avg' : 'gas avg')
+                const maintenanceSegment = selMake
+                  ? classifySegment(selMake, selModel||'')
+                  : (catInfo?.segment ?? 'sedan')
 
                 return (
                   <div className="rounded-xl border divide-y"
                     style={{ borderColor:'var(--border)', background:'var(--surface)' }}>
                     {[
                       { key: 'ins',  label: 'Insurance',                                   value: annualInsurance,    note: insNote },
-                      { key: 'fuel', label: modelData?.is_ev ? 'Charging' : 'Fuel',        value: annualFuel,         note: fuelNote },
+                      { key: 'fuel', label: effIsEV ? 'Charging' : 'Fuel',                  value: annualFuel,         note: fuelNote },
                       { key: 'maint',label: 'Maintenance & Repairs',                        value: annualMaintenance,  note: maintNote },
                       { key: 'reg',  label: 'Registration & Fees',                          value: annualRegistration, note: `${resolvedState} DMV` },
                     ].map(({ key, label, value, note }) => (
@@ -1539,7 +1598,7 @@ export default function TCOCalculator() {
                         </div>
                         {key === 'maint' && detailedMode && (
                           <MaintenanceBreakdown
-                            isEV={modelData?.is_ev ?? false}
+                            isEV={effIsEV}
                             annualMileage={annualMileage}
                             segment={maintenanceSegment}
                             make={selMake}
@@ -1592,7 +1651,7 @@ export default function TCOCalculator() {
             <div className="flex flex-col gap-4 lg:sticky lg:top-20">
 
               {/* Car visual + specs */}
-              {selModel && modelData && (
+              {selModel && modelData ? (
                 <div className="anim-3 flex flex-col gap-4">
                   <CarVisual
                     make={selMake} model={selModel}
@@ -1600,7 +1659,17 @@ export default function TCOCalculator() {
                   />
                   <SpecsPanel specs={modelData.specs} mpg={modelData.mpg} isEV={modelData.is_ev} />
                 </div>
-              )}
+              ) : vehicleCategory && (() => {
+                const cat = VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)
+                return (
+                  <div className="anim-3">
+                    <CarVisual
+                      make="" model={cat.label}
+                      carType={cat.svgType} isEV={cat.isEV}
+                    />
+                  </div>
+                )
+              })()}
 
               <div className="anim-4">
                 <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
@@ -1625,7 +1694,7 @@ export default function TCOCalculator() {
                   {[
                     { label: 'Loan payments',          value: results.trueAnnualCost },
                     { label: 'Insurance',              value: annualInsurance },
-                    { label: modelData?.is_ev ? 'Charging' : 'Fuel', value: annualFuel },
+                    { label: (modelData?.is_ev || VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.isEV) ? 'Charging' : 'Fuel', value: annualFuel },
                     { label: 'Maintenance & repairs',  value: annualMaintenance },
                     { label: 'Registration & fees',    value: annualRegistration },
                   ].map(({ label, value }) => (

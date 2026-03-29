@@ -177,7 +177,11 @@ export default function CarBuyingChecklist() {
                   <select
                     className="input-field"
                     value={vehicleInfo.trim}
-                    onChange={e => setVehicleInfo(v => ({ ...v, trim: e.target.value }))}
+                    onChange={e => {
+                      const t = e.target.value
+                      const msrp = getTrims(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year)[t] ?? ''
+                      setVehicleInfo(v => ({ ...v, trim: t, price: msrp ? String(msrp) : v.price }))
+                    }}
                     required
                   >
                     <option value="">Select trim…</option>
@@ -205,7 +209,7 @@ export default function CarBuyingChecklist() {
               </div>
 
               <div>
-                <label className="input-label">Asking Price (optional)</label>
+                <label className="input-label">Asking Price</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
                   <input

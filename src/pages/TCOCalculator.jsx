@@ -344,6 +344,24 @@ function resolveLocation(input) {
   return null
 }
 
+// Public DC fast-charging rate ≈ 2.2× home residential (floor $0.29, cap $0.55)
+function getPublicChargingRate(state) {
+  const home = STATE_ELEC_RATES[state] ?? 0.16
+  return Math.round(Math.max(0.29, Math.min(0.55, home * 2.2)) * 100) / 100
+}
+
+// Blended effective rate based on charging style
+// 'home'   = 100 % residential rate
+// 'mixed'  = 80 % home / 20 % public DCFC
+// 'public' = 100 % public DCFC
+function getEffectiveElecRate(state, style) {
+  const home = STATE_ELEC_RATES[state] ?? 0.16
+  const pub  = getPublicChargingRate(state)
+  if (style === 'public') return pub
+  if (style === 'mixed')  return Math.round((home * 0.80 + pub * 0.20) * 1000) / 1000
+  return home
+}
+
 function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 15000, fuelPriceOverride = null) {
   const KWH_PER_GAL = 33.7
   if (isEV) {
@@ -1187,6 +1205,7 @@ export default function TCOCalculator() {
   const [detailedMode,   setDetailedMode]   = useState(false)
   const [annualMileage,  setAnnualMileage]  = useState(12000)
   const [vehicleCategory,setVehicleCategory]= useState('')      // used when no make/model selected
+  const [chargingStyle,  setChargingStyle]  = useState('home')  // 'home' | 'mixed' | 'public'
   const [customFuelPrice,setCustomFuelPrice]= useState('')      // empty = use state avg
   const [multiCarPolicy, setMultiCarPolicy] = useState(false)
   // Track original MSRP separately from price (which may be depreciation-adjusted)
@@ -1198,8 +1217,12 @@ export default function TCOCalculator() {
   useEffect(() => {
     if (customCosts) return
     setAnnualInsurance(estimateInsurance(price, selMake||null, selModel||null, selYear||null, resolvedState||null, detailedMode && multiCarPolicy))
-    const fuelOverride = detailedMode && customFuelPrice !== '' ? parseFloat(customFuelPrice) : null
+    const customOverride = detailedMode && customFuelPrice !== '' ? parseFloat(customFuelPrice) : null
     if (modelData) {
+      // For EVs: use charging-style blended rate unless user has manually overridden it
+      const fuelOverride = (modelData.is_ev && customOverride === null)
+        ? getEffectiveElecRate(resolvedState, chargingStyle)
+        : customOverride
       setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride))
       if (detailedMode) {
         const seg = classifySegment(selMake||'', selModel||'')
@@ -1213,6 +1236,9 @@ export default function TCOCalculator() {
       const catIsEV = catInfo?.isEV ?? false
       const catMpg  = catInfo?.mpg  ?? 28
       const catMpge = catInfo?.mpge ?? null
+      const fuelOverride = (catIsEV && customOverride === null)
+        ? getEffectiveElecRate(resolvedState, chargingStyle)
+        : customOverride
       setAnnualFuel(computeAnnualFuel(catIsEV, catMpg, catMpge, resolvedState, annualMileage, fuelOverride))
       if (detailedMode) {
         const catSeg = catInfo?.segment ?? 'sedan'
@@ -1226,7 +1252,7 @@ export default function TCOCalculator() {
       ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)))
       : price
     setAnnualRegistration(computeAnnualRegistration(resolvedState, currentVal))
-  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLocationInput = useCallback((val) => {
     setLocationInput(val)
@@ -1283,6 +1309,10 @@ export default function TCOCalculator() {
 
   const safeDown = Math.min(downPayment, price)
   const usingMSRP = !!(selMake && selModel && selYear && selTrim)
+
+  // Derived EV flag and charging rate — used across the render
+  const catInfoForRender = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
+  const effIsEV = modelData ? modelData.is_ev : (catInfoForRender?.isEV ?? false)
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">
@@ -1501,6 +1531,79 @@ export default function TCOCalculator() {
                 />
               )}
 
+              {/* EV Charging Setup — shown whenever an EV or electric category is active */}
+              {resolvedState && !customCosts && effIsEV && (
+                <div className="rounded-xl border p-4 flex flex-col gap-4"
+                  style={{ borderColor: 'rgba(96,200,255,0.25)', background: 'rgba(96,200,255,0.03)' }}>
+
+                  {/* Header */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest"
+                      style={{ color: '#60c8ff' }}>⚡ EV Charging Setup</span>
+                  </div>
+
+                  {/* Rate display — home vs public */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-lg px-3 py-2.5" style={{ background: 'rgba(0,0,0,0.3)' }}>
+                      <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Home rate · {resolvedState}</p>
+                      <p className="text-white font-bold text-sm mt-0.5">
+                        ${(STATE_ELEC_RATES[resolvedState] ?? 0.16).toFixed(2)}<span className="text-[var(--text-muted)] font-normal text-xs">/kWh</span>
+                      </p>
+                      <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Residential avg</p>
+                    </div>
+                    <div className="rounded-lg px-3 py-2.5" style={{ background: 'rgba(0,0,0,0.3)' }}>
+                      <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Public DCFC · {resolvedState}</p>
+                      <p className="text-white font-bold text-sm mt-0.5">
+                        ${getPublicChargingRate(resolvedState).toFixed(2)}<span className="text-[var(--text-muted)] font-normal text-xs">/kWh</span>
+                      </p>
+                      <p className="text-[10px] text-[var(--text-muted)] mt-0.5">DC fast-charge est.</p>
+                    </div>
+                  </div>
+
+                  {/* Charging style selector */}
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs font-semibold text-[var(--text-muted)]">Where do you primarily charge?</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { value: 'home',   label: '100% Home',     sub: 'Garage / driveway' },
+                        { value: 'mixed',  label: 'Home + Public', sub: '~80% home / 20% DCFC' },
+                        { value: 'public', label: 'All Public',    sub: 'No home charger' },
+                      ].map(opt => (
+                        <button key={opt.value}
+                          onClick={() => setChargingStyle(opt.value)}
+                          className="rounded-lg border px-2 py-2.5 text-center transition-all"
+                          style={{
+                            borderColor: chargingStyle === opt.value ? 'rgba(96,200,255,0.6)' : 'var(--border)',
+                            background:  chargingStyle === opt.value ? 'rgba(96,200,255,0.12)' : 'transparent',
+                          }}>
+                          <p className="text-xs font-semibold"
+                            style={{ color: chargingStyle === opt.value ? '#60c8ff' : 'white' }}>
+                            {opt.label}
+                          </p>
+                          <p className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-tight">{opt.sub}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Effective blended rate */}
+                  <div className="flex items-center justify-between rounded-lg px-3 py-2"
+                    style={{ background: 'rgba(96,200,255,0.07)' }}>
+                    <div>
+                      <span className="text-xs text-[var(--text-muted)]">Effective charging rate</span>
+                      {chargingStyle === 'mixed' && (
+                        <span className="ml-2 text-[10px] text-[var(--text-muted)]">
+                          (${(STATE_ELEC_RATES[resolvedState] ?? 0.16).toFixed(2)} × 80% + ${getPublicChargingRate(resolvedState).toFixed(2)} × 20%)
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-sm font-bold" style={{ color: '#60c8ff' }}>
+                      ${getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)}/kWh
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Detailed inputs panel */}
               {resolvedState && detailedMode && !customCosts && (
                 <div className="rounded-xl border p-4 flex flex-col gap-5"
@@ -1512,7 +1615,7 @@ export default function TCOCalculator() {
                   {/* Custom fuel/electricity price */}
                   <div className="flex flex-col gap-2">
                     <label className="input-label">
-                      {modelData?.is_ev ? 'Electricity Rate ($/kWh)' : 'Fuel Price ($/gallon)'}
+                      {effIsEV ? 'Override Electricity Rate ($/kWh)' : 'Fuel Price ($/gallon)'}
                     </label>
                     <div className="flex items-center gap-2">
                       <div className="relative flex-1">
@@ -1520,12 +1623,12 @@ export default function TCOCalculator() {
                         <input
                           type="number"
                           className="input-field pl-7"
-                          placeholder={modelData?.is_ev
-                            ? `${STATE_ELEC_RATES[resolvedState] ?? 0.16} (${resolvedState} avg)`
+                          placeholder={effIsEV
+                            ? `${getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)} (${{ home: 'home', mixed: 'blended', public: 'public DCFC' }[chargingStyle]})`
                             : `${STATE_FUEL_PRICES[resolvedState] ?? 3.50} (${resolvedState} avg)`}
                           value={customFuelPrice}
                           onChange={e => setCustomFuelPrice(e.target.value)}
-                          step={modelData?.is_ev ? 0.01 : 0.05}
+                          step={effIsEV ? 0.001 : 0.05}
                           min={0}
                         />
                       </div>
@@ -1537,10 +1640,9 @@ export default function TCOCalculator() {
                       )}
                     </div>
                     <p className="text-[10px] text-[var(--text-muted)]">
-                      Leave blank to use {resolvedState} average
-                      {modelData?.is_ev
-                        ? ` ($${STATE_ELEC_RATES[resolvedState] ?? 0.16}/kWh)`
-                        : ` ($${STATE_FUEL_PRICES[resolvedState] ?? 3.50}/gal)`}
+                      {effIsEV
+                        ? `Leave blank to use charging-style rate ($${getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)}/kWh)`
+                        : `Leave blank to use ${resolvedState} average ($${STATE_FUEL_PRICES[resolvedState] ?? 3.50}/gal)`}
                     </p>
                   </div>
 
@@ -1566,10 +1668,12 @@ export default function TCOCalculator() {
               )}
 
               {resolvedState && !customCosts && (() => {
-                const catInfo = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
-                const effIsEV = modelData ? modelData.is_ev : (catInfo?.isEV ?? false)
+                const activeElecRate = (customFuelPrice && detailedMode)
+                  ? parseFloat(customFuelPrice)
+                  : getEffectiveElecRate(resolvedState, chargingStyle)
+                const chargingStyleLabel = { home: 'home', mixed: 'home+public', public: 'public DCFC' }[chargingStyle]
                 const fuelNote = effIsEV
-                  ? `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${STATE_ELEC_RATES[resolvedState] ?? 0.16}`}/kWh`
+                  ? `$${activeElecRate.toFixed(3)}/kWh · ${(customFuelPrice && detailedMode) ? 'custom' : chargingStyleLabel}`
                   : `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${STATE_FUEL_PRICES[resolvedState] ?? 3.50}`}/gal`
                 const insNote = `${resolvedState} · ${selMake || 'avg'}${detailedMode && multiCarPolicy ? ' · multi-car' : ''}`
                 const maintNote = detailedMode
@@ -1577,7 +1681,7 @@ export default function TCOCalculator() {
                   : (effIsEV ? 'EV avg' : 'gas avg')
                 const maintenanceSegment = selMake
                   ? classifySegment(selMake, selModel||'')
-                  : (catInfo?.segment ?? 'sedan')
+                  : (catInfoForRender?.segment ?? 'sedan')
 
                 return (
                   <div className="rounded-xl border divide-y"

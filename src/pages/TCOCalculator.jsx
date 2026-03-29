@@ -125,13 +125,132 @@ const INSURANCE_BRAND_MULT = {
   Chevrolet: 1.00, Ford: 1.05, Ram: 1.10, Jeep: 1.10,
 }
 
-function estimateInsurance(purchasePrice, make, model, modelYear, state) {
+function estimateInsurance(purchasePrice, make, model, modelYear, state, multiCarDiscount = false) {
   const ageYears   = modelYear ? Math.max(0, new Date().getFullYear() - parseInt(modelYear)) : 0
   const currentVal = estimateCurrentValue(purchasePrice, make || null, model || null, ageYears)
   const [,,valueMult] = INSURANCE_VALUE_BRACKETS.find(([mn, mx]) => currentVal >= mn && currentVal < mx) ?? [0,0,1.0]
   const brandMult  = INSURANCE_BRAND_MULT[make] ?? 1.0
   const stateBase  = STATE_INS_BASE[state] ?? INSURANCE_BASE_RATE
-  return Math.round((stateBase * valueMult * brandMult) / 50) * 50
+  const multiCarMult = multiCarDiscount ? 0.85 : 1.0
+  return Math.round((stateBase * valueMult * brandMult * multiCarMult) / 50) * 50
+}
+
+// ── Maintenance service breakdown ─────────────────────
+// Ported from maintenance_utils.py — EnhancedMaintenanceCalculator
+// Uses brand_multipliers, _determine_vehicle_tier, _get_tier_multipliers,
+// and ComponentDatabase costs/labor_hours for realistic per-brand pricing.
+
+// Brand-specific cost multipliers (from _initialize_brand_multipliers)
+const MAINT_BRAND_MULT = {
+  Toyota: 0.85, Honda: 0.90, Lexus: 1.05, Mazda: 0.92, Subaru: 0.95,
+  Nissan: 0.95, Infiniti: 1.10, Acura: 1.08,
+  BMW: 1.50, 'Mercedes-Benz': 1.55, Audi: 1.45, Porsche: 1.80, Volkswagen: 1.15,
+  Ford: 1.00, Chevrolet: 0.98, GMC: 1.02, Ram: 1.05, Jeep: 1.10, Cadillac: 1.35,
+  Hyundai: 0.88, Kia: 0.88, Genesis: 1.15,
+  Tesla: 0.70, Rivian: 0.75, Lucid: 0.75,
+}
+
+// Tier lookup (from _determine_vehicle_tier)
+const MAINT_LUXURY_MAKES = new Set(['BMW','Mercedes-Benz','Audi','Porsche','Lexus','Land Rover',
+  'Jaguar','Maserati','Alfa Romeo','Genesis','Lucid','Rivian'])
+const MAINT_PREMIUM_MAKES = new Set(['Acura','Infiniti','Volvo','Lincoln','Cadillac','Tesla','Buick','Mini','Polestar'])
+const MAINT_ECONOMY_MAKES = new Set(['Kia','Hyundai','Nissan','Mitsubishi','Fiat','Chrysler'])
+
+function determineMaintTier(make) {
+  if (MAINT_LUXURY_MAKES.has(make))  return 'luxury'
+  if (MAINT_PREMIUM_MAKES.has(make)) return 'premium'
+  if (MAINT_ECONOMY_MAKES.has(make)) return 'economy'
+  return 'standard'
+}
+
+// Per-service costs by tier (from _get_tier_multipliers)
+const MAINT_TIER_COSTS = {
+  luxury:   { oil_change_cost:175, oil_interval:10000, filter_cost:150, tire_rotation_cost:40,  brake_inspection_cost:75,  brake_fluid_flush_cost:200, trans_fluid_cost:400, coolant_flush_cost:250, spark_plug_cost:400, wiper_cost:80,  alignment_cost:200, parts_mult:1.5, labor_mult:1.4 },
+  premium:  { oil_change_cost:120, oil_interval:7500,  filter_cost:100, tire_rotation_cost:35,  brake_inspection_cost:60,  brake_fluid_flush_cost:150, trans_fluid_cost:300, coolant_flush_cost:180, spark_plug_cost:280, wiper_cost:60,  alignment_cost:150, parts_mult:1.2, labor_mult:1.2 },
+  standard: { oil_change_cost:85,  oil_interval:7500,  filter_cost:70,  tire_rotation_cost:25,  brake_inspection_cost:50,  brake_fluid_flush_cost:120, trans_fluid_cost:200, coolant_flush_cost:150, spark_plug_cost:200, wiper_cost:45,  alignment_cost:120, parts_mult:1.0, labor_mult:1.0 },
+  economy:  { oil_change_cost:65,  oil_interval:5000,  filter_cost:50,  tire_rotation_cost:20,  brake_inspection_cost:40,  brake_fluid_flush_cost:100, trans_fluid_cost:180, coolant_flush_cost:120, spark_plug_cost:150, wiper_cost:35,  alignment_cost:100, parts_mult:0.85,labor_mult:0.9  },
+}
+
+// Base labor rate ($/hr) used in ComponentDatabase cost calculations
+const LABOR_RATE = 100
+
+function generateMaintenanceServices(isEV, annualMileage, segment, make = '') {
+  const tier  = determineMaintTier(make)
+  const c     = MAINT_TIER_COSTS[tier]
+  // Brand multiplier fine-tunes costs within tier (e.g. Toyota 0.85 vs Porsche 1.80)
+  const brand = MAINT_BRAND_MULT[make] ?? 1.0
+  const isTruck  = segment === 'truck'
+  const isSports = segment === 'sports'
+
+  const svc = []
+  // amortize: annual cost of a component replacement over its interval
+  const amortize = (partsCost, laborHrs, intervalMiles) =>
+    Math.round((annualMileage / intervalMiles) * (partsCost * c.parts_mult * brand + laborHrs * LABOR_RATE * c.labor_mult))
+
+  // === ROUTINE SCHEDULED SERVICES ===
+
+  // Oil changes — tier interval & cost, brand-adjusted (not for EV)
+  if (!isEV) {
+    const oilQty = Math.max(1, Math.round(annualMileage / c.oil_interval))
+    svc.push({ name: 'Oil changes', detail: `every ${c.oil_interval.toLocaleString()} mi`, annual: Math.round(oilQty * c.oil_change_cost * brand) })
+  }
+
+  // Air & cabin filters — luxury annual, others ~every 15k
+  const filterInterval = tier === 'luxury' ? annualMileage : 15000
+  svc.push({ name: 'Air & cabin filters', detail: tier === 'luxury' ? 'annual' : 'every ~15,000 mi', annual: Math.round((annualMileage / filterInterval) * c.filter_cost * brand) })
+
+  // Tire rotations (every 6,000 mi per maintenance_utils.py _get_routine_maintenance_services)
+  const rotations = Math.max(2, Math.floor(annualMileage / 6000))
+  svc.push({ name: 'Tire rotations', detail: 'every 6,000 mi', annual: Math.round(rotations * c.tire_rotation_cost * brand) })
+
+  // Brake inspection — annual
+  svc.push({ name: 'Brake inspection', detail: 'annual', annual: Math.round(c.brake_inspection_cost * brand) })
+
+  // Wiper blades — annual
+  svc.push({ name: 'Wiper blades', detail: 'annual', annual: Math.round(c.wiper_cost * brand) })
+
+  // Brake fluid flush (luxury/premium every 24k, else 30k — from _get_routine_maintenance_services)
+  const bfInterval = (tier === 'luxury' || tier === 'premium') ? 24000 : 30000
+  svc.push({ name: 'Brake fluid flush', detail: `every ${bfInterval.toLocaleString()} mi`, annual: amortize(c.brake_fluid_flush_cost, 0, bfInterval) })
+
+  if (!isEV) {
+    // Transmission fluid (luxury 60k, else 80k)
+    const transInterval = tier === 'luxury' ? 60000 : 80000
+    svc.push({ name: 'Transmission fluid', detail: `every ${transInterval.toLocaleString()} mi`, annual: amortize(c.trans_fluid_cost, 0, transInterval) })
+
+    // Coolant flush (luxury 60k, else 80k)
+    const coolantInterval = tier === 'luxury' ? 60000 : 80000
+    svc.push({ name: 'Coolant flush', detail: `every ${coolantInterval.toLocaleString()} mi`, annual: amortize(c.coolant_flush_cost, 0, coolantInterval) })
+
+    // Spark plugs (luxury/premium 60k, else 90k)
+    const sparkInterval = (tier === 'luxury' || tier === 'premium') ? 60000 : 90000
+    svc.push({ name: 'Spark plugs', detail: `every ${sparkInterval.toLocaleString()} mi`, annual: amortize(c.spark_plug_cost, 0, sparkInterval) })
+  }
+
+  // Wheel alignment — every 2 years (amortized)
+  svc.push({ name: 'Wheel alignment', detail: 'every 2 years', annual: Math.round(c.alignment_cost * brand / 2) })
+
+  // === COMPONENT REPLACEMENTS (ComponentDatabase costs + labor hours) ===
+
+  // Tire set — ComponentDatabase: cost $600 parts, 2.0 hr labor; interval varies by segment/type
+  const tireInterval = isEV ? 40000 : isSports ? 30000 : isTruck ? 45000 : (tier === 'luxury' || tier === 'premium') ? 40000 : 60000
+  svc.push({ name: 'Tire replacement (set)', detail: `every ${tireInterval.toLocaleString()} mi`, annual: amortize(600, 2.0, tireInterval) })
+
+  // Brake pads & rotors — ComponentDatabase parts + labor hours, EV intervals 1.8× longer (regen braking)
+  // front pads: $150 / 1.0 hr @ 60k; rear pads: $130 / 1.0 hr @ 70k
+  // front rotors: $300 / 1.5 hr @ 80k; rear rotors: $250 / 1.5 hr @ 90k
+  const brakeMult = isEV ? 1.8 : 1.0
+  const brakeAnnual =
+    amortize(150, 1.0, 60000 * brakeMult) +
+    amortize(130, 1.0, 70000 * brakeMult) +
+    amortize(300, 1.5, 80000 * brakeMult) +
+    amortize(250, 1.5, 90000 * brakeMult)
+  svc.push({ name: 'Brake pads & rotors (amortized)', detail: isEV ? 'extended — regen braking' : '~60k–90k mi', annual: Math.round(brakeAnnual) })
+
+  // 12V battery — ComponentDatabase: $180 parts, 0.3 hr labor, every ~65k mi (5 yrs @ 13k/yr)
+  svc.push({ name: '12V battery (amortized)', detail: 'every ~5 years', annual: amortize(180, 0.3, 65000) })
+
+  return svc
 }
 
 // ── Location data (from zip_code_utils.py, advanced_insurance.py, taxes_fees_utils.py) ─
@@ -225,16 +344,17 @@ function resolveLocation(input) {
   return null
 }
 
-function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state) {
-  const MILES = 15000
+function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 15000, fuelPriceOverride = null) {
   const KWH_PER_GAL = 33.7
   if (isEV) {
     const mpge = mpgeCombined ?? 100
-    const annualKwh = MILES / (mpge / KWH_PER_GAL)
-    return Math.round(annualKwh * (STATE_ELEC_RATES[state] ?? 0.16) / 50) * 50
+    const annualKwh = miles / (mpge / KWH_PER_GAL)
+    const rate = fuelPriceOverride !== null ? fuelPriceOverride : (STATE_ELEC_RATES[state] ?? 0.16)
+    return Math.round(annualKwh * rate / 50) * 50
   }
   const mpg = mpgCombined ?? 28
-  return Math.round((MILES / mpg) * (STATE_FUEL_PRICES[state] ?? 3.50) / 50) * 50
+  const price = fuelPriceOverride !== null ? fuelPriceOverride : (STATE_FUEL_PRICES[state] ?? 3.50)
+  return Math.round((miles / mpg) * price / 50) * 50
 }
 
 function computeAnnualRegistration(state, vehicleValue) {
@@ -511,6 +631,30 @@ function SpecsPanel({ specs, mpg, isEV }) {
           <div key={label}>
             <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">{label}</p>
             <p className="text-white font-semibold text-sm mt-0.5">{value}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Maintenance breakdown panel ───────────────────────
+function MaintenanceBreakdown({ isEV, annualMileage, segment, make }) {
+  const services = generateMaintenanceServices(isEV, annualMileage, segment, make)
+  return (
+    <div className="px-4 pb-3 pt-2 border-t border-[var(--border)]"
+      style={{ background: 'rgba(0,0,0,0.25)' }}>
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-2">
+        Planned services
+      </p>
+      <div className="flex flex-col gap-1">
+        {services.map(({ name, detail, annual }) => (
+          <div key={name} className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-white/75 truncate">{name}</span>
+              <span className="text-[var(--text-muted)] opacity-70 shrink-0">{detail}</span>
+            </div>
+            <span className="text-white/60 font-mono ml-2 shrink-0">{annual > 0 ? `$${annual}` : '—'}</span>
           </div>
         ))}
       </div>
@@ -1024,6 +1168,11 @@ export default function TCOCalculator() {
   const [locationError,  setLocationError]  = useState('')
   // Operating costs mode
   const [customCosts,    setCustomCosts]    = useState(false)
+  // Detailed estimates mode
+  const [detailedMode,   setDetailedMode]   = useState(false)
+  const [annualMileage,  setAnnualMileage]  = useState(15000)
+  const [customFuelPrice,setCustomFuelPrice]= useState('')      // empty = use state avg
+  const [multiCarPolicy, setMultiCarPolicy] = useState(false)
   // Track original MSRP separately from price (which may be depreciation-adjusted)
   const [origMsrp,       setOrigMsrp]       = useState(null)
 
@@ -1032,18 +1181,31 @@ export default function TCOCalculator() {
 
   useEffect(() => {
     if (customCosts) return
-    setAnnualInsurance(estimateInsurance(price, selMake||null, selModel||null, selYear||null, resolvedState||null))
+    setAnnualInsurance(estimateInsurance(price, selMake||null, selModel||null, selYear||null, resolvedState||null, detailedMode && multiCarPolicy))
+    const fuelOverride = detailedMode && customFuelPrice !== '' ? parseFloat(customFuelPrice) : null
     if (modelData) {
-      setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState))
-      setAnnualMaintenance(modelData.is_ev ? 700 : 1200)
+      setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride))
+      if (detailedMode) {
+        const seg = classifySegment(selMake||'', selModel||'')
+        const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake)
+        setAnnualMaintenance(services.reduce((s, x) => s + x.annual, 0))
+      } else {
+        setAnnualMaintenance(modelData.is_ev ? 700 : 1200)
+      }
     } else {
-      setAnnualFuel(computeAnnualFuel(false, 28, null, resolvedState))
+      setAnnualFuel(computeAnnualFuel(false, 28, null, resolvedState, annualMileage, fuelOverride))
+      if (detailedMode) {
+        const services = generateMaintenanceServices(false, annualMileage, 'sedan', '')
+        setAnnualMaintenance(services.reduce((s, x) => s + x.annual, 0))
+      } else {
+        setAnnualMaintenance(1200)
+      }
     }
     const currentVal = (selYear && (selMake || selModel))
       ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)))
       : price
     setAnnualRegistration(computeAnnualRegistration(resolvedState, currentVal))
-  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLocationInput = useCallback((val) => {
     setLocationInput(val)
@@ -1238,15 +1400,27 @@ export default function TCOCalculator() {
                 <div className="flex items-center justify-between mb-1">
                   <h2 className="font-display font-bold text-white text-lg">Annual Operating Costs</h2>
                   {resolvedState && (
-                    <button
-                      onClick={() => setCustomCosts(c => !c)}
-                      className="text-xs px-3 py-1 rounded-lg border transition-colors"
-                      style={{
-                        borderColor: customCosts ? 'var(--accent)' : 'var(--border)',
-                        color: customCosts ? 'var(--accent)' : 'var(--text-muted)',
-                      }}>
-                      {customCosts ? 'Use estimates' : 'Customize'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setDetailedMode(d => !d)}
+                        className="text-xs px-3 py-1 rounded-lg border transition-colors"
+                        style={{
+                          borderColor: detailedMode ? 'rgba(200,255,0,0.5)' : 'var(--border)',
+                          color: detailedMode ? 'var(--accent)' : 'var(--text-muted)',
+                          background: detailedMode ? 'rgba(200,255,0,0.05)' : 'transparent',
+                        }}>
+                        {detailedMode ? 'Detailed ✓' : 'Detailed'}
+                      </button>
+                      <button
+                        onClick={() => setCustomCosts(c => !c)}
+                        className="text-xs px-3 py-1 rounded-lg border transition-colors"
+                        style={{
+                          borderColor: customCosts ? 'var(--accent)' : 'var(--border)',
+                          color: customCosts ? 'var(--accent)' : 'var(--text-muted)',
+                        }}>
+                        {customCosts ? 'Use estimates' : 'Customize'}
+                      </button>
+                    </div>
                   )}
                 </div>
                 {!resolvedState ? (
@@ -1257,30 +1431,125 @@ export default function TCOCalculator() {
                   <p className="text-[var(--text-muted)] text-sm">
                     {customCosts
                       ? 'Adjust any cost to match your situation.'
-                      : `Estimated for ${resolvedState}${modelData ? (modelData.is_ev ? ' · EV rates' : ` · ${modelData.mpg?.combined ?? 28} MPG`) : ''}.`}
+                      : detailedMode
+                        ? `Detailed estimates for ${resolvedState} · ${annualMileage.toLocaleString()} mi/yr${modelData ? (modelData.is_ev ? ' · EV' : ` · ${modelData.mpg?.combined ?? 28} MPG`) : ''}.`
+                        : `Estimated for ${resolvedState}${modelData ? (modelData.is_ev ? ' · EV rates' : ` · ${modelData.mpg?.combined ?? 28} MPG`) : ''}.`}
                   </p>
                 )}
               </div>
 
-              {resolvedState && !customCosts && (
-                <div className="rounded-xl border divide-y"
-                  style={{ borderColor:'var(--border)', background:'var(--surface)' }}>
-                  {[
-                    { label: 'Insurance',              value: annualInsurance,    note: `${resolvedState} rate · ${selMake || 'avg'} brand` },
-                    { label: modelData?.is_ev ? 'Charging' : 'Fuel', value: annualFuel, note: modelData?.is_ev ? `$${STATE_ELEC_RATES[resolvedState] ?? 0.16}/kWh` : `$${STATE_FUEL_PRICES[resolvedState] ?? 3.50}/gal` },
-                    { label: 'Maintenance & Repairs',  value: annualMaintenance,  note: modelData?.is_ev ? 'EV avg' : 'gas avg' },
-                    { label: 'Registration & Fees',    value: annualRegistration, note: `${resolvedState} DMV` },
-                  ].map(({ label, value, note }) => (
-                    <div key={label} className="flex items-center justify-between px-4 py-3">
-                      <div>
-                        <span className="text-sm text-white">{label}</span>
-                        <span className="ml-2 text-[10px] text-[var(--text-muted)]">{note}</span>
+              {/* Detailed inputs panel */}
+              {resolvedState && detailedMode && !customCosts && (
+                <div className="rounded-xl border p-4 flex flex-col gap-5"
+                  style={{ borderColor: 'rgba(200,255,0,0.2)', background: 'rgba(200,255,0,0.02)' }}>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)]">
+                    Detailed Parameters
+                  </p>
+
+                  {/* Annual mileage */}
+                  <SliderInput
+                    label="Annual Miles Driven"
+                    value={annualMileage}
+                    onChange={setAnnualMileage}
+                    min={3000} max={30000} step={500} suffix=" mi"
+                  />
+
+                  {/* Custom fuel/electricity price */}
+                  <div className="flex flex-col gap-2">
+                    <label className="input-label">
+                      {modelData?.is_ev ? 'Electricity Rate ($/kWh)' : 'Fuel Price ($/gallon)'}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none select-none">$</span>
+                        <input
+                          type="number"
+                          className="input-field pl-7"
+                          placeholder={modelData?.is_ev
+                            ? `${STATE_ELEC_RATES[resolvedState] ?? 0.16} (${resolvedState} avg)`
+                            : `${STATE_FUEL_PRICES[resolvedState] ?? 3.50} (${resolvedState} avg)`}
+                          value={customFuelPrice}
+                          onChange={e => setCustomFuelPrice(e.target.value)}
+                          step={modelData?.is_ev ? 0.01 : 0.05}
+                          min={0}
+                        />
                       </div>
-                      <span className="font-display font-semibold text-white text-sm">{formatCurrency(value)}/yr</span>
+                      {customFuelPrice && (
+                        <button onClick={() => setCustomFuelPrice('')}
+                          className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors shrink-0">
+                          Reset
+                        </button>
+                      )}
                     </div>
-                  ))}
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      Leave blank to use {resolvedState} average
+                      {modelData?.is_ev
+                        ? ` ($${STATE_ELEC_RATES[resolvedState] ?? 0.16}/kWh)`
+                        : ` ($${STATE_FUEL_PRICES[resolvedState] ?? 3.50}/gal)`}
+                    </p>
+                  </div>
+
+                  {/* Multi-car policy toggle */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white">Multi-Car Policy</p>
+                      <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                        ~15% discount · insuring 2+ vehicles on same policy
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setMultiCarPolicy(m => !m)}
+                      className="relative w-11 h-6 rounded-full transition-colors shrink-0"
+                      style={{ background: multiCarPolicy ? 'var(--accent)' : 'var(--border)' }}>
+                      <span
+                        className="absolute top-0.5 w-5 h-5 rounded-full transition-all"
+                        style={{ left: multiCarPolicy ? '22px' : '2px', background: multiCarPolicy ? '#000' : '#555' }}
+                      />
+                    </button>
+                  </div>
                 </div>
               )}
+
+              {resolvedState && !customCosts && (() => {
+                const fuelNote = modelData?.is_ev
+                  ? `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${STATE_ELEC_RATES[resolvedState] ?? 0.16}`}/kWh`
+                  : `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${STATE_FUEL_PRICES[resolvedState] ?? 3.50}`}/gal`
+                const insNote = `${resolvedState} · ${selMake || 'avg'}${detailedMode && multiCarPolicy ? ' · multi-car' : ''}`
+                const maintNote = detailedMode
+                  ? (modelData?.is_ev ? 'EV · itemized' : 'gas · itemized')
+                  : (modelData?.is_ev ? 'EV avg' : 'gas avg')
+                const maintenanceSegment = classifySegment(selMake||'', selModel||'')
+
+                return (
+                  <div className="rounded-xl border divide-y"
+                    style={{ borderColor:'var(--border)', background:'var(--surface)' }}>
+                    {[
+                      { key: 'ins',  label: 'Insurance',                                   value: annualInsurance,    note: insNote },
+                      { key: 'fuel', label: modelData?.is_ev ? 'Charging' : 'Fuel',        value: annualFuel,         note: fuelNote },
+                      { key: 'maint',label: 'Maintenance & Repairs',                        value: annualMaintenance,  note: maintNote },
+                      { key: 'reg',  label: 'Registration & Fees',                          value: annualRegistration, note: `${resolvedState} DMV` },
+                    ].map(({ key, label, value, note }) => (
+                      <div key={key}>
+                        <div className="flex items-center justify-between px-4 py-3">
+                          <div>
+                            <span className="text-sm text-white">{label}</span>
+                            <span className="ml-2 text-[10px] text-[var(--text-muted)]">{note}</span>
+                          </div>
+                          <span className="font-display font-semibold text-white text-sm">{formatCurrency(value)}/yr</span>
+                        </div>
+                        {key === 'maint' && detailedMode && (
+                          <MaintenanceBreakdown
+                            isEV={modelData?.is_ev ?? false}
+                            annualMileage={annualMileage}
+                            segment={maintenanceSegment}
+                            make={selMake}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
 
               {resolvedState && customCosts && (
                 <>
@@ -1298,8 +1567,21 @@ export default function TCOCalculator() {
                   </div>
                   <SliderInput label={modelData?.is_ev ? 'Charging (electricity)' : 'Fuel'} value={annualFuel} onChange={setAnnualFuel}
                     min={0} max={6000} step={50} prefix="$" suffix="/yr" />
-                  <SliderInput label="Maintenance &amp; Repairs" value={annualMaintenance} onChange={setAnnualMaintenance}
-                    min={0} max={5000} step={50} prefix="$" suffix="/yr" />
+                  <div>
+                    <SliderInput label="Maintenance &amp; Repairs" value={annualMaintenance} onChange={setAnnualMaintenance}
+                      min={0} max={5000} step={50} prefix="$" suffix="/yr" />
+                    {detailedMode && (
+                      <div className="mt-3 rounded-xl border overflow-hidden"
+                        style={{ borderColor: 'var(--border)' }}>
+                        <MaintenanceBreakdown
+                          isEV={modelData?.is_ev ?? false}
+                          annualMileage={annualMileage}
+                          segment={classifySegment(selMake||'', selModel||'')}
+                          make={selMake}
+                        />
+                      </div>
+                    )}
+                  </div>
                   <SliderInput label="Registration &amp; Fees" value={annualRegistration} onChange={setAnnualRegistration}
                     min={0} max={2000} step={25} prefix="$" suffix="/yr" />
                 </>

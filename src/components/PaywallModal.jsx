@@ -93,7 +93,7 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
 
         {/* Pricing card */}
         <div className="rounded-xl border p-4 mb-5 text-center"
-          style={{ borderColor: 'rgba(200,255,0,0.25)', background: 'rgba(200,255,0,0.04)' }}>
+          style={{ borderColor: 'rgba(255,184,0,0.25)', background: 'rgba(255,184,0,0.04)' }}>
           <div className="font-display font-extrabold text-white text-3xl">
             $10<span className="text-lg font-normal text-[var(--text-muted)]">/month</span>
           </div>

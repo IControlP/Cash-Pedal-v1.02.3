@@ -119,7 +119,7 @@ export default function About() {
           </div>
 
           {/* Contact */}
-          <div className="card border-[var(--accent)] anim-5" style={{ background: 'rgba(200,255,0,0.04)' }}>
+          <div className="card border-[var(--accent)] anim-5" style={{ background: 'rgba(255,184,0,0.04)' }}>
             <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)] mb-3">Get in touch</p>
             <p className="text-[var(--text-muted)] text-sm mb-3">
               Questions, feedback, or found a bug? We'd love to hear from you.

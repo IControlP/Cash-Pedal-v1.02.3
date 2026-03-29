@@ -24,7 +24,7 @@ export default function ResultCard({ label, value, highlight = false, delay = 0 
     <div
       className={`card flex flex-col gap-2 transition-all duration-200 ${
         highlight
-          ? 'border-[var(--accent)] bg-[var(--accent-muted)] shadow-[0_0_32px_rgba(200,255,0,0.08)]'
+          ? 'border-[var(--accent)] bg-[var(--accent-muted)] shadow-[0_0_32px_rgba(255,184,0,0.08)]'
           : 'hover:border-[#3a3a3e]'
       }`}
       style={{ animationDelay: `${delay}ms` }}

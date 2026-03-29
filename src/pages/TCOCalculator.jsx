@@ -437,7 +437,7 @@ const C = {
   wheelRim:    '#22223a',
   wheelHub:    '#2e2e50',
   wheelSpoke:  '#1a1a30',
-  accent:      '#C8FF00',
+  accent:      '#FFB800',
   tail:        '#ff3333',
   shadow:      'rgba(0,0,0,0.45)',
 }
@@ -469,9 +469,9 @@ function EVBadge({ x, y }) {
   return (
     <>
       <rect x={x} y={y} width="30" height="14" rx="4"
-        fill="rgba(200,255,0,0.20)" stroke="rgba(200,255,0,0.4)" strokeWidth="1" />
+        fill="rgba(255,184,0,0.20)" stroke="rgba(255,184,0,0.4)" strokeWidth="1" />
       <text x={x + 15} y={y + 10} textAnchor="middle" fontSize="7"
-        fontWeight="bold" fill="#C8FF00" fontFamily="monospace">EV</text>
+        fontWeight="bold" fill="#FFB800" fontFamily="monospace">EV</text>
     </>
   )
 }
@@ -600,7 +600,7 @@ function CarVisual({ make, model, carType, isEV }) {
 
   return (
     <div className="rounded-xl border border-[var(--border)] overflow-hidden"
-      style={{ background: 'linear-gradient(160deg,#0f0f18 0%,#080809 100%)' }}>
+      style={{ background: 'linear-gradient(160deg,#1f0838 0%,#0f0520 100%)' }}>
       <div className="px-6 pt-5 pb-2">{visual}</div>
       <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--border)]">
         <div>
@@ -611,7 +611,7 @@ function CarVisual({ make, model, carType, isEV }) {
         </div>
         {isEV && (
           <span className="text-[10px] font-bold tracking-wide px-2 py-0.5 rounded"
-            style={{ color:'#C8FF00', background:'rgba(200,255,0,0.1)', border:'1px solid rgba(200,255,0,0.25)' }}>
+            style={{ color:'#FFB800', background:'rgba(255,184,0,0.1)', border:'1px solid rgba(255,184,0,0.25)' }}>
             ELECTRIC
           </span>
         )}
@@ -969,8 +969,8 @@ function TermsGate({ onAccepted }) {
             <label key={i}
               className="flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors"
               style={{
-                borderColor: checked ? 'rgba(200,255,0,0.4)' : 'var(--border)',
-                background: checked ? 'rgba(200,255,0,0.04)' : 'var(--surface)',
+                borderColor: checked ? 'rgba(255,184,0,0.4)' : 'var(--border)',
+                background: checked ? 'rgba(255,184,0,0.04)' : 'var(--surface)',
               }}>
               <input
                 type="checkbox" checked={checked}
@@ -1453,7 +1453,7 @@ export default function TCOCalculator() {
                 <div className="flex items-center gap-2 mb-1">
                   <h2 className="font-display font-bold text-white text-lg">Your Location</h2>
                   <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded"
-                    style={{ color:'var(--accent)', border:'1px solid rgba(200,255,0,0.3)' }}>
+                    style={{ color:'var(--accent)', border:'1px solid rgba(255,184,0,0.3)' }}>
                     Required
                   </span>
                 </div>
@@ -1472,7 +1472,7 @@ export default function TCOCalculator() {
                     />
                     {resolvedState && (
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold px-2 py-0.5 rounded"
-                        style={{ color:'var(--accent)', background:'rgba(200,255,0,0.1)', border:'1px solid rgba(200,255,0,0.25)' }}>
+                        style={{ color:'var(--accent)', background:'rgba(255,184,0,0.1)', border:'1px solid rgba(255,184,0,0.25)' }}>
                         {locationLabel}
                       </span>
                     )}
@@ -1537,7 +1537,7 @@ export default function TCOCalculator() {
                   <h2 className="font-display font-bold text-white text-lg">Purchase &amp; Financing</h2>
                   {usingMSRP && (
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded"
-                      style={{ color:'#C8FF00', background:'rgba(200,255,0,0.08)', border:'1px solid rgba(200,255,0,0.2)' }}>
+                      style={{ color:'#FFB800', background:'rgba(255,184,0,0.08)', border:'1px solid rgba(255,184,0,0.2)' }}>
                       {origMsrp && carAge > 0 ? 'Est. Current Value' : 'Using MSRP'}
                     </span>
                   )}
@@ -1589,9 +1589,9 @@ export default function TCOCalculator() {
                         }}
                         className="text-xs px-3 py-1 rounded-lg border transition-colors"
                         style={{
-                          borderColor: detailedMode ? 'rgba(200,255,0,0.5)' : 'var(--border)',
+                          borderColor: detailedMode ? 'rgba(255,184,0,0.5)' : 'var(--border)',
                           color: detailedMode ? 'var(--accent)' : 'var(--text-muted)',
-                          background: detailedMode ? 'rgba(200,255,0,0.05)' : 'transparent',
+                          background: detailedMode ? 'rgba(255,184,0,0.05)' : 'transparent',
                         }}>
                         {detailedMode ? 'Detailed ✓' : 'Detailed'}
                       </button>
@@ -1712,7 +1712,7 @@ export default function TCOCalculator() {
               {/* Detailed inputs panel */}
               {resolvedState && detailedMode && !customCosts && (
                 <div className="rounded-xl border p-4 flex flex-col gap-5"
-                  style={{ borderColor: 'rgba(200,255,0,0.2)', background: 'rgba(200,255,0,0.02)' }}>
+                  style={{ borderColor: 'rgba(255,184,0,0.2)', background: 'rgba(255,184,0,0.02)' }}>
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)]">
                     Detailed Parameters
                   </p>
@@ -1928,7 +1928,7 @@ export default function TCOCalculator() {
 
               {/* Summary */}
               <div className="rounded-xl p-4 border text-sm leading-relaxed"
-                style={{ background:'rgba(200,255,0,0.04)', borderColor:'rgba(200,255,0,0.15)', color:'var(--text-muted)' }}>
+                style={{ background:'rgba(255,184,0,0.04)', borderColor:'rgba(255,184,0,0.15)', color:'var(--text-muted)' }}>
                 <span className="text-[var(--accent)] font-semibold">The real picture: </span>
                 Over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}, loan payments total{' '}
                 <span className="text-white font-semibold">

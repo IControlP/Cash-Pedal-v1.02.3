@@ -1,63 +1,81 @@
 export const questions = [
   {
     id: 1,
-    text: "Is a car just a thing that gets you from point A to point B?",
-    lowLabel: "Absolutely",
-    highLabel: "Never",
+    text: "When you think about your next car, is it mostly about getting from A to B cheaply — or is the car itself part of the appeal?",
+    lowLabel: "Just transport",
+    highLabel: "It's personal",
   },
   {
     id: 2,
-    text: "I've definitely watched a car review video at 2am... for fun.",
-    lowLabel: "Never done that",
-    highLabel: "That's basically me",
+    text: "Be honest: have you ever watched a car review video just for fun?",
+    lowLabel: "Never",
+    highLabel: "It's a regular thing",
   },
   {
     id: 3,
-    text: "My car is basically a mobile closet.",
-    lowLabel: "I'm minimalist",
-    highLabel: "Trunk life",
+    text: "How often do you need to haul stuff — gear, groceries, sports equipment, or extra passengers?",
+    lowLabel: "Rarely, just me",
+    highLabel: "Constantly",
   },
   {
     id: 4,
-    text: "I'd rather spend money on literally anything else besides my car.",
-    lowLabel: "Cars are worth it",
-    highLabel: "100% agreed",
+    text: "Would you genuinely rather put your car budget toward almost anything else?",
+    lowLabel: "No, cars are worth it",
+    highLabel: "Absolutely yes",
   },
   {
     id: 5,
-    text: "I secretly love the valet parking moment.",
-    lowLabel: "Meh",
-    highLabel: "It's the highlight",
+    text: "Does pulling up somewhere in a sharp-looking car give you a little kick?",
+    lowLabel: "Not really",
+    highLabel: "100%, love it",
   },
   {
     id: 6,
-    text: "My backseat looks like a snack explosion happened.",
+    text: "On an average day, how chaotic is your back seat?",
     lowLabel: "Spotless",
-    highLabel: "Don't ask",
+    highLabel: "Don't even ask",
   },
   {
     id: 7,
-    text: "When the light turns green, I like to be the first one gone.",
-    lowLabel: "I'm patient",
-    highLabel: "It's a lifestyle",
+    text: "When the light turns green, do you like being the first one off the line?",
+    lowLabel: "I take my time",
+    highLabel: "Every single time",
   },
   {
     id: 8,
-    text: "I feel guilty every time I fill up at a gas station.",
+    text: "Do you feel any guilt when you pull into a gas station to fill up?",
     lowLabel: "Not at all",
     highLabel: "Every single time",
   },
   {
     id: 9,
-    text: "I've tried to fit something way too big into a car that was way too small.",
+    text: "Have you ever had to awkwardly squeeze something way too big into a car way too small?",
     lowLabel: "Never happened",
-    highLabel: "Many times",
+    highLabel: "More times than I'd like",
   },
   {
     id: 10,
-    text: "I can parallel park in a spot that would make others sweat.",
-    lowLabel: "I avoid it",
-    highLabel: "Challenge accepted",
+    text: "How comfortable are you parallel parking in a tight urban spot?",
+    lowLabel: "I avoid it at all costs",
+    highLabel: "Easy — bring it on",
+  },
+  {
+    id: 11,
+    text: "How often are you driving more than an hour at a stretch — road trips, long commutes, or highway runs?",
+    lowLabel: "Almost never",
+    highLabel: "Several times a month",
+  },
+  {
+    id: 12,
+    text: "How much do you care about in-car tech — big screens, wireless everything, over-the-air updates?",
+    lowLabel: "Could not care less",
+    highLabel: "It matters a lot",
+  },
+  {
+    id: 13,
+    text: "How much of your driving involves gravel roads, trails, off-road terrain, or towing a trailer?",
+    lowLabel: "Zero — I'm city or suburb",
+    highLabel: "It's a regular thing",
   },
 ]
 
@@ -150,6 +168,33 @@ export const questionImpacts = [
     { category: 'pickup', impact: -6 },
     { category: 'minivan', impact: -4 },
     { category: 'suv', impact: -2 },
+  ],
+  // Q11: "Long highway drives / road trips"
+  // High = long trips → suv, sedan, hybrid (range/comfort). Low = city → electric, economy
+  [
+    { category: 'suv', impact: 6 },
+    { category: 'sedan', impact: 4 },
+    { category: 'hybrid', impact: 8 },
+    { category: 'electric', impact: -6 },
+    { category: 'economy', impact: -4 },
+  ],
+  // Q12: "Excited about in-car tech"
+  // High = tech lover → electric, luxury. Low = doesn't care → economy, pickup
+  [
+    { category: 'electric', impact: 12 },
+    { category: 'luxury', impact: 8 },
+    { category: 'economy', impact: -8 },
+    { category: 'pickup', impact: -4 },
+  ],
+  // Q13: "Off-road / gravel / towing"
+  // High = rugged use → pickup, suv. Low = city/suburb → economy, sedan, electric, sports
+  [
+    { category: 'pickup', impact: 14 },
+    { category: 'suv', impact: 10 },
+    { category: 'economy', impact: -10 },
+    { category: 'sedan', impact: -8 },
+    { category: 'electric', impact: -6 },
+    { category: 'sports', impact: -6 },
   ],
 ]
 

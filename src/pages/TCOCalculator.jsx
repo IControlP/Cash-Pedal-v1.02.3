@@ -727,7 +727,7 @@ function SelectInput({ label, value, onChange, options }) {
 }
 
 // ── Vehicle picker ────────────────────────────────────
-function VehiclePicker({ make, model, year, trim, onChange, onClear }) {
+function VehiclePicker({ make, model, year, trim, onChange, onClear, freeLeft, isSubscribed }) {
   const models   = getModels(make)
   const years    = getAvailableYears(make, model)
   const trimsMap = getTrims(make, model, year)
@@ -769,7 +769,20 @@ function VehiclePicker({ make, model, year, trim, onChange, onClear }) {
       {/* Trim */}
       {year && (
         <div className="flex flex-col gap-2">
-          <label className="input-label">Trim</label>
+          <div className="flex items-center gap-2">
+            <label className="input-label">Trim</label>
+            {!isSubscribed && (
+              freeLeft > 0
+                ? <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                    style={{ color: '#FFB800', background: 'rgba(255,184,0,0.1)', border: '1px solid rgba(255,184,0,0.2)' }}>
+                    {freeLeft} free
+                  </span>
+                : <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                    style={{ color: '#f87171', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)' }}>
+                    🔒 locked
+                  </span>
+            )}
+          </div>
           <select className="input-field" value={trim} onChange={e => onChange('trim', e.target.value)}>
             <option value="">Select trim…</option>
             {trimNames.map(t => (
@@ -1181,22 +1194,16 @@ export default function TCOCalculator() {
     parseInt(localStorage.getItem(LS_DETAILED_COUNT) || '0', 10)
   )
   const [showPaywall,  setShowPaywall]  = useState(false)
-  const detailedCountedRef = useRef(false) // don't double-count within one session
 
-  // Returns true if the action is allowed; false if blocked (paywall shown)
+  // Returns true if the action is allowed; false if blocked (paywall shown).
+  // Each call counts as one calculation — callers must guard against duplicate invocations.
   const checkDetailedLimit = useCallback(() => {
     if (isSubscribed) return true
-    if (detailedCountedRef.current) {
-      // Already counted this session — just check if they're still under limit
-      return detailedCalcCount <= FREE_DETAILED_LIMIT
-    }
-    // Haven't counted this session yet
     const next = detailedCalcCount + 1
     if (next > FREE_DETAILED_LIMIT) {
       setShowPaywall(true)
       return false
     }
-    detailedCountedRef.current = true
     setDetailedCalcCount(next)
     localStorage.setItem(LS_DETAILED_COUNT, String(next))
     return true
@@ -1312,8 +1319,8 @@ export default function TCOCalculator() {
     if (level === 'model') { setSelModel(value); setSelYear(''); setSelTrim(''); setOrigMsrp(null) }
     if (level === 'year')  { setSelYear(value); setSelTrim(''); setOrigMsrp(null) }
     if (level === 'trim') {
-      // Selecting a specific trim triggers a detailed calc — check limit
-      if (!checkDetailedLimit()) return
+      // Each new trim selection counts as one detailed calculation
+      if (value !== selTrim && !checkDetailedLimit()) return
       setSelTrim(value)
       if (selMake && selModel && selYear) {
         const t = getTrims(selMake, selModel, selYear)
@@ -1449,6 +1456,39 @@ export default function TCOCalculator() {
             {/* ── Inputs ── */}
             <div className="card anim-3 flex flex-col gap-7">
 
+              {/* Free vs Limited feature tier summary */}
+              {!isSubscribed && (
+                <div className="rounded-xl border divide-y text-xs"
+                  style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                  <div className="px-4 py-2.5 flex items-center gap-3">
+                    <span className="shrink-0 font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                      style={{ color: '#4ade80', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.25)' }}>
+                      Free
+                    </span>
+                    <span className="text-[var(--text-muted)]">
+                      Loan calculator · Operating cost estimates · Make / Model / Year lookup
+                    </span>
+                  </div>
+                  <div className="px-4 py-2.5 flex items-center gap-3">
+                    <span className="shrink-0 font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                      style={{ color: '#FFB800', background: 'rgba(255,184,0,0.1)', border: '1px solid rgba(255,184,0,0.25)' }}>
+                      {detailedCalcCount >= FREE_DETAILED_LIMIT ? 'Locked' : `${FREE_DETAILED_LIMIT - detailedCalcCount} left`}
+                    </span>
+                    <span className="text-[var(--text-muted)]">
+                      Trim-specific MSRP &amp; depreciation · Detailed itemized cost breakdown
+                      {detailedCalcCount < FREE_DETAILED_LIMIT
+                        ? ` — ${FREE_DETAILED_LIMIT - detailedCalcCount} of ${FREE_DETAILED_LIMIT} free ${FREE_DETAILED_LIMIT - detailedCalcCount === 1 ? 'analysis' : 'analyses'} remaining`
+                        : ' — '}
+                      {detailedCalcCount >= FREE_DETAILED_LIMIT && (
+                        <a href="/subscribe" className="ml-1 text-[var(--accent)] hover:underline font-semibold">
+                          Subscribe for unlimited
+                        </a>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Location */}
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -1499,6 +1539,8 @@ export default function TCOCalculator() {
                 <VehiclePicker
                   make={selMake} model={selModel} year={selYear} trim={selTrim}
                   onChange={handlePickerChange} onClear={handleClear}
+                  freeLeft={Math.max(0, FREE_DETAILED_LIMIT - detailedCalcCount)}
+                  isSubscribed={isSubscribed}
                 />
 
                 {/* Category picker — shown only when no make is selected */}
@@ -1588,13 +1630,21 @@ export default function TCOCalculator() {
                           if (!detailedMode && !checkDetailedLimit()) return
                           setDetailedMode(d => !d)
                         }}
-                        className="text-xs px-3 py-1 rounded-lg border transition-colors"
+                        className="text-xs px-3 py-1 rounded-lg border transition-colors flex items-center gap-1.5"
                         style={{
                           borderColor: detailedMode ? 'rgba(255,184,0,0.5)' : 'var(--border)',
                           color: detailedMode ? 'var(--accent)' : 'var(--text-muted)',
                           background: detailedMode ? 'rgba(255,184,0,0.05)' : 'transparent',
                         }}>
                         {detailedMode ? 'Detailed ✓' : 'Detailed'}
+                        {!isSubscribed && !detailedMode && (
+                          detailedCalcCount >= FREE_DETAILED_LIMIT
+                            ? <span style={{ color: '#f87171' }}>🔒</span>
+                            : <span className="font-bold text-[10px]"
+                                style={{ color: '#FFB800' }}>
+                                {FREE_DETAILED_LIMIT - detailedCalcCount} free
+                              </span>
+                        )}
                       </button>
                       <button
                         onClick={() => setCustomCosts(c => !c)}
@@ -1946,12 +1996,14 @@ export default function TCOCalculator() {
                 className="btn-primary w-full text-sm flex items-center justify-center gap-2">
                 <span>＋</span> Add to Multi-Vehicle Comparison
               </button>
-              {!isSubscribed && detailedCalcCount > 0 && (
-                <p className="text-center text-[var(--text-muted)] text-xs">
-                  {Math.max(0, FREE_DETAILED_LIMIT - detailedCalcCount)} detailed {FREE_DETAILED_LIMIT - detailedCalcCount === 1 ? 'analysis' : 'analyses'} remaining free
-                  {' · '}
-                  <a href="/subscribe" className="text-[var(--accent)] hover:underline">Subscribe for unlimited</a>
-                </p>
+              {!isSubscribed && detailedCalcCount >= FREE_DETAILED_LIMIT && (
+                <div className="rounded-xl border px-4 py-3 text-center text-xs"
+                  style={{ borderColor: 'rgba(255,184,0,0.2)', background: 'rgba(255,184,0,0.04)' }}>
+                  <span className="text-[var(--text-muted)]">You've used all {FREE_DETAILED_LIMIT} free detailed analyses. </span>
+                  <a href="/subscribe" className="text-[var(--accent)] hover:underline font-semibold">
+                    Subscribe for unlimited access →
+                  </a>
+                </div>
               )}
             </div>
 

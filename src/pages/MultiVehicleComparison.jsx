@@ -38,6 +38,7 @@ const COLORS = ['var(--accent)', '#60a5fa', '#f472b6', '#fb923c', '#a78bfa']
 // Default blank vehicle (manually entered — no TCO data)
 const defaultVehicle = {
   name: '', price: 30000, downPayment: 5000, loanTerm: 60, rate: 6.5, ownershipYears: 5,
+  isLease: false, leaseMonthlyPayment: 0, leaseTerm: 36,
   // Extended fields (null = not available for this entry)
   totalAnnualCost: null, totalOwnershipCost: null,
   mpgCombined: null, cargoSqFt: null, valueRetentionPct: null,
@@ -76,21 +77,50 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
         )}
       </div>
 
-      {/* TCO-imported badge */}
-      {vehicle.isFromTCO && (
-        <div className="flex items-center gap-1.5 -mt-2">
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded"
-            style={{ color: 'var(--accent)', background: 'rgba(255,184,0,0.1)', border: '1px solid rgba(255,184,0,0.25)' }}>
-            Imported from TCO
-          </span>
+      {/* TCO-imported / lease badges */}
+      {(vehicle.isFromTCO || vehicle.isLease) && (
+        <div className="flex items-center gap-1.5 -mt-2 flex-wrap">
+          {vehicle.isFromTCO && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded"
+              style={{ color: 'var(--accent)', background: 'rgba(255,184,0,0.1)', border: '1px solid rgba(255,184,0,0.25)' }}>
+              Imported from TCO
+            </span>
+          )}
+          {vehicle.isLease && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded"
+              style={{ color: '#60a5fa', background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.25)' }}>
+              Lease
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Buy / Lease toggle — only shown for non-TCO vehicles */}
+      {!vehicle.isFromTCO && (
+        <div className="flex gap-1 p-1 rounded-lg"
+          style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+          {[
+            { value: false, label: 'Buy / Finance' },
+            { value: true,  label: 'Lease' },
+          ].map(opt => (
+            <button key={String(opt.value)}
+              onClick={() => onChange({ ...vehicle, isLease: opt.value })}
+              className="flex-1 py-1 rounded-md text-xs font-semibold transition-all"
+              style={{
+                background: vehicle.isLease === opt.value ? color : 'transparent',
+                color:      vehicle.isLease === opt.value ? '#000' : 'var(--text-muted)',
+              }}>
+              {opt.label}
+            </button>
+          ))}
         </div>
       )}
 
       <div className="h-px bg-[var(--border)]" />
 
-      {/* Price */}
+      {/* Price / MSRP */}
       <div>
-        <label className="input-label">Price</label>
+        <label className="input-label">{vehicle.isLease ? 'MSRP' : 'Price'}</label>
         <div className="relative mb-2">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
           <input type="number" value={vehicle.price}
@@ -102,48 +132,79 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
           style={{ background: `linear-gradient(to right, ${color} ${pct(vehicle.price, 5000, 150000)}%, var(--border) ${pct(vehicle.price, 5000, 150000)}%)` }} />
       </div>
 
-      {/* Down payment */}
-      <div>
-        <label className="input-label">Down Payment</label>
-        <div className="relative mb-2">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
-          <input type="number" value={vehicle.downPayment}
-            onChange={e => onChange({ ...vehicle, downPayment: Math.min(Number(e.target.value), vehicle.price) })}
-            className="input-field text-sm py-2" style={{ paddingLeft: '1.75rem' }} />
-        </div>
-        <input type="range" min={0} max={Math.min(vehicle.price, 50000)} step={500}
-          value={Math.min(vehicle.downPayment, vehicle.price)}
-          onChange={e => onChange({ ...vehicle, downPayment: Number(e.target.value) })}
-          style={{ background: `linear-gradient(to right, ${color} ${pct(Math.min(vehicle.downPayment, vehicle.price), 0, Math.min(vehicle.price, 50000))}%, var(--border) ${pct(Math.min(vehicle.downPayment, vehicle.price), 0, Math.min(vehicle.price, 50000))}%)` }} />
-      </div>
+      {vehicle.isLease ? (
+        <>
+          {/* Lease monthly payment */}
+          <div>
+            <label className="input-label">Monthly Lease Payment</label>
+            <div className="relative mb-2">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+              <input type="number" min={0} value={vehicle.leaseMonthlyPayment ?? 0}
+                onChange={e => onChange({ ...vehicle, leaseMonthlyPayment: Number(e.target.value) })}
+                className="input-field text-sm py-2" style={{ paddingLeft: '1.75rem' }} />
+            </div>
+            <input type="range" min={0} max={3000} step={25}
+              value={vehicle.leaseMonthlyPayment ?? 0}
+              onChange={e => onChange({ ...vehicle, leaseMonthlyPayment: Number(e.target.value) })}
+              style={{ background: `linear-gradient(to right, ${color} ${pct(vehicle.leaseMonthlyPayment ?? 0, 0, 3000)}%, var(--border) ${pct(vehicle.leaseMonthlyPayment ?? 0, 0, 3000)}%)` }} />
+          </div>
 
-      {/* Loan term + rate */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="input-label">Loan Term</label>
-          <select value={vehicle.loanTerm}
-            onChange={e => onChange({ ...vehicle, loanTerm: Number(e.target.value) })}
-            className="input-field text-sm py-2">
-            {[24,36,48,60,72,84].map(m => <option key={m} value={m}>{m} mo</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="input-label">Rate (%)</label>
-          <input type="number" value={vehicle.rate} min={0} max={25} step={0.1}
-            onChange={e => onChange({ ...vehicle, rate: Number(e.target.value) })}
-            className="input-field text-sm py-2" />
-        </div>
-      </div>
+          {/* Lease term */}
+          <div>
+            <label className="input-label">Lease Term</label>
+            <select value={vehicle.leaseTerm ?? 36}
+              onChange={e => onChange({ ...vehicle, leaseTerm: Number(e.target.value) })}
+              className="input-field text-sm py-2">
+              {[24, 36, 39, 48].map(m => <option key={m} value={m}>{m} mo</option>)}
+            </select>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Down payment */}
+          <div>
+            <label className="input-label">Down Payment</label>
+            <div className="relative mb-2">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+              <input type="number" value={vehicle.downPayment}
+                onChange={e => onChange({ ...vehicle, downPayment: Math.min(Number(e.target.value), vehicle.price) })}
+                className="input-field text-sm py-2" style={{ paddingLeft: '1.75rem' }} />
+            </div>
+            <input type="range" min={0} max={Math.min(vehicle.price, 50000)} step={500}
+              value={Math.min(vehicle.downPayment, vehicle.price)}
+              onChange={e => onChange({ ...vehicle, downPayment: Number(e.target.value) })}
+              style={{ background: `linear-gradient(to right, ${color} ${pct(Math.min(vehicle.downPayment, vehicle.price), 0, Math.min(vehicle.price, 50000))}%, var(--border) ${pct(Math.min(vehicle.downPayment, vehicle.price), 0, Math.min(vehicle.price, 50000))}%)` }} />
+          </div>
 
-      {/* Ownership */}
-      <div>
-        <label className="input-label">Own for (years)</label>
-        <select value={vehicle.ownershipYears}
-          onChange={e => onChange({ ...vehicle, ownershipYears: Number(e.target.value) })}
-          className="input-field text-sm py-2">
-          {[1,2,3,4,5,7,10].map(y => <option key={y} value={y}>{y} yr{y > 1 ? 's' : ''}</option>)}
-        </select>
-      </div>
+          {/* Loan term + rate */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="input-label">Loan Term</label>
+              <select value={vehicle.loanTerm}
+                onChange={e => onChange({ ...vehicle, loanTerm: Number(e.target.value) })}
+                className="input-field text-sm py-2">
+                {[24,36,48,60,72,84].map(m => <option key={m} value={m}>{m} mo</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="input-label">Rate (%)</label>
+              <input type="number" value={vehicle.rate} min={0} max={25} step={0.1}
+                onChange={e => onChange({ ...vehicle, rate: Number(e.target.value) })}
+                className="input-field text-sm py-2" />
+            </div>
+          </div>
+
+          {/* Ownership */}
+          <div>
+            <label className="input-label">Own for (years)</label>
+            <select value={vehicle.ownershipYears}
+              onChange={e => onChange({ ...vehicle, ownershipYears: Number(e.target.value) })}
+              className="input-field text-sm py-2">
+              {[1,2,3,4,5,7,10].map(y => <option key={y} value={y}>{y} yr{y > 1 ? 's' : ''}</option>)}
+            </select>
+          </div>
+        </>
+      )}
 
       {/* Optional extra fields — always editable */}
       <div className="h-px bg-[var(--border)]" />
@@ -202,20 +263,24 @@ export default function MultiVehicleComparison() {
         imports.forEach(imp => {
           const existing = merged.findIndex(v => v.tcoId === imp.id)
           const mapped = {
-            tcoId:             imp.id,
-            name:              imp.name || 'TCO Import',
-            price:             imp.price,
-            downPayment:       imp.downPayment,
-            loanTerm:          imp.loanTerm,
-            rate:              imp.rate,
-            ownershipYears:    imp.ownershipYears,
+            tcoId:               imp.id,
+            name:                imp.name || 'TCO Import',
+            price:               imp.price,
+            downPayment:         imp.downPayment,
+            loanTerm:            imp.loanTerm,
+            rate:                imp.rate,
+            ownershipYears:      imp.ownershipYears,
+            // Lease fields
+            isLease:             imp.isLease ?? false,
+            leaseMonthlyPayment: imp.leaseMonthlyPayment ?? 0,
+            leaseTerm:           imp.leaseTerm ?? 36,
             // Extended
-            totalAnnualCost:   imp.totalAnnualCost ?? null,
-            totalOwnershipCost:imp.totalOwnershipCost ?? null,
-            mpgCombined:       imp.mpgCombined ?? null,
-            cargoSqFt:         imp.cargoSqFt ?? null,
-            valueRetentionPct: imp.valueRetentionPct ?? null,
-            isFromTCO:         true,
+            totalAnnualCost:     imp.totalAnnualCost ?? null,
+            totalOwnershipCost:  imp.totalOwnershipCost ?? null,
+            mpgCombined:         imp.mpgCombined ?? null,
+            cargoSqFt:           imp.cargoSqFt ?? null,
+            valueRetentionPct:   imp.valueRetentionPct ?? null,
+            isFromTCO:           true,
           }
           if (existing >= 0) {
             merged[existing] = mapped
@@ -233,15 +298,26 @@ export default function MultiVehicleComparison() {
   }, [])
 
   const results = useMemo(() =>
-    vehicles.map(v =>
-      calcLoan({
-        price:            v.price,
-        downPayment:      Math.min(v.downPayment, v.price),
-        loanTermMonths:   v.loanTerm,
-        annualRatePercent:v.rate,
-        ownershipYears:   v.ownershipYears,
+    vehicles.map(v => {
+      if (v.isLease) {
+        const monthly = v.leaseMonthlyPayment ?? 0
+        const term    = v.leaseTerm ?? 36
+        return {
+          loanAmount:       0,
+          monthlyPayment:   monthly,
+          totalInterest:    null,
+          totalCostOfLoan:  monthly * term,
+          annualCost:       monthly * 12,
+        }
+      }
+      return calcLoan({
+        price:             v.price,
+        downPayment:       Math.min(v.downPayment, v.price),
+        loanTermMonths:    v.loanTerm,
+        annualRatePercent: v.rate,
+        ownershipYears:    v.ownershipYears,
       })
-    ), [vehicles])
+    }), [vehicles])
 
   // Compute "total out of pocket" for ranking — prefer TCO-sourced if available
   const totalOutOfPocket = useMemo(() =>
@@ -278,12 +354,14 @@ export default function MultiVehicleComparison() {
     ).i
   }
 
+  const hasLease = vehicles.some(v => v.isLease)
+
   const loanMetrics = [
-    { key: 'monthlyPayment',  label: 'Monthly Payment',    vals: results.map(r => r.monthlyPayment),  lowerIsBetter: true },
-    { key: 'totalInterest',   label: 'Total Interest',     vals: results.map(r => r.totalInterest),   lowerIsBetter: true },
-    { key: 'totalCostOfLoan', label: 'Total Cost of Loan', vals: results.map(r => r.totalCostOfLoan), lowerIsBetter: true },
-    { key: 'annualCost',      label: 'Loan Cost / Year',   vals: results.map(r => r.annualCost),      lowerIsBetter: true },
-    { key: 'loanAmount',      label: 'Loan Amount',        vals: results.map(r => r.loanAmount),      lowerIsBetter: null },
+    { key: 'monthlyPayment',  label: hasLease ? 'Monthly Payment / Lease' : 'Monthly Payment', vals: results.map(r => r.monthlyPayment), lowerIsBetter: true },
+    { key: 'totalInterest',   label: 'Total Interest',     vals: results.map(r => r.totalInterest),   lowerIsBetter: true,  fmt: v => v != null ? fmt(v) : '—' },
+    { key: 'totalCostOfLoan', label: hasLease ? 'Total Cost (Loan/Lease)' : 'Total Cost of Loan', vals: results.map(r => r.totalCostOfLoan), lowerIsBetter: true },
+    { key: 'annualCost',      label: hasLease ? 'Annual Cost (Loan/Lease)' : 'Loan Cost / Year',  vals: results.map(r => r.annualCost),      lowerIsBetter: true },
+    { key: 'loanAmount',      label: 'Loan Amount',        vals: results.map((r, i) => vehicles[i].isLease ? null : r.loanAmount), lowerIsBetter: null, fmt: v => v != null ? fmt(v) : '—' },
   ]
 
   // TCO extended metrics (only rows where at least one vehicle has data)
@@ -499,17 +577,18 @@ export default function MultiVehicleComparison() {
               </thead>
               <tbody>
                 {/* Loan metrics */}
-                {loanMetrics.map(({ key, label, vals, lowerIsBetter }) => {
+                {loanMetrics.map(({ key, label, vals, lowerIsBetter, fmt: fmtFn }) => {
                   const best = lowerIsBetter != null ? bestIdx(vals, lowerIsBetter) : -1
+                  const fmtVal = fmtFn ?? fmt
                   return (
                     <tr key={key} className="border-t border-[var(--border)]">
                       <td className="py-3 pr-4 text-[var(--text-muted)] text-xs uppercase tracking-wider font-semibold">{label}</td>
                       {vals.map((val, i) => (
                         <td key={i} className="py-3 px-3 text-right">
-                          <span className={`font-display font-bold tabular-nums ${i === best && best >= 0 ? 'text-[var(--accent)]' : 'text-white'}`}>
-                            {fmt(val)}
+                          <span className={`font-display font-bold tabular-nums ${i === best && best >= 0 && val != null ? 'text-[var(--accent)]' : 'text-white'}`}>
+                            {fmtVal(val)}
                           </span>
-                          {i === best && best >= 0 && (
+                          {i === best && best >= 0 && val != null && (
                             <span className="ml-1.5 text-[10px] text-[var(--accent)] font-bold">✓ best</span>
                           )}
                         </td>

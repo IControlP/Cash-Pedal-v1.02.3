@@ -741,10 +741,12 @@ function SelectInput({ label, value, onChange, options }) {
 }
 
 // ── Vehicle picker ────────────────────────────────────
-function VehiclePicker({ make, model, year, trim, onChange, onClear, freeLeft, isSubscribed }) {
-  const models   = getModels(make)
-  const years    = getAvailableYears(make, model)
-  const trimsMap = getTrims(make, model, year)
+function VehiclePicker({ make, model, year, trim, onChange, onClear, freeLeft, isSubscribed, isLease }) {
+  const models    = getModels(make)
+  const allYears  = getAvailableYears(make, model)
+  // Lease: only the latest model year is available
+  const years     = isLease && allYears.length > 0 ? [allYears[0]] : allYears
+  const trimsMap  = getTrims(make, model, year)
   const trimNames = Object.keys(trimsMap)
 
   return (
@@ -1344,26 +1346,53 @@ export default function TCOCalculator() {
     }
   }, [])
 
+  // Applies a trim selection — shared by explicit picks and auto-defaults
+  const applyTrim = useCallback((make, model, year, trimName) => {
+    const t = getTrims(make, model, year)
+    if (!t[trimName]) return
+    setSelTrim(trimName)
+    const msrp = t[trimName]
+    setOrigMsrp(msrp)
+    const ageYrs = Math.max(0, new Date().getFullYear() - parseInt(year))
+    const estimated = ageYrs > 0 ? estimateCurrentValue(msrp, make, model, ageYrs) : msrp
+    setPrice(Math.round(estimated / 500) * 500)
+  }, [])
+
+  // Auto-selects the cheapest trim for a given make/model/year
+  const autoSelectCheapestTrim = useCallback((make, model, year) => {
+    const t = getTrims(make, model, year)
+    const entries = Object.entries(t)
+    if (entries.length === 0) return
+    if (!checkDetailedLimit()) return
+    const [cheapestName] = entries.reduce((a, b) => b[1] < a[1] ? b : a)
+    applyTrim(make, model, year, cheapestName)
+  }, [checkDetailedLimit, applyTrim])
+
   const handlePickerChange = useCallback((level, value) => {
-    if (level === 'make')  { setSelMake(value); setSelModel(''); setSelYear(''); setSelTrim(''); setOrigMsrp(null); setVehicleCategory('') }
-    if (level === 'model') { setSelModel(value); setSelYear(''); setSelTrim(''); setOrigMsrp(null) }
-    if (level === 'year')  { setSelYear(value); setSelTrim(''); setOrigMsrp(null) }
-    if (level === 'trim') {
-      // Each new trim selection counts as one detailed calculation
-      if (value !== selTrim && !checkDetailedLimit()) return
-      setSelTrim(value)
-      if (selMake && selModel && selYear) {
-        const t = getTrims(selMake, selModel, selYear)
-        if (t[value]) {
-          const msrp = t[value]
-          setOrigMsrp(msrp)
-          const ageYrs = Math.max(0, new Date().getFullYear() - parseInt(selYear))
-          const estimated = ageYrs > 0 ? estimateCurrentValue(msrp, selMake, selModel, ageYrs) : msrp
-          setPrice(Math.round(estimated / 500) * 500)
+    if (level === 'make') {
+      setSelMake(value); setSelModel(''); setSelYear(''); setSelTrim(''); setOrigMsrp(null); setVehicleCategory('')
+    }
+    if (level === 'model') {
+      setSelModel(value); setSelYear(''); setSelTrim(''); setOrigMsrp(null)
+      // Lease: auto-select latest year and cheapest trim
+      if (financeMode === 'lease' && value) {
+        const latestYear = getAvailableYears(selMake, value)[0]
+        if (latestYear) {
+          setSelYear(latestYear)
+          autoSelectCheapestTrim(selMake, value, latestYear)
         }
       }
     }
-  }, [selMake, selModel, selYear, checkDetailedLimit])
+    if (level === 'year') {
+      setSelYear(value); setSelTrim(''); setOrigMsrp(null)
+      // Auto-default to cheapest trim when year is chosen
+      if (value) autoSelectCheapestTrim(selMake, selModel, value)
+    }
+    if (level === 'trim') {
+      if (value !== selTrim && !checkDetailedLimit()) return
+      applyTrim(selMake, selModel, selYear, value)
+    }
+  }, [financeMode, selMake, selModel, selYear, selTrim, checkDetailedLimit, applyTrim, autoSelectCheapestTrim])
 
   const handleClear = useCallback(() => {
     setSelMake(''); setSelModel(''); setSelYear(''); setSelTrim(''); setOrigMsrp(null)
@@ -1505,6 +1534,25 @@ export default function TCOCalculator() {
             {/* ── Inputs ── */}
             <div className="card anim-3 flex flex-col gap-7">
 
+              {/* Buy / Lease toggle — top-level choice */}
+              <div className="flex gap-1 p-1 rounded-lg"
+                style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                {[
+                  { value: 'buy',   label: 'Buy / Finance' },
+                  { value: 'lease', label: 'Lease' },
+                ].map(opt => (
+                  <button key={opt.value}
+                    onClick={() => setFinanceMode(opt.value)}
+                    className="flex-1 py-1.5 rounded-md text-sm font-semibold transition-all"
+                    style={{
+                      background: financeMode === opt.value ? 'var(--accent)' : 'transparent',
+                      color:      financeMode === opt.value ? '#000' : 'var(--text-muted)',
+                    }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
               {/* Free vs Limited feature tier summary */}
               {!isSubscribed && (
                 <div className="rounded-xl overflow-hidden text-xs border"
@@ -1592,6 +1640,7 @@ export default function TCOCalculator() {
                   onChange={handlePickerChange} onClear={handleClear}
                   freeLeft={Math.max(0, FREE_DETAILED_LIMIT - detailedCalcCount)}
                   isSubscribed={isSubscribed}
+                  isLease={financeMode === 'lease'}
                 />
 
                 {/* Category picker — shown only when no make is selected */}
@@ -1635,24 +1684,6 @@ export default function TCOCalculator() {
                       {origMsrp && carAge > 0 ? 'Est. Current Value' : 'Using MSRP'}
                     </span>
                   )}
-                </div>
-                {/* Buy / Lease toggle */}
-                <div className="flex gap-1 p-1 rounded-lg mb-4"
-                  style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-                  {[
-                    { value: 'buy',   label: 'Buy / Finance' },
-                    { value: 'lease', label: 'Lease' },
-                  ].map(opt => (
-                    <button key={opt.value}
-                      onClick={() => setFinanceMode(opt.value)}
-                      className="flex-1 py-1.5 rounded-md text-sm font-semibold transition-all"
-                      style={{
-                        background:  financeMode === opt.value ? 'var(--accent)' : 'transparent',
-                        color:       financeMode === opt.value ? '#000' : 'var(--text-muted)',
-                      }}>
-                      {opt.label}
-                    </button>
-                  ))}
                 </div>
                 <p className="text-[var(--text-muted)] text-sm">
                   {financeMode === 'lease'

@@ -1534,25 +1534,6 @@ export default function TCOCalculator() {
             {/* ── Inputs ── */}
             <div className="card anim-3 flex flex-col gap-7">
 
-              {/* Buy / Lease toggle — top-level choice */}
-              <div className="flex gap-1 p-1 rounded-lg"
-                style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-                {[
-                  { value: 'buy',   label: 'Buy / Finance' },
-                  { value: 'lease', label: 'Lease' },
-                ].map(opt => (
-                  <button key={opt.value}
-                    onClick={() => setFinanceMode(opt.value)}
-                    className="flex-1 py-1.5 rounded-md text-sm font-semibold transition-all"
-                    style={{
-                      background: financeMode === opt.value ? 'var(--accent)' : 'transparent',
-                      color:      financeMode === opt.value ? '#000' : 'var(--text-muted)',
-                    }}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-
               {/* Free vs Limited feature tier summary */}
               {!isSubscribed && (
                 <div className="rounded-xl overflow-hidden text-xs border"
@@ -1622,6 +1603,37 @@ export default function TCOCalculator() {
               </div>
 
               <div className="h-px bg-[var(--border)]" />
+
+              {/* Buy / Lease toggle */}
+              <div className="flex gap-1 p-1 rounded-lg"
+                style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                {[
+                  { value: 'buy',   label: 'Buy / Finance' },
+                  { value: 'lease', label: 'Lease' },
+                ].map(opt => (
+                  <button key={opt.value}
+                    onClick={() => {
+                      setFinanceMode(opt.value)
+                      // When switching to lease, enforce latest year if a model is already selected
+                      if (opt.value === 'lease' && selMake && selModel) {
+                        const latestYear = getAvailableYears(selMake, selModel)[0]
+                        if (latestYear && selYear !== latestYear) {
+                          setSelYear(latestYear)
+                          setSelTrim('')
+                          setOrigMsrp(null)
+                          autoSelectCheapestTrim(selMake, selModel, latestYear)
+                        }
+                      }
+                    }}
+                    className="flex-1 py-1.5 rounded-md text-sm font-semibold transition-all"
+                    style={{
+                      background: financeMode === opt.value ? 'var(--accent)' : 'transparent',
+                      color:      financeMode === opt.value ? '#000' : 'var(--text-muted)',
+                    }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
 
               {/* Vehicle selector */}
               <div>

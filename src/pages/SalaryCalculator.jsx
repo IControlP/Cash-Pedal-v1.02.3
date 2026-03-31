@@ -68,12 +68,37 @@ const loanTermOptions = [
 ]
 
 export default function SalaryCalculator() {
+  // Finance mode: 'buy' | 'lease'
+  const [mode, setMode] = useState('buy')
+
+  // Buy inputs
   const [vehiclePrice, setVehiclePrice] = useState(30000)
   const [downPct, setDownPct] = useState(20)
   const [loanTerm, setLoanTerm] = useState(48)
   const [rate, setRate] = useState(6.5)
 
+  // Lease inputs
+  const [leaseMsrp,    setLeaseMsrp]    = useState(30000)
+  const [leaseMonthly, setLeaseMonthly] = useState(400)
+  const [leaseTerm,    setLeaseTerm]    = useState(36)
+
   const results = useMemo(() => {
+    if (mode === 'lease') {
+      const extra = estimateAdditionalMonthlyCosts(leaseMsrp)
+      const totalMonthly = leaseMonthly + extra.total
+      return {
+        payment: leaseMonthly,
+        extra,
+        totalMonthly,
+        conservative: (totalMonthly / 0.10) * 12,
+        comfortable:  (totalMonthly / 0.15) * 12,
+        aggressive:   (totalMonthly / 0.20) * 12,
+        conservativeMonthly: totalMonthly / 0.10,
+        // buy-only fields (unused in lease mode)
+        downPayment: null,
+        loanAmount: null,
+      }
+    }
     const downPayment = vehiclePrice * (downPct / 100)
     const loanAmount = vehiclePrice - downPayment
     const payment = monthlyPayment(loanAmount, rate, loanTerm)
@@ -93,7 +118,7 @@ export default function SalaryCalculator() {
       // Monthly breakdown of total annual income needed (conservative)
       conservativeMonthly: totalMonthly / 0.10,
     }
-  }, [vehiclePrice, downPct, loanTerm, rate])
+  }, [mode, vehiclePrice, downPct, loanTerm, rate, leaseMsrp, leaseMonthly, leaseTerm])
 
   const downAmount = vehiclePrice * (downPct / 100)
 
@@ -111,7 +136,9 @@ export default function SalaryCalculator() {
             Can you actually afford it?
           </h1>
           <p className="anim-2 text-[var(--text-muted)] mt-2 text-base max-w-xl">
-            The 20/4/10 rule: 20% down, max 4-year loan, total vehicle costs ≤ 10% of gross income. See the salary you need.
+            {mode === 'lease'
+              ? 'Enter your lease payment and see the gross income needed to keep vehicle costs under 10–20% of your salary.'
+              : 'The 20/4/10 rule: 20% down, max 4-year loan, total vehicle costs ≤ 10% of gross income. See the salary you need.'}
           </p>
         </div>
 
@@ -120,99 +147,189 @@ export default function SalaryCalculator() {
 
             {/* Inputs */}
             <div className="card anim-3 flex flex-col gap-6">
-              <h2 className="font-display font-bold text-white text-lg">Vehicle Details</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="font-display font-bold text-white text-lg">Vehicle Details</h2>
+              </div>
+
+              {/* Buy / Lease toggle */}
+              <div className="flex gap-1 p-1 rounded-lg"
+                style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                {[
+                  { value: 'buy',   label: 'Buy / Finance' },
+                  { value: 'lease', label: 'Lease' },
+                ].map(opt => (
+                  <button key={opt.value}
+                    onClick={() => setMode(opt.value)}
+                    className="flex-1 py-1.5 rounded-md text-sm font-semibold transition-all"
+                    style={{
+                      background: mode === opt.value ? 'var(--accent)' : 'transparent',
+                      color:      mode === opt.value ? '#000' : 'var(--text-muted)',
+                    }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
               <div className="h-px bg-[var(--border)]" />
 
-              {/* Price */}
-              <div className="flex flex-col gap-2">
-                <label className="input-label">Vehicle Price</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
-                  <input
-                    type="number"
-                    value={vehiclePrice}
-                    onChange={e => setVehiclePrice(Number(e.target.value))}
-                    className="input-field"
-                    style={{ paddingLeft: '1.75rem' }}
-                  />
-                </div>
-                <input
-                  type="range" min={5000} max={200000} step={1000}
-                  value={vehiclePrice}
-                  onChange={e => setVehiclePrice(Number(e.target.value))}
-                  style={{ background: `linear-gradient(to right, var(--accent) ${((vehiclePrice - 5000) / 195000) * 100}%, var(--border) ${((vehiclePrice - 5000) / 195000) * 100}%)` }}
-                />
-                <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
-                  <span>$5,000</span><span>$200,000</span>
-                </div>
-              </div>
+              {mode === 'lease' ? (
+                <>
+                  {/* MSRP */}
+                  <div className="flex flex-col gap-2">
+                    <label className="input-label">Vehicle MSRP</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                      <input
+                        type="number"
+                        value={leaseMsrp}
+                        onChange={e => setLeaseMsrp(Number(e.target.value))}
+                        className="input-field"
+                        style={{ paddingLeft: '1.75rem' }}
+                      />
+                    </div>
+                    <input
+                      type="range" min={5000} max={200000} step={1000}
+                      value={leaseMsrp}
+                      onChange={e => setLeaseMsrp(Number(e.target.value))}
+                      style={{ background: `linear-gradient(to right, var(--accent) ${((leaseMsrp - 5000) / 195000) * 100}%, var(--border) ${((leaseMsrp - 5000) / 195000) * 100}%)` }}
+                    />
+                    <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+                      <span>$5,000</span><span>$200,000</span>
+                    </div>
+                  </div>
 
-              {/* Down payment % */}
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <label className="input-label">Down Payment</label>
-                  <span className="text-sm font-bold text-white">{fmt(downAmount)}</span>
-                </div>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={downPct}
-                    min={0} max={100}
-                    onChange={e => setDownPct(Math.min(100, Math.max(0, Number(e.target.value))))}
-                    className="input-field"
-                    style={{ paddingRight: '2.5rem' }}
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">%</span>
-                </div>
-                <input
-                  type="range" min={0} max={100} step={1}
-                  value={downPct}
-                  onChange={e => setDownPct(Number(e.target.value))}
-                  style={{ background: `linear-gradient(to right, var(--accent) ${downPct}%, var(--border) ${downPct}%)` }}
-                />
-                <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
-                  <span>0%</span><span className="font-semibold text-[var(--accent)]">20% recommended</span><span>100%</span>
-                </div>
-              </div>
+                  {/* Monthly lease payment */}
+                  <div className="flex flex-col gap-2">
+                    <label className="input-label">Monthly Lease Payment</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                      <input
+                        type="number"
+                        value={leaseMonthly}
+                        min={0}
+                        onChange={e => setLeaseMonthly(Number(e.target.value))}
+                        className="input-field"
+                        style={{ paddingLeft: '1.75rem' }}
+                      />
+                    </div>
+                    <input
+                      type="range" min={0} max={3000} step={25}
+                      value={leaseMonthly}
+                      onChange={e => setLeaseMonthly(Number(e.target.value))}
+                      style={{ background: `linear-gradient(to right, var(--accent) ${(leaseMonthly / 3000) * 100}%, var(--border) ${(leaseMonthly / 3000) * 100}%)` }}
+                    />
+                    <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+                      <span>$0</span><span>$3,000/mo</span>
+                    </div>
+                  </div>
 
-              {/* Loan term */}
-              <div className="flex flex-col gap-2">
-                <label className="input-label">Loan Term</label>
-                <select
-                  value={loanTerm}
-                  onChange={e => setLoanTerm(Number(e.target.value))}
-                  className="input-field"
-                >
-                  {loanTermOptions.map(o => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-                {loanTerm > 48 && (
-                  <p className="text-xs text-yellow-500">⚠ The 20/4/10 rule recommends 48 months max to keep total cost down.</p>
-                )}
-              </div>
+                  {/* Lease term */}
+                  <div className="flex flex-col gap-2">
+                    <label className="input-label">Lease Term</label>
+                    <select value={leaseTerm} onChange={e => setLeaseTerm(Number(e.target.value))} className="input-field">
+                      {[24, 36, 39, 48].map(m => (
+                        <option key={m} value={m}>{m} months</option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      Total lease cost: {fmt(leaseMonthly * leaseTerm)} · No equity at lease end
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Price */}
+                  <div className="flex flex-col gap-2">
+                    <label className="input-label">Vehicle Price</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                      <input
+                        type="number"
+                        value={vehiclePrice}
+                        onChange={e => setVehiclePrice(Number(e.target.value))}
+                        className="input-field"
+                        style={{ paddingLeft: '1.75rem' }}
+                      />
+                    </div>
+                    <input
+                      type="range" min={5000} max={200000} step={1000}
+                      value={vehiclePrice}
+                      onChange={e => setVehiclePrice(Number(e.target.value))}
+                      style={{ background: `linear-gradient(to right, var(--accent) ${((vehiclePrice - 5000) / 195000) * 100}%, var(--border) ${((vehiclePrice - 5000) / 195000) * 100}%)` }}
+                    />
+                    <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+                      <span>$5,000</span><span>$200,000</span>
+                    </div>
+                  </div>
 
-              {/* Interest rate */}
-              <div className="flex flex-col gap-2">
-                <label className="input-label">Annual Interest Rate</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={rate}
-                    min={0} max={25} step={0.1}
-                    onChange={e => setRate(Number(e.target.value))}
-                    className="input-field"
-                    style={{ paddingRight: '2.5rem' }}
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">%</span>
-                </div>
-                <input
-                  type="range" min={0} max={25} step={0.1}
-                  value={rate}
-                  onChange={e => setRate(Number(e.target.value))}
-                  style={{ background: `linear-gradient(to right, var(--accent) ${(rate / 25) * 100}%, var(--border) ${(rate / 25) * 100}%)` }}
-                />
-              </div>
+                  {/* Down payment % */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <label className="input-label">Down Payment</label>
+                      <span className="text-sm font-bold text-white">{fmt(downAmount)}</span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={downPct}
+                        min={0} max={100}
+                        onChange={e => setDownPct(Math.min(100, Math.max(0, Number(e.target.value))))}
+                        className="input-field"
+                        style={{ paddingRight: '2.5rem' }}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">%</span>
+                    </div>
+                    <input
+                      type="range" min={0} max={100} step={1}
+                      value={downPct}
+                      onChange={e => setDownPct(Number(e.target.value))}
+                      style={{ background: `linear-gradient(to right, var(--accent) ${downPct}%, var(--border) ${downPct}%)` }}
+                    />
+                    <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+                      <span>0%</span><span className="font-semibold text-[var(--accent)]">20% recommended</span><span>100%</span>
+                    </div>
+                  </div>
+
+                  {/* Loan term */}
+                  <div className="flex flex-col gap-2">
+                    <label className="input-label">Loan Term</label>
+                    <select
+                      value={loanTerm}
+                      onChange={e => setLoanTerm(Number(e.target.value))}
+                      className="input-field"
+                    >
+                      {loanTermOptions.map(o => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
+                    {loanTerm > 48 && (
+                      <p className="text-xs text-yellow-500">⚠ The 20/4/10 rule recommends 48 months max to keep total cost down.</p>
+                    )}
+                  </div>
+
+                  {/* Interest rate */}
+                  <div className="flex flex-col gap-2">
+                    <label className="input-label">Annual Interest Rate</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={rate}
+                        min={0} max={25} step={0.1}
+                        onChange={e => setRate(Number(e.target.value))}
+                        className="input-field"
+                        style={{ paddingRight: '2.5rem' }}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">%</span>
+                    </div>
+                    <input
+                      type="range" min={0} max={25} step={0.1}
+                      value={rate}
+                      onChange={e => setRate(Number(e.target.value))}
+                      style={{ background: `linear-gradient(to right, var(--accent) ${(rate / 25) * 100}%, var(--border) ${(rate / 25) * 100}%)` }}
+                    />
+                  </div>
+                </>
+              )}
 
               {/* Monthly cost breakdown */}
               <div className="bg-[var(--bg)] rounded-xl border border-[var(--border)] p-4">
@@ -221,7 +338,7 @@ export default function SalaryCalculator() {
                 </p>
                 <div className="flex flex-col gap-2.5">
                   {[
-                    { label: 'Loan payment', val: results.payment },
+                    { label: mode === 'lease' ? 'Lease payment' : 'Loan payment', val: results.payment },
                     { label: 'Fuel', val: results.extra.fuel },
                     { label: 'Insurance', val: results.extra.insurance },
                     { label: 'Maintenance', val: results.extra.maintenance },
@@ -291,22 +408,43 @@ export default function SalaryCalculator() {
                 </div>
               ))}
 
-              {/* 20/4/10 rule explainer */}
-              <div className="card border-[var(--border)]">
-                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">The 20/4/10 Rule</p>
-                <div className="flex flex-col gap-2.5">
-                  {[
-                    { num: '20%', desc: 'Minimum down payment' },
-                    { num: '4 yrs', desc: 'Maximum loan term' },
-                    { num: '10%', desc: 'Max % of gross income for all vehicle costs' },
-                  ].map(({ num, desc }) => (
-                    <div key={num} className="flex items-center gap-3">
-                      <span className="font-display font-bold text-[var(--accent)] text-sm w-12 shrink-0">{num}</span>
-                      <span className="text-sm text-[var(--text-muted)]">{desc}</span>
-                    </div>
-                  ))}
+              {/* Rule explainer */}
+              {mode === 'buy' ? (
+                <div className="card border-[var(--border)]">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">The 20/4/10 Rule</p>
+                  <div className="flex flex-col gap-2.5">
+                    {[
+                      { num: '20%', desc: 'Minimum down payment' },
+                      { num: '4 yrs', desc: 'Maximum loan term' },
+                      { num: '10%', desc: 'Max % of gross income for all vehicle costs' },
+                    ].map(({ num, desc }) => (
+                      <div key={num} className="flex items-center gap-3">
+                        <span className="font-display font-bold text-[var(--accent)] text-sm w-12 shrink-0">{num}</span>
+                        <span className="text-sm text-[var(--text-muted)]">{desc}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="card border-[var(--border)]">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">Lease Affordability Guide</p>
+                  <div className="flex flex-col gap-2.5">
+                    {[
+                      { num: '10%', desc: 'Conservative — all vehicle costs ≤ 10% of gross income' },
+                      { num: '15%', desc: 'Comfortable — most can manage without strain' },
+                      { num: '20%', desc: 'Aggressive — stretched but feasible for some' },
+                    ].map(({ num, desc }) => (
+                      <div key={num} className="flex items-center gap-3">
+                        <span className="font-display font-bold text-[var(--accent)] text-sm w-12 shrink-0">{num}</span>
+                        <span className="text-sm text-[var(--text-muted)]">{desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-[var(--text-muted)] mt-3">
+                    Note: Leases build no equity. At lease end you return the vehicle or buy it at residual value.
+                  </p>
+                </div>
+              )}
 
               <Link to="/tco" className="btn-ghost text-sm justify-center">
                 Calculate full TCO →

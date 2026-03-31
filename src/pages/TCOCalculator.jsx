@@ -403,6 +403,20 @@ function calculateLoan({ price, downPayment, loanTermMonths, annualRatePercent, 
   return { loanAmount, monthlyPayment, totalInterestPaid, totalCostOfLoan: totalPaid, trueAnnualCost }
 }
 
+// ── Lease math ────────────────────────────────────────
+// moneyFactor = APR / 2400 (standard industry conversion)
+function calculateLease({ msrp, capCostReduction, acquisitionFee, leaseTermMonths, aprPercent, residualPct }) {
+  const capCost = msrp - capCostReduction + acquisitionFee
+  const residualValue = msrp * (residualPct / 100)
+  const moneyFactor = aprPercent / 2400
+  const depreciationFee = (capCost - residualValue) / leaseTermMonths
+  const financeCharge = (capCost + residualValue) * moneyFactor
+  const monthlyPayment = depreciationFee + financeCharge
+  const totalLeaseCost = monthlyPayment * leaseTermMonths + capCostReduction
+  const annualLeaseCost = monthlyPayment * 12
+  return { monthlyPayment, totalLeaseCost, annualLeaseCost, residualValue, capCost }
+}
+
 function formatCurrency(val) {
   return new Intl.NumberFormat('en-US', {
     style: 'currency', currency: 'USD',
@@ -1168,6 +1182,13 @@ const ownershipOptions = [
   { value: 10, label: '10 years' },
 ]
 
+const leaseTermOptions = [
+  { value: 24, label: '24 months (2 years)' },
+  { value: 36, label: '36 months (3 years)' },
+  { value: 39, label: '39 months' },
+  { value: 48, label: '48 months (4 years)' },
+]
+
 // ── Main page ─────────────────────────────────────────
 export default function TCOCalculator() {
   const navigate = useNavigate()
@@ -1254,6 +1275,15 @@ export default function TCOCalculator() {
   const [multiCarPolicy, setMultiCarPolicy] = useState(false)
   // Track original MSRP separately from price (which may be depreciation-adjusted)
   const [origMsrp,       setOrigMsrp]       = useState(null)
+
+  // Finance mode: 'buy' | 'lease'
+  const [financeMode,      setFinanceMode]      = useState('buy')
+  // Lease-specific inputs
+  const [leaseTerm,        setLeaseTerm]        = useState(36)
+  const [leaseApr,         setLeaseApr]         = useState(3.0)
+  const [residualPct,      setResidualPct]      = useState(55)
+  const [capCostReduction, setCapCostReduction] = useState(0)
+  const [acquisitionFee,   setAcquisitionFee]   = useState(795)
 
   // Derived model data (type, specs, mpg, isEV)
   const modelData = useMemo(() => getModelData(selMake, selModel), [selMake, selModel])
@@ -1344,8 +1374,17 @@ export default function TCOCalculator() {
     loanTermMonths: loanTerm, annualRatePercent: rate, ownershipYears,
   }), [price, downPayment, loanTerm, rate, ownershipYears])
 
+  const leaseResults = useMemo(() => calculateLease({
+    msrp: price,
+    capCostReduction: Math.min(capCostReduction, price),
+    acquisitionFee,
+    leaseTermMonths: leaseTerm,
+    aprPercent: leaseApr,
+    residualPct,
+  }), [price, capCostReduction, acquisitionFee, leaseTerm, leaseApr, residualPct])
+
   const annualOperatingCost = annualInsurance + annualFuel + annualMaintenance + annualRegistration
-  const totalAnnualCost     = results.trueAnnualCost + annualOperatingCost
+  const totalAnnualCost = (financeMode === 'lease' ? leaseResults.annualLeaseCost : results.trueAnnualCost) + annualOperatingCost
 
   // For the insurance note: estimated current market value after depreciation
   const carAge            = selYear ? Math.max(0, new Date().getFullYear() - parseInt(selYear)) : 0
@@ -1373,30 +1412,40 @@ export default function TCOCalculator() {
       ? Math.round((futureValue / origMsrp) * 100)
       : null
 
+    const leasePeriodYears = leaseTerm / 12
+    const totalOwnership = financeMode === 'lease'
+      ? leaseResults.totalLeaseCost + annualOperatingCost * leasePeriodYears
+      : totalAnnualCost * ownershipYears
+
     const entry = {
       id:                crypto.randomUUID(),
       name:              selMake && selModel
         ? [selYear, selMake, selModel, selTrim].filter(Boolean).join(' ')
         : 'Custom Vehicle',
       addedAt:           new Date().toISOString(),
-      // Loan inputs
+      // Finance mode
+      isLease:           financeMode === 'lease',
+      // Loan inputs (used when isLease === false)
       price,
       downPayment:       safeDown,
       loanTerm,
       rate,
-      ownershipYears,
-      // Loan results
-      monthlyPayment:    results.monthlyPayment,
-      totalInterest:     results.totalInterestPaid,
-      totalCostOfLoan:   results.totalCostOfLoan,
-      trueAnnualCost:    results.trueAnnualCost,
+      ownershipYears:    financeMode === 'lease' ? leasePeriodYears : ownershipYears,
+      // Lease inputs (used when isLease === true)
+      leaseMonthlyPayment: financeMode === 'lease' ? leaseResults.monthlyPayment : null,
+      leaseTerm:           financeMode === 'lease' ? leaseTerm : null,
+      // Finance results
+      monthlyPayment:    financeMode === 'lease' ? leaseResults.monthlyPayment : results.monthlyPayment,
+      totalInterest:     financeMode === 'lease' ? null : results.totalInterestPaid,
+      totalCostOfLoan:   financeMode === 'lease' ? leaseResults.totalLeaseCost : results.totalCostOfLoan,
+      trueAnnualCost:    financeMode === 'lease' ? leaseResults.annualLeaseCost : results.trueAnnualCost,
       // Operating costs
       annualInsurance,
       annualFuel,
       annualMaintenance,
       annualRegistration,
       totalAnnualCost,
-      totalOwnershipCost: totalAnnualCost * ownershipYears,
+      totalOwnershipCost: totalOwnership,
       // Vehicle identity
       make: selMake, model: selModel, year: selYear, trim: selTrim,
       // Specs (may be null for category-only or no-picker entries)
@@ -1404,9 +1453,9 @@ export default function TCOCalculator() {
       cargoSqFt:      modelData?.specs?.cargo_cu_ft ?? null,
       seats:          modelData?.specs?.seats ?? null,
       isEV:           effIsEV,
-      // Value retention
+      // Value retention (not applicable for leases but keep for reference)
       futureValue,
-      valueRetentionPct: retentionPct,
+      valueRetentionPct: financeMode === 'lease' ? null : retentionPct,
     }
 
     const existing = JSON.parse(localStorage.getItem('cashpedal_tco_for_comparison') || '[]')
@@ -1576,7 +1625,7 @@ export default function TCOCalculator() {
 
               {/* Financing */}
               <div>
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-3">
                   <h2 className="font-display font-bold text-white text-lg">Purchase &amp; Financing</h2>
                   {usingMSRP && (
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded"
@@ -1585,37 +1634,109 @@ export default function TCOCalculator() {
                     </span>
                   )}
                 </div>
-                <p className="text-[var(--text-muted)] text-sm mb-5">
-                  Adjust any value — results update live.
+                {/* Buy / Lease toggle */}
+                <div className="flex gap-1 p-1 rounded-lg mb-4"
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                  {[
+                    { value: 'buy',   label: 'Buy / Finance' },
+                    { value: 'lease', label: 'Lease' },
+                  ].map(opt => (
+                    <button key={opt.value}
+                      onClick={() => setFinanceMode(opt.value)}
+                      className="flex-1 py-1.5 rounded-md text-sm font-semibold transition-all"
+                      style={{
+                        background:  financeMode === opt.value ? 'var(--accent)' : 'transparent',
+                        color:       financeMode === opt.value ? '#000' : 'var(--text-muted)',
+                      }}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[var(--text-muted)] text-sm">
+                  {financeMode === 'lease'
+                    ? 'Lease inputs: MSRP, cap cost reduction, term, APR & residual.'
+                    : 'Adjust any value — results update live.'}
                 </p>
               </div>
 
-              <SliderInput label="Vehicle Purchase Price" value={price} onChange={setPrice}
+              <SliderInput label={financeMode === 'lease' ? 'Vehicle MSRP' : 'Vehicle Purchase Price'} value={price} onChange={setPrice}
                 min={5000} max={150000} step={500} prefix="$" />
 
-              {origMsrp && carAge > 0 && (
+              {origMsrp && carAge > 0 && financeMode === 'buy' && (
                 <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
                   Auto-set to estimated {carAge}-year depreciated value — original MSRP was{' '}
                   <span className="text-white">{formatCurrency(origMsrp)}</span>
                 </p>
               )}
 
-              <SliderInput label="Down Payment" value={safeDown}
-                onChange={v => setDownPayment(Math.min(v, price))}
-                min={0} max={Math.min(price, 50000)} step={500} prefix="$" />
+              {financeMode === 'buy' ? (
+                <>
+                  <SliderInput label="Down Payment" value={safeDown}
+                    onChange={v => setDownPayment(Math.min(v, price))}
+                    min={0} max={Math.min(price, 50000)} step={500} prefix="$" />
 
-              <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
-                <span className="text-sm text-[var(--text-muted)]">Loan amount</span>
-                <span className="font-display font-bold text-white text-lg">{formatCurrency(results.loanAmount)}</span>
-              </div>
+                  <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
+                    <span className="text-sm text-[var(--text-muted)]">Loan amount</span>
+                    <span className="font-display font-bold text-white text-lg">{formatCurrency(results.loanAmount)}</span>
+                  </div>
 
-              <SelectInput label="Loan Term" value={loanTerm} onChange={setLoanTerm} options={loanTermOptions} />
+                  <SelectInput label="Loan Term" value={loanTerm} onChange={setLoanTerm} options={loanTermOptions} />
 
-              <SliderInput label="Annual Interest Rate" value={rate} onChange={setRate}
-                min={0} max={25} step={0.1} suffix="%" inputMin={0} inputMax={25} />
+                  <SliderInput label="Annual Interest Rate" value={rate} onChange={setRate}
+                    min={0} max={25} step={0.1} suffix="%" inputMin={0} inputMax={25} />
 
-              <SelectInput label="Ownership Duration" value={ownershipYears}
-                onChange={setOwnershipYears} options={ownershipOptions} />
+                  <SelectInput label="Ownership Duration" value={ownershipYears}
+                    onChange={setOwnershipYears} options={ownershipOptions} />
+                </>
+              ) : (
+                <>
+                  <SliderInput label="Cap Cost Reduction (upfront payment)"
+                    value={Math.min(capCostReduction, price)}
+                    onChange={v => setCapCostReduction(Math.min(v, price))}
+                    min={0} max={Math.min(price, 20000)} step={250} prefix="$" />
+
+                  <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                    Lowers your monthly payment but is not recovered at lease end
+                  </p>
+
+                  <SliderInput label="Acquisition Fee" value={acquisitionFee} onChange={setAcquisitionFee}
+                    min={0} max={2000} step={25} prefix="$" />
+
+                  <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                    Dealer/lender fee added to cap cost — typically $595–$995
+                  </p>
+
+                  <SelectInput label="Lease Term" value={leaseTerm} onChange={setLeaseTerm} options={leaseTermOptions} />
+
+                  <SliderInput label="Money Factor (APR equivalent)" value={leaseApr} onChange={setLeaseApr}
+                    min={0} max={15} step={0.1} suffix="%" inputMin={0} inputMax={15} />
+
+                  <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                    Money factor = {(leaseApr / 2400).toFixed(5)} · Typical lease APR is 2–5%
+                  </p>
+
+                  <SliderInput label="Residual Value" value={residualPct} onChange={setResidualPct}
+                    min={20} max={80} step={1} suffix="%" />
+
+                  <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
+                    <span className="text-sm text-[var(--text-muted)]">Residual amount</span>
+                    <span className="font-display font-bold text-white text-lg">
+                      {formatCurrency(price * residualPct / 100)}
+                    </span>
+                  </div>
+
+                  <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                    Vehicle value at lease end — typically 45–65% for 36-month leases
+                  </p>
+
+                  <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
+                    <span className="text-sm text-[var(--text-muted)]">Capitalized cost</span>
+                    <span className="font-display font-bold text-white text-lg">
+                      {formatCurrency(leaseResults.capCost)}
+                    </span>
+                  </div>
+                </>
+              )}
 
               <div className="h-px bg-[var(--border)]" />
 
@@ -1935,13 +2056,26 @@ export default function TCOCalculator() {
                 <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
                   Your results
                 </p>
-                <ResultCard label="Monthly Payment" value={results.monthlyPayment} highlight delay={0} />
+                <ResultCard
+                  label={financeMode === 'lease' ? 'Monthly Lease Payment' : 'Monthly Payment'}
+                  value={financeMode === 'lease' ? leaseResults.monthlyPayment : results.monthlyPayment}
+                  highlight delay={0} />
               </div>
 
               <div className="grid grid-cols-1 gap-4 anim-5">
-                <ResultCard label="Total Interest Paid"  value={results.totalInterestPaid}  delay={60}  />
-                <ResultCard label="Total Cost of Loan"   value={results.totalCostOfLoan}    delay={120} />
-                <ResultCard label="Loan Cost Per Year"   value={results.trueAnnualCost}     delay={180} />
+                {financeMode === 'lease' ? (
+                  <>
+                    <ResultCard label="Total Lease Cost"     value={leaseResults.totalLeaseCost}   delay={60}  />
+                    <ResultCard label="Residual Value"       value={leaseResults.residualValue}     delay={120} />
+                    <ResultCard label="Lease Cost Per Year"  value={leaseResults.annualLeaseCost}  delay={180} />
+                  </>
+                ) : (
+                  <>
+                    <ResultCard label="Total Interest Paid"  value={results.totalInterestPaid}  delay={60}  />
+                    <ResultCard label="Total Cost of Loan"   value={results.totalCostOfLoan}    delay={120} />
+                    <ResultCard label="Loan Cost Per Year"   value={results.trueAnnualCost}     delay={180} />
+                  </>
+                )}
               </div>
 
               {/* Annual cost breakdown */}
@@ -1952,7 +2086,7 @@ export default function TCOCalculator() {
                 </p>
                 <div className="flex flex-col gap-2 text-sm">
                   {[
-                    { label: 'Loan payments',          value: results.trueAnnualCost },
+                    { label: financeMode === 'lease' ? 'Lease payments' : 'Loan payments', value: financeMode === 'lease' ? leaseResults.annualLeaseCost : results.trueAnnualCost },
                     { label: 'Insurance',              value: annualInsurance },
                     { label: (modelData?.is_ev || VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.isEV) ? 'Charging' : 'Fuel', value: annualFuel },
                     { label: 'Maintenance & repairs',  value: annualMaintenance },
@@ -1971,8 +2105,14 @@ export default function TCOCalculator() {
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-[var(--text-muted)]">Total over {ownershipYears} yr{ownershipYears !== 1 ? 's' : ''}</span>
-                    <span className="text-[var(--text-muted)] font-medium">{formatCurrency(totalAnnualCost * ownershipYears)}</span>
+                    <span className="text-[var(--text-muted)]">
+                      Total over {financeMode === 'lease' ? `${leaseTerm} mo lease` : `${ownershipYears} yr${ownershipYears !== 1 ? 's' : ''}`}
+                    </span>
+                    <span className="text-[var(--text-muted)] font-medium">
+                      {formatCurrency(financeMode === 'lease'
+                        ? leaseResults.totalLeaseCost + annualOperatingCost * (leaseTerm / 12)
+                        : totalAnnualCost * ownershipYears)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1981,13 +2121,27 @@ export default function TCOCalculator() {
               <div className="rounded-xl p-4 border text-sm leading-relaxed"
                 style={{ background:'rgba(255,184,0,0.04)', borderColor:'rgba(255,184,0,0.15)', color:'var(--text-muted)' }}>
                 <span className="text-[var(--accent)] font-semibold">The real picture: </span>
-                Over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}, loan payments total{' '}
-                <span className="text-white font-semibold">
-                  {formatCurrency(results.monthlyPayment * Math.min(ownershipYears * 12, loanTerm))}
-                </span>{' '}
-                ({formatCurrency(results.totalInterestPaid)} in interest). Add insurance, fuel, maintenance, and fees and your{' '}
-                <span className="text-white font-semibold">all-in annual cost is {formatCurrency(totalAnnualCost)}</span>{' '}
-                — or {formatCurrency(totalAnnualCost * ownershipYears)} over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}.
+                {financeMode === 'lease' ? (
+                  <>
+                    Over your {leaseTerm}-month lease, payments total{' '}
+                    <span className="text-white font-semibold">
+                      {formatCurrency(leaseResults.monthlyPayment * leaseTerm)}
+                    </span>{' '}
+                    — you don&apos;t own the vehicle at the end. Add insurance, fuel, maintenance, and fees and your{' '}
+                    <span className="text-white font-semibold">all-in annual cost is {formatCurrency(totalAnnualCost)}</span>{' '}
+                    — or {formatCurrency(leaseResults.totalLeaseCost + annualOperatingCost * (leaseTerm / 12))} over the full lease.
+                  </>
+                ) : (
+                  <>
+                    Over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}, loan payments total{' '}
+                    <span className="text-white font-semibold">
+                      {formatCurrency(results.monthlyPayment * Math.min(ownershipYears * 12, loanTerm))}
+                    </span>{' '}
+                    ({formatCurrency(results.totalInterestPaid)} in interest). Add insurance, fuel, maintenance, and fees and your{' '}
+                    <span className="text-white font-semibold">all-in annual cost is {formatCurrency(totalAnnualCost)}</span>{' '}
+                    — or {formatCurrency(totalAnnualCost * ownershipYears)} over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}.
+                  </>
+                )}
               </div>
 
               {/* Add to Comparison */}

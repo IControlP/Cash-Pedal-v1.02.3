@@ -1458,31 +1458,33 @@ export default function TCOCalculator() {
 
               {/* Free vs Limited feature tier summary */}
               {!isSubscribed && (
-                <div className="rounded-xl border divide-y text-xs"
-                  style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-                  <div className="px-4 py-2.5 flex items-center gap-3">
+                <div className="rounded-xl overflow-hidden text-xs border"
+                  style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'var(--bg)' }}>
+                  <div className="px-4 py-3 flex items-center gap-3 border-b"
+                    style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                     <span className="shrink-0 font-bold uppercase tracking-wider px-2 py-0.5 rounded"
-                      style={{ color: '#4ade80', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.25)' }}>
+                      style={{ color: '#4ade80', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)' }}>
                       Free
                     </span>
                     <span className="text-[var(--text-muted)]">
                       Loan calculator · Operating cost estimates · Make / Model / Year lookup
                     </span>
                   </div>
-                  <div className="px-4 py-2.5 flex items-center gap-3">
-                    <span className="shrink-0 font-bold uppercase tracking-wider px-2 py-0.5 rounded"
-                      style={{ color: '#FFB800', background: 'rgba(255,184,0,0.1)', border: '1px solid rgba(255,184,0,0.25)' }}>
-                      {detailedCalcCount >= FREE_DETAILED_LIMIT ? 'Locked' : `${FREE_DETAILED_LIMIT - detailedCalcCount} left`}
-                    </span>
+                  <div className="px-4 py-3 flex items-center gap-3">
+                    {detailedCalcCount >= FREE_DETAILED_LIMIT
+                      ? <span className="shrink-0 font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                          style={{ color: '#f87171', background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.3)' }}>
+                          🔒 Locked
+                        </span>
+                      : <span className="shrink-0 font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                          style={{ color: '#FFB800', background: 'rgba(255,184,0,0.12)', border: '1px solid rgba(255,184,0,0.3)' }}>
+                          {FREE_DETAILED_LIMIT - detailedCalcCount} of {FREE_DETAILED_LIMIT} free
+                        </span>
+                    }
                     <span className="text-[var(--text-muted)]">
                       Trim-specific MSRP &amp; depreciation · Detailed itemized cost breakdown
-                      {detailedCalcCount < FREE_DETAILED_LIMIT
-                        ? ` — ${FREE_DETAILED_LIMIT - detailedCalcCount} of ${FREE_DETAILED_LIMIT} free ${FREE_DETAILED_LIMIT - detailedCalcCount === 1 ? 'analysis' : 'analyses'} remaining`
-                        : ' — '}
                       {detailedCalcCount >= FREE_DETAILED_LIMIT && (
-                        <a href="/subscribe" className="ml-1 text-[var(--accent)] hover:underline font-semibold">
-                          Subscribe for unlimited
-                        </a>
+                        <> — <a href="/subscribe" className="text-[var(--accent)] hover:underline font-semibold">Subscribe for unlimited</a></>
                       )}
                     </span>
                   </div>

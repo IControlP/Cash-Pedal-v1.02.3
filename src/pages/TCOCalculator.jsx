@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import ResultCard from '../components/ResultCard'
@@ -827,6 +827,7 @@ const LS_TERMS_VERSION    = 'cashpedal_terms_version'
 const LS_SESSION_ID       = 'cashpedal_session_id'
 const LS_CALC_COUNT       = 'cashpedal_calculation_count'
 const LS_USER_SUBMITTED   = 'cashpedal_user_data_submitted'
+const LS_LAST_CALC        = 'cashpedal_last_calc'
 
 // ── Paywall constants ─────────────────────────────────
 const FREE_DETAILED_LIMIT  = 3
@@ -1194,6 +1195,7 @@ const leaseTermOptions = [
 // ── Main page ─────────────────────────────────────────
 export default function TCOCalculator() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { isSubscribed } = useSubscription()
 
   // ── Terms acceptance ──
@@ -1286,6 +1288,26 @@ export default function TCOCalculator() {
   const [residualPct,      setResidualPct]      = useState(55)
   const [capCostReduction, setCapCostReduction] = useState(0)
   const [acquisitionFee,   setAcquisitionFee]   = useState(795)
+
+  // Restore last session when landing via ?resume=1
+  useEffect(() => {
+    if (searchParams.get('resume') !== '1') return
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_LAST_CALC) || 'null')
+      if (!saved?.inputs) return
+      const i = saved.inputs
+      if (i.price        != null) setPrice(i.price)
+      if (i.downPayment  != null) setDownPayment(i.downPayment)
+      if (i.loanTerm     != null) setLoanTerm(i.loanTerm)
+      if (i.rate         != null) setRate(i.rate)
+      if (i.ownershipYears != null) setOwnershipYears(i.ownershipYears)
+      if (i.selMake)  setSelMake(i.selMake)
+      if (i.selModel) setSelModel(i.selModel)
+      if (i.selYear)  setSelYear(i.selYear)
+      if (i.selTrim)  setSelTrim(i.selTrim)
+      if (i.financeMode) setFinanceMode(i.financeMode)
+    } catch { /* ignore corrupt data */ }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Derived model data (type, specs, mpg, isEV)
   const modelData = useMemo(() => getModelData(selMake, selModel), [selMake, selModel])
@@ -1430,6 +1452,25 @@ export default function TCOCalculator() {
 
   // Whether the detailed results are currently blocked by the paywall
   const isDetailBlocked = !isSubscribed && detailedCalcCount > FREE_DETAILED_LIMIT
+
+  // Persist a snapshot for returning-user insights on the landing page.
+  // Only save when the user has changed at least one input from defaults.
+  useEffect(() => {
+    const isDefault = price === 30000 && downPayment === 5000 && !selMake
+    if (isDefault) return
+    const snapshot = {
+      vehicle: selMake && selModel
+        ? [selYear, selMake, selModel, selTrim].filter(Boolean).join(' ')
+        : null,
+      price,
+      financeMode,
+      monthlyPayment: financeMode === 'lease' ? leaseResults.monthlyPayment : results.monthlyPayment,
+      totalAnnualCost,
+      savedAt: new Date().toISOString(),
+      inputs: { price, downPayment, loanTerm, rate, ownershipYears, selMake, selModel, selYear, selTrim, financeMode },
+    }
+    localStorage.setItem(LS_LAST_CALC, JSON.stringify(snapshot))
+  }, [price, downPayment, loanTerm, rate, ownershipYears, selMake, selModel, selYear, selTrim, financeMode, results, leaseResults, totalAnnualCost]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save this TCO result to localStorage so the comparison page can import it
   function handleAddToComparison() {

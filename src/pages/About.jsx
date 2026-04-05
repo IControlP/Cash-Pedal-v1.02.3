@@ -17,7 +17,7 @@ const faqs = [
   },
   {
     q: 'Do I need to create an account?',
-    a: 'No. All tools on Cash Pedal are free and require no sign-up, no email, and no personal information. Open the calculator, enter your numbers, get your answer.',
+    a: 'No. All basic tools are free and require no sign-up. Cash Pedal Pro ($10/month) unlocks unlimited detailed TCO analyses, unlimited used-car checklists, and multi-vehicle comparison exports — no account required for the free tier.',
   },
   {
     q: 'How does the Car Survey work?',
@@ -69,8 +69,10 @@ export default function About() {
               available are designed by dealerships, lenders, or media companies with something to sell you.
             </p>
             <p className="text-[var(--text-muted)] leading-relaxed mb-4">
-              We don't have an agenda. No affiliate commissions built into the calculators, no upsells, no
-              "sponsored results." Just the math — presented as clearly as possible — so you can make your own decision.
+              We don't have an agenda. The calculators have no affiliate relationships — the math is the math,
+              not a lead-generation funnel. Our Resources page links to third-party tools we'd genuinely recommend,
+              and some of those links may earn us a small commission. That revenue helps keep the core tools free.
+              Sponsored results? Never.
             </p>
             <p className="text-[var(--text-muted)] leading-relaxed">
               Every tool on Cash Pedal runs entirely in your browser. No data is collected or stored.

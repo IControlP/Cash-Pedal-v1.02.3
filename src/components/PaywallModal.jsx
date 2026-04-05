@@ -28,6 +28,7 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
   const [loading,      setLoading]      = useState(false)
   const [restoreErr,   setRestoreErr]   = useState('')
   const [checkoutErr,  setCheckoutErr]  = useState('')
+  const [annual,       setAnnual]       = useState(false)
 
   const { verifySubscription, activateFromSession } = useSubscription()
 
@@ -38,7 +39,7 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
       const res  = await fetch('/api/create-checkout-session', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email: email || undefined, cancelPath }),
+        body:    JSON.stringify({ email: email || undefined, cancelPath, annual }),
       })
       const data = await res.json()
       if (data.url) {
@@ -91,12 +92,44 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
           </p>
         </div>
 
+        {/* Billing toggle */}
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <span className={`text-sm font-semibold ${!annual ? 'text-white' : 'text-[var(--text-muted)]'}`}>Monthly</span>
+          <button
+            onClick={() => setAnnual(a => !a)}
+            className="relative w-10 h-5 rounded-full transition-colors duration-200"
+            style={{ background: annual ? 'var(--accent)' : 'var(--border)' }}
+            aria-label="Toggle annual billing"
+          >
+            <span
+              className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200"
+              style={{ transform: annual ? 'translateX(20px)' : 'translateX(0)' }}
+            />
+          </button>
+          <span className={`text-sm font-semibold ${annual ? 'text-white' : 'text-[var(--text-muted)]'}`}>
+            Annual
+            <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full font-bold"
+              style={{ background: 'rgba(200,255,0,0.15)', color: 'var(--accent)' }}>
+              Save 20%
+            </span>
+          </span>
+        </div>
+
         {/* Pricing card */}
         <div className="rounded-xl border p-4 mb-5 text-center"
           style={{ borderColor: 'rgba(255,184,0,0.25)', background: 'rgba(255,184,0,0.04)' }}>
-          <div className="font-display font-extrabold text-white text-3xl">
-            $10<span className="text-lg font-normal text-[var(--text-muted)]">/month</span>
-          </div>
+          {annual ? (
+            <div>
+              <div className="font-display font-extrabold text-white text-3xl">
+                $8<span className="text-lg font-normal text-[var(--text-muted)]">/month</span>
+              </div>
+              <p className="text-xs text-[var(--text-muted)] mt-1">Billed as $96/year — you save $24</p>
+            </div>
+          ) : (
+            <div className="font-display font-extrabold text-white text-3xl">
+              $10<span className="text-lg font-normal text-[var(--text-muted)]">/month</span>
+            </div>
+          )}
           <ul className="mt-3 text-sm text-[var(--text-muted)] space-y-1.5 text-left mx-auto max-w-xs">
             {[
               'Unlimited detailed TCO analyses',
@@ -155,7 +188,7 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
               onClick={handleCheckout}
               disabled={loading}
               className="btn-primary w-full disabled:opacity-40">
-              {loading ? 'Redirecting…' : 'Subscribe — $10/month'}
+              {loading ? 'Redirecting…' : annual ? 'Subscribe — $96/year ($8/mo)' : 'Subscribe — $10/month'}
             </button>
             <button
               onClick={() => { setRestoreMode(true); setRestoreErr('') }}

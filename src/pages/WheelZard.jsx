@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import { useSubscription } from '../hooks/useSubscription'
 
 const GPT_URL = 'https://chatgpt.com/g/g-698e3ceaa11c81919b86766878324f99-wheel-zard'
 
@@ -51,6 +52,7 @@ function getLocalResponse(msg) {
 }
 
 export default function WheelZard() {
+  const { isSubscribed } = useSubscription()
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
@@ -231,6 +233,31 @@ export default function WheelZard() {
                   ))}
                 </div>
               </div>
+
+              {!isSubscribed && (
+                <div className="rounded-xl border p-4"
+                  style={{ borderColor: 'rgba(255,184,0,0.3)', background: 'rgba(255,184,0,0.04)' }}>
+                  <p className="text-xs font-semibold uppercase tracking-widest mb-2"
+                    style={{ color: 'var(--accent)' }}>
+                    Cash Pedal Pro
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-3">
+                    Unlock unlimited detailed TCO analyses with make/model/trim-level breakdowns, unlimited used-car
+                    checklists, and multi-vehicle comparisons.
+                  </p>
+                  <ul className="text-xs text-[var(--text-muted)] space-y-1 mb-4">
+                    {['Unlimited detailed TCO analyses', 'Unlimited checklists', 'Multi-vehicle comparison export'].map(f => (
+                      <li key={f} className="flex items-start gap-1.5">
+                        <span style={{ color: 'var(--accent)' }}>✓</span>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link to="/tco" className="btn-primary text-xs py-2 block text-center">
+                    Try Pro — $10/month →
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -216,6 +216,42 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* ── Pro section ───────────────────────────────── */}
+        <section className="px-4 sm:px-6 py-20 border-t border-[var(--border)]">
+          <div className="max-w-3xl mx-auto text-center">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
+              Cash Pedal Pro
+            </p>
+            <h2
+              className="font-display font-extrabold text-white leading-tight mb-4"
+              style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.5rem)' }}
+            >
+              Go deeper for <span className="text-[var(--accent)]">$10/month</span>
+            </h2>
+            <p className="text-[var(--text-muted)] text-base mb-8 max-w-xl mx-auto">
+              The free tools cover the basics. Pro unlocks make/model/trim-level cost breakdowns,
+              unlimited used-car checklists, and multi-vehicle comparison exports.
+            </p>
+            <div className="grid sm:grid-cols-3 gap-4 mb-8 text-left">
+              {[
+                { icon: '🔬', title: 'Detailed TCO', body: 'Vehicle-specific depreciation, insurance models by state, and itemized maintenance — not just averages.' },
+                { icon: '🔍', title: 'Unlimited Checklists', body: 'Run as many used-car maintenance audits and negotiation guides as you need, no cap.' },
+                { icon: '⚖️', title: 'Comparison Export', body: 'Push Pro TCO results directly into the multi-vehicle comparison for a true side-by-side.' },
+              ].map(({ icon, title, body }) => (
+                <div key={title} className="card">
+                  <div className="text-2xl mb-2">{icon}</div>
+                  <p className="font-display font-bold text-white text-sm mb-1">{title}</p>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">{body}</p>
+                </div>
+              ))}
+            </div>
+            <Link to="/tco" className="btn-primary text-base px-8 py-4 shadow-[0_4px_20px_rgba(255,184,0,0.3)]">
+              Try Pro — $10/month →
+            </Link>
+            <p className="text-xs text-[var(--text-muted)] mt-3">Cancel anytime. Basic tools are always free.</p>
+          </div>
+        </section>
+
         {/* ── CTA band ──────────────────────────────────── */}
         <section className="px-4 sm:px-6 py-20 border-t border-[var(--border)]">
           <div className="max-w-3xl mx-auto text-center">

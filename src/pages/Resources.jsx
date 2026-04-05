@@ -149,9 +149,8 @@ export default function Resources() {
           </div>
 
           <p className="text-center text-xs text-[var(--text-muted)] mt-10 max-w-lg mx-auto leading-relaxed">
-            Some links on this page may be affiliate links — we may earn a commission if you click through
-            and make a purchase or sign up. This never influences which resources we recommend. Our calculators
-            have no affiliate relationships and never will.
+            Cash Pedal is not affiliated with any of the resources listed above.
+            Links are provided for convenience only.
           </p>
         </div>
       </main>

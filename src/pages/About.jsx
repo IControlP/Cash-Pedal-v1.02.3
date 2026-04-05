@@ -69,10 +69,8 @@ export default function About() {
               available are designed by dealerships, lenders, or media companies with something to sell you.
             </p>
             <p className="text-[var(--text-muted)] leading-relaxed mb-4">
-              We don't have an agenda. The calculators have no affiliate relationships — the math is the math,
-              not a lead-generation funnel. Our Resources page links to third-party tools we'd genuinely recommend,
-              and some of those links may earn us a small commission. That revenue helps keep the core tools free.
-              Sponsored results? Never.
+              We don't have an agenda. No affiliate commissions built into the calculators, no upsells, no
+              "sponsored results." Just the math — presented as clearly as possible — so you can make your own decision.
             </p>
             <p className="text-[var(--text-muted)] leading-relaxed">
               Every tool on Cash Pedal runs entirely in your browser. No data is collected or stored.

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -87,7 +88,19 @@ const reasons = [
   },
 ]
 
+function fmt(n) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
+}
+
 export default function Landing() {
+  const [lastCalc] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('cashpedal_last_calc') || 'null')
+    } catch { return null }
+  })
+  const [dismissedResume, setDismissedResume] = useState(false)
+  const showResume = lastCalc && !dismissedResume
+
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">
       <Navbar />
@@ -136,6 +149,37 @@ export default function Landing() {
               See all 8 tools ↓
             </a>
           </div>
+
+          {showResume && (
+            <div className="anim-4 mt-8 w-full max-w-sm mx-auto rounded-xl border px-4 py-3 flex items-center gap-4"
+              style={{ borderColor: 'rgba(255,184,0,0.25)', background: 'rgba(255,184,0,0.05)' }}>
+              <div className="flex-1 text-left min-w-0">
+                <p className="text-xs text-[var(--text-muted)] mb-0.5">Last calculation</p>
+                <p className="text-sm font-semibold text-white truncate">
+                  {lastCalc.vehicle || `$${lastCalc.price?.toLocaleString() ?? '—'} vehicle`}
+                </p>
+                <p className="text-xs text-[var(--text-muted)]">
+                  {fmt(lastCalc.monthlyPayment)}/mo &middot; {fmt(lastCalc.totalAnnualCost)}/yr
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Link
+                  to="/tco?resume=1"
+                  className="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors"
+                  style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
+                >
+                  Resume →
+                </Link>
+                <button
+                  onClick={() => setDismissedResume(true)}
+                  className="text-[var(--text-muted)] hover:text-white transition-colors text-lg leading-none"
+                  aria-label="Dismiss"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* ── Tools grid ────────────────────────────────── */}

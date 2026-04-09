@@ -7,6 +7,7 @@ import {
   classifySegment, determineMaintTier,
   estimateInsurance, generateMaintenanceServices,
   computeAnnualFuel, computeAnnualRegistration,
+  STATE_INS_BASE,
 } from '../utils/vehicleCosts'
 
 function fmt(n) {
@@ -20,62 +21,77 @@ function monthlyPayment(principal, annualRate, months) {
   return (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1)
 }
 
-// ── Pro mode cost estimation ─────────────────────────────
-// Uses the same shared functions as TCOCalculator (src/utils/vehicleCosts.js)
-// State = null → national average defaults throughout
+// ── Cost estimation ──────────────────────────────────────
+// All shared functions come from src/utils/vehicleCosts.js (same as TCOCalculator).
+// state=null throughout means national average fallbacks.
 
 const DEFAULT_ANNUAL_MILES = 12000
 
-function estimateProMonthlyCosts(price, make, model, year, isEv, mpg) {
-  // Segment classification (same logic as TCO)
+// Basic mode: state-aware when state is provided, otherwise flat tier estimates
+function estimateBasicMonthlyCosts(price, state) {
+  const tierKey = price >= 60000 ? 'luxury' : price >= 35000 ? 'premium' : price >= 20000 ? 'standard' : 'economy'
+  const tierLabel = { luxury: 'Luxury', premium: 'Premium', standard: 'Standard', economy: 'Economy' }
+  // Maintenance stays tier-based (no brand info available in basic mode)
+  const maintByTier = { luxury: 180, premium: 120, standard: 80, economy: 60 }
+  const maintenance = maintByTier[tierKey]
+
+  if (!state) {
+    // No state: use existing flat estimates (no change from original behavior)
+    const flat = { luxury: { fuel:250, insurance:280, registration:50 }, premium: { fuel:180, insurance:180, registration:35 }, standard: { fuel:150, insurance:130, registration:25 }, economy: { fuel:120, insurance:100, registration:20 } }
+    const f = flat[tierKey]
+    return { ...f, maintenance, total: f.fuel + f.insurance + maintenance + f.registration, tier: tierLabel[tierKey] }
+  }
+
+  // State provided: use shared utility functions for insurance, fuel, registration
+  const fuel = Math.round(computeAnnualFuel(false, 28, null, state, DEFAULT_ANNUAL_MILES) / 12)
+  const insurance = Math.round(estimateInsurance(price, null, null, null, state) / 12)
+  const registration = Math.round(computeAnnualRegistration(state, price) / 12)
+  return { fuel, insurance, maintenance, registration, total: fuel + insurance + maintenance + registration, tier: tierLabel[tierKey] }
+}
+
+// Pro mode: vehicle-specific + state-aware
+function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state) {
   const segment = isEv ? 'electric' : classifySegment(make, model)
 
-  // Fuel — computeAnnualFuel uses $3.50/gal and $0.16/kWh national defaults when state=null
-  const annualFuel = computeAnnualFuel(
+  const fuel = Math.round(computeAnnualFuel(
     isEv,
-    isEv ? null : (mpg || null),   // gas mpg (null → default 28)
-    isEv ? (mpg || null) : null,   // EV mpge (null → default 100)
-    null,                          // no state → national average
+    isEv ? null : (mpg || null),
+    isEv ? (mpg || null) : null,
+    state || null,
     DEFAULT_ANNUAL_MILES
-  )
-  const fuel = Math.round(annualFuel / 12)
+  ) / 12)
 
-  // Insurance — estimateInsurance uses INSURANCE_BASE_RATE national avg when state=null
-  const annualIns = estimateInsurance(price, make, model, year, null)
-  const insurance = Math.round(annualIns / 12)
+  const insurance = Math.round(estimateInsurance(price, make, model, year, state || null) / 12)
 
-  // Maintenance — generateMaintenanceServices uses same brand tiers as TCO
   const maintServices = generateMaintenanceServices(isEv, DEFAULT_ANNUAL_MILES, segment, make)
-  const annualMaint = maintServices.reduce((sum, s) => sum + s.annual, 0)
-  const maintenance = Math.round(annualMaint / 12)
+  const maintenance = Math.round(maintServices.reduce((s, x) => s + x.annual, 0) / 12)
 
-  // Registration — base $50 national average when state=null
-  const annualReg = computeAnnualRegistration(null, price)
-  const registration = Math.round(annualReg / 12)
+  const registration = Math.round(computeAnnualRegistration(state || null, price) / 12)
 
   return {
-    fuel,
-    insurance,
-    maintenance,
-    registration,
+    fuel, insurance, maintenance, registration,
     total: fuel + insurance + maintenance + registration,
     segment,
     maintTier: determineMaintTier(make),
   }
 }
 
-// Generic tier-based estimates (basic mode, unchanged)
-function estimateAdditionalMonthlyCosts(vehiclePrice) {
-  if (vehiclePrice >= 60000) {
-    return { fuel: 250, insurance: 280, maintenance: 180, registration: 50, total: 760, tier: 'Luxury' }
-  } else if (vehiclePrice >= 35000) {
-    return { fuel: 180, insurance: 180, maintenance: 120, registration: 35, total: 515, tier: 'Premium' }
-  } else if (vehiclePrice >= 20000) {
-    return { fuel: 150, insurance: 130, maintenance: 80, registration: 25, total: 385, tier: 'Standard' }
-  } else {
-    return { fuel: 120, insurance: 100, maintenance: 60, registration: 20, total: 300, tier: 'Economy' }
-  }
-}
+// US state list for the selector (derived from STATE_INS_BASE keys for coverage)
+const US_STATES = [
+  ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],
+  ['CA','California'],['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],
+  ['DC','Washington D.C.'],['FL','Florida'],['GA','Georgia'],['HI','Hawaii'],
+  ['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],
+  ['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],
+  ['MD','Maryland'],['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],
+  ['MS','Mississippi'],['MO','Missouri'],['MT','Montana'],['NE','Nebraska'],
+  ['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],['NM','New Mexico'],
+  ['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],
+  ['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['RI','Rhode Island'],
+  ['SC','South Carolina'],['SD','South Dakota'],['TN','Tennessee'],['TX','Texas'],
+  ['UT','Utah'],['VT','Vermont'],['VA','Virginia'],['WA','Washington'],
+  ['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming'],
+]
 
 const loanTermOptions = [
   { value: 36, label: '36 months' },
@@ -93,6 +109,11 @@ const TYPE_LABELS = {
 export default function SalaryCalculator() {
   // Finance mode
   const [mode, setMode] = useState('buy')
+
+  // State detection
+  const [userState, setUserState] = useState('')
+  const [stateAutoDetected, setStateAutoDetected] = useState(false)
+  const [stateDetecting, setStateDetecting] = useState(false)
 
   // Pro mode
   const [proMode, setProMode] = useState(false)
@@ -151,6 +172,22 @@ export default function SalaryCalculator() {
     }
   }, [proMode, selMake, selModel, selYear, selTrim])
 
+  // Auto-detect state from IP on mount
+  useEffect(() => {
+    setStateDetecting(true)
+    fetch('https://ipwho.is/')
+      .then(r => r.json())
+      .then(d => {
+        if (d.success && d.country_code === 'US' && d.region_code &&
+            US_STATES.some(([code]) => code === d.region_code)) {
+          setUserState(d.region_code)
+          setStateAutoDetected(true)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setStateDetecting(false))
+  }, [])
+
   // When trim selected, auto-populate price field
   useEffect(() => {
     if (!proMode || !selectedVehicleInfo?.price) return
@@ -169,15 +206,15 @@ export default function SalaryCalculator() {
   const proExtras = useMemo(() => {
     if (!proMode || !selectedVehicleInfo) return null
     const { make, model, year, is_ev, mpg } = selectedVehicleInfo
-    return estimateProMonthlyCosts(activePrice, make, model, year, is_ev, mpg)
-  }, [proMode, selectedVehicleInfo, activePrice])
+    return estimateProMonthlyCosts(activePrice, make, model, year, is_ev, mpg, userState)
+  }, [proMode, selectedVehicleInfo, activePrice, userState])
 
   const results = useMemo(() => {
     const extra = proExtras
       ? { ...proExtras, tier: TYPE_LABELS[proExtras.segment] ?? 'Vehicle' }
       : mode === 'lease'
-        ? estimateAdditionalMonthlyCosts(leaseMsrp)
-        : estimateAdditionalMonthlyCosts(vehiclePrice)
+        ? estimateBasicMonthlyCosts(leaseMsrp, userState)
+        : estimateBasicMonthlyCosts(vehiclePrice, userState)
 
     if (mode === 'lease') {
       const totalMonthly = leaseMonthly + extra.total
@@ -208,7 +245,7 @@ export default function SalaryCalculator() {
       aggressive: (totalMonthly / 0.20) * 12,
       conservativeMonthly: totalMonthly / 0.10,
     }
-  }, [mode, vehiclePrice, downPct, loanTerm, rate, leaseMsrp, leaseMonthly, leaseTerm, proExtras])
+  }, [mode, vehiclePrice, downPct, loanTerm, rate, leaseMsrp, leaseMonthly, leaseTerm, proExtras, userState])
 
   const downAmount = vehiclePrice * (downPct / 100)
 
@@ -274,6 +311,55 @@ export default function SalaryCalculator() {
                     {opt.label}
                   </button>
                 ))}
+              </div>
+
+              {/* State selector */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <label className="input-label flex items-center gap-1.5">
+                    <svg width="11" height="13" viewBox="0 0 11 13" fill="none" className="shrink-0">
+                      <path d="M5.5 0C2.46 0 0 2.46 0 5.5c0 4.125 5.5 7.5 5.5 7.5S11 9.625 11 5.5C11 2.46 8.54 0 5.5 0Zm0 7.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" fill="currentColor" opacity=".7"/>
+                    </svg>
+                    Your State
+                  </label>
+                  <div className="flex items-center gap-2">
+                    {stateDetecting && (
+                      <span className="text-[10px] text-[var(--text-muted)] animate-pulse">Detecting…</span>
+                    )}
+                    {!stateDetecting && stateAutoDetected && userState && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1"
+                        style={{ background: 'rgba(200,255,0,0.12)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.25)' }}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] inline-block" />
+                        Auto-detected
+                      </span>
+                    )}
+                    {userState && (
+                      <button
+                        onClick={() => { setUserState(''); setStateAutoDetected(false) }}
+                        className="text-[10px] text-[var(--text-muted)] hover:text-white transition-colors"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <select
+                  value={userState}
+                  onChange={e => { setUserState(e.target.value); setStateAutoDetected(false) }}
+                  className="input-field text-sm"
+                >
+                  <option value="">National average (no state)</option>
+                  {US_STATES.map(([code, name]) => (
+                    <option key={code} value={code}>{name} ({code})</option>
+                  ))}
+                </select>
+                {userState && (
+                  <p className="text-[10px] text-[var(--text-muted)]">
+                    {STATE_INS_BASE[userState]
+                      ? `${US_STATES.find(([c]) => c === userState)?.[1] ?? userState} state insurance rates, fuel prices, and registration fees applied.`
+                      : 'National average rates applied for this state.'}
+                  </p>
+                )}
               </div>
 
               {/* Pro: Vehicle picker */}
@@ -559,12 +645,19 @@ export default function SalaryCalculator() {
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
                     Estimated monthly costs · {results.extra.tier} tier
                   </p>
-                  {proMode && selectedVehicleInfo?.make && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                      style={{ background: 'rgba(200,255,0,0.12)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.25)' }}>
-                      Pro estimates
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {userState && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--text-muted)]">
+                        {userState}
+                      </span>
+                    )}
+                    {proMode && selectedVehicleInfo?.make && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                        style={{ background: 'rgba(200,255,0,0.12)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.25)' }}>
+                        Pro
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-col gap-2.5">
                   {[
@@ -584,12 +677,14 @@ export default function SalaryCalculator() {
                     <span className="font-display font-bold text-[var(--accent)] text-lg tabular-nums">{fmt(results.totalMonthly)}</span>
                   </div>
                 </div>
-                {proMode && selectedVehicleInfo?.make && (
-                  <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
-                    Estimates use brand-specific insurance rates and maintenance tiers for {selectedVehicleInfo.make}
-                    {selectedVehicleInfo.is_ev ? ', adjusted for EV lower fuel and service costs' : ''}.
-                  </p>
-                )}
+                <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
+                  {proMode && selectedVehicleInfo?.make
+                    ? <>Brand-specific rates for {selectedVehicleInfo.make}{selectedVehicleInfo.is_ev ? ', EV-adjusted fuel & service' : ''}. </>
+                    : null}
+                  {userState
+                    ? <>{US_STATES.find(([c]) => c === userState)?.[1]} insurance, fuel & registration rates applied.</>
+                    : 'National average rates. Select your state above for tailored estimates.'}
+                </p>
               </div>
             </div>
 

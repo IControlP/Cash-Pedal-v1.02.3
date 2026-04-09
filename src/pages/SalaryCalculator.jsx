@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import VEHICLES from '../data/vehicles.json'
+import {
+  classifySegment, determineMaintTier,
+  estimateInsurance, generateMaintenanceServices,
+  computeAnnualFuel, computeAnnualRegistration,
+} from '../utils/vehicleCosts'
 
 function fmt(n) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
@@ -16,103 +21,37 @@ function monthlyPayment(principal, annualRate, months) {
 }
 
 // ── Pro mode cost estimation ─────────────────────────────
+// Uses the same shared functions as TCOCalculator (src/utils/vehicleCosts.js)
+// State = null → national average defaults throughout
 
-// Brand-specific annual insurance multipliers (relative to $1,450 national avg)
-const INS_BRAND_MULT = {
-  BMW: 1.28, 'Mercedes-Benz': 1.32, Audi: 1.22, Porsche: 1.35, Maserati: 1.45,
-  Lexus: 1.15, Acura: 1.10, Infiniti: 1.10, Cadillac: 1.18, Lincoln: 1.12,
-  'Land Rover': 1.25, Jaguar: 1.26, 'Alfa Romeo': 1.20, Genesis: 1.12, Volvo: 1.10,
-  Ford: 1.05, Jeep: 1.08, Ram: 1.08, Dodge: 1.18, GMC: 1.02,
-  Chevrolet: 1.00, Buick: 0.95, Chrysler: 1.05,
-  Toyota: 0.88, Honda: 0.88, Subaru: 0.93, Mazda: 0.93,
-  Hyundai: 0.85, Kia: 0.85, Nissan: 0.96, Mitsubishi: 0.90,
-  Tesla: 1.18, Rivian: 1.22, Lucid: 1.30, Polestar: 1.18,
-}
+const DEFAULT_ANNUAL_MILES = 12000
 
-// Price brackets → insurance value multiplier
-const INS_VALUE_BRACKETS = [
-  [0, 15000, 0.82],
-  [15000, 30000, 1.00],
-  [30000, 50000, 1.18],
-  [50000, 80000, 1.38],
-  [80000, Infinity, 1.62],
-]
+function estimateProMonthlyCosts(price, make, model, year, isEv, mpg) {
+  // Segment classification (same logic as TCO)
+  const segment = isEv ? 'electric' : classifySegment(make, model)
 
-// Annual maintenance cost base by brand tier
-const MAINT_LUXURY_MAKES = new Set(['BMW','Mercedes-Benz','Audi','Porsche','Lexus','Land Rover',
-  'Jaguar','Maserati','Alfa Romeo','Genesis','Lucid','Rivian'])
-const MAINT_PREMIUM_MAKES = new Set(['Acura','Infiniti','Volvo','Lincoln','Cadillac','Tesla','Buick','Mini','Polestar'])
-const MAINT_ECONOMY_MAKES = new Set(['Kia','Hyundai','Nissan','Mitsubishi','Fiat','Chrysler'])
+  // Fuel — computeAnnualFuel uses $3.50/gal and $0.16/kWh national defaults when state=null
+  const annualFuel = computeAnnualFuel(
+    isEv,
+    isEv ? null : (mpg || null),   // gas mpg (null → default 28)
+    isEv ? (mpg || null) : null,   // EV mpge (null → default 100)
+    null,                          // no state → national average
+    DEFAULT_ANNUAL_MILES
+  )
+  const fuel = Math.round(annualFuel / 12)
 
-const MAINT_BASE_ANNUAL = { luxury: 2200, premium: 1400, standard: 950, economy: 720 }
-const MAINT_EV_DISCOUNT = 0.55 // EVs ~45% less maintenance
-
-function determineMaintTier(make) {
-  if (MAINT_LUXURY_MAKES.has(make)) return 'luxury'
-  if (MAINT_PREMIUM_MAKES.has(make)) return 'premium'
-  if (MAINT_ECONOMY_MAKES.has(make)) return 'economy'
-  return 'standard'
-}
-
-// Monthly fuel by vehicle type
-const FUEL_BY_TYPE = {
-  electric: 58,   // avg electricity cost to charge
-  hybrid:   90,
-  truck:    210,
-  suv:      170,
-  luxury_suv: 180,
-  sports:   175,
-  compact:  115,
-  economy:  100,
-  sedan:    130,
-}
-
-function classifyType(make, model, isEv, rawType) {
-  if (isEv) return 'electric'
-  const m = (model ?? '').toLowerCase()
-  const mk = (make ?? '').toLowerCase()
-  if (m.includes('hybrid') || m.includes('phev') || m.includes('4xe') ||
-      ['prius','insight','sienna','maverick'].some(k => m.includes(k))) return 'hybrid'
-  if (['corvette','mustang','camaro','challenger','charger','911','cayman',
-       'boxster','z4','supra','miata','mx-5','gt-r','370z','400z','brz','gr86','nsx']
-    .some(k => m.includes(k))) return 'sports'
-  if (['f-150','f-250','f-350','silverado','sierra','ram 1500','ram 2500',
-       'tundra','tacoma','frontier','ridgeline','gladiator','ranger','colorado','canyon','titan']
-    .some(k => m.includes(k))) return 'truck'
-  const luxBrands = ['bmw','mercedes-benz','audi','lexus','acura','infiniti','cadillac',
-    'lincoln','jaguar','land rover','porsche','maserati','alfa romeo','genesis']
-  if (luxBrands.includes(mk)) {
-    const luxSuvKw = ['x1','x2','x3','x4','x5','x6','x7','gla','glb','glc','gle','gls',
-      'q3','q4','q5','q7','q8','ux','nx','rx','gx','lx','rdx','mdx','qx50','qx55','qx60',
-      'qx80','navigator','nautilus','aviator','corsair','cayenne','macan','e-pace','f-pace',
-      'range rover','discovery','defender','escalade','xt4','xt5','xt6','gv70','gv80']
-    return luxSuvKw.some(k => m.includes(k)) ? 'luxury_suv' : 'luxury'
-  }
-  const suvKw = ['suburban','tahoe','yukon','pilot','highlander','rav4','cr-v','explorer',
-    'expedition','escape','equinox','traverse','pathfinder','armada','palisade','telluride',
-    'sorento','santa fe','tucson','cx-5','cx-9','cx-50','outback','forester','ascent',
-    'wrangler','grand cherokee','durango','atlas','tiguan','4runner','sequoia','land cruiser']
-  if (suvKw.some(k => m.includes(k))) return 'suv'
-  if (rawType === 'suv') return 'suv'
-  if (['civic','corolla','elantra','sentra','forte','jetta','golf','mazda3','impreza'].some(k => m.includes(k))) return 'compact'
-  if (['spark','mirage','rio','versa','accent','yaris','fit'].some(k => m.includes(k))) return 'economy'
-  return rawType || 'sedan'
-}
-
-function estimateProMonthlyCosts(price, make, model, isEv, rawType) {
-  const vehicleType = classifyType(make, model, isEv, rawType)
-  const fuel = FUEL_BY_TYPE[vehicleType] ?? 130
-
-  const [,, valueMult] = INS_VALUE_BRACKETS.find(([mn, mx]) => price >= mn && price < mx) ?? [0, 0, 1.0]
-  const brandMult = INS_BRAND_MULT[make] ?? 1.0
-  const annualIns = Math.round(1450 * valueMult * brandMult / 50) * 50
+  // Insurance — estimateInsurance uses INSURANCE_BASE_RATE national avg when state=null
+  const annualIns = estimateInsurance(price, make, model, year, null)
   const insurance = Math.round(annualIns / 12)
 
-  const maintTier = determineMaintTier(make)
-  const annualMaint = MAINT_BASE_ANNUAL[maintTier] * (isEv ? MAINT_EV_DISCOUNT : 1.0)
+  // Maintenance — generateMaintenanceServices uses same brand tiers as TCO
+  const maintServices = generateMaintenanceServices(isEv, DEFAULT_ANNUAL_MILES, segment, make)
+  const annualMaint = maintServices.reduce((sum, s) => sum + s.annual, 0)
   const maintenance = Math.round(annualMaint / 12)
 
-  const registration = price >= 80000 ? 55 : price >= 50000 ? 40 : price >= 30000 ? 30 : 20
+  // Registration — base $50 national average when state=null
+  const annualReg = computeAnnualRegistration(null, price)
+  const registration = Math.round(annualReg / 12)
 
   return {
     fuel,
@@ -120,8 +59,8 @@ function estimateProMonthlyCosts(price, make, model, isEv, rawType) {
     maintenance,
     registration,
     total: fuel + insurance + maintenance + registration,
-    vehicleType,
-    maintTier,
+    segment,
+    maintTier: determineMaintTier(make),
   }
 }
 
@@ -229,13 +168,13 @@ export default function SalaryCalculator() {
 
   const proExtras = useMemo(() => {
     if (!proMode || !selectedVehicleInfo) return null
-    const { make, model, is_ev, type } = selectedVehicleInfo
-    return estimateProMonthlyCosts(activePrice, make, model, is_ev, type)
+    const { make, model, year, is_ev, mpg } = selectedVehicleInfo
+    return estimateProMonthlyCosts(activePrice, make, model, year, is_ev, mpg)
   }, [proMode, selectedVehicleInfo, activePrice])
 
   const results = useMemo(() => {
     const extra = proExtras
-      ? { ...proExtras, tier: TYPE_LABELS[proExtras.vehicleType] ?? 'Vehicle' }
+      ? { ...proExtras, tier: TYPE_LABELS[proExtras.segment] ?? 'Vehicle' }
       : mode === 'lease'
         ? estimateAdditionalMonthlyCosts(leaseMsrp)
         : estimateAdditionalMonthlyCosts(vehiclePrice)
@@ -630,7 +569,7 @@ export default function SalaryCalculator() {
                 <div className="flex flex-col gap-2.5">
                   {[
                     { label: mode === 'lease' ? 'Lease payment' : 'Loan payment', val: results.payment },
-                    { label: results.extra.vehicleType === 'electric' ? 'Electricity (fuel equiv.)' : 'Fuel', val: results.extra.fuel },
+                    { label: results.extra.segment === 'electric' ? 'Electricity (fuel equiv.)' : 'Fuel', val: results.extra.fuel },
                     { label: 'Insurance', val: results.extra.insurance },
                     { label: 'Maintenance', val: results.extra.maintenance },
                     { label: 'Registration', val: results.extra.registration },

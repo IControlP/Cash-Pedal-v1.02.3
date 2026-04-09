@@ -1,7 +1,14 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import VEHICLES from '../data/vehicles.json'
+import {
+  classifySegment, determineMaintTier,
+  estimateInsurance, generateMaintenanceServices,
+  computeAnnualFuel, computeAnnualRegistration,
+  STATE_INS_BASE,
+} from '../utils/vehicleCosts'
 
 function fmt(n) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
@@ -14,51 +21,77 @@ function monthlyPayment(principal, annualRate, months) {
   return (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1)
 }
 
-// Estimated monthly ownership costs on top of the payment
-function estimateAdditionalMonthlyCosts(vehiclePrice) {
-  // Tier-based estimates (consistent with original app)
-  if (vehiclePrice >= 60000) {
-    // Luxury tier
-    return {
-      fuel: 250,
-      insurance: 280,
-      maintenance: 180,
-      registration: 50,
-      total: 760,
-      tier: 'Luxury',
-    }
-  } else if (vehiclePrice >= 35000) {
-    // Premium tier
-    return {
-      fuel: 180,
-      insurance: 180,
-      maintenance: 120,
-      registration: 35,
-      total: 515,
-      tier: 'Premium',
-    }
-  } else if (vehiclePrice >= 20000) {
-    // Standard tier
-    return {
-      fuel: 150,
-      insurance: 130,
-      maintenance: 80,
-      registration: 25,
-      total: 385,
-      tier: 'Standard',
-    }
-  } else {
-    // Economy tier
-    return {
-      fuel: 120,
-      insurance: 100,
-      maintenance: 60,
-      registration: 20,
-      total: 300,
-      tier: 'Economy',
-    }
+// ── Cost estimation ──────────────────────────────────────
+// All shared functions come from src/utils/vehicleCosts.js (same as TCOCalculator).
+// state=null throughout means national average fallbacks.
+
+const DEFAULT_ANNUAL_MILES = 12000
+
+// Basic mode: state-aware when state is provided, otherwise flat tier estimates
+function estimateBasicMonthlyCosts(price, state) {
+  const tierKey = price >= 60000 ? 'luxury' : price >= 35000 ? 'premium' : price >= 20000 ? 'standard' : 'economy'
+  const tierLabel = { luxury: 'Luxury', premium: 'Premium', standard: 'Standard', economy: 'Economy' }
+  // Maintenance stays tier-based (no brand info available in basic mode)
+  const maintByTier = { luxury: 180, premium: 120, standard: 80, economy: 60 }
+  const maintenance = maintByTier[tierKey]
+
+  if (!state) {
+    // No state: use existing flat estimates (no change from original behavior)
+    const flat = { luxury: { fuel:250, insurance:280, registration:50 }, premium: { fuel:180, insurance:180, registration:35 }, standard: { fuel:150, insurance:130, registration:25 }, economy: { fuel:120, insurance:100, registration:20 } }
+    const f = flat[tierKey]
+    return { ...f, maintenance, total: f.fuel + f.insurance + maintenance + f.registration, tier: tierLabel[tierKey] }
+  }
+
+  // State provided: use shared utility functions for insurance, fuel, registration
+  const fuel = Math.round(computeAnnualFuel(false, 28, null, state, DEFAULT_ANNUAL_MILES) / 12)
+  const insurance = Math.round(estimateInsurance(price, null, null, null, state) / 12)
+  const registration = Math.round(computeAnnualRegistration(state, price) / 12)
+  return { fuel, insurance, maintenance, registration, total: fuel + insurance + maintenance + registration, tier: tierLabel[tierKey] }
+}
+
+// Pro mode: vehicle-specific + state-aware
+function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state) {
+  const segment = isEv ? 'electric' : classifySegment(make, model)
+
+  const fuel = Math.round(computeAnnualFuel(
+    isEv,
+    isEv ? null : (mpg || null),
+    isEv ? (mpg || null) : null,
+    state || null,
+    DEFAULT_ANNUAL_MILES
+  ) / 12)
+
+  const insurance = Math.round(estimateInsurance(price, make, model, year, state || null) / 12)
+
+  const maintServices = generateMaintenanceServices(isEv, DEFAULT_ANNUAL_MILES, segment, make)
+  const maintenance = Math.round(maintServices.reduce((s, x) => s + x.annual, 0) / 12)
+
+  const registration = Math.round(computeAnnualRegistration(state || null, price) / 12)
+
+  return {
+    fuel, insurance, maintenance, registration,
+    total: fuel + insurance + maintenance + registration,
+    segment,
+    maintTier: determineMaintTier(make),
   }
 }
+
+// US state list for the selector (derived from STATE_INS_BASE keys for coverage)
+const US_STATES = [
+  ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],
+  ['CA','California'],['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],
+  ['DC','Washington D.C.'],['FL','Florida'],['GA','Georgia'],['HI','Hawaii'],
+  ['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],
+  ['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],
+  ['MD','Maryland'],['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],
+  ['MS','Mississippi'],['MO','Missouri'],['MT','Montana'],['NE','Nebraska'],
+  ['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],['NM','New Mexico'],
+  ['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],
+  ['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['RI','Rhode Island'],
+  ['SC','South Carolina'],['SD','South Dakota'],['TN','Tennessee'],['TX','Texas'],
+  ['UT','Utah'],['VT','Vermont'],['VA','Virginia'],['WA','Washington'],
+  ['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming'],
+]
 
 const loanTermOptions = [
   { value: 36, label: '36 months' },
@@ -67,9 +100,27 @@ const loanTermOptions = [
   { value: 72, label: '72 months' },
 ]
 
+const TYPE_LABELS = {
+  electric: 'Electric', hybrid: 'Hybrid', truck: 'Truck', suv: 'SUV',
+  luxury_suv: 'Luxury SUV', sports: 'Sports', compact: 'Compact',
+  economy: 'Economy', sedan: 'Sedan', luxury: 'Luxury',
+}
+
 export default function SalaryCalculator() {
-  // Finance mode: 'buy' | 'lease'
+  // Finance mode
   const [mode, setMode] = useState('buy')
+
+  // State detection
+  const [userState, setUserState] = useState('')
+  const [stateAutoDetected, setStateAutoDetected] = useState(false)
+  const [stateDetecting, setStateDetecting] = useState(false)
+
+  // Pro mode
+  const [proMode, setProMode] = useState(false)
+  const [selMake, setSelMake] = useState('')
+  const [selModel, setSelModel] = useState('')
+  const [selYear, setSelYear] = useState('')
+  const [selTrim, setSelTrim] = useState('')
 
   // Buy inputs
   const [vehiclePrice, setVehiclePrice] = useState(30000)
@@ -78,23 +129,103 @@ export default function SalaryCalculator() {
   const [rate, setRate] = useState(6.5)
 
   // Lease inputs
-  const [leaseMsrp,    setLeaseMsrp]    = useState(30000)
+  const [leaseMsrp, setLeaseMsrp] = useState(30000)
   const [leaseMonthly, setLeaseMonthly] = useState(400)
-  const [leaseTerm,    setLeaseTerm]    = useState(36)
+  const [leaseTerm, setLeaseTerm] = useState(36)
+
+  // Cascade: make → model → year → trim
+  const makes = useMemo(() => Object.keys(VEHICLES).sort(), [])
+
+  const models = useMemo(() => {
+    if (!selMake) return []
+    return Object.keys(VEHICLES[selMake] || {}).sort()
+  }, [selMake])
+
+  const years = useMemo(() => {
+    if (!selMake || !selModel) return []
+    const trimsByYear = VEHICLES[selMake]?.[selModel]?.trims_by_year || {}
+    return Object.keys(trimsByYear).sort((a, b) => Number(b) - Number(a))
+  }, [selMake, selModel])
+
+  const trims = useMemo(() => {
+    if (!selMake || !selModel || !selYear) return []
+    return Object.keys(VEHICLES[selMake]?.[selModel]?.trims_by_year?.[selYear] || {})
+  }, [selMake, selModel, selYear])
+
+  const selectedVehicleInfo = useMemo(() => {
+    if (!proMode || !selMake || !selModel) return null
+    const vd = VEHICLES[selMake]?.[selModel]
+    if (!vd) return null
+    const price = selTrim && selYear
+      ? vd.trims_by_year?.[selYear]?.[selTrim]
+      : null
+    return {
+      make: selMake,
+      model: selModel,
+      year: selYear,
+      trim: selTrim,
+      is_ev: vd.is_ev,
+      type: vd.type,
+      specs: vd.specs,
+      mpg: vd.mpg,
+      price,
+    }
+  }, [proMode, selMake, selModel, selYear, selTrim])
+
+  // Auto-detect state from IP on mount
+  useEffect(() => {
+    setStateDetecting(true)
+    fetch('https://ipwho.is/')
+      .then(r => r.json())
+      .then(d => {
+        if (d.success && d.country_code === 'US' && d.region_code &&
+            US_STATES.some(([code]) => code === d.region_code)) {
+          setUserState(d.region_code)
+          setStateAutoDetected(true)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setStateDetecting(false))
+  }, [])
+
+  // When trim selected, auto-populate price field
+  useEffect(() => {
+    if (!proMode || !selectedVehicleInfo?.price) return
+    const p = selectedVehicleInfo.price
+    if (mode === 'lease') setLeaseMsrp(p)
+    else setVehiclePrice(p)
+  }, [proMode, selectedVehicleInfo?.price, mode])
+
+  // Reset cascade on upstream change
+  function handleMakeChange(v) { setSelMake(v); setSelModel(''); setSelYear(''); setSelTrim('') }
+  function handleModelChange(v) { setSelModel(v); setSelYear(''); setSelTrim('') }
+  function handleYearChange(v) { setSelYear(v); setSelTrim('') }
+
+  const activePrice = mode === 'lease' ? leaseMsrp : vehiclePrice
+
+  const proExtras = useMemo(() => {
+    if (!proMode || !selectedVehicleInfo) return null
+    const { make, model, year, is_ev, mpg } = selectedVehicleInfo
+    return estimateProMonthlyCosts(activePrice, make, model, year, is_ev, mpg, userState)
+  }, [proMode, selectedVehicleInfo, activePrice, userState])
 
   const results = useMemo(() => {
+    const extra = proExtras
+      ? { ...proExtras, tier: TYPE_LABELS[proExtras.segment] ?? 'Vehicle' }
+      : mode === 'lease'
+        ? estimateBasicMonthlyCosts(leaseMsrp, userState)
+        : estimateBasicMonthlyCosts(vehiclePrice, userState)
+
     if (mode === 'lease') {
-      const extra = estimateAdditionalMonthlyCosts(leaseMsrp)
       const totalMonthly = leaseMonthly + extra.total
       return {
         payment: leaseMonthly,
         extra,
         totalMonthly,
         conservative: (totalMonthly / 0.10) * 12,
-        comfortable:  (totalMonthly / 0.15) * 12,
-        aggressive:   (totalMonthly / 0.20) * 12,
+        comfortable: (totalMonthly / 0.15) * 12,
+        aggressive: (totalMonthly / 0.20) * 12,
         conservativeMonthly: totalMonthly / 0.10,
-        // buy-only fields (unused in lease mode)
         downPayment: null,
         loanAmount: null,
       }
@@ -102,23 +233,19 @@ export default function SalaryCalculator() {
     const downPayment = vehiclePrice * (downPct / 100)
     const loanAmount = vehiclePrice - downPayment
     const payment = monthlyPayment(loanAmount, rate, loanTerm)
-    const extra = estimateAdditionalMonthlyCosts(vehiclePrice)
     const totalMonthly = payment + extra.total
-
     return {
       downPayment,
       loanAmount,
       payment,
       extra,
       totalMonthly,
-      // Required gross monthly income at each threshold
-      conservative: (totalMonthly / 0.10) * 12,  // 10% rule
-      comfortable: (totalMonthly / 0.15) * 12,   // 15% rule
-      aggressive: (totalMonthly / 0.20) * 12,    // 20% rule
-      // Monthly breakdown of total annual income needed (conservative)
+      conservative: (totalMonthly / 0.10) * 12,
+      comfortable: (totalMonthly / 0.15) * 12,
+      aggressive: (totalMonthly / 0.20) * 12,
       conservativeMonthly: totalMonthly / 0.10,
     }
-  }, [mode, vehiclePrice, downPct, loanTerm, rate, leaseMsrp, leaseMonthly, leaseTerm])
+  }, [mode, vehiclePrice, downPct, loanTerm, rate, leaseMsrp, leaseMonthly, leaseTerm, proExtras, userState])
 
   const downAmount = vehiclePrice * (downPct / 100)
 
@@ -149,13 +276,29 @@ export default function SalaryCalculator() {
             <div className="card anim-3 flex flex-col gap-6">
               <div className="flex items-center justify-between">
                 <h2 className="font-display font-bold text-white text-lg">Vehicle Details</h2>
+                {/* Pro toggle */}
+                <button
+                  onClick={() => setProMode(p => !p)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border"
+                  style={{
+                    background: proMode ? 'var(--accent)' : 'transparent',
+                    color: proMode ? '#000' : 'var(--text-muted)',
+                    borderColor: proMode ? 'var(--accent)' : 'var(--border)',
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M6 3.5v2.5l1.5 1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                  </svg>
+                  Pro
+                </button>
               </div>
 
               {/* Buy / Lease toggle */}
               <div className="flex gap-1 p-1 rounded-lg"
                 style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
                 {[
-                  { value: 'buy',   label: 'Buy / Finance' },
+                  { value: 'buy', label: 'Buy / Finance' },
                   { value: 'lease', label: 'Lease' },
                 ].map(opt => (
                   <button key={opt.value}
@@ -163,12 +306,177 @@ export default function SalaryCalculator() {
                     className="flex-1 py-1.5 rounded-md text-sm font-semibold transition-all"
                     style={{
                       background: mode === opt.value ? 'var(--accent)' : 'transparent',
-                      color:      mode === opt.value ? '#000' : 'var(--text-muted)',
+                      color: mode === opt.value ? '#000' : 'var(--text-muted)',
                     }}>
                     {opt.label}
                   </button>
                 ))}
               </div>
+
+              {/* State selector */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <label className="input-label flex items-center gap-1.5">
+                    <svg width="11" height="13" viewBox="0 0 11 13" fill="none" className="shrink-0">
+                      <path d="M5.5 0C2.46 0 0 2.46 0 5.5c0 4.125 5.5 7.5 5.5 7.5S11 9.625 11 5.5C11 2.46 8.54 0 5.5 0Zm0 7.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" fill="currentColor" opacity=".7"/>
+                    </svg>
+                    Your State
+                  </label>
+                  <div className="flex items-center gap-2">
+                    {stateDetecting && (
+                      <span className="text-[10px] text-[var(--text-muted)] animate-pulse">Detecting…</span>
+                    )}
+                    {!stateDetecting && stateAutoDetected && userState && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1"
+                        style={{ background: 'rgba(200,255,0,0.12)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.25)' }}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] inline-block" />
+                        Auto-detected
+                      </span>
+                    )}
+                    {userState && (
+                      <button
+                        onClick={() => { setUserState(''); setStateAutoDetected(false) }}
+                        className="text-[10px] text-[var(--text-muted)] hover:text-white transition-colors"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <select
+                  value={userState}
+                  onChange={e => { setUserState(e.target.value); setStateAutoDetected(false) }}
+                  className="input-field text-sm"
+                >
+                  <option value="">National average (no state)</option>
+                  {US_STATES.map(([code, name]) => (
+                    <option key={code} value={code}>{name} ({code})</option>
+                  ))}
+                </select>
+                {userState && (
+                  <p className="text-[10px] text-[var(--text-muted)]">
+                    {STATE_INS_BASE[userState]
+                      ? `${US_STATES.find(([c]) => c === userState)?.[1] ?? userState} state insurance rates, fuel prices, and registration fees applied.`
+                      : 'National average rates applied for this state.'}
+                  </p>
+                )}
+              </div>
+
+              {/* Pro: Vehicle picker */}
+              {proMode && (
+                <div className="flex flex-col gap-3 p-4 rounded-xl border border-[var(--accent)] bg-[rgba(200,255,0,0.03)]">
+                  <p className="text-xs font-bold uppercase tracking-widest text-[var(--accent)]">
+                    Pro — Vehicle Lookup
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)] -mt-1">
+                    Select make, model, year, and trim to auto-fill price and get vehicle-specific cost estimates.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Make */}
+                    <div className="flex flex-col gap-1">
+                      <label className="input-label text-[10px]">Make</label>
+                      <select
+                        value={selMake}
+                        onChange={e => handleMakeChange(e.target.value)}
+                        className="input-field text-sm"
+                      >
+                        <option value="">Select make</option>
+                        {makes.map(mk => <option key={mk} value={mk}>{mk}</option>)}
+                      </select>
+                    </div>
+
+                    {/* Model */}
+                    <div className="flex flex-col gap-1">
+                      <label className="input-label text-[10px]">Model</label>
+                      <select
+                        value={selModel}
+                        onChange={e => handleModelChange(e.target.value)}
+                        className="input-field text-sm"
+                        disabled={!selMake}
+                      >
+                        <option value="">Select model</option>
+                        {models.map(m => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                    </div>
+
+                    {/* Year */}
+                    <div className="flex flex-col gap-1">
+                      <label className="input-label text-[10px]">Year</label>
+                      <select
+                        value={selYear}
+                        onChange={e => handleYearChange(e.target.value)}
+                        className="input-field text-sm"
+                        disabled={!selModel}
+                      >
+                        <option value="">Select year</option>
+                        {years.map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                    </div>
+
+                    {/* Trim */}
+                    <div className="flex flex-col gap-1">
+                      <label className="input-label text-[10px]">Trim</label>
+                      <select
+                        value={selTrim}
+                        onChange={e => setSelTrim(e.target.value)}
+                        className="input-field text-sm"
+                        disabled={!selYear}
+                      >
+                        <option value="">Select trim</option>
+                        {trims.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Vehicle profile badge */}
+                  {selectedVehicleInfo && (
+                    <div className="mt-1 p-3 rounded-lg bg-[var(--bg)] border border-[var(--border)] flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-bold text-white">
+                          {selectedVehicleInfo.year && `${selectedVehicleInfo.year} `}
+                          {selectedVehicleInfo.make} {selectedVehicleInfo.model}
+                          {selectedVehicleInfo.trim && selectedVehicleInfo.trim !== selectedVehicleInfo.model
+                            ? <span className="text-[var(--text-muted)] font-normal"> · {selectedVehicleInfo.trim}</span>
+                            : null}
+                        </p>
+                        <div className="flex gap-1.5">
+                          {selectedVehicleInfo.is_ev && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                              style={{ background: 'rgba(200,255,0,0.15)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.3)' }}>
+                              EV
+                            </span>
+                          )}
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--text-muted)] capitalize">
+                            {selectedVehicleInfo.type}
+                          </span>
+                        </div>
+                      </div>
+                      {selectedVehicleInfo.specs && (
+                        <div className="flex gap-4 text-xs text-[var(--text-muted)]">
+                          {selectedVehicleInfo.specs.horsepower && (
+                            <span>{selectedVehicleInfo.specs.horsepower} hp</span>
+                          )}
+                          {selectedVehicleInfo.specs.seats && (
+                            <span>{selectedVehicleInfo.specs.seats} seats</span>
+                          )}
+                          {selectedVehicleInfo.specs.cargo_cu_ft && (
+                            <span>{selectedVehicleInfo.specs.cargo_cu_ft} cu ft cargo</span>
+                          )}
+                          {selectedVehicleInfo.mpg && (
+                            <span>{selectedVehicleInfo.mpg} mpg</span>
+                          )}
+                        </div>
+                      )}
+                      {selectedVehicleInfo.price && (
+                        <p className="text-xs text-[var(--text-muted)]">
+                          MSRP auto-filled: <span className="text-white font-semibold">{fmt(selectedVehicleInfo.price)}</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="h-px bg-[var(--border)]" />
 
@@ -333,13 +641,28 @@ export default function SalaryCalculator() {
 
               {/* Monthly cost breakdown */}
               <div className="bg-[var(--bg)] rounded-xl border border-[var(--border)] p-4">
-                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-4">
-                  Estimated monthly costs · {results.extra.tier} tier
-                </p>
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+                    Estimated monthly costs · {results.extra.tier} tier
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    {userState && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--text-muted)]">
+                        {userState}
+                      </span>
+                    )}
+                    {proMode && selectedVehicleInfo?.make && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                        style={{ background: 'rgba(200,255,0,0.12)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.25)' }}>
+                        Pro
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <div className="flex flex-col gap-2.5">
                   {[
                     { label: mode === 'lease' ? 'Lease payment' : 'Loan payment', val: results.payment },
-                    { label: 'Fuel', val: results.extra.fuel },
+                    { label: results.extra.segment === 'electric' ? 'Electricity (fuel equiv.)' : 'Fuel', val: results.extra.fuel },
                     { label: 'Insurance', val: results.extra.insurance },
                     { label: 'Maintenance', val: results.extra.maintenance },
                     { label: 'Registration', val: results.extra.registration },
@@ -354,6 +677,14 @@ export default function SalaryCalculator() {
                     <span className="font-display font-bold text-[var(--accent)] text-lg tabular-nums">{fmt(results.totalMonthly)}</span>
                   </div>
                 </div>
+                <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
+                  {proMode && selectedVehicleInfo?.make
+                    ? <>Brand-specific rates for {selectedVehicleInfo.make}{selectedVehicleInfo.is_ev ? ', EV-adjusted fuel & service' : ''}. </>
+                    : null}
+                  {userState
+                    ? <>{US_STATES.find(([c]) => c === userState)?.[1]} insurance, fuel & registration rates applied.</>
+                    : 'National average rates. Select your state above for tailored estimates.'}
+                </p>
               </div>
             </div>
 

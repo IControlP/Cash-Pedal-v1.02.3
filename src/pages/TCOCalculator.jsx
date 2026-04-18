@@ -64,8 +64,25 @@ function formatCurrency(val) {
 // ── Vehicle data helpers ──────────────────────────────
 const MAKES = Object.keys(VEHICLES).sort()
 
+// Latest model year present anywhere in the database — used as the lease year filter
+const LEASE_YEAR = String(Math.max(
+  ...Object.values(VEHICLES).flatMap(makeData =>
+    Object.values(makeData).flatMap(modelData =>
+      Object.keys(modelData.trims_by_year).map(Number)
+    )
+  )
+))
+
 function getModels(make)          { return make ? Object.keys(VEHICLES[make] ?? {}).sort() : [] }
 function getModelData(make, model){ return VEHICLES[make]?.[model] ?? null }
+
+// In lease mode only show models that have trims for the latest database year
+function getLeasableModels(make) {
+  if (!make) return []
+  return Object.keys(VEHICLES[make] ?? {}).filter(
+    model => Object.keys(VEHICLES[make][model]?.trims_by_year ?? {}).includes(LEASE_YEAR)
+  ).sort()
+}
 
 function getAvailableYears(make, model) {
   const d = getModelData(make, model)
@@ -379,10 +396,11 @@ function SelectInput({ label, value, onChange, options }) {
 
 // ── Vehicle picker ────────────────────────────────────
 function VehiclePicker({ make, model, year, trim, onChange, onClear, freeLeft, isSubscribed, isLease }) {
-  const models    = getModels(make)
+  // Lease mode: only models with trims in the latest database year
+  const models    = isLease ? getLeasableModels(make) : getModels(make)
   const allYears  = getAvailableYears(make, model)
-  // Lease: only the latest model year is available
-  const years     = isLease && allYears.length > 0 ? [allYears[0]] : allYears
+  // Lease: pin to the latest database year only
+  const years     = isLease && allYears.length > 0 ? [LEASE_YEAR] : allYears
   const trimsMap  = getTrims(make, model, year)
   const trimNames = Object.keys(trimsMap)
 
@@ -1033,13 +1051,10 @@ export default function TCOCalculator() {
     }
     if (level === 'model') {
       setSelModel(value); setSelYear(''); setSelTrim(''); setOrigMsrp(null)
-      // Lease: auto-select latest year and cheapest trim
+      // Lease: auto-select the pinned year and cheapest trim
       if (financeMode === 'lease' && value) {
-        const latestYear = getAvailableYears(selMake, value)[0]
-        if (latestYear) {
-          setSelYear(latestYear)
-          autoSelectCheapestTrim(selMake, value, latestYear)
-        }
+        setSelYear(LEASE_YEAR)
+        autoSelectCheapestTrim(selMake, value, LEASE_YEAR)
       }
     }
     if (level === 'year') {
@@ -1294,12 +1309,11 @@ export default function TCOCalculator() {
                       setFinanceMode(opt.value)
                       // When switching to lease, enforce latest year if a model is already selected
                       if (opt.value === 'lease' && selMake && selModel) {
-                        const latestYear = getAvailableYears(selMake, selModel)[0]
-                        if (latestYear && selYear !== latestYear) {
-                          setSelYear(latestYear)
+                        if (selYear !== LEASE_YEAR) {
+                          setSelYear(LEASE_YEAR)
                           setSelTrim('')
                           setOrigMsrp(null)
-                          autoSelectCheapestTrim(selMake, selModel, latestYear)
+                          autoSelectCheapestTrim(selMake, selModel, LEASE_YEAR)
                         }
                       }
                     }}

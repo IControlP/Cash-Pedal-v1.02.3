@@ -3,7 +3,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PaywallModal from '../components/PaywallModal'
 import { useSubscription } from '../hooks/useSubscription'
-import { maintenanceItems, sellerQuestions } from '../data/checklistData'
+import { maintenanceItems, sellerQuestions, US_STATES, getClimateFlags, getContextualQuestions } from '../data/checklistData'
 import VEHICLES from '../data/vehicles.json'
 
 const MAKES = Object.keys(VEHICLES).sort()
@@ -47,7 +47,7 @@ export default function CarBuyingChecklist() {
   const [showPaywall, setShowPaywall] = useState(false)
 
   const [step, setStep] = useState('input') // input | checklist
-  const [vehicleInfo, setVehicleInfo] = useState({ year: '', make: '', model: '', trim: '', mileage: 80000, price: '' })
+  const [vehicleInfo, setVehicleInfo] = useState({ year: '', make: '', model: '', trim: '', mileage: 80000, price: '', state: '' })
   const [statuses, setStatuses] = useState({})
   const [notes, setNotes] = useState({})
   const [activeTab, setActiveTab] = useState('maintenance')
@@ -82,6 +82,48 @@ export default function CarBuyingChecklist() {
 
   const negotiationSavings = notDone.reduce((s, i) => s + i.cost, 0) +
     unknown.reduce((s, i) => s + i.cost * 0.5, 0)
+
+  const vehicleData = useMemo(() =>
+    vehicleInfo.make && vehicleInfo.model ? VEHICLES[vehicleInfo.make]?.[vehicleInfo.model] : null,
+    [vehicleInfo.make, vehicleInfo.model]
+  )
+
+  const climateFlags = useMemo(() =>
+    vehicleInfo.state ? getClimateFlags(vehicleInfo.state) : [],
+    [vehicleInfo.state]
+  )
+
+  const allSellerQuestions = useMemo(() => {
+    const contextual = getContextualQuestions(vehicleData?.type, vehicleData?.is_ev, climateFlags)
+    return [...sellerQuestions, ...contextual]
+  }, [vehicleData, climateFlags])
+
+  const priceRange = useMemo(() => {
+    const trims = getTrims(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year)
+    const msrp = vehicleInfo.trim ? trims[vehicleInfo.trim] : null
+    if (!msrp || !vehicleInfo.year) return null
+    const age = 2026 - parseInt(vehicleInfo.year)
+    if (age < 0) return null
+    let value = msrp
+    for (let y = 1; y <= age; y++) {
+      if (y === 1) value *= 0.80
+      else if (y === 2) value *= 0.85
+      else if (y <= 5) value *= 0.87
+      else if (y <= 10) value *= 0.90
+      else value *= 0.93
+    }
+    const avgMiles = age * 12000
+    value -= ((vehicleInfo.mileage - avgMiles) / 1000) * 150
+    value = Math.max(1500, value)
+    return {
+      low: Math.round(value * 0.88 / 100) * 100,
+      fair: Math.round(value / 100) * 100,
+      high: Math.round(value * 1.12 / 100) * 100,
+      msrp,
+      age,
+      avgMiles,
+    }
+  }, [vehicleInfo.make, vehicleInfo.model, vehicleInfo.year, vehicleInfo.trim, vehicleInfo.mileage])
 
   function handleStart(e) {
     e.preventDefault()
@@ -223,6 +265,54 @@ export default function CarBuyingChecklist() {
                 </div>
               </div>
 
+              {/* Estimated market value preview */}
+              {priceRange && (
+                <div className="rounded-lg p-4 border" style={{ background: 'rgba(200,255,0,0.03)', borderColor: 'rgba(200,255,0,0.15)' }}>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)] mb-3">Estimated Market Value</p>
+                  <div className="grid grid-cols-3 gap-3 mb-2">
+                    <div>
+                      <p className="text-[var(--text-muted)] text-[10px] mb-0.5">Below Market</p>
+                      <p className="font-display font-bold text-white text-base">{fmt(priceRange.low)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[var(--text-muted)] text-[10px] mb-0.5">Fair Value</p>
+                      <p className="font-display font-bold text-[var(--accent)] text-base">{fmt(priceRange.fair)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[var(--text-muted)] text-[10px] mb-0.5">Above Market</p>
+                      <p className="font-display font-bold text-white text-base">{fmt(priceRange.high)}</p>
+                    </div>
+                  </div>
+                  {vehicleInfo.price && (
+                    <p className={`text-xs font-semibold mt-1 ${
+                      Number(vehicleInfo.price) <= priceRange.fair ? 'text-green-400' :
+                      Number(vehicleInfo.price) <= priceRange.high ? 'text-yellow-400' : 'text-red-400'
+                    }`}>
+                      Your asking price ({fmt(Number(vehicleInfo.price))}) is {
+                        Number(vehicleInfo.price) <= priceRange.low ? 'a great deal' :
+                        Number(vehicleInfo.price) <= priceRange.fair ? 'a fair price' :
+                        Number(vehicleInfo.price) <= priceRange.high ? 'above fair value' : 'overpriced'
+                      }
+                    </p>
+                  )}
+                  <p className="text-[10px] text-[var(--text-muted)] mt-2">
+                    MSRP-based depreciation ({priceRange.age}yr) + mileage vs. {priceRange.avgMiles.toLocaleString()}-mile avg. Varies by condition & market.
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <label className="input-label">Your State <span className="text-[var(--text-muted)] font-normal">(for tailored inspection tips)</span></label>
+                <select
+                  className="input-field"
+                  value={vehicleInfo.state}
+                  onChange={e => setVehicleInfo(v => ({ ...v, state: e.target.value }))}
+                >
+                  <option value="">Select state…</option>
+                  {US_STATES.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
+                </select>
+              </div>
+
               <button type="submit" className="btn-primary justify-center py-4">
                 Generate My Checklist →
               </button>
@@ -255,12 +345,66 @@ export default function CarBuyingChecklist() {
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)] mb-1">Checklist</p>
               <h1 className="font-display font-extrabold text-white text-2xl sm:text-3xl">{vehicleLabel}</h1>
-              <p className="text-[var(--text-muted)] text-sm mt-1">{vehicleInfo.mileage.toLocaleString()} miles</p>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <p className="text-[var(--text-muted)] text-sm">{vehicleInfo.mileage.toLocaleString()} miles</p>
+                {vehicleData?.type && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)] uppercase tracking-wider">
+                    {vehicleData.type.replace('_', ' ')}
+                  </span>
+                )}
+                {climateFlags.includes('snow') && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-blue-500/10 border-blue-500/30 text-blue-400 uppercase tracking-wider">Snow Belt</span>
+                )}
+                {climateFlags.includes('coastal') && !climateFlags.includes('snow') && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-cyan-500/10 border-cyan-500/30 text-cyan-400 uppercase tracking-wider">Coastal</span>
+                )}
+                {climateFlags.includes('hot') && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-orange-500/10 border-orange-500/30 text-orange-400 uppercase tracking-wider">Hot Climate</span>
+                )}
+              </div>
             </div>
             <button onClick={() => setStep('input')} className="btn-ghost text-sm shrink-0">
               ← Start Over
             </button>
           </div>
+
+          {/* Price range card */}
+          {priceRange && (
+            <div className="rounded-xl p-5 mb-6 border" style={{ background: 'rgba(200,255,0,0.03)', borderColor: 'rgba(200,255,0,0.15)' }}>
+              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)] mb-3">Estimated Market Value</p>
+              <div className="grid grid-cols-3 sm:grid-cols-3 gap-4 mb-3">
+                <div>
+                  <p className="text-[var(--text-muted)] text-xs mb-1">Below Market</p>
+                  <p className="font-display font-bold text-white text-xl">{fmt(priceRange.low)}</p>
+                </div>
+                <div>
+                  <p className="text-[var(--text-muted)] text-xs mb-1">Fair Value</p>
+                  <p className="font-display font-bold text-[var(--accent)] text-xl">{fmt(priceRange.fair)}</p>
+                </div>
+                <div>
+                  <p className="text-[var(--text-muted)] text-xs mb-1">Above Market</p>
+                  <p className="font-display font-bold text-white text-xl">{fmt(priceRange.high)}</p>
+                </div>
+              </div>
+              {vehicleInfo.price && (
+                <div className="flex items-center gap-2 pt-2 border-t border-[var(--border)]">
+                  <span className="text-xs text-[var(--text-muted)]">Asking price {fmt(Number(vehicleInfo.price))} —</span>
+                  <span className={`text-xs font-bold ${
+                    Number(vehicleInfo.price) <= priceRange.low ? 'text-green-400' :
+                    Number(vehicleInfo.price) <= priceRange.fair ? 'text-green-400' :
+                    Number(vehicleInfo.price) <= priceRange.high ? 'text-yellow-400' : 'text-red-400'
+                  }`}>
+                    {Number(vehicleInfo.price) <= priceRange.low ? 'Great deal' :
+                     Number(vehicleInfo.price) <= priceRange.fair ? 'Fair price' :
+                     Number(vehicleInfo.price) <= priceRange.high ? 'Above fair value' : 'Overpriced'}
+                  </span>
+                </div>
+              )}
+              <p className="text-[10px] text-[var(--text-muted)] mt-2">
+                MSRP {fmt(priceRange.msrp)} → {priceRange.age}-year depreciation + mileage vs. {priceRange.avgMiles.toLocaleString()}-mile average (12k/yr). Actual values vary by condition, trim, and local market.
+              </p>
+            </div>
+          )}
 
           {/* Negotiation leverage banner */}
           <div
@@ -296,7 +440,7 @@ export default function CarBuyingChecklist() {
             {[
               { key: 'maintenance', label: `Maintenance Due (${dueItems.length})` },
               { key: 'upcoming', label: `Coming Up (${upcomingItems.length})` },
-              { key: 'questions', label: 'Seller Questions' },
+              { key: 'questions', label: `Seller Questions (${allSellerQuestions.length})` },
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -410,7 +554,7 @@ export default function CarBuyingChecklist() {
           {/* Seller questions tab */}
           {activeTab === 'questions' && (
             <div className="flex flex-col gap-4">
-              {sellerQuestions.map(section => (
+              {allSellerQuestions.map(section => (
                 <div key={section.category} className="card">
                   <div className="flex items-center gap-3 mb-4">
                     <p className="font-display font-bold text-white text-base">{section.category}</p>

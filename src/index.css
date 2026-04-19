@@ -217,6 +217,45 @@ select.input-field {
 .anim-4 { animation: fadeUp 0.6s ease 320ms both; }
 .anim-5 { animation: fadeUp 0.6s ease 400ms both; }
 
+/* ── Vehicle illustration animations ─────────────── */
+
+.wheel-rim-inner {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.car-visual-wrap:hover .wheel-rim-inner {
+  animation: rim-spin 1.6s linear infinite;
+}
+@keyframes rim-spin {
+  to { transform: rotate(360deg); }
+}
+.car-visual-wrap:hover .headlight-fx {
+  animation: hl-pulse 2s ease-in-out infinite;
+}
+@keyframes hl-pulse {
+  0%, 100% { opacity: 0.95; }
+  50%       { opacity: 0.35; }
+}
+.speed-line {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.car-visual-wrap:hover .speed-line {
+  opacity: 1;
+  animation: speed-scroll 0.65s linear infinite;
+}
+@keyframes speed-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-14px); }
+}
+.ev-bolt {
+  animation: bolt-glow 1.5s ease-in-out infinite;
+}
+@keyframes bolt-glow {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }

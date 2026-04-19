@@ -106,6 +106,8 @@ const TYPE_LABELS = {
   economy: 'Economy', sedan: 'Sedan', luxury: 'Luxury',
 }
 
+const CURRENT_YEAR = String(new Date().getFullYear())
+
 export default function SalaryCalculator() {
   // Finance mode
   const [mode, setMode] = useState('buy')
@@ -134,18 +136,29 @@ export default function SalaryCalculator() {
   const [leaseTerm, setLeaseTerm] = useState(36)
 
   // Cascade: make → model → year → trim
-  const makes = useMemo(() => Object.keys(VEHICLES).sort(), [])
+  const makes = useMemo(() => {
+    const all = Object.keys(VEHICLES).sort()
+    if (mode !== 'lease') return all
+    return all.filter(mk =>
+      Object.values(VEHICLES[mk] || {}).some(md => CURRENT_YEAR in (md.trims_by_year || {}))
+    )
+  }, [mode])
 
   const models = useMemo(() => {
     if (!selMake) return []
-    return Object.keys(VEHICLES[selMake] || {}).sort()
-  }, [selMake])
+    const all = Object.keys(VEHICLES[selMake] || {}).sort()
+    if (mode !== 'lease') return all
+    return all.filter(m => CURRENT_YEAR in (VEHICLES[selMake]?.[m]?.trims_by_year || {}))
+  }, [selMake, mode])
 
   const years = useMemo(() => {
     if (!selMake || !selModel) return []
     const trimsByYear = VEHICLES[selMake]?.[selModel]?.trims_by_year || {}
+    if (mode === 'lease') {
+      return CURRENT_YEAR in trimsByYear ? [CURRENT_YEAR] : []
+    }
     return Object.keys(trimsByYear).sort((a, b) => Number(b) - Number(a))
-  }, [selMake, selModel])
+  }, [selMake, selModel, mode])
 
   const trims = useMemo(() => {
     if (!selMake || !selModel || !selYear) return []
@@ -195,6 +208,34 @@ export default function SalaryCalculator() {
     if (mode === 'lease') setLeaseMsrp(p)
     else setVehiclePrice(p)
   }, [proMode, selectedVehicleInfo?.price, mode])
+
+  // In lease mode: auto-select current year once model is set, clear if unavailable
+  useEffect(() => {
+    if (mode !== 'lease' || !proMode) return
+    if (selMake && selModel) {
+      const hasCurrentYear = CURRENT_YEAR in (VEHICLES[selMake]?.[selModel]?.trims_by_year || {})
+      if (hasCurrentYear) {
+        setSelYear(CURRENT_YEAR)
+        setSelTrim('')
+      } else {
+        setSelYear('')
+        setSelTrim('')
+      }
+    }
+  }, [mode, selMake, selModel, proMode])
+
+  // When switching to lease mode, clear selections no longer valid
+  useEffect(() => {
+    if (mode !== 'lease' || !proMode) return
+    if (selMake) {
+      const makeValid = Object.values(VEHICLES[selMake] || {}).some(md => CURRENT_YEAR in (md.trims_by_year || {}))
+      if (!makeValid) { setSelMake(''); setSelModel(''); setSelYear(''); setSelTrim(''); return }
+    }
+    if (selMake && selModel) {
+      const modelValid = CURRENT_YEAR in (VEHICLES[selMake]?.[selModel]?.trims_by_year || {})
+      if (!modelValid) { setSelModel(''); setSelYear(''); setSelTrim('') }
+    }
+  }, [mode])
 
   // Reset cascade on upstream change
   function handleMakeChange(v) { setSelMake(v); setSelModel(''); setSelYear(''); setSelTrim('') }

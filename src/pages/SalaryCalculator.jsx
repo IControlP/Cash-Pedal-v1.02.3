@@ -21,6 +21,17 @@ function monthlyPayment(principal, annualRate, months) {
   return (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1)
 }
 
+// Estimated monthly lease payment using standard dealer math
+// residual ≈ 55% (36mo), 60% (24mo), 50% (48mo); money factor ≈ 0.00250 (~6% APR)
+function estimateLeaseMonthly(msrp, capReduction, termMonths) {
+  const residualPct = termMonths <= 24 ? 0.60 : termMonths <= 36 ? 0.55 : 0.50
+  const residual = msrp * residualPct
+  const capCost = msrp - capReduction
+  const depreciation = (capCost - residual) / termMonths
+  const financeCharge = (capCost + residual) * 0.00250
+  return Math.max(0, Math.round(depreciation + financeCharge))
+}
+
 // ── Cost estimation ──────────────────────────────────────
 // All shared functions come from src/utils/vehicleCosts.js (same as TCOCalculator).
 // state=null throughout means national average fallbacks.
@@ -132,6 +143,7 @@ export default function SalaryCalculator() {
 
   // Lease inputs
   const [leaseMsrp, setLeaseMsrp] = useState(30000)
+  const [leaseDown, setLeaseDown] = useState(0)
   const [leaseMonthly, setLeaseMonthly] = useState(400)
   const [leaseTerm, setLeaseTerm] = useState(36)
 
@@ -209,6 +221,12 @@ export default function SalaryCalculator() {
     else setVehiclePrice(p)
   }, [proMode, selectedVehicleInfo?.price, mode])
 
+  // Pro + lease mode: auto-calculate monthly payment whenever MSRP, down, or term changes
+  useEffect(() => {
+    if (!proMode || mode !== 'lease' || !leaseMsrp) return
+    setLeaseMonthly(estimateLeaseMonthly(leaseMsrp, leaseDown, leaseTerm))
+  }, [proMode, mode, leaseMsrp, leaseDown, leaseTerm])
+
   // In lease mode: auto-select current year once model is set, clear if unavailable
   useEffect(() => {
     if (mode !== 'lease' || !proMode) return
@@ -267,7 +285,7 @@ export default function SalaryCalculator() {
         comfortable: (totalMonthly / 0.15) * 12,
         aggressive: (totalMonthly / 0.20) * 12,
         conservativeMonthly: totalMonthly / 0.10,
-        downPayment: null,
+        downPayment: leaseDown,
         loanAmount: null,
       }
     }
@@ -286,7 +304,7 @@ export default function SalaryCalculator() {
       aggressive: (totalMonthly / 0.20) * 12,
       conservativeMonthly: totalMonthly / 0.10,
     }
-  }, [mode, vehiclePrice, downPct, loanTerm, rate, leaseMsrp, leaseMonthly, leaseTerm, proExtras, userState])
+  }, [mode, vehiclePrice, downPct, loanTerm, rate, leaseMsrp, leaseDown, leaseMonthly, leaseTerm, proExtras, userState])
 
   const downAmount = vehiclePrice * (downPct / 100)
 
@@ -547,9 +565,45 @@ export default function SalaryCalculator() {
                     </div>
                   </div>
 
+                  {/* Cap cost reduction / down payment */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <label className="input-label">Cap Cost Reduction</label>
+                      <span className="text-sm font-bold text-white">{fmt(leaseDown)}</span>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                      <input
+                        type="number"
+                        value={leaseDown}
+                        min={0}
+                        onChange={e => setLeaseDown(Number(e.target.value))}
+                        className="input-field"
+                        style={{ paddingLeft: '1.75rem' }}
+                      />
+                    </div>
+                    <input
+                      type="range" min={0} max={20000} step={500}
+                      value={leaseDown}
+                      onChange={e => setLeaseDown(Number(e.target.value))}
+                      style={{ background: `linear-gradient(to right, var(--accent) ${(leaseDown / 20000) * 100}%, var(--border) ${(leaseDown / 20000) * 100}%)` }}
+                    />
+                    <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+                      <span>$0 (no drive-off)</span><span>$20,000</span>
+                    </div>
+                  </div>
+
                   {/* Monthly lease payment */}
                   <div className="flex flex-col gap-2">
-                    <label className="input-label">Monthly Lease Payment</label>
+                    <div className="flex items-center gap-2">
+                      <label className="input-label">Monthly Lease Payment</label>
+                      {proMode && (
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                          style={{ background: 'rgba(200,255,0,0.12)', color: 'var(--accent)' }}>
+                          estimated
+                        </span>
+                      )}
+                    </div>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
                       <input
@@ -581,7 +635,8 @@ export default function SalaryCalculator() {
                       ))}
                     </select>
                     <p className="text-[10px] text-[var(--text-muted)]">
-                      Total lease cost: {fmt(leaseMonthly * leaseTerm)} · No equity at lease end
+                      Total out-of-pocket: {fmt(leaseMonthly * leaseTerm + leaseDown)}
+                      {leaseDown > 0 ? ` (${fmt(leaseDown)} due at signing + ${fmt(leaseMonthly * leaseTerm)} payments)` : ''} · No equity at lease end
                     </p>
                   </div>
                 </>

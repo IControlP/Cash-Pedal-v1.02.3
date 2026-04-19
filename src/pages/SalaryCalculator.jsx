@@ -117,7 +117,15 @@ const TYPE_LABELS = {
   economy: 'Economy', sedan: 'Sedan', luxury: 'Luxury',
 }
 
-const CURRENT_YEAR = String(new Date().getFullYear())
+const CURRENT_YEAR = String(
+  Math.max(
+    ...Object.values(VEHICLES).flatMap(make =>
+      Object.values(make).flatMap(model =>
+        Object.keys(model.trims_by_year || {}).map(Number)
+      )
+    )
+  )
+)
 
 export default function SalaryCalculator() {
   // Finance mode

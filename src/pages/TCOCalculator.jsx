@@ -1131,9 +1131,13 @@ export default function TCOCalculator() {
     const msrp = t[trimName]
     setOrigMsrp(msrp)
     const ageYrs = Math.max(0, new Date().getFullYear() - parseInt(year))
-    const estimated = ageYrs > 0 ? estimateCurrentValue(msrp, make, model, ageYrs) : msrp
+    // Leases always use MSRP as cap cost; prior-model-year cars (≤1yr) are
+    // still often sold as new stock, so default to MSRP and let the user adjust.
+    const estimated = (financeMode === 'lease' || ageYrs <= 1)
+      ? msrp
+      : estimateCurrentValue(msrp, make, model, ageYrs)
     setPrice(Math.round(estimated / 500) * 500)
-  }, [])
+  }, [financeMode])
 
   // Auto-selects the cheapest trim for a given make/model/year
   const autoSelectCheapestTrim = useCallback((make, model, year) => {
@@ -1861,7 +1865,68 @@ export default function TCOCalculator() {
                       }
                     </p>
                   </div>
-                  <SliderInput label={modelData?.is_ev ? 'Charging (electricity)' : 'Fuel'} value={annualFuel} onChange={setAnnualFuel}
+                  {/* Rate input so user can drive the annual cost from $/kWh or $/gal */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <label className="input-label">
+                        {effIsEV ? 'Electricity Rate ($/kWh)' : 'Gas Price ($/gallon)'}
+                      </label>
+                      {customFuelPrice && (
+                        <button
+                          onClick={() => {
+                            setCustomFuelPrice('')
+                            const defaultRate = effIsEV ? getEffectiveElecRate(resolvedState, chargingStyle) : null
+                            setAnnualFuel(computeAnnualFuel(
+                              effIsEV,
+                              modelData?.mpg?.combined ?? (catInfoForRender?.mpg ?? 28),
+                              modelData?.mpg?.mpge_combined ?? (catInfoForRender?.mpge ?? null),
+                              resolvedState,
+                              annualMileage,
+                              defaultRate
+                            ))
+                          }}
+                          className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
+                          Reset
+                        </button>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none select-none">$</span>
+                      <input
+                        type="number"
+                        className="input-field pl-7"
+                        placeholder={effIsEV
+                          ? `${getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)} (${resolvedState} avg)`
+                          : `${STATE_FUEL_PRICES[resolvedState] ?? 3.50} (${resolvedState} avg)`}
+                        value={customFuelPrice}
+                        onChange={e => {
+                          const val = e.target.value
+                          setCustomFuelPrice(val)
+                          if (val !== '') {
+                            const rate = parseFloat(val)
+                            if (!isNaN(rate)) {
+                              setAnnualFuel(computeAnnualFuel(
+                                effIsEV,
+                                modelData?.mpg?.combined ?? (catInfoForRender?.mpg ?? 28),
+                                modelData?.mpg?.mpge_combined ?? (catInfoForRender?.mpge ?? null),
+                                resolvedState,
+                                annualMileage,
+                                rate
+                              ))
+                            }
+                          }
+                        }}
+                        step={effIsEV ? 0.001 : 0.05}
+                        min={0}
+                      />
+                    </div>
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      {effIsEV
+                        ? `Leave blank to use ${resolvedState} avg ($${getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)}/kWh)`
+                        : `Leave blank to use ${resolvedState} avg ($${STATE_FUEL_PRICES[resolvedState] ?? 3.50}/gal)`}
+                    </p>
+                  </div>
+                  <SliderInput label={effIsEV ? 'Annual Charging Cost' : 'Annual Fuel Cost'} value={annualFuel} onChange={setAnnualFuel}
                     min={0} max={6000} step={50} prefix="$" suffix="/yr" />
                   <div>
                     <SliderInput label="Maintenance &amp; Repairs" value={annualMaintenance} onChange={setAnnualMaintenance}

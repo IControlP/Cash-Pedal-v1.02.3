@@ -100,6 +100,8 @@ export function applyModelAdjustments(make, model, brandMult) {
 }
 
 export function estimateCurrentValue(originalPrice, make, model, ageYears) {
+  // A brand-new or current-model-year car retains full value
+  if (ageYears <= 0) return originalPrice
   const segment  = (make && model) ? classifySegment(make, model) : 'sedan'
   const rawBrand = BRAND_DEPRECIATION_MULT[make] ?? 1.0
   const adjBrand = (make && model) ? applyModelAdjustments(make, model, rawBrand) : rawBrand

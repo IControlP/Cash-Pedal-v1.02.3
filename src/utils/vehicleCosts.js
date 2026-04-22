@@ -240,6 +240,76 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
   return svc
 }
 
+// Returns an array of length `years` with the actual maintenance cost for each year,
+// computed by counting real service occurrences based on cumulative mileage thresholds
+// rather than flat amortization. High-interval items (tires, trans fluid, etc.) only
+// appear in the years where the mileage milestone is actually crossed.
+export function generateMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5) {
+  const tier  = determineMaintTier(make)
+  const c     = MAINT_TIER_COSTS[tier]
+  const brand = MAINT_BRAND_MULT[make] ?? 1.0
+  const isTruck  = segment === 'truck'
+  const isSports = segment === 'sports'
+
+  const occCost = (partsCost, laborHrs) =>
+    Math.round(partsCost * c.parts_mult * brand + laborHrs * LABOR_RATE * c.labor_mult)
+
+  const occsInYear = (yr, intervalMiles) => {
+    if (!intervalMiles || intervalMiles <= 0) return 0
+    const start = (yr - 1) * annualMileage
+    const end   = yr * annualMileage
+    return Math.floor(end / intervalMiles) - Math.floor(start / intervalMiles)
+  }
+
+  const services = []
+
+  if (!isEV) {
+    services.push({ costPerOcc: Math.round(c.oil_change_cost * brand), intervalMiles: c.oil_interval })
+  }
+
+  const filterInterval = tier === 'luxury' ? annualMileage : 15000
+  services.push({ costPerOcc: Math.round(c.filter_cost * brand), intervalMiles: filterInterval })
+
+  services.push({ costPerOcc: Math.round(c.tire_rotation_cost * brand), intervalMiles: 6000 })
+  services.push({ costPerOcc: Math.round(c.brake_inspection_cost * brand), intervalMiles: annualMileage })
+  services.push({ costPerOcc: Math.round(c.wiper_cost * brand), intervalMiles: annualMileage })
+
+  const bfInterval = (tier === 'luxury' || tier === 'premium') ? 24000 : 30000
+  services.push({ costPerOcc: occCost(c.brake_fluid_flush_cost, 0), intervalMiles: bfInterval })
+
+  if (!isEV) {
+    const transInterval = tier === 'luxury' ? 60000 : 80000
+    services.push({ costPerOcc: occCost(c.trans_fluid_cost, 0), intervalMiles: transInterval })
+
+    const coolantInterval = tier === 'luxury' ? 60000 : 80000
+    services.push({ costPerOcc: occCost(c.coolant_flush_cost, 0), intervalMiles: coolantInterval })
+
+    const sparkInterval = (tier === 'luxury' || tier === 'premium') ? 60000 : 90000
+    services.push({ costPerOcc: occCost(c.spark_plug_cost, 0), intervalMiles: sparkInterval })
+  }
+
+  // Wheel alignment every 2 years, expressed as miles so occsInYear handles it uniformly
+  services.push({ costPerOcc: Math.round(c.alignment_cost * brand), intervalMiles: 2 * annualMileage })
+
+  const tireInterval = isEV ? 40000 : isSports ? 30000 : isTruck ? 45000 : (tier === 'luxury' || tier === 'premium') ? 40000 : 60000
+  services.push({ costPerOcc: occCost(600, 2.0), intervalMiles: tireInterval })
+
+  // Brake pads & rotors as 4 separate components at different mileage thresholds
+  const brakeMult = isEV ? 1.8 : 1.0
+  services.push({ costPerOcc: occCost(150, 1.0), intervalMiles: 60000 * brakeMult })
+  services.push({ costPerOcc: occCost(130, 1.0), intervalMiles: 70000 * brakeMult })
+  services.push({ costPerOcc: occCost(300, 1.5), intervalMiles: 80000 * brakeMult })
+  services.push({ costPerOcc: occCost(250, 1.5), intervalMiles: 90000 * brakeMult })
+
+  services.push({ costPerOcc: occCost(180, 0.3), intervalMiles: 65000 })
+
+  return Array.from({ length: years }, (_, i) => {
+    const yr = i + 1
+    return services.reduce((sum, { costPerOcc, intervalMiles }) =>
+      sum + occsInYear(yr, intervalMiles) * costPerOcc, 0)
+  })
+}
+
 // ── Fuel ─────────────────────────────────────────────────
 
 // Premium unleaded is ~$0.60/gal above regular (national avg, per EIA)

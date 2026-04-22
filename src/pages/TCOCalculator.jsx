@@ -14,7 +14,7 @@ import {
   INSURANCE_BASE_RATE, INSURANCE_VALUE_BRACKETS, INSURANCE_BRAND_MULT, STATE_INS_BASE,
   estimateInsurance,
   MAINT_BRAND_MULT, MAINT_LUXURY_MAKES, MAINT_PREMIUM_MAKES, MAINT_ECONOMY_MAKES,
-  determineMaintTier, MAINT_TIER_COSTS, LABOR_RATE, generateMaintenanceServices,
+  determineMaintTier, MAINT_TIER_COSTS, LABOR_RATE, generateMaintenanceServices, generateMaintenanceByYear,
   STATE_FUEL_PRICES, STATE_ELEC_RATES,
   getPublicChargingRate, getEffectiveElecRate, computeAnnualFuel,
   PREMIUM_PRICE_DELTA, requiresPremiumFuel,
@@ -925,7 +925,7 @@ const leaseTermOptions = [
 // ── 5-Year Forecast ───────────────────────────────────
 function FiveYearForecast({ isPro, financeMode, ownershipYears, loanTerm, leaseTerm,
   monthlyPayment, annualLeaseCost, annualInsurance, annualFuel, annualMaintenance,
-  annualRegistration, formatCurrency }) {
+  maintenanceByYear, annualRegistration, formatCurrency }) {
 
   const years = Math.min(5, Math.max(1, ownershipYears))
   const leasePeriodYears = Math.ceil(leaseTerm / 12)
@@ -940,7 +940,7 @@ function FiveYearForecast({ isPro, financeMode, ownershipYears, loanTerm, leaseT
       : monthlyPayment * loanMonths
     const insurance    = Math.round(annualInsurance    * Math.pow(1.02, i))
     const fuel         = annualFuel
-    const maintenance  = Math.round(annualMaintenance  * Math.pow(1.08, i))
+    const maintenance  = maintenanceByYear?.[i] ?? Math.round(annualMaintenance * Math.pow(1.08, i))
     const registration = Math.round(annualRegistration * Math.pow(0.95, i))
     const total = loanCost + insurance + fuel + maintenance + registration
     return { yr, loanCost, insurance, fuel, maintenance, registration, total }
@@ -1351,6 +1351,19 @@ export default function TCOCalculator() {
 
   // Derived model data (type, specs, mpg, isEV)
   const modelData = useMemo(() => getModelData(selMake, selModel), [selMake, selModel])
+
+  // Per-year maintenance costs using actual service occurrence counts (detailedMode only)
+  const maintenanceByYear = useMemo(() => {
+    if (!detailedMode) return null
+    if (modelData) {
+      const seg = classifySegment(selMake || '', selModel || '')
+      return generateMaintenanceByYear(modelData.is_ev, annualMileage, seg, selMake)
+    }
+    const catInfo = VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)
+    const catIsEV = catInfo?.isEV ?? false
+    const catSeg  = catInfo?.segment ?? 'sedan'
+    return generateMaintenanceByYear(catIsEV, annualMileage, catSeg, '')
+  }, [detailedMode, modelData, annualMileage, selMake, selModel, vehicleCategory])
 
   useEffect(() => {
     if (customCosts) return
@@ -2364,6 +2377,7 @@ export default function TCOCalculator() {
                 annualInsurance={annualInsurance}
                 annualFuel={annualFuel}
                 annualMaintenance={annualMaintenance}
+                maintenanceByYear={maintenanceByYear}
                 annualRegistration={annualRegistration}
                 formatCurrency={formatCurrency}
               />

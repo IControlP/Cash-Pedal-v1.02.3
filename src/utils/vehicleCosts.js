@@ -242,6 +242,37 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
 
 // ── Fuel ─────────────────────────────────────────────────
 
+// Premium unleaded is ~$0.60/gal above regular (national avg, per EIA)
+export const PREMIUM_PRICE_DELTA = 0.60
+
+// Brands where every ICE model requires premium
+export const PREMIUM_FUEL_MAKES = new Set([
+  'BMW', 'Mercedes-Benz', 'Audi', 'Porsche', 'Infiniti', 'Genesis',
+  'Maserati', 'Alfa Romeo', 'Jaguar', 'Land Rover', 'Ferrari',
+  'Cadillac', 'Lincoln', 'Volvo', 'Acura',
+])
+
+// Specific models from non-premium brands that require/strongly recommend premium
+export const PREMIUM_FUEL_MODELS = {
+  Lexus:     ['IS 350','IS 500','RC','LC','LS','GS','LX','GX'],
+  Toyota:    ['GR Supra','GR86','GR Corolla','Crown'],
+  Honda:     ['Civic Type R'],
+  Subaru:    ['WRX'],
+  Chevrolet: ['Corvette','Camaro'],
+  Ford:      ['Mustang Shelby','Mustang Mach 1','GT'],
+  Dodge:     ['Challenger SRT','Charger SRT','Durango SRT','Viper'],
+  Kia:       ['Stinger'],
+  Hyundai:   ['Elantra N','Sonata N Line'],
+  Nissan:    ['GT-R','370Z','400Z'],
+}
+
+export function requiresPremiumFuel(make, model) {
+  if (!make) return false
+  if (PREMIUM_FUEL_MAKES.has(make)) return true
+  const ml = (model ?? '').toLowerCase()
+  return (PREMIUM_FUEL_MODELS[make] ?? []).some(m => ml.includes(m.toLowerCase()))
+}
+
 export const STATE_FUEL_PRICES = {
   AL:3.20,AK:4.15,AZ:3.85,AR:3.10,CA:4.65,CO:3.50,CT:3.75,
   DE:3.45,FL:3.40,GA:3.30,HI:4.95,ID:3.65,IL:3.60,IN:3.35,
@@ -280,7 +311,8 @@ export function getEffectiveElecRate(state, style) {
 }
 
 // state=null → national average defaults ($3.50/gal gas, $0.16/kWh electricity)
-export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 15000, fuelPriceOverride = null) {
+// isPremium: adds PREMIUM_PRICE_DELTA to the state average when no override is set
+export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 15000, fuelPriceOverride = null, isPremium = false) {
   const KWH_PER_GAL = 33.7
   if (isEV) {
     const mpge = mpgeCombined ?? 100
@@ -289,7 +321,10 @@ export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles 
     return Math.round(annualKwh * rate / 50) * 50
   }
   const mpg = mpgCombined ?? 28
-  const price = fuelPriceOverride !== null ? fuelPriceOverride : (STATE_FUEL_PRICES[state] ?? 3.50)
+  const base = STATE_FUEL_PRICES[state] ?? 3.50
+  const price = fuelPriceOverride !== null
+    ? fuelPriceOverride
+    : base + (isPremium ? PREMIUM_PRICE_DELTA : 0)
   return Math.round((miles / mpg) * price / 50) * 50
 }
 

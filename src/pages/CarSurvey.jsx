@@ -74,7 +74,7 @@ export default function CarSurvey() {
   const rankedProfiles = useMemo(() => {
     if (!scores) return []
     return Object.entries(scores)
-      .sort((a, b) => b[1] - a[1])
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
       .map(([key, score]) => ({ key, score, profile: vehicleProfiles[key] }))
   }, [scores])
 

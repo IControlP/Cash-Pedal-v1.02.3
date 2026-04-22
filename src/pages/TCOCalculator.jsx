@@ -19,6 +19,7 @@ import {
   getPublicChargingRate, getEffectiveElecRate, computeAnnualFuel,
   PREMIUM_PRICE_DELTA, requiresPremiumFuel,
   STATE_REG_FEE, STATE_VLF, computeAnnualRegistration,
+  STATE_SALES_TAX, computeSalesTax,
   ZIP_RANGES, zipToState, resolveLocation,
 } from '../utils/vehicleCosts'
 
@@ -1819,6 +1820,43 @@ export default function TCOCalculator() {
                     <span className="text-sm text-[var(--text-muted)]">Loan amount</span>
                     <span className="font-display font-bold text-white text-lg">{formatCurrency(results.loanAmount)}</span>
                   </div>
+
+                  {/* Sales tax callout — shown when state is known */}
+                  {(() => {
+                    const taxAmt = computeSalesTax(resolvedState, price)
+                    const taxRate = resolvedState ? (STATE_SALES_TAX[resolvedState] ?? 0.0575) : null
+                    if (taxAmt === 0 && resolvedState) {
+                      return (
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
+                          style={{ background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.2)' }}>
+                          <span className="text-green-400 font-semibold">No vehicle sales tax in {resolvedState}</span>
+                          <span className="text-[var(--text-muted)]">— one less cost to budget for</span>
+                        </div>
+                      )
+                    }
+                    if (!resolvedState) return null
+                    return (
+                      <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg text-xs"
+                        style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.2)' }}>
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 mt-0.5">
+                          <path d="M7 1.5L12.5 11H1.5L7 1.5Z" stroke="#FBBF24" strokeWidth="1.2" fill="rgba(251,191,36,0.15)" />
+                          <line x1="7" y1="5.5" x2="7" y2="8" stroke="#FBBF24" strokeWidth="1.3" strokeLinecap="round" />
+                          <circle cx="7" cy="9.5" r="0.6" fill="#FBBF24" />
+                        </svg>
+                        <div>
+                          <span className="text-amber-300 font-semibold">
+                            Estimated sales tax: {formatCurrency(taxAmt)}
+                          </span>
+                          <span className="text-[var(--text-muted)] ml-1">
+                            ({(taxRate * 100).toFixed(2)}% in {resolvedState})
+                          </span>
+                          <p className="text-[var(--text-muted)] mt-0.5">
+                            Not included in loan amount above — add to down payment or loan if financing the tax.
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  })()}
 
                   <SelectInput label="Loan Term" value={loanTerm} onChange={setLoanTerm} options={loanTermOptions} />
 

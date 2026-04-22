@@ -5,6 +5,7 @@ import PaywallModal from '../components/PaywallModal'
 import { useSubscription } from '../hooks/useSubscription'
 import { maintenanceItems, sellerQuestions, US_STATES, getClimateFlags, getContextualQuestions } from '../data/checklistData'
 import VEHICLES from '../data/vehicles.json'
+import { estimateCurrentValue } from '../utils/vehicleCosts'
 
 const MAKES = Object.keys(VEHICLES).sort()
 function getModels(make) { return make ? Object.keys(VEHICLES[make] ?? {}).sort() : [] }
@@ -102,17 +103,12 @@ export default function CarBuyingChecklist() {
     const trims = getTrims(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year)
     const msrp = vehicleInfo.trim ? trims[vehicleInfo.trim] : null
     if (!msrp || !vehicleInfo.year) return null
-    const age = 2026 - parseInt(vehicleInfo.year)
+    const age = new Date().getFullYear() - parseInt(vehicleInfo.year)
     if (age < 0) return null
-    let value = msrp
-    for (let y = 1; y <= age; y++) {
-      if (y === 1) value *= 0.80
-      else if (y === 2) value *= 0.85
-      else if (y <= 5) value *= 0.87
-      else if (y <= 10) value *= 0.90
-      else value *= 0.93
-    }
+    // Use the same segment/brand-aware depreciation as TCOCalculator for consistency
+    let value = estimateCurrentValue(msrp, vehicleInfo.make, vehicleInfo.model, age)
     const avgMiles = age * 12000
+    // Mileage adjustment: ~$150 per 1,000 miles above/below age-adjusted average
     value -= ((vehicleInfo.mileage - avgMiles) / 1000) * 150
     value = Math.max(1500, value)
     return {
@@ -433,6 +429,21 @@ export default function CarBuyingChecklist() {
             <p className="text-xs text-[var(--text-muted)] mt-3">
               Reduction = all "not done" costs + 50% of "unknown" costs. Use this as your negotiation floor.
             </p>
+          </div>
+
+          {/* Pre-purchase inspection callout */}
+          <div className="rounded-xl p-4 mb-6 flex items-start gap-3 border"
+            style={{ background: 'rgba(96,200,255,0.04)', borderColor: 'rgba(96,200,255,0.2)' }}>
+            <div className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"
+              style={{ background: 'rgba(96,200,255,0.12)', color: '#60c8ff' }}>
+              🔧
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-white mb-0.5">Get a pre-purchase inspection</p>
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                A licensed mechanic can spot issues not visible on a test drive — budget <span className="text-white font-semibold">$100–$300</span> for an independent inspection. It's the single best money spent before buying any used car, and findings give you additional negotiation leverage.
+              </p>
+            </div>
           </div>
 
           {/* Tabs */}

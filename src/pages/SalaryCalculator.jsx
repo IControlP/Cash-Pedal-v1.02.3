@@ -89,6 +89,21 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state) {
   }
 }
 
+// Rough effective take-home estimate for a given gross annual salary.
+// Uses simplified federal brackets + FICA + 4% avg state income tax.
+// Intended for ballpark context only, not tax advice.
+function estimateMonthlyTakeHome(grossAnnual) {
+  let federalEff
+  if (grossAnnual <= 30000)       federalEff = 0.08
+  else if (grossAnnual <= 55000)  federalEff = 0.12
+  else if (grossAnnual <= 90000)  federalEff = 0.17
+  else if (grossAnnual <= 140000) federalEff = 0.21
+  else if (grossAnnual <= 200000) federalEff = 0.24
+  else                            federalEff = 0.28
+  const totalRate = federalEff + 0.0765 + 0.04  // federal + FICA + avg state
+  return Math.round((grossAnnual * (1 - totalRate)) / 12)
+}
+
 // US state list for the selector (derived from STATE_INS_BASE keys for coverage)
 const US_STATES = [
   ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],
@@ -861,6 +876,40 @@ export default function SalaryCalculator() {
                   <p className="text-[var(--text-muted)] text-xs mt-1">{sublabel}</p>
                 </div>
               ))}
+
+              {/* Take-home income context */}
+              {(() => {
+                const grossConservative = results.conservative
+                const takeHome = estimateMonthlyTakeHome(grossConservative)
+                const vehiclePct = Math.round((results.totalMonthly / takeHome) * 100)
+                return (
+                  <div className="rounded-xl border border-[var(--border)] p-4 text-sm"
+                    style={{ background: 'var(--surface)' }}>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
+                      What that salary looks like monthly
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex justify-between">
+                        <span className="text-[var(--text-muted)]">Gross (conservative)</span>
+                        <span className="text-white font-semibold">{fmt(grossConservative / 12)}/mo</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[var(--text-muted)]">Est. take-home after taxes</span>
+                        <span className="text-white font-semibold">{fmt(takeHome)}/mo</span>
+                      </div>
+                      <div className="border-t border-[var(--border)] pt-2 flex justify-between">
+                        <span className="text-[var(--text-muted)]">Vehicle share of take-home</span>
+                        <span className={`font-bold ${vehiclePct <= 15 ? 'text-green-400' : vehiclePct <= 20 ? 'text-amber-400' : 'text-red-400'}`}>
+                          {vehiclePct}%
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
+                      Take-home estimate uses federal brackets + FICA + 4% avg state tax — actual varies by state, filing status & deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
+                    </p>
+                  </div>
+                )
+              })()}
 
               {/* Rule explainer */}
               {mode === 'buy' ? (

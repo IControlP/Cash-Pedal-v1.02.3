@@ -422,6 +422,28 @@ export function computeAnnualRegistration(state, vehicleValue) {
   return Math.round((base + vehicleValue * rate + flat) / 25) * 25
 }
 
+// ── Sales Tax ────────────────────────────────────────
+// Effective vehicle sales tax rates (state + typical local blended)
+// States with $0 use an alternate fee (title/registration) already captured elsewhere.
+export const STATE_SALES_TAX = {
+  AL:0.022, AK:0.000, AZ:0.056, AR:0.065, CA:0.0725, CO:0.029, CT:0.0635,
+  DE:0.000, DC:0.060, FL:0.060, GA:0.066, HI:0.040,  ID:0.060, IL:0.0625,
+  IN:0.070, IA:0.050, KS:0.065, KY:0.060, LA:0.0445, ME:0.055, MD:0.060,
+  MA:0.0625,MI:0.060, MN:0.065, MS:0.050, MO:0.04225,MT:0.000, NE:0.055,
+  NV:0.0685,NH:0.000, NJ:0.06625,NM:0.040,NY:0.040,  NC:0.030, ND:0.050,
+  OH:0.0575,OK:0.0325,OR:0.000, PA:0.060, RI:0.070,  SC:0.050, SD:0.040,
+  TN:0.070, TX:0.0625,UT:0.0685,VT:0.060, VA:0.0415, WA:0.068, WV:0.060,
+  WI:0.050, WY:0.040,
+}
+
+// Returns estimated sales tax for a vehicle purchase.
+// state=null → use national average (~5.75%).
+// Note: SC caps vehicle tax at $500; a few states have nuances not modeled here.
+export function computeSalesTax(state, vehicleValue) {
+  const rate = STATE_SALES_TAX[state] ?? 0.0575
+  return Math.round(vehicleValue * rate)
+}
+
 // ── Location ─────────────────────────────────────────────
 
 export const ZIP_RANGES = [

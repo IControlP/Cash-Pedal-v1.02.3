@@ -922,6 +922,316 @@ const leaseTermOptions = [
   { value: 48, label: '48 months (4 years)' },
 ]
 
+// ── 5-Year Forecast ───────────────────────────────────
+function FiveYearForecast({ isPro, financeMode, ownershipYears, loanTerm, leaseTerm,
+  monthlyPayment, annualLeaseCost, annualInsurance, annualFuel, annualMaintenance,
+  annualRegistration, formatCurrency }) {
+
+  const years = Math.min(5, Math.max(1, ownershipYears))
+  const leasePeriodYears = Math.ceil(leaseTerm / 12)
+
+  const rows = Array.from({ length: years }, (_, i) => {
+    const yr = i + 1
+    const loanMonths = financeMode === 'lease'
+      ? 0
+      : Math.max(0, Math.min(12, loanTerm - i * 12))
+    const loanCost = financeMode === 'lease'
+      ? (yr <= leasePeriodYears ? annualLeaseCost : 0)
+      : monthlyPayment * loanMonths
+    const insurance    = Math.round(annualInsurance    * Math.pow(1.02, i))
+    const fuel         = annualFuel
+    const maintenance  = Math.round(annualMaintenance  * Math.pow(1.08, i))
+    const registration = Math.round(annualRegistration * Math.pow(0.95, i))
+    const total = loanCost + insurance + fuel + maintenance + registration
+    return { yr, loanCost, insurance, fuel, maintenance, registration, total }
+  })
+
+  const maxTotal   = Math.max(...rows.map(r => r.total), 1)
+  const cumulTotal = rows.reduce((s, r) => s + r.total, 0)
+
+  const SEGS = [
+    { key: 'loanCost',     label: financeMode === 'lease' ? 'Lease'        : 'Loan',         color: 'var(--accent)' },
+    { key: 'insurance',    label: 'Insurance',    color: '#60a5fa' },
+    { key: 'fuel',         label: 'Fuel',         color: '#f472b6' },
+    { key: 'maintenance',  label: 'Maintenance',  color: '#fb923c' },
+    { key: 'registration', label: 'Registration', color: '#a78bfa' },
+  ]
+
+  const ProBadge = () => (
+    <span className="text-[10px] font-bold px-2 py-0.5 rounded"
+      style={{ background: 'rgba(200,255,0,0.1)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.25)' }}>
+      Pro
+    </span>
+  )
+
+  if (!isPro) {
+    return (
+      <div className="relative rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+        <div className="opacity-[0.12] pointer-events-none select-none p-4 flex flex-col gap-3" aria-hidden>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">5-Year Ownership Forecast</p>
+            <ProBadge />
+          </div>
+          {[1,2,3,4,5].map(yr => (
+            <div key={yr}>
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-[var(--text-muted)]">Year {yr}</span>
+                <span className="text-white">$──,───</span>
+              </div>
+              <div className="h-3 w-full rounded" style={{ background: 'var(--border)' }} />
+            </div>
+          ))}
+        </div>
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 p-6 text-center"
+          style={{ background: 'rgba(13,13,18,0.82)', backdropFilter: 'blur(6px)' }}>
+          <div className="w-9 h-9 rounded-full flex items-center justify-center text-base"
+            style={{ background: 'rgba(255,184,0,0.1)', border: '1px solid rgba(255,184,0,0.25)' }}>
+            🔒
+          </div>
+          <div>
+            <p className="font-display font-bold text-white text-sm mb-1">5-Year Ownership Forecast</p>
+            <p className="text-[var(--text-muted)] text-xs max-w-xs leading-relaxed mx-auto">
+              Year-by-year cost breakdown showing loan payoff, rising maintenance, and cumulative ownership cost.
+            </p>
+          </div>
+          <a href="/subscribe" className="text-xs font-bold px-4 py-2 rounded-lg"
+            style={{ background: 'var(--accent)', color: '#000' }}>
+            Unlock with Pro →
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-xl border p-4 flex flex-col gap-4"
+      style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+          {years}-Year Ownership Forecast
+        </p>
+        <ProBadge />
+      </div>
+
+      <div className="flex flex-col gap-2.5">
+        {rows.map(row => (
+          <div key={row.yr}>
+            <div className="flex items-center justify-between text-xs mb-1">
+              <span className="text-[var(--text-muted)] font-semibold">Year {row.yr}</span>
+              <span className="text-white font-bold tabular-nums">{formatCurrency(row.total)}</span>
+            </div>
+            <div className="h-3 w-full rounded overflow-hidden flex gap-px" style={{ background: 'var(--bg)' }}>
+              {SEGS.map(({ key, color }) =>
+                row[key] > 0 ? (
+                  <div key={key} className="h-full transition-all duration-500"
+                    style={{ width: `${(row[key] / maxTotal) * 100}%`, background: color, minWidth: 2 }} />
+                ) : null
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[10px] text-[var(--text-muted)] border-t border-[var(--border)] pt-3">
+        {SEGS.map(({ label, color }) => (
+          <span key={label} className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: color }} />
+            {label}
+          </span>
+        ))}
+        <span className="ml-auto font-semibold text-white tabular-nums">
+          {years}-yr total: {formatCurrency(cumulTotal)}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// ── Repair & Reliability Risk Score ──────────────────
+function RepairRiskScore({ isPro, make, model, isEV, maintBrandMult, determineTier }) {
+  const ProBadge = () => (
+    <span className="text-[10px] font-bold px-2 py-0.5 rounded"
+      style={{ background: 'rgba(200,255,0,0.1)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.25)' }}>
+      Pro
+    </span>
+  )
+
+  if (!isPro) {
+    return (
+      <div className="relative rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+        <div className="opacity-[0.12] pointer-events-none select-none p-4 flex items-center gap-4" aria-hidden>
+          <div className="w-14 h-14 rounded-full border-2 flex items-center justify-center font-display font-bold text-xl"
+            style={{ borderColor: '#4ade80', color: '#4ade80' }}>82</div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-white mb-1.5">Low Risk</p>
+            <div className="h-2 rounded-full" style={{ width: '82%', background: '#4ade80' }} />
+          </div>
+        </div>
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 p-6 text-center"
+          style={{ background: 'rgba(13,13,18,0.82)', backdropFilter: 'blur(6px)' }}>
+          <div className="w-9 h-9 rounded-full flex items-center justify-center text-base"
+            style={{ background: 'rgba(255,184,0,0.1)', border: '1px solid rgba(255,184,0,0.25)' }}>
+            🔒
+          </div>
+          <div>
+            <p className="font-display font-bold text-white text-sm mb-1">Repair & Reliability Risk Score</p>
+            <p className="text-[var(--text-muted)] text-xs max-w-xs leading-relaxed mx-auto">
+              Brand-specific reliability rating with repair cost multiplier and ownership risk notes.
+            </p>
+          </div>
+          <a href="/subscribe" className="text-xs font-bold px-4 py-2 rounded-lg"
+            style={{ background: 'var(--accent)', color: '#000' }}>
+            Unlock with Pro →
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  if (!make) return null
+
+  const mult  = maintBrandMult[make] ?? 1.0
+  const tier  = determineTier(make)
+  const raw   = Math.round(100 - ((mult - 0.65) / (1.85 - 0.65)) * 75)
+  const score = Math.max(20, Math.min(100, isEV ? Math.min(raw + 8, 100) : raw))
+  const label = score >= 80 ? 'Low Risk' : score >= 60 ? 'Average Risk' : 'Higher Risk'
+  const color = score >= 80 ? '#4ade80' : score >= 60 ? '#FFB800' : '#f87171'
+
+  const notes = [
+    isEV
+      ? 'Electric drivetrain: no oil changes, fewer brake services — but battery replacement is a major future cost risk.'
+      : tier === 'luxury'
+        ? `Luxury-brand parts and labor run ${Math.round((mult - 1) * 100)}% above industry average. Budget for higher repair bills.`
+        : tier === 'premium'
+          ? `Premium-brand maintenance runs ~${Math.round((mult - 1) * 100)}% above average rates.`
+          : `${make} maintenance costs are ${mult <= 0.95 ? 'below' : mult <= 1.05 ? 'near' : 'above'}-average for its segment.`,
+    `Repair cost multiplier: ${mult.toFixed(2)}× industry baseline.`,
+  ]
+
+  return (
+    <div className="rounded-xl border p-4 flex flex-col gap-3"
+      style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+          Repair & Reliability Risk
+        </p>
+        <ProBadge />
+      </div>
+      <div className="flex items-center gap-4">
+        <div className="shrink-0 w-14 h-14 rounded-full flex items-center justify-center font-display font-bold text-xl border-2"
+          style={{ borderColor: color, color }}>
+          {score}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-sm font-bold text-white">{label}</span>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+              style={{ background: `${color}1a`, color, border: `1px solid ${color}40` }}>
+              {make}
+            </span>
+          </div>
+          <div className="h-2 rounded-full overflow-hidden mb-1.5" style={{ background: 'var(--bg)' }}>
+            <div className="h-full rounded-full transition-all duration-700"
+              style={{ width: `${score}%`, background: color }} />
+          </div>
+          <p className="text-[10px] text-[var(--text-muted)]">0–100 scale · higher = lower repair risk</p>
+        </div>
+      </div>
+      <div className="flex flex-col gap-1.5 pt-1">
+        {notes.map((note, i) => (
+          <p key={i} className="text-[10px] text-[var(--text-muted)] leading-relaxed">• {note}</p>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Cost Alerts ───────────────────────────────────────
+function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenance,
+  maintBrandMult, classifySegment, formatCurrency }) {
+
+  const ProBadge = () => (
+    <span className="text-[10px] font-bold px-2 py-0.5 rounded"
+      style={{ background: 'rgba(200,255,0,0.1)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.25)' }}>
+      Pro
+    </span>
+  )
+
+  if (!isPro) {
+    return (
+      <div className="rounded-xl border px-4 py-3 flex items-start gap-3"
+        style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+        <span className="text-base mt-0.5 shrink-0">🔒</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-xs font-bold text-white">Alerts & Better Alternatives</p>
+            <ProBadge />
+          </div>
+          <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+            We'd flag if this vehicle's costs are above average for its segment and suggest cheaper alternatives.
+          </p>
+          <a href="/subscribe" className="text-xs font-semibold mt-2 inline-block"
+            style={{ color: 'var(--accent)' }}>
+            Unlock with Pro →
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  const mult = maintBrandMult[make] ?? 1.0
+  const alerts = []
+
+  if (!make) {
+    alerts.push({ type: 'info', text: 'Select a make and model above to see vehicle-specific cost alerts.' })
+  } else {
+    if (mult > 1.2) {
+      alerts.push({
+        type: 'warning',
+        text: `${make}'s repair costs run ~${Math.round((mult - 1) * 100)}% above average. Budget an extra ${formatCurrency(Math.round(annualMaintenance * (mult - 1)))}/yr for surprises.`,
+      })
+    }
+    if (totalAnnualCost > 15000 && !isEV) {
+      alerts.push({
+        type: 'info',
+        text: `Your all-in annual cost of ${formatCurrency(totalAnnualCost)} is above average. Reducing the purchase price by 10% or shortening the loan term can save meaningfully on interest.`,
+      })
+    }
+    if (isEV) {
+      alerts.push({
+        type: 'good',
+        text: 'EVs eliminate oil changes and reduce brake wear — typical maintenance savings of $500–$900/yr vs. a comparable gas vehicle.',
+      })
+    }
+    if (alerts.length === 0) {
+      alerts.push({ type: 'good', text: `${make}'s costs are in line with segment averages. No major red flags detected for this vehicle.` })
+    }
+  }
+
+  const colorMap = { warning: '#f87171', info: '#60a5fa', good: '#4ade80' }
+  const iconMap  = { warning: '⚠', info: 'ℹ', good: '✓' }
+
+  return (
+    <div className="rounded-xl border p-4 flex flex-col gap-3"
+      style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+          Alerts & Alternatives
+        </p>
+        <ProBadge />
+      </div>
+      {alerts.map((alert, i) => (
+        <div key={i} className="flex items-start gap-2.5">
+          <span className="shrink-0 font-bold text-sm mt-0.5" style={{ color: colorMap[alert.type] }}>
+            {iconMap[alert.type]}
+          </span>
+          <p className="text-xs text-[var(--text-muted)] leading-relaxed">{alert.text}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ── Main page ─────────────────────────────────────────
 export default function TCOCalculator() {
   const navigate = useNavigate()
@@ -2041,6 +2351,66 @@ export default function TCOCalculator() {
                   </>
                 )}
               </div>
+
+              {/* ── 5-Year Ownership Forecast (Pro) ── */}
+              <FiveYearForecast
+                isPro={isSubscribed}
+                financeMode={financeMode}
+                ownershipYears={ownershipYears}
+                loanTerm={loanTerm}
+                leaseTerm={leaseTerm}
+                monthlyPayment={results.monthlyPayment}
+                annualLeaseCost={leaseResults.annualLeaseCost}
+                annualInsurance={annualInsurance}
+                annualFuel={annualFuel}
+                annualMaintenance={annualMaintenance}
+                annualRegistration={annualRegistration}
+                formatCurrency={formatCurrency}
+              />
+
+              {/* ── Repair & Reliability Risk Score (Pro) ── */}
+              <RepairRiskScore
+                isPro={isSubscribed}
+                make={selMake}
+                model={selModel}
+                isEV={modelData?.is_ev ?? false}
+                maintBrandMult={MAINT_BRAND_MULT}
+                determineTier={determineMaintTier}
+              />
+
+              {/* ── Alerts for Better Alternatives (Pro) ── */}
+              <CostAlerts
+                isPro={isSubscribed}
+                make={selMake}
+                model={selModel}
+                isEV={modelData?.is_ev ?? false}
+                totalAnnualCost={totalAnnualCost}
+                annualMaintenance={annualMaintenance}
+                maintBrandMult={MAINT_BRAND_MULT}
+                classifySegment={classifySegment}
+                formatCurrency={formatCurrency}
+              />
+
+              {/* ── PDF Export (Pro) ── */}
+              {isSubscribed ? (
+                <button
+                  onClick={() => window.print()}
+                  className="w-full py-2.5 rounded-xl border text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                >
+                  ⬇ Export PDF Report
+                </button>
+              ) : (
+                <div className="rounded-xl border px-4 py-2.5 flex items-center justify-between text-xs"
+                  style={{ borderColor: 'var(--border)' }}>
+                  <span className="flex items-center gap-2 text-[var(--text-muted)]">
+                    🔒 PDF Report Export
+                  </span>
+                  <a href="/subscribe" className="font-semibold" style={{ color: 'var(--accent)' }}>
+                    Unlock Pro →
+                  </a>
+                </div>
+              )}
 
               {/* Add to Comparison */}
               <button

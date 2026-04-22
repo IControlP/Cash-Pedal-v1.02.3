@@ -41,6 +41,16 @@ export default function Navbar() {
               {label}
             </Link>
           ))}
+          <Link
+            to="/subscribe"
+            className={`ml-1 px-3 py-1.5 rounded-md text-sm font-bold transition-all border ${
+              pathname === '/subscribe'
+                ? 'border-[var(--accent)] text-[var(--accent)] bg-[rgba(200,255,0,0.06)]'
+                : 'border-[rgba(200,255,0,0.35)] text-[var(--accent)] hover:bg-[rgba(200,255,0,0.06)]'
+            }`}
+          >
+            Pro
+          </Link>
         </div>
 
         {/* Mobile hamburger */}
@@ -85,6 +95,14 @@ export default function Navbar() {
             className="px-3 py-2.5 rounded-md text-sm font-medium text-[var(--text-muted)] hover:text-white"
           >
             Resources
+          </Link>
+          <Link
+            to="/subscribe"
+            onClick={() => setMenuOpen(false)}
+            className="px-3 py-2.5 rounded-md text-sm font-bold border"
+            style={{ borderColor: 'rgba(200,255,0,0.35)', color: 'var(--accent)' }}
+          >
+            Get Pro →
           </Link>
         </div>
       )}

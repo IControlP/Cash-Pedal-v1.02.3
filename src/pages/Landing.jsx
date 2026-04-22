@@ -11,6 +11,8 @@ const tools = [
     desc: 'Monthly payment, total interest, and true annual cost — updating live as you type.',
     cta: 'Run the numbers',
     featured: true,
+    tier: 'free',
+    tierNote: '5-yr forecast & repair risk: Pro',
   },
   {
     to: '/compare',
@@ -19,6 +21,7 @@ const tools = [
     desc: 'Line up to 5 vehicles side by side and see every cost metric compared at a glance.',
     cta: 'Compare vehicles',
     featured: true,
+    tier: 'pro',
   },
   {
     to: '/salary',
@@ -27,14 +30,18 @@ const tools = [
     desc: "Using the 20/4/10 rule, see exactly what income you'd need to afford any vehicle responsibly.",
     cta: 'Check affordability',
     featured: false,
+    tier: 'free',
+    tierNote: 'Vehicle-specific optimization: Pro',
   },
   {
     to: '/survey',
     emoji: '🎯',
     title: 'Car Survey',
-    desc: '10 questions. Instantly matched to your ideal vehicle type — SUV, EV, truck, sports car, and more.',
+    desc: '13 questions. Instantly matched to your ideal vehicle type — SUV, EV, truck, sports car, and more.',
     cta: 'Find your match',
     featured: false,
+    tier: 'free',
+    tierNote: 'Full ranked results: Pro',
   },
   {
     to: '/checklist',
@@ -43,6 +50,7 @@ const tools = [
     desc: 'Enter the mileage, get a full maintenance audit, negotiation leverage calculator, and seller questions.',
     cta: 'Build your checklist',
     featured: false,
+    tier: 'free',
   },
   {
     to: '/wheelzard',
@@ -51,6 +59,7 @@ const tools = [
     desc: 'Ask anything about vehicles, costs, or buying decisions. Powered by a custom GPT trained on automotive data.',
     cta: 'Ask Wheel-Zard',
     featured: false,
+    tier: 'free',
   },
   {
     to: '/resources',
@@ -59,6 +68,7 @@ const tools = [
     desc: 'Curated links for shopping, financing, insurance, maintenance research, and vehicle history.',
     cta: 'View resources',
     featured: false,
+    tier: 'free',
   },
   {
     to: '/about',
@@ -67,6 +77,7 @@ const tools = [
     desc: 'How Cash Pedal works, what the math includes, and answers to common questions.',
     cta: 'Learn more',
     featured: false,
+    tier: 'free',
   },
 ]
 
@@ -84,7 +95,7 @@ const reasons = [
   {
     icon: '🛠️',
     title: 'Eight tools, one place.',
-    body: 'From affordability checks to used car audits to AI advice — everything you need before you sign.',
+    body: 'From affordability checks to 5-year forecasts to AI advice — free tools plus Pro depth, all in one place.',
   },
 ]
 
@@ -121,7 +132,7 @@ export default function Landing() {
           {/* Accent pill */}
           <div className="anim-0 mb-6 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] text-xs font-semibold text-[var(--accent)] uppercase tracking-wider">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
-            Free · No signup · 8 tools
+            Free tools · Pro plan · No signup required
           </div>
 
           <h1
@@ -209,11 +220,20 @@ export default function Landing() {
                     <h3 className="font-display font-bold text-white text-lg group-hover:text-[var(--accent)] transition-colors">
                       {tool.title}
                     </h3>
+                    {tool.tier === 'pro' && (
+                      <span className="ml-auto shrink-0 text-[10px] font-bold px-2 py-0.5 rounded"
+                        style={{ background: 'rgba(200,255,0,0.1)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.25)' }}>
+                        Pro
+                      </span>
+                    )}
                   </div>
                   <p className="text-[var(--text-muted)] text-sm leading-relaxed">{tool.desc}</p>
-                  <span className="text-xs font-semibold text-[var(--accent)] mt-auto">
-                    {tool.cta} →
-                  </span>
+                  <div className="flex items-center justify-between mt-auto">
+                    <span className="text-xs font-semibold text-[var(--accent)]">{tool.cta} →</span>
+                    {tool.tierNote && (
+                      <span className="text-[10px] text-[var(--text-muted)]">{tool.tierNote}</span>
+                    )}
+                  </div>
                 </Link>
               ))}
             </div>
@@ -231,11 +251,22 @@ export default function Landing() {
                     <h3 className="font-display font-bold text-white text-base group-hover:text-[var(--accent)] transition-colors">
                       {tool.title}
                     </h3>
+                    {tool.tier === 'pro' && (
+                      <span className="ml-auto shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded"
+                        style={{ background: 'rgba(200,255,0,0.1)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.25)' }}>
+                        Pro
+                      </span>
+                    )}
                   </div>
                   <p className="text-[var(--text-muted)] text-xs leading-relaxed">{tool.desc}</p>
-                  <span className="text-xs font-semibold text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors mt-1">
-                    {tool.cta} →
-                  </span>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-xs font-semibold text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors">
+                      {tool.cta} →
+                    </span>
+                    {tool.tierNote && (
+                      <span className="text-[10px] text-[var(--text-muted)]">{tool.tierNote}</span>
+                    )}
+                  </div>
                 </Link>
               ))}
             </div>
@@ -262,37 +293,47 @@ export default function Landing() {
 
         {/* ── Pro section ───────────────────────────────── */}
         <section className="px-4 sm:px-6 py-20 border-t border-[var(--border)]">
-          <div className="max-w-3xl mx-auto text-center">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
-              Cash Pedal Pro
-            </p>
-            <h2
-              className="font-display font-extrabold text-white leading-tight mb-4"
-              style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.5rem)' }}
-            >
-              Go deeper for <span className="text-[var(--accent)]">$10/month</span>
-            </h2>
-            <p className="text-[var(--text-muted)] text-base mb-8 max-w-xl mx-auto">
-              The free tools cover the basics. Pro unlocks make/model/trim-level cost breakdowns,
-              unlimited used-car checklists, and multi-vehicle comparison exports.
-            </p>
-            <div className="grid sm:grid-cols-3 gap-4 mb-8 text-left">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-10">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
+                Cash Pedal Pro
+              </p>
+              <h2
+                className="font-display font-extrabold text-white leading-tight mb-4"
+                style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.5rem)' }}
+              >
+                Go deeper for <span className="text-[var(--accent)]">$10/month</span>
+              </h2>
+              <p className="text-[var(--text-muted)] text-base max-w-xl mx-auto">
+                Free tools cover the basics. Pro unlocks the full forecasting, comparison, and optimization suite.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-3 mb-8 max-w-2xl mx-auto">
               {[
-                { icon: '🔬', title: 'Detailed TCO', body: 'Vehicle-specific depreciation, insurance models by state, and itemized maintenance — not just averages.' },
-                { icon: '🔍', title: 'Unlimited Checklists', body: 'Run as many used-car maintenance audits and negotiation guides as you need, no cap.' },
-                { icon: '⚖️', title: 'Comparison Export', body: 'Push Pro TCO results directly into the multi-vehicle comparison for a true side-by-side.' },
+                { icon: '📈', title: 'Full 5-year ownership forecast', body: 'Year-by-year cost breakdown: loan payoff, rising maintenance, total cumulative spend.' },
+                { icon: '⚖️', title: 'Multi-vehicle comparison', body: 'Compare up to 5 vehicles side by side — buy or lease — on every cost metric.' },
+                { icon: '🛠️', title: 'Repair & reliability risk score', body: 'Brand-specific reliability rating with repair cost multiplier and ownership risk notes.' },
+                { icon: '💵', title: 'Salary optimization tool', body: 'Vehicle-specific salary requirements using brand-accurate insurance, fuel, and maintenance.' },
+                { icon: '🎯', title: 'Full quiz ranked results', body: 'All vehicle types ranked by match percentage — not just your top pick.' },
+                { icon: '⬇', title: 'PDF report export', body: 'Download a clean PDF summary of your TCO analysis to share or keep.' },
               ].map(({ icon, title, body }) => (
-                <div key={title} className="card">
-                  <div className="text-2xl mb-2">{icon}</div>
-                  <p className="font-display font-bold text-white text-sm mb-1">{title}</p>
-                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">{body}</p>
+                <div key={title} className="card flex items-start gap-3">
+                  <span className="text-xl mt-0.5 shrink-0">{icon}</span>
+                  <div>
+                    <p className="font-display font-bold text-white text-sm mb-1">{title}</p>
+                    <p className="text-xs text-[var(--text-muted)] leading-relaxed">{body}</p>
+                  </div>
                 </div>
               ))}
             </div>
-            <Link to="/tco" className="btn-primary text-base px-8 py-4 shadow-[0_4px_20px_rgba(255,184,0,0.3)]">
-              Try Pro — $10/month →
-            </Link>
-            <p className="text-xs text-[var(--text-muted)] mt-3">Cancel anytime. Basic tools are always free.</p>
+
+            <div className="text-center">
+              <Link to="/subscribe" className="btn-primary text-base px-8 py-4 shadow-[0_4px_20px_rgba(255,184,0,0.3)]">
+                Get Pro — $10/month →
+              </Link>
+              <p className="text-xs text-[var(--text-muted)] mt-3">Cancel anytime. Basic tools are always free.</p>
+            </div>
           </div>
         </section>
 

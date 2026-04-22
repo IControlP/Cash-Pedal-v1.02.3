@@ -2,6 +2,8 @@ import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import PaywallModal from '../components/PaywallModal'
+import { useSubscription } from '../hooks/useSubscription'
 
 function fmt(n) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
@@ -236,6 +238,9 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
 
 // ── Main page ─────────────────────────────────────────
 export default function MultiVehicleComparison() {
+  const { isSubscribed } = useSubscription()
+  const [showPaywall, setShowPaywall] = useState(false)
+
   // Ranking parameter toggles
   const [activeRankParams, setActiveRankParams] = useState({ totalOutOfPocket: true, mpgCombined: false, cargoSqFt: false, valueRetentionPct: false })
 
@@ -426,6 +431,14 @@ export default function MultiVehicleComparison() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">
+      {showPaywall && (
+        <PaywallModal
+          feature="compare"
+          usedCount={0}
+          cancelPath="/compare"
+          onUnlocked={() => setShowPaywall(false)}
+        />
+      )}
       <Navbar />
       <main className="flex-1 pt-20 pb-16">
 
@@ -443,7 +456,34 @@ export default function MultiVehicleComparison() {
           </p>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        {/* ── Pro gate banner ── */}
+        {!isSubscribed && (
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 mb-6">
+            <div className="rounded-xl border p-6 text-center"
+              style={{ borderColor: 'rgba(255,184,0,0.25)', background: 'rgba(255,184,0,0.04)' }}>
+              <div className="text-3xl mb-3">⚖️</div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)] mb-2">Pro Feature</p>
+              <h2 className="font-display font-bold text-white text-xl mb-2">Multi-vehicle comparison is a Pro feature</h2>
+              <p className="text-[var(--text-muted)] text-sm mb-5 max-w-md mx-auto leading-relaxed">
+                Compare up to 5 vehicles side by side — payments, interest, insurance, fuel, maintenance, and total ownership cost.
+                Free users get a single-vehicle TCO estimate.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={() => setShowPaywall(true)}
+                  className="btn-primary text-sm px-6 py-3"
+                >
+                  Unlock Multi-Vehicle Comparison →
+                </button>
+                <Link to="/tco" className="btn-ghost text-sm px-6 py-3 justify-center">
+                  Back to TCO Calculator
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isSubscribed && <div className="max-w-6xl mx-auto px-4 sm:px-6">
 
           {/* Import banner */}
           {importBanner && (
@@ -684,7 +724,7 @@ export default function MultiVehicleComparison() {
           <div className="mt-6 anim-5">
             <Link to="/tco" className="btn-ghost text-sm">← Back to TCO Calculator</Link>
           </div>
-        </div>
+        </div>}
       </main>
       <Footer />
     </div>

@@ -138,7 +138,7 @@ export default function Subscribe() {
               Manage Subscription
             </h1>
             <p className="anim-2 text-[var(--text-muted)] mt-2 text-base">
-              $10/month — unlimited detailed TCO analyses and used-car checklists.
+              $10/month — full forecasting, comparison, risk scoring, and more.
             </p>
           </div>
 
@@ -210,9 +210,14 @@ export default function Subscribe() {
                 </p>
                 <ul className="mb-5 text-sm text-[var(--text-muted)] space-y-1.5">
                   {[
-                    'Unlimited detailed TCO analyses (make/model/trim)',
-                    'Unlimited used-car checklists',
-                    'Add results to multi-vehicle comparison',
+                    'Full 5-year ownership forecast',
+                    'Multi-vehicle comparison (up to 5)',
+                    'Buy vs. lease comparison',
+                    'Repair & reliability risk score',
+                    'Salary optimization (vehicle-specific)',
+                    'Full quiz ranked results',
+                    'PDF report export',
+                    'Alerts for better alternatives',
                     'Cancel anytime — access through billing period',
                   ].map(item => (
                     <li key={item} className="flex items-start gap-2">
@@ -306,11 +311,11 @@ export default function Subscribe() {
                 {[
                   {
                     q: "What's always free?",
-                    a: 'The basic loan calculator (price, down payment, rate, term → monthly payment and total interest), the salary/20-4-10 tool, survey, and Wheel-Zard AI are always free. The first 3 detailed TCO analyses and first 5 checklists are also free.',
+                    a: 'Single-vehicle TCO (year 1), basic affordability score, buy vs. lease (single vehicle), state taxes & fees, ZIP-based fuel pricing, top car quiz match, used-car checklist, Wheel-Zard AI, and the resource library.',
                   },
                   {
                     q: 'What does Pro unlock?',
-                    a: 'Unlimited detailed TCO analyses with make/model/trim selection, itemized maintenance breakdowns, and full operating cost models. Unlimited used-car checklists with negotiation calculators. Add any result to the multi-car comparison.',
+                    a: 'Full 5-year ownership forecast, multi-vehicle comparison (up to 5), buy vs. lease comparison, repair & reliability risk score, salary optimization tool (vehicle-specific), full quiz ranked results, PDF report export, and alerts for better alternatives.',
                   },
                   {
                     q: 'How do I access Pro on a new device?',

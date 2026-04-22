@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import ProGate from '../components/ProGate'
+import { useSubscription } from '../hooks/useSubscription'
 import { questions, questionImpacts, vehicleProfiles } from '../data/surveyData'
 
 function scoreVehicles(answers) {
@@ -57,6 +59,7 @@ function ScoreMeter({ score, label }) {
 }
 
 export default function CarSurvey() {
+  const { isSubscribed } = useSubscription()
   const [step, setStep] = useState('intro') // intro | quiz | results
   const [currentQ, setCurrentQ] = useState(0)
   const [answers, setAnswers] = useState(Array(questions.length).fill(3))
@@ -259,44 +262,87 @@ export default function CarSurvey() {
             </div>
           </div>
 
-          {/* Runner-up profiles */}
-          <div className="grid sm:grid-cols-2 gap-4 mb-6 anim-4">
-            {rankedProfiles.slice(1, 3).map(({ key, score, profile }) => (
-              <div key={key} className="card hover:border-[#3a3a3e] transition-colors">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{profile.emoji}</span>
-                    <span className="font-display font-bold text-white text-base">{profile.name}</span>
+          {/* Runner-up profiles — Pro only */}
+          <div className="mb-6 anim-4">
+            {isSubscribed ? (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {rankedProfiles.slice(1, 3).map(({ key, score, profile }) => (
+                  <div key={key} className="card hover:border-[#3a3a3e] transition-colors">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">{profile.emoji}</span>
+                        <span className="font-display font-bold text-white text-base">{profile.name}</span>
+                      </div>
+                      <span className="text-xs font-bold text-[var(--text-muted)] bg-[var(--bg)] px-2 py-1 rounded">{Math.round(score)}%</span>
+                    </div>
+                    <p className="text-xs text-[var(--text-muted)] italic mb-3">"{profile.tagline}"</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {profile.topPicks.map(pick => (
+                        <span key={pick} className="px-2 py-1 rounded text-xs text-[var(--text-muted)] bg-[var(--bg)] border border-[var(--border)]">
+                          {pick}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <span className="text-xs font-bold text-[var(--text-muted)] bg-[var(--bg)] px-2 py-1 rounded">{Math.round(score)}%</span>
-                </div>
-                <p className="text-xs text-[var(--text-muted)] italic mb-3">"{profile.tagline}"</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {profile.topPicks.map(pick => (
-                    <span key={pick} className="px-2 py-1 rounded text-xs text-[var(--text-muted)] bg-[var(--bg)] border border-[var(--border)]">
-                      {pick}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* All scores toggle */}
-          <div className="card mb-8 anim-5">
-            <button
-              onClick={() => setShowAllScores(s => !s)}
-              className="w-full flex items-center justify-between text-sm font-semibold text-[var(--text-muted)] hover:text-white transition-colors"
-            >
-              <span>Full score breakdown</span>
-              <span>{showAllScores ? '▲' : '▼'}</span>
-            </button>
-            {showAllScores && (
-              <div className="mt-6 flex flex-col gap-3">
-                {rankedProfiles.map(({ key, score, profile }) => (
-                  <ScoreMeter key={key} score={score} label={`${profile.emoji} ${profile.name}`} />
                 ))}
               </div>
+            ) : (
+              <ProGate
+                isPro={false}
+                title="Runner-up Matches"
+                description="See your #2 and #3 vehicle type matches with model recommendations — Pro feature."
+                preview={
+                  <div className="grid sm:grid-cols-2 gap-4 p-2">
+                    {rankedProfiles.slice(1, 3).map(({ key, score, profile }) => (
+                      <div key={key} className="card">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">{profile.emoji}</span>
+                            <span className="font-display font-bold text-white text-base">{profile.name}</span>
+                          </div>
+                          <span className="text-xs font-bold text-[var(--text-muted)] bg-[var(--bg)] px-2 py-1 rounded">{Math.round(score)}%</span>
+                        </div>
+                        <p className="text-xs text-[var(--text-muted)] italic">"{profile.tagline}"</p>
+                      </div>
+                    ))}
+                  </div>
+                }
+              />
+            )}
+          </div>
+
+          {/* Full score breakdown — Pro only */}
+          <div className="mb-8 anim-5">
+            {isSubscribed ? (
+              <div className="card">
+                <button
+                  onClick={() => setShowAllScores(s => !s)}
+                  className="w-full flex items-center justify-between text-sm font-semibold text-[var(--text-muted)] hover:text-white transition-colors"
+                >
+                  <span>Full score breakdown</span>
+                  <span>{showAllScores ? '▲' : '▼'}</span>
+                </button>
+                {showAllScores && (
+                  <div className="mt-6 flex flex-col gap-3">
+                    {rankedProfiles.map(({ key, score, profile }) => (
+                      <ScoreMeter key={key} score={score} label={`${profile.emoji} ${profile.name}`} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <ProGate
+                isPro={false}
+                title="Full Quiz Score Breakdown"
+                description="All vehicle types ranked by match percentage — upgrade to Pro to see your complete results."
+                preview={
+                  <div className="p-4 flex flex-col gap-3">
+                    {rankedProfiles.slice(0, 4).map(({ key, score, profile }) => (
+                      <ScoreMeter key={key} score={score} label={`${profile.emoji} ${profile.name}`} />
+                    ))}
+                  </div>
+                }
+              />
             )}
           </div>
 

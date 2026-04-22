@@ -2,6 +2,8 @@ import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import PaywallModal from '../components/PaywallModal'
+import { useSubscription } from '../hooks/useSubscription'
 import VEHICLES from '../data/vehicles.json'
 import {
   classifySegment, determineMaintTier,
@@ -128,6 +130,9 @@ const CURRENT_YEAR = String(
 )
 
 export default function SalaryCalculator() {
+  const { isSubscribed } = useSubscription()
+  const [showPaywall, setShowPaywall] = useState(false)
+
   // Finance mode
   const [mode, setMode] = useState('buy')
 
@@ -318,6 +323,14 @@ export default function SalaryCalculator() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">
+      {showPaywall && (
+        <PaywallModal
+          feature="salary"
+          usedCount={0}
+          cancelPath="/salary"
+          onUnlocked={() => { setShowPaywall(false); setProMode(true) }}
+        />
+      )}
       <Navbar />
       <main className="flex-1 pt-20 pb-16">
         {/* Header */}
@@ -345,7 +358,10 @@ export default function SalaryCalculator() {
                 <h2 className="font-display font-bold text-white text-lg">Vehicle Details</h2>
                 {/* Pro toggle */}
                 <button
-                  onClick={() => setProMode(p => !p)}
+                  onClick={() => {
+                    if (!isSubscribed && !proMode) { setShowPaywall(true); return }
+                    setProMode(p => !p)
+                  }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border"
                   style={{
                     background: proMode ? 'var(--accent)' : 'transparent',
@@ -353,6 +369,9 @@ export default function SalaryCalculator() {
                     borderColor: proMode ? 'var(--accent)' : 'var(--border)',
                   }}
                 >
+                  {!isSubscribed && !proMode && (
+                    <span className="text-[10px] mr-0.5">🔒</span>
+                  )}
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                     <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.5"/>
                     <path d="M6 3.5v2.5l1.5 1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>

@@ -18,6 +18,46 @@ const FEATURE_COPY = {
     unit: 'checklist',
     units: 'checklists',
   },
+  forecast: {
+    icon: '📈',
+    title: '5-Year Ownership Forecast',
+    description: 'year-by-year cost projections showing how loan payoff, rising maintenance, and depreciation shift your total cost over time',
+    freeLimit: 0,
+    unit: 'forecast',
+    units: 'forecasts',
+  },
+  compare: {
+    icon: '⚖️',
+    title: 'Multi-Vehicle Comparison',
+    description: 'compare up to 5 vehicles side by side across payment, fuel, insurance, maintenance, and total ownership cost',
+    freeLimit: 0,
+    unit: 'comparison',
+    units: 'comparisons',
+  },
+  salary: {
+    icon: '💵',
+    title: 'Salary Optimization Tool',
+    description: 'vehicle-specific salary requirements with brand-accurate cost models — pick any make, model, year, and trim',
+    freeLimit: 0,
+    unit: 'optimization',
+    units: 'optimizations',
+  },
+  quiz: {
+    icon: '🎯',
+    title: 'Full Quiz Ranked Results',
+    description: 'see all vehicle type scores ranked from best to worst match, not just your top result',
+    freeLimit: 0,
+    unit: 'result',
+    units: 'results',
+  },
+  repair: {
+    icon: '🛠️',
+    title: 'Repair & Reliability Risk Score',
+    description: 'brand- and model-specific reliability ratings with estimated repair frequency and cost-of-ownership risk',
+    freeLimit: 0,
+    unit: 'risk score',
+    units: 'risk scores',
+  },
 }
 
 export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocked }) {
@@ -84,11 +124,13 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
             <span className="w-4 h-px bg-[var(--accent)]" />
           </div>
           <h2 className="font-display font-extrabold text-white text-xl sm:text-2xl">
-            Free limit reached
+            {copy.freeLimit > 0 ? 'Free limit reached' : 'Pro feature'}
           </h2>
           <p className="text-[var(--text-muted)] text-sm mt-2 leading-relaxed">
-            You've used <span className="text-white font-semibold">{usedCount} of {copy.freeLimit}</span> free {copy.units}.
-            Unlock unlimited access to {copy.description}.
+            {copy.freeLimit > 0
+              ? <>You've used <span className="text-white font-semibold">{usedCount} of {copy.freeLimit}</span> free {copy.units}. Unlock unlimited access to {copy.description}.</>
+              : <>Upgrade to Pro to unlock {copy.description}.</>
+            }
           </p>
         </div>
 
@@ -132,10 +174,14 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
           )}
           <ul className="mt-3 text-sm text-[var(--text-muted)] space-y-1.5 text-left mx-auto max-w-xs">
             {[
-              'Unlimited detailed TCO analyses',
-              'Unlimited used-car checklists',
-              'Add results to multi-car comparison',
-              'Cancel anytime from your account',
+              'Full 5-year ownership forecast',
+              'Multi-vehicle comparison (up to 5)',
+              'Buy vs. lease comparison',
+              'Repair & reliability risk score',
+              'Salary optimization tool',
+              'Full quiz ranked results',
+              'PDF report export',
+              'Alerts for better alternatives',
             ].map(item => (
               <li key={item} className="flex items-start gap-2">
                 <span className="mt-0.5 shrink-0" style={{ color: 'var(--accent)' }}>✓</span>

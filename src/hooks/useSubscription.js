@@ -4,8 +4,9 @@ export const LS_SUB_EMAIL       = 'cashpedal_subscriber_email'
 export const LS_SUB_EXPIRES     = 'cashpedal_sub_expires'
 export const LS_SUB_VERIFIED_AT = 'cashpedal_sub_verified_at'
 
-// Permanent pro user — bypasses all subscription checks and never expires
+// Permanent pro users — bypass all subscription checks and never expire
 export const PRO_USER_EMAIL = 'pro@cashpedal.io'
+const PRO_USERS = new Set([PRO_USER_EMAIL, 'noah@cashpedal.io'])
 
 const VERIFY_INTERVAL_MS = 24 * 60 * 60 * 1000 // re-verify once per day
 
@@ -13,7 +14,7 @@ function isActiveFromStorage() {
   const email   = localStorage.getItem(LS_SUB_EMAIL)
   const expires = localStorage.getItem(LS_SUB_EXPIRES)
   if (!email) return false
-  if (email === PRO_USER_EMAIL) return true
+  if (PRO_USERS.has(email)) return true
   if (expires && new Date(expires) < new Date()) return false
   return true
 }
@@ -27,7 +28,7 @@ export function useSubscription() {
     const email      = localStorage.getItem(LS_SUB_EMAIL)
     const verifiedAt = localStorage.getItem(LS_SUB_VERIFIED_AT)
     if (!email) return
-    if (email === PRO_USER_EMAIL) return // pro user never needs re-verification
+    if (PRO_USERS.has(email)) return // pro users never need re-verification
 
     const stale = !verifiedAt || (Date.now() - parseInt(verifiedAt, 10)) > VERIFY_INTERVAL_MS
     if (stale) {
@@ -40,7 +41,7 @@ export function useSubscription() {
     if (!clean) return { active: false }
 
     // Pro user is always active — no API call needed
-    if (clean === PRO_USER_EMAIL) {
+    if (PRO_USERS.has(clean)) {
       localStorage.setItem(LS_SUB_EMAIL,       clean)
       localStorage.setItem(LS_SUB_VERIFIED_AT, String(Date.now()))
       localStorage.removeItem(LS_SUB_EXPIRES)
@@ -87,7 +88,7 @@ export function useSubscription() {
   }
 
   function clearSubscription() {
-    if (localStorage.getItem(LS_SUB_EMAIL) === PRO_USER_EMAIL) return
+    if (PRO_USERS.has(localStorage.getItem(LS_SUB_EMAIL))) return
     localStorage.removeItem(LS_SUB_EMAIL)
     localStorage.removeItem(LS_SUB_EXPIRES)
     localStorage.removeItem(LS_SUB_VERIFIED_AT)

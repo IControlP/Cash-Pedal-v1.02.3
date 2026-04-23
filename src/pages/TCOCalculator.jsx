@@ -923,12 +923,37 @@ const leaseTermOptions = [
 ]
 
 // ── Export helpers ────────────────────────────────────
-function buildCSV(rows) {
+function metaSection(meta, line) {
+  const out = []
+  out.push(line(['VEHICLE & PARAMETERS']))
+  out.push(line(['Vehicle', meta.vehicle || 'Not specified']))
+  out.push(line(['Purchase price', meta.price]))
+  out.push(line(['Down payment', meta.downPayment]))
+  if (meta.financeMode === 'lease') {
+    out.push(line(['Finance mode', 'Lease']))
+    out.push(line(['Lease term', `${meta.leaseTerm} months`]))
+    out.push(line(['Lease APR', `${meta.leaseApr}%`]))
+    out.push(line(['Residual', `${meta.residualPct}%`]))
+  } else {
+    out.push(line(['Finance mode', 'Loan']))
+    out.push(line(['Loan term', `${meta.loanTerm} months`]))
+    out.push(line(['Interest rate', `${meta.rate}%`]))
+  }
+  out.push(line(['Annual mileage', `${meta.annualMileage.toLocaleString()} mi/yr`]))
+  out.push(line(['Current odometer', `${meta.startMileage.toLocaleString()} mi`]))
+  out.push(line(['Location', meta.location || 'Not set']))
+  out.push(line(['Ownership years', meta.ownershipYears]))
+  return out
+}
+
+function buildCSV(rows, meta) {
   const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`
   const line = cols => cols.map(esc).join(',')
   const out = []
 
   out.push(line(['Cash Pedal — TCO Report', `Generated ${new Date().toLocaleDateString()}`]))
+  out.push('')
+  out.push(...metaSection(meta, line))
   out.push('')
 
   out.push(line(['YEAR-BY-YEAR FORECAST']))
@@ -942,12 +967,14 @@ function buildCSV(rows) {
   return out.join('\n')
 }
 
-function buildDetailedCSV(rows, maintenanceDetail) {
+function buildDetailedCSV(rows, maintenanceDetail, meta) {
   const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`
   const line = cols => cols.map(esc).join(',')
   const out = []
 
   out.push(line(['Cash Pedal — TCO Report (Detailed)', `Generated ${new Date().toLocaleDateString()}`]))
+  out.push('')
+  out.push(...metaSection(meta, line))
   out.push('')
 
   out.push(line(['YEAR-BY-YEAR FORECAST']))
@@ -961,7 +988,7 @@ function buildDetailedCSV(rows, maintenanceDetail) {
 
   if (maintenanceDetail) {
     out.push(line(['MAINTENANCE SCHEDULE BY YEAR']))
-    out.push(line(['Year','Service','Occurrences','Cost Each','Year Total']))
+    out.push(line(['Year','Service','Occurrences','Cost Each','Year Maint. Total']))
     maintenanceDetail.forEach(yr => {
       if (yr.services.length === 0) {
         out.push(line([`Year ${yr.year}`, '(no scheduled services)', '', '', 0]))
@@ -1375,6 +1402,7 @@ export default function TCOCalculator() {
   const [residualPct,      setResidualPct]      = useState(55)
   const [capCostReduction, setCapCostReduction] = useState(0)
   const [acquisitionFee,   setAcquisitionFee]   = useState(795)
+  const [currentMileage,   setCurrentMileage]   = useState(null) // null = auto (carAge × annualMileage)
 
   // Restore last session when landing via ?resume=1
   useEffect(() => {
@@ -1399,18 +1427,23 @@ export default function TCOCalculator() {
   // Derived model data (type, specs, mpg, isEV)
   const modelData = useMemo(() => getModelData(selMake, selModel), [selMake, selModel])
 
+  // Effective odometer start: user override or vehicle age × annual mileage
+  const vehicleAge = selYear ? Math.max(0, new Date().getFullYear() - parseInt(selYear)) : 0
+  const effectiveStartMileage = currentMileage ?? Math.round(vehicleAge * annualMileage)
+
   // Per-year maintenance costs using actual service occurrence counts (detailedMode only)
   const maintenanceDetail = useMemo(() => {
     if (!detailedMode) return null
+    const sm = effectiveStartMileage
     if (modelData) {
       const seg = classifySegment(selMake || '', selModel || '')
-      return generateDetailedMaintenanceByYear(modelData.is_ev, annualMileage, seg, selMake)
+      return generateDetailedMaintenanceByYear(modelData.is_ev, annualMileage, seg, selMake, 5, sm)
     }
     const catInfo = VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)
     const catIsEV = catInfo?.isEV ?? false
     const catSeg  = catInfo?.segment ?? 'sedan'
-    return generateDetailedMaintenanceByYear(catIsEV, annualMileage, catSeg, '')
-  }, [detailedMode, modelData, annualMileage, selMake, selModel, vehicleCategory])
+    return generateDetailedMaintenanceByYear(catIsEV, annualMileage, catSeg, '', 5, sm)
+  }, [detailedMode, modelData, annualMileage, selMake, selModel, vehicleCategory, effectiveStartMileage, selYear, currentMileage])
 
   const maintenanceByYear = useMemo(() => maintenanceDetail?.map(yr => yr.total) ?? null, [maintenanceDetail])
 
@@ -2173,6 +2206,31 @@ export default function TCOCalculator() {
                       />
                     </button>
                   </div>
+
+                  {/* Current odometer reading */}
+                  <div className="flex flex-col gap-2">
+                    <label className="input-label">Current Odometer (miles)</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        className="input-field flex-1"
+                        placeholder={`${effectiveStartMileage.toLocaleString()} (auto)`}
+                        value={currentMileage ?? ''}
+                        onChange={e => setCurrentMileage(e.target.value === '' ? null : Math.max(0, parseInt(e.target.value) || 0))}
+                        min={0}
+                        step={1000}
+                      />
+                      {currentMileage !== null && (
+                        <button onClick={() => setCurrentMileage(null)}
+                          className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors shrink-0">
+                          Reset
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      Used to determine which services are due in each forecast year. Auto-estimate: {effectiveStartMileage.toLocaleString()} mi ({vehicleAge > 0 ? `${vehicleAge}yr × ${annualMileage.toLocaleString()} mi/yr` : 'new vehicle'}).
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -2449,7 +2507,16 @@ export default function TCOCalculator() {
               {/* ── Export Report ── */}
               <div className="flex gap-2">
                 <button
-                  onClick={() => downloadCSV(buildCSV(forecastRows), 'tco-summary.csv')}
+                  onClick={() => {
+                    const meta = {
+                      vehicle: [selYear, selMake, selModel, selTrim].filter(Boolean).join(' ') || vehicleCategory || 'Unknown vehicle',
+                      price, downPayment, financeMode, loanTerm, rate, leaseTerm, leaseApr, residualPct,
+                      annualMileage, startMileage: effectiveStartMileage,
+                      location: locationLabel || resolvedState || 'Not set',
+                      ownershipYears,
+                    }
+                    downloadCSV(buildCSV(forecastRows, meta), 'tco-summary.csv')
+                  }}
                   className="flex-1 text-xs font-semibold py-2 px-3 rounded-lg border transition-colors"
                   style={{ borderColor: 'var(--border)', color: 'var(--text-muted)', background: 'var(--surface)' }}
                 >
@@ -2457,7 +2524,16 @@ export default function TCOCalculator() {
                 </button>
                 {maintenanceDetail && (
                   <button
-                    onClick={() => downloadCSV(buildDetailedCSV(forecastRows, maintenanceDetail), 'tco-detailed.csv')}
+                    onClick={() => {
+                      const meta = {
+                        vehicle: [selYear, selMake, selModel, selTrim].filter(Boolean).join(' ') || vehicleCategory || 'Unknown vehicle',
+                        price, downPayment, financeMode, loanTerm, rate, leaseTerm, leaseApr, residualPct,
+                        annualMileage, startMileage: effectiveStartMileage,
+                        location: locationLabel || resolvedState || 'Not set',
+                        ownershipYears,
+                      }
+                      downloadCSV(buildDetailedCSV(forecastRows, maintenanceDetail, meta), 'tco-detailed.csv')
+                    }}
                     className="flex-1 text-xs font-semibold py-2 px-3 rounded-lg border transition-colors"
                     style={{ borderColor: 'var(--border)', color: 'var(--text-muted)', background: 'var(--surface)' }}
                   >

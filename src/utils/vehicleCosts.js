@@ -8,13 +8,13 @@
 export const BRAND_DEPRECIATION_MULT = {
   Toyota: 0.75, Lexus: 0.78, Porsche: 0.79, Honda: 0.82, Subaru: 0.85,
   Jeep: 0.86, Mazda: 0.88, Acura: 0.89,
-  Hyundai: 0.93, Kia: 0.95, GMC: 0.96, Ford: 0.98, Buick: 1.04,
-  Chevrolet: 1.00, Ram: 1.02, Nissan: 1.05, Genesis: 1.06, Volvo: 1.07, Infiniti: 1.08,
-  Cadillac: 1.12, Volkswagen: 1.14, Audi: 1.15, Mini: 1.16, BMW: 1.18, Lincoln: 1.18,
-  'Mercedes-Benz': 1.22, 'Land Rover': 1.24, Dodge: 1.26, Jaguar: 1.28,
-  Chrysler: 1.32, 'Alfa Romeo': 1.35, Fiat: 1.38,
-  Tesla: 0.90, Rivian: 1.20, Lucid: 1.28, Polestar: 1.22,
-  Maserati: 1.42,
+  Hyundai: 0.93, Kia: 0.95, GMC: 0.96, Ford: 0.98, Buick: 1.02,
+  Chevrolet: 1.00, Ram: 1.02, Nissan: 1.03, Genesis: 1.04, Volvo: 1.05, Infiniti: 1.05,
+  Cadillac: 1.08, Volkswagen: 1.08, Audi: 1.05, Mini: 1.10, BMW: 1.05, Lincoln: 1.05,
+  'Mercedes-Benz': 1.06, 'Land Rover': 1.10, Dodge: 1.22, Jaguar: 1.12,
+  Chrysler: 1.28, 'Alfa Romeo': 1.30, Fiat: 1.35,
+  Tesla: 0.90, Rivian: 1.15, Lucid: 1.22, Polestar: 1.15,
+  Maserati: 1.38,
 }
 
 export const SEGMENT_CURVES = {
@@ -56,7 +56,7 @@ export const HIGH_RETENTION = {
 }
 
 export const POOR_RETENTION = {
-  BMW: ['i3','8 Series'],
+  BMW: ['7 Series','X7','i3','8 Series'],
   'Mercedes-Benz': ['S-Class','E-Class','CLS','AMG GT','EQS','EQE'],
   Audi: ['A8','A7','Q8','e-tron','e-tron GT'],
   Cadillac: ['CT4','CT5','CT6','Lyriq'],
@@ -243,7 +243,8 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
 // Returns per-year, per-service maintenance detail. Each entry is:
 //   { year, total, services: [{ name, occurrences, costPerOcc, total }] }
 // Only services with ≥1 occurrence in that year are included in the services array.
-export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5) {
+// startMileage offsets the odometer so year 1 begins at the vehicle's current mileage.
+export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5, startMileage = 0) {
   const tier  = determineMaintTier(make)
   const c     = MAINT_TIER_COSTS[tier]
   const brand = MAINT_BRAND_MULT[make] ?? 1.0
@@ -255,8 +256,8 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
 
   const occsInYear = (yr, intervalMiles) => {
     if (!intervalMiles || intervalMiles <= 0) return 0
-    const start = (yr - 1) * annualMileage
-    const end   = yr * annualMileage
+    const start = startMileage + (yr - 1) * annualMileage
+    const end   = startMileage + yr * annualMileage
     return Math.floor(end / intervalMiles) - Math.floor(start / intervalMiles)
   }
 
@@ -313,8 +314,8 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
 }
 
 // Convenience wrapper — returns just the per-year totals array.
-export function generateMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5) {
-  return generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make, years).map(yr => yr.total)
+export function generateMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5, startMileage = 0) {
+  return generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make, years, startMileage).map(yr => yr.total)
 }
 
 // ── Fuel ─────────────────────────────────────────────────

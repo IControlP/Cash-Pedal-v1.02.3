@@ -14,7 +14,7 @@ import {
   INSURANCE_BASE_RATE, INSURANCE_VALUE_BRACKETS, INSURANCE_BRAND_MULT, STATE_INS_BASE,
   estimateInsurance,
   MAINT_BRAND_MULT, MAINT_LUXURY_MAKES, MAINT_PREMIUM_MAKES, MAINT_ECONOMY_MAKES,
-  determineMaintTier, MAINT_TIER_COSTS, LABOR_RATE, generateMaintenanceServices, generateMaintenanceByYear,
+  determineMaintTier, MAINT_TIER_COSTS, LABOR_RATE, generateMaintenanceServices, generateMaintenanceByYear, generateDetailedMaintenanceByYear,
   STATE_FUEL_PRICES, STATE_ELEC_RATES,
   getPublicChargingRate, getEffectiveElecRate, computeAnnualFuel,
   PREMIUM_PRICE_DELTA, requiresPremiumFuel,
@@ -922,30 +922,77 @@ const leaseTermOptions = [
   { value: 48, label: '48 months (4 years)' },
 ]
 
-// ── 5-Year Forecast ───────────────────────────────────
-function FiveYearForecast({ isPro, financeMode, ownershipYears, loanTerm, leaseTerm,
-  monthlyPayment, annualLeaseCost, annualInsurance, annualFuel, annualMaintenance,
-  maintenanceByYear, annualRegistration, formatCurrency }) {
+// ── Export helpers ────────────────────────────────────
+function buildCSV(rows) {
+  const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`
+  const line = cols => cols.map(esc).join(',')
+  const out = []
 
-  const years = Math.min(5, Math.max(1, ownershipYears))
-  const leasePeriodYears = Math.ceil(leaseTerm / 12)
+  out.push(line(['Cash Pedal — TCO Report', `Generated ${new Date().toLocaleDateString()}`]))
+  out.push('')
 
-  const rows = Array.from({ length: years }, (_, i) => {
-    const yr = i + 1
-    const loanMonths = financeMode === 'lease'
-      ? 0
-      : Math.max(0, Math.min(12, loanTerm - i * 12))
-    const loanCost = financeMode === 'lease'
-      ? (yr <= leasePeriodYears ? annualLeaseCost : 0)
-      : monthlyPayment * loanMonths
-    const insurance    = Math.round(annualInsurance    * Math.pow(1.02, i))
-    const fuel         = annualFuel
-    const maintenance  = maintenanceByYear?.[i] ?? Math.round(annualMaintenance * Math.pow(1.08, i))
-    const registration = Math.round(annualRegistration * Math.pow(0.95, i))
-    const total = loanCost + insurance + fuel + maintenance + registration
-    return { yr, loanCost, insurance, fuel, maintenance, registration, total }
+  out.push(line(['YEAR-BY-YEAR FORECAST']))
+  out.push(line(['Year','Loan/Lease','Insurance','Fuel','Maintenance','Registration','Total']))
+  rows.forEach(r => {
+    out.push(line([`Year ${r.yr}`, r.loanCost, r.insurance, r.fuel, r.maintenance, r.registration, r.total]))
   })
+  const grandTotal = rows.reduce((s, r) => s + r.total, 0)
+  out.push(line(['TOTAL','','','','','', grandTotal]))
 
+  return out.join('\n')
+}
+
+function buildDetailedCSV(rows, maintenanceDetail) {
+  const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`
+  const line = cols => cols.map(esc).join(',')
+  const out = []
+
+  out.push(line(['Cash Pedal — TCO Report (Detailed)', `Generated ${new Date().toLocaleDateString()}`]))
+  out.push('')
+
+  out.push(line(['YEAR-BY-YEAR FORECAST']))
+  out.push(line(['Year','Loan/Lease','Insurance','Fuel','Maintenance','Registration','Total']))
+  rows.forEach(r => {
+    out.push(line([`Year ${r.yr}`, r.loanCost, r.insurance, r.fuel, r.maintenance, r.registration, r.total]))
+  })
+  const grandTotal = rows.reduce((s, r) => s + r.total, 0)
+  out.push(line(['TOTAL','','','','','', grandTotal]))
+  out.push('')
+
+  if (maintenanceDetail) {
+    out.push(line(['MAINTENANCE SCHEDULE BY YEAR']))
+    out.push(line(['Year','Service','Occurrences','Cost Each','Year Total']))
+    maintenanceDetail.forEach(yr => {
+      if (yr.services.length === 0) {
+        out.push(line([`Year ${yr.year}`, '(no scheduled services)', '', '', 0]))
+      } else {
+        yr.services.forEach((svc, idx) => {
+          out.push(line([
+            idx === 0 ? `Year ${yr.year}` : '',
+            svc.name,
+            svc.occurrences,
+            svc.costPerOcc,
+            idx === 0 ? yr.total : '',
+          ]))
+        })
+      }
+    })
+  }
+
+  return out.join('\n')
+}
+
+function downloadCSV(content, filename) {
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href = url; a.download = filename
+  document.body.appendChild(a); a.click()
+  document.body.removeChild(a); URL.revokeObjectURL(url)
+}
+
+// ── 5-Year Forecast ───────────────────────────────────
+function FiveYearForecast({ isPro, financeMode, rows, formatCurrency }) {
   const maxTotal   = Math.max(...rows.map(r => r.total), 1)
   const cumulTotal = rows.reduce((s, r) => s + r.total, 0)
 
@@ -1008,7 +1055,7 @@ function FiveYearForecast({ isPro, financeMode, ownershipYears, loanTerm, leaseT
       style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
-          {years}-Year Ownership Forecast
+          {rows.length}-Year Ownership Forecast
         </p>
         <ProBadge />
       </div>
@@ -1040,7 +1087,7 @@ function FiveYearForecast({ isPro, financeMode, ownershipYears, loanTerm, leaseT
           </span>
         ))}
         <span className="ml-auto font-semibold text-white tabular-nums">
-          {years}-yr total: {formatCurrency(cumulTotal)}
+          {rows.length}-yr total: {formatCurrency(cumulTotal)}
         </span>
       </div>
     </div>
@@ -1353,17 +1400,19 @@ export default function TCOCalculator() {
   const modelData = useMemo(() => getModelData(selMake, selModel), [selMake, selModel])
 
   // Per-year maintenance costs using actual service occurrence counts (detailedMode only)
-  const maintenanceByYear = useMemo(() => {
+  const maintenanceDetail = useMemo(() => {
     if (!detailedMode) return null
     if (modelData) {
       const seg = classifySegment(selMake || '', selModel || '')
-      return generateMaintenanceByYear(modelData.is_ev, annualMileage, seg, selMake)
+      return generateDetailedMaintenanceByYear(modelData.is_ev, annualMileage, seg, selMake)
     }
     const catInfo = VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)
     const catIsEV = catInfo?.isEV ?? false
     const catSeg  = catInfo?.segment ?? 'sedan'
-    return generateMaintenanceByYear(catIsEV, annualMileage, catSeg, '')
+    return generateDetailedMaintenanceByYear(catIsEV, annualMileage, catSeg, '')
   }, [detailedMode, modelData, annualMileage, selMake, selModel, vehicleCategory])
+
+  const maintenanceByYear = useMemo(() => maintenanceDetail?.map(yr => yr.total) ?? null, [maintenanceDetail])
 
   useEffect(() => {
     if (customCosts) return
@@ -1490,6 +1539,30 @@ export default function TCOCalculator() {
 
   const annualOperatingCost = annualInsurance + annualFuel + annualMaintenance + annualRegistration
   const totalAnnualCost = (financeMode === 'lease' ? leaseResults.annualLeaseCost : results.trueAnnualCost) + annualOperatingCost
+
+  // Forecast rows computed at parent level so both the summary panel and FiveYearForecast
+  // share identical totals (prevents the visual vs. summary number discrepancy).
+  const forecastRows = useMemo(() => {
+    const years = Math.min(5, Math.max(1, ownershipYears))
+    const leasePeriodYears = Math.ceil(leaseTerm / 12)
+    return Array.from({ length: years }, (_, i) => {
+      const yr = i + 1
+      const loanMonths = financeMode === 'lease'
+        ? 0
+        : Math.max(0, Math.min(12, loanTerm - i * 12))
+      const loanCost = financeMode === 'lease'
+        ? (yr <= leasePeriodYears ? leaseResults.annualLeaseCost : 0)
+        : results.monthlyPayment * loanMonths
+      const insurance    = Math.round(annualInsurance    * Math.pow(1.02, i))
+      const fuel         = annualFuel
+      const maintenance  = maintenanceByYear?.[i] ?? Math.round(annualMaintenance * Math.pow(1.08, i))
+      const registration = Math.round(annualRegistration * Math.pow(0.95, i))
+      const total = loanCost + insurance + fuel + maintenance + registration
+      return { yr, loanCost, insurance, fuel, maintenance, registration, total }
+    })
+  }, [ownershipYears, leaseTerm, financeMode, loanTerm, leaseResults.annualLeaseCost,
+      results.monthlyPayment, annualInsurance, annualFuel, maintenanceByYear,
+      annualMaintenance, annualRegistration])
 
   // For the insurance note: estimated current market value after depreciation
   const carAge            = selYear ? Math.max(0, new Date().getFullYear() - parseInt(selYear)) : 0
@@ -1938,8 +2011,8 @@ export default function TCOCalculator() {
                 )}
               </div>
 
-              {/* Annual miles slider — always visible when location is set */}
-              {resolvedState && !customCosts && (
+              {/* Annual miles slider — always visible unless user is in custom-costs mode */}
+              {!customCosts && (
                 <SliderInput
                   label="Annual Miles Driven"
                   value={annualMileage}
@@ -2307,11 +2380,11 @@ export default function TCOCalculator() {
                 </p>
                 <div className="flex flex-col gap-2 text-sm">
                   {[
-                    { label: financeMode === 'lease' ? 'Lease payments' : 'Loan payments', value: financeMode === 'lease' ? leaseResults.annualLeaseCost : results.trueAnnualCost },
-                    { label: 'Insurance',              value: annualInsurance },
+                    { label: financeMode === 'lease' ? 'Lease payments' : 'Loan payments', value: forecastRows[0]?.loanCost ?? (financeMode === 'lease' ? leaseResults.annualLeaseCost : results.trueAnnualCost) },
+                    { label: 'Insurance',              value: forecastRows[0]?.insurance    ?? annualInsurance },
                     { label: (modelData?.is_ev || VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.isEV) ? 'Charging' : 'Fuel', value: annualFuel },
-                    { label: 'Maintenance & repairs',  value: annualMaintenance },
-                    { label: 'Registration & fees',    value: annualRegistration },
+                    { label: 'Maintenance & repairs',  value: forecastRows[0]?.maintenance  ?? annualMaintenance },
+                    { label: 'Registration & fees',    value: forecastRows[0]?.registration ?? annualRegistration },
                   ].map(({ label, value }) => (
                     <div key={label} className="flex justify-between items-center">
                       <span className="text-[var(--text-muted)]">{label}</span>
@@ -2320,9 +2393,9 @@ export default function TCOCalculator() {
                   ))}
                   <div className="h-px bg-[var(--border)] my-1" />
                   <div className="flex justify-between items-center">
-                    <span className="text-white font-bold">Total per year</span>
+                    <span className="text-white font-bold">Year 1 total</span>
                     <span className="font-display font-bold text-lg" style={{ color: 'var(--accent)' }}>
-                      {formatCurrency(totalAnnualCost)}
+                      {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
@@ -2332,7 +2405,7 @@ export default function TCOCalculator() {
                     <span className="text-[var(--text-muted)] font-medium">
                       {formatCurrency(financeMode === 'lease'
                         ? leaseResults.totalLeaseCost + annualOperatingCost * (leaseTerm / 12)
-                        : totalAnnualCost * ownershipYears)}
+                        : forecastRows.reduce((s, r) => s + r.total, 0))}
                     </span>
                   </div>
                 </div>
@@ -2349,7 +2422,7 @@ export default function TCOCalculator() {
                       {formatCurrency(leaseResults.monthlyPayment * leaseTerm)}
                     </span>{' '}
                     — you don&apos;t own the vehicle at the end. Add insurance, fuel, maintenance, and fees and your{' '}
-                    <span className="text-white font-semibold">all-in annual cost is {formatCurrency(totalAnnualCost)}</span>{' '}
+                    <span className="text-white font-semibold">all-in Year 1 cost is {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}</span>{' '}
                     — or {formatCurrency(leaseResults.totalLeaseCost + annualOperatingCost * (leaseTerm / 12))} over the full lease.
                   </>
                 ) : (
@@ -2359,8 +2432,8 @@ export default function TCOCalculator() {
                       {formatCurrency(results.monthlyPayment * Math.min(ownershipYears * 12, loanTerm))}
                     </span>{' '}
                     ({formatCurrency(results.totalInterestPaid)} in interest). Add insurance, fuel, maintenance, and fees and your{' '}
-                    <span className="text-white font-semibold">all-in annual cost is {formatCurrency(totalAnnualCost)}</span>{' '}
-                    — or {formatCurrency(totalAnnualCost * ownershipYears)} over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}.
+                    <span className="text-white font-semibold">all-in Year 1 cost is {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}</span>{' '}
+                    — or {formatCurrency(forecastRows.reduce((s, r) => s + r.total, 0))} over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}.
                   </>
                 )}
               </div>
@@ -2369,18 +2442,29 @@ export default function TCOCalculator() {
               <FiveYearForecast
                 isPro={isSubscribed}
                 financeMode={financeMode}
-                ownershipYears={ownershipYears}
-                loanTerm={loanTerm}
-                leaseTerm={leaseTerm}
-                monthlyPayment={results.monthlyPayment}
-                annualLeaseCost={leaseResults.annualLeaseCost}
-                annualInsurance={annualInsurance}
-                annualFuel={annualFuel}
-                annualMaintenance={annualMaintenance}
-                maintenanceByYear={maintenanceByYear}
-                annualRegistration={annualRegistration}
+                rows={forecastRows}
                 formatCurrency={formatCurrency}
               />
+
+              {/* ── Export Report ── */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => downloadCSV(buildCSV(forecastRows), 'tco-summary.csv')}
+                  className="flex-1 text-xs font-semibold py-2 px-3 rounded-lg border transition-colors"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-muted)', background: 'var(--surface)' }}
+                >
+                  Export Summary CSV
+                </button>
+                {maintenanceDetail && (
+                  <button
+                    onClick={() => downloadCSV(buildDetailedCSV(forecastRows, maintenanceDetail), 'tco-detailed.csv')}
+                    className="flex-1 text-xs font-semibold py-2 px-3 rounded-lg border transition-colors"
+                    style={{ borderColor: 'var(--border)', color: 'var(--text-muted)', background: 'var(--surface)' }}
+                  >
+                    Export Detailed Maintenance CSV
+                  </button>
+                )}
+              </div>
 
               {/* ── Repair & Reliability Risk Score (Pro) ── */}
               <RepairRiskScore

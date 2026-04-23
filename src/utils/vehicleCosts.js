@@ -56,7 +56,7 @@ export const HIGH_RETENTION = {
 }
 
 export const POOR_RETENTION = {
-  BMW: ['7 Series','X7','i3','i4','8 Series'],
+  BMW: ['i3','8 Series'],
   'Mercedes-Benz': ['S-Class','E-Class','CLS','AMG GT','EQS','EQE'],
   Audi: ['A8','A7','Q8','e-tron','e-tron GT'],
   Cadillac: ['CT4','CT5','CT6','Lyriq'],
@@ -240,11 +240,10 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
   return svc
 }
 
-// Returns an array of length `years` with the actual maintenance cost for each year,
-// computed by counting real service occurrences based on cumulative mileage thresholds
-// rather than flat amortization. High-interval items (tires, trans fluid, etc.) only
-// appear in the years where the mileage milestone is actually crossed.
-export function generateMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5) {
+// Returns per-year, per-service maintenance detail. Each entry is:
+//   { year, total, services: [{ name, occurrences, costPerOcc, total }] }
+// Only services with ≥1 occurrence in that year are included in the services array.
+export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5) {
   const tier  = determineMaintTier(make)
   const c     = MAINT_TIER_COSTS[tier]
   const brand = MAINT_BRAND_MULT[make] ?? 1.0
@@ -261,53 +260,61 @@ export function generateMaintenanceByYear(isEV, annualMileage, segment, make = '
     return Math.floor(end / intervalMiles) - Math.floor(start / intervalMiles)
   }
 
-  const services = []
+  const defs = []
 
   if (!isEV) {
-    services.push({ costPerOcc: Math.round(c.oil_change_cost * brand), intervalMiles: c.oil_interval })
+    defs.push({ name: 'Oil changes', costPerOcc: Math.round(c.oil_change_cost * brand), intervalMiles: c.oil_interval })
   }
 
   const filterInterval = tier === 'luxury' ? annualMileage : 15000
-  services.push({ costPerOcc: Math.round(c.filter_cost * brand), intervalMiles: filterInterval })
-
-  services.push({ costPerOcc: Math.round(c.tire_rotation_cost * brand), intervalMiles: 6000 })
-  services.push({ costPerOcc: Math.round(c.brake_inspection_cost * brand), intervalMiles: annualMileage })
-  services.push({ costPerOcc: Math.round(c.wiper_cost * brand), intervalMiles: annualMileage })
+  defs.push({ name: 'Air & cabin filters', costPerOcc: Math.round(c.filter_cost * brand), intervalMiles: filterInterval })
+  defs.push({ name: 'Tire rotations', costPerOcc: Math.round(c.tire_rotation_cost * brand), intervalMiles: 6000 })
+  defs.push({ name: 'Brake inspection', costPerOcc: Math.round(c.brake_inspection_cost * brand), intervalMiles: annualMileage })
+  defs.push({ name: 'Wiper blades', costPerOcc: Math.round(c.wiper_cost * brand), intervalMiles: annualMileage })
 
   const bfInterval = (tier === 'luxury' || tier === 'premium') ? 24000 : 30000
-  services.push({ costPerOcc: occCost(c.brake_fluid_flush_cost, 0), intervalMiles: bfInterval })
+  defs.push({ name: 'Brake fluid flush', costPerOcc: occCost(c.brake_fluid_flush_cost, 0), intervalMiles: bfInterval })
 
   if (!isEV) {
     const transInterval = tier === 'luxury' ? 60000 : 80000
-    services.push({ costPerOcc: occCost(c.trans_fluid_cost, 0), intervalMiles: transInterval })
+    defs.push({ name: 'Transmission fluid', costPerOcc: occCost(c.trans_fluid_cost, 0), intervalMiles: transInterval })
 
     const coolantInterval = tier === 'luxury' ? 60000 : 80000
-    services.push({ costPerOcc: occCost(c.coolant_flush_cost, 0), intervalMiles: coolantInterval })
+    defs.push({ name: 'Coolant flush', costPerOcc: occCost(c.coolant_flush_cost, 0), intervalMiles: coolantInterval })
 
     const sparkInterval = (tier === 'luxury' || tier === 'premium') ? 60000 : 90000
-    services.push({ costPerOcc: occCost(c.spark_plug_cost, 0), intervalMiles: sparkInterval })
+    defs.push({ name: 'Spark plugs', costPerOcc: occCost(c.spark_plug_cost, 0), intervalMiles: sparkInterval })
   }
 
-  // Wheel alignment every 2 years, expressed as miles so occsInYear handles it uniformly
-  services.push({ costPerOcc: Math.round(c.alignment_cost * brand), intervalMiles: 2 * annualMileage })
+  defs.push({ name: 'Wheel alignment', costPerOcc: Math.round(c.alignment_cost * brand), intervalMiles: 2 * annualMileage })
 
   const tireInterval = isEV ? 40000 : isSports ? 30000 : isTruck ? 45000 : (tier === 'luxury' || tier === 'premium') ? 40000 : 60000
-  services.push({ costPerOcc: occCost(600, 2.0), intervalMiles: tireInterval })
+  defs.push({ name: 'Tire replacement (set)', costPerOcc: occCost(600, 2.0), intervalMiles: tireInterval })
 
-  // Brake pads & rotors as 4 separate components at different mileage thresholds
   const brakeMult = isEV ? 1.8 : 1.0
-  services.push({ costPerOcc: occCost(150, 1.0), intervalMiles: 60000 * brakeMult })
-  services.push({ costPerOcc: occCost(130, 1.0), intervalMiles: 70000 * brakeMult })
-  services.push({ costPerOcc: occCost(300, 1.5), intervalMiles: 80000 * brakeMult })
-  services.push({ costPerOcc: occCost(250, 1.5), intervalMiles: 90000 * brakeMult })
+  defs.push({ name: 'Front brake pads', costPerOcc: occCost(150, 1.0), intervalMiles: 60000 * brakeMult })
+  defs.push({ name: 'Rear brake pads',  costPerOcc: occCost(130, 1.0), intervalMiles: 70000 * brakeMult })
+  defs.push({ name: 'Front rotors',     costPerOcc: occCost(300, 1.5), intervalMiles: 80000 * brakeMult })
+  defs.push({ name: 'Rear rotors',      costPerOcc: occCost(250, 1.5), intervalMiles: 90000 * brakeMult })
 
-  services.push({ costPerOcc: occCost(180, 0.3), intervalMiles: 65000 })
+  defs.push({ name: '12V battery', costPerOcc: occCost(180, 0.3), intervalMiles: 65000 })
 
   return Array.from({ length: years }, (_, i) => {
     const yr = i + 1
-    return services.reduce((sum, { costPerOcc, intervalMiles }) =>
-      sum + occsInYear(yr, intervalMiles) * costPerOcc, 0)
+    const services = defs
+      .map(({ name, costPerOcc, intervalMiles }) => {
+        const occurrences = occsInYear(yr, intervalMiles)
+        return { name, occurrences, costPerOcc, total: occurrences * costPerOcc }
+      })
+      .filter(s => s.occurrences > 0)
+    const total = services.reduce((sum, s) => sum + s.total, 0)
+    return { year: yr, total, services }
   })
+}
+
+// Convenience wrapper — returns just the per-year totals array.
+export function generateMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5) {
+  return generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make, years).map(yr => yr.total)
 }
 
 // ── Fuel ─────────────────────────────────────────────────

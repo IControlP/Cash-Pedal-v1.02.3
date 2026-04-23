@@ -2054,6 +2054,32 @@ export default function TCOCalculator() {
                 />
               )}
 
+              {/* Current odometer — always visible, drives which maintenance services are due */}
+              {!customCosts && (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <label className="input-label">Current Odometer (miles)</label>
+                    {currentMileage !== null && (
+                      <button onClick={() => setCurrentMileage(null)}
+                        className="text-[10px] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
+                        Reset to auto
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="number"
+                    className="input-field"
+                    placeholder={`${effectiveStartMileage.toLocaleString()} mi (auto${vehicleAge > 0 ? ` — ${vehicleAge}yr × ${annualMileage.toLocaleString()} mi/yr` : ''})`}
+                    value={currentMileage ?? ''}
+                    onChange={e => setCurrentMileage(e.target.value === '' ? null : Math.max(0, parseInt(e.target.value) || 0))}
+                    min={0} step={1000}
+                  />
+                  <p className="text-[10px] text-[var(--text-muted)]">
+                    Sets the starting mileage for the maintenance forecast — affects when services like tires, brakes, and fluids are due.
+                  </p>
+                </div>
+              )}
+
               {/* EV Charging Setup — shown whenever an EV or electric category is active */}
               {resolvedState && !customCosts && effIsEV && (
                 <div className="rounded-xl border p-4 flex flex-col gap-4"
@@ -2207,30 +2233,6 @@ export default function TCOCalculator() {
                     </button>
                   </div>
 
-                  {/* Current odometer reading */}
-                  <div className="flex flex-col gap-2">
-                    <label className="input-label">Current Odometer (miles)</label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        className="input-field flex-1"
-                        placeholder={`${effectiveStartMileage.toLocaleString()} (auto)`}
-                        value={currentMileage ?? ''}
-                        onChange={e => setCurrentMileage(e.target.value === '' ? null : Math.max(0, parseInt(e.target.value) || 0))}
-                        min={0}
-                        step={1000}
-                      />
-                      {currentMileage !== null && (
-                        <button onClick={() => setCurrentMileage(null)}
-                          className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors shrink-0">
-                          Reset
-                        </button>
-                      )}
-                    </div>
-                    <p className="text-[10px] text-[var(--text-muted)]">
-                      Used to determine which services are due in each forecast year. Auto-estimate: {effectiveStartMileage.toLocaleString()} mi ({vehicleAge > 0 ? `${vehicleAge}yr × ${annualMileage.toLocaleString()} mi/yr` : 'new vehicle'}).
-                    </p>
-                  </div>
                 </div>
               )}
 
@@ -2456,6 +2458,19 @@ export default function TCOCalculator() {
                       {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}
                     </span>
                   </div>
+                  {forecastRows.length > 1 && (() => {
+                    const totals = forecastRows.map(r => r.total)
+                    const lo = Math.min(...totals)
+                    const hi = Math.max(...totals)
+                    return lo !== hi ? (
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-[var(--text-muted)]">Annual range (yr 1–{forecastRows.length})</span>
+                        <span className="text-[var(--text-muted)] font-medium tabular-nums">
+                          {formatCurrency(lo)} – {formatCurrency(hi)}
+                        </span>
+                      </div>
+                    ) : null
+                  })()}
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-[var(--text-muted)]">
                       Total over {financeMode === 'lease' ? `${leaseTerm} mo lease` : `${ownershipYears} yr${ownershipYears !== 1 ? 's' : ''}`}

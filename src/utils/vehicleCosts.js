@@ -115,28 +115,31 @@ export function estimateCurrentValue(originalPrice, make, model, ageYears) {
 // ── Insurance ────────────────────────────────────────────
 // Ported from advanced_insurance.py (AdvancedInsuranceCalculator)
 
-export const INSURANCE_BASE_RATE = 1300 // national average annual premium
+// National average full-coverage premium — updated to 2025 levels (Bankrate/NAIC data)
+export const INSURANCE_BASE_RATE = 1760
 
 export const INSURANCE_VALUE_BRACKETS = [
-  [0, 15000, .85], [15000, 30000, 1.00], [30000, 50000, 1.15],
-  [50000, 80000, 1.35], [80000, Infinity, 1.60],
+  [0, 15000, .80], [15000, 30000, 1.00], [30000, 50000, 1.18],
+  [50000, 80000, 1.40], [80000, Infinity, 1.65],
 ]
 
 export const INSURANCE_BRAND_MULT = {
   BMW: 1.25, 'Mercedes-Benz': 1.30, Audi: 1.20, Lexus: 1.15, Acura: 1.10,
-  Infiniti: 1.10, Cadillac: 1.15, Toyota: 0.90, Honda: 0.90,
-  Hyundai: 0.85, Kia: 0.85, Subaru: 0.95, Mazda: 0.95,
+  Infiniti: 1.10, Cadillac: 1.15, Toyota: 0.88, Honda: 0.90,
+  Hyundai: 0.87, Kia: 0.87, Subaru: 0.95, Mazda: 0.93,
   Chevrolet: 1.00, Ford: 1.05, Ram: 1.10, Jeep: 1.10,
+  Tesla: 1.35, Rivian: 1.30, Lucid: 1.25,
 }
 
+// State base premiums updated to 2025 averages (Bankrate/NAIC)
 export const STATE_INS_BASE = {
-  AL:1420,AK:1180,AZ:1290,AR:1380,CA:1760,CO:1340,CT:1510,
-  DE:1440,FL:2059,GA:1450,HI:1200,ID:1050,IL:1240,IN:1080,
-  IA:1050,KS:1150,KY:1350,LA:2298,ME:1020,MD:1380,MA:1175,
-  MI:1980,MN:1240,MS:1350,MO:1250,MT:1220,NE:1180,NV:1368,
-  NH:1050,NJ:1590,NM:1300,NY:1470,NC:1100,ND:1240,OH:1050,
-  OK:1420,OR:1180,PA:1340,RI:1470,SC:1340,SD:1240,TN:1180,
-  TX:1550,UT:1170,VT:1050,VA:1180,WA:1240,WV:1390,WI:1100,WY:1240,
+  AL:1840,AK:1380,AZ:1810,AR:1740,CA:2310,CO:2100,CT:1980,
+  DE:1790,FL:3100,GA:2070,HI:1340,ID:1190,IL:1700,IN:1420,
+  IA:1250,KS:1580,KY:2030,LA:3090,ME:1160,MD:1980,MA:1520,
+  MI:2520,MN:1680,MS:1800,MO:1880,MT:1560,NE:1490,NV:2060,
+  NH:1190,NJ:2030,NM:1700,NY:2280,NC:1440,ND:1440,OH:1270,
+  OK:2100,OR:1530,PA:1720,RI:2020,SC:1660,SD:1540,TN:1680,
+  TX:2310,UT:1640,VT:1160,VA:1480,WA:1620,WV:1610,WI:1330,WY:1420,
 }
 
 // state=null → national average
@@ -320,8 +323,8 @@ export function generateMaintenanceByYear(isEV, annualMileage, segment, make = '
 
 // ── Fuel ─────────────────────────────────────────────────
 
-// Premium unleaded is ~$0.60/gal above regular (national avg, per EIA)
-export const PREMIUM_PRICE_DELTA = 0.60
+// Premium unleaded is ~$0.70/gal above regular (national avg, per EIA 2025)
+export const PREMIUM_PRICE_DELTA = 0.70
 
 // Brands where every ICE model requires premium
 export const PREMIUM_FUEL_MAKES = new Set([
@@ -351,26 +354,28 @@ export function requiresPremiumFuel(make, model) {
   return (PREMIUM_FUEL_MODELS[make] ?? []).some(m => ml.includes(m.toLowerCase()))
 }
 
+// Regular unleaded state averages — updated to 2025 levels (EIA/GasBuddy data)
 export const STATE_FUEL_PRICES = {
-  AL:3.20,AK:4.15,AZ:3.85,AR:3.10,CA:4.65,CO:3.50,CT:3.75,
-  DE:3.45,FL:3.40,GA:3.30,HI:4.95,ID:3.65,IL:3.60,IN:3.35,
-  IA:3.25,KS:3.15,KY:3.30,LA:3.05,ME:3.70,MD:3.55,MA:3.80,
-  MI:3.50,MN:3.45,MS:3.10,MO:3.20,MT:3.60,NE:3.30,NV:4.05,
-  NH:3.65,NJ:3.70,NM:3.40,NY:3.90,NC:3.35,ND:3.25,OH:3.40,
-  OK:3.15,OR:4.10,PA:3.65,RI:3.75,SC:3.25,SD:3.35,TN:3.20,
-  TX:3.25,UT:3.75,VT:3.70,VA:3.45,WA:4.20,WV:3.40,WI:3.45,
-  WY:3.50,DC:3.60,
+  AL:3.05,AK:3.95,AZ:3.70,AR:2.95,CA:4.80,CO:3.30,CT:3.55,
+  DE:3.20,FL:3.25,GA:3.05,HI:4.90,ID:3.50,IL:3.55,IN:3.25,
+  IA:3.10,KS:2.95,KY:3.05,LA:2.90,ME:3.45,MD:3.35,MA:3.60,
+  MI:3.40,MN:3.30,MS:2.90,MO:2.95,MT:3.40,NE:3.10,NV:3.90,
+  NH:3.35,NJ:3.45,NM:3.10,NY:3.75,NC:3.10,ND:3.05,OH:3.15,
+  OK:2.95,OR:3.95,PA:3.55,RI:3.50,SC:3.05,SD:3.15,TN:3.05,
+  TX:3.00,UT:3.55,VT:3.50,VA:3.20,WA:4.10,WV:3.25,WI:3.30,
+  WY:3.25,DC:3.75,
 }
 
+// Residential electricity rates $/kWh — updated to 2025 levels (EIA data)
 export const STATE_ELEC_RATES = {
-  AL:0.13,AK:0.24,AZ:0.14,AR:0.11,CA:0.33,CO:0.14,CT:0.30,
-  DE:0.14,FL:0.14,GA:0.14,HI:0.42,ID:0.10,IL:0.16,IN:0.14,
-  IA:0.12,KS:0.14,KY:0.11,LA:0.11,ME:0.16,MD:0.18,MA:0.27,
-  MI:0.17,MN:0.14,MS:0.12,MO:0.13,MT:0.12,NE:0.11,NV:0.13,
-  NH:0.23,NJ:0.20,NM:0.14,NY:0.20,NC:0.13,ND:0.11,OH:0.15,
-  OK:0.12,OR:0.11,PA:0.17,RI:0.28,SC:0.14,SD:0.12,TN:0.12,
-  TX:0.13,UT:0.11,VT:0.17,VA:0.13,WA:0.10,WV:0.12,WI:0.15,
-  WY:0.12,DC:0.16,
+  AL:0.14,AK:0.25,AZ:0.15,AR:0.11,CA:0.38,CO:0.15,CT:0.33,
+  DE:0.15,FL:0.15,GA:0.14,HI:0.44,ID:0.11,IL:0.17,IN:0.15,
+  IA:0.13,KS:0.14,KY:0.12,LA:0.11,ME:0.18,MD:0.19,MA:0.30,
+  MI:0.19,MN:0.15,MS:0.12,MO:0.13,MT:0.12,NE:0.12,NV:0.14,
+  NH:0.26,NJ:0.22,NM:0.14,NY:0.22,NC:0.13,ND:0.11,OH:0.15,
+  OK:0.12,OR:0.12,PA:0.18,RI:0.30,SC:0.14,SD:0.12,TN:0.12,
+  TX:0.14,UT:0.12,VT:0.19,VA:0.14,WA:0.11,WV:0.13,WI:0.16,
+  WY:0.12,DC:0.17,
 }
 
 // Public DC fast-charging rate ≈ 2.2× home residential (floor $0.29, cap $0.55)

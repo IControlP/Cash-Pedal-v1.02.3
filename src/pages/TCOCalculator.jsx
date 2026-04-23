@@ -1222,7 +1222,7 @@ function RepairRiskScore({ isPro, make, model, isEV, maintBrandMult, determineTi
 
 // ── Cost Alerts ───────────────────────────────────────
 function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenance,
-  maintBrandMult, classifySegment, formatCurrency }) {
+  maintBrandMult, classifySegment, formatCurrency, loanAmount, price, rate, financeMode }) {
 
   const ProBadge = () => (
     <span className="text-[10px] font-bold px-2 py-0.5 rounded"
@@ -1269,6 +1269,18 @@ function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenan
       alerts.push({
         type: 'info',
         text: `Your all-in annual cost of ${formatCurrency(totalAnnualCost)} is above average. Reducing the purchase price by 10% or shortening the loan term can save meaningfully on interest.`,
+      })
+    }
+    if (financeMode === 'buy' && rate >= 10) {
+      alerts.push({
+        type: 'warning',
+        text: `Your interest rate of ${rate}% is high. Check credit union rates — they typically run 2–4% below dealer-arranged financing for the same loan term.`,
+      })
+    }
+    if (financeMode === 'buy' && loanAmount > 0 && price > 0 && loanAmount / price > 0.80) {
+      alerts.push({
+        type: 'warning',
+        text: `You're financing more than 80% of the vehicle's value. Gap insurance (~$300 one-time or $20–$40/mo) protects you if the car is totaled before your loan balance drops below market value.`,
       })
     }
     if (isEV) {
@@ -1926,6 +1938,19 @@ export default function TCOCalculator() {
                     <span className="font-display font-bold text-white text-lg">{formatCurrency(results.loanAmount)}</span>
                   </div>
 
+                  {/* Gap insurance nudge — new cars depreciate ~20% in year 1; financing >80% LTV means likely underwater */}
+                  {results.loanAmount > price * 0.80 && (
+                    <div className="rounded-lg px-3 py-2.5 flex items-start gap-2.5 border"
+                      style={{ borderColor: 'rgba(251,191,36,0.35)', background: 'rgba(251,191,36,0.05)' }}>
+                      <span className="text-sm shrink-0 mt-0.5">⚠</span>
+                      <p className="text-[11px] leading-relaxed" style={{ color: '#fbbf24' }}>
+                        <span className="font-semibold">Low down payment — consider gap insurance.</span>{' '}
+                        With less than 20% down, your loan balance may exceed the car's market value for the first 1–2 years.
+                        Gap insurance (~$20–$40/mo or a one-time ~$300) covers the difference if the vehicle is totaled or stolen.
+                      </p>
+                    </div>
+                  )}
+
                   <SelectInput label="Loan Term" value={loanTerm} onChange={setLoanTerm} options={loanTermOptions} />
 
                   <SliderInput label="Annual Interest Rate" value={rate} onChange={setRate}
@@ -1958,7 +1983,7 @@ export default function TCOCalculator() {
                     min={0} max={15} step={0.1} suffix="%" inputMin={0} inputMax={15} />
 
                   <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                    Money factor = {(leaseApr / 2400).toFixed(5)} · Typical lease APR is 2–5%
+                    Money factor = {(leaseApr / 2400).toFixed(5)} · Ask the dealer for the exact money factor — divide by 2,400 to convert to APR
                   </p>
 
                   <SliderInput label="Residual Value" value={residualPct} onChange={setResidualPct}
@@ -1972,7 +1997,11 @@ export default function TCOCalculator() {
                   </div>
 
                   <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                    Vehicle value at lease end — typically 45–65% for 36-month leases
+                    {leaseTerm <= 24
+                      ? 'Typical 24-month residual: 58–65% — higher residual = lower payment'
+                      : leaseTerm <= 36
+                      ? 'Typical 36-month residual: 48–58% — Toyota/Honda/Subaru tend toward top of range; luxury/EV toward bottom'
+                      : 'Typical 48-month residual: 40–50% — longer terms mean more depreciation and lower residuals'}
                   </p>
 
                   <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
@@ -2578,6 +2607,10 @@ export default function TCOCalculator() {
                 maintBrandMult={MAINT_BRAND_MULT}
                 classifySegment={classifySegment}
                 formatCurrency={formatCurrency}
+                loanAmount={results.loanAmount}
+                price={price}
+                rate={rate}
+                financeMode={financeMode}
               />
 
               {/* ── PDF Export (Pro) ── */}

@@ -18,7 +18,7 @@ export const US_STATES = [
   { code: 'WI', name: 'Wisconsin' }, { code: 'WY', name: 'Wyoming' }, { code: 'DC', name: 'D.C.' },
 ]
 
-const SNOW_STATES = new Set(['AK','CO','CT','DC','ID','IL','IN','IA','KS','KY','ME','MD','MA','MI','MN','MO','MT','NE','NH','NJ','NY','ND','OH','OR','PA','RI','SD','UT','VT','VA','WA','WV','WI','WY'])
+const SNOW_STATES = new Set(['AK','CO','CT','DC','ID','IL','IN','IA','KS','KY','ME','MD','MA','MI','MN','MO','MT','NE','NH','NJ','NY','ND','OH','PA','RI','SD','UT','VT','VA','WA','WV','WI','WY'])
 const COASTAL_STATES = new Set(['AK','AL','CA','CT','DE','FL','GA','HI','LA','MA','MD','ME','MS','NC','NH','NJ','NY','OR','RI','SC','TX','VA','WA'])
 const HOT_STATES = new Set(['AL','AZ','CA','FL','GA','LA','MS','NM','NV','OK','SC','TX'])
 
@@ -158,32 +158,33 @@ export function getContextualQuestions(vehicleType, isEV, climateFlags) {
   return sections
 }
 
-// Maintenance service intervals (miles) with costs and categories
+// Maintenance service intervals (miles) with costs and categories.
+// Intervals reflect modern vehicles with synthetic oil and iridium/platinum plugs.
 export const maintenanceItems = [
   // Engine / Powertrain
-  { id: 'oil_change', name: 'Oil & Filter Change', interval: 5000, category: 'Powertrain', cost: 80, critical: false },
-  { id: 'air_filter', name: 'Engine Air Filter', interval: 15000, category: 'Powertrain', cost: 30, critical: false },
+  { id: 'oil_change', name: 'Oil & Filter Change', interval: 7500, category: 'Powertrain', cost: 80, critical: false },
+  { id: 'air_filter', name: 'Engine Air Filter', interval: 20000, category: 'Powertrain', cost: 30, critical: false },
   { id: 'cabin_filter', name: 'Cabin Air Filter', interval: 15000, category: 'Interior', cost: 30, critical: false },
-  { id: 'spark_plugs', name: 'Spark Plugs', interval: 30000, category: 'Powertrain', cost: 150, critical: false },
-  { id: 'transmission_fluid', name: 'Transmission Fluid', interval: 30000, category: 'Powertrain', cost: 120, critical: true },
-  { id: 'coolant_flush', name: 'Coolant Flush', interval: 30000, category: 'Powertrain', cost: 100, critical: false },
+  { id: 'spark_plugs', name: 'Spark Plugs (iridium/platinum)', interval: 60000, category: 'Powertrain', cost: 200, critical: false },
+  { id: 'transmission_fluid', name: 'Transmission Fluid', interval: 60000, category: 'Powertrain', cost: 150, critical: true },
+  { id: 'coolant_flush', name: 'Coolant Flush', interval: 50000, category: 'Powertrain', cost: 100, critical: false },
   { id: 'timing_belt', name: 'Timing Belt / Chain Inspection', interval: 60000, category: 'Powertrain', cost: 600, critical: true },
-  { id: 'fuel_filter', name: 'Fuel Filter', interval: 30000, category: 'Powertrain', cost: 80, critical: false },
+  { id: 'fuel_filter', name: 'Fuel Filter', interval: 60000, category: 'Powertrain', cost: 80, critical: false },
   // Suspension & Steering
   { id: 'tires_rotate', name: 'Tire Rotation & Balance', interval: 7500, category: 'Tires & Suspension', cost: 50, critical: false },
-  { id: 'tires_replace', name: 'Tire Replacement', interval: 40000, category: 'Tires & Suspension', cost: 600, critical: true },
+  { id: 'tires_replace', name: 'Tire Replacement', interval: 50000, category: 'Tires & Suspension', cost: 700, critical: true },
   { id: 'alignment', name: 'Wheel Alignment', interval: 30000, category: 'Tires & Suspension', cost: 100, critical: false },
-  { id: 'shocks_struts', name: 'Shocks / Struts', interval: 50000, category: 'Tires & Suspension', cost: 800, critical: true },
+  { id: 'shocks_struts', name: 'Shocks / Struts', interval: 60000, category: 'Tires & Suspension', cost: 900, critical: true },
   // Brakes
-  { id: 'brake_pads', name: 'Brake Pads', interval: 25000, category: 'Brakes', cost: 200, critical: true },
+  { id: 'brake_pads', name: 'Brake Pads', interval: 40000, category: 'Brakes', cost: 250, critical: true },
   { id: 'brake_fluid', name: 'Brake Fluid Flush', interval: 30000, category: 'Brakes', cost: 80, critical: false },
-  { id: 'brake_rotors', name: 'Brake Rotors', interval: 50000, category: 'Brakes', cost: 350, critical: true },
+  { id: 'brake_rotors', name: 'Brake Rotors', interval: 70000, category: 'Brakes', cost: 400, critical: true },
   // Electrical / Safety
-  { id: 'battery', name: 'Battery Test / Replacement', interval: 40000, category: 'Electrical', cost: 180, critical: true },
+  { id: 'battery', name: 'Battery Test / Replacement', interval: 50000, category: 'Electrical', cost: 200, critical: true },
   { id: 'lights', name: 'Light Bulb Inspection', interval: 15000, category: 'Electrical', cost: 30, critical: false },
   // Fluids
-  { id: 'power_steering', name: 'Power Steering Fluid', interval: 30000, category: 'Fluids', cost: 60, critical: false },
-  { id: 'differential', name: 'Differential Fluid', interval: 30000, category: 'Fluids', cost: 90, critical: false },
+  { id: 'power_steering', name: 'Power Steering Fluid', interval: 50000, category: 'Fluids', cost: 60, critical: false },
+  { id: 'differential', name: 'Differential Fluid', interval: 50000, category: 'Fluids', cost: 100, critical: false },
   { id: 'wiper_blades', name: 'Wiper Blades', interval: 12000, category: 'Safety', cost: 40, critical: false },
 ]
 

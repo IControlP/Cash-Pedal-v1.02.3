@@ -2380,11 +2380,11 @@ export default function TCOCalculator() {
                 </p>
                 <div className="flex flex-col gap-2 text-sm">
                   {[
-                    { label: financeMode === 'lease' ? 'Lease payments' : 'Loan payments', value: financeMode === 'lease' ? leaseResults.annualLeaseCost : results.trueAnnualCost },
-                    { label: 'Insurance',              value: annualInsurance },
+                    { label: financeMode === 'lease' ? 'Lease payments' : 'Loan payments', value: forecastRows[0]?.loanCost ?? (financeMode === 'lease' ? leaseResults.annualLeaseCost : results.trueAnnualCost) },
+                    { label: 'Insurance',              value: forecastRows[0]?.insurance    ?? annualInsurance },
                     { label: (modelData?.is_ev || VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.isEV) ? 'Charging' : 'Fuel', value: annualFuel },
-                    { label: 'Maintenance & repairs',  value: annualMaintenance },
-                    { label: 'Registration & fees',    value: annualRegistration },
+                    { label: 'Maintenance & repairs',  value: forecastRows[0]?.maintenance  ?? annualMaintenance },
+                    { label: 'Registration & fees',    value: forecastRows[0]?.registration ?? annualRegistration },
                   ].map(({ label, value }) => (
                     <div key={label} className="flex justify-between items-center">
                       <span className="text-[var(--text-muted)]">{label}</span>
@@ -2393,9 +2393,9 @@ export default function TCOCalculator() {
                   ))}
                   <div className="h-px bg-[var(--border)] my-1" />
                   <div className="flex justify-between items-center">
-                    <span className="text-white font-bold">Total per year</span>
+                    <span className="text-white font-bold">Year 1 total</span>
                     <span className="font-display font-bold text-lg" style={{ color: 'var(--accent)' }}>
-                      {formatCurrency(totalAnnualCost)}
+                      {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
@@ -2422,7 +2422,7 @@ export default function TCOCalculator() {
                       {formatCurrency(leaseResults.monthlyPayment * leaseTerm)}
                     </span>{' '}
                     — you don&apos;t own the vehicle at the end. Add insurance, fuel, maintenance, and fees and your{' '}
-                    <span className="text-white font-semibold">all-in annual cost is {formatCurrency(totalAnnualCost)}</span>{' '}
+                    <span className="text-white font-semibold">all-in Year 1 cost is {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}</span>{' '}
                     — or {formatCurrency(leaseResults.totalLeaseCost + annualOperatingCost * (leaseTerm / 12))} over the full lease.
                   </>
                 ) : (
@@ -2432,7 +2432,7 @@ export default function TCOCalculator() {
                       {formatCurrency(results.monthlyPayment * Math.min(ownershipYears * 12, loanTerm))}
                     </span>{' '}
                     ({formatCurrency(results.totalInterestPaid)} in interest). Add insurance, fuel, maintenance, and fees and your{' '}
-                    <span className="text-white font-semibold">all-in annual cost is {formatCurrency(totalAnnualCost)}</span>{' '}
+                    <span className="text-white font-semibold">all-in Year 1 cost is {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}</span>{' '}
                     — or {formatCurrency(forecastRows.reduce((s, r) => s + r.total, 0))} over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}.
                   </>
                 )}

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PaywallModal from '../components/PaywallModal'
@@ -17,6 +17,60 @@ function getTrims(make, model, year) {
   const d = VEHICLES[make]?.[model]
   if (!d || !year) return {}
   return d.trims_by_year[year] ?? {}
+}
+
+// Regional demand multiplier by vehicle type and state
+const TRUCK_HIGH  = new Set(['TX','OK','KS','NE','SD','ND','MN','IA','MO','AR','WY','MT','ID','MS','AL','LA','TN','KY','WV','IN','OH'])
+const TRUCK_MED   = new Set(['GA','NC','SC','VA','FL','CO','UT','AK','WI','MI'])
+const TRUCK_LOW   = new Set(['CA','OR','WA','NY','NJ','MA','CT','RI','DC','MD','DE'])
+const EV_HIGH     = new Set(['CA','OR','WA','CO','VT','MA','CT','NY','NJ','MD','DC','HI'])
+const EV_MED      = new Set(['ME','NH','RI','DE','MN','IL','AZ','NV'])
+const EV_LOW      = new Set(['MS','AL','LA','WV','AR','KY','TN','OK','KS','ND','SD','NE','WY','MT','ID','IA','MO','IN'])
+const CONV_HIGH   = new Set(['CA','FL','AZ','HI','NV','TX'])
+const CONV_LOW    = new Set(['AK','MN','ND','SD','ME','VT','NH','WY','MT'])
+const SPORTS_HIGH = new Set(['CA','FL','TX','NV'])
+const SPORTS_LOW  = new Set(['AK','ND','SD','MT','WY','ME','VT'])
+const SUV_L_HIGH  = new Set(['MN','WI','MI','CO','UT','WA','VT','NH','ME','AK','MT','WY','ND','SD','ID'])
+
+function getRegionalMultiplier(vehicleType, stateCode) {
+  if (!vehicleType || !stateCode) return 1.0
+  const isEV = vehicleType.startsWith('ev_')
+  if (vehicleType === 'truck') {
+    if (TRUCK_HIGH.has(stateCode)) return 1.10
+    if (TRUCK_MED.has(stateCode)) return 1.05
+    if (TRUCK_LOW.has(stateCode)) return 0.95
+  }
+  if (isEV) {
+    if (EV_HIGH.has(stateCode)) return 1.12
+    if (EV_MED.has(stateCode)) return 1.05
+    if (EV_LOW.has(stateCode)) return 0.90
+  }
+  if (vehicleType === 'convertible') {
+    if (CONV_HIGH.has(stateCode)) return 1.08
+    if (CONV_LOW.has(stateCode)) return 0.92
+  }
+  if (vehicleType === 'sports') {
+    if (SPORTS_HIGH.has(stateCode)) return 1.05
+    if (SPORTS_LOW.has(stateCode)) return 0.95
+  }
+  if (vehicleType === 'suv_large' && SUV_L_HIGH.has(stateCode)) return 1.05
+  return 1.0
+}
+
+function regionalLabel(vehicleType, multiplier) {
+  if (multiplier === 1.0) return null
+  const pct = Math.round((multiplier - 1) * 100)
+  const sign = pct > 0 ? '+' : ''
+  const isEV = vehicleType?.startsWith('ev_')
+  const notes = {
+    truck:       pct > 0 ? 'truck country premium'      : 'urban/coastal discount',
+    ev:          pct > 0 ? 'strong EV demand'            : 'limited EV market',
+    convertible: pct > 0 ? 'warm-weather market'         : 'seasonal market discount',
+    sports:      pct > 0 ? 'active sports car market'    : 'seasonal market discount',
+    suv_large:   'AWD/winter demand premium',
+  }
+  const key = isEV ? 'ev' : vehicleType === 'truck' ? 'truck' : vehicleType === 'convertible' ? 'convertible' : vehicleType === 'sports' ? 'sports' : vehicleType === 'suv_large' ? 'suv_large' : null
+  return `${sign}${pct}% regional — ${notes[key] ?? 'market adjustment'}`
 }
 
 const FREE_CHECKLIST_LIMIT = 5
@@ -48,6 +102,7 @@ export default function CarBuyingChecklist() {
 
   const [step, setStep] = useState('input') // input | checklist
   const [vehicleInfo, setVehicleInfo] = useState({ year: '', make: '', model: '', trim: '', mileage: 80000, price: '', state: '' })
+  const [priceSource, setPriceSource] = useState('auto') // 'auto' | 'user'
   const [statuses, setStatuses] = useState({})
   const [notes, setNotes] = useState({})
   const [activeTab, setActiveTab] = useState('maintenance')
@@ -115,6 +170,8 @@ export default function CarBuyingChecklist() {
     const avgMiles = age * 12000
     value -= ((vehicleInfo.mileage - avgMiles) / 1000) * 150
     value = Math.max(1500, value)
+    const regionMultiplier = getRegionalMultiplier(vehicleData?.type, vehicleInfo.state)
+    value = Math.max(1500, value * regionMultiplier)
     return {
       low: Math.round(value * 0.88 / 100) * 100,
       fair: Math.round(value / 100) * 100,
@@ -122,8 +179,17 @@ export default function CarBuyingChecklist() {
       msrp,
       age,
       avgMiles,
+      regionMultiplier,
+      regionNote: regionalLabel(vehicleData?.type, regionMultiplier),
     }
-  }, [vehicleInfo.make, vehicleInfo.model, vehicleInfo.year, vehicleInfo.trim, vehicleInfo.mileage])
+  }, [vehicleInfo.make, vehicleInfo.model, vehicleInfo.year, vehicleInfo.trim, vehicleInfo.mileage, vehicleInfo.state, vehicleData])
+
+  // Auto-fill asking price with fair estimate whenever it changes, unless user manually set it
+  useEffect(() => {
+    if (priceRange && priceSource === 'auto') {
+      setVehicleInfo(v => ({ ...v, price: String(priceRange.fair) }))
+    }
+  }, [priceRange, priceSource])
 
   function handleStart(e) {
     e.preventDefault()
@@ -170,7 +236,7 @@ export default function CarBuyingChecklist() {
                 <select
                   className="input-field"
                   value={vehicleInfo.make}
-                  onChange={e => setVehicleInfo(v => ({ ...v, make: e.target.value, model: '', year: '', trim: '' }))}
+                  onChange={e => { setPriceSource('auto'); setVehicleInfo(v => ({ ...v, make: e.target.value, model: '', year: '', trim: '' })) }}
                   required
                 >
                   <option value="">Select make…</option>
@@ -185,7 +251,7 @@ export default function CarBuyingChecklist() {
                   <select
                     className="input-field"
                     value={vehicleInfo.model}
-                    onChange={e => setVehicleInfo(v => ({ ...v, model: e.target.value, year: '', trim: '' }))}
+                    onChange={e => { setPriceSource('auto'); setVehicleInfo(v => ({ ...v, model: e.target.value, year: '', trim: '' })) }}
                     required
                   >
                     <option value="">Select model…</option>
@@ -201,7 +267,7 @@ export default function CarBuyingChecklist() {
                   <select
                     className="input-field"
                     value={vehicleInfo.year}
-                    onChange={e => setVehicleInfo(v => ({ ...v, year: e.target.value, trim: '' }))}
+                    onChange={e => { setPriceSource('auto'); setVehicleInfo(v => ({ ...v, year: e.target.value, trim: '' })) }}
                     required
                   >
                     <option value="">Select year…</option>
@@ -219,11 +285,7 @@ export default function CarBuyingChecklist() {
                   <select
                     className="input-field"
                     value={vehicleInfo.trim}
-                    onChange={e => {
-                      const t = e.target.value
-                      const msrp = getTrims(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year)[t] ?? ''
-                      setVehicleInfo(v => ({ ...v, trim: t, price: msrp ? String(msrp) : v.price }))
-                    }}
+                    onChange={e => { setPriceSource('auto'); setVehicleInfo(v => ({ ...v, trim: e.target.value })) }}
                     required
                   >
                     <option value="">Select trim…</option>
@@ -257,7 +319,7 @@ export default function CarBuyingChecklist() {
                   <input
                     type="number"
                     value={vehicleInfo.price}
-                    onChange={e => setVehicleInfo(v => ({ ...v, price: e.target.value }))}
+                    onChange={e => { setPriceSource('user'); setVehicleInfo(v => ({ ...v, price: e.target.value })) }}
                     placeholder="18,000"
                     className="input-field"
                     style={{ paddingLeft: '1.75rem' }}
@@ -295,7 +357,10 @@ export default function CarBuyingChecklist() {
                       }
                     </p>
                   )}
-                  <p className="text-[10px] text-[var(--text-muted)] mt-2">
+                  {priceRange.regionNote && (
+                    <p className="text-xs font-semibold text-[var(--accent)] mt-2">{priceRange.regionNote}</p>
+                  )}
+                  <p className="text-[10px] text-[var(--text-muted)] mt-1">
                     MSRP-based depreciation ({priceRange.age}yr) + mileage vs. {priceRange.avgMiles.toLocaleString()}-mile avg. Varies by condition & market.
                   </p>
                 </div>
@@ -400,8 +465,11 @@ export default function CarBuyingChecklist() {
                   </span>
                 </div>
               )}
-              <p className="text-[10px] text-[var(--text-muted)] mt-2">
-                MSRP {fmt(priceRange.msrp)} → {priceRange.age}-year depreciation + mileage vs. {priceRange.avgMiles.toLocaleString()}-mile average (12k/yr). Actual values vary by condition, trim, and local market.
+              {priceRange.regionNote && (
+                <p className="text-xs font-semibold text-[var(--accent)] mt-2">{priceRange.regionNote}</p>
+              )}
+              <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                MSRP {fmt(priceRange.msrp)} → {priceRange.age}-year depreciation + mileage vs. {priceRange.avgMiles.toLocaleString()}-mile avg (12k/yr). Actual values vary by condition and local market.
               </p>
             </div>
           )}

@@ -219,6 +219,17 @@ export default function CarSurvey() {
             <p className="text-[var(--text-muted)] font-semibold text-lg mt-1 anim-2">
               "{topMatch?.profile.tagline}"
             </p>
+            {topMatch && (
+              <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full anim-2"
+                style={{ background: 'rgba(255,184,0,0.1)', border: '1px solid rgba(255,184,0,0.3)' }}>
+                <span className="font-display font-bold text-[var(--accent)] text-base tabular-nums">
+                  {Math.round(topMatch.score)}%
+                </span>
+                <span className="text-[var(--text-muted)] text-xs">
+                  {topMatch.score >= 75 ? 'strong match' : topMatch.score >= 55 ? 'good match' : 'moderate match'} · based on your answers
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Top match card */}

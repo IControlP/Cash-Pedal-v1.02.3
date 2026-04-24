@@ -23,9 +23,21 @@ import {
 } from '../utils/vehicleCosts'
 
 
+// State vehicle sales tax rates (state base rate; local surtaxes vary)
+const STATE_SALES_TAX = {
+  AL:0.02,  AK:0.00,  AZ:0.056, AR:0.065, CA:0.0725, CO:0.029,  CT:0.0635,
+  DE:0.00,  DC:0.06,  FL:0.06,  GA:0.04,  HI:0.04,   ID:0.06,   IL:0.0625,
+  IN:0.07,  IA:0.05,  KS:0.065, KY:0.06,  LA:0.0445,  ME:0.055,  MD:0.06,
+  MA:0.0625,MI:0.06,  MN:0.0688,MS:0.05,  MO:0.04225,MT:0.00,   NE:0.055,
+  NV:0.0685,NH:0.00,  NJ:0.066, NM:0.05125,NY:0.04,  NC:0.03,   ND:0.05,
+  OH:0.0575,OK:0.045, OR:0.00,  PA:0.06,  RI:0.07,   SC:0.05,   SD:0.04,
+  TN:0.07,  TX:0.0625,UT:0.061, VT:0.06,  VA:0.0415,  WA:0.065,  WV:0.06,
+  WI:0.05,  WY:0.04,
+}
+
 // ── Loan math ────────────────────────────────────────
-function calculateLoan({ price, downPayment, loanTermMonths, annualRatePercent, ownershipYears }) {
-  const loanAmount = price - downPayment
+function calculateLoan({ price, downPayment, salesTax = 0, loanTermMonths, annualRatePercent, ownershipYears }) {
+  const loanAmount = price + salesTax - downPayment
   const r = annualRatePercent / 12 / 100
   const n = loanTermMonths
   let monthlyPayment = 0
@@ -1365,6 +1377,7 @@ export default function TCOCalculator() {
   const [loanTerm, setLoanTerm]     = useState(60)
   const [rate, setRate]             = useState(6.5)
   const [ownershipYears, setOwnershipYears] = useState(5)
+  const [salesTaxPct, setSalesTaxPct] = useState(0)
 
   // Annual operating costs (pre-filled with national averages)
   const [annualInsurance,    setAnnualInsurance]    = useState(2000)
@@ -1503,6 +1516,12 @@ export default function TCOCalculator() {
     }
   }, [])
 
+  // Auto-populate sales tax rate when state resolves
+  useEffect(() => {
+    if (!resolvedState) return
+    setSalesTaxPct(+((STATE_SALES_TAX[resolvedState] ?? 0) * 100).toFixed(2))
+  }, [resolvedState])
+
   // Applies a trim selection — shared by explicit picks and auto-defaults
   const applyTrim = useCallback((make, model, year, trimName) => {
     const t = getTrims(make, model, year)
@@ -1558,8 +1577,9 @@ export default function TCOCalculator() {
 
   const results = useMemo(() => calculateLoan({
     price, downPayment: Math.min(downPayment, price),
+    salesTax: Math.round(price * salesTaxPct / 100),
     loanTermMonths: loanTerm, annualRatePercent: rate, ownershipYears,
-  }), [price, downPayment, loanTerm, rate, ownershipYears])
+  }), [price, downPayment, salesTaxPct, loanTerm, rate, ownershipYears])
 
   const leaseResults = useMemo(() => calculateLease({
     msrp: price,
@@ -1604,7 +1624,15 @@ export default function TCOCalculator() {
     : price
 
   const safeDown = Math.min(downPayment, price)
+  const salesTaxAmount = Math.round(price * salesTaxPct / 100)
   const usingMSRP = !!(selMake && selModel && selYear && selTrim)
+
+  // Net cost of ownership: total paid minus estimated future resale value
+  const futureResaleValue = (financeMode === 'buy' && origMsrp && selYear)
+    ? Math.round(estimateCurrentValue(origMsrp, selMake || null, selModel || null, carAge + ownershipYears))
+    : null
+  const totalOwnershipPaid = forecastRows.reduce((s, r) => s + r.total, 0)
+  const netCostOfOwnership = futureResaleValue != null ? totalOwnershipPaid - futureResaleValue : null
 
   // Derived EV flag, charging rate, and premium fuel flag — used across the render
   const catInfoForRender = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
@@ -1917,19 +1945,55 @@ export default function TCOCalculator() {
 
               {financeMode === 'buy' ? (
                 <>
+                  <SliderInput label="Sales Tax Rate" value={salesTaxPct} onChange={setSalesTaxPct}
+                    min={0} max={12} step={0.25} suffix="%" inputMin={0} inputMax={12} />
+                  <div className="flex items-center justify-between -mt-4 pl-1">
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      {resolvedState
+                        ? `${resolvedState} state base rate (auto-filled) — local taxes may add 0–3%`
+                        : 'Enter your location above to auto-fill state rate'}
+                    </p>
+                    {salesTaxAmount > 0 && (
+                      <span className="text-[10px] font-semibold text-white shrink-0 ml-2">
+                        {formatCurrency(salesTaxAmount)} tax
+                      </span>
+                    )}
+                  </div>
+
                   <SliderInput label="Down Payment" value={safeDown}
                     onChange={v => setDownPayment(Math.min(v, price))}
                     min={0} max={Math.min(price, 50000)} step={500} prefix="$" />
 
-                  <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
-                    <span className="text-sm text-[var(--text-muted)]">Loan amount</span>
-                    <span className="font-display font-bold text-white text-lg">{formatCurrency(results.loanAmount)}</span>
+                  {safeDown / price < 0.10 && loanTerm >= 60 && (
+                    <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg -mt-3"
+                      style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)' }}>
+                      <span className="text-red-400 text-sm shrink-0 mt-0.5">⚠</span>
+                      <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                        <span className="text-red-400 font-semibold">Consider gap insurance.</span>{' '}
+                        With less than 10% down on a {loanTerm}-month loan, you may owe more than the car is worth if totaled or stolen in the first 2–3 years. Gap coverage typically costs $200–$400 total.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-1 px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-[var(--text-muted)]">Loan amount</span>
+                      <span className="font-display font-bold text-white text-lg">{formatCurrency(results.loanAmount)}</span>
+                    </div>
+                    {salesTaxAmount > 0 && (
+                      <p className="text-[10px] text-[var(--text-muted)]">
+                        = {formatCurrency(price)} price + {formatCurrency(salesTaxAmount)} tax − {formatCurrency(safeDown)} down
+                      </p>
+                    )}
                   </div>
 
                   <SelectInput label="Loan Term" value={loanTerm} onChange={setLoanTerm} options={loanTermOptions} />
 
                   <SliderInput label="Annual Interest Rate" value={rate} onChange={setRate}
                     min={0} max={25} step={0.1} suffix="%" inputMin={0} inputMax={25} />
+                  <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                    Typical rates (new car): excellent credit 740+ ≈ 5–7% · good 680+ ≈ 7–9% · fair 620+ ≈ 10–13%
+                  </p>
 
                   <SelectInput label="Ownership Duration" value={ownershipYears}
                     onChange={setOwnershipYears} options={ownershipOptions} />
@@ -2510,6 +2574,38 @@ export default function TCOCalculator() {
                   </>
                 )}
               </div>
+
+              {/* ── Net Cost of Ownership ── */}
+              {financeMode === 'buy' && futureResaleValue != null && netCostOfOwnership != null && (
+                <div className="rounded-xl border p-4 flex flex-col gap-3"
+                  style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+                    Net Cost of Ownership
+                  </p>
+                  <div className="flex flex-col gap-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--text-muted)]">Total paid over {ownershipYears} yr{ownershipYears !== 1 ? 's' : ''}</span>
+                      <span className="text-white font-medium">{formatCurrency(totalOwnershipPaid)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--text-muted)]">
+                        Est. resale value ({carAge + ownershipYears}yr old {selMake})
+                      </span>
+                      <span className="text-white font-medium">− {formatCurrency(futureResaleValue)}</span>
+                    </div>
+                    <div className="h-px bg-[var(--border)] my-0.5" />
+                    <div className="flex justify-between items-center">
+                      <span className="text-white font-bold">Net out-of-pocket</span>
+                      <span className="font-display font-bold text-lg" style={{ color: 'var(--accent)' }}>
+                        {formatCurrency(netCostOfOwnership)}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                    You can sell the vehicle at the end of ownership. This is your true economic cost — lower than total payments because the car retains value.
+                  </p>
+                </div>
+              )}
 
               {/* ── 5-Year Ownership Forecast (Pro) ── */}
               <FiveYearForecast

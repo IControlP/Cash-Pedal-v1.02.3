@@ -14,6 +14,21 @@ const APP_URL     = (process.env.APP_URL || 'https://cashpedal.io').replace(/\/$
 const PRICE_ID    = process.env.STRIPE_PRICE_ID || ''
 const WEBHOOK_SEC = process.env.STRIPE_WEBHOOK_SECRET || ''
 
+const MAX_DEVICES        = 2
+const DEVICE_EXPIRY_DAYS = 30
+// Emails that bypass all subscription and device checks
+const PRO_USERS_SERVER   = new Set(['pro@cashpedal.io', 'noah@cashpedal.io'])
+
+function getClientIp(req) {
+  return (
+    (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
+    req.headers['x-real-ip'] ||
+    req.headers['cf-connecting-ip'] ||
+    req.socket.remoteAddress ||
+    'unknown'
+  )
+}
+
 // ── Stripe ────────────────────────────────────────────
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
@@ -174,6 +189,22 @@ async function initTables() {
     await client.query(`CREATE INDEX IF NOT EXISTS idx_subscribers_email ON subscribers(email)`)
     await client.query(`CREATE INDEX IF NOT EXISTS idx_subscribers_stripe_sub ON subscribers(stripe_subscription_id)`)
     await client.query(`CREATE INDEX IF NOT EXISTS idx_subscribers_customer ON subscribers(stripe_customer_id)`)
+
+    // ── Device-session tracking ───────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS subscriber_devices (
+        id          SERIAL PRIMARY KEY,
+        email       VARCHAR(255) NOT NULL,
+        ip_address  VARCHAR(45)  NOT NULL,
+        first_seen  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        last_seen   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (email, ip_address)
+      )
+    `)
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_sub_devices_email
+        ON subscriber_devices(email)
+    `)
   } finally {
     client.release()
   }
@@ -190,13 +221,7 @@ app.post('/api/consent', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Missing required fields' })
   }
 
-  const ip = (
-    (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
-    req.headers['x-real-ip'] ||
-    req.headers['cf-connecting-ip'] ||
-    req.socket.remoteAddress ||
-    'unknown'
-  )
+  const ip = getClientIp(req)
   const user_agent     = req.headers['user-agent'] || 'unknown'
   const timestamp_utc  = new Date().toISOString()
   const integrity_hash = crypto
@@ -238,13 +263,7 @@ app.post('/api/user-data', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Missing required fields' })
   }
 
-  const ip = (
-    (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
-    req.headers['x-real-ip'] ||
-    req.headers['cf-connecting-ip'] ||
-    req.socket.remoteAddress ||
-    'unknown'
-  )
+  const ip = getClientIp(req)
   const user_agent    = req.headers['user-agent'] || 'unknown'
   const timestamp_utc = new Date().toISOString()
 
@@ -354,6 +373,11 @@ app.get('/api/subscription-status', async (req, res) => {
   if (!email) return res.status(400).json({ error: 'Email required' })
   if (!pool)  return res.json({ active: false, reason: 'db_not_configured' })
 
+  // Pro users bypass all checks
+  if (PRO_USERS_SERVER.has(email)) {
+    return res.json({ active: true, status: 'active', expires: null })
+  }
+
   try {
     const result = await pool.query(
       `SELECT subscription_status, current_period_end
@@ -363,12 +387,99 @@ app.get('/api/subscription-status', async (req, res) => {
     if (result.rows.length === 0) return res.json({ active: false })
 
     const { subscription_status, current_period_end } = result.rows[0]
-    const active = subscription_status === 'active' &&
+    const active = (subscription_status === 'active' || subscription_status === 'canceling') &&
       (!current_period_end || new Date(current_period_end) > new Date())
 
-    res.json({ active, status: subscription_status, expires: current_period_end })
+    if (!active) {
+      return res.json({ active: false, status: subscription_status, expires: current_period_end })
+    }
+
+    // ── Device-limit enforcement ──────────────────────
+    const ip = getClientIp(req)
+
+    // Expire stale devices (not seen in DEVICE_EXPIRY_DAYS days)
+    await pool.query(
+      `DELETE FROM subscriber_devices
+       WHERE email = $1
+         AND last_seen < NOW() - INTERVAL '${DEVICE_EXPIRY_DAYS} days'`,
+      [email]
+    )
+
+    // Check if this IP is already registered for this subscriber
+    const existing = await pool.query(
+      `SELECT id FROM subscriber_devices WHERE email = $1 AND ip_address = $2`,
+      [email, ip]
+    )
+
+    if (existing.rows.length > 0) {
+      // Known device — refresh last_seen and allow
+      await pool.query(
+        `UPDATE subscriber_devices SET last_seen = NOW()
+         WHERE email = $1 AND ip_address = $2`,
+        [email, ip]
+      )
+    } else {
+      // New device — count how many active devices exist
+      const countResult = await pool.query(
+        `SELECT COUNT(*) AS cnt FROM subscriber_devices WHERE email = $1`,
+        [email]
+      )
+      const deviceCount = parseInt(countResult.rows[0].cnt, 10)
+
+      if (deviceCount >= MAX_DEVICES) {
+        console.log(`[device-limit] ${email} blocked — ${deviceCount} devices registered`)
+        return res.json({
+          active:  false,
+          reason:  'device_limit',
+          limit:   MAX_DEVICES,
+          current: deviceCount,
+        })
+      }
+
+      // Slot available — register new device
+      await pool.query(
+        `INSERT INTO subscriber_devices (email, ip_address)
+         VALUES ($1, $2)
+         ON CONFLICT (email, ip_address) DO UPDATE SET last_seen = NOW()`,
+        [email, ip]
+      )
+    }
+
+    res.json({ active: true, status: subscription_status, expires: current_period_end })
   } catch (err) {
     console.error('[subscription-status] error:', err.message)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── API: Reset all registered devices for an email ────
+app.post('/api/reset-devices', async (req, res) => {
+  const email = ((req.body && req.body.email) || '').trim().toLowerCase()
+  if (!email) return res.status(400).json({ error: 'Email required' })
+  if (!pool)  return res.status(503).json({ error: 'DB not configured' })
+
+  // Only allow reset for confirmed active subscribers
+  try {
+    const result = await pool.query(
+      `SELECT subscription_status, current_period_end
+       FROM subscribers WHERE email = $1`,
+      [email]
+    )
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'No subscription found for this email' })
+    }
+    const { subscription_status, current_period_end } = result.rows[0]
+    const active = (subscription_status === 'active' || subscription_status === 'canceling') &&
+      (!current_period_end || new Date(current_period_end) > new Date())
+    if (!active) {
+      return res.status(403).json({ error: 'No active subscription found for this email' })
+    }
+
+    await pool.query(`DELETE FROM subscriber_devices WHERE email = $1`, [email])
+    console.log(`[reset-devices] cleared devices for ${email}`)
+    res.json({ success: true })
+  } catch (err) {
+    console.error('[reset-devices] error:', err.message)
     res.status(500).json({ error: err.message })
   }
 })

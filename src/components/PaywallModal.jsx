@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useSubscription } from '../hooks/useSubscription'
 
 const FEATURE_COPY = {
@@ -69,6 +70,7 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
   const [restoreErr,   setRestoreErr]   = useState('')
   const [checkoutErr,  setCheckoutErr]  = useState('')
   const [annual,       setAnnual]       = useState(false)
+  const [deviceLimit,  setDeviceLimit]  = useState(false)
 
   const { verifySubscription, activateFromSession } = useSubscription()
 
@@ -96,13 +98,15 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
 
   async function handleRestore(e) {
     e.preventDefault()
-    setRestoreErr('')
+    setRestoreErr(''); setDeviceLimit(false)
     if (!email.trim()) { setRestoreErr('Please enter your email address.'); return }
     setLoading(true)
     const result = await verifySubscription(email)
     setLoading(false)
     if (result.active) {
       onUnlocked()
+    } else if (result.reason === 'device_limit') {
+      setDeviceLimit(true)
     } else if (result.error === 'network') {
       setRestoreErr('Could not reach server. Please check your connection.')
     } else {
@@ -193,6 +197,31 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
 
         {/* Restore existing subscription */}
         {restoreMode ? (
+          deviceLimit ? (
+            <div className="flex flex-col gap-3 mb-4">
+              <div className="rounded-xl border p-4 text-sm"
+                style={{ borderColor: 'rgba(255,100,100,0.3)', background: 'rgba(255,100,100,0.06)' }}>
+                <p className="text-red-400 font-semibold mb-1">Device limit reached</p>
+                <p className="text-[var(--text-muted)] leading-relaxed">
+                  This subscription is already active on 2 devices. To use it here,
+                  go to your subscription page to reset your registered devices.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setDeviceLimit(false); setRestoreErr('') }}
+                  className="flex-1 py-2 rounded-xl border border-[var(--border)] text-[var(--text-muted)] text-sm hover:border-[var(--accent)] transition-colors">
+                  Back
+                </button>
+                <Link
+                  to="/subscribe"
+                  className="flex-1 btn-primary text-sm text-center">
+                  Manage Devices
+                </Link>
+              </div>
+            </div>
+          ) : (
           <form onSubmit={handleRestore} className="flex flex-col gap-3 mb-4">
             <p className="text-sm text-white font-semibold">Restore your subscription</p>
             <input
@@ -219,6 +248,7 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
               </button>
             </div>
           </form>
+          )
         ) : (
           <div className="flex flex-col gap-3 mb-4">
             {/* Optional email for checkout prefill */}

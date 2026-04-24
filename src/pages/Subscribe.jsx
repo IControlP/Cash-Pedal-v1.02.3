@@ -14,17 +14,21 @@ export default function Subscribe() {
   const success          = searchParams.get('success') === 'true'
   const sessionId        = searchParams.get('session_id') || ''
 
-  const { isSubscribed, subscriberEmail, verifySubscription, activateFromSession, clearSubscription } = useSubscription()
+  const { isSubscribed, subscriberEmail, verifySubscription, activateFromSession, clearSubscription, resetDevices } = useSubscription()
 
   // ── States ────────────────────────────────────────────
   const [verifying,    setVerifying]    = useState(success && !!sessionId)
   const [sessionData,  setSessionData]  = useState(null)  // { email, expires }
   const [sessionErr,   setSessionErr]   = useState('')
 
-  const [restoreEmail, setRestoreEmail] = useState('')
-  const [restoring,    setRestoring]    = useState(false)
-  const [restoreMsg,   setRestoreMsg]   = useState('')
-  const [restoreErr,   setRestoreErr]   = useState('')
+  const [restoreEmail,      setRestoreEmail]      = useState('')
+  const [restoring,         setRestoring]         = useState(false)
+  const [restoreMsg,        setRestoreMsg]        = useState('')
+  const [restoreErr,        setRestoreErr]        = useState('')
+  const [deviceLimitEmail,  setDeviceLimitEmail]  = useState('')
+  const [resettingDevices,  setResettingDevices]  = useState(false)
+  const [deviceResetMsg,    setDeviceResetMsg]    = useState('')
+  const [deviceResetErr,    setDeviceResetErr]    = useState('')
 
   const [cancelEmail,  setCancelEmail]  = useState(subscriberEmail)
   const [canceling,    setCanceling]    = useState(false)
@@ -59,17 +63,40 @@ export default function Subscribe() {
   // ── Restore access ────────────────────────────────────
   async function handleRestore(e) {
     e.preventDefault()
-    setRestoreMsg(''); setRestoreErr('')
+    setRestoreMsg(''); setRestoreErr(''); setDeviceLimitEmail(''); setDeviceResetMsg(''); setDeviceResetErr('')
     if (!restoreEmail.trim()) { setRestoreErr('Please enter your email.'); return }
     setRestoring(true)
     const result = await verifySubscription(restoreEmail)
     setRestoring(false)
     if (result.active) {
       setRestoreMsg(`Access restored for ${restoreEmail.trim().toLowerCase()}. You can now use all Pro features.`)
+    } else if (result.reason === 'device_limit') {
+      setDeviceLimitEmail(restoreEmail.trim().toLowerCase())
     } else if (result.error === 'network') {
       setRestoreErr('Could not reach server. Check your connection and try again.')
     } else {
       setRestoreErr('No active subscription found for that email.')
+    }
+  }
+
+  // ── Reset devices ─────────────────────────────────────
+  async function handleResetDevices() {
+    setDeviceResetMsg(''); setDeviceResetErr('')
+    setResettingDevices(true)
+    const result = await resetDevices(deviceLimitEmail)
+    setResettingDevices(false)
+    if (result.success) {
+      setDeviceResetMsg('All devices cleared. You can now restore access on this device.')
+      setDeviceLimitEmail('')
+      // Immediately re-verify so the user is logged in
+      const verify = await verifySubscription(restoreEmail || deviceLimitEmail)
+      if (verify.active) {
+        setRestoreMsg(`Access restored for ${(restoreEmail || deviceLimitEmail).trim().toLowerCase()}. You can now use all Pro features.`)
+      }
+    } else if (result.error === 'network') {
+      setDeviceResetErr('Connection error. Please try again.')
+    } else {
+      setDeviceResetErr(result.error || 'Could not reset devices. Please try again.')
     }
   }
 
@@ -252,23 +279,55 @@ export default function Subscribe() {
               <p className="text-[var(--text-muted)] text-sm mb-4">
                 Already subscribed? Enter your email to restore Pro access on this device.
               </p>
-              <form onSubmit={handleRestore} className="flex flex-col gap-3">
-                <input
-                  type="email"
-                  className="input-field text-sm"
-                  placeholder="your@email.com"
-                  value={restoreEmail}
-                  onChange={e => setRestoreEmail(e.target.value)}
-                />
-                {restoreErr && <p className="text-xs text-red-400">{restoreErr}</p>}
-                {restoreMsg && <p className="text-xs text-green-400">{restoreMsg}</p>}
-                <button
-                  type="submit"
-                  disabled={restoring}
-                  className="btn-primary w-full disabled:opacity-40 text-sm">
-                  {restoring ? 'Checking…' : 'Restore Access'}
-                </button>
-              </form>
+
+              {deviceLimitEmail ? (
+                <div className="flex flex-col gap-3">
+                  <div className="rounded-xl border p-4 text-sm"
+                    style={{ borderColor: 'rgba(255,100,100,0.3)', background: 'rgba(255,100,100,0.06)' }}>
+                    <p className="text-red-400 font-semibold mb-1">Device limit reached</p>
+                    <p className="text-[var(--text-muted)] leading-relaxed">
+                      This subscription is already active on 2 devices. To add this device,
+                      reset your registered devices below — all other devices will need to
+                      re-verify with their email.
+                    </p>
+                  </div>
+                  {deviceResetErr && <p className="text-xs text-red-400">{deviceResetErr}</p>}
+                  {deviceResetMsg && <p className="text-xs text-green-400">{deviceResetMsg}</p>}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setDeviceLimitEmail(''); setDeviceResetMsg(''); setDeviceResetErr('') }}
+                      className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-muted)] text-sm hover:border-[var(--accent)] transition-colors">
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResetDevices}
+                      disabled={resettingDevices}
+                      className="flex-1 btn-primary disabled:opacity-40 text-sm">
+                      {resettingDevices ? 'Resetting…' : 'Reset My Devices'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleRestore} className="flex flex-col gap-3">
+                  <input
+                    type="email"
+                    className="input-field text-sm"
+                    placeholder="your@email.com"
+                    value={restoreEmail}
+                    onChange={e => setRestoreEmail(e.target.value)}
+                  />
+                  {restoreErr && <p className="text-xs text-red-400">{restoreErr}</p>}
+                  {restoreMsg && <p className="text-xs text-green-400">{restoreMsg}</p>}
+                  <button
+                    type="submit"
+                    disabled={restoring}
+                    className="btn-primary w-full disabled:opacity-40 text-sm">
+                    {restoring ? 'Checking…' : 'Restore Access'}
+                  </button>
+                </form>
+              )}
             </div>
 
             {/* ── Cancel subscription ── */}
@@ -319,7 +378,7 @@ export default function Subscribe() {
                   },
                   {
                     q: 'How do I access Pro on a new device?',
-                    a: 'Use the "Restore Access" form above with your subscription email. We verify against our records and unlock Pro on that device.',
+                    a: 'Use the "Restore Access" form above with your subscription email. Pro access is limited to 2 devices at a time. If you\'ve reached the limit, use "Reset My Devices" to clear your registered devices and re-register.',
                   },
                   {
                     q: 'What happens when I cancel?',

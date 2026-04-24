@@ -76,6 +76,11 @@ export function useSubscription() {
         window.dispatchEvent(new Event(SUB_CHANGED))
         return { active: true, email: clean, expires: data.expires }
       } else {
+        // Device limit reached — don't wipe existing local state; let the UI surface the error
+        if (data.reason === 'device_limit') {
+          return { active: false, reason: 'device_limit', limit: data.limit, current: data.current }
+        }
+
         // Only wipe stored credentials if the server explicitly says they're inactive
         if (localStorage.getItem(LS_SUB_EMAIL) === clean) {
           localStorage.removeItem(LS_SUB_EMAIL)
@@ -112,5 +117,21 @@ export function useSubscription() {
     window.dispatchEvent(new Event(SUB_CHANGED))
   }
 
-  return { isSubscribed, subscriberEmail, verifySubscription, activateFromSession, clearSubscription }
+  async function resetDevices(email) {
+    const clean = (email || '').trim().toLowerCase()
+    if (!clean) return { success: false, error: 'Email required' }
+    try {
+      const res  = await fetch('/api/reset-devices', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email: clean }),
+      })
+      const data = await res.json()
+      return data.success ? { success: true } : { success: false, error: data.error }
+    } catch {
+      return { success: false, error: 'network' }
+    }
+  }
+
+  return { isSubscribed, subscriberEmail, verifySubscription, activateFromSession, clearSubscription, resetDevices }
 }

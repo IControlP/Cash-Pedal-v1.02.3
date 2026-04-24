@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 
+const SUB_CHANGED = 'cashpedal_sub_changed'
+
 export const LS_SUB_EMAIL       = 'cashpedal_subscriber_email'
 export const LS_SUB_EXPIRES     = 'cashpedal_sub_expires'
 export const LS_SUB_VERIFIED_AT = 'cashpedal_sub_verified_at'
@@ -22,6 +24,16 @@ function isActiveFromStorage() {
 export function useSubscription() {
   const [isSubscribed,    setIsSubscribed]    = useState(isActiveFromStorage)
   const [subscriberEmail, setSubscriberEmail] = useState(() => localStorage.getItem(LS_SUB_EMAIL) || '')
+
+  // Sync state across all hook instances when any one of them changes subscription
+  useEffect(() => {
+    function onChanged() {
+      setIsSubscribed(isActiveFromStorage())
+      setSubscriberEmail(localStorage.getItem(LS_SUB_EMAIL) || '')
+    }
+    window.addEventListener(SUB_CHANGED, onChanged)
+    return () => window.removeEventListener(SUB_CHANGED, onChanged)
+  }, [])
 
   // Re-verify against server once per day if we think they're subscribed
   useEffect(() => {
@@ -47,6 +59,7 @@ export function useSubscription() {
       localStorage.removeItem(LS_SUB_EXPIRES)
       setIsSubscribed(true)
       setSubscriberEmail(clean)
+      window.dispatchEvent(new Event(SUB_CHANGED))
       return { active: true, email: clean }
     }
 
@@ -60,6 +73,7 @@ export function useSubscription() {
         if (data.expires) localStorage.setItem(LS_SUB_EXPIRES, data.expires)
         setIsSubscribed(true)
         setSubscriberEmail(clean)
+        window.dispatchEvent(new Event(SUB_CHANGED))
         return { active: true, email: clean, expires: data.expires }
       } else {
         // Only wipe stored credentials if the server explicitly says they're inactive
@@ -85,6 +99,7 @@ export function useSubscription() {
     if (expires) localStorage.setItem(LS_SUB_EXPIRES, expires)
     setIsSubscribed(true)
     setSubscriberEmail(clean)
+    window.dispatchEvent(new Event(SUB_CHANGED))
   }
 
   function clearSubscription() {
@@ -94,6 +109,7 @@ export function useSubscription() {
     localStorage.removeItem(LS_SUB_VERIFIED_AT)
     setIsSubscribed(false)
     setSubscriberEmail('')
+    window.dispatchEvent(new Event(SUB_CHANGED))
   }
 
   return { isSubscribed, subscriberEmail, verifySubscription, activateFromSession, clearSubscription }

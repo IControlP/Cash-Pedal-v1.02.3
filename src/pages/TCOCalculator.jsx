@@ -1525,13 +1525,20 @@ export default function TCOCalculator() {
     const msrp = t[trimName]
     setOrigMsrp(msrp)
     const ageYrs = Math.max(0, new Date().getFullYear() - parseInt(year))
-    // Leases always use MSRP as cap cost; prior-model-year cars (≤1yr) are
-    // still often sold as new stock, so default to MSRP and let the user adjust.
-    const estimated = (financeMode === 'lease' || ageYrs <= 1)
-      ? msrp
-      : estimateCurrentValue(msrp, make, model, ageYrs)
-    setPrice(Math.round(estimated / 500) * 500)
-  }, [financeMode])
+    // Leases always use MSRP as cap cost; ≤1yr cars are priced at MSRP (dealer)
+    // or a slight below-sticker discount (private). Used cars get dealer (+10%) or
+    // private-party (market) pricing depending on the purchase channel toggle.
+    let base
+    if (financeMode === 'lease' || ageYrs <= 1) {
+      base = dealerPurchase ? msrp : Math.round(msrp * 0.97 / 500) * 500
+    } else {
+      const market = estimateCurrentValue(msrp, make, model, ageYrs)
+      base = dealerPurchase
+        ? Math.round(market * 1.10 / 500) * 500
+        : Math.round(market       / 500) * 500
+    }
+    setPrice(base)
+  }, [financeMode, dealerPurchase])
 
   // Auto-selects the cheapest trim for a given make/model/year
   const autoSelectCheapestTrim = useCallback((make, model, year) => {
@@ -1641,9 +1648,21 @@ export default function TCOCalculator() {
     if (financeMode !== 'buy' || !origMsrp || !selMake || !selModel || !selYear || currentMileage === null) return
     const ageYrs = Math.max(0, new Date().getFullYear() - parseInt(selYear))
     if (ageYrs <= 1) return
-    const estimated = estimateCurrentValue(origMsrp, selMake, selModel, ageYrs, currentMileage)
-    setPrice(Math.round(estimated / 500) * 500)
-  }, [currentMileage, origMsrp, selMake, selModel, selYear, financeMode]) // eslint-disable-line react-hooks/exhaustive-deps
+    const market = estimateCurrentValue(origMsrp, selMake, selModel, ageYrs, currentMileage)
+    setPrice(Math.round((dealerPurchase ? market * 1.10 : market) / 500) * 500)
+  }, [currentMileage, origMsrp, selMake, selModel, selYear, financeMode, dealerPurchase]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-price vehicle when the purchase channel (dealer vs. private) toggles.
+  useEffect(() => {
+    if (financeMode !== 'buy' || !origMsrp || !selMake || !selModel || !selYear) return
+    const ageYrs = Math.max(0, new Date().getFullYear() - parseInt(selYear))
+    if (ageYrs <= 1) {
+      setPrice(dealerPurchase ? origMsrp : Math.round(origMsrp * 0.97 / 500) * 500)
+      return
+    }
+    const market = estimateCurrentValue(origMsrp, selMake, selModel, ageYrs, currentMileage ?? undefined)
+    setPrice(Math.round((dealerPurchase ? market * 1.10 : market) / 500) * 500)
+  }, [dealerPurchase]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // For the insurance note: estimated current market value after depreciation
   const carAge            = selYear ? Math.max(0, new Date().getFullYear() - parseInt(selYear)) : 0
@@ -1958,9 +1977,11 @@ export default function TCOCalculator() {
 
               {origMsrp && carAge > 0 && financeMode === 'buy' && (
                 <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                  Auto-set to estimated {carAge}-year depreciated value
+                  <span className="text-white">{dealerPurchase ? 'Dealer est.' : 'Private party est.'}</span>
+                  {' '}· {carAge}-yr depreciated value
+                  {dealerPurchase && ' + 10% dealer markup'}
                   {currentMileage !== null && ` · ${currentMileage.toLocaleString()} mi`}
-                  {' '}— original MSRP was{' '}
+                  {' '}— original MSRP{' '}
                   <span className="text-white">{formatCurrency(origMsrp)}</span>
                 </p>
               )}

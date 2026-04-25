@@ -99,16 +99,44 @@ export function applyModelAdjustments(make, model, brandMult) {
   return brandMult
 }
 
-export function estimateCurrentValue(originalPrice, make, model, ageYears) {
+export function estimateCurrentValue(originalPrice, make, model, ageYears, currentMileage = null) {
   // A brand-new or current-model-year car retains full value
   if (ageYears <= 0) return originalPrice
   const segment  = (make && model) ? classifySegment(make, model) : 'sedan'
   const rawBrand = BRAND_DEPRECIATION_MULT[make] ?? 1.0
   const adjBrand = (make && model) ? applyModelAdjustments(make, model, rawBrand) : rawBrand
   const curve    = SEGMENT_CURVES[segment] ?? SEGMENT_CURVES.sedan
-  const baseRate = ageYears <= 15 ? (curve[ageYears] ?? curve[15]) : Math.min(0.96, curve[15] + (ageYears - 15) * 0.005)
-  const cap      = SEGMENT_MAX_DEPR[segment] ?? 0.80
-  const finalRate = Math.min(baseRate * adjBrand, cap)
+
+  // Linear interpolation so fractional years (e.g. 3.25 for 39-month lease) work correctly
+  let baseRate
+  if (ageYears > 15) {
+    baseRate = Math.min(0.96, curve[15] + (ageYears - 15) * 0.005)
+  } else {
+    const lo = Math.floor(ageYears)
+    const hi = Math.min(Math.ceil(ageYears), 15)
+    if (lo === hi) {
+      baseRate = curve[lo] ?? 0
+    } else {
+      const frac   = ageYears - lo
+      const rateLo = lo === 0 ? 0 : (curve[lo] ?? curve[15])
+      const rateHi = curve[hi] ?? curve[15]
+      baseRate = rateLo + (rateHi - rateLo) * frac
+    }
+  }
+
+  const cap = SEGMENT_MAX_DEPR[segment] ?? 0.80
+
+  // Mileage adjustment: compare actual miles vs. expected 12 k/yr average.
+  // Each 10 % deviation from average shifts depreciation by ~2.5 %.
+  // Capped at +10 % extra depreciation (very high mileage) / -8 % (very low).
+  let mileageFactor = 1.0
+  if (currentMileage != null && ageYears > 0) {
+    const expectedMiles = ageYears * 12000
+    const mileageRatio  = currentMileage / expectedMiles
+    mileageFactor = Math.max(0.92, Math.min(1.10, 1 + (mileageRatio - 1) * 0.25))
+  }
+
+  const finalRate = Math.min(baseRate * adjBrand * mileageFactor, cap)
   return Math.max(originalPrice * (1 - finalRate), originalPrice * 0.10)
 }
 

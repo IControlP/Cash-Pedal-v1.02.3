@@ -19,6 +19,7 @@ import {
   getPublicChargingRate, getEffectiveElecRate, computeAnnualFuel,
   PREMIUM_PRICE_DELTA, requiresPremiumFuel,
   STATE_REG_FEE, STATE_VLF, computeAnnualRegistration,
+  computeSalesTax, STATE_VEHICLE_SALES_TAX, STATE_DOC_FEE_AVG, getRegionalDemandPremium,
   ZIP_RANGES, zipToState, resolveLocation,
 } from '../utils/vehicleCosts'
 
@@ -939,6 +940,11 @@ function metaSection(meta, line) {
     out.push(line(['Loan term', `${meta.loanTerm} months`]))
     out.push(line(['Interest rate', `${meta.rate}%`]))
   }
+  if (meta.financeMode !== 'lease' && meta.outTheDoor != null) {
+    out.push(line(['Sales tax', meta.salesTax != null ? `$${meta.salesTax.toLocaleString()}` : '—']))
+    out.push(line(['Doc fee', meta.docFee != null ? `$${meta.docFee.toLocaleString()}` : '—']))
+    out.push(line(['Out-the-door price', meta.outTheDoor != null ? `$${meta.outTheDoor.toLocaleString()}` : '—']))
+  }
   out.push(line(['Annual mileage', `${meta.annualMileage.toLocaleString()} mi/yr`]))
   out.push(line(['Current odometer', `${meta.startMileage.toLocaleString()} mi`]))
   out.push(line(['Location', meta.location || 'Not set']))
@@ -1403,6 +1409,9 @@ export default function TCOCalculator() {
   const [capCostReduction, setCapCostReduction] = useState(0)
   const [acquisitionFee,   setAcquisitionFee]   = useState(795)
   const [currentMileage,   setCurrentMileage]   = useState(null) // null = auto (carAge × annualMileage)
+  const [dealerPurchase,   setDealerPurchase]   = useState(true)
+  const [taxRateOverride,  setTaxRateOverride]  = useState(null) // null = use state rate
+  const [docFeeOverride,   setDocFeeOverride]   = useState(null) // null = use state avg
 
   // Restore last session when landing via ?resume=1
   useEffect(() => {
@@ -1556,10 +1565,24 @@ export default function TCOCalculator() {
     setSelMake(''); setSelModel(''); setSelYear(''); setSelTrim(''); setOrigMsrp(null)
   }, [])
 
+  // Purchase extras (tax + dealer fees) — only for buy mode
+  const salesTaxAmt = financeMode === 'buy'
+    ? (taxRateOverride !== null
+        ? Math.round(price * (parseFloat(taxRateOverride) / 100) / 25) * 25
+        : computeSalesTax(resolvedState, price))
+    : 0
+  const autoDocFee = resolvedState ? (STATE_DOC_FEE_AVG[resolvedState] ?? 299) : 299
+  const effectiveDocFee = (financeMode === 'buy' && dealerPurchase)
+    ? (docFeeOverride !== null ? Number(docFeeOverride) : autoDocFee)
+    : 0
+  const totalPurchaseExtras = salesTaxAmt + effectiveDocFee
+  const effectivePrice = financeMode === 'buy' ? price + totalPurchaseExtras : price
+  const regionalDemand = resolvedState ? getRegionalDemandPremium(resolvedState) : 0
+
   const results = useMemo(() => calculateLoan({
-    price, downPayment: Math.min(downPayment, price),
+    price: effectivePrice, downPayment: Math.min(downPayment, effectivePrice),
     loanTermMonths: loanTerm, annualRatePercent: rate, ownershipYears,
-  }), [price, downPayment, loanTerm, rate, ownershipYears])
+  }), [effectivePrice, downPayment, loanTerm, rate, ownershipYears])
 
   const leaseResults = useMemo(() => calculateLease({
     msrp: price,
@@ -1623,7 +1646,7 @@ export default function TCOCalculator() {
     ? estimateCurrentValue(price, selMake || null, selModel || null, carAge, currentMileage)
     : price
 
-  const safeDown = Math.min(downPayment, price)
+  const safeDown = Math.min(downPayment, effectivePrice)
   const usingMSRP = !!(selMake && selModel && selYear && selTrim)
 
   // Derived EV flag, charging rate, and premium fuel flag — used across the render
@@ -1937,11 +1960,97 @@ export default function TCOCalculator() {
                 </p>
               )}
 
+              {/* Regional demand note */}
+              {financeMode === 'buy' && carAge > 0 && regionalDemand !== 0 && resolvedState && (
+                <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                  Used-car market in <span className="text-white">{resolvedState}</span> typically runs{' '}
+                  <span className={regionalDemand > 0 ? 'text-amber-400' : 'text-green-400'}>
+                    {regionalDemand > 0 ? '+' : ''}{Math.round(regionalDemand * 100)}%
+                  </span>{' '}
+                  vs. national average — adjust price accordingly.
+                </p>
+              )}
+
               {financeMode === 'buy' ? (
                 <>
+                  {/* Dealer / Private Party toggle */}
+                  <div className="flex gap-1 p-1 rounded-lg" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                    {[{ v: true, l: 'Dealer Purchase' }, { v: false, l: 'Private Party' }].map(({ v, l }) => (
+                      <button key={String(v)} onClick={() => setDealerPurchase(v)}
+                        className="flex-1 py-1.5 rounded-md text-sm font-semibold transition-all"
+                        style={{
+                          background: dealerPurchase === v ? 'var(--accent)' : 'transparent',
+                          color:      dealerPurchase === v ? '#000' : 'var(--text-muted)',
+                        }}>
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Tax + Fees block */}
+                  <div className="rounded-xl border divide-y" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                    {/* Sales tax row */}
+                    <div className="flex items-center justify-between px-4 py-3 gap-3">
+                      <div className="min-w-0">
+                        <span className="text-sm text-white">Sales Tax</span>
+                        <span className="ml-2 text-[10px] text-[var(--text-muted)]">
+                          {resolvedState
+                            ? `${resolvedState} · ${((taxRateOverride !== null ? parseFloat(taxRateOverride) : (STATE_VEHICLE_SALES_TAX[resolvedState] ?? 0.0625) * 100)).toFixed(2)}%`
+                            : 'Enter location for exact rate'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="relative">
+                          <input
+                            type="number" step="0.01" min="0" max="20"
+                            placeholder={resolvedState ? ((STATE_VEHICLE_SALES_TAX[resolvedState] ?? 0.0625) * 100).toFixed(2) : '6.25'}
+                            value={taxRateOverride ?? ''}
+                            onChange={e => setTaxRateOverride(e.target.value === '' ? null : e.target.value)}
+                            className="input-field text-right pr-6 py-1 text-sm w-24"
+                          />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs pointer-events-none">%</span>
+                        </div>
+                        <span className="font-semibold text-white text-sm tabular-nums w-20 text-right">{formatCurrency(salesTaxAmt)}</span>
+                      </div>
+                    </div>
+
+                    {/* Doc fee row — dealer only */}
+                    {dealerPurchase && (
+                      <div className="flex items-center justify-between px-4 py-3 gap-3">
+                        <div className="min-w-0">
+                          <span className="text-sm text-white">Doc Fee</span>
+                          <span className="ml-2 text-[10px] text-[var(--text-muted)]">
+                            {resolvedState ? `${resolvedState} typical` : 'dealer documentation fee'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="relative">
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs pointer-events-none">$</span>
+                            <input
+                              type="number" step="1" min="0" max="2000"
+                              placeholder={String(autoDocFee)}
+                              value={docFeeOverride ?? ''}
+                              onChange={e => setDocFeeOverride(e.target.value === '' ? null : e.target.value)}
+                              className="input-field text-right pl-5 py-1 text-sm w-24"
+                            />
+                          </div>
+                          <span className="font-semibold text-white text-sm tabular-nums w-20 text-right">{formatCurrency(effectiveDocFee)}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Out-the-door total */}
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <span className="text-sm font-semibold text-white">Out-the-Door Price</span>
+                      <span className="font-display font-bold text-lg" style={{ color: 'var(--accent)' }}>
+                        {formatCurrency(effectivePrice)}
+                      </span>
+                    </div>
+                  </div>
+
                   <SliderInput label="Down Payment" value={safeDown}
-                    onChange={v => setDownPayment(Math.min(v, price))}
-                    min={0} max={Math.min(price, 50000)} step={500} prefix="$" />
+                    onChange={v => setDownPayment(Math.min(v, effectivePrice))}
+                    min={0} max={Math.min(effectivePrice, 50000)} step={500} prefix="$" />
 
                   <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
                     <span className="text-sm text-[var(--text-muted)]">Loan amount</span>
@@ -2552,6 +2661,7 @@ export default function TCOCalculator() {
                       annualMileage, startMileage: effectiveStartMileage,
                       location: locationLabel || resolvedState || 'Not set',
                       ownershipYears,
+                      salesTax: salesTaxAmt, docFee: effectiveDocFee, outTheDoor: effectivePrice,
                     }
                     downloadCSV(buildCSV(forecastRows, meta), 'tco-summary.csv')
                   }}

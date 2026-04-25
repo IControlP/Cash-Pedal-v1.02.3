@@ -6,13 +6,13 @@
 // ── Depreciation ─────────────────────────────────────────
 
 export const BRAND_DEPRECIATION_MULT = {
-  Toyota: 0.75, Lexus: 0.78, Porsche: 0.79, Honda: 0.82, Subaru: 0.85,
-  Jeep: 0.86, Mazda: 0.88, Acura: 0.89,
-  Hyundai: 0.93, Kia: 0.95, GMC: 0.96, Ford: 0.98, Buick: 1.02,
-  Chevrolet: 1.00, Ram: 1.02, Nissan: 1.03, Genesis: 1.04, Volvo: 1.05, Infiniti: 1.05,
+  Toyota: 0.75, Lexus: 0.78, Porsche: 0.79, Honda: 0.80, Subaru: 0.82,
+  Jeep: 0.84, Mazda: 0.86, Acura: 0.87,
+  Hyundai: 0.88, Kia: 0.90, GMC: 0.96, Ford: 0.98, Buick: 1.02,
+  Chevrolet: 1.00, Ram: 1.02, Nissan: 1.05, Genesis: 0.96, Volvo: 1.05, Infiniti: 1.05,
   Cadillac: 1.08, Volkswagen: 1.08, Audi: 1.05, Mini: 1.10, BMW: 1.05, Lincoln: 1.05,
   'Mercedes-Benz': 1.06, 'Land Rover': 1.10, Dodge: 1.22, Jaguar: 1.12,
-  Chrysler: 1.28, 'Alfa Romeo': 1.30, Fiat: 1.35,
+  Chrysler: 1.28, 'Alfa Romeo': 1.30, Fiat: 1.35, Mitsubishi: 1.25,
   Tesla: 0.90, Rivian: 1.15, Lucid: 1.22, Polestar: 1.15,
   Maserati: 1.38,
 }
@@ -35,37 +35,52 @@ export const SEGMENT_MAX_DEPR = {
   sports:.72, sedan:.72, luxury:.77, economy:.78, electric:.78,
 }
 
+// Elite-demand models: exceptional supply/demand retention (×0.82 on brand mult)
+export const ELITE_RETENTION = {
+  Toyota:    ['4Runner','Tacoma','Land Cruiser'],
+  Jeep:      ['Wrangler','Gladiator'],
+  Ford:      ['Bronco'],
+  Chevrolet: ['Corvette'],
+  Porsche:   ['911'],
+}
+
 export const HIGH_RETENTION = {
-  Toyota: ['4Runner','Tacoma','Tundra','Land Cruiser','Sequoia','RAV4','Highlander','Sienna','Camry','Corolla'],
-  Honda: ['Pilot','Ridgeline','Odyssey','CR-V','Accord','Civic'],
-  Subaru: ['Outback','Forester','Crosstrek','Ascent','WRX'],
-  Jeep: ['Wrangler','Gladiator'],
-  Ford: ['F-150','F-250','F-350','Bronco','Bronco Sport','Mustang'],
-  Chevrolet: ['Silverado','Tahoe','Suburban','Corvette','Colorado'],
-  GMC: ['Yukon','Yukon XL','Sierra','Canyon'],
-  Ram: ['1500','2500','3500'],
-  Lexus: ['GX','LX','RX','NX','ES','IS'],
-  Porsche: ['911','Cayenne','Macan','Boxster','Cayman'],
-  Cadillac: ['Escalade','XT5','XT6'],
-  Lincoln: ['Navigator','Aviator'],
-  Mazda: ['CX-5','CX-9','CX-50','Mazda3'],
-  Hyundai: ['Palisade','Santa Fe','Tucson'],
-  Kia: ['Telluride','Sorento','Sportage'],
-  Acura: ['MDX','RDX'],
-  Tesla: ['Model Y','Model 3'],
+  Toyota:    ['Tundra','Sequoia','RAV4','Highlander','Sienna','Camry','Corolla','Venza','GR86','GR Corolla','GR Supra'],
+  Honda:     ['Pilot','Ridgeline','Odyssey','CR-V','HR-V','Passport','Accord','Civic'],
+  Subaru:    ['Outback','Forester','Crosstrek','Ascent','WRX','Solterra'],
+  Jeep:      ['Grand Cherokee'],
+  Ford:      ['F-150','F-250','F-350','Bronco Sport','Mustang','Maverick'],
+  Chevrolet: ['Silverado','Tahoe','Suburban','Colorado','TrailBlazer'],
+  GMC:       ['Yukon','Yukon XL','Sierra','Canyon'],
+  Ram:       ['1500','2500','3500'],
+  Lexus:     ['GX','LX','RX','NX','TX','ES','IS'],
+  Porsche:   ['Cayenne','Macan','Boxster','Cayman','Panamera'],
+  Cadillac:  ['Escalade','XT5','XT6'],
+  Lincoln:   ['Navigator','Aviator'],
+  Mazda:     ['CX-5','CX-50','CX-70','CX-90','CX-9','Mazda3'],
+  Hyundai:   ['Palisade','Santa Fe','Tucson','Ioniq 5','Ioniq 6','Ioniq 9'],
+  Kia:       ['Telluride','Sorento','Sportage','EV6','EV9'],
+  Acura:     ['MDX','RDX','Integra'],
+  Genesis:   ['GV80','GV70','GV60'],
+  Tesla:     ['Model Y','Model 3','Cybertruck'],
 }
 
 export const POOR_RETENTION = {
-  BMW: ['7 Series','X7','i3','8 Series'],
-  'Mercedes-Benz': ['S-Class','E-Class','CLS','AMG GT','EQS','EQE'],
-  Audi: ['A8','A7','Q8','e-tron','e-tron GT'],
-  Cadillac: ['CT4','CT5','CT6','Lyriq'],
-  Nissan: ['Altima','Maxima','Sentra','Leaf'],
-  Jaguar: ['XJ','XF','F-Type','I-PACE'],
-  'Land Rover': ['Range Rover','Discovery','Defender'],
-  Dodge: ['Durango','Journey'],
-  Volkswagen: ['Passat','Arteon','ID.4'],
-  Maserati: ['Ghibli','Quattroporte','Levante'],
+  BMW:              ['7 Series','X7','i3','8 Series','iX','i7'],
+  'Mercedes-Benz':  ['S-Class','E-Class','CLS','AMG GT','EQS','EQE','EQB','EQC'],
+  Audi:             ['A8','A7','A6','Q8','e-tron','e-tron GT','Q8 e-tron'],
+  Cadillac:         ['CT4','CT5','CT6','Lyriq'],
+  Nissan:           ['Altima','Maxima','Sentra','Leaf','Kicks','Versa','Murano'],
+  Jaguar:           ['XJ','XF','F-Type','I-PACE','F-PACE','E-PACE'],
+  'Land Rover':     ['Range Rover','Discovery','Defender'],
+  Dodge:            ['Durango','Journey','Charger','Challenger'],
+  Volkswagen:       ['Passat','Arteon','ID.4','Taos'],
+  Maserati:         ['Ghibli','Quattroporte','Levante','Grecale'],
+  Mitsubishi:       ['Mirage','Eclipse Cross','Outlander Sport'],
+  Chrysler:         ['Pacifica','Voyager'],
+  Fiat:             ['500','500X','500L','500e'],
+  Lincoln:          ['Nautilus','Corsair'],
+  Volvo:            ['S90','V90','XC90'],
 }
 
 export function classifySegment(make, model) {
@@ -94,6 +109,7 @@ export function classifySegment(make, model) {
 
 export function applyModelAdjustments(make, model, brandMult) {
   const ml = (model ?? '').toLowerCase()
+  if (ELITE_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 0.82
   if (HIGH_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 0.90
   if (POOR_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 1.10
   return brandMult
@@ -456,6 +472,59 @@ export function computeAnnualRegistration(state, vehicleValue) {
   const base = STATE_REG_FEE[state] ?? 50
   const [rate, flat] = STATE_VLF[state] ?? [0, 0]
   return Math.round((base + vehicleValue * rate + flat) / 25) * 25
+}
+
+// ── Sales Tax ────────────────────────────────────────────
+// State-level vehicle sales tax rates. Local taxes may add 0–4% on top.
+// Notable exceptions: NC/SC have statutory caps; MT/NH/OR/DE have no sales tax.
+export const STATE_VEHICLE_SALES_TAX = {
+  AL:0.0200, AK:0.0000, AZ:0.0560, AR:0.0650, CA:0.0725, CO:0.0290,
+  CT:0.0635, DE:0.0000, FL:0.0600, GA:0.0700, HI:0.0400, ID:0.0600,
+  IL:0.0625, IN:0.0700, IA:0.0500, KS:0.0650, KY:0.0600, LA:0.0445,
+  ME:0.0550, MD:0.0600, MA:0.0625, MI:0.0600, MN:0.0650, MS:0.0500,
+  MO:0.0423, MT:0.0000, NE:0.0550, NV:0.0685, NH:0.0000, NJ:0.0663,
+  NM:0.0488, NY:0.0400, NC:0.0300, ND:0.0500, OH:0.0575, OK:0.0325,
+  OR:0.0000, PA:0.0600, RI:0.0700, SC:0.0500, SD:0.0400, TN:0.0700,
+  TX:0.0625, UT:0.0485, VT:0.0600, VA:0.0430, WA:0.0650, WV:0.0600,
+  WI:0.0500, WY:0.0400, DC:0.0600,
+}
+
+// States with a statutory dollar cap on vehicle sales tax
+export const STATE_VEHICLE_TAX_CAP = { NC: 2000, SC: 500 }
+
+export function computeSalesTax(state, vehiclePrice) {
+  const rate = STATE_VEHICLE_SALES_TAX[state] ?? 0.0625
+  const raw  = vehiclePrice * rate
+  const cap  = STATE_VEHICLE_TAX_CAP[state]
+  return Math.round((cap != null ? Math.min(raw, cap) : raw) / 25) * 25
+}
+
+// ── Dealer Doc Fees ───────────────────────────────────────
+// Typical dealer documentation fee by state. CA/TX/NY/MN/OR are capped by law.
+export const STATE_DOC_FEE_AVG = {
+  AL:485, AK:400, AZ:410, AR:129, CA:85,  CO:490, CT:349, DE:299,
+  FL:699, GA:545, HI:499, ID:299, IL:169, IN:199, IA:145, KS:399,
+  KY:485, LA:299, ME:299, MD:399, MA:395, MI:230, MN:75,  MS:399,
+  MO:449, MT:299, NE:299, NV:499, NH:399, NJ:399, NM:319, NY:75,
+  NC:599, ND:249, OH:250, OK:399, OR:115, PA:389, RI:399, SC:225,
+  SD:299, TN:499, TX:125, UT:399, VT:299, VA:699, WA:150, WV:299,
+  WI:199, WY:249, DC:299,
+}
+
+// ── Regional Used-Car Demand ──────────────────────────────
+// Static premium/discount vs. national average used-car asking prices.
+// Based on regional supply/demand patterns; updated periodically.
+export const STATE_USED_CAR_DEMAND = {
+  HI: 0.08, AK: 0.06, CA: 0.06, WA: 0.05, OR: 0.04, MA: 0.04,
+  NY: 0.04, CO: 0.04, CT: 0.03, NJ: 0.03, VA: 0.03, MD: 0.03,
+  AZ: 0.03, FL: 0.02, UT: 0.02, NV: 0.02, TX: 0.01, GA: 0.01,
+  IA:-0.03, KS:-0.03, NE:-0.03, ND:-0.04, SD:-0.04, WY:-0.03,
+  MT:-0.02, ID:-0.02, AR:-0.03, MS:-0.03, WV:-0.03, OK:-0.02,
+  AL:-0.02, LA:-0.02,
+}
+
+export function getRegionalDemandPremium(state) {
+  return STATE_USED_CAR_DEMAND[state] ?? 0.0
 }
 
 // ── Location ─────────────────────────────────────────────

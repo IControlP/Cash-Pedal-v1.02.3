@@ -41,7 +41,7 @@ function estimateLeaseMonthly(msrp, capReduction, termMonths) {
 const DEFAULT_ANNUAL_MILES = 12000
 
 // Basic mode: state-aware when state is provided, otherwise flat tier estimates
-function estimateBasicMonthlyCosts(price, state) {
+function estimateBasicMonthlyCosts(price, state, annualMiles = DEFAULT_ANNUAL_MILES) {
   const tierKey = price >= 60000 ? 'luxury' : price >= 35000 ? 'premium' : price >= 20000 ? 'standard' : 'economy'
   const tierLabel = { luxury: 'Luxury', premium: 'Premium', standard: 'Standard', economy: 'Economy' }
   // Maintenance stays tier-based (no brand info available in basic mode)
@@ -49,21 +49,22 @@ function estimateBasicMonthlyCosts(price, state) {
   const maintenance = maintByTier[tierKey]
 
   if (!state) {
-    // No state: use existing flat estimates (no change from original behavior)
+    // No state: scale flat fuel estimate by mileage ratio; other costs stay tier-based
     const flat = { luxury: { fuel:250, insurance:280, registration:50 }, premium: { fuel:180, insurance:180, registration:35 }, standard: { fuel:150, insurance:130, registration:25 }, economy: { fuel:120, insurance:100, registration:20 } }
     const f = flat[tierKey]
-    return { ...f, maintenance, total: f.fuel + f.insurance + maintenance + f.registration, tier: tierLabel[tierKey] }
+    const scaledFuel = Math.round(f.fuel * (annualMiles / DEFAULT_ANNUAL_MILES))
+    return { ...f, fuel: scaledFuel, maintenance, total: scaledFuel + f.insurance + maintenance + f.registration, tier: tierLabel[tierKey] }
   }
 
   // State provided: use shared utility functions for insurance, fuel, registration
-  const fuel = Math.round(computeAnnualFuel(false, 28, null, state, DEFAULT_ANNUAL_MILES) / 12)
+  const fuel = Math.round(computeAnnualFuel(false, 28, null, state, annualMiles) / 12)
   const insurance = Math.round(estimateInsurance(price, null, null, null, state) / 12)
   const registration = Math.round(computeAnnualRegistration(state, price) / 12)
   return { fuel, insurance, maintenance, registration, total: fuel + insurance + maintenance + registration, tier: tierLabel[tierKey] }
 }
 
 // Pro mode: vehicle-specific + state-aware
-function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state) {
+function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, annualMiles = DEFAULT_ANNUAL_MILES) {
   const segment = isEv ? 'electric' : classifySegment(make, model)
 
   const fuel = Math.round(computeAnnualFuel(
@@ -71,12 +72,12 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state) {
     isEv ? null : (mpg || null),
     isEv ? (mpg || null) : null,
     state || null,
-    DEFAULT_ANNUAL_MILES
+    annualMiles
   ) / 12)
 
   const insurance = Math.round(estimateInsurance(price, make, model, year, state || null) / 12)
 
-  const maintServices = generateMaintenanceServices(isEv, DEFAULT_ANNUAL_MILES, segment, make)
+  const maintServices = generateMaintenanceServices(isEv, annualMiles, segment, make)
   const maintenance = Math.round(maintServices.reduce((s, x) => s + x.annual, 0) / 12)
 
   const registration = Math.round(computeAnnualRegistration(state || null, price) / 12)
@@ -140,6 +141,7 @@ export default function SalaryCalculator() {
   const [userState, setUserState] = useState('')
   const [stateAutoDetected, setStateAutoDetected] = useState(false)
   const [stateDetecting, setStateDetecting] = useState(false)
+  const [stateDetectFailed, setStateDetectFailed] = useState(false)
 
   // Pro mode
   const [proMode, setProMode] = useState(false)
@@ -153,6 +155,9 @@ export default function SalaryCalculator() {
   const [downPct, setDownPct] = useState(20)
   const [loanTerm, setLoanTerm] = useState(48)
   const [rate, setRate] = useState(6.5)
+
+  // Annual mileage (affects fuel cost)
+  const [annualMiles, setAnnualMiles] = useState(DEFAULT_ANNUAL_MILES)
 
   // Lease inputs
   const [leaseMsrp, setLeaseMsrp] = useState(30000)
@@ -213,17 +218,21 @@ export default function SalaryCalculator() {
   // Auto-detect state from IP on mount
   useEffect(() => {
     setStateDetecting(true)
-    fetch('https://ipwho.is/')
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 5000)
+    fetch('https://ipwho.is/', { signal: controller.signal })
       .then(r => r.json())
       .then(d => {
         if (d.success && d.country_code === 'US' && d.region_code &&
             US_STATES.some(([code]) => code === d.region_code)) {
           setUserState(d.region_code)
           setStateAutoDetected(true)
+        } else {
+          setStateDetectFailed(true)
         }
       })
-      .catch(() => {})
-      .finally(() => setStateDetecting(false))
+      .catch(() => setStateDetectFailed(true))
+      .finally(() => { setStateDetecting(false); clearTimeout(timeout) })
   }, [])
 
   // When trim selected, auto-populate price field
@@ -278,15 +287,15 @@ export default function SalaryCalculator() {
   const proExtras = useMemo(() => {
     if (!proMode || !selectedVehicleInfo) return null
     const { make, model, year, is_ev, mpg } = selectedVehicleInfo
-    return estimateProMonthlyCosts(activePrice, make, model, year, is_ev, mpg, userState)
-  }, [proMode, selectedVehicleInfo, activePrice, userState])
+    return estimateProMonthlyCosts(activePrice, make, model, year, is_ev, mpg, userState, annualMiles)
+  }, [proMode, selectedVehicleInfo, activePrice, userState, annualMiles])
 
   const results = useMemo(() => {
     const extra = proExtras
       ? { ...proExtras, tier: TYPE_LABELS[proExtras.segment] ?? 'Vehicle' }
       : mode === 'lease'
-        ? estimateBasicMonthlyCosts(leaseMsrp, userState)
-        : estimateBasicMonthlyCosts(vehiclePrice, userState)
+        ? estimateBasicMonthlyCosts(leaseMsrp, userState, annualMiles)
+        : estimateBasicMonthlyCosts(vehiclePrice, userState, annualMiles)
 
     if (mode === 'lease') {
       const totalMonthly = leaseMonthly + extra.total
@@ -305,11 +314,15 @@ export default function SalaryCalculator() {
     const downPayment = vehiclePrice * (downPct / 100)
     const loanAmount = vehiclePrice - downPayment
     const payment = monthlyPayment(loanAmount, rate, loanTerm)
+    const totalLoanCost = payment * loanTerm
+    const totalInterest = totalLoanCost - loanAmount
     const totalMonthly = payment + extra.total
     return {
       downPayment,
       loanAmount,
       payment,
+      totalLoanCost,
+      totalInterest,
       extra,
       totalMonthly,
       conservative: (totalMonthly / 0.10) * 12,
@@ -317,7 +330,7 @@ export default function SalaryCalculator() {
       aggressive: (totalMonthly / 0.20) * 12,
       conservativeMonthly: totalMonthly / 0.10,
     }
-  }, [mode, vehiclePrice, downPct, loanTerm, rate, leaseMsrp, leaseDown, leaseMonthly, leaseTerm, proExtras, userState])
+  }, [mode, vehiclePrice, downPct, loanTerm, rate, leaseMsrp, leaseDown, leaseMonthly, leaseTerm, proExtras, userState, annualMiles])
 
   const downAmount = vehiclePrice * (downPct / 100)
 
@@ -411,6 +424,9 @@ export default function SalaryCalculator() {
                   <div className="flex items-center gap-2">
                     {stateDetecting && (
                       <span className="text-[10px] text-[var(--text-muted)] animate-pulse">Detecting…</span>
+                    )}
+                    {!stateDetecting && stateDetectFailed && !userState && (
+                      <span className="text-[10px] text-yellow-500">Auto-detect unavailable — select manually</span>
                     )}
                     {!stateDetecting && stateAutoDetected && userState && (
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1"
@@ -762,6 +778,25 @@ export default function SalaryCalculator() {
                 </>
               )}
 
+              {/* Annual mileage */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <label className="input-label">Annual Mileage</label>
+                  <span className="text-sm font-bold text-white">{annualMiles.toLocaleString()} mi/yr</span>
+                </div>
+                <input
+                  type="range" min={3000} max={30000} step={1000}
+                  value={annualMiles}
+                  onChange={e => setAnnualMiles(Number(e.target.value))}
+                  style={{ background: `linear-gradient(to right, var(--accent) ${((annualMiles - 3000) / 27000) * 100}%, var(--border) ${((annualMiles - 3000) / 27000) * 100}%)` }}
+                />
+                <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+                  <span>3,000</span>
+                  <span className="font-semibold text-[var(--accent)]">12,000 avg</span>
+                  <span>30,000</span>
+                </div>
+              </div>
+
               {/* Monthly cost breakdown */}
               <div className="bg-[var(--bg)] rounded-xl border border-[var(--border)] p-4">
                 <div className="flex items-center justify-between mb-4">
@@ -861,6 +896,30 @@ export default function SalaryCalculator() {
                   <p className="text-[var(--text-muted)] text-xs mt-1">{sublabel}</p>
                 </div>
               ))}
+
+              {/* Loan cost summary — buy mode only */}
+              {mode === 'buy' && results.loanAmount > 0 && (
+                <div className="card border-[var(--border)]">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">Loan Cost Summary</p>
+                  <div className="flex flex-col gap-2">
+                    {[
+                      { label: 'Amount financed', val: results.loanAmount },
+                      { label: `Interest paid (${loanTerm / 12} yr @ ${rate}%)`, val: results.totalInterest },
+                      { label: 'Total loan cost', val: results.totalLoanCost },
+                    ].map(({ label, val }) => (
+                      <div key={label} className="flex items-center justify-between text-sm">
+                        <span className="text-[var(--text-muted)]">{label}</span>
+                        <span className={`font-semibold tabular-nums ${label.startsWith('Interest') ? 'text-yellow-400' : 'text-white'}`}>{fmt(val)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {results.totalInterest > 0 && (
+                    <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
+                      You pay {fmt(results.totalInterest)} extra in interest — {Math.round((results.totalInterest / results.loanAmount) * 100)}% above the loan principal. A shorter term or larger down payment reduces this.
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Rule explainer */}
               {mode === 'buy' ? (

@@ -157,7 +157,7 @@ export default function CarBuyingChecklist() {
     const trims = getTrims(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year)
     const msrp = vehicleInfo.trim ? trims[vehicleInfo.trim] : null
     if (!msrp || !vehicleInfo.year) return null
-    const age = 2026 - parseInt(vehicleInfo.year)
+    const age = new Date().getFullYear() - parseInt(vehicleInfo.year)
     if (age < 0) return null
     let value = msrp
     for (let y = 1; y <= age; y++) {

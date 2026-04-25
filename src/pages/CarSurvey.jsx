@@ -219,6 +219,11 @@ export default function CarSurvey() {
             <p className="text-[var(--text-muted)] font-semibold text-lg mt-1 anim-2">
               "{topMatch?.profile.tagline}"
             </p>
+            {rankedProfiles[1] && (topMatch.score - rankedProfiles[1].score) <= 5 && (
+              <p className="text-xs text-yellow-400 mt-3 anim-2">
+                Very close match — {rankedProfiles[1].profile.name} scored only {Math.round(topMatch.score - rankedProfiles[1].score)} point{Math.round(topMatch.score - rankedProfiles[1].score) !== 1 ? 's' : ''} behind. Both may suit you well.
+              </p>
+            )}
           </div>
 
           {/* Top match card */}

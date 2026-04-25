@@ -1482,10 +1482,10 @@ export default function TCOCalculator() {
       }
     }
     const currentVal = (selYear && (selMake || selModel))
-      ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)))
+      ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)), currentMileage)
       : price
     setAnnualRegistration(computeAnnualRegistration(resolvedState, currentVal))
-  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLocationInput = useCallback((val) => {
     setLocationInput(val)
@@ -1597,10 +1597,30 @@ export default function TCOCalculator() {
       results.monthlyPayment, annualInsurance, annualFuel, maintenanceByYear,
       annualMaintenance, annualRegistration])
 
+  // Auto-suggest residual % based on the depreciation model for the selected lease term.
+  // Fires whenever the lease term, make, or model changes.
+  useEffect(() => {
+    if (financeMode !== 'lease') return
+    const leaseYears = leaseTerm / 12
+    const suggested = Math.round(
+      estimateCurrentValue(100, selMake || null, selModel || null, leaseYears)
+    )
+    setResidualPct(Math.max(20, Math.min(80, suggested)))
+  }, [leaseTerm, selMake, selModel, financeMode]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-estimate purchase price when the user explicitly overrides the odometer reading.
+  useEffect(() => {
+    if (financeMode !== 'buy' || !origMsrp || !selMake || !selModel || !selYear || currentMileage === null) return
+    const ageYrs = Math.max(0, new Date().getFullYear() - parseInt(selYear))
+    if (ageYrs <= 1) return
+    const estimated = estimateCurrentValue(origMsrp, selMake, selModel, ageYrs, currentMileage)
+    setPrice(Math.round(estimated / 500) * 500)
+  }, [currentMileage, origMsrp, selMake, selModel, selYear, financeMode]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // For the insurance note: estimated current market value after depreciation
   const carAge            = selYear ? Math.max(0, new Date().getFullYear() - parseInt(selYear)) : 0
   const estimatedCarValue = selYear
-    ? estimateCurrentValue(price, selMake || null, selModel || null, carAge)
+    ? estimateCurrentValue(price, selMake || null, selModel || null, carAge, currentMileage)
     : price
 
   const safeDown = Math.min(downPayment, price)
@@ -1910,7 +1930,9 @@ export default function TCOCalculator() {
 
               {origMsrp && carAge > 0 && financeMode === 'buy' && (
                 <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                  Auto-set to estimated {carAge}-year depreciated value — original MSRP was{' '}
+                  Auto-set to estimated {carAge}-year depreciated value
+                  {currentMileage !== null && ` · ${currentMileage.toLocaleString()} mi`}
+                  {' '}— original MSRP was{' '}
                   <span className="text-white">{formatCurrency(origMsrp)}</span>
                 </p>
               )}
@@ -1972,7 +1994,8 @@ export default function TCOCalculator() {
                   </div>
 
                   <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                    Vehicle value at lease end — typically 45–65% for 36-month leases
+                    Vehicle value at lease end — auto-estimated from depreciation model for a {leaseTerm}-month term
+                    {(selMake || selModel) ? ` (${[selMake, selModel].filter(Boolean).join(' ')})` : ''}
                   </p>
 
                   <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">

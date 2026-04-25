@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import ResultCard from '../components/ResultCard'
@@ -1334,6 +1334,11 @@ export default function TCOCalculator() {
   )
   const [showPaywall,  setShowPaywall]  = useState(false)
 
+  // ── Comparison queue count ──
+  const [comparisonCount, setComparisonCount] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('cashpedal_tco_for_comparison') || '[]').length } catch { return 0 }
+  })
+
   // Returns true if the action is allowed; false if blocked (paywall shown).
   // Each call counts as one calculation — callers must guard against duplicate invocations.
   const checkDetailedLimit = useCallback(() => {
@@ -1711,9 +1716,9 @@ export default function TCOCalculator() {
 
     const existing = JSON.parse(localStorage.getItem('cashpedal_tco_for_comparison') || '[]')
     // Keep at most 5 entries (max comparison slots)
-    const updated = [...existing.filter(e => e.id !== entry.id), entry].slice(-5)
+    const updated = [...existing, entry].slice(-5)
     localStorage.setItem('cashpedal_tco_for_comparison', JSON.stringify(updated))
-    navigate('/compare')
+    setComparisonCount(updated.length)
   }
 
   return (
@@ -2630,6 +2635,21 @@ export default function TCOCalculator() {
                 className="btn-primary w-full text-sm flex items-center justify-center gap-2">
                 <span>＋</span> Add to Multi-Vehicle Comparison
               </button>
+
+              {comparisonCount > 0 && (
+                <div className="flex items-center justify-between rounded-lg px-3 py-2.5 text-xs"
+                  style={{ background: 'rgba(200,255,0,0.06)', border: '1px solid rgba(200,255,0,0.2)' }}>
+                  <span style={{ color: 'var(--accent)' }} className="font-semibold">
+                    {comparisonCount} car{comparisonCount !== 1 ? 's' : ''} queued for comparison
+                  </span>
+                  {comparisonCount >= 2 && (
+                    <Link to="/compare"
+                      className="font-bold text-white hover:text-[var(--accent)] transition-colors ml-3 shrink-0">
+                      View Comparison →
+                    </Link>
+                  )}
+                </div>
+              )}
               {!isSubscribed && detailedCalcCount >= FREE_DETAILED_LIMIT && (
                 <div className="rounded-xl border px-4 py-3 text-center text-xs"
                   style={{ borderColor: 'rgba(255,184,0,0.2)', background: 'rgba(255,184,0,0.04)' }}>

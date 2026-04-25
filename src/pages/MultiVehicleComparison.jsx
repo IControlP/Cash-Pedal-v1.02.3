@@ -245,7 +245,10 @@ export default function MultiVehicleComparison() {
   const [activeRankParams, setActiveRankParams] = useState({ totalOutOfPocket: true, mpgCombined: false, cargoSqFt: false, valueRetentionPct: false })
 
   const [vehicles, setVehicles] = useState(() => {
-    // Seed with two defaults; TCO imports are applied via useEffect
+    try {
+      const saved = JSON.parse(localStorage.getItem('cashpedal_comparison_vehicles') || 'null')
+      if (saved && Array.isArray(saved) && saved.length >= 2) return saved
+    } catch { /* ignore */ }
     return [
       { ...defaultVehicle, name: 'Vehicle 1', price: 25000, downPayment: 5000 },
       { ...defaultVehicle, name: 'Vehicle 2', price: 35000, downPayment: 7000 },
@@ -253,6 +256,11 @@ export default function MultiVehicleComparison() {
   })
 
   const [importBanner, setImportBanner] = useState(null) // { count }
+
+  // Persist vehicles state across navigation
+  useEffect(() => {
+    localStorage.setItem('cashpedal_comparison_vehicles', JSON.stringify(vehicles))
+  }, [vehicles])
 
   // Pull TCO-imported vehicles from localStorage on mount
   useEffect(() => {
@@ -343,6 +351,16 @@ export default function MultiVehicleComparison() {
 
   function removeVehicle(i) {
     setVehicles(vs => vs.filter((_, idx) => idx !== i))
+  }
+
+  function restartComparison() {
+    localStorage.removeItem('cashpedal_comparison_vehicles')
+    localStorage.removeItem('cashpedal_tco_for_comparison')
+    setVehicles([
+      { ...defaultVehicle, name: 'Vehicle 1', price: 25000, downPayment: 5000 },
+      { ...defaultVehicle, name: 'Vehicle 2', price: 35000, downPayment: 7000 },
+    ])
+    setImportBanner(null)
   }
 
   function toggleRankParam(key) {
@@ -540,13 +558,18 @@ export default function MultiVehicleComparison() {
           </div>
 
           {/* Add vehicle / import button row */}
-          <div className="flex items-center gap-3 mb-8 anim-3">
+          <div className="flex items-center gap-3 mb-8 anim-3 flex-wrap">
             {vehicles.length < 5 && (
               <button onClick={addVehicle} className="btn-ghost text-sm">
                 + Add Vehicle
               </button>
             )}
-            <Link to="/tco" className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
+            <button
+              onClick={restartComparison}
+              className="text-xs text-[var(--text-muted)] hover:text-red-400 transition-colors border border-[var(--border)] hover:border-red-400/40 rounded-lg px-3 py-1.5">
+              ↺ Restart Comparison
+            </button>
+            <Link to="/tco" className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors ml-auto">
               ← Calculate in TCO first, then add here
             </Link>
           </div>

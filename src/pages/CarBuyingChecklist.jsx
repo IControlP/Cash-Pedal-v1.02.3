@@ -501,6 +501,49 @@ export default function CarBuyingChecklist() {
             <p className="text-xs text-[var(--text-muted)] mt-3">
               Reduction = all "not done" costs + 50% of "unknown" costs. Use this as your negotiation floor.
             </p>
+
+            {/* Critical item call-outs */}
+            {(() => {
+              const criticalFlags = dueItems.filter(
+                i => i.critical && statuses[i.id] !== 'confirmed'
+              )
+              if (criticalFlags.length === 0) return null
+              const criticalTotal = criticalFlags.reduce((s, i) => {
+                if (statuses[i.id] === 'not_done') return s + i.cost
+                return s + i.cost * 0.5
+              }, 0)
+              return (
+                <div className="mt-4 pt-4 border-t border-[rgba(255,184,0,0.15)]">
+                  <p className="text-xs font-bold uppercase tracking-widest text-red-400 mb-2">
+                    Red Flags — {criticalFlags.length} critical item{criticalFlags.length !== 1 ? 's' : ''} unverified
+                  </p>
+                  <div className="flex flex-col gap-1.5 mb-3">
+                    {criticalFlags.map(item => (
+                      <div key={item.id} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className={`shrink-0 ${statuses[item.id] === 'not_done' ? 'text-red-400' : 'text-yellow-400'}`}>
+                            {statuses[item.id] === 'not_done' ? '✗' : '?'}
+                          </span>
+                          <span className="text-white font-semibold">{item.name}</span>
+                          <span className="text-[var(--text-muted)]">
+                            ({statuses[item.id] === 'not_done' ? 'not done' : 'unknown'})
+                          </span>
+                        </div>
+                        <span className="text-red-400 font-semibold tabular-nums shrink-0 ml-2">
+                          {statuses[item.id] === 'not_done' ? fmt(item.cost) : `~${fmt(item.cost * 0.5)}`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                    <span className="text-red-400 font-semibold">Negotiation tip:</span>{' '}
+                    Lead with the critical items above — they represent{' '}
+                    <span className="text-white font-semibold">{fmt(criticalTotal)}</span> in deferred costs you'll face as the new owner.
+                    Ask the seller to address them before purchase or reduce the asking price accordingly.
+                  </p>
+                </div>
+              )
+            })()}
           </div>
 
           {/* Tabs */}

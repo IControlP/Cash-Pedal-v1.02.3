@@ -881,6 +881,22 @@ function UserDataModal({ calcCount, onClose }) {
   )
 }
 
+// ── Typical annual operating cost benchmarks by segment ──────────────────
+// (insurance + fuel + maintenance + registration, 12k mi/yr, national avg)
+// Used to give users context on whether their vehicle runs above or below average.
+const SEGMENT_OP_COST_AVG = {
+  economy:   4400,
+  compact:   5200,
+  sedan:     5600,
+  suv:       7000,
+  luxury_suv:9200,
+  truck:     7800,
+  sports:    7600,
+  luxury:   10400,
+  electric:  3600,
+  hybrid:    4800,
+}
+
 // ── Vehicle categories (used when no specific make/model is selected) ─────
 // Each entry provides a SVG silhouette type, maintenance segment, and default MPG
 const VEHICLE_CATEGORIES = [
@@ -2458,6 +2474,34 @@ export default function TCOCalculator() {
                       {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}
                     </span>
                   </div>
+                  {/* Segment operating cost context */}
+                  {(() => {
+                    const seg = modelData
+                      ? classifySegment(selMake || '', selModel || '')
+                      : (VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.segment ?? null)
+                    const avg = seg ? SEGMENT_OP_COST_AVG[seg] : null
+                    const userOp = annualOperatingCost
+                    if (!avg) return null
+                    const diff = userOp - avg
+                    const pct = Math.round(Math.abs(diff) / avg * 100)
+                    const segLabel = seg.replace('_', ' ')
+                    if (pct < 5) {
+                      return (
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-[var(--text-muted)]">vs. avg {segLabel} operating cost</span>
+                          <span className="text-green-400 font-medium">≈ on par</span>
+                        </div>
+                      )
+                    }
+                    return (
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-[var(--text-muted)]">vs. avg {segLabel} operating cost</span>
+                        <span className={`font-medium ${diff > 0 ? 'text-yellow-400' : 'text-green-400'}`}>
+                          {diff > 0 ? `+${pct}% above avg` : `${pct}% below avg`}
+                        </span>
+                      </div>
+                    )
+                  })()}
                   {forecastRows.length > 1 && (() => {
                     const totals = forecastRows.map(r => r.total)
                     const lo = Math.min(...totals)

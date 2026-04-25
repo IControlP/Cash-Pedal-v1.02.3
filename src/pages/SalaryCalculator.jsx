@@ -135,6 +135,7 @@ export default function SalaryCalculator() {
 
   // Finance mode
   const [mode, setMode] = useState('buy')
+  const [knownSalary, setKnownSalary] = useState('')
 
   // State detection
   const [userState, setUserState] = useState('')
@@ -318,6 +319,36 @@ export default function SalaryCalculator() {
       conservativeMonthly: totalMonthly / 0.10,
     }
   }, [mode, vehiclePrice, downPct, loanTerm, rate, leaseMsrp, leaseDown, leaseMonthly, leaseTerm, proExtras, userState])
+
+  // Reverse mode: given a salary, solve for the max affordable vehicle price
+  // Uses 3-pass iteration to converge on a stable price (operating costs depend on price)
+  const affordableResults = useMemo(() => {
+    const s = Number(knownSalary)
+    if (!s || s < 10000) return null
+
+    function solve(thresholdPct) {
+      const maxMonthly = (s * thresholdPct) / 12
+      let estPrice = 30000
+      for (let i = 0; i < 4; i++) {
+        const ops = estimateBasicMonthlyCosts(estPrice, userState || null)
+        const loanBudget = maxMonthly - ops.total
+        if (loanBudget <= 0) return 0
+        const r = rate / 12 / 100
+        const n = loanTerm
+        const factor = r > 0
+          ? (Math.pow(1 + r, n) - 1) / (r * Math.pow(1 + r, n))
+          : n
+        estPrice = Math.max(500, (loanBudget * factor) / (1 - downPct / 100))
+      }
+      return Math.round(estPrice / 500) * 500
+    }
+
+    return {
+      conservative: solve(0.10),
+      comfortable:  solve(0.15),
+      aggressive:   solve(0.20),
+    }
+  }, [knownSalary, userState, rate, loanTerm, downPct])
 
   const downAmount = vehiclePrice * (downPct / 100)
 
@@ -861,6 +892,79 @@ export default function SalaryCalculator() {
                   <p className="text-[var(--text-muted)] text-xs mt-1">{sublabel}</p>
                 </div>
               ))}
+
+              {/* Reverse: What can I afford? */}
+              <div className="card border-[var(--border)]">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                  What can I afford?
+                </p>
+                <p className="text-xs text-[var(--text-muted)] mb-3 leading-relaxed">
+                  Enter your gross annual salary to see the vehicle price you can target at each spending tier.
+                </p>
+                <div className="flex flex-col gap-2 mb-4">
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                    <input
+                      type="number"
+                      value={knownSalary}
+                      onChange={e => setKnownSalary(e.target.value)}
+                      placeholder="e.g. 75,000"
+                      className="input-field"
+                      style={{ paddingLeft: '1.75rem' }}
+                      min={0}
+                      step={1000}
+                    />
+                  </div>
+                  {knownSalary && Number(knownSalary) >= 10000 && (
+                    <input
+                      type="range" min={20000} max={400000} step={1000}
+                      value={Number(knownSalary)}
+                      onChange={e => setKnownSalary(e.target.value)}
+                      style={{ background: `linear-gradient(to right, var(--accent) ${((Number(knownSalary) - 20000) / 380000) * 100}%, var(--border) ${((Number(knownSalary) - 20000) / 380000) * 100}%)` }}
+                    />
+                  )}
+                </div>
+
+                {affordableResults ? (
+                  <div className="flex flex-col gap-2">
+                    {[
+                      { label: 'Conservative', pct: '10%', badge: '✓ Safest', value: affordableResults.conservative, accent: true },
+                      { label: 'Comfortable',  pct: '15%', badge: null,        value: affordableResults.comfortable,  accent: false },
+                      { label: 'Aggressive',   pct: '20%', badge: '⚠ Stretched', value: affordableResults.aggressive, accent: false },
+                    ].map(({ label, pct, badge, value, accent }) => (
+                      <div key={label}
+                        className="flex items-center justify-between px-3 py-2.5 rounded-lg border"
+                        style={{
+                          borderColor: accent ? 'var(--accent)' : 'var(--border)',
+                          background: accent ? 'rgba(200,255,0,0.04)' : 'var(--bg)',
+                        }}>
+                        <div>
+                          <span className="text-xs font-semibold" style={{ color: accent ? 'var(--accent)' : 'var(--text-muted)' }}>
+                            {label} <span className="font-normal opacity-70">({pct})</span>
+                          </span>
+                          {badge && (
+                            <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded"
+                              style={{ background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
+                              {badge}
+                            </span>
+                          )}
+                        </div>
+                        <span className={`font-display font-bold tabular-nums ${accent ? 'text-[var(--accent)] text-lg' : 'text-white'}`}>
+                          {value > 0 ? fmt(value) : 'N/A'}
+                        </span>
+                      </div>
+                    ))}
+                    <p className="text-[10px] text-[var(--text-muted)] leading-relaxed mt-1">
+                      Assumes {downPct}% down · {loanTerm}-month loan · {rate}% APR · includes estimated insurance, fuel, maintenance &amp; registration.
+                      {userState ? ` ${userState} rates applied.` : ' National average rates.'}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-[var(--text-muted)] italic">
+                    Enter a salary above to see your affordable vehicle range.
+                  </p>
+                )}
+              </div>
 
               {/* Rule explainer */}
               {mode === 'buy' ? (

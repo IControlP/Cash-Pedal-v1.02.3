@@ -8,6 +8,8 @@ const navLinks = [
   { to: '/survey', label: 'Car Survey' },
   { to: '/checklist', label: 'Checklist' },
   { to: '/wheelzard', label: 'Wheel-Zard' },
+  { to: '/resources', label: 'Resources' },
+  { to: '/about', label: 'About' },
 ]
 
 export default function Navbar() {
@@ -82,20 +84,6 @@ export default function Navbar() {
               {label}
             </Link>
           ))}
-          <Link
-            to="/about"
-            onClick={() => setMenuOpen(false)}
-            className="px-3 py-2.5 rounded-md text-sm font-medium text-[var(--text-muted)] hover:text-white"
-          >
-            About
-          </Link>
-          <Link
-            to="/resources"
-            onClick={() => setMenuOpen(false)}
-            className="px-3 py-2.5 rounded-md text-sm font-medium text-[var(--text-muted)] hover:text-white"
-          >
-            Resources
-          </Link>
           <Link
             to="/subscribe"
             onClick={() => setMenuOpen(false)}

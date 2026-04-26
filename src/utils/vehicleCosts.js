@@ -191,7 +191,12 @@ export function estimateInsurance(purchasePrice, make, model, modelYear, state, 
   const brandMult  = INSURANCE_BRAND_MULT[make] ?? 1.0
   const stateBase  = STATE_INS_BASE[state] ?? INSURANCE_BASE_RATE
   const multiCarMult = multiCarDiscount ? 0.85 : 1.0
-  return Math.round((stateBase * valueMult * brandMult * multiCarMult) / 50) * 50
+  // Value brackets already capture comp/collision drop from depreciation.
+  // This additional factor reflects lower liability/medical claim rates on older vehicles
+  // and the insurer's reduced exposure as car value falls beyond bracket thresholds.
+  // ~1.5% per year, floored at 0.85 for vehicles 10+ years old.
+  const ageMult = ageYears > 0 ? Math.max(0.85, 1 - ageYears * 0.015) : 1.0
+  return Math.round((stateBase * valueMult * brandMult * ageMult * multiCarMult) / 50) * 50
 }
 
 // ── Maintenance ──────────────────────────────────────────
@@ -417,10 +422,11 @@ export const STATE_ELEC_RATES = {
   WY:0.12,DC:0.16,
 }
 
-// Public DC fast-charging rate ≈ 2.2× home residential (floor $0.29, cap $0.55)
+// Public DC fast-charging rate ≈ 2.2× home residential (floor $0.29, cap $0.65)
+// Cap raised from $0.55 — HI/CA public DCFC stations routinely exceed $0.60/kWh
 export function getPublicChargingRate(state) {
   const home = STATE_ELEC_RATES[state] ?? 0.16
-  return Math.round(Math.max(0.29, Math.min(0.55, home * 2.2)) * 100) / 100
+  return Math.round(Math.max(0.29, Math.min(0.65, home * 2.2)) * 100) / 100
 }
 
 // 'home' = 100% residential, 'mixed' = 80/20 home/DCFC, 'public' = 100% DCFC

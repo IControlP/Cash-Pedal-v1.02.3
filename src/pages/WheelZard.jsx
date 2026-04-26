@@ -7,12 +7,12 @@ import { useSubscription } from '../hooks/useSubscription'
 const GPT_URL = 'https://chatgpt.com/g/g-698e3ceaa11c81919b86766878324f99-wheel-zard'
 
 const quickTopics = [
-  "What car should I buy for under $30,000?",
-  "Best reliable SUV for families?",
-  "How much does it cost to own a Tesla?",
-  "Compare Honda Civic vs Toyota Corolla",
   "Should I buy new or used?",
+  "Is leasing or buying better?",
+  "EV vs gas — which saves more money?",
   "Most reliable cars for long-term ownership?",
+  "Best reliable SUV for families?",
+  "Should I buy a Honda Civic or Toyota Corolla?",
 ]
 
 const capabilities = [
@@ -37,16 +37,22 @@ function getLocalResponse(msg) {
     return "Happy to help! Let me know if you have more questions, or try the full Wheel-Zard GPT for deeper analysis."
   }
   if (/\b(budget|afford|cost|price|expensive|cheap)\b/.test(m)) {
-    return "For a precise cost breakdown, try our <a href='/tco' class='text-[var(--accent)] hover:underline'>TCO Calculator</a> or <a href='/salary' class='text-[var(--accent)] hover:underline'>Salary Calculator</a>. They'll show you exactly what a specific vehicle will cost you over time — no GPT needed."
+    return "For a precise cost breakdown, try our <a href='/tco' class='text-[var(--accent)] hover:underline'>TCO Calculator</a> or <a href='/salary' class='text-[var(--accent)] hover:underline'>Salary Calculator</a>. They'll show you exactly what a specific vehicle will cost you over time, including insurance, fuel, maintenance, and taxes — no GPT needed."
   }
   if (/\b(recommend|suggest|which car|best car|what car)\b/.test(m)) {
     return "For personalized recommendations I need to ask you a few questions — the full Wheel-Zard GPT is best for that. Or try our <a href='/survey' class='text-[var(--accent)] hover:underline'>Car Survey</a> for a quick personality-based match!"
   }
-  if (/\b(electric|ev|tesla|hybrid|gas|fuel|mpg)\b/.test(m)) {
-    return "EVs win on fuel cost ($0.03–0.05/mile vs $0.10–0.15/mile for gas) and maintenance (no oil changes, fewer brake jobs from regen braking). The trade-off: higher upfront cost and charging logistics. For high-mileage drivers or anyone with home charging, the math usually favors EV or hybrid within 3-5 years."
+  if (/\b(reliable|reliability|repair|breakdown|maintenance)\b/.test(m)) {
+    return "Reliability leaders by segment: <strong class='text-white'>Sedans</strong> — Toyota Camry, Honda Accord. <strong class='text-white'>SUVs</strong> — Toyota 4Runner, Honda CR-V, Mazda CX-5. <strong class='text-white'>Trucks</strong> — Toyota Tacoma, Honda Ridgeline. <strong class='text-white'>EVs</strong> — Tesla Model 3/Y (fewer mechanical issues, but higher part costs). Generally: Japanese brands cost 15–30% less to maintain than European luxury brands. Our <a href='/tco' class='text-[var(--accent)] hover:underline'>TCO Calculator</a> includes brand-specific maintenance multipliers and a Repair Risk Score."
+  }
+  if (/\b(electric|ev|tesla|hybrid|gas|fuel|mpg|charging)\b/.test(m)) {
+    return "EV fuel cost with <strong class='text-white'>home charging</strong>: roughly $0.04–0.06/mile depending on your state's electricity rate. With <strong class='text-white'>public DC fast charging</strong>: $0.09–0.16/mile — approaching gas prices in some states. Gas vehicles typically run $0.11–0.18/mile at current pump prices. The EV advantage shrinks if you rely heavily on public charging. EVs also save $500–$900/yr on maintenance (no oil changes, extended brake life from regen braking). For high-mileage drivers with home charging, the math usually favors EV or hybrid within 3–5 years. Run your specific numbers in our <a href='/tco' class='text-[var(--accent)] hover:underline'>TCO Calculator</a>."
   }
   if (/\b(lease|buy|finance|loan|own)\b/.test(m)) {
-    return "Buying wins if you keep the car 5+ years and drive a lot. Leasing makes sense if you want a new car every 3 years, drive < 12K miles/year, and want lower monthly payments. The hidden cost of leasing: you never build equity. Run the numbers in our <a href='/tco' class='text-[var(--accent)] hover:underline'>TCO Calculator</a>."
+    return "<strong class='text-white'>Buy if:</strong> you keep the car 5+ years, drive 15k+ miles/year, or want to build equity. Total cost over 7–10 years is almost always lower. <strong class='text-white'>Lease if:</strong> you want a new car every 3 years, drive under 12k miles/year, and want predictable monthly costs with no resale hassle. The hidden cost of leasing: no equity, mileage overage fees ($0.15–0.25/mile), and you'll always have a payment. Run both scenarios in our <a href='/tco' class='text-[var(--accent)] hover:underline'>TCO Calculator</a> — it models exact lease vs. buy costs side by side."
+  }
+  if (/\b(new|used|pre.?owned|second.?hand)\b/.test(m)) {
+    return "<strong class='text-white'>New</strong>: full warranty, latest features, financing incentives — but loses 15–20% of value in year one. <strong class='text-white'>Used (1–3 years old)</strong>: someone else absorbed the steepest depreciation. Sweet spot for value. <strong class='text-white'>Used (4–7 years old)</strong>: lowest price, but warranty typically expired — budget for repairs. Use our <a href='/checklist' class='text-[var(--accent)] hover:underline'>Used Car Checklist</a> before any private party or dealer used purchase to estimate negotiation leverage."
   }
   return null
 }

@@ -9,7 +9,7 @@ function formatCurrency(value) {
   }).format(value)
 }
 
-export default function ResultCard({ label, value, highlight = false, delay = 0 }) {
+export default function ResultCard({ label, value, highlight = false, delay = 0, note = null }) {
   const [animKey, setAnimKey] = useState(0)
   const prevValue = useRef(value)
 
@@ -43,6 +43,11 @@ export default function ResultCard({ label, value, highlight = false, delay = 0 
       >
         {formatCurrency(value)}
       </p>
+      {note && (
+        <p className="text-[10px] leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+          {note}
+        </p>
+      )}
     </div>
   )
 }

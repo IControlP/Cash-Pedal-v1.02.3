@@ -13,7 +13,7 @@ const faqs = [
   },
   {
     q: 'What\'s included in the TCO calculation?',
-    a: 'The TCO Calculator covers the financing cost (loan payment, interest paid, total loan cost) and true cost per year based on your ownership duration. Fuel, insurance, and maintenance estimates are available in the Salary Calculator.',
+    a: 'The TCO Calculator covers financing (loan payment, total interest, total loan cost), fuel, insurance, maintenance, registration fees, and depreciation — all broken down annually over your ownership period. The Salary Calculator applies those same costs to the 20/4/10 affordability rule.',
   },
   {
     q: 'Do I need to create an account?',
@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     q: 'How does the Car Survey work?',
-    a: 'The 10-question survey scores your answers across 9 vehicle categories using a weighted impact system. Your top match is the vehicle type that most closely aligns with your priorities, lifestyle, and attitude toward cars.',
+    a: 'The 13-question survey scores your answers across 9 vehicle categories using a weighted impact system. Your top match is the vehicle type that most closely aligns with your priorities, lifestyle, and attitude toward cars.',
   },
   {
     q: 'What is the 20/4/10 rule?',

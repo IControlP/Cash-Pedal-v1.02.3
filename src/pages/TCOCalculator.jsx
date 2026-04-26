@@ -897,6 +897,21 @@ function UserDataModal({ calcCount, onClose }) {
   )
 }
 
+// ── Typical annual operating cost benchmarks by segment ──────────────────
+// (insurance + fuel + maintenance + registration, 12k mi/yr, national avg)
+const SEGMENT_OP_COST_AVG = {
+  economy:    4400,
+  compact:    5200,
+  sedan:      5600,
+  suv:        7000,
+  luxury_suv: 9200,
+  truck:      7800,
+  sports:     7600,
+  luxury:    10400,
+  electric:   3600,
+  hybrid:     4800,
+}
+
 // ── Vehicle categories (used when no specific make/model is selected) ─────
 // Each entry provides a SVG silhouette type, maintenance segment, and default MPG
 const VEHICLE_CATEGORIES = [
@@ -1243,7 +1258,7 @@ function RepairRiskScore({ isPro, make, model, isEV, maintBrandMult, determineTi
 
 // ── Cost Alerts ───────────────────────────────────────
 function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenance,
-  maintBrandMult, classifySegment, formatCurrency }) {
+  maintBrandMult, classifySegment, formatCurrency, loanAmount, price, rate, financeMode }) {
 
   const ProBadge = () => (
     <span className="text-[10px] font-bold px-2 py-0.5 rounded"
@@ -1290,6 +1305,18 @@ function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenan
       alerts.push({
         type: 'info',
         text: `Your all-in annual cost of ${formatCurrency(totalAnnualCost)} is above average. Reducing the purchase price by 10% or shortening the loan term can save meaningfully on interest.`,
+      })
+    }
+    if (financeMode === 'buy' && rate >= 10) {
+      alerts.push({
+        type: 'warning',
+        text: `Your interest rate of ${rate}% is high. Check credit union rates — they typically run 2–4% below dealer-arranged financing for the same loan term.`,
+      })
+    }
+    if (financeMode === 'buy' && loanAmount > 0 && price > 0 && loanAmount / price > 0.80) {
+      alerts.push({
+        type: 'warning',
+        text: `You're financing more than 80% of the vehicle's value. Gap insurance (~$300 one-time or $20–$40/mo) protects you if the car is totaled before your loan balance drops below market value.`,
       })
     }
     if (isEV) {
@@ -1695,6 +1722,13 @@ export default function TCOCalculator() {
   const safeDown = Math.min(downPayment, effectivePrice)
   const usingMSRP = !!(selMake && selModel && selYear && selTrim)
 
+  // Net cost of ownership: total paid minus estimated future resale value
+  const futureResaleValue = (financeMode === 'buy' && origMsrp && selYear)
+    ? Math.round(estimateCurrentValue(origMsrp, selMake || null, selModel || null, carAge + ownershipYears))
+    : null
+  const totalOwnershipPaid = forecastRows.reduce((s, r) => s + r.total, 0)
+  const netCostOfOwnership = futureResaleValue != null ? totalOwnershipPaid - futureResaleValue : null
+
   // Derived EV flag, charging rate, and premium fuel flag — used across the render
   const catInfoForRender = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
   const effIsEV = modelData ? modelData.is_ev : (catInfoForRender?.isEV ?? false)
@@ -2043,7 +2077,9 @@ export default function TCOCalculator() {
                         <span className="text-sm text-white">Sales Tax</span>
                         <span className="ml-2 text-[10px] text-[var(--text-muted)]">
                           {resolvedState
-                            ? `${resolvedState} · ${((taxRateOverride !== null ? parseFloat(taxRateOverride) : (STATE_VEHICLE_SALES_TAX[resolvedState] ?? 0.0625) * 100)).toFixed(2)}%`
+                            ? taxRateOverride === null && (STATE_VEHICLE_SALES_TAX[resolvedState] ?? 1) === 0
+                              ? <span className="text-green-400 font-semibold">No vehicle sales tax ({resolvedState})</span>
+                              : `${resolvedState} · ${((taxRateOverride !== null ? parseFloat(taxRateOverride) : (STATE_VEHICLE_SALES_TAX[resolvedState] ?? 0.0625) * 100)).toFixed(2)}%`
                             : 'Enter location for exact rate'}
                         </span>
                       </div>
@@ -2105,10 +2141,26 @@ export default function TCOCalculator() {
                     <span className="font-display font-bold text-white text-lg">{formatCurrency(results.loanAmount)}</span>
                   </div>
 
+                  {/* Gap insurance nudge when financing >80% LTV */}
+                  {results.loanAmount > price * 0.80 && (
+                    <div className="rounded-lg px-3 py-2.5 flex items-start gap-2.5 border"
+                      style={{ borderColor: 'rgba(251,191,36,0.35)', background: 'rgba(251,191,36,0.05)' }}>
+                      <span className="text-sm shrink-0 mt-0.5">⚠</span>
+                      <p className="text-[11px] leading-relaxed" style={{ color: '#fbbf24' }}>
+                        <span className="font-semibold">Low down payment — consider gap insurance.</span>{' '}
+                        With less than 20% down, your loan balance may exceed the car's market value for the first 1–2 years.
+                        Gap insurance (~$20–$40/mo or a one-time ~$300) covers the difference if the vehicle is totaled or stolen.
+                      </p>
+                    </div>
+                  )}
+
                   <SelectInput label="Loan Term" value={loanTerm} onChange={setLoanTerm} options={loanTermOptions} />
 
                   <SliderInput label="Annual Interest Rate" value={rate} onChange={setRate}
                     min={0} max={25} step={0.1} suffix="%" inputMin={0} inputMax={25} />
+                  <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                    Typical rates (new car): excellent credit 740+ ≈ 5–7% · good 680+ ≈ 7–9% · fair 620+ ≈ 10–13%
+                  </p>
 
                   <SelectInput label="Ownership Duration" value={ownershipYears}
                     onChange={setOwnershipYears} options={ownershipOptions} />
@@ -2137,7 +2189,7 @@ export default function TCOCalculator() {
                     min={0} max={15} step={0.1} suffix="%" inputMin={0} inputMax={15} />
 
                   <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                    Money factor = {(leaseApr / 2400).toFixed(5)} · Typical lease APR is 2–5%
+                    Money factor = {(leaseApr / 2400).toFixed(5)} · Ask the dealer for the exact money factor — divide by 2,400 to convert to APR
                   </p>
 
                   <SliderInput label="Residual Value" value={residualPct} onChange={setResidualPct}
@@ -2151,8 +2203,11 @@ export default function TCOCalculator() {
                   </div>
 
                   <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                    Vehicle value at lease end — auto-estimated from depreciation model for a {leaseTerm}-month term
-                    {(selMake || selModel) ? ` (${[selMake, selModel].filter(Boolean).join(' ')})` : ''}
+                    {leaseTerm <= 24
+                      ? 'Typical 24-month residual: 58–65% — higher residual = lower payment'
+                      : leaseTerm <= 36
+                      ? 'Typical 36-month residual: 48–58% — Toyota/Honda/Subaru tend toward top of range; luxury/EV toward bottom'
+                      : 'Typical 48-month residual: 40–50% — longer terms mean more depreciation and lower residuals'}
                   </p>
 
                   <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
@@ -2643,6 +2698,31 @@ export default function TCOCalculator() {
                       {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}
                     </span>
                   </div>
+                  {/* Segment operating cost context */}
+                  {(() => {
+                    const seg = selMake
+                      ? classifySegment(selMake || '', selModel || '')
+                      : (VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.segment ?? null)
+                    const avg = seg ? SEGMENT_OP_COST_AVG[seg] : null
+                    if (!avg) return null
+                    const diff = annualOperatingCost - avg
+                    const pct = Math.round(Math.abs(diff) / avg * 100)
+                    const segLabel = seg.replace('_', ' ')
+                    if (pct < 5) return (
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-[var(--text-muted)]">vs. avg {segLabel} operating cost</span>
+                        <span className="text-green-400 font-medium">≈ on par</span>
+                      </div>
+                    )
+                    return (
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-[var(--text-muted)]">vs. avg {segLabel} operating cost</span>
+                        <span className={`font-medium ${diff > 0 ? 'text-yellow-400' : 'text-green-400'}`}>
+                          {diff > 0 ? `+${pct}% above avg` : `${pct}% below avg`}
+                        </span>
+                      </div>
+                    )
+                  })()}
                   {forecastRows.length > 1 && (() => {
                     const totals = forecastRows.map(r => r.total)
                     const lo = Math.min(...totals)
@@ -2740,6 +2820,38 @@ export default function TCOCalculator() {
                 )}
               </div>
 
+              {/* ── Net Cost of Ownership ── */}
+              {financeMode === 'buy' && futureResaleValue != null && netCostOfOwnership != null && (
+                <div className="rounded-xl border p-4 flex flex-col gap-3"
+                  style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+                    Net Cost of Ownership
+                  </p>
+                  <div className="flex flex-col gap-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--text-muted)]">Total paid over {ownershipYears} yr{ownershipYears !== 1 ? 's' : ''}</span>
+                      <span className="text-white font-medium">{formatCurrency(totalOwnershipPaid)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--text-muted)]">
+                        Est. resale value ({carAge + ownershipYears}yr old {selMake})
+                      </span>
+                      <span className="text-white font-medium">− {formatCurrency(futureResaleValue)}</span>
+                    </div>
+                    <div className="h-px bg-[var(--border)] my-0.5" />
+                    <div className="flex justify-between items-center">
+                      <span className="text-white font-bold">Net out-of-pocket</span>
+                      <span className="font-display font-bold text-lg" style={{ color: 'var(--accent)' }}>
+                        {formatCurrency(netCostOfOwnership)}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                    You can sell the vehicle at the end of ownership. This is your true economic cost — lower than total payments because the car retains value.
+                  </p>
+                </div>
+              )}
+
               {/* ── 5-Year Ownership Forecast (Pro) ── */}
               <FiveYearForecast
                 isPro={isSubscribed}
@@ -2808,6 +2920,10 @@ export default function TCOCalculator() {
                 maintBrandMult={MAINT_BRAND_MULT}
                 classifySegment={classifySegment}
                 formatCurrency={formatCurrency}
+                loanAmount={results.loanAmount}
+                price={price}
+                rate={rate}
+                financeMode={financeMode}
               />
 
               {/* ── PDF Export (Pro) ── */}

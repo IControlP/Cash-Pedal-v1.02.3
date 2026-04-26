@@ -41,7 +41,7 @@ function estimateLeaseMonthly(msrp, capReduction, termMonths) {
 const DEFAULT_ANNUAL_MILES = 12000
 
 // Basic mode: state-aware when state is provided, otherwise flat tier estimates
-function estimateBasicMonthlyCosts(price, state) {
+function estimateBasicMonthlyCosts(price, state, annualMiles = DEFAULT_ANNUAL_MILES) {
   const tierKey = price >= 60000 ? 'luxury' : price >= 35000 ? 'premium' : price >= 20000 ? 'standard' : 'economy'
   const tierLabel = { luxury: 'Luxury', premium: 'Premium', standard: 'Standard', economy: 'Economy' }
   // Maintenance stays tier-based (no brand info available in basic mode)
@@ -49,21 +49,22 @@ function estimateBasicMonthlyCosts(price, state) {
   const maintenance = maintByTier[tierKey]
 
   if (!state) {
-    // No state: use existing flat estimates (no change from original behavior)
+    // No state: scale flat fuel estimate by mileage ratio; other costs stay tier-based
     const flat = { luxury: { fuel:250, insurance:280, registration:50 }, premium: { fuel:180, insurance:180, registration:35 }, standard: { fuel:150, insurance:130, registration:25 }, economy: { fuel:120, insurance:100, registration:20 } }
     const f = flat[tierKey]
-    return { ...f, maintenance, total: f.fuel + f.insurance + maintenance + f.registration, tier: tierLabel[tierKey] }
+    const scaledFuel = Math.round(f.fuel * (annualMiles / DEFAULT_ANNUAL_MILES))
+    return { ...f, fuel: scaledFuel, maintenance, total: scaledFuel + f.insurance + maintenance + f.registration, tier: tierLabel[tierKey] }
   }
 
   // State provided: use shared utility functions for insurance, fuel, registration
-  const fuel = Math.round(computeAnnualFuel(false, 28, null, state, DEFAULT_ANNUAL_MILES) / 12)
+  const fuel = Math.round(computeAnnualFuel(false, 28, null, state, annualMiles) / 12)
   const insurance = Math.round(estimateInsurance(price, null, null, null, state) / 12)
   const registration = Math.round(computeAnnualRegistration(state, price) / 12)
   return { fuel, insurance, maintenance, registration, total: fuel + insurance + maintenance + registration, tier: tierLabel[tierKey] }
 }
 
 // Pro mode: vehicle-specific + state-aware
-function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state) {
+function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, annualMiles = DEFAULT_ANNUAL_MILES) {
   const segment = isEv ? 'electric' : classifySegment(make, model)
 
   const fuel = Math.round(computeAnnualFuel(
@@ -71,12 +72,12 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state) {
     isEv ? null : (mpg || null),
     isEv ? (mpg || null) : null,
     state || null,
-    DEFAULT_ANNUAL_MILES
+    annualMiles
   ) / 12)
 
   const insurance = Math.round(estimateInsurance(price, make, model, year, state || null) / 12)
 
-  const maintServices = generateMaintenanceServices(isEv, DEFAULT_ANNUAL_MILES, segment, make)
+  const maintServices = generateMaintenanceServices(isEv, annualMiles, segment, make)
   const maintenance = Math.round(maintServices.reduce((s, x) => s + x.annual, 0) / 12)
 
   const registration = Math.round(computeAnnualRegistration(state || null, price) / 12)
@@ -87,6 +88,21 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state) {
     segment,
     maintTier: determineMaintTier(make),
   }
+}
+
+// Rough effective take-home estimate for a given gross annual salary.
+// Uses simplified federal brackets + FICA + 4% avg state income tax.
+// Intended for ballpark context only, not tax advice.
+function estimateMonthlyTakeHome(grossAnnual) {
+  let federalEff
+  if (grossAnnual <= 30000)       federalEff = 0.08
+  else if (grossAnnual <= 55000)  federalEff = 0.12
+  else if (grossAnnual <= 90000)  federalEff = 0.17
+  else if (grossAnnual <= 140000) federalEff = 0.21
+  else if (grossAnnual <= 200000) federalEff = 0.24
+  else                            federalEff = 0.28
+  const totalRate = federalEff + 0.0765 + 0.04  // federal + FICA + avg state
+  return Math.round((grossAnnual * (1 - totalRate)) / 12)
 }
 
 // US state list for the selector (derived from STATE_INS_BASE keys for coverage)
@@ -135,11 +151,13 @@ export default function SalaryCalculator() {
 
   // Finance mode
   const [mode, setMode] = useState('buy')
+  const [knownSalary, setKnownSalary] = useState('')
 
   // State detection
   const [userState, setUserState] = useState('')
   const [stateAutoDetected, setStateAutoDetected] = useState(false)
   const [stateDetecting, setStateDetecting] = useState(false)
+  const [stateDetectFailed, setStateDetectFailed] = useState(false)
 
   // Pro mode
   const [proMode, setProMode] = useState(false)
@@ -147,6 +165,9 @@ export default function SalaryCalculator() {
   const [selModel, setSelModel] = useState('')
   const [selYear, setSelYear] = useState('')
   const [selTrim, setSelTrim] = useState('')
+
+  // Annual mileage (affects fuel cost)
+  const [annualMiles, setAnnualMiles] = useState(DEFAULT_ANNUAL_MILES)
 
   // Buy inputs
   const [vehiclePrice, setVehiclePrice] = useState(30000)
@@ -213,17 +234,21 @@ export default function SalaryCalculator() {
   // Auto-detect state from IP on mount
   useEffect(() => {
     setStateDetecting(true)
-    fetch('https://ipwho.is/')
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 5000)
+    fetch('https://ipwho.is/', { signal: controller.signal })
       .then(r => r.json())
       .then(d => {
         if (d.success && d.country_code === 'US' && d.region_code &&
             US_STATES.some(([code]) => code === d.region_code)) {
           setUserState(d.region_code)
           setStateAutoDetected(true)
+        } else {
+          setStateDetectFailed(true)
         }
       })
-      .catch(() => {})
-      .finally(() => setStateDetecting(false))
+      .catch(() => setStateDetectFailed(true))
+      .finally(() => { setStateDetecting(false); clearTimeout(timeout) })
   }, [])
 
   // When trim selected, auto-populate price field
@@ -278,15 +303,15 @@ export default function SalaryCalculator() {
   const proExtras = useMemo(() => {
     if (!proMode || !selectedVehicleInfo) return null
     const { make, model, year, is_ev, mpg } = selectedVehicleInfo
-    return estimateProMonthlyCosts(activePrice, make, model, year, is_ev, mpg, userState)
-  }, [proMode, selectedVehicleInfo, activePrice, userState])
+    return estimateProMonthlyCosts(activePrice, make, model, year, is_ev, mpg, userState, annualMiles)
+  }, [proMode, selectedVehicleInfo, activePrice, userState, annualMiles])
 
   const results = useMemo(() => {
     const extra = proExtras
       ? { ...proExtras, tier: TYPE_LABELS[proExtras.segment] ?? 'Vehicle' }
       : mode === 'lease'
-        ? estimateBasicMonthlyCosts(leaseMsrp, userState)
-        : estimateBasicMonthlyCosts(vehiclePrice, userState)
+        ? estimateBasicMonthlyCosts(leaseMsrp, userState, annualMiles)
+        : estimateBasicMonthlyCosts(vehiclePrice, userState, annualMiles)
 
     if (mode === 'lease') {
       const totalMonthly = leaseMonthly + extra.total
@@ -305,11 +330,15 @@ export default function SalaryCalculator() {
     const downPayment = vehiclePrice * (downPct / 100)
     const loanAmount = vehiclePrice - downPayment
     const payment = monthlyPayment(loanAmount, rate, loanTerm)
+    const totalLoanCost = payment * loanTerm
+    const totalInterest = totalLoanCost - loanAmount
     const totalMonthly = payment + extra.total
     return {
       downPayment,
       loanAmount,
       payment,
+      totalLoanCost,
+      totalInterest,
       extra,
       totalMonthly,
       conservative: (totalMonthly / 0.10) * 12,
@@ -317,7 +346,36 @@ export default function SalaryCalculator() {
       aggressive: (totalMonthly / 0.20) * 12,
       conservativeMonthly: totalMonthly / 0.10,
     }
-  }, [mode, vehiclePrice, downPct, loanTerm, rate, leaseMsrp, leaseDown, leaseMonthly, leaseTerm, proExtras, userState])
+  }, [mode, vehiclePrice, downPct, loanTerm, rate, leaseMsrp, leaseDown, leaseMonthly, leaseTerm, proExtras, userState, annualMiles])
+
+  // Reverse mode: given a salary, solve for the max affordable vehicle price
+  const affordableResults = useMemo(() => {
+    const s = Number(knownSalary)
+    if (!s || s < 10000) return null
+
+    function solve(thresholdPct) {
+      const maxMonthly = (s * thresholdPct) / 12
+      let estPrice = 30000
+      for (let i = 0; i < 4; i++) {
+        const ops = estimateBasicMonthlyCosts(estPrice, userState || null, annualMiles)
+        const loanBudget = maxMonthly - ops.total
+        if (loanBudget <= 0) return 0
+        const r = rate / 12 / 100
+        const n = loanTerm
+        const factor = r > 0
+          ? (Math.pow(1 + r, n) - 1) / (r * Math.pow(1 + r, n))
+          : n
+        estPrice = Math.max(500, (loanBudget * factor) / (1 - downPct / 100))
+      }
+      return Math.round(estPrice / 500) * 500
+    }
+
+    return {
+      conservative: solve(0.10),
+      comfortable:  solve(0.15),
+      aggressive:   solve(0.20),
+    }
+  }, [knownSalary, userState, rate, loanTerm, downPct, annualMiles])
 
   const downAmount = vehiclePrice * (downPct / 100)
 
@@ -411,6 +469,9 @@ export default function SalaryCalculator() {
                   <div className="flex items-center gap-2">
                     {stateDetecting && (
                       <span className="text-[10px] text-[var(--text-muted)] animate-pulse">Detecting…</span>
+                    )}
+                    {!stateDetecting && stateDetectFailed && !userState && (
+                      <span className="text-[10px] text-yellow-500">Auto-detect unavailable — select manually</span>
                     )}
                     {!stateDetecting && stateAutoDetected && userState && (
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1"
@@ -762,6 +823,25 @@ export default function SalaryCalculator() {
                 </>
               )}
 
+              {/* Annual mileage */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <label className="input-label">Annual Mileage</label>
+                  <span className="text-sm font-bold text-white">{annualMiles.toLocaleString()} mi/yr</span>
+                </div>
+                <input
+                  type="range" min={3000} max={30000} step={1000}
+                  value={annualMiles}
+                  onChange={e => setAnnualMiles(Number(e.target.value))}
+                  style={{ background: `linear-gradient(to right, var(--accent) ${((annualMiles - 3000) / 27000) * 100}%, var(--border) ${((annualMiles - 3000) / 27000) * 100}%)` }}
+                />
+                <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+                  <span>3,000</span>
+                  <span className="font-semibold text-[var(--accent)]">12,000 avg</span>
+                  <span>30,000</span>
+                </div>
+              </div>
+
               {/* Monthly cost breakdown */}
               <div className="bg-[var(--bg)] rounded-xl border border-[var(--border)] p-4">
                 <div className="flex items-center justify-between mb-4">
@@ -861,6 +941,136 @@ export default function SalaryCalculator() {
                   <p className="text-[var(--text-muted)] text-xs mt-1">{sublabel}</p>
                 </div>
               ))}
+
+              {/* Loan cost summary — buy mode only */}
+              {mode === 'buy' && results.loanAmount > 0 && (
+                <div className="card border-[var(--border)]">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">Loan Cost Summary</p>
+                  <div className="flex flex-col gap-2">
+                    {[
+                      { label: 'Amount financed', val: results.loanAmount },
+                      { label: `Interest paid (${loanTerm / 12} yr @ ${rate}%)`, val: results.totalInterest },
+                      { label: 'Total loan cost', val: results.totalLoanCost },
+                    ].map(({ label, val }) => (
+                      <div key={label} className="flex items-center justify-between text-sm">
+                        <span className="text-[var(--text-muted)]">{label}</span>
+                        <span className={`font-semibold tabular-nums ${label.startsWith('Interest') ? 'text-yellow-400' : 'text-white'}`}>{fmt(val)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {results.totalInterest > 0 && (
+                    <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
+                      You pay {fmt(results.totalInterest)} extra in interest — {Math.round((results.totalInterest / results.loanAmount) * 100)}% above the loan principal. A shorter term or larger down payment reduces this.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Take-home income context */}
+              {(() => {
+                const grossConservative = results.conservative
+                const takeHome = estimateMonthlyTakeHome(grossConservative)
+                const vehiclePct = Math.round((results.totalMonthly / takeHome) * 100)
+                return (
+                  <div className="rounded-xl border border-[var(--border)] p-4 text-sm"
+                    style={{ background: 'var(--surface)' }}>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
+                      What that salary looks like monthly
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex justify-between">
+                        <span className="text-[var(--text-muted)]">Gross (conservative)</span>
+                        <span className="text-white font-semibold">{fmt(grossConservative / 12)}/mo</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[var(--text-muted)]">Est. take-home after taxes</span>
+                        <span className="text-white font-semibold">{fmt(takeHome)}/mo</span>
+                      </div>
+                      <div className="border-t border-[var(--border)] pt-2 flex justify-between">
+                        <span className="text-[var(--text-muted)]">Vehicle share of take-home</span>
+                        <span className={`font-bold ${vehiclePct <= 15 ? 'text-green-400' : vehiclePct <= 20 ? 'text-amber-400' : 'text-red-400'}`}>
+                          {vehiclePct}%
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
+                      Take-home estimate uses federal brackets + FICA + 4% avg state tax — actual varies by state, filing status &amp; deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
+                    </p>
+                  </div>
+                )
+              })()}
+
+              {/* Reverse: What can I afford? */}
+              <div className="card border-[var(--border)]">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                  What can I afford?
+                </p>
+                <p className="text-xs text-[var(--text-muted)] mb-3 leading-relaxed">
+                  Enter your gross annual salary to see the vehicle price you can target at each spending tier.
+                </p>
+                <div className="flex flex-col gap-2 mb-4">
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                    <input
+                      type="number"
+                      value={knownSalary}
+                      onChange={e => setKnownSalary(e.target.value)}
+                      placeholder="e.g. 75,000"
+                      className="input-field"
+                      style={{ paddingLeft: '1.75rem' }}
+                      min={0}
+                      step={1000}
+                    />
+                  </div>
+                  {knownSalary && Number(knownSalary) >= 10000 && (
+                    <input
+                      type="range" min={20000} max={400000} step={1000}
+                      value={Number(knownSalary)}
+                      onChange={e => setKnownSalary(e.target.value)}
+                      style={{ background: `linear-gradient(to right, var(--accent) ${((Number(knownSalary) - 20000) / 380000) * 100}%, var(--border) ${((Number(knownSalary) - 20000) / 380000) * 100}%)` }}
+                    />
+                  )}
+                </div>
+                {affordableResults ? (
+                  <div className="flex flex-col gap-2">
+                    {[
+                      { label: 'Conservative', pct: '10%', badge: '✓ Safest', value: affordableResults.conservative, accent: true },
+                      { label: 'Comfortable',  pct: '15%', badge: null,        value: affordableResults.comfortable,  accent: false },
+                      { label: 'Aggressive',   pct: '20%', badge: '⚠ Stretched', value: affordableResults.aggressive, accent: false },
+                    ].map(({ label, pct, badge, value, accent }) => (
+                      <div key={label}
+                        className="flex items-center justify-between px-3 py-2.5 rounded-lg border"
+                        style={{
+                          borderColor: accent ? 'var(--accent)' : 'var(--border)',
+                          background: accent ? 'rgba(200,255,0,0.04)' : 'var(--bg)',
+                        }}>
+                        <div>
+                          <span className="text-xs font-semibold" style={{ color: accent ? 'var(--accent)' : 'var(--text-muted)' }}>
+                            {label} <span className="font-normal opacity-70">({pct})</span>
+                          </span>
+                          {badge && (
+                            <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded"
+                              style={{ background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
+                              {badge}
+                            </span>
+                          )}
+                        </div>
+                        <span className={`font-display font-bold tabular-nums ${accent ? 'text-[var(--accent)] text-lg' : 'text-white'}`}>
+                          {value > 0 ? fmt(value) : 'N/A'}
+                        </span>
+                      </div>
+                    ))}
+                    <p className="text-[10px] text-[var(--text-muted)] leading-relaxed mt-1">
+                      Assumes {downPct}% down · {loanTerm}-month loan · {rate}% APR · includes estimated insurance, fuel, maintenance &amp; registration.
+                      {userState ? ` ${userState} rates applied.` : ' National average rates.'}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-[var(--text-muted)] italic">
+                    Enter a salary above to see your affordable vehicle range.
+                  </p>
+                )}
+              </div>
 
               {/* Rule explainer */}
               {mode === 'buy' ? (

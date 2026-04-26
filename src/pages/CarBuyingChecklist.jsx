@@ -4,6 +4,7 @@ import Footer from '../components/Footer'
 import PaywallModal from '../components/PaywallModal'
 import { useSubscription } from '../hooks/useSubscription'
 import { maintenanceItems, sellerQuestions, US_STATES, getClimateFlags, getContextualQuestions } from '../data/checklistData'
+import { estimateCurrentValue } from '../utils/vehicleCosts'
 import VEHICLES from '../data/vehicles.json'
 
 const MAKES = Object.keys(VEHICLES).sort()
@@ -157,19 +158,11 @@ export default function CarBuyingChecklist() {
     const trims = getTrims(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year)
     const msrp = vehicleInfo.trim ? trims[vehicleInfo.trim] : null
     if (!msrp || !vehicleInfo.year) return null
-    const age = 2026 - parseInt(vehicleInfo.year)
+    const age = new Date().getFullYear() - parseInt(vehicleInfo.year)
     if (age < 0) return null
-    let value = msrp
-    for (let y = 1; y <= age; y++) {
-      if (y === 1) value *= 0.80
-      else if (y === 2) value *= 0.85
-      else if (y <= 5) value *= 0.87
-      else if (y <= 10) value *= 0.90
-      else value *= 0.93
-    }
+    // Use shared estimateCurrentValue for consistent depreciation + mileage adjustment (~$150/1k mi vs 12k/yr avg)
+    let value = Math.max(1500, estimateCurrentValue(msrp, vehicleInfo.make, vehicleInfo.model, age, vehicleInfo.mileage))
     const avgMiles = age * 12000
-    value -= ((vehicleInfo.mileage - avgMiles) / 1000) * 150
-    value = Math.max(1500, value)
     const regionMultiplier = getRegionalMultiplier(vehicleData?.type, vehicleInfo.state)
     value = Math.max(1500, value * regionMultiplier)
     return {
@@ -501,6 +494,63 @@ export default function CarBuyingChecklist() {
             <p className="text-xs text-[var(--text-muted)] mt-3">
               Reduction = all "not done" costs + 50% of "unknown" costs. Use this as your negotiation floor.
             </p>
+
+            {/* Critical item call-outs */}
+            {(() => {
+              const criticalFlags = dueItems.filter(
+                i => i.critical && statuses[i.id] !== 'confirmed'
+              )
+              if (criticalFlags.length === 0) return null
+              const criticalTotal = criticalFlags.reduce((s, i) => {
+                if (statuses[i.id] === 'not_done') return s + i.cost
+                return s + i.cost * 0.5
+              }, 0)
+              return (
+                <div className="mt-4 pt-4 border-t border-[rgba(255,184,0,0.15)]">
+                  <p className="text-xs font-bold uppercase tracking-widest text-red-400 mb-2">
+                    Red Flags — {criticalFlags.length} critical item{criticalFlags.length !== 1 ? 's' : ''} unverified
+                  </p>
+                  <div className="flex flex-col gap-1.5 mb-3">
+                    {criticalFlags.map(item => (
+                      <div key={item.id} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className={`shrink-0 ${statuses[item.id] === 'not_done' ? 'text-red-400' : 'text-yellow-400'}`}>
+                            {statuses[item.id] === 'not_done' ? '✗' : '?'}
+                          </span>
+                          <span className="text-white font-semibold">{item.name}</span>
+                          <span className="text-[var(--text-muted)]">
+                            ({statuses[item.id] === 'not_done' ? 'not done' : 'unknown'})
+                          </span>
+                        </div>
+                        <span className="text-red-400 font-semibold tabular-nums shrink-0 ml-2">
+                          {statuses[item.id] === 'not_done' ? fmt(item.cost) : `~${fmt(item.cost * 0.5)}`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                    <span className="text-red-400 font-semibold">Negotiation tip:</span>{' '}
+                    Lead with the critical items above — they represent{' '}
+                    <span className="text-white font-semibold">{fmt(criticalTotal)}</span> in deferred costs you'll face as the new owner.
+                    Ask the seller to address them before purchase or reduce the asking price accordingly.
+                  </p>
+                </div>
+              )
+            })()}
+          </div>
+
+          {/* Pre-purchase inspection callout */}
+          <div className="rounded-xl p-4 mb-6 flex items-start gap-3 border"
+            style={{ borderColor: 'rgba(200,255,0,0.25)', background: 'rgba(200,255,0,0.04)' }}>
+            <span className="text-lg shrink-0">🔧</span>
+            <div>
+              <p className="text-sm font-semibold text-white mb-1">Get a pre-purchase inspection</p>
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                Budget <span className="text-white font-semibold">$100–$300</span> for an independent mechanic to inspect
+                the vehicle before you buy. A PPI can reveal hidden issues not visible in a test drive and gives you
+                additional negotiation leverage on top of the maintenance items below.
+              </p>
+            </div>
           </div>
 
           {/* Tabs */}

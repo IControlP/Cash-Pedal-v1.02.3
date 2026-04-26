@@ -39,7 +39,22 @@ function calculateLoan({ price, downPayment, loanTermMonths, annualRatePercent, 
   const totalInterestPaid = totalPaid - loanAmount
   const effectiveMonths = Math.min(ownershipYears * 12, n)
   const trueAnnualCost = (monthlyPayment * effectiveMonths) / ownershipYears
-  return { loanAmount, monthlyPayment, totalInterestPaid, totalCostOfLoan: totalPaid, trueAnnualCost }
+
+  // Interest paid only through the ownership period.
+  // When selling before the loan ends, the remaining balance is retired at sale —
+  // so actual interest paid = (payments made) − (principal repaid), not full-term interest.
+  let interestThroughOwnership
+  if (effectiveMonths >= n || r === 0) {
+    interestThroughOwnership = totalInterestPaid
+  } else {
+    const remainingBal = loanAmount * Math.pow(1 + r, effectiveMonths)
+      - monthlyPayment * (Math.pow(1 + r, effectiveMonths) - 1) / r
+    const principalRepaid = loanAmount - Math.max(0, remainingBal)
+    interestThroughOwnership = Math.max(0, monthlyPayment * effectiveMonths - principalRepaid)
+  }
+  const ownershipShorterThanLoan = ownershipYears * 12 < n
+
+  return { loanAmount, monthlyPayment, totalInterestPaid, totalCostOfLoan: totalPaid, trueAnnualCost, interestThroughOwnership, ownershipShorterThanLoan }
 }
 
 // ── Lease math ────────────────────────────────────────
@@ -1461,6 +1476,13 @@ export default function TCOCalculator() {
 
   const maintenanceByYear = useMemo(() => maintenanceDetail?.map(yr => yr.total) ?? null, [maintenanceDetail])
 
+  // When detailed mode is active, keep annualMaintenance aligned with the start-mileage-aware
+  // first-year cost from the forecast (not the mileage-agnostic generateMaintenanceServices avg).
+  useEffect(() => {
+    if (!detailedMode || customCosts || !maintenanceDetail) return
+    setAnnualMaintenance(maintenanceDetail[0]?.total ?? maintenanceDetail.reduce((s, y) => s + y.total, 0) / maintenanceDetail.length)
+  }, [detailedMode, customCosts, maintenanceDetail])
+
   useEffect(() => {
     if (customCosts) return
     setAnnualInsurance(estimateInsurance(price, selMake||null, selModel||null, selYear||null, resolvedState||null, detailedMode && multiCarPolicy))
@@ -2583,7 +2605,12 @@ export default function TCOCalculator() {
                   </>
                 ) : (
                   <>
-                    <ResultCard label="Total Interest Paid"  value={results.totalInterestPaid}  delay={60}  />
+                    <ResultCard
+                      label={results.ownershipShorterThanLoan ? `Interest (${ownershipYears}-yr ownership)` : 'Total Interest Paid'}
+                      value={results.interestThroughOwnership}
+                      delay={60}
+                      note={results.ownershipShorterThanLoan ? `Full ${loanTerm}-mo loan: ${formatCurrency(results.totalInterestPaid)} total interest` : null}
+                    />
                     <ResultCard label="Total Cost of Loan"   value={results.totalCostOfLoan}    delay={120} />
                     <ResultCard label="Loan Cost Per Year"   value={results.trueAnnualCost}     delay={180} />
                   </>
@@ -2642,6 +2669,48 @@ export default function TCOCalculator() {
                 </div>
               </div>
 
+              {/* Affordability check — 20/4/10 rule income bands */}
+              {(() => {
+                const year1Total = forecastRows[0]?.total ?? totalAnnualCost
+                const req10 = year1Total / 0.10
+                const req15 = year1Total / 0.15
+                const req20 = year1Total / 0.20
+                // Determine which band the user is likely in (no income input, so show all 3)
+                return (
+                  <div className="rounded-xl border p-4 flex flex-col gap-3"
+                    style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+                        Income Required (20/4/10 rule)
+                      </p>
+                      <a href="/salary" className="text-[10px] font-semibold"
+                        style={{ color: 'var(--accent)' }}>
+                        Full analysis →
+                      </a>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { label: 'Conservative', sub: '10% of income', value: req10, color: '#f87171' },
+                        { label: 'Comfortable',  sub: '15% of income', value: req15, color: '#FFB800' },
+                        { label: 'Aggressive',   sub: '20% of income', value: req20, color: '#4ade80' },
+                      ].map(({ label, sub, value, color }) => (
+                        <div key={label} className="rounded-lg px-2 py-2.5 text-center"
+                          style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                          <p className="text-[10px] font-semibold" style={{ color }}>{label}</p>
+                          <p className="text-[10px] text-[var(--text-muted)] mb-1">{sub}</p>
+                          <p className="text-white font-bold text-xs tabular-nums">{formatCurrency(value)}</p>
+                          <p className="text-[10px] text-[var(--text-muted)]">/yr gross</p>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                      Based on your Year 1 all-in cost of <span className="text-white">{formatCurrency(year1Total)}</span>.
+                      The 10% band is the safest; above 20% strains most budgets.
+                    </p>
+                  </div>
+                )
+              })()}
+
               {/* Summary */}
               <div className="rounded-xl p-4 border text-sm leading-relaxed"
                 style={{ background:'rgba(255,184,0,0.04)', borderColor:'rgba(255,184,0,0.15)', color:'var(--text-muted)' }}>
@@ -2662,7 +2731,9 @@ export default function TCOCalculator() {
                     <span className="text-white font-semibold">
                       {formatCurrency(results.monthlyPayment * Math.min(ownershipYears * 12, loanTerm))}
                     </span>{' '}
-                    ({formatCurrency(results.totalInterestPaid)} in interest). Add insurance, fuel, maintenance, and fees and your{' '}
+                    ({formatCurrency(results.interestThroughOwnership)} in interest
+                    {results.ownershipShorterThanLoan && <span className="text-amber-400/80"> — remaining balance paid off at sale</span>}
+                    ). Add insurance, fuel, maintenance, and fees and your{' '}
                     <span className="text-white font-semibold">all-in Year 1 cost is {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}</span>{' '}
                     — or {formatCurrency(forecastRows.reduce((s, r) => s + r.total, 0))} over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}.
                   </>

@@ -67,10 +67,13 @@ function estimateBasicMonthlyCosts(price, state, annualMiles = DEFAULT_ANNUAL_MI
 function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, annualMiles = DEFAULT_ANNUAL_MILES) {
   const segment = isEv ? 'electric' : classifySegment(make, model)
 
+  const mpgNum  = mpg && typeof mpg === 'object' ? (mpg.combined ?? null) : (mpg || null)
+  const mpgeNum = mpg && typeof mpg === 'object' ? (mpg.mpge_combined ?? null) : null
+
   const fuel = Math.round(computeAnnualFuel(
     isEv,
-    isEv ? null : (mpg || null),
-    isEv ? (mpg || null) : null,
+    isEv ? null : mpgNum,
+    isEv ? mpgeNum : null,
     state || null,
     annualMiles
   ) / 12)
@@ -611,7 +614,11 @@ export default function SalaryCalculator() {
                             <span>{selectedVehicleInfo.specs.cargo_cu_ft} cu ft cargo</span>
                           )}
                           {selectedVehicleInfo.mpg && (
-                            <span>{selectedVehicleInfo.mpg} mpg</span>
+                            <span>
+                              {selectedVehicleInfo.is_ev
+                                ? `${selectedVehicleInfo.mpg.mpge_combined} MPGe`
+                                : `${selectedVehicleInfo.mpg.combined} mpg`}
+                            </span>
                           )}
                         </div>
                       )}

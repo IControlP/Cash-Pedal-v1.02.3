@@ -444,20 +444,21 @@ function MaintenanceBreakdown({ isEV, annualMileage, segment, make }) {
 }
 
 // ── Slider ────────────────────────────────────────────
-function SliderInput({ label, value, onChange, min, max, step, prefix = '', suffix = '', inputMin, inputMax }) {
+function SliderInput({ label, value, onChange, min, max, step, prefix = '', suffix = '', inputMin, inputMax, displayValue, onDisplayChange }) {
   const handleSlider = useCallback(e => onChange(Number(e.target.value)), [onChange])
   const handleInput  = useCallback(e => {
     const num = parseFloat(e.target.value.replace(/[^0-9.]/g, ''))
-    if (!isNaN(num)) onChange(num)
-  }, [onChange])
+    if (!isNaN(num)) (onDisplayChange ?? onChange)(num)
+  }, [onChange, onDisplayChange])
   const pct = ((value - min) / (max - min)) * 100
+  const shown = displayValue ?? value
   return (
     <div className="flex flex-col gap-2">
       <label className="input-label">{label}</label>
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
           {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none select-none">{prefix}</span>}
-          <input type="number" value={value} min={inputMin ?? min} max={inputMax ?? max} step={step}
+          <input type="number" value={shown} min={inputMin ?? min} max={inputMax ?? max} step={step}
             onChange={handleInput} className="input-field"
             style={{ paddingLeft: prefix ? '1.75rem' : '1rem', paddingRight: suffix ? '2.5rem' : '1rem' }} />
           {suffix && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none select-none">{suffix}</span>}
@@ -2028,17 +2029,37 @@ export default function TCOCalculator() {
                 </p>
               </div>
 
-              <SliderInput label={financeMode === 'lease' ? 'Vehicle MSRP' : 'Vehicle Purchase Price'} value={price} onChange={setPrice}
-                min={5000} max={150000} step={500} prefix="$" />
+              <SliderInput
+                label={financeMode === 'lease' ? 'Vehicle MSRP' : 'Vehicle Purchase Price (Out-the-Door)'}
+                value={price}
+                onChange={setPrice}
+                displayValue={financeMode === 'buy' ? effectivePrice : undefined}
+                onDisplayChange={financeMode === 'buy' ? (otd) => {
+                  const taxRate = taxRateOverride !== null
+                    ? parseFloat(taxRateOverride) / 100
+                    : (STATE_VEHICLE_SALES_TAX[resolvedState] ?? 0.0625)
+                  const base = Math.round((otd - effectiveDocFee) / (1 + taxRate) / 500) * 500
+                  setPrice(Math.max(5000, Math.min(150000, base)))
+                } : undefined}
+                min={5000} max={150000} step={500} prefix="$"
+                inputMax={financeMode === 'buy' ? 175000 : undefined}
+              />
 
-              {origMsrp && carAge > 0 && financeMode === 'buy' && (
+              {financeMode === 'buy' && (
                 <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                  <span className="text-white">{dealerPurchase ? 'Dealer est.' : 'Private party est.'}</span>
-                  {' '}· {carAge}-yr depreciated value
-                  {dealerPurchase && ' + 10% dealer markup'}
-                  {currentMileage !== null && ` · ${currentMileage.toLocaleString()} mi`}
-                  {' '}— original MSRP{' '}
-                  <span className="text-white">{formatCurrency(origMsrp)}</span>
+                  Estimated vehicle <span className="text-white">{formatCurrency(price)}</span>
+                  {totalPurchaseExtras > 0 && (
+                    <> · tax + fees <span className="text-white">{formatCurrency(totalPurchaseExtras)}</span></>
+                  )}
+                  {origMsrp && carAge > 0 && (
+                    <>
+                      {' '}·{' '}
+                      <span className="text-white">{dealerPurchase ? 'Dealer est.' : 'Private party est.'}</span>
+                      {dealerPurchase && ' +10% markup'}
+                      {currentMileage !== null && ` · ${currentMileage.toLocaleString()} mi`}
+                      {' '}· MSRP <span className="text-white">{formatCurrency(origMsrp)}</span>
+                    </>
+                  )}
                 </p>
               )}
 

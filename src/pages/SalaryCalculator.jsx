@@ -148,6 +148,18 @@ const CURRENT_YEAR = String(
   )
 )
 
+const SALARY_LUXURY_MAKES = new Set([
+  'BMW', 'Mercedes-Benz', 'Audi', 'Porsche', 'Lexus', 'Acura', 'Infiniti',
+  'Cadillac', 'Lincoln', 'Genesis', 'Jaguar', 'Land Rover', 'Maserati',
+  'Alfa Romeo', 'Volvo', 'Buick', 'Mini', 'Ferrari', 'Tesla', 'Rivian', 'Lucid',
+])
+
+function classifyCarCategory(make, type, basePrice) {
+  if (SALARY_LUXURY_MAKES.has(make)) return 'luxury'
+  if (['suv', 'suv_large', 'truck', 'sports', 'ev_sedan', 'ev_suv', 'minivan'].includes(type)) return 'other'
+  return basePrice <= 30000 ? 'economy' : 'other'
+}
+
 export default function SalaryCalculator() {
   const { isSubscribed } = useSubscription()
   const [showPaywall, setShowPaywall] = useState(false)
@@ -171,6 +183,9 @@ export default function SalaryCalculator() {
 
   // Annual mileage (affects fuel cost)
   const [annualMiles, setAnnualMiles] = useState(DEFAULT_ANNUAL_MILES)
+
+  // Car suggestion filter
+  const [carFilterCategory, setCarFilterCategory] = useState('all')
 
   // Buy inputs
   const [vehiclePrice, setVehiclePrice] = useState(30000)
@@ -379,6 +394,34 @@ export default function SalaryCalculator() {
       aggressive:   solve(0.20),
     }
   }, [knownSalary, userState, rate, loanTerm, downPct, annualMiles])
+
+  const matchedVehicles = useMemo(() => {
+    if (!affordableResults) return []
+    const maxPrice = affordableResults.aggressive || 0
+    if (maxPrice <= 0) return []
+    const entries = []
+    Object.entries(VEHICLES).forEach(([make, models]) => {
+      Object.entries(models).forEach(([model, data]) => {
+        const years = Object.keys(data.trims_by_year || {}).sort((a, b) => Number(b) - Number(a))
+        if (!years.length) return
+        const latestYear = years[0]
+        const trims = data.trims_by_year[latestYear]
+        const basePrice = Math.min(...Object.values(trims))
+        if (basePrice > maxPrice || basePrice <= 0) return
+        const category = classifyCarCategory(make, data.type, basePrice)
+        let tier = 'aggressive'
+        if (basePrice <= (affordableResults.conservative || 0)) tier = 'conservative'
+        else if (basePrice <= (affordableResults.comfortable || 0)) tier = 'comfortable'
+        entries.push({ make, model, type: data.type, is_ev: data.is_ev, basePrice, year: latestYear, category, tier })
+      })
+    })
+    return entries.sort((a, b) => b.basePrice - a.basePrice)
+  }, [affordableResults])
+
+  const filteredVehicles = useMemo(() => {
+    if (carFilterCategory === 'all') return matchedVehicles
+    return matchedVehicles.filter(v => v.category === carFilterCategory)
+  }, [matchedVehicles, carFilterCategory])
 
   const downAmount = vehiclePrice * (downPct / 100)
 
@@ -1122,6 +1165,104 @@ export default function SalaryCalculator() {
               </Link>
             </div>
           </div>
+
+          {/* Vehicle Suggestions */}
+          {affordableResults && (
+            <div className="mt-10 pb-2">
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)] mb-1">
+                    Matching Vehicles
+                  </p>
+                  <h2 className="font-display font-bold text-white text-lg leading-tight">
+                    Cars within your budget
+                  </h2>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">
+                    Base MSRP fits your {downPct}% down · {loanTerm}-mo loan · {rate}% APR · includes operating costs
+                    {userState ? ` · ${userState} rates` : ''}
+                  </p>
+                </div>
+                <div className="flex gap-1 p-1 rounded-lg shrink-0"
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                  {[
+                    { value: 'all', label: 'All' },
+                    { value: 'economy', label: 'Economy' },
+                    { value: 'luxury', label: 'Luxury' },
+                    { value: 'other', label: 'Other' },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setCarFilterCategory(opt.value)}
+                      className="px-3 py-1.5 rounded-md text-xs font-semibold transition-all"
+                      style={{
+                        background: carFilterCategory === opt.value ? 'var(--accent)' : 'transparent',
+                        color: carFilterCategory === opt.value ? '#000' : 'var(--text-muted)',
+                      }}
+                    >
+                      {opt.label}
+                      {' '}
+                      <span className="opacity-60 font-normal">
+                        ({carFilterCategory === opt.value || opt.value === 'all'
+                          ? (opt.value === 'all' ? matchedVehicles.length : filteredVehicles.length)
+                          : matchedVehicles.filter(v => v.category === opt.value).length})
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {filteredVehicles.length === 0 ? (
+                <div className="card text-center py-8">
+                  <p className="text-[var(--text-muted)] text-sm">No vehicles in this category fit your current budget.</p>
+                  <p className="text-[var(--text-muted)] text-xs mt-1">Try a higher salary or switch to a different category.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                    {filteredVehicles.slice(0, 20).map(v => {
+                      const tierStyles = {
+                        conservative: { color: 'text-green-400', label: '✓ Conservative' },
+                        comfortable:  { color: 'text-[var(--accent)]', label: 'Comfortable' },
+                        aggressive:   { color: 'text-amber-400', label: '⚠ Stretched' },
+                      }[v.tier]
+                      return (
+                        <div
+                          key={`${v.make}-${v.model}`}
+                          className="card p-3 flex flex-col gap-1 hover:border-[var(--accent)] transition-all"
+                        >
+                          <div className="flex items-start justify-between gap-1 mb-0.5">
+                            <p className="text-[11px] font-semibold text-[var(--text-muted)] leading-tight">{v.make}</p>
+                            {v.is_ev && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
+                                style={{ background: 'rgba(200,255,0,0.15)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.3)' }}>
+                                EV
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm font-bold text-white leading-tight">{v.model}</p>
+                          <p className="text-[11px] text-[var(--text-muted)] capitalize">{v.type.replace('_', ' ')}</p>
+                          <p className="font-display font-bold text-white tabular-nums text-base mt-1">{fmt(v.basePrice)}</p>
+                          <span className={`text-[10px] font-semibold ${tierStyles.color}`}>{tierStyles.label}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {filteredVehicles.length > 20 && (
+                    <p className="text-xs text-[var(--text-muted)] text-center mt-4">
+                      Showing 20 of {filteredVehicles.length} matches — filter by category or adjust your salary to refine.
+                    </p>
+                  )}
+                </>
+              )}
+
+              <div className="mt-4 flex flex-wrap gap-4 text-[11px] text-[var(--text-muted)]">
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-400 inline-block" /> Conservative ≤ {fmt(affordableResults.conservative)}</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[var(--accent)] inline-block" /> Comfortable ≤ {fmt(affordableResults.comfortable)}</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> Stretched ≤ {fmt(affordableResults.aggressive)}</span>
+                <span className="opacity-60">Base MSRP only · final price varies by trim, dealer, and region</span>
+              </div>
+            </div>
+          )}
         </div>
       </main>
       <Footer />

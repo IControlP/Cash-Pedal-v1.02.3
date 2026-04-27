@@ -412,11 +412,20 @@ export default function SalaryCalculator() {
         let tier = 'aggressive'
         if (basePrice <= (affordableResults.conservative || 0)) tier = 'conservative'
         else if (basePrice <= (affordableResults.comfortable || 0)) tier = 'comfortable'
-        entries.push({ make, model, type: data.type, is_ev: data.is_ev, basePrice, year: latestYear, category, tier })
+        const ops = estimateBasicMonthlyCosts(basePrice, userState || null, annualMiles)
+        entries.push({
+          make, model, type: data.type, is_ev: data.is_ev,
+          basePrice, year: latestYear, category, tier,
+          annualFuel: ops.fuel * 12,
+          annualInsurance: ops.insurance * 12,
+          annualMaintenance: ops.maintenance * 12,
+          annualRegistration: ops.registration * 12,
+          annualOperating: ops.total * 12,
+        })
       })
     })
     return entries.sort((a, b) => b.basePrice - a.basePrice)
-  }, [affordableResults])
+  }, [affordableResults, userState, annualMiles])
 
   const filteredVehicles = useMemo(() => {
     if (carFilterCategory === 'all') return matchedVehicles
@@ -1241,8 +1250,26 @@ export default function SalaryCalculator() {
                           </div>
                           <p className="text-sm font-bold text-white leading-tight">{v.model}</p>
                           <p className="text-[11px] text-[var(--text-muted)] capitalize">{v.type.replace('_', ' ')}</p>
-                          <p className="font-display font-bold text-white tabular-nums text-base mt-1">{fmt(v.basePrice)}</p>
-                          <span className={`text-[10px] font-semibold ${tierStyles.color}`}>{tierStyles.label}</span>
+                          <p className="font-display font-bold text-white tabular-nums text-base mt-1.5">{fmt(v.basePrice)}</p>
+                          <span className={`text-[10px] font-semibold ${tierStyles.color} mb-1`}>{tierStyles.label}</span>
+                          <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Est. annual costs</p>
+                            {[
+                              { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.annualFuel },
+                              { label: 'Insurance', val: v.annualInsurance },
+                              { label: 'Maintenance', val: v.annualMaintenance },
+                              { label: 'Registration', val: v.annualRegistration },
+                            ].map(({ label, val }) => (
+                              <div key={label} className="flex items-center justify-between">
+                                <span className="text-[10px] text-[var(--text-muted)]">{label}</span>
+                                <span className="text-[10px] text-white tabular-nums">{fmt(val)}</span>
+                              </div>
+                            ))}
+                            <div className="flex items-center justify-between border-t border-[var(--border)] pt-1 mt-0.5">
+                              <span className="text-[10px] font-bold text-white">Total/yr</span>
+                              <span className="text-[10px] font-bold tabular-nums" style={{ color: 'var(--accent)' }}>{fmt(v.annualOperating)}</span>
+                            </div>
+                          </div>
                         </div>
                       )
                     })}

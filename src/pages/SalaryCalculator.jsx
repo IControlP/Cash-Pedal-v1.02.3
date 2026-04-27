@@ -1092,6 +1092,17 @@ export default function SalaryCalculator() {
                 </div>
                 {affordableResults ? (
                   <div className="flex flex-col gap-2">
+                    {affordableResults.aggressive === 0 && (
+                      <div className="rounded-lg border px-3 py-2.5 mb-1"
+                        style={{ borderColor: 'rgba(248,113,113,0.35)', background: 'rgba(248,113,113,0.06)' }}>
+                        <p className="text-xs font-semibold text-red-400 mb-0.5">Budget too low for any vehicle</p>
+                        <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                          At this salary, estimated operating costs (insurance, fuel, maintenance, registration) already
+                          consume the full vehicle budget before any loan payment. Try a higher salary, longer loan term,
+                          or larger down payment — or switch to the "What salary do I need?" view above.
+                        </p>
+                      </div>
+                    )}
                     {[
                       { label: 'Conservative', pct: '10%', badge: '✓ Safest', value: affordableResults.conservative, accent: true },
                       { label: 'Comfortable',  pct: '15%', badge: null,        value: affordableResults.comfortable,  accent: false },
@@ -1115,7 +1126,7 @@ export default function SalaryCalculator() {
                           )}
                         </div>
                         <span className={`font-display font-bold tabular-nums ${accent ? 'text-[var(--accent)] text-lg' : 'text-white'}`}>
-                          {value > 0 ? fmt(value) : 'N/A'}
+                          {value > 0 ? fmt(value) : '—'}
                         </span>
                       </div>
                     ))}

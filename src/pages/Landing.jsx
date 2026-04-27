@@ -27,7 +27,7 @@ const tools = [
     to: '/salary',
     emoji: '💵',
     title: 'Salary Calculator',
-    desc: "Using the 20/4/10 rule, see exactly what income you'd need to afford any vehicle responsibly.",
+    desc: "Using the 20/4/10 rule, see what income you'd need to afford any vehicle responsibly.",
     cta: 'Check affordability',
     featured: false,
     tier: 'free',
@@ -103,6 +103,23 @@ function fmt(n) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
 }
 
+const RESUME_STALE_DAYS = 30
+
+function calcAgeDays(savedAt) {
+  if (!savedAt) return Infinity
+  const ms = Date.now() - new Date(savedAt).getTime()
+  return ms / (1000 * 60 * 60 * 24)
+}
+
+function calcAgeLabel(savedAt) {
+  const days = calcAgeDays(savedAt)
+  if (days < 1) return 'today'
+  if (days < 2) return 'yesterday'
+  if (days < 7) return `${Math.floor(days)} days ago`
+  if (days < 30) return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''} ago`
+  return null
+}
+
 export default function Landing() {
   const [lastCalc] = useState(() => {
     try {
@@ -110,7 +127,8 @@ export default function Landing() {
     } catch { return null }
   })
   const [dismissedResume, setDismissedResume] = useState(false)
-  const showResume = lastCalc && !dismissedResume
+  const calcAge = calcAgeDays(lastCalc?.savedAt)
+  const showResume = lastCalc && !dismissedResume && calcAge < RESUME_STALE_DAYS
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">
@@ -165,7 +183,9 @@ export default function Landing() {
             <div className="anim-4 mt-8 w-full max-w-sm mx-auto rounded-xl border px-4 py-3 flex items-center gap-4"
               style={{ borderColor: 'rgba(255,184,0,0.25)', background: 'rgba(255,184,0,0.05)' }}>
               <div className="flex-1 text-left min-w-0">
-                <p className="text-xs text-[var(--text-muted)] mb-0.5">Last calculation</p>
+                <p className="text-xs text-[var(--text-muted)] mb-0.5">
+                  Last calculation{calcAgeLabel(lastCalc?.savedAt) ? ` · ${calcAgeLabel(lastCalc.savedAt)}` : ''}
+                </p>
                 <p className="text-sm font-semibold text-white truncate">
                   {lastCalc.vehicle || `$${lastCalc.price?.toLocaleString() ?? '—'} vehicle`}
                 </p>

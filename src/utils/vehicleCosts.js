@@ -126,7 +126,10 @@ export function estimateCurrentValue(originalPrice, make, model, ageYears, curre
   // Linear interpolation so fractional years (e.g. 3.25 for 39-month lease) work correctly
   let baseRate
   if (ageYears > 15) {
-    baseRate = Math.min(0.96, curve[15] + (ageYears - 15) * 0.005)
+    // Vehicles 16+ years old continue depreciating at a realistic pace as systems
+    // age and fail. 0.005/yr underestimates wear on older vehicles; 0.015/yr better
+    // reflects market data for 15–25 year old cars.
+    baseRate = Math.min(0.97, curve[15] + (ageYears - 15) * 0.015)
   } else {
     const lo = Math.floor(ageYears)
     const hi = Math.min(Math.ceil(ageYears), 15)
@@ -235,6 +238,9 @@ export const MAINT_TIER_COSTS = {
 
 export const LABOR_RATE = 100
 
+// Tire set cost by maintenance tier. Luxury/performance tires are 2–3× standard OEM.
+export const TIRE_SET_COST = { luxury: 1400, premium: 900, standard: 600, economy: 500 }
+
 export function generateMaintenanceServices(isEV, annualMileage, segment, make = '') {
   const tier  = determineMaintTier(make)
   const c     = MAINT_TIER_COSTS[tier]
@@ -277,7 +283,8 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
   svc.push({ name: 'Wheel alignment', detail: 'every 2 years', annual: Math.round(c.alignment_cost * brand / 2) })
 
   const tireInterval = isEV ? 40000 : isSports ? 30000 : isTruck ? 45000 : (tier === 'luxury' || tier === 'premium') ? 40000 : 60000
-  svc.push({ name: 'Tire replacement (set)', detail: `every ${tireInterval.toLocaleString()} mi`, annual: amortize(600, 2.0, tireInterval) })
+  const tireSetCost = TIRE_SET_COST[tier] ?? 600
+  svc.push({ name: 'Tire replacement (set)', detail: `every ${tireInterval.toLocaleString()} mi`, annual: amortize(tireSetCost, 2.0, tireInterval) })
 
   const brakeMult = isEV ? 1.8 : 1.0
   const brakeAnnual =
@@ -342,7 +349,8 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
   defs.push({ name: 'Wheel alignment', costPerOcc: Math.round(c.alignment_cost * brand), intervalMiles: 2 * annualMileage })
 
   const tireInterval = isEV ? 40000 : isSports ? 30000 : isTruck ? 45000 : (tier === 'luxury' || tier === 'premium') ? 40000 : 60000
-  defs.push({ name: 'Tire replacement (set)', costPerOcc: occCost(600, 2.0), intervalMiles: tireInterval })
+  const tireSetCostDet = TIRE_SET_COST[tier] ?? 600
+  defs.push({ name: 'Tire replacement (set)', costPerOcc: occCost(tireSetCostDet, 2.0), intervalMiles: tireInterval })
 
   const brakeMult = isEV ? 1.8 : 1.0
   defs.push({ name: 'Front brake pads', costPerOcc: occCost(150, 1.0), intervalMiles: 60000 * brakeMult })

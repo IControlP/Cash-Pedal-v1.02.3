@@ -6,9 +6,11 @@ export const LS_SUB_EMAIL       = 'cashpedal_subscriber_email'
 export const LS_SUB_EXPIRES     = 'cashpedal_sub_expires'
 export const LS_SUB_VERIFIED_AT = 'cashpedal_sub_verified_at'
 
-// Permanent pro users — bypass all subscription checks and never expire
+// Permanent pro user — bypasses all subscription checks and never expires.
+// Used for internal testing only. Do NOT add personal emails here; manage
+// access via the Stripe dashboard or server-side overrides instead.
 export const PRO_USER_EMAIL = 'pro@cashpedal.io'
-const PRO_USERS = new Set([PRO_USER_EMAIL, 'noah@cashpedal.io'])
+const PRO_USERS = new Set([PRO_USER_EMAIL])
 
 const VERIFY_INTERVAL_MS = 24 * 60 * 60 * 1000 // re-verify once per day
 

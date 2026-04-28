@@ -50,7 +50,7 @@ function estimateBasicMonthlyCosts(price, state, annualMiles = DEFAULT_ANNUAL_MI
 
   if (!state) {
     // No state: scale flat fuel estimate by mileage ratio; other costs stay tier-based
-    const flat = { luxury: { fuel:250, insurance:280, registration:50 }, premium: { fuel:180, insurance:180, registration:35 }, standard: { fuel:150, insurance:130, registration:25 }, economy: { fuel:120, insurance:100, registration:20 } }
+    const flat = { luxury: { fuel:250, insurance:310, registration:50 }, premium: { fuel:180, insurance:205, registration:35 }, standard: { fuel:150, insurance:165, registration:25 }, economy: { fuel:120, insurance:115, registration:20 } }
     const f = flat[tierKey]
     const scaledFuel = Math.round(f.fuel * (annualMiles / DEFAULT_ANNUAL_MILES))
     return { ...f, fuel: scaledFuel, maintenance, total: scaledFuel + f.insurance + maintenance + f.registration, tier: tierLabel[tierKey] }
@@ -190,6 +190,7 @@ export default function SalaryCalculator() {
   // Buy inputs
   const [vehiclePrice, setVehiclePrice] = useState(30000)
   const [downPct, setDownPct] = useState(20)
+  const [tradeInValue, setTradeInValue] = useState(0)
   const [loanTerm, setLoanTerm] = useState(48)
   const [rate, setRate] = useState(6.5)
 
@@ -346,13 +347,16 @@ export default function SalaryCalculator() {
       }
     }
     const downPayment = vehiclePrice * (downPct / 100)
-    const loanAmount = vehiclePrice - downPayment
+    const effectiveDown = Math.min(downPayment + tradeInValue, vehiclePrice)
+    const loanAmount = Math.max(0, vehiclePrice - effectiveDown)
     const payment = monthlyPayment(loanAmount, rate, loanTerm)
     const totalLoanCost = payment * loanTerm
     const totalInterest = totalLoanCost - loanAmount
     const totalMonthly = payment + extra.total
     return {
       downPayment,
+      tradeInValue,
+      effectiveDown,
       loanAmount,
       payment,
       totalLoanCost,
@@ -364,7 +368,7 @@ export default function SalaryCalculator() {
       aggressive: (totalMonthly / 0.20) * 12,
       conservativeMonthly: totalMonthly / 0.10,
     }
-  }, [mode, vehiclePrice, downPct, loanTerm, rate, leaseMsrp, leaseDown, leaseMonthly, leaseTerm, proExtras, userState, annualMiles])
+  }, [mode, vehiclePrice, downPct, tradeInValue, loanTerm, rate, leaseMsrp, leaseDown, leaseMonthly, leaseTerm, proExtras, userState, annualMiles])
 
   // Reverse mode: given a salary, solve for the max affordable vehicle price
   const affordableResults = useMemo(() => {
@@ -413,7 +417,9 @@ export default function SalaryCalculator() {
         if (basePrice <= (affordableResults.conservative || 0)) tier = 'conservative'
         else if (basePrice <= (affordableResults.comfortable || 0)) tier = 'comfortable'
         const ops = estimateBasicMonthlyCosts(basePrice, userState || null, annualMiles)
-        const annualFinancing = Math.round(monthlyPayment(basePrice * 0.80, rate, 60) * 12)
+        const cardDown = basePrice * (downPct / 100)
+        const cardLoan = Math.max(0, basePrice - cardDown)
+        const annualFinancing = Math.round(monthlyPayment(cardLoan, rate, loanTerm) * 12)
         const annualOperating = ops.total * 12
         entries.push({
           make, model, type: data.type, is_ev: data.is_ev,
@@ -429,7 +435,7 @@ export default function SalaryCalculator() {
       })
     })
     return entries.sort((a, b) => b.basePrice - a.basePrice)
-  }, [affordableResults, userState, annualMiles, rate])
+  }, [affordableResults, userState, annualMiles, rate, downPct, loanTerm])
 
   const filteredVehicles = useMemo(() => {
     if (carFilterCategory === 'all') return matchedVehicles
@@ -437,6 +443,7 @@ export default function SalaryCalculator() {
   }, [matchedVehicles, carFilterCategory])
 
   const downAmount = vehiclePrice * (downPct / 100)
+  const effectiveDownDisplay = Math.min(downAmount + tradeInValue, vehiclePrice)
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">
@@ -845,6 +852,41 @@ export default function SalaryCalculator() {
                     </div>
                   </div>
 
+                  {/* Trade-in value */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <label className="input-label">Trade-In Value</label>
+                      <span className="text-sm font-bold text-white">{tradeInValue > 0 ? fmt(tradeInValue) : 'None'}</span>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                      <input
+                        type="number"
+                        value={tradeInValue}
+                        min={0}
+                        max={vehiclePrice}
+                        onChange={e => setTradeInValue(Math.max(0, Number(e.target.value)))}
+                        className="input-field"
+                        style={{ paddingLeft: '1.75rem' }}
+                      />
+                    </div>
+                    <input
+                      type="range" min={0} max={Math.min(vehiclePrice, 80000)} step={500}
+                      value={tradeInValue}
+                      onChange={e => setTradeInValue(Number(e.target.value))}
+                      style={{ background: `linear-gradient(to right, var(--accent) ${(tradeInValue / Math.min(vehiclePrice, 80000)) * 100}%, var(--border) ${(tradeInValue / Math.min(vehiclePrice, 80000)) * 100}%)` }}
+                    />
+                    {tradeInValue > 0 ? (
+                      <p className="text-[10px] text-[var(--text-muted)]">
+                        Effective down: {fmt(effectiveDownDisplay)} ({Math.round((effectiveDownDisplay / vehiclePrice) * 100)}% of price) — {fmt(downAmount)} cash + {fmt(tradeInValue)} trade-in
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-[var(--text-muted)]">
+                        Have a vehicle to trade in? Enter its value to reduce your loan amount.
+                      </p>
+                    )}
+                  </div>
+
                   {/* Loan term */}
                   <div className="flex flex-col gap-2">
                     <label className="input-label">Loan Term</label>
@@ -882,6 +924,12 @@ export default function SalaryCalculator() {
                       onChange={e => setRate(Number(e.target.value))}
                       style={{ background: `linear-gradient(to right, var(--accent) ${(rate / 25) * 100}%, var(--border) ${(rate / 25) * 100}%)` }}
                     />
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      Typical new-car APRs: excellent credit (740+) ≈ 5–7% · good (680+) ≈ 7–9% · fair (620+) ≈ 10–13%
+                    </p>
+                    {rate >= 12 && (
+                      <p className="text-xs text-yellow-500">⚠ Rate looks high. Credit unions typically offer 2–4% below dealer-arranged financing — worth shopping before you sign.</p>
+                    )}
                   </div>
                 </>
               )}
@@ -1010,6 +1058,12 @@ export default function SalaryCalculator() {
                 <div className="card border-[var(--border)]">
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">Loan Cost Summary</p>
                   <div className="flex flex-col gap-2">
+                    {results.tradeInValue > 0 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[var(--text-muted)]">Trade-in credit</span>
+                        <span className="font-semibold tabular-nums text-green-400">−{fmt(results.tradeInValue)}</span>
+                      </div>
+                    )}
                     {[
                       { label: 'Amount financed', val: results.loanAmount },
                       { label: `Interest paid (${loanTerm / 12} yr @ ${rate}%)`, val: results.totalInterest },
@@ -1259,7 +1313,7 @@ export default function SalaryCalculator() {
                           <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1">
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Est. annual costs</p>
                             {[
-                              { label: `Financing (80% · 5yr · ${rate}%)`, val: v.annualFinancing },
+                              { label: `Financing (${100-downPct}% · ${loanTerm}mo · ${rate}%)`, val: v.annualFinancing },
                               { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.annualFuel },
                               { label: 'Insurance', val: v.annualInsurance },
                               { label: 'Maintenance', val: v.annualMaintenance },

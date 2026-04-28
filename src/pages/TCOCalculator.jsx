@@ -114,61 +114,54 @@ function getTrims(make, model, year) {
 }
 
 // ── Car SVG silhouettes ───────────────────────────────
+// Tabler-style monoline art: body color is the stroke color.
+// All brand hues are bright (L≥0.72) so they read on the dark purple background.
 const DEFAULT_PAL = {
-  body:      '#2a2a3a',
-  stroke:    '#3a3a50',
+  body:      '#E8E4F0',
+  stroke:    '#E8E4F0',
   win:       'rgba(16,30,52,0.88)',
-  headlight: '#FFB800',
-  tail:      '#ff3333',
-  rim:       '#4a4a70',
+  headlight: '#FFE066',
+  tail:      '#FF6B8A',
+  rim:       '#FFE066',
   shadow:    'rgba(0,0,0,0.45)',
 }
 
-// dimHex: darken a #rrggbb color for spoke contrast
-function dimHex(hex) {
-  if (!hex || hex[0] !== '#' || hex.length !== 7) return '#101018'
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return `rgb(${Math.round(r * 0.42)},${Math.round(g * 0.42)},${Math.round(b * 0.42)})`
-}
-
 const BRAND_PALETTE = {
-  'Acura':         { body: '#1E3260', stroke: '#2A4278', rim: '#5A8AB0' },
-  'Alfa Romeo':    { body: '#9B1422', stroke: '#721018', rim: '#D8D8D8', headlight: '#FFEE00' },
-  'Audi':          { body: '#303030', stroke: '#484848', rim: '#D0D0D0' },
-  'BMW':           { body: '#1A3278', stroke: '#1E3A90', rim: '#C8D4E0', headlight: '#C8E0FF' },
-  'Buick':         { body: '#1C2E58', stroke: '#243870', rim: '#9898B8' },
-  'Cadillac':      { body: '#201018', stroke: '#301820', rim: '#C8A040' },
-  'Chevrolet':     { body: '#0E2268', stroke: '#163090', rim: '#C0C0C0' },
-  'Chrysler':      { body: '#181E3A', stroke: '#222C54', rim: '#A8A8C0' },
-  'Dodge':         { body: '#5A1000', stroke: '#800E00', rim: '#E86010', headlight: '#FF8800' },
-  'Ferrari':       { body: '#AA0000', stroke: '#CC1010', rim: '#D0D0D0', headlight: '#FFEE00' },
-  'Fiat':          { body: '#881A1A', stroke: '#A02020', rim: '#C8C8C8' },
-  'Ford':          { body: '#0A2668', stroke: '#103482', rim: '#B8B8B8' },
-  'GMC':           { body: '#241414', stroke: '#341C1C', rim: '#C02020' },
-  'Genesis':       { body: '#202030', stroke: '#303040', rim: '#9090B0' },
-  'Honda':         { body: '#301414', stroke: '#401C1C', rim: '#B8B8B8' },
-  'Hyundai':       { body: '#0A1C48', stroke: '#102860', rim: '#B0B8C8' },
-  'Infiniti':      { body: '#1C1C30', stroke: '#282840', rim: '#9898B0' },
-  'Jaguar':        { body: '#103018', stroke: '#184022', rim: '#C0A030' },
-  'Jeep':          { body: '#304028', stroke: '#405434', rim: '#907060' },
-  'Kia':           { body: '#400E18', stroke: '#581420', rim: '#C8C8C8' },
-  'Lexus':         { body: '#1C1C28', stroke: '#282838', rim: '#9898A8' },
-  'Lincoln':       { body: '#0E0E22', stroke: '#181832', rim: '#B8B8C8' },
-  'Mazda':         { body: '#7E0E1A', stroke: '#A01020', rim: '#C8C8C8' },
-  'Mercedes-Benz': { body: '#262626', stroke: '#363636', rim: '#D8D8D8', headlight: '#E0EEFF' },
-  'Mini':          { body: '#8A1010', stroke: '#A81414', rim: '#C8C8C8' },
-  'Mitsubishi':    { body: '#880E0E', stroke: '#A81212', rim: '#C8C8C8' },
-  'Nissan':        { body: '#2C1414', stroke: '#3C1C1C', rim: '#C0C0C0' },
-  'Porsche':       { body: '#1A1A18', stroke: '#262420', rim: '#D0A820', headlight: '#FFFFFF' },
-  'Ram':           { body: '#0C2048', stroke: '#122E64', rim: '#B8B8B8' },
-  'Rivian':        { body: '#103420', stroke: '#1A4A2C', rim: '#40B870', headlight: '#90FFD8' },
-  'Subaru':        { body: '#0C2254', stroke: '#143070', rim: '#B0B8C8' },
-  'Tesla':         { body: '#280E0E', stroke: '#381414', rim: '#404040', headlight: '#90D4FF' },
-  'Toyota':        { body: '#2C0E0E', stroke: '#3C1414', rim: '#B8B8B8' },
-  'Volkswagen':    { body: '#0A1E4A', stroke: '#102860', rim: '#C8C8C8' },
-  'Volvo':         { body: '#0C1C3C', stroke: '#142852', rim: '#B0B8C8' },
+  'Acura':         { body: '#7BC8FF', rim: '#E0F0FF', headlight: '#E8F4FF' },
+  'Alfa Romeo':    { body: '#FF7A6B', rim: '#FFE066', headlight: '#FFEE00' },
+  'Audi':          { body: '#D8D8E0', rim: '#FFFFFF', headlight: '#E8F4FF' },
+  'BMW':           { body: '#7BC8FF', rim: '#E0F0FF', headlight: '#E8F4FF' },
+  'Buick':         { body: '#9CC8FF', rim: '#D8E8FF' },
+  'Cadillac':      { body: '#FFE066', rim: '#FFF0A0', headlight: '#FFFFFF' },
+  'Chevrolet':     { body: '#5BB8FF', rim: '#D0E8FF' },
+  'Chrysler':      { body: '#B8C8E8', rim: '#E0E8F4' },
+  'Dodge':         { body: '#FFB070', rim: '#FFE0B8', headlight: '#FFD060' },
+  'Ferrari':       { body: '#FF7A6B', rim: '#FFE066', headlight: '#FFEE00' },
+  'Fiat':          { body: '#FF8A7A', rim: '#F4DCD0' },
+  'Ford':          { body: '#5BB8FF', rim: '#D0E8FF', headlight: '#E8F4FF' },
+  'GMC':           { body: '#FF8470', rim: '#FFD0B8' },
+  'Genesis':       { body: '#C8C0E0', rim: '#E0DCF0' },
+  'Honda':         { body: '#FF8A7A', rim: '#F4DCD0' },
+  'Hyundai':       { body: '#7BC8FF', rim: '#D8E8FF' },
+  'Infiniti':      { body: '#B8C0E0', rim: '#D8DCF0' },
+  'Jaguar':        { body: '#9CE07A', rim: '#FFE066', headlight: '#FFE066' },
+  'Jeep':          { body: '#9CE07A', rim: '#D8E8B8', headlight: '#FFE066' },
+  'Kia':           { body: '#FF7A6B', rim: '#F4DCD0' },
+  'Lexus':         { body: '#D0CCE0', rim: '#E8E4F0' },
+  'Lincoln':       { body: '#C8C8D8', rim: '#E0E0E8' },
+  'Mazda':         { body: '#FF7A6B', rim: '#F4DCD0' },
+  'Mercedes-Benz': { body: '#D8D8E0', rim: '#FFFFFF', headlight: '#E8F4FF' },
+  'Mini':          { body: '#FF8A7A', rim: '#F4DCD0' },
+  'Mitsubishi':    { body: '#FF8A7A', rim: '#F4DCD0' },
+  'Nissan':        { body: '#FF8A7A', rim: '#F4DCD0' },
+  'Porsche':       { body: '#FFE066', rim: '#FFF0A0', headlight: '#FFFFFF' },
+  'Ram':           { body: '#5BB8FF', rim: '#D0E8FF' },
+  'Rivian':        { body: '#5FE0B8', rim: '#A8F4D8', headlight: '#9FE5FF' },
+  'Subaru':        { body: '#7BC8FF', rim: '#D8E8FF' },
+  'Tesla':         { body: '#F0F0F0', rim: '#FFFFFF', headlight: '#9FE5FF' },
+  'Toyota':        { body: '#FF8A7A', rim: '#F4DCD0', headlight: '#FFE8B8' },
+  'Volkswagen':    { body: '#7BC8FF', rim: '#D8E8FF' },
+  'Volvo':         { body: '#9CC8FF', rim: '#D8E8FF' },
 }
 
 const BRAND_TAGLINES = {
@@ -215,121 +208,159 @@ function getPal(make) {
 }
 
 // ── Shared SVG constants ──────────────────────────────
-const WIN  = 'rgba(16,30,56,0.9)'
-const TIRE = '#0c0c14'
+const STROKE_W = 3
 
-// Wheel: tire + colored rim + cross spokes (spin animates on hover)
-function Wheel({ cx, cy, r = 17, pal = DEFAULT_PAL }) {
-  const s = dimHex(pal.rim)
+// Wheel: tire ring + concentric hub with cross spokes (hub group spins on hover)
+function Wheel({ cx, cy, r = 15, pal = DEFAULT_PAL }) {
   return (
     <g>
-      <circle cx={cx} cy={cy} r={r} fill={TIRE} />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={pal.body} strokeWidth={STROKE_W} />
       <g className="wheel-rim-inner">
-        <circle cx={cx} cy={cy} r={r - 5} fill={pal.rim} />
-        <line x1={cx-(r-8)} y1={cy}      x2={cx+(r-8)} y2={cy}      stroke={s} strokeWidth="3" strokeLinecap="round" />
-        <line x1={cx}       y1={cy-(r-8)} x2={cx}       y2={cy+(r-8)} stroke={s} strokeWidth="3" strokeLinecap="round" />
-        <circle cx={cx} cy={cy} r={2.5} fill={TIRE} />
+        <circle cx={cx} cy={cy} r={r * 0.5} fill={pal.body} />
+        <circle cx={cx} cy={cy} r={r * 0.22} fill={pal.rim} />
+        <rect x={cx - 0.8} y={cy - r * 0.45} width="1.6" height={r * 0.9} fill={pal.rim} opacity="0.55" />
+        <rect x={cx - r * 0.45} y={cy - 0.8} width={r * 0.9} height="1.6" fill={pal.rim} opacity="0.55" />
       </g>
     </g>
   )
 }
 
 function EVBolt({ x, y }) {
+  const color = '#4FC3F7'
   return (
     <g className="ev-bolt">
-      <rect x={x} y={y} width="26" height="13" rx="3"
-        fill="rgba(79,195,247,0.18)" stroke="rgba(79,195,247,0.6)" strokeWidth="1" />
-      <path d={`M${x+6} ${y+11} L${x+11} ${y+3} L${x+14} ${y+7} L${x+19} ${y+3} L${x+14} ${y+11} L${x+11} ${y+7} Z`}
-        fill="#4FC3F7" />
+      <path
+        d={`M${x} ${y+8} L${x+5} ${y} L${x+4} ${y+5} L${x+9} ${y+5} L${x+3} ${y+13} L${x+5} ${y+8} Z`}
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
     </g>
   )
 }
 
-// SEDAN — 3-box silhouette: hood | windshield | roof | rear glass | trunk
+// SEDAN — clean monoline three-box profile
 function SedanSVG({ isEV, pal = DEFAULT_PAL }) {
   return (
     <svg viewBox="0 0 260 120" fill="none" className="w-full">
-      <ellipse cx="130" cy="114" rx="108" ry="5" fill={pal.shadow} />
-      <path d="M16 96 L16 68 C16 58 22 56 34 56 L80 56 L94 24 L168 22 L182 56 L226 56 C232 56 238 58 238 68 L238 96 Z" fill={pal.body} />
-      <polygon points="82,56 96,26 166,24 180,56" fill={WIN} />
-      <line x1="129" y1="56" x2="129" y2="96" stroke={pal.stroke} strokeWidth="1.5" opacity="0.5" />
-      <rect x="12" y="64" width="10" height="8" rx="2" fill={pal.headlight} opacity="0.95" className="headlight-fx" />
-      <rect x="238" y="62" width="8" height="10" rx="2" fill={pal.tail} opacity="0.9" />
-      {isEV && <EVBolt x={102} y={62} />}
-      <Wheel cx={50}  cy={105} r={16} pal={pal} />
-      <Wheel cx={208} cy={105} r={16} pal={pal} />
+      <ellipse cx="130" cy="114" rx="108" ry="3" fill={pal.shadow} />
+      <path
+        d="M 14 92 L 14 74 C 14 70 18 68 24 68 L 78 68 L 92 40 C 96 34 102 32 110 32 L 158 32 C 168 32 174 36 178 44 L 188 68 L 232 68 C 240 68 244 72 244 78 L 244 92"
+        stroke={pal.body}
+        strokeWidth={STROKE_W}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line x1="78" y1="68" x2="188" y2="68" stroke={pal.body} strokeWidth={STROKE_W} strokeLinecap="round" />
+      <line x1="135" y1="32" x2="135" y2="68" stroke={pal.body} strokeWidth={STROKE_W} strokeLinecap="round" />
+      <circle cx="20" cy="76" r="2.4" fill={pal.headlight} className="headlight-fx" />
+      <circle cx="238" cy="76" r="2.4" fill={pal.tail} />
+      {isEV && <EVBolt x={108} y={50} />}
+      <Wheel cx={56}  cy={96} r={14} pal={pal} />
+      <Wheel cx={204} cy={96} r={14} pal={pal} />
     </svg>
   )
 }
 
-// SUV — taller body, more upright windshield
+// SUV — taller upright greenhouse, two visible pillars, optional roof rail
 function SUVSVG({ isEV, isLarge, pal = DEFAULT_PAL }) {
   return (
     <svg viewBox="0 0 260 120" fill="none" className="w-full">
-      <ellipse cx="130" cy="114" rx="110" ry="5" fill={pal.shadow} />
-      <path d="M14 96 L14 62 C14 52 20 50 32 50 L76 50 L88 18 L174 16 L188 50 L228 50 C234 50 240 52 240 62 L240 96 Z" fill={pal.body} />
-      <polygon points="78,50 90,20 172,18 186,50" fill={WIN} />
-      <line x1="133" y1="50" x2="133" y2="96" stroke={pal.stroke} strokeWidth="1.5" opacity="0.5" />
-      {isLarge && <rect x="90" y="12" width="82" height="4" rx="2" fill={pal.stroke} opacity="0.85" />}
-      <rect x="10" y="60" width="12" height="10" rx="2" fill={pal.headlight} opacity="0.95" className="headlight-fx" />
-      <rect x="238" y="58" width="8" height="12" rx="2" fill={pal.tail} opacity="0.9" />
-      {isEV && <EVBolt x={104} y={56} />}
-      <Wheel cx={48}  cy={105} r={18} pal={pal} />
-      <Wheel cx={212} cy={105} r={18} pal={pal} />
+      <ellipse cx="130" cy="114" rx="110" ry="3" fill={pal.shadow} />
+      <path
+        d="M 14 92 L 14 68 C 14 64 18 62 24 62 L 64 62 C 70 36 80 28 100 26 L 174 26 C 188 28 196 36 200 62 L 232 62 C 240 62 244 66 244 72 L 244 92"
+        stroke={pal.body}
+        strokeWidth={STROKE_W}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line x1="64" y1="62" x2="200" y2="62" stroke={pal.body} strokeWidth={STROKE_W} strokeLinecap="round" />
+      <line x1="120" y1="26" x2="120" y2="62" stroke={pal.body} strokeWidth={STROKE_W} strokeLinecap="round" />
+      <line x1="160" y1="26" x2="160" y2="62" stroke={pal.body} strokeWidth={STROKE_W} strokeLinecap="round" />
+      {isLarge && <line x1="100" y1="22" x2="180" y2="22" stroke={pal.body} strokeWidth={STROKE_W - 1} strokeLinecap="round" />}
+      <circle cx="20" cy="72" r="2.4" fill={pal.headlight} className="headlight-fx" />
+      <circle cx="238" cy="72" r="2.4" fill={pal.tail} />
+      {isEV && <EVBolt x={108} y={42} />}
+      <Wheel cx={56}  cy={96} r={15} pal={pal} />
+      <Wheel cx={204} cy={96} r={15} pal={pal} />
     </svg>
   )
 }
 
-// TRUCK — distinct cab (tall, left) + flat bed (right)
+// TRUCK — distinct cab + open bed
 function TruckSVG({ pal = DEFAULT_PAL }) {
   return (
     <svg viewBox="0 0 260 120" fill="none" className="w-full">
-      <ellipse cx="130" cy="114" rx="110" ry="5" fill={pal.shadow} />
-      <rect x="14" y="70" width="230" height="26" rx="6" fill={pal.body} />
-      <path d="M14 96 L14 66 C14 56 18 52 28 52 L52 52 L64 24 L116 22 L120 44 L120 96 Z" fill={pal.body} />
-      <polygon points="52,52 66,26 114,24 118,52" fill={WIN} />
-      <rect x="120" y="62" width="122" height="10" rx="3" fill={pal.stroke} opacity="0.8" />
-      <rect x="240" y="62" width="6"   height="34" rx="2" fill={pal.stroke} opacity="0.7" />
-      <rect x="10" y="66" width="10" height="8" rx="2" fill={pal.headlight} opacity="0.95" className="headlight-fx" />
-      <rect x="240" y="66" width="6"  height="10" rx="2" fill={pal.tail} opacity="0.9" />
-      <Wheel cx={46}  cy={105} r={18} pal={pal} />
-      <Wheel cx={206} cy={105} r={18} pal={pal} />
+      <ellipse cx="130" cy="114" rx="110" ry="3" fill={pal.shadow} />
+      <path
+        d="M 14 92 L 14 68 C 14 64 18 62 24 62 L 50 62 L 60 32 C 64 26 68 24 76 24 L 116 24 C 122 24 124 28 126 32 L 130 62 L 130 92"
+        stroke={pal.body}
+        strokeWidth={STROKE_W}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M 130 92 L 130 56 L 240 56 C 244 56 246 60 246 64 L 246 92"
+        stroke={pal.body}
+        strokeWidth={STROKE_W}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line x1="50" y1="62" x2="126" y2="62" stroke={pal.body} strokeWidth={STROKE_W} strokeLinecap="round" />
+      <line x1="92" y1="24" x2="92" y2="62" stroke={pal.body} strokeWidth={STROKE_W} strokeLinecap="round" />
+      <line x1="130" y1="56" x2="130" y2="92" stroke={pal.body} strokeWidth={STROKE_W - 0.5} strokeLinecap="round" opacity="0.55" />
+      <circle cx="20" cy="72" r="2.4" fill={pal.headlight} className="headlight-fx" />
+      <circle cx="238" cy="68" r="2.4" fill={pal.tail} />
+      <Wheel cx={50}  cy={96} r={15} pal={pal} />
+      <Wheel cx={210} cy={96} r={15} pal={pal} />
     </svg>
   )
 }
 
-// SPORTS — ultra-low wide body, raked windshield
+// SPORTS — long hood, low raked DLO, animated speed lines
 function SportsSVG({ pal = DEFAULT_PAL }) {
   return (
     <svg viewBox="0 0 260 120" fill="none" className="w-full">
-      <ellipse cx="130" cy="114" rx="112" ry="5" fill={pal.shadow} />
-      <path d="M10 96 L10 78 C10 70 18 66 28 65 L88 63 L104 40 L160 38 L176 63 L234 65 C244 66 250 72 250 80 L250 96 Z" fill={pal.body} />
-      <polygon points="90,63 106,42 158,40 174,63" fill={WIN} />
-      <rect x="52" y="89" width="158" height="5" rx="2.5" fill={pal.stroke} opacity="0.45" />
-      <line className="speed-line" x1="12" y1="74" x2="40" y2="74" stroke={pal.headlight} strokeWidth="2" />
-      <line className="speed-line" x1="8"  y1="82" x2="36" y2="82" stroke={pal.headlight} strokeWidth="1.5" style={{ animationDelay: '0.12s' }} />
-      <rect x="8"   y="72" width="14" height="6" rx="2" fill={pal.headlight} opacity="0.95" className="headlight-fx" />
-      <rect x="238" y="70" width="14" height="6" rx="2" fill={pal.tail} opacity="0.9" />
-      <Wheel cx={52}  cy={105} r={16} pal={pal} />
-      <Wheel cx={208} cy={105} r={16} pal={pal} />
+      <ellipse cx="130" cy="114" rx="112" ry="3" fill={pal.shadow} />
+      <path
+        d="M 8 92 L 12 76 C 14 72 18 70 24 70 L 90 70 L 104 48 C 108 42 116 40 124 40 L 156 40 C 166 42 172 46 178 56 L 196 70 L 234 70 C 244 70 250 74 250 80 L 250 92"
+        stroke={pal.body}
+        strokeWidth={STROKE_W}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line x1="90" y1="70" x2="196" y2="70" stroke={pal.body} strokeWidth={STROKE_W} strokeLinecap="round" />
+      <line className="speed-line" x1="14" y1="60" x2="44" y2="60" stroke={pal.body} strokeWidth="2" strokeLinecap="round" />
+      <line className="speed-line" x1="8"  y1="68" x2="38" y2="68" stroke={pal.body} strokeWidth="2" strokeLinecap="round" style={{ animationDelay: '0.12s' }} />
+      <circle cx="16" cy="76" r="2.4" fill={pal.headlight} className="headlight-fx" />
+      <circle cx="244" cy="76" r="2.4" fill={pal.tail} />
+      <Wheel cx={58}  cy={96} r={14} pal={pal} />
+      <Wheel cx={204} cy={96} r={14} pal={pal} />
     </svg>
   )
 }
 
-// MINIVAN — tall box, panoramic side windows, sliding door line
+// MINIVAN — tall body with three large window sections
 function MinivanSVG({ pal = DEFAULT_PAL }) {
   return (
     <svg viewBox="0 0 260 120" fill="none" className="w-full">
-      <ellipse cx="130" cy="114" rx="108" ry="5" fill={pal.shadow} />
-      <path d="M14 96 L14 64 C14 54 18 50 28 50 L56 50 C58 26 68 14 86 14 L176 14 C194 14 200 28 200 50 L228 50 C234 50 240 56 240 64 L240 96 Z" fill={pal.body} />
-      <polygon points="56,50 60,26 84,14 88,50" fill={WIN} />
-      <rect x="92"  y="20" width="50" height="24" rx="4" fill={WIN} />
-      <rect x="148" y="20" width="46" height="24" rx="4" fill={WIN} />
-      <line x1="144" y1="50" x2="142" y2="96" stroke={pal.stroke} strokeWidth="2" opacity="0.6" />
-      <rect x="10" y="62" width="10" height="8"  rx="2" fill={pal.headlight} opacity="0.95" className="headlight-fx" />
-      <rect x="238" y="60" width="8" height="12" rx="2" fill={pal.tail} opacity="0.9" />
-      <Wheel cx={46}  cy={105} r={17} pal={pal} />
-      <Wheel cx={208} cy={105} r={17} pal={pal} />
+      <ellipse cx="130" cy="114" rx="108" ry="3" fill={pal.shadow} />
+      <path
+        d="M 14 92 L 14 64 C 14 60 18 58 24 58 L 56 58 C 60 32 70 22 90 22 L 188 22 C 200 22 206 32 208 58 L 232 58 C 240 58 244 62 244 68 L 244 92"
+        stroke={pal.body}
+        strokeWidth={STROKE_W}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line x1="56" y1="58" x2="208" y2="58" stroke={pal.body} strokeWidth={STROKE_W} strokeLinecap="round" />
+      <line x1="96"  y1="22" x2="96"  y2="58" stroke={pal.body} strokeWidth={STROKE_W} strokeLinecap="round" />
+      <line x1="142" y1="22" x2="142" y2="58" stroke={pal.body} strokeWidth={STROKE_W} strokeLinecap="round" />
+      <line x1="186" y1="22" x2="186" y2="58" stroke={pal.body} strokeWidth={STROKE_W} strokeLinecap="round" />
+      <circle cx="20" cy="68" r="2.4" fill={pal.headlight} className="headlight-fx" />
+      <circle cx="238" cy="68" r="2.4" fill={pal.tail} />
+      <Wheel cx={56}  cy={96} r={15} pal={pal} />
+      <Wheel cx={204} cy={96} r={15} pal={pal} />
     </svg>
   )
 }
@@ -371,7 +402,7 @@ function CarVisual({ make, model, carType, isEV }) {
         </div>
         {tagline && (
           <p className="text-[10px] mt-1.5 italic"
-            style={{ color: pal.headlight !== DEFAULT_PAL.headlight ? pal.headlight : 'var(--accent)', opacity: 0.7 }}>
+            style={{ color: pal.body, opacity: 0.75 }}>
             "{tagline}"
           </p>
         )}

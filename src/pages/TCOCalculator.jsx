@@ -1491,6 +1491,7 @@ export default function TCOCalculator() {
   const [dealerPurchase,   setDealerPurchase]   = useState(true)
   const [taxRateOverride,  setTaxRateOverride]  = useState(null) // null = use state rate
   const [docFeeOverride,   setDocFeeOverride]   = useState(null) // null = use state avg
+  const [evTaxCredit,      setEvTaxCredit]      = useState(0)    // IRA federal EV credit (buy mode only)
 
   // Restore last session when landing via ?resume=1
   useEffect(() => {
@@ -1633,7 +1634,7 @@ export default function TCOCalculator() {
 
   const handlePickerChange = useCallback((level, value) => {
     if (level === 'make') {
-      setSelMake(value); setSelModel(''); setSelYear(''); setSelTrim(''); setOrigMsrp(null); setVehicleCategory('')
+      setSelMake(value); setSelModel(''); setSelYear(''); setSelTrim(''); setOrigMsrp(null); setVehicleCategory(''); setEvTaxCredit(0)
     }
     if (level === 'model') {
       setSelModel(value); setSelYear(''); setSelTrim(''); setOrigMsrp(null)
@@ -1673,9 +1674,10 @@ export default function TCOCalculator() {
   const regionalDemand = resolvedState ? getRegionalDemandPremium(resolvedState) : 0
 
   const results = useMemo(() => calculateLoan({
-    price: effectivePrice, downPayment: Math.min(downPayment, effectivePrice),
+    price: effectivePrice,
+    downPayment: Math.min(downPayment + (financeMode === 'buy' ? evTaxCredit : 0), effectivePrice),
     loanTermMonths: loanTerm, annualRatePercent: rate, ownershipYears,
-  }), [effectivePrice, downPayment, loanTerm, rate, ownershipYears])
+  }), [effectivePrice, downPayment, evTaxCredit, financeMode, loanTerm, rate, ownershipYears])
 
   const leaseResults = useMemo(() => calculateLease({
     msrp: price,
@@ -2020,7 +2022,11 @@ export default function TCOCalculator() {
                     <select
                       className="input-field"
                       value={vehicleCategory}
-                      onChange={e => setVehicleCategory(e.target.value)}
+                      onChange={e => {
+                        const newCat = e.target.value
+                        setVehicleCategory(newCat)
+                        if (newCat !== 'electric') setEvTaxCredit(0)
+                      }}
                     >
                       <option value="">Select category…</option>
                       {VEHICLE_CATEGORIES.map(c => (
@@ -2188,8 +2194,39 @@ export default function TCOCalculator() {
                     onChange={v => setDownPayment(Math.min(v, effectivePrice))}
                     min={0} max={Math.min(effectivePrice, 50000)} step={500} prefix="$" />
 
+                  {/* Federal EV Tax Credit — IRA 2024, buy mode only */}
+                  {effIsEV && (
+                    <div className="flex flex-col gap-2 px-4 pt-3 pb-4 rounded-xl border"
+                      style={{ borderColor: 'rgba(96,165,250,0.35)', background: 'rgba(96,165,250,0.05)' }}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-white">Federal EV Tax Credit</p>
+                          <p className="text-[10px] text-[var(--text-muted)] mt-0.5">IRA 2024 — up to $7,500 for qualifying new EVs</p>
+                        </div>
+                        <span className="font-display font-bold text-blue-400 text-lg">{evTaxCredit > 0 ? `−${formatCurrency(evTaxCredit)}` : '—'}</span>
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        {[0, 3750, 7500].map(amt => (
+                          <button key={amt}
+                            onClick={() => setEvTaxCredit(amt)}
+                            className="flex-1 py-1.5 rounded-lg border text-xs font-bold transition-all"
+                            style={{
+                              borderColor: evTaxCredit === amt ? 'rgba(96,165,250,0.6)' : 'var(--border)',
+                              color:       evTaxCredit === amt ? '#60a5fa' : 'var(--text-muted)',
+                              background:  evTaxCredit === amt ? 'rgba(96,165,250,0.12)' : 'transparent',
+                            }}>
+                            {amt === 0 ? 'No credit' : formatCurrency(amt)}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                        Reduces your effective loan amount. Eligibility depends on income, MSRP caps, and vehicle assembly requirements — verify at fueleconomy.gov.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
-                    <span className="text-sm text-[var(--text-muted)]">Loan amount</span>
+                    <span className="text-sm text-[var(--text-muted)]">Loan amount{evTaxCredit > 0 && effIsEV ? ' (after EV credit)' : ''}</span>
                     <span className="font-display font-bold text-white text-lg">{formatCurrency(results.loanAmount)}</span>
                   </div>
 

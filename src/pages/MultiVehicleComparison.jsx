@@ -49,7 +49,7 @@ const defaultVehicle = {
 
 // ── Ranking parameters available to the user ──────────
 const RANK_PARAMS = [
-  { key: 'totalOutOfPocket', label: 'Most Affordable (Total Out-of-Pocket)', lowerIsBetter: true },
+  { key: 'totalOutOfPocket', label: 'Lowest Total Financing Cost', lowerIsBetter: true },
   { key: 'mpgCombined',      label: 'Best MPG',                               lowerIsBetter: false },
   { key: 'cargoSqFt',        label: 'Most Cargo Space',                       lowerIsBetter: false },
   { key: 'valueRetentionPct',label: 'Best Value Retention',                   lowerIsBetter: false },
@@ -332,13 +332,15 @@ export default function MultiVehicleComparison() {
       })
     }), [vehicles])
 
-  // Compute "total out of pocket" for ranking — prefer TCO-sourced if available
+  // Compute total financing cost for ranking.
+  // TCO-imported vehicles: full ownership cost (loan + insurance + fuel + maintenance + registration).
+  // Manually entered: down payment + total loan payments (buy) or total lease payments (lease).
   const totalOutOfPocket = useMemo(() =>
-    vehicles.map((v, i) =>
-      v.totalOwnershipCost != null
-        ? v.totalOwnershipCost
-        : results[i].totalCostOfLoan
-    ), [vehicles, results])
+    vehicles.map((v, i) => {
+      if (v.totalOwnershipCost != null) return v.totalOwnershipCost
+      if (v.isLease) return results[i].totalCostOfLoan  // monthly × term
+      return Math.min(v.downPayment, v.price) + results[i].totalCostOfLoan
+    }), [vehicles, results])
 
   function updateVehicle(i, v) {
     setVehicles(vs => vs.map((orig, idx) => idx === i ? v : orig))
@@ -614,6 +616,12 @@ export default function MultiVehicleComparison() {
                   ))}
                 </tbody>
               </table>
+              {activeRankParams.totalOutOfPocket && (
+                <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
+                  * Financing cost: TCO-imported vehicles include all ownership costs (loan + insurance + fuel + maintenance + registration).
+                  Manually entered vehicles show down payment + total loan payments (buy) or total lease payments (lease) — import from TCO Calculator for full all-in comparison.
+                </p>
+              )}
             </div>
           )}
 

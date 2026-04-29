@@ -93,19 +93,32 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
   }
 }
 
-// Rough effective take-home estimate for a given gross annual salary.
-// Uses simplified federal brackets + FICA + 4% avg state income tax.
+// Estimated monthly take-home for a given gross annual salary.
+// Uses 2025 federal marginal brackets (single filer, standard deduction) + FICA + 4% avg state.
 // Intended for ballpark context only, not tax advice.
 function estimateMonthlyTakeHome(grossAnnual) {
-  let federalEff
-  if (grossAnnual <= 30000)       federalEff = 0.08
-  else if (grossAnnual <= 55000)  federalEff = 0.12
-  else if (grossAnnual <= 90000)  federalEff = 0.17
-  else if (grossAnnual <= 140000) federalEff = 0.21
-  else if (grossAnnual <= 200000) federalEff = 0.24
-  else                            federalEff = 0.28
-  const totalRate = federalEff + 0.0765 + 0.04  // federal + FICA + avg state
-  return Math.round((grossAnnual * (1 - totalRate)) / 12)
+  // 2025 federal brackets (single filer). Standard deduction: $15,000.
+  const STANDARD_DEDUCTION = 15000
+  const BRACKETS = [
+    [11925,    0.10],
+    [48475,    0.12],
+    [103350,   0.22],
+    [197300,   0.24],
+    [250525,   0.32],
+    [626350,   0.35],
+    [Infinity, 0.37],
+  ]
+  const taxable = Math.max(0, grossAnnual - STANDARD_DEDUCTION)
+  let federal = 0, prev = 0
+  for (const [limit, rate] of BRACKETS) {
+    if (taxable <= prev) break
+    federal += (Math.min(taxable, limit) - prev) * rate
+    prev = limit
+  }
+  // FICA: 6.2% Social Security (capped at $176,100) + 1.45% Medicare
+  const fica = Math.min(grossAnnual, 176100) * 0.062 + grossAnnual * 0.0145
+  const state = grossAnnual * 0.04  // avg state income tax
+  return Math.round((grossAnnual - federal - fica - state) / 12)
 }
 
 // US state list for the selector (derived from STATE_INS_BASE keys for coverage)
@@ -186,6 +199,7 @@ export default function SalaryCalculator() {
 
   // Car suggestion filter
   const [carFilterCategory, setCarFilterCategory] = useState('all')
+  const [showAllVehicles, setShowAllVehicles] = useState(false)
 
   // Buy inputs
   const [vehiclePrice, setVehiclePrice] = useState(30000)
@@ -1205,7 +1219,7 @@ export default function SalaryCalculator() {
                   ].map(opt => (
                     <button
                       key={opt.value}
-                      onClick={() => setCarFilterCategory(opt.value)}
+                      onClick={() => { setCarFilterCategory(opt.value); setShowAllVehicles(false) }}
                       className="px-3 py-1.5 rounded-md text-xs font-semibold transition-all"
                       style={{
                         background: carFilterCategory === opt.value ? 'var(--accent)' : 'transparent',
@@ -1232,7 +1246,7 @@ export default function SalaryCalculator() {
               ) : (
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                    {filteredVehicles.slice(0, 20).map(v => {
+                    {(showAllVehicles ? filteredVehicles : filteredVehicles.slice(0, 20)).map(v => {
                       const tierStyles = {
                         conservative: { color: 'text-green-400', label: '✓ Conservative' },
                         comfortable:  { color: 'text-[var(--accent)]', label: 'Comfortable' },
@@ -1280,9 +1294,16 @@ export default function SalaryCalculator() {
                     })}
                   </div>
                   {filteredVehicles.length > 20 && (
-                    <p className="text-xs text-[var(--text-muted)] text-center mt-4">
-                      Showing 20 of {filteredVehicles.length} matches — filter by category or adjust your salary to refine.
-                    </p>
+                    <div className="text-center mt-4">
+                      <button
+                        onClick={() => setShowAllVehicles(v => !v)}
+                        className="text-xs font-semibold px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all"
+                      >
+                        {showAllVehicles
+                          ? `Show fewer ↑`
+                          : `Show all ${filteredVehicles.length} matches ↓`}
+                      </button>
+                    </div>
                   )}
                 </>
               )}

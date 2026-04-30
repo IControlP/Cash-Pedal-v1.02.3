@@ -186,11 +186,28 @@ export const STATE_INS_BASE = {
   TX:2310,UT:1640,VT:1160,VA:1480,WA:1620,WV:1610,WI:1330,WY:1420,
 }
 
+// Interpolates between value brackets to avoid abrupt insurance jumps at bracket edges.
+// e.g. a $49,999 vs. $50,001 vehicle no longer yields a sudden 18% premium spike.
+function getInsuranceValueMult(value) {
+  for (let i = 0; i < INSURANCE_VALUE_BRACKETS.length; i++) {
+    const [lo, hi, mult] = INSURANCE_VALUE_BRACKETS[i]
+    if (value >= lo && value < hi) {
+      if (i + 1 < INSURANCE_VALUE_BRACKETS.length && hi !== Infinity) {
+        const nextMult = INSURANCE_VALUE_BRACKETS[i + 1][2]
+        const t = (value - lo) / (hi - lo)
+        return mult + t * (nextMult - mult)
+      }
+      return mult
+    }
+  }
+  return 1.65
+}
+
 // state=null → national average
 export function estimateInsurance(purchasePrice, make, model, modelYear, state, multiCarDiscount = false) {
   const ageYears   = modelYear ? Math.max(0, new Date().getFullYear() - parseInt(modelYear)) : 0
   const currentVal = estimateCurrentValue(purchasePrice, make || null, model || null, ageYears)
-  const [,,valueMult] = INSURANCE_VALUE_BRACKETS.find(([mn, mx]) => currentVal >= mn && currentVal < mx) ?? [0,0,1.0]
+  const valueMult  = getInsuranceValueMult(currentVal)
   const brandMult  = INSURANCE_BRAND_MULT[make] ?? 1.0
   const stateBase  = STATE_INS_BASE[state] ?? INSURANCE_BASE_RATE
   const multiCarMult = multiCarDiscount ? 0.85 : 1.0

@@ -5,9 +5,9 @@ export default function ProGate({ isPro, title, description, preview = null }) {
 
   return (
     <div className="relative rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-      {/* Blurred ghost preview */}
+      {/* Blurred ghost preview — raised to 22% so users can tell what kind of content is behind the gate */}
       {preview && (
-        <div className="opacity-[0.12] pointer-events-none select-none" aria-hidden>
+        <div className="opacity-[0.22] pointer-events-none select-none" aria-hidden>
           {preview}
         </div>
       )}
@@ -15,7 +15,7 @@ export default function ProGate({ isPro, title, description, preview = null }) {
       {/* Lock overlay */}
       <div
         className={`${preview ? 'absolute inset-0' : ''} z-10 flex flex-col items-center justify-center gap-3 p-6 text-center`}
-        style={preview ? { background: 'rgba(13,13,18,0.82)', backdropFilter: 'blur(6px)' } : {}}
+        style={preview ? { background: 'rgba(13,13,18,0.78)', backdropFilter: 'blur(5px)' } : {}}
       >
         <div className="w-9 h-9 rounded-full flex items-center justify-center text-lg shrink-0"
           style={{ background: 'rgba(255,184,0,0.1)', border: '1px solid rgba(255,184,0,0.25)' }}>

@@ -59,6 +59,11 @@ const RANK_PARAMS = [
 function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
   const pct = (val, min, max) => ((val - min) / (max - min)) * 100
 
+  const priceWarning = vehicle.price < 1000 ? 'Price seems too low — check for typos.' : null
+  const rateWarning  = !vehicle.isLease && vehicle.rate > 20 ? 'Rate above 20% — double-check this value.' : null
+  const downWarning  = !vehicle.isLease && vehicle.downPayment > 0 && vehicle.downPayment >= vehicle.price
+    ? 'Down payment ≥ price — no loan needed.' : null
+
   return (
     <div className="card flex flex-col gap-4" style={{ borderColor: color, borderWidth: '1px' }}>
       {/* Header */}
@@ -129,6 +134,9 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
             onChange={e => onChange({ ...vehicle, price: Number(e.target.value) })}
             className="input-field text-sm py-2" style={{ paddingLeft: '1.75rem' }} />
         </div>
+        {priceWarning && (
+          <p className="text-[10px] text-amber-400 mb-1">⚠ {priceWarning}</p>
+        )}
         <input type="range" min={5000} max={150000} step={500} value={vehicle.price}
           onChange={e => onChange({ ...vehicle, price: Number(e.target.value) })}
           style={{ background: `linear-gradient(to right, ${color} ${pct(vehicle.price, 5000, 150000)}%, var(--border) ${pct(vehicle.price, 5000, 150000)}%)` }} />
@@ -172,6 +180,9 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
                 onChange={e => onChange({ ...vehicle, downPayment: Math.min(Number(e.target.value), vehicle.price) })}
                 className="input-field text-sm py-2" style={{ paddingLeft: '1.75rem' }} />
             </div>
+            {downWarning && (
+              <p className="text-[10px] text-amber-400 mb-1">⚠ {downWarning}</p>
+            )}
             <input type="range" min={0} max={Math.min(vehicle.price, 50000)} step={500}
               value={Math.min(vehicle.downPayment, vehicle.price)}
               onChange={e => onChange({ ...vehicle, downPayment: Number(e.target.value) })}
@@ -193,6 +204,9 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
               <input type="number" value={vehicle.rate} min={0} max={25} step={0.1}
                 onChange={e => onChange({ ...vehicle, rate: Number(e.target.value) })}
                 className="input-field text-sm py-2" />
+              {rateWarning && (
+                <p className="text-[10px] text-amber-400 mt-1">⚠ {rateWarning}</p>
+              )}
             </div>
           </div>
 

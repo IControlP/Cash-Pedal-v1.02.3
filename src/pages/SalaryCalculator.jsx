@@ -960,6 +960,43 @@ export default function SalaryCalculator() {
                 Required annual income
               </p>
 
+              {/* Affordability verdict when user has entered their salary */}
+              {knownSalary && Number(knownSalary) >= 10000 && (() => {
+                const s = Number(knownSalary)
+                let verdict, subtext, bg, border, textColor
+                if (s >= results.conservative) {
+                  verdict = 'Comfortably within budget'
+                  subtext = `At ${fmt(s)}/yr, vehicle costs stay under 10% of gross income.`
+                  bg = 'rgba(74,222,128,0.07)'
+                  border = 'rgba(74,222,128,0.3)'
+                  textColor = 'rgb(74,222,128)'
+                } else if (s >= results.comfortable) {
+                  verdict = 'Manageable — slightly stretched'
+                  subtext = `Vehicle costs will be 10–15% of your ${fmt(s)}/yr income. Doable with discipline.`
+                  bg = 'rgba(250,204,21,0.07)'
+                  border = 'rgba(250,204,21,0.3)'
+                  textColor = 'rgb(250,204,21)'
+                } else if (s >= results.aggressive) {
+                  verdict = 'Stretched — approaching your limit'
+                  subtext = `Vehicle costs will be 15–20% of your ${fmt(s)}/yr income. Little room for error.`
+                  bg = 'rgba(251,146,60,0.07)'
+                  border = 'rgba(251,146,60,0.3)'
+                  textColor = 'rgb(251,146,60)'
+                } else {
+                  verdict = 'Over budget for this vehicle'
+                  subtext = `This vehicle would require ${fmt(results.aggressive)}/yr minimum — ${fmt(results.aggressive - s)} more than your salary.`
+                  bg = 'rgba(248,113,113,0.07)'
+                  border = 'rgba(248,113,113,0.3)'
+                  textColor = 'rgb(248,113,113)'
+                }
+                return (
+                  <div className="rounded-xl border p-4" style={{ background: bg, borderColor: border }}>
+                    <p className="font-bold text-sm" style={{ color: textColor }}>{verdict}</p>
+                    <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">{subtext}</p>
+                  </div>
+                )
+              })()}
+
               {[
                 {
                   label: 'Conservative',

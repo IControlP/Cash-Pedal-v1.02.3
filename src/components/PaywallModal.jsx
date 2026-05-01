@@ -78,10 +78,11 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
     setCheckoutErr('')
     setLoading(true)
     try {
+      const normalizedEmail = email.trim().toLowerCase() || undefined
       const res  = await fetch('/api/create-checkout-session', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email: email || undefined, cancelPath, annual }),
+        body:    JSON.stringify({ email: normalizedEmail, cancelPath, annual }),
       })
       const data = await res.json()
       if (data.url) {
@@ -101,7 +102,7 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
     setRestoreErr(''); setDeviceLimit(false)
     if (!email.trim()) { setRestoreErr('Please enter your email address.'); return }
     setLoading(true)
-    const result = await verifySubscription(email)
+    const result = await verifySubscription(email.trim().toLowerCase())
     setLoading(false)
     if (result.active) {
       onUnlocked()

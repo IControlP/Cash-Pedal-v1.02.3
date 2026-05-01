@@ -443,13 +443,18 @@ export function getEffectiveElecRate(state, style) {
   return home
 }
 
+// AC Level-2 home chargers are ~88% efficient (energy in battery / energy drawn from grid).
+// Charging losses of ~12% mean the grid cost is higher than battery consumption suggests.
+const EV_CHARGING_OVERHEAD = 1.12
+
 // state=null → national average defaults ($3.50/gal gas, $0.16/kWh electricity)
 // isPremium: adds PREMIUM_PRICE_DELTA to the state average when no override is set
 export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 15000, fuelPriceOverride = null, isPremium = false) {
   const KWH_PER_GAL = 33.7
   if (isEV) {
     const mpge = mpgeCombined ?? 100
-    const annualKwh = miles / (mpge / KWH_PER_GAL)
+    // annualKwh is battery consumption; multiply by overhead to get grid draw cost
+    const annualKwh = (miles / (mpge / KWH_PER_GAL)) * EV_CHARGING_OVERHEAD
     const rate = fuelPriceOverride !== null ? fuelPriceOverride : (STATE_ELEC_RATES[state] ?? 0.16)
     return Math.round(annualKwh * rate / 50) * 50
   }

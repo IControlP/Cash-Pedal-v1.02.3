@@ -71,6 +71,12 @@ export default function CarSurvey() {
     return scoreVehicles(answers)
   }, [answers, step])
 
+  // Live scores update as user answers — only shown after 3+ questions answered
+  const liveScores = useMemo(() => {
+    if (step !== 'quiz' || currentQ < 3) return null
+    return scoreVehicles(answers)
+  }, [answers, step, currentQ])
+
   const rankedProfiles = useMemo(() => {
     if (!scores) return []
     return Object.entries(scores)
@@ -188,10 +194,49 @@ export default function CarSurvey() {
               </div>
             </div>
 
+            {/* Live score preview — appears after 3 answers */}
+            {liveScores && (() => {
+              const top3 = Object.entries(liveScores)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+              const maxScore = top3[0][1]
+              return (
+                <div className="mt-4 p-3 rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-2">
+                    Leading so far
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {top3.map(([key, score], i) => {
+                      const profile = vehicleProfiles[key]
+                      return (
+                        <div key={key} className="flex items-center gap-2">
+                          <span className="text-sm w-5 shrink-0">{profile.emoji}</span>
+                          <span className="text-xs text-[var(--text-muted)] w-24 shrink-0 truncate">{profile.name}</span>
+                          <div className="flex-1 h-1.5 bg-[var(--border)] rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{
+                                width: `${(score / maxScore) * 100}%`,
+                                background: i === 0 ? 'var(--accent)' : 'rgba(200,255,0,0.35)',
+                              }}
+                            />
+                          </div>
+                          <span className="text-xs font-bold tabular-nums w-7 text-right"
+                            style={{ color: i === 0 ? 'var(--accent)' : 'var(--text-muted)' }}>
+                            {Math.round(score)}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })()}
+
             {currentQ > 0 && (
               <button
                 onClick={() => setCurrentQ(q => q - 1)}
-                className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
+                className="text-sm text-[var(--text-muted)] hover:text-white transition-colors mt-4 block"
               >
                 ← Back
               </button>

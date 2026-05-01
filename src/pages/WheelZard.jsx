@@ -24,6 +24,47 @@ const capabilities = [
   { emoji: '🎯', title: 'Buying Advice', desc: 'New vs used, lease vs buy — Wheel-Zard breaks it down.' },
 ]
 
+// Parse a response string that may contain <a href='...'> and <strong> tags
+// into an array of React-safe elements. Only these two tag types are produced
+// by getLocalResponse, so the parser is intentionally narrow.
+function parseResponseText(html) {
+  const parts = []
+  const tagRe = /<(a|strong)(?:\s+[^>]*)?>[\s\S]*?<\/\1>/g
+  let last = 0, match
+  while ((match = tagRe.exec(html)) !== null) {
+    if (match.index > last) parts.push(html.slice(last, match.index))
+    const tag = match[0]
+    if (tag.startsWith('<strong')) {
+      const text = tag.replace(/<\/?strong[^>]*>/g, '')
+      parts.push({ type: 'strong', text })
+    } else {
+      const hrefMatch = /href='([^']+)'/.exec(tag)
+      const text = tag.replace(/<[^>]+>/g, '')
+      parts.push({ type: 'a', href: hrefMatch?.[1] ?? '#', text })
+    }
+    last = match.index + match[0].length
+  }
+  if (last < html.length) parts.push(html.slice(last))
+  return parts
+}
+
+function SafeResponse({ text }) {
+  const parts = parseResponseText(text)
+  return (
+    <>
+      {parts.map((p, i) => {
+        if (typeof p === 'string') return <span key={i}>{p}</span>
+        if (p.type === 'strong') return <strong key={i} className="text-white">{p.text}</strong>
+        return (
+          <a key={i} href={p.href} className="text-[var(--accent)] hover:underline">
+            {p.text}
+          </a>
+        )
+      })}
+    </>
+  )
+}
+
 // Simple local response logic for quick questions
 function getLocalResponse(msg) {
   const m = msg.toLowerCase()
@@ -135,7 +176,7 @@ export default function WheelZard() {
                       }`}
                     >
                       {msg.html
-                        ? <span dangerouslySetInnerHTML={{ __html: msg.text }} />
+                        ? <SafeResponse text={msg.text} />
                         : msg.text
                       }
                       {msg.cta && (

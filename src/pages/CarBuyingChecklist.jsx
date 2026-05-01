@@ -426,6 +426,19 @@ export default function CarBuyingChecklist() {
             </button>
           </div>
 
+          {/* Vehicle history reminder */}
+          <div className="rounded-xl border px-4 py-3 mb-5 flex items-start gap-3 text-sm"
+            style={{ borderColor: 'rgba(96,165,250,0.3)', background: 'rgba(96,165,250,0.06)' }}>
+            <span className="text-base shrink-0 mt-0.5">📋</span>
+            <div>
+              <span className="font-semibold text-white">Run a vehicle history report before you buy.</span>
+              <span className="text-[var(--text-muted)] ml-1">
+                Check for accidents, title issues, odometer rollback, open recalls, and lemon history.
+                Free option: <a href="https://www.nhtsa.gov/vehicle/recalls" target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:underline">NHTSA Recalls</a> · Paid reports: Carfax, AutoCheck (~$25–40).
+              </span>
+            </div>
+          </div>
+
           {/* Price range card */}
           {priceRange && (
             <div className="rounded-xl p-5 mb-6 border" style={{ background: 'rgba(200,255,0,0.03)', borderColor: 'rgba(200,255,0,0.15)' }}>

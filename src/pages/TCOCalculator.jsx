@@ -2709,6 +2709,11 @@ export default function TCOCalculator() {
                     <ResultCard label="Total Lease Cost"     value={leaseResults.totalLeaseCost}   delay={60}  />
                     <ResultCard label="Residual Value"       value={leaseResults.residualValue}     delay={120} />
                     <ResultCard label="Lease Cost Per Year"  value={leaseResults.annualLeaseCost}  delay={180} />
+                    <div className="col-span-full mt-1 rounded-xl border px-4 py-3 text-xs leading-relaxed"
+                      style={{ borderColor: 'rgba(251,146,60,0.3)', background: 'rgba(251,146,60,0.06)', color: 'var(--text-muted)' }}>
+                      <span className="font-semibold text-white">Gap insurance note: </span>
+                      If your leased vehicle is totaled or stolen, your auto insurer pays current market value — which is often less than what you owe on the lease. GAP insurance covers that difference and typically costs $20–40/year added to your policy. Most lenders require it; verify with your dealer.
+                    </div>
                   </>
                 ) : (
                   <>

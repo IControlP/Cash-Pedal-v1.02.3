@@ -882,6 +882,36 @@ export default function SalaryCalculator() {
                       onChange={e => setRate(Number(e.target.value))}
                       style={{ background: `linear-gradient(to right, var(--accent) ${(rate / 25) * 100}%, var(--border) ${(rate / 25) * 100}%)` }}
                     />
+                    {/* Credit score APR guidance */}
+                    <div className="rounded-lg border p-3 mt-1"
+                      style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-2">
+                        Typical APR by Credit Score
+                      </p>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {[
+                          { label: 'Excellent', score: '750+',    apr: '4–6%',   highlight: rate >= 4 && rate <= 6.5 },
+                          { label: 'Good',      score: '700–749', apr: '6–9%',   highlight: rate > 6.5 && rate <= 9 },
+                          { label: 'Fair',      score: '650–699', apr: '9–13%',  highlight: rate > 9 && rate <= 13 },
+                          { label: 'Poor',      score: '600–649', apr: '13–18%', highlight: rate > 13 && rate <= 18 },
+                          { label: 'Very Poor', score: '<600',    apr: '18%+',   highlight: rate > 18 },
+                          { label: 'New buyer', score: 'no hist', apr: '10–15%', highlight: false },
+                        ].map(({ label, score, apr, highlight }) => (
+                          <div key={label} className="rounded px-2 py-1.5 text-center"
+                            style={{
+                              background: highlight ? 'rgba(200,255,0,0.08)' : 'rgba(255,255,255,0.03)',
+                              border: `1px solid ${highlight ? 'rgba(200,255,0,0.25)' : 'transparent'}`,
+                            }}>
+                            <p className={`font-semibold ${highlight ? 'text-[var(--accent)]' : 'text-white/70'}`}>{apr}</p>
+                            <p className="text-[var(--text-muted)] mt-0.5">{label}</p>
+                            <p className="text-[var(--text-muted)] opacity-60">{score}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-[var(--text-muted)] text-[10px] mt-2 opacity-70">
+                        Your credit score is the single biggest lever on your monthly payment. Adjust the rate above to match your situation.
+                      </p>
+                    </div>
                   </div>
                 </>
               )}

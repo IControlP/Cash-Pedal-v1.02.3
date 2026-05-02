@@ -444,6 +444,25 @@ export default function MultiVehicleComparison() {
       })
     }
 
+    // "Best Overall": count wins per vehicle across all active params
+    if (rows.length >= 2) {
+      const winCounts = vehicles.map((_, i) =>
+        rows.reduce((n, row) => n + (row.scores[i]?.isBest && row.scores[i]?.hasValue ? 1 : 0), 0)
+      )
+      const maxWins = Math.max(...winCounts)
+      if (maxWins > 0) {
+        rows.push({
+          label: 'Best Overall',
+          isSummary: true,
+          scores: winCounts.map((w, i) => ({
+            display: w === 0 ? '—' : `${w} win${w !== 1 ? 's' : ''}`,
+            isBest: w === maxWins,
+            hasValue: w > 0,
+          })),
+        })
+      }
+    }
+
     return rows
   }, [activeRankParams, vehicles, totalOutOfPocket])
 
@@ -598,15 +617,21 @@ export default function MultiVehicleComparison() {
                 </thead>
                 <tbody>
                   {rankingRows.map(row => (
-                    <tr key={row.label} className="border-t border-[var(--border)]">
-                      <td className="py-3 pr-4 text-[var(--text-muted)] text-xs uppercase tracking-wider font-semibold">{row.label}</td>
+                    <tr key={row.label}
+                      className="border-t border-[var(--border)]"
+                      style={row.isSummary ? { background: 'rgba(200,255,0,0.04)' } : {}}>
+                      <td className={`py-3 pr-4 text-xs uppercase tracking-wider font-semibold ${row.isSummary ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'}`}>
+                        {row.label}
+                      </td>
                       {row.scores.map((s, i) => (
                         <td key={i} className="py-3 px-3 text-right">
                           <span className={`font-display font-bold tabular-nums ${s.isBest && s.hasValue ? 'text-[var(--accent)]' : 'text-white'}`}>
                             {s.display}
                           </span>
                           {s.isBest && s.hasValue && (
-                            <span className="ml-1.5 text-[10px] text-[var(--accent)] font-bold">✓ best</span>
+                            <span className="ml-1.5 text-[10px] text-[var(--accent)] font-bold">
+                              {row.isSummary ? '🏆 winner' : '✓ best'}
+                            </span>
                           )}
                         </td>
                       ))}

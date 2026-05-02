@@ -1185,6 +1185,9 @@ function FiveYearForecast({ isPro, financeMode, rows, formatCurrency }) {
           {rows.length}-yr total: {formatCurrency(cumulTotal)}
         </span>
       </div>
+      <p className="text-[10px] text-[var(--text-muted)] mt-2 opacity-70">
+        Projections apply +5%/yr insurance, +2.5%/yr fuel, and –5%/yr registration inflation.
+      </p>
     </div>
   )
 }
@@ -1702,8 +1705,8 @@ export default function TCOCalculator() {
       const loanCost = financeMode === 'lease'
         ? (yr <= leasePeriodYears ? leaseResults.annualLeaseCost : 0)
         : results.monthlyPayment * loanMonths
-      const insurance    = Math.round(annualInsurance    * Math.pow(1.02, i))
-      const fuel         = annualFuel
+      const insurance    = Math.round(annualInsurance    * Math.pow(1.05, i))
+      const fuel         = Math.round(annualFuel         * Math.pow(1.025, i))
       const maintenance  = maintenanceByYear?.[i] ?? Math.round(annualMaintenance * Math.pow(1.08, i))
       const registration = Math.round(annualRegistration * Math.pow(0.95, i))
       const total = loanCost + insurance + fuel + maintenance + registration
@@ -1760,6 +1763,28 @@ export default function TCOCalculator() {
     : null
   const totalOwnershipPaid = forecastRows.reduce((s, r) => s + r.total, 0)
   const netCostOfOwnership = futureResaleValue != null ? totalOwnershipPaid - futureResaleValue : null
+
+  // Negative equity: find the first month the buyer is "above water" (car value > loan balance).
+  // Only relevant for buy mode with a known vehicle (origMsrp + selYear) and a non-zero rate loan.
+  const negativeEquityInfo = useMemo(() => {
+    if (financeMode !== 'buy' || !origMsrp || !selYear || rate === 0) return null
+    const loanAmt = effectivePrice - Math.min(downPayment, effectivePrice)
+    if (loanAmt <= 0) return null
+    const r = rate / 12 / 100
+    let underwaterAtStart = false
+    let breakEvenMonth = null
+    for (let m = 0; m <= loanTerm; m++) {
+      const balance = m === 0
+        ? loanAmt
+        : loanAmt * Math.pow(1 + r, m) - results.monthlyPayment * (Math.pow(1 + r, m) - 1) / r
+      const ageAtM = carAge + m / 12
+      const carVal = estimateCurrentValue(origMsrp, selMake || null, selModel || null, ageAtM)
+      if (m === 0 && balance > carVal) underwaterAtStart = true
+      if (underwaterAtStart && balance <= carVal) { breakEvenMonth = m; break }
+    }
+    if (!underwaterAtStart) return null
+    return { breakEvenMonth }
+  }, [financeMode, origMsrp, selYear, rate, effectivePrice, downPayment, loanTerm, carAge, selMake, selModel, results.monthlyPayment])
 
   // Derived EV flag, charging rate, and premium fuel flag — used across the render
   const catInfoForRender = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
@@ -2459,6 +2484,23 @@ export default function TCOCalculator() {
                 </div>
               )}
 
+              {/* EV battery replacement risk notice */}
+              {effIsEV && (
+                <div className="rounded-xl border p-4 flex flex-col gap-2"
+                  style={{ borderColor: 'rgba(96,200,255,0.2)', background: 'rgba(96,200,255,0.04)' }}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🔋</span>
+                    <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#60c8ff' }}>Battery Replacement Risk</p>
+                  </div>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+                    EV battery packs typically last <strong className="text-white">8–12 years / 100k–150k miles</strong> before significant capacity loss. Replacement costs <strong className="text-white">$8,000–$20,000+</strong> depending on the model and may be covered under the federal 8-yr/100k-mile warranty on newer vehicles.
+                  </p>
+                  <p className="text-[10px] text-[var(--text-muted)]">
+                    This cost is not included in the estimates above. Factor it into long-term ownership plans, especially for vehicles with higher mileage or older battery chemistry.
+                  </p>
+                </div>
+              )}
+
               {/* Detailed inputs panel */}
               {resolvedState && detailedMode && !customCosts && (
                 <div className="rounded-xl border p-4 flex flex-col gap-5"
@@ -2871,6 +2913,27 @@ export default function TCOCalculator() {
                   </>
                 )}
               </div>
+
+              {/* ── Negative Equity Warning ── */}
+              {financeMode === 'buy' && negativeEquityInfo && (
+                <div className="rounded-xl border p-4 flex flex-col gap-2"
+                  style={{ borderColor: 'rgba(251,146,60,0.35)', background: 'rgba(251,146,60,0.05)' }}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">⚠️</span>
+                    <p className="text-xs font-bold uppercase tracking-wider text-orange-400">Negative Equity Risk</p>
+                  </div>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+                    At purchase, your <strong className="text-white">loan balance exceeds the car's estimated value</strong> — you are immediately "underwater." This is common with long loan terms or low down payments.
+                    {negativeEquityInfo.breakEvenMonth != null
+                      ? <> You're projected to break even around <strong className="text-orange-300">month {negativeEquityInfo.breakEvenMonth}</strong> (~{Math.round(negativeEquityInfo.breakEvenMonth / 12 * 10) / 10} yr).</>
+                      : <> Based on this vehicle's depreciation, you may remain underwater through the full loan term.</>
+                    }
+                  </p>
+                  <p className="text-[10px] text-[var(--text-muted)]">
+                    If you sell or total the car before breaking even, you'll owe more than the car is worth. Consider a larger down payment or shorter loan term to reduce this risk.
+                  </p>
+                </div>
+              )}
 
               {/* ── Net Cost of Ownership ── */}
               {financeMode === 'buy' && futureResaleValue != null && netCostOfOwnership != null && (

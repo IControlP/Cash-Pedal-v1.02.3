@@ -392,13 +392,15 @@ export default function MultiVehicleComparison() {
   const hasMpg         = vehicles.some(v => v.mpgCombined != null)
   const hasCargo       = vehicles.some(v => v.cargoSqFt != null)
   const hasRetention   = vehicles.some(v => v.valueRetentionPct != null)
+  const hasCostPerMile = vehicles.some(v => v.costPerMile != null)
 
   const tcoMetrics = [
-    hasTCOData   && { key: 'totalAnnualCost',   label: 'All-In Annual Cost',    vals: vehicles.map(v => v.totalAnnualCost),   lowerIsBetter: true,  fmt: v => v != null ? fmt(v) : '—' },
-    hasTCOData   && { key: 'totalOwnershipCost', label: 'Total Ownership Cost',  vals: vehicles.map(v => v.totalOwnershipCost), lowerIsBetter: true,  fmt: v => v != null ? fmt(v) : '—' },
-    hasMpg       && { key: 'mpg',               label: 'MPG (Combined)',         vals: vehicles.map(v => v.mpgCombined),       lowerIsBetter: false, fmt: fmtMpg },
-    hasCargo     && { key: 'cargo',             label: 'Cargo Space',            vals: vehicles.map(v => v.cargoSqFt),         lowerIsBetter: false, fmt: fmtCargo },
-    hasRetention && { key: 'retention',         label: 'Value Retention',        vals: vehicles.map(v => v.valueRetentionPct), lowerIsBetter: false, fmt: fmtRetention },
+    hasTCOData     && { key: 'totalAnnualCost',   label: 'All-In Annual Cost',    vals: vehicles.map(v => v.totalAnnualCost),   lowerIsBetter: true,  fmt: v => v != null ? fmt(v) : '—' },
+    hasTCOData     && { key: 'totalOwnershipCost', label: 'Total Ownership Cost',  vals: vehicles.map(v => v.totalOwnershipCost), lowerIsBetter: true,  fmt: v => v != null ? fmt(v) : '—' },
+    hasCostPerMile && { key: 'costPerMile',        label: 'Cost Per Mile',          vals: vehicles.map(v => v.costPerMile),        lowerIsBetter: true,  fmt: v => v != null ? `$${v.toFixed(2)}/mi` : '—' },
+    hasMpg         && { key: 'mpg',               label: 'MPG (Combined)',         vals: vehicles.map(v => v.mpgCombined),       lowerIsBetter: false, fmt: fmtMpg },
+    hasCargo       && { key: 'cargo',             label: 'Cargo Space',            vals: vehicles.map(v => v.cargoSqFt),         lowerIsBetter: false, fmt: fmtCargo },
+    hasRetention   && { key: 'retention',         label: 'Value Retention',        vals: vehicles.map(v => v.valueRetentionPct), lowerIsBetter: false, fmt: fmtRetention },
   ].filter(Boolean)
 
   // ── Ranking panel (user-selected parameters) ──────────

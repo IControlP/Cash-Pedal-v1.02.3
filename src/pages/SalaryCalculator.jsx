@@ -942,6 +942,14 @@ export default function SalaryCalculator() {
                     <span className="font-bold text-white">Total monthly</span>
                     <span className="font-display font-bold text-[var(--accent)] text-lg tabular-nums">{fmt(results.totalMonthly)}</span>
                   </div>
+                  {annualMiles > 0 && (
+                    <div className="flex items-center justify-between text-xs pt-1">
+                      <span className="text-[var(--text-muted)]">Cost per mile</span>
+                      <span className="text-white font-medium tabular-nums">
+                        ${((results.totalMonthly * 12) / annualMiles).toFixed(2)}/mi
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
                   {proMode && selectedVehicleInfo?.make

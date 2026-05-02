@@ -9,6 +9,8 @@ import WheelZard from './pages/WheelZard'
 import Resources from './pages/Resources'
 import About from './pages/About'
 import Subscribe from './pages/Subscribe'
+import Blog from './pages/Blog'
+import BlogPost from './pages/BlogPost'
 
 export default function App() {
   return (
@@ -24,6 +26,8 @@ export default function App() {
         <Route path="/resources" element={<Resources />} />
         <Route path="/about" element={<About />} />
         <Route path="/subscribe" element={<Subscribe />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
       </Routes>
     </BrowserRouter>
   )

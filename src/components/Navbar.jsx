@@ -9,6 +9,7 @@ const navLinks = [
   { to: '/checklist', label: 'Checklist' },
   { to: '/wheelzard', label: 'Wheel-Zard' },
   { to: '/resources', label: 'Resources' },
+  { to: '/blog', label: 'Blog' },
   { to: '/about', label: 'About' },
 ]
 

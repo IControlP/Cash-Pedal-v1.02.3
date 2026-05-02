@@ -1842,6 +1842,9 @@ export default function TCOCalculator() {
       // Value retention (not applicable for leases but keep for reference)
       futureValue,
       valueRetentionPct: financeMode === 'lease' ? null : retentionPct,
+      // Cost efficiency
+      annualMileage,
+      costPerMile: annualMileage > 0 ? Math.round((totalAnnualCost / annualMileage) * 100) / 100 : null,
     }
 
     const existing = JSON.parse(localStorage.getItem('cashpedal_tco_for_comparison') || '[]')
@@ -2748,6 +2751,12 @@ export default function TCOCalculator() {
                     <span className="text-white font-bold">Year 1 total</span>
                     <span className="font-display font-bold text-lg" style={{ color: 'var(--accent)' }}>
                       {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[var(--text-muted)]">Cost per mile</span>
+                    <span className="text-white font-medium tabular-nums">
+                      ${((forecastRows[0]?.total ?? totalAnnualCost) / annualMileage).toFixed(2)}/mi
                     </span>
                   </div>
                   {/* Segment operating cost context */}

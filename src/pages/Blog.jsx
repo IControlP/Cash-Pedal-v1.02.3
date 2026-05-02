@@ -1,7 +1,7 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import { posts } from '../data/posts'
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -13,6 +13,17 @@ function formatDate(iso) {
 }
 
 export default function Blog() {
+  const [posts, setPosts] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/posts')
+      .then(r => r.json())
+      .then(data => setPosts(Array.isArray(data) ? data : []))
+      .catch(() => setPosts([]))
+      .finally(() => setLoading(false))
+  }, [])
+
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">
       <Navbar />
@@ -31,7 +42,9 @@ export default function Blog() {
         </div>
 
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
-          {posts.length === 0 ? (
+          {loading ? (
+            <p className="text-[var(--text-muted)] text-sm">Loading posts…</p>
+          ) : posts.length === 0 ? (
             <p className="text-[var(--text-muted)] text-sm">No posts yet — check back soon.</p>
           ) : (
             <div className="flex flex-col gap-5">
@@ -43,7 +56,7 @@ export default function Blog() {
                 >
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <span className="text-xs text-[var(--text-muted)]">{formatDate(post.date)}</span>
-                    {post.tags.map(tag => (
+                    {(post.tags || []).map(tag => (
                       <span
                         key={tag}
                         className="text-xs px-1.5 py-0.5 rounded font-semibold"

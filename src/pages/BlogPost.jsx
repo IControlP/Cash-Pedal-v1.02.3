@@ -1,7 +1,7 @@
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import { posts } from '../data/posts'
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -14,9 +14,36 @@ function formatDate(iso) {
 
 export default function BlogPost() {
   const { slug } = useParams()
-  const post = posts.find(p => p.slug === slug)
+  const [post, setPost] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
 
-  if (!post) {
+  useEffect(() => {
+    setLoading(true)
+    setNotFound(false)
+    fetch(`/api/posts/${encodeURIComponent(slug)}`)
+      .then(r => {
+        if (r.status === 404) { setNotFound(true); return null }
+        return r.json()
+      })
+      .then(data => { if (data) setPost(data) })
+      .catch(() => setNotFound(true))
+      .finally(() => setLoading(false))
+  }, [slug])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[var(--bg)]">
+        <Navbar />
+        <main className="flex-1 pt-20 pb-16 flex items-center justify-center">
+          <p className="text-[var(--text-muted)] text-sm">Loading…</p>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (notFound || !post) {
     return (
       <div className="min-h-screen flex flex-col bg-[var(--bg)]">
         <Navbar />
@@ -34,7 +61,6 @@ export default function BlogPost() {
       <Navbar />
       <main className="flex-1 pt-20 pb-16">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-10">
-          {/* Back link */}
           <Link
             to="/blog"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-muted)] hover:text-white transition-colors mb-8"
@@ -42,10 +68,9 @@ export default function BlogPost() {
             ← All posts
           </Link>
 
-          {/* Meta */}
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="text-xs text-[var(--text-muted)]">{formatDate(post.date)}</span>
-            {post.tags.map(tag => (
+            {(post.tags || []).map(tag => (
               <span
                 key={tag}
                 className="text-xs px-1.5 py-0.5 rounded font-semibold"
@@ -56,7 +81,6 @@ export default function BlogPost() {
             ))}
           </div>
 
-          {/* Title */}
           <h1 className="font-display font-extrabold text-white text-3xl sm:text-4xl leading-tight mb-4">
             {post.title}
           </h1>
@@ -65,7 +89,6 @@ export default function BlogPost() {
             {post.excerpt}
           </p>
 
-          {/* Body */}
           <div
             className="prose-cashpedal"
             dangerouslySetInnerHTML={{ __html: post.content }}

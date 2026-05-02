@@ -205,6 +205,27 @@ async function initTables() {
       CREATE INDEX IF NOT EXISTS idx_sub_devices_email
         ON subscriber_devices(email)
     `)
+
+    // ── Blog posts ────────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS blog_posts (
+        id         SERIAL PRIMARY KEY,
+        slug       TEXT UNIQUE NOT NULL,
+        title      TEXT NOT NULL,
+        date       TEXT NOT NULL,
+        excerpt    TEXT NOT NULL,
+        tags       TEXT[] DEFAULT '{}',
+        content    TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `)
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_blog_posts_slug ON blog_posts(slug)
+    `)
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_blog_posts_date ON blog_posts(date DESC)
+    `)
   } finally {
     client.release()
   }
@@ -525,6 +546,112 @@ app.post('/api/cancel-subscription', async (req, res) => {
     })
   } catch (err) {
     console.error('[cancel-subscription] error:', err.message)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── Admin auth middleware ─────────────────────────────
+function requireAdmin(req, res, next) {
+  const adminPw = process.env.ADMIN_PASSWORD
+  if (!adminPw) return res.status(503).json({ error: 'ADMIN_PASSWORD not configured' })
+  const auth = req.headers.authorization || ''
+  if (auth !== `Bearer ${adminPw}`) return res.status(401).json({ error: 'Unauthorized' })
+  next()
+}
+
+// ── API: Admin login ──────────────────────────────────
+app.post('/api/admin/login', (req, res) => {
+  const adminPw = process.env.ADMIN_PASSWORD
+  if (!adminPw) return res.status(503).json({ error: 'ADMIN_PASSWORD not configured' })
+  const { password } = req.body
+  if (password === adminPw) {
+    res.json({ ok: true, token: adminPw })
+  } else {
+    res.status(401).json({ error: 'Wrong password' })
+  }
+})
+
+// ── API: Public — list posts ──────────────────────────
+app.get('/api/posts', async (req, res) => {
+  if (!pool) return res.json([])
+  try {
+    const result = await pool.query(
+      `SELECT slug, title, date, excerpt, tags
+       FROM blog_posts
+       ORDER BY date DESC, created_at DESC`
+    )
+    res.json(result.rows)
+  } catch (err) {
+    console.error('[posts] error:', err.message)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── API: Public — single post ─────────────────────────
+app.get('/api/posts/:slug', async (req, res) => {
+  if (!pool) return res.status(404).json({ error: 'Not found' })
+  try {
+    const result = await pool.query(
+      `SELECT slug, title, date, excerpt, tags, content FROM blog_posts WHERE slug = $1`,
+      [req.params.slug]
+    )
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Not found' })
+    res.json(result.rows[0])
+  } catch (err) {
+    console.error('[post] error:', err.message)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── API: Admin — create post ──────────────────────────
+app.post('/api/admin/posts', requireAdmin, async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'DB not configured' })
+  const { slug, title, date, excerpt, tags, content } = req.body
+  if (!slug || !title || !date || !excerpt || !content) {
+    return res.status(400).json({ error: 'Missing required fields' })
+  }
+  try {
+    const result = await pool.query(
+      `INSERT INTO blog_posts (slug, title, date, excerpt, tags, content)
+       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+      [slug.trim(), title.trim(), date, excerpt.trim(), tags || [], content]
+    )
+    res.json(result.rows[0])
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: 'Slug already exists' })
+    console.error('[admin/posts] create error:', err.message)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── API: Admin — update post ──────────────────────────
+app.put('/api/admin/posts/:slug', requireAdmin, async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'DB not configured' })
+  const { slug: newSlug, title, date, excerpt, tags, content } = req.body
+  try {
+    const result = await pool.query(
+      `UPDATE blog_posts
+       SET slug=$1, title=$2, date=$3, excerpt=$4, tags=$5, content=$6, updated_at=NOW()
+       WHERE slug=$7
+       RETURNING *`,
+      [newSlug || req.params.slug, title, date, excerpt, tags || [], content, req.params.slug]
+    )
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Not found' })
+    res.json(result.rows[0])
+  } catch (err) {
+    console.error('[admin/posts] update error:', err.message)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── API: Admin — delete post ──────────────────────────
+app.delete('/api/admin/posts/:slug', requireAdmin, async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'DB not configured' })
+  try {
+    await pool.query(`DELETE FROM blog_posts WHERE slug = $1`, [req.params.slug])
+    res.json({ ok: true })
+  } catch (err) {
+    console.error('[admin/posts] delete error:', err.message)
     res.status(500).json({ error: err.message })
   }
 })

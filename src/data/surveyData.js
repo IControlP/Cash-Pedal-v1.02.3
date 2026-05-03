@@ -83,14 +83,15 @@ export const questions = [
 // Each entry: { category, impact } where impact is multiplied by (answer - 3)
 // So answer=1 → -2x, answer=3 → 0x, answer=5 → +2x
 export const questionImpacts = [
-  // Q1: "Car is just transport"
-  // High = minimalist → economy, sedan. Low = loves cars → sports, luxury
+  // Q1: "Car is just transport vs. it's personal"
+  // highLabel="It's personal" → car enthusiast → sports, luxury
+  // lowLabel="Just transport" → minimalist → economy, sedan
   [
-    { category: 'economy', impact: 8 },
-    { category: 'sedan', impact: 4 },
-    { category: 'sports', impact: -10 },
-    { category: 'luxury', impact: -6 },
-    { category: 'suv', impact: -2 },
+    { category: 'economy', impact: -8 },
+    { category: 'sedan', impact: -4 },
+    { category: 'sports', impact: 10 },
+    { category: 'luxury', impact: 6 },
+    { category: 'suv', impact: 2 },
   ],
   // Q2: "Watches car reviews at 2am"
   // High = car enthusiast → sports, luxury

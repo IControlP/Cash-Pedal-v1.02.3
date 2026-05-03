@@ -163,8 +163,8 @@ export function estimateCurrentValue(originalPrice, make, model, ageYears, curre
 export const INSURANCE_BASE_RATE = 1760
 
 export const INSURANCE_VALUE_BRACKETS = [
-  [0, 15000, .80], [15000, 30000, 1.00], [30000, 50000, 1.18],
-  [50000, 80000, 1.40], [80000, Infinity, 1.65],
+  [0, 15000, .80], [15000, 30000, 1.00], [30000, 35000, 1.09],
+  [35000, 50000, 1.18], [50000, 80000, 1.40], [80000, Infinity, 1.65],
 ]
 
 export const INSURANCE_BRAND_MULT = {

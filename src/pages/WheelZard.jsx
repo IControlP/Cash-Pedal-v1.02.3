@@ -42,6 +42,9 @@ function getLocalResponse(msg) {
   if (/\b(recommend|suggest|which car|best car|what car)\b/.test(m)) {
     return "For personalized recommendations I need to ask you a few questions — the full Wheel-Zard GPT is best for that. Or try our <a href='/survey' class='text-[var(--accent)] hover:underline'>Car Survey</a> for a quick personality-based match!"
   }
+  if (/\bvs\.?\b|\bversus\b|\bcompare\b|\bor the\b|\bor a\b/.test(m) && /\b(car|truck|suv|sedan|vehicle|accord|camry|civic|corolla|tacoma|f-150|rav4|cr-v|tesla|mazda|honda|toyota|ford|chevy|chevrolet|bmw|audi|subaru|hyundai|kia|nissan)\b/.test(m)) {
+    return "Head-to-head comparisons are what our <a href='/compare' class='text-[var(--accent)] hover:underline'>Multi-Vehicle Comparison</a> tool is built for. You can line up the two (or more) vehicles side by side and see monthly cost, 5-year TCO, insurance, fuel, and maintenance all at once. For a deeper narrative comparison — pros, cons, and which fits your lifestyle — the full Wheel-Zard GPT below handles that well."
+  }
   if (/\b(reliable|reliability|repair|breakdown|maintenance)\b/.test(m)) {
     return "Reliability leaders by segment: <strong class='text-white'>Sedans</strong> — Toyota Camry, Honda Accord. <strong class='text-white'>SUVs</strong> — Toyota 4Runner, Honda CR-V, Mazda CX-5. <strong class='text-white'>Trucks</strong> — Toyota Tacoma, Honda Ridgeline. <strong class='text-white'>EVs</strong> — Tesla Model 3/Y (fewer mechanical issues, but higher part costs). Generally: Japanese brands cost 15–30% less to maintain than European luxury brands. Our <a href='/tco' class='text-[var(--accent)] hover:underline'>TCO Calculator</a> includes brand-specific maintenance multipliers and a Repair Risk Score."
   }
@@ -88,12 +91,12 @@ export default function WheelZard() {
           ...m,
           {
             role: 'assistant',
-            text: `That's a great question. For the most accurate, personalized answer I'd recommend taking it to the full Wheel-Zard GPT — it has access to detailed vehicle data and can ask follow-up questions. You can also check our calculators for specific cost questions.`,
+            text: `That's a good question. For the most accurate, personalized answer I'd recommend taking it to the full Wheel-Zard GPT — it has access to detailed vehicle data and can ask follow-up questions. You can also check our calculators for specific cost questions.`,
             cta: true,
           },
         ])
       }
-    }, 600)
+    }, 150)
   }
 
   return (

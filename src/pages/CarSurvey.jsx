@@ -6,6 +6,42 @@ import ProGate from '../components/ProGate'
 import { useSubscription } from '../hooks/useSubscription'
 import { questions, questionImpacts, vehicleProfiles } from '../data/surveyData'
 
+// Short labels describing what a high vs. low answer signals, per question
+const Q_SUMMARIES = [
+  { high: 'the driving experience matters to you',     low: 'you just want reliable transportation' },
+  { high: 'you follow cars as a hobby',                low: 'cars aren\'t really a passion' },
+  { high: 'you regularly haul gear or passengers',     low: 'it\'s mostly just you in the car' },
+  { high: 'you want to spend as little as possible',   low: 'you\'re happy investing in your vehicle' },
+  { high: 'making an impression with your car matters',low: 'you don\'t need the car to turn heads' },
+  { high: 'your car life is busy and full',            low: 'your car stays pretty tidy and solo' },
+  { high: 'you enjoy spirited, quick driving',         low: 'you take a relaxed pace on the road' },
+  { high: 'you want to cut fuel costs and emissions',  low: 'range anxiety isn\'t on your radar' },
+  { high: 'you often need serious cargo room',         low: 'hauling space rarely comes up for you' },
+  { high: 'you\'re comfortable in tight spaces',       low: 'you prefer bigger, easier-to-park vehicles' },
+  { high: 'you take regular long drives or road trips',low: 'most of your driving is short and local' },
+  { high: 'in-car tech is important to you',           low: 'screens and gadgets don\'t sway you' },
+  { high: 'you deal with rough terrain or towing',     low: 'you stick to normal roads and conditions' },
+]
+
+function getInfluenceReasons(answers, topCategory) {
+  const contributions = []
+  answers.forEach((answer, qi) => {
+    const multiplier = answer - 3
+    if (multiplier === 0) return
+    const catImpact = questionImpacts[qi]?.find(i => i.category === topCategory)
+    if (!catImpact) return
+    const contribution = catImpact.impact * multiplier
+    if (contribution > 0) {
+      const summary = multiplier > 0 ? Q_SUMMARIES[qi]?.high : Q_SUMMARIES[qi]?.low
+      contributions.push({ qi, contribution, summary })
+    }
+  })
+  return contributions
+    .sort((a, b) => b.contribution - a.contribution)
+    .slice(0, 3)
+    .filter(c => c.summary)
+}
+
 function scoreVehicles(answers) {
   const categories = Object.keys(vehicleProfiles)
   const scores = Object.fromEntries(categories.map(c => [c, 50]))
@@ -79,6 +115,11 @@ export default function CarSurvey() {
   }, [scores])
 
   const topMatch = rankedProfiles[0]
+
+  const influenceReasons = useMemo(() => {
+    if (!topMatch) return []
+    return getInfluenceReasons(answers, topMatch.key)
+  }, [topMatch, answers])
 
   function handleAnswer(value) {
     setSelectedAnswer(value)
@@ -236,6 +277,21 @@ export default function CarSurvey() {
               </p>
             )}
           </div>
+
+          {/* Why this match */}
+          {influenceReasons.length > 0 && (
+            <div className="mb-4 anim-2">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-2">Why this match</p>
+              <ul className="flex flex-col gap-1.5">
+                {influenceReasons.map(({ qi, summary }) => (
+                  <li key={qi} className="flex items-start gap-2 text-sm text-[var(--text-muted)]">
+                    <span className="text-[var(--accent)] mt-0.5 shrink-0">→</span>
+                    {summary}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Top match card */}
           <div className="card border-[var(--accent)] mb-6 anim-3" style={{ background: 'rgba(255,184,0,0.04)' }}>

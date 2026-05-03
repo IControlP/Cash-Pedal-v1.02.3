@@ -1011,6 +1011,9 @@ function metaSection(meta, line) {
   out.push(line(['Current odometer', `${meta.startMileage.toLocaleString()} mi`]))
   out.push(line(['Location', meta.location || 'Not set']))
   out.push(line(['Ownership years', meta.ownershipYears]))
+  if (meta.fuelEscalationPct != null && meta.fuelEscalationPct !== 0) {
+    out.push(line(['Fuel price change/yr', `${meta.fuelEscalationPct > 0 ? '+' : ''}${meta.fuelEscalationPct}%`]))
+  }
   return out
 }
 
@@ -1475,6 +1478,7 @@ export default function TCOCalculator() {
   const [vehicleCategory,setVehicleCategory]= useState('')      // used when no make/model selected
   const [chargingStyle,  setChargingStyle]  = useState('home')  // 'home' | 'mixed' | 'public'
   const [customFuelPrice,setCustomFuelPrice]= useState('')      // empty = use state avg
+  const [fuelEscalationPct, setFuelEscalationPct] = useState(0) // annual % change in fuel price
   const [multiCarPolicy, setMultiCarPolicy] = useState(false)
   // Track original MSRP separately from price (which may be depreciation-adjusted)
   const [origMsrp,       setOrigMsrp]       = useState(null)
@@ -1703,14 +1707,14 @@ export default function TCOCalculator() {
         ? (yr <= leasePeriodYears ? leaseResults.annualLeaseCost : 0)
         : results.monthlyPayment * loanMonths
       const insurance    = Math.round(annualInsurance    * Math.pow(1.02, i))
-      const fuel         = annualFuel
+      const fuel         = Math.round(annualFuel * Math.pow(1 + fuelEscalationPct / 100, i))
       const maintenance  = maintenanceByYear?.[i] ?? Math.round(annualMaintenance * Math.pow(1.08, i))
       const registration = Math.round(annualRegistration * Math.pow(0.95, i))
       const total = loanCost + insurance + fuel + maintenance + registration
       return { yr, loanCost, insurance, fuel, maintenance, registration, total }
     })
   }, [ownershipYears, leaseTerm, financeMode, loanTerm, leaseResults.annualLeaseCost,
-      results.monthlyPayment, annualInsurance, annualFuel, maintenanceByYear,
+      results.monthlyPayment, annualInsurance, annualFuel, fuelEscalationPct, maintenanceByYear,
       annualMaintenance, annualRegistration])
 
   // Auto-suggest residual % based on the depreciation model for the selected lease term.
@@ -2504,6 +2508,47 @@ export default function TCOCalculator() {
                     </p>
                   </div>
 
+                  {/* Annual fuel price escalation */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <label className="input-label">
+                        {effIsEV ? 'Annual Electricity Rate Change' : 'Annual Fuel Price Change'}
+                      </label>
+                      <span className="text-sm font-bold tabular-nums"
+                        style={{ color: fuelEscalationPct > 0 ? '#f87171' : fuelEscalationPct < 0 ? '#4ade80' : 'var(--text-muted)' }}>
+                        {fuelEscalationPct > 0 ? '+' : ''}{fuelEscalationPct.toFixed(1)}%/yr
+                      </span>
+                    </div>
+                    <input
+                      type="range" min={-10} max={10} step={0.5}
+                      value={fuelEscalationPct}
+                      onChange={e => setFuelEscalationPct(Number(e.target.value))}
+                      style={{ background: `linear-gradient(to right, var(--accent) ${((fuelEscalationPct + 10) / 20) * 100}%, var(--border) ${((fuelEscalationPct + 10) / 20) * 100}%)` }}
+                    />
+                    <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+                      <span>−10%/yr</span>
+                      <span>0 (flat)</span>
+                      <span>+10%/yr</span>
+                    </div>
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      Compounds {effIsEV ? 'electricity rate' : 'fuel price'} annually across the forecast.
+                      {fuelEscalationPct !== 0 && ownershipYears > 1 && (
+                        <span className="text-white">
+                          {' '}Year {Math.min(ownershipYears, 5)} est.:
+                          {' '}{formatCurrency(Math.round(annualFuel * Math.pow(1 + fuelEscalationPct / 100, Math.min(ownershipYears, 5) - 1)))}/yr
+                          {' '}({fuelEscalationPct > 0 ? '+' : ''}{Math.round((Math.pow(1 + fuelEscalationPct / 100, Math.min(ownershipYears, 5) - 1) - 1) * 100)}% vs. today).
+                        </span>
+                      )}
+                      {fuelEscalationPct === 0 && ' Use 0 for a flat estimate; EIA historical avg ≈ +3–5%/yr.'}
+                    </p>
+                    {fuelEscalationPct !== 0 && (
+                      <button onClick={() => setFuelEscalationPct(0)}
+                        className="text-[10px] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors self-start">
+                        Reset to flat
+                      </button>
+                    )}
+                  </div>
+
                   {/* Multi-car policy toggle */}
                   <div className="flex items-center justify-between">
                     <div>
@@ -2932,6 +2977,7 @@ export default function TCOCalculator() {
                       location: locationLabel || resolvedState || 'Not set',
                       ownershipYears,
                       salesTax: salesTaxAmt, docFee: effectiveDocFee, outTheDoor: effectivePrice,
+                      fuelEscalationPct,
                     }
                     downloadCSV(buildCSV(forecastRows, meta), 'tco-summary.csv')
                   }}
@@ -2949,6 +2995,7 @@ export default function TCOCalculator() {
                         annualMileage, startMileage: effectiveStartMileage,
                         location: locationLabel || resolvedState || 'Not set',
                         ownershipYears,
+                        fuelEscalationPct,
                       }
                       downloadCSV(buildDetailedCSV(forecastRows, maintenanceDetail, meta), 'tco-detailed.csv')
                     }}

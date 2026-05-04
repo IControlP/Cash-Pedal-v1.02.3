@@ -371,18 +371,46 @@ export default function CarBuyingChecklist() {
                 </select>
               </div>
 
+              {!isSubscribed && (() => {
+                const used = checklistCount
+                const remaining = Math.max(0, FREE_CHECKLIST_LIMIT - used)
+                const isNearLimit = used >= FREE_CHECKLIST_LIMIT - 1
+                const isAtLimit = used >= FREE_CHECKLIST_LIMIT
+                if (used === 0) return null
+                return (
+                  <div className="rounded-lg px-4 py-3 flex items-center justify-between gap-3 border"
+                    style={{
+                      borderColor: isAtLimit ? 'rgba(248,113,113,0.4)' : isNearLimit ? 'rgba(255,184,0,0.4)' : 'var(--border)',
+                      background: isAtLimit ? 'rgba(248,113,113,0.06)' : isNearLimit ? 'rgba(255,184,0,0.06)' : 'var(--surface)',
+                    }}>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="text-base shrink-0">{isAtLimit ? '🔒' : isNearLimit ? '⚠️' : 'ℹ️'}</span>
+                      <div>
+                        <p className="text-xs font-semibold"
+                          style={{ color: isAtLimit ? '#f87171' : isNearLimit ? '#FFB800' : 'var(--text-muted)' }}>
+                          {isAtLimit
+                            ? 'Free checklist limit reached'
+                            : `${remaining} free checklist${remaining !== 1 ? 's' : ''} remaining`}
+                        </p>
+                        <p className="text-[10px] text-[var(--text-muted)]">
+                          {used} of {FREE_CHECKLIST_LIMIT} used
+                        </p>
+                      </div>
+                    </div>
+                    {(isNearLimit || isAtLimit) && (
+                      <a href="/subscribe"
+                        className="text-xs font-bold px-3 py-1.5 rounded-lg shrink-0 transition-opacity hover:opacity-80"
+                        style={{ background: 'var(--accent)', color: '#000' }}>
+                        Go Pro →
+                      </a>
+                    )}
+                  </div>
+                )
+              })()}
+
               <button type="submit" className="btn-primary justify-center py-4">
                 Generate My Checklist →
               </button>
-
-              {!isSubscribed && (
-                <p className="text-center text-[var(--text-muted)] text-xs mt-1">
-                  {Math.max(0, FREE_CHECKLIST_LIMIT - checklistCount)} of {FREE_CHECKLIST_LIMIT} free checklists remaining
-                  {checklistCount >= FREE_CHECKLIST_LIMIT && (
-                    <> · <a href="/subscribe" className="text-[var(--accent)] hover:underline">Subscribe for unlimited</a></>
-                  )}
-                </p>
-              )}
             </form>
           </div>
         </main>

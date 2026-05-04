@@ -143,13 +143,13 @@ export function estimateCurrentValue(originalPrice, make, model, ageYears, curre
   const cap = SEGMENT_MAX_DEPR[segment] ?? 0.80
 
   // Mileage adjustment: compare actual miles vs. expected 12 k/yr average.
-  // Each 10 % deviation from average shifts depreciation by ~2.5 %.
-  // Capped at +10 % extra depreciation (very high mileage) / -8 % (very low).
+  // Each 10 % deviation from average shifts depreciation by ~3 %.
+  // Capped at +20 % extra depreciation (very high mileage, 200 k+) / -8 % (very low).
   let mileageFactor = 1.0
   if (currentMileage != null && ageYears > 0) {
     const expectedMiles = ageYears * 12000
     const mileageRatio  = currentMileage / expectedMiles
-    mileageFactor = Math.max(0.92, Math.min(1.10, 1 + (mileageRatio - 1) * 0.25))
+    mileageFactor = Math.max(0.92, Math.min(1.20, 1 + (mileageRatio - 1) * 0.30))
   }
 
   const finalRate = Math.min(baseRate * adjBrand * mileageFactor, cap)
@@ -172,7 +172,7 @@ export const INSURANCE_BRAND_MULT = {
   Infiniti: 1.10, Cadillac: 1.15, Toyota: 0.88, Honda: 0.90,
   Hyundai: 0.87, Kia: 0.87, Subaru: 0.95, Mazda: 0.93,
   Chevrolet: 1.00, Ford: 1.05, Ram: 1.10, Jeep: 1.10,
-  Tesla: 1.35, Rivian: 1.30, Lucid: 1.25,
+  Tesla: 1.15, Rivian: 1.25, Lucid: 1.20,
 }
 
 // State base premiums updated to 2025 averages (Bankrate/NAIC)
@@ -443,13 +443,20 @@ export function getEffectiveElecRate(state, style) {
   return home
 }
 
+// Charging efficiency loss factors by charging style.
+// EPA MPGe measures energy delivered to the battery; grid draw is higher.
+// home (L2): ~8% loss · mixed (80/20 L2/DCFC): ~10% · public DCFC: ~15%
+export const CHARGING_LOSS_FACTOR = { home: 1.08, mixed: 1.10, public: 1.15 }
+
 // state=null → national average defaults ($3.50/gal gas, $0.16/kWh electricity)
 // isPremium: adds PREMIUM_PRICE_DELTA to the state average when no override is set
-export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 15000, fuelPriceOverride = null, isPremium = false) {
+// chargingLossFactor: wall-draw multiplier for EVs (1.08 home / 1.10 mixed / 1.15 public DCFC)
+export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 15000, fuelPriceOverride = null, isPremium = false, chargingLossFactor = 1.0) {
   const KWH_PER_GAL = 33.7
   if (isEV) {
     const mpge = mpgeCombined ?? 100
-    const annualKwh = miles / (mpge / KWH_PER_GAL)
+    const atBatteryKwh = miles / (mpge / KWH_PER_GAL)
+    const annualKwh = atBatteryKwh * chargingLossFactor
     const rate = fuelPriceOverride !== null ? fuelPriceOverride : (STATE_ELEC_RATES[state] ?? 0.16)
     return Math.round(annualKwh * rate / 50) * 50
   }

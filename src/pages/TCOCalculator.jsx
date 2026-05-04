@@ -16,7 +16,7 @@ import {
   MAINT_BRAND_MULT, MAINT_LUXURY_MAKES, MAINT_PREMIUM_MAKES, MAINT_ECONOMY_MAKES,
   determineMaintTier, MAINT_TIER_COSTS, LABOR_RATE, generateMaintenanceServices, generateMaintenanceByYear, generateDetailedMaintenanceByYear,
   STATE_FUEL_PRICES, STATE_ELEC_RATES,
-  getPublicChargingRate, getEffectiveElecRate, computeAnnualFuel,
+  getPublicChargingRate, getEffectiveElecRate, computeAnnualFuel, CHARGING_LOSS_FACTOR,
   PREMIUM_PRICE_DELTA, requiresPremiumFuel,
   STATE_REG_FEE, STATE_VLF, computeAnnualRegistration,
   computeSalesTax, STATE_VEHICLE_SALES_TAX, STATE_DOC_FEE_AVG, getRegionalDemandPremium,
@@ -59,16 +59,17 @@ function calculateLoan({ price, downPayment, loanTermMonths, annualRatePercent, 
 
 // ── Lease math ────────────────────────────────────────
 // moneyFactor = APR / 2400 (standard industry conversion)
-function calculateLease({ msrp, capCostReduction, acquisitionFee, leaseTermMonths, aprPercent, residualPct }) {
+// dispositionFee: one-time fee charged at lease end when you don't buy or re-lease (typically $350–$500)
+function calculateLease({ msrp, capCostReduction, acquisitionFee, leaseTermMonths, aprPercent, residualPct, dispositionFee = 395 }) {
   const capCost = msrp - capCostReduction + acquisitionFee
   const residualValue = msrp * (residualPct / 100)
   const moneyFactor = aprPercent / 2400
   const depreciationFee = (capCost - residualValue) / leaseTermMonths
   const financeCharge = (capCost + residualValue) * moneyFactor
   const monthlyPayment = depreciationFee + financeCharge
-  const totalLeaseCost = monthlyPayment * leaseTermMonths + capCostReduction
+  const totalLeaseCost = monthlyPayment * leaseTermMonths + capCostReduction + dispositionFee
   const annualLeaseCost = monthlyPayment * 12
-  return { monthlyPayment, totalLeaseCost, annualLeaseCost, residualValue, capCost }
+  return { monthlyPayment, totalLeaseCost, annualLeaseCost, residualValue, capCost, dispositionFee }
 }
 
 function formatCurrency(val) {
@@ -1487,6 +1488,7 @@ export default function TCOCalculator() {
   const [residualPct,      setResidualPct]      = useState(55)
   const [capCostReduction, setCapCostReduction] = useState(0)
   const [acquisitionFee,   setAcquisitionFee]   = useState(795)
+  const [dispositionFee,   setDispositionFee]   = useState(395)
   const [currentMileage,   setCurrentMileage]   = useState(null) // null = auto (carAge × annualMileage)
   const [dealerPurchase,   setDealerPurchase]   = useState(true)
   const [taxRateOverride,  setTaxRateOverride]  = useState(null) // null = use state rate
@@ -1546,12 +1548,13 @@ export default function TCOCalculator() {
     if (customCosts) return
     setAnnualInsurance(estimateInsurance(price, selMake||null, selModel||null, selYear||null, resolvedState||null, detailedMode && multiCarPolicy))
     const customOverride = customFuelPrice !== '' ? parseFloat(customFuelPrice) : null
+    const evLossFactor = CHARGING_LOSS_FACTOR[chargingStyle] ?? CHARGING_LOSS_FACTOR.home
     if (modelData) {
       // For EVs: use charging-style blended rate unless user has manually overridden it
       const fuelOverride = (modelData.is_ev && customOverride === null)
         ? getEffectiveElecRate(resolvedState, chargingStyle)
         : customOverride
-      setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel)))
+      setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel), modelData.is_ev ? evLossFactor : 1.0))
       if (detailedMode) {
         const seg = classifySegment(selMake||'', selModel||'')
         const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake)
@@ -1567,7 +1570,7 @@ export default function TCOCalculator() {
       const fuelOverride = (catIsEV && customOverride === null)
         ? getEffectiveElecRate(resolvedState, chargingStyle)
         : customOverride
-      setAnnualFuel(computeAnnualFuel(catIsEV, catMpg, catMpge, resolvedState, annualMileage, fuelOverride))
+      setAnnualFuel(computeAnnualFuel(catIsEV, catMpg, catMpge, resolvedState, annualMileage, fuelOverride, false, catIsEV ? evLossFactor : 1.0))
       if (detailedMode) {
         const catSeg = catInfo?.segment ?? 'sedan'
         const services = generateMaintenanceServices(catIsEV, annualMileage, catSeg, '')
@@ -1684,7 +1687,8 @@ export default function TCOCalculator() {
     leaseTermMonths: leaseTerm,
     aprPercent: leaseApr,
     residualPct,
-  }), [price, capCostReduction, acquisitionFee, leaseTerm, leaseApr, residualPct])
+    dispositionFee,
+  }), [price, capCostReduction, acquisitionFee, leaseTerm, leaseApr, residualPct, dispositionFee])
 
   const annualOperatingCost = annualInsurance + annualFuel + annualMaintenance + annualRegistration
   const totalAnnualCost = (financeMode === 'lease' ? leaseResults.annualLeaseCost : results.trueAnnualCost) + annualOperatingCost
@@ -2271,6 +2275,13 @@ export default function TCOCalculator() {
                       {formatCurrency(leaseResults.capCost)}
                     </span>
                   </div>
+
+                  <SliderInput label="Disposition Fee (at lease end)" value={dispositionFee} onChange={setDispositionFee}
+                    min={0} max={1000} step={25} prefix="$" />
+
+                  <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                    One-time fee due if you return the car and don't re-lease or buy — typically $350–$500. Set to $0 if you plan to buy out or re-lease.
+                  </p>
                 </>
               )}
 
@@ -2599,13 +2610,16 @@ export default function TCOCalculator() {
                           onClick={() => {
                             setCustomFuelPrice('')
                             const defaultRate = effIsEV ? getEffectiveElecRate(resolvedState, chargingStyle) : null
+                            const lossFactor = effIsEV ? (CHARGING_LOSS_FACTOR[chargingStyle] ?? CHARGING_LOSS_FACTOR.home) : 1.0
                             setAnnualFuel(computeAnnualFuel(
                               effIsEV,
                               modelData?.mpg?.combined ?? (catInfoForRender?.mpg ?? 28),
                               modelData?.mpg?.mpge_combined ?? (catInfoForRender?.mpge ?? null),
                               resolvedState,
                               annualMileage,
-                              defaultRate
+                              defaultRate,
+                              false,
+                              lossFactor
                             ))
                           }}
                           className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
@@ -2628,13 +2642,16 @@ export default function TCOCalculator() {
                           if (val !== '') {
                             const rate = parseFloat(val)
                             if (!isNaN(rate)) {
+                              const lossFactor = effIsEV ? (CHARGING_LOSS_FACTOR[chargingStyle] ?? CHARGING_LOSS_FACTOR.home) : 1.0
                               setAnnualFuel(computeAnnualFuel(
                                 effIsEV,
                                 modelData?.mpg?.combined ?? (catInfoForRender?.mpg ?? 28),
                                 modelData?.mpg?.mpge_combined ?? (catInfoForRender?.mpge ?? null),
                                 resolvedState,
                                 annualMileage,
-                                rate
+                                rate,
+                                false,
+                                lossFactor
                               ))
                             }
                           }
@@ -2709,7 +2726,7 @@ export default function TCOCalculator() {
               <div className="grid grid-cols-1 gap-4 anim-5">
                 {financeMode === 'lease' ? (
                   <>
-                    <ResultCard label="Total Lease Cost"     value={leaseResults.totalLeaseCost}   delay={60}  />
+                    <ResultCard label="Total Lease Cost"     value={leaseResults.totalLeaseCost}   delay={60}  note={dispositionFee > 0 ? `incl. ${formatCurrency(dispositionFee)} disposition fee` : null} />
                     <ResultCard label="Residual Value"       value={leaseResults.residualValue}     delay={120} />
                     <ResultCard label="Lease Cost Per Year"  value={leaseResults.annualLeaseCost}  delay={180} />
                   </>

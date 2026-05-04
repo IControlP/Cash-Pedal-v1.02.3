@@ -9,6 +9,7 @@ import {
   classifySegment, determineMaintTier,
   estimateInsurance, generateMaintenanceServices,
   computeAnnualFuel, computeAnnualRegistration,
+  CHARGING_LOSS_FACTOR,
   STATE_INS_BASE,
 } from '../utils/vehicleCosts'
 
@@ -75,7 +76,10 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
     isEv ? null : mpgNum,
     isEv ? mpgeNum : null,
     state || null,
-    annualMiles
+    annualMiles,
+    null,
+    false,
+    isEv ? CHARGING_LOSS_FACTOR.home : 1.0
   ) / 12)
 
   const insurance = Math.round(estimateInsurance(price, make, model, year, state || null) / 12)

@@ -251,10 +251,10 @@ export const vehicleProfiles = {
   },
   economy: {
     name: 'Economy Car',
-    tagline: 'The Money Isn\'t Everything Genius',
+    tagline: 'The Smart Value Champion',
     emoji: '💚',
     description:
-      'You\'re not cheap — you\'re smart. A car is not an identity, and you\'d rather put that money somewhere it grows. The economy car wins on total cost of ownership, every time.',
+      'You know a car is a tool, not an identity — and you\'d rather put that money to work elsewhere. Economy cars win on total cost of ownership, every time, and top picks are genuinely reliable.',
     perfectFor: ['First-time car buyers', 'City dwellers with limited parking budgets', 'People who drive < 10K miles/year', 'Those who want low insurance and maintenance costs'],
     considerations: ['Fewer features at base trim', 'Less road presence', 'Can feel underpowered on highways'],
     topPicks: ['Honda Civic', 'Toyota Corolla', 'Hyundai Elantra'],

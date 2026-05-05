@@ -130,6 +130,7 @@ const loanTermOptions = [
   { value: 48, label: '48 months' },
   { value: 60, label: '60 months' },
   { value: 72, label: '72 months' },
+  { value: 84, label: '84 months (7 yr)' },
 ]
 
 const TYPE_LABELS = {
@@ -374,7 +375,7 @@ export default function SalaryCalculator() {
     function solve(thresholdPct) {
       const maxMonthly = (s * thresholdPct) / 12
       let estPrice = 30000
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 6; i++) {
         const ops = estimateBasicMonthlyCosts(estPrice, userState || null, annualMiles)
         const loanBudget = maxMonthly - ops.total
         if (loanBudget <= 0) return 0
@@ -413,7 +414,7 @@ export default function SalaryCalculator() {
         if (basePrice <= (affordableResults.conservative || 0)) tier = 'conservative'
         else if (basePrice <= (affordableResults.comfortable || 0)) tier = 'comfortable'
         const ops = estimateBasicMonthlyCosts(basePrice, userState || null, annualMiles)
-        const annualFinancing = Math.round(monthlyPayment(basePrice * 0.80, rate, 60) * 12)
+        const annualFinancing = Math.round(monthlyPayment(basePrice * (1 - downPct / 100), rate, loanTerm) * 12)
         const annualOperating = ops.total * 12
         entries.push({
           make, model, type: data.type, is_ev: data.is_ev,
@@ -857,8 +858,14 @@ export default function SalaryCalculator() {
                         <option key={o.value} value={o.value}>{o.label}</option>
                       ))}
                     </select>
-                    {loanTerm > 48 && (
-                      <p className="text-xs text-yellow-500">⚠ The 20/4/10 rule recommends 48 months max to keep total cost down.</p>
+                    {loanTerm === 60 && (
+                      <p className="text-xs text-yellow-500">⚠ 5-year loans are common but add significant interest. The 20/4/10 rule recommends 48 months max.</p>
+                    )}
+                    {loanTerm === 72 && (
+                      <p className="text-xs text-orange-400">⚠ 6-year loans mean you'll likely owe more than the car is worth for the first 2–3 years (underwater).</p>
+                    )}
+                    {loanTerm === 84 && (
+                      <p className="text-xs text-red-400">⛔ 7-year loans are high risk — you'll be underwater for most of the loan and pay substantially more in interest. Consider a less expensive vehicle.</p>
                     )}
                   </div>
 
@@ -1267,7 +1274,7 @@ export default function SalaryCalculator() {
                           <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1">
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Est. annual costs</p>
                             {[
-                              { label: `Financing (80% · 5yr · ${rate}%)`, val: v.annualFinancing },
+                              { label: `Financing (${100 - downPct}% · ${loanTerm / 12}yr · ${rate}%)`, val: v.annualFinancing },
                               { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.annualFuel },
                               { label: 'Insurance', val: v.annualInsurance },
                               { label: 'Maintenance', val: v.annualMaintenance },

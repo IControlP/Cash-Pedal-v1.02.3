@@ -159,8 +159,8 @@ export function estimateCurrentValue(originalPrice, make, model, ageYears, curre
 // ── Insurance ────────────────────────────────────────────
 // Ported from advanced_insurance.py (AdvancedInsuranceCalculator)
 
-// National average full-coverage premium — updated to 2025 levels (Bankrate/NAIC data)
-export const INSURANCE_BASE_RATE = 1760
+// National average full-coverage premium — updated to 2025/2026 levels (Bankrate/NAIC data)
+export const INSURANCE_BASE_RATE = 2050
 
 export const INSURANCE_VALUE_BRACKETS = [
   [0, 15000, .80], [15000, 30000, 1.00], [30000, 50000, 1.18],
@@ -227,13 +227,14 @@ export function determineMaintTier(make) {
 }
 
 export const MAINT_TIER_COSTS = {
-  luxury:   { oil_change_cost:175, oil_interval:10000, filter_cost:150, tire_rotation_cost:40,  brake_inspection_cost:75,  brake_fluid_flush_cost:200, trans_fluid_cost:400, coolant_flush_cost:250, spark_plug_cost:400, wiper_cost:80,  alignment_cost:200, parts_mult:1.5, labor_mult:1.4 },
-  premium:  { oil_change_cost:120, oil_interval:7500,  filter_cost:100, tire_rotation_cost:35,  brake_inspection_cost:60,  brake_fluid_flush_cost:150, trans_fluid_cost:300, coolant_flush_cost:180, spark_plug_cost:280, wiper_cost:60,  alignment_cost:150, parts_mult:1.2, labor_mult:1.2 },
-  standard: { oil_change_cost:85,  oil_interval:7500,  filter_cost:70,  tire_rotation_cost:25,  brake_inspection_cost:50,  brake_fluid_flush_cost:120, trans_fluid_cost:200, coolant_flush_cost:150, spark_plug_cost:200, wiper_cost:45,  alignment_cost:120, parts_mult:1.0, labor_mult:1.0 },
-  economy:  { oil_change_cost:65,  oil_interval:5000,  filter_cost:50,  tire_rotation_cost:20,  brake_inspection_cost:40,  brake_fluid_flush_cost:100, trans_fluid_cost:180, coolant_flush_cost:120, spark_plug_cost:150, wiper_cost:35,  alignment_cost:100, parts_mult:0.85,labor_mult:0.9  },
+  luxury:   { oil_change_cost:220, oil_interval:10000, filter_cost:160, tire_rotation_cost:45,  brake_inspection_cost:85,  brake_fluid_flush_cost:210, trans_fluid_cost:420, coolant_flush_cost:270, spark_plug_cost:480, wiper_cost:85,  alignment_cost:220, parts_mult:1.5, labor_mult:1.4 },
+  premium:  { oil_change_cost:150, oil_interval:7500,  filter_cost:110, tire_rotation_cost:38,  brake_inspection_cost:65,  brake_fluid_flush_cost:160, trans_fluid_cost:320, coolant_flush_cost:200, spark_plug_cost:320, wiper_cost:65,  alignment_cost:160, parts_mult:1.2, labor_mult:1.2 },
+  standard: { oil_change_cost:95,  oil_interval:7500,  filter_cost:75,  tire_rotation_cost:28,  brake_inspection_cost:55,  brake_fluid_flush_cost:130, trans_fluid_cost:220, coolant_flush_cost:160, spark_plug_cost:240, wiper_cost:48,  alignment_cost:130, parts_mult:1.0, labor_mult:1.0 },
+  economy:  { oil_change_cost:75,  oil_interval:5000,  filter_cost:55,  tire_rotation_cost:22,  brake_inspection_cost:45,  brake_fluid_flush_cost:110, trans_fluid_cost:195, coolant_flush_cost:130, spark_plug_cost:175, wiper_cost:38,  alignment_cost:110, parts_mult:0.85,labor_mult:0.9  },
 }
 
-export const LABOR_RATE = 100
+// National average shop rate for independent repair shops (AAA/ASE survey, 2025-2026)
+export const LABOR_RATE = 130
 
 export function generateMaintenanceServices(isEV, annualMileage, segment, make = '') {
   const tier  = determineMaintTier(make)
@@ -276,7 +277,8 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
 
   svc.push({ name: 'Wheel alignment', detail: 'every 2 years', annual: Math.round(c.alignment_cost * brand / 2) })
 
-  const tireInterval = isEV ? 40000 : isSports ? 30000 : isTruck ? 45000 : (tier === 'luxury' || tier === 'premium') ? 40000 : 60000
+  // EVs are ~20-30% heavier than equivalent ICE and deliver instant torque — both accelerate tire wear
+  const tireInterval = isEV ? 35000 : isSports ? 30000 : isTruck ? 45000 : (tier === 'luxury' || tier === 'premium') ? 40000 : 60000
   svc.push({ name: 'Tire replacement (set)', detail: `every ${tireInterval.toLocaleString()} mi`, annual: amortize(600, 2.0, tireInterval) })
 
   const brakeMult = isEV ? 1.8 : 1.0
@@ -341,7 +343,7 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
 
   defs.push({ name: 'Wheel alignment', costPerOcc: Math.round(c.alignment_cost * brand), intervalMiles: 2 * annualMileage })
 
-  const tireInterval = isEV ? 40000 : isSports ? 30000 : isTruck ? 45000 : (tier === 'luxury' || tier === 'premium') ? 40000 : 60000
+  const tireInterval = isEV ? 35000 : isSports ? 30000 : isTruck ? 45000 : (tier === 'luxury' || tier === 'premium') ? 40000 : 60000
   defs.push({ name: 'Tire replacement (set)', costPerOcc: occCost(600, 2.0), intervalMiles: tireInterval })
 
   const brakeMult = isEV ? 1.8 : 1.0

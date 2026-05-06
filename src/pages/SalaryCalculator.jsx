@@ -9,7 +9,7 @@ import {
   classifySegment, determineMaintTier,
   estimateInsurance, generateMaintenanceServices,
   computeAnnualFuel, computeAnnualRegistration,
-  STATE_INS_BASE,
+  STATE_INS_BASE, estimateCurrentValue,
 } from '../utils/vehicleCosts'
 
 function fmt(n) {
@@ -23,10 +23,20 @@ function monthlyPayment(principal, annualRate, months) {
   return (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1)
 }
 
-// Estimated monthly lease payment using standard dealer math
-// residual ≈ 55% (36mo), 60% (24mo), 50% (48mo); money factor ≈ 0.00250 (~6% APR)
-function estimateLeaseMonthly(msrp, capReduction, termMonths) {
-  const residualPct = termMonths <= 24 ? 0.60 : termMonths <= 36 ? 0.55 : 0.50
+// Estimated monthly lease payment using standard dealer math.
+// When make and model are provided (Pro mode), residual is derived from the shared
+// depreciation model for accuracy. Generic fallbacks: 60% (24mo), 55% (36mo), 50% (48mo).
+// Money factor ≈ 0.00250 (~6% APR) throughout.
+function estimateLeaseMonthly(msrp, capReduction, termMonths, make = null, model = null) {
+  const termYears = termMonths / 12
+  let residualPct
+  if (make && model) {
+    // estimateCurrentValue returns dollars; dividing by 100 gives fractional retention
+    const modelResidual = estimateCurrentValue(100, make, model, termYears) / 100
+    residualPct = Math.max(0.30, Math.min(0.70, modelResidual))
+  } else {
+    residualPct = termMonths <= 24 ? 0.60 : termMonths <= 36 ? 0.55 : 0.50
+  }
   const residual = msrp * residualPct
   const capCost = msrp - capReduction
   const depreciation = (capCost - residual) / termMonths
@@ -277,11 +287,11 @@ export default function SalaryCalculator() {
     else setVehiclePrice(p)
   }, [proMode, selectedVehicleInfo?.price, mode])
 
-  // Pro + lease mode: auto-calculate monthly payment whenever MSRP, down, or term changes
+  // Pro + lease mode: auto-calculate monthly payment whenever MSRP, down, term, or vehicle changes
   useEffect(() => {
     if (!proMode || mode !== 'lease' || !leaseMsrp) return
-    setLeaseMonthly(estimateLeaseMonthly(leaseMsrp, leaseDown, leaseTerm))
-  }, [proMode, mode, leaseMsrp, leaseDown, leaseTerm])
+    setLeaseMonthly(estimateLeaseMonthly(leaseMsrp, leaseDown, leaseTerm, selMake || null, selModel || null))
+  }, [proMode, mode, leaseMsrp, leaseDown, leaseTerm, selMake, selModel])
 
   // In lease mode: auto-select current year once model is set, clear if unavailable
   useEffect(() => {

@@ -538,6 +538,77 @@ export function getRegionalDemandPremium(state) {
   return STATE_USED_CAR_DEMAND[state] ?? 0.0
 }
 
+// ── Reliability Scoring ───────────────────────────────────
+// Score 0–100 (higher = lower repair risk).
+// Base score derives from the maintenance cost multiplier (a strong proxy for
+// overall reliability cost). Model-level adjustments layer on top.
+
+// Models that consistently outperform their brand's average reliability.
+export const MODEL_RELIABILITY_BOOST = {
+  Toyota:  ['4Runner','Tacoma','Land Cruiser','Tundra','Sequoia','Camry','Corolla','RAV4','Highlander','Sienna','Venza','Prius'],
+  Honda:   ['Civic','Accord','CR-V','HR-V','Pilot','Ridgeline','Odyssey'],
+  Subaru:  ['Outback','Forester','Crosstrek'],
+  Mazda:   ['Mazda3','CX-5','CX-50'],
+  Lexus:   ['LX','GX','RX','NX','ES'],
+  Hyundai: ['Palisade','Santa Fe'],
+  Kia:     ['Telluride','Sorento'],
+}
+
+// Models with documented below-average reliability within their brand.
+export const MODEL_RELIABILITY_PENALTY = {
+  'Land Rover':    ['Range Rover','Discovery','Defender','Evoque'],
+  Jaguar:          ['XF','F-Pace','E-Pace','I-PACE'],
+  'Mercedes-Benz': ['GLS','EQS','EQE','EQC','EQB','S-Class','E-Class'],
+  BMW:             ['7 Series','X7','iX','i7'],
+  Dodge:           ['Durango','Charger','Challenger'],
+  Chrysler:        ['Pacifica','Voyager'],
+  Fiat:            ['500','500X'],
+  Volkswagen:      ['Taos','ID.4','Arteon'],
+  Nissan:          ['Murano','Armada','Maxima'],
+  Maserati:        ['Ghibli','Quattroporte','Levante','Grecale'],
+}
+
+// Returns { score, label, color, notes, mult } or null when make is unknown.
+export function computeReliabilityScore(make, model, isEV) {
+  if (!make) return null
+  const mult = MAINT_BRAND_MULT[make] ?? 1.0
+  const ml   = (model ?? '').toLowerCase()
+
+  // Map maintenance multiplier (0.65–1.85) to a 0–75 penalty, giving a 25–100 raw score.
+  const raw  = Math.round(100 - ((mult - 0.65) / (1.85 - 0.65)) * 75)
+  let score  = Math.max(20, Math.min(100, isEV ? Math.min(raw + 8, 100) : raw))
+
+  // Apply model-level adjustments (+7 for standout reliability, -8 for documented issues).
+  if (model) {
+    if ((MODEL_RELIABILITY_BOOST[make]   ?? []).some(m => ml.includes(m.toLowerCase()))) score = Math.min(100, score + 7)
+    if ((MODEL_RELIABILITY_PENALTY[make] ?? []).some(m => ml.includes(m.toLowerCase()))) score = Math.max(20, score - 8)
+  }
+
+  const label = score >= 80 ? 'Low Risk' : score >= 60 ? 'Average Risk' : 'Higher Risk'
+  const color = score >= 80 ? '#4ade80' : score >= 60 ? '#FFB800' : '#f87171'
+  const tier  = determineMaintTier(make)
+
+  const notes = []
+  if (isEV) {
+    notes.push('Electric drivetrain: no oil changes, fewer brake services — but battery replacement is a major future cost risk.')
+  } else if (tier === 'luxury') {
+    notes.push(`Luxury-brand parts and labor run ${Math.round((mult - 1) * 100)}% above industry average. Budget for higher repair bills.`)
+  } else if (tier === 'premium') {
+    notes.push(`Premium-brand maintenance runs ~${Math.round((mult - 1) * 100)}% above average rates.`)
+  } else {
+    notes.push(`${make} maintenance costs are ${mult <= 0.95 ? 'below' : mult <= 1.05 ? 'near' : 'above'}-average for its segment.`)
+  }
+  if (model && (MODEL_RELIABILITY_BOOST[make]   ?? []).some(m => ml.includes(m.toLowerCase()))) {
+    notes.push(`The ${model} is recognized for above-average reliability in the ${make} lineup.`)
+  }
+  if (model && (MODEL_RELIABILITY_PENALTY[make] ?? []).some(m => ml.includes(m.toLowerCase()))) {
+    notes.push(`The ${model} has a below-average reliability record — factor in higher repair frequency and costs.`)
+  }
+  notes.push(`Repair cost multiplier: ${mult.toFixed(2)}× industry baseline.`)
+
+  return { score, label, color, notes, mult }
+}
+
 // ── Location ─────────────────────────────────────────────
 
 export const ZIP_RANGES = [

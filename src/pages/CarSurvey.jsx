@@ -364,8 +364,11 @@ export default function CarSurvey() {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 anim-5">
-            <Link to="/tco" className="btn-primary flex-1 justify-center py-4">
-              Calculate TCO for this vehicle →
+            <Link
+              to={`/tco?category=${topMatch?.key ?? ''}`}
+              className="btn-primary flex-1 justify-center py-4"
+            >
+              Calculate {topMatch?.profile.name ?? 'vehicle'} TCO →
             </Link>
             <button onClick={handleRestart} className="btn-ghost flex-1 justify-center py-4">
               Retake the survey

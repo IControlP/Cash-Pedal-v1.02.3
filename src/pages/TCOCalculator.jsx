@@ -21,6 +21,7 @@ import {
   STATE_REG_FEE, STATE_VLF, computeAnnualRegistration,
   computeSalesTax, STATE_VEHICLE_SALES_TAX, STATE_DOC_FEE_AVG, getRegionalDemandPremium,
   ZIP_RANGES, zipToState, resolveLocation,
+  computeReliabilityScore,
 } from '../utils/vehicleCosts'
 
 
@@ -1232,23 +1233,9 @@ function RepairRiskScore({ isPro, make, model, isEV, maintBrandMult, determineTi
 
   if (!make) return null
 
-  const mult  = maintBrandMult[make] ?? 1.0
-  const tier  = determineTier(make)
-  const raw   = Math.round(100 - ((mult - 0.65) / (1.85 - 0.65)) * 75)
-  const score = Math.max(20, Math.min(100, isEV ? Math.min(raw + 8, 100) : raw))
-  const label = score >= 80 ? 'Low Risk' : score >= 60 ? 'Average Risk' : 'Higher Risk'
-  const color = score >= 80 ? '#4ade80' : score >= 60 ? '#FFB800' : '#f87171'
-
-  const notes = [
-    isEV
-      ? 'Electric drivetrain: no oil changes, fewer brake services — but battery replacement is a major future cost risk.'
-      : tier === 'luxury'
-        ? `Luxury-brand parts and labor run ${Math.round((mult - 1) * 100)}% above industry average. Budget for higher repair bills.`
-        : tier === 'premium'
-          ? `Premium-brand maintenance runs ~${Math.round((mult - 1) * 100)}% above average rates.`
-          : `${make} maintenance costs are ${mult <= 0.95 ? 'below' : mult <= 1.05 ? 'near' : 'above'}-average for its segment.`,
-    `Repair cost multiplier: ${mult.toFixed(2)}× industry baseline.`,
-  ]
+  const reliability = computeReliabilityScore(make, model, isEV)
+  if (!reliability) return null
+  const { score, label, color, notes } = reliability
 
   return (
     <div className="rounded-xl border p-4 flex flex-col gap-3"
@@ -1472,7 +1459,17 @@ export default function TCOCalculator() {
   // Detailed estimates mode
   const [detailedMode,   setDetailedMode]   = useState(false)
   const [annualMileage,  setAnnualMileage]  = useState(12000)
-  const [vehicleCategory,setVehicleCategory]= useState('')      // used when no make/model selected
+  const [vehicleCategory,setVehicleCategory]= useState(() => {
+    // Pre-select from ?category= URL param (e.g. forwarded from CarSurvey results)
+    const catParam = new URLSearchParams(window.location.search).get('category')
+    if (catParam) {
+      const validVals = VEHICLE_CATEGORIES.map(c => c.value)
+      // Map survey's 'hybrid' type to the closest TCO category
+      const mapped = catParam === 'hybrid' ? 'compact' : catParam
+      if (validVals.includes(mapped)) return mapped
+    }
+    return ''
+  })
   const [chargingStyle,  setChargingStyle]  = useState('home')  // 'home' | 'mixed' | 'public'
   const [customFuelPrice,setCustomFuelPrice]= useState('')      // empty = use state avg
   const [multiCarPolicy, setMultiCarPolicy] = useState(false)

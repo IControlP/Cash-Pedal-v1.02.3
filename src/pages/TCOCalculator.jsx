@@ -21,12 +21,13 @@ import {
   STATE_REG_FEE, STATE_VLF, computeAnnualRegistration,
   computeSalesTax, STATE_VEHICLE_SALES_TAX, STATE_DOC_FEE_AVG, getRegionalDemandPremium,
   ZIP_RANGES, zipToState, resolveLocation,
+  FEDERAL_EV_CREDIT, FEDERAL_EV_MSRP_CAP, STATE_EV_INCENTIVES, estimateNewEVIncentives,
 } from '../utils/vehicleCosts'
 
 
 // ── Loan math ────────────────────────────────────────
-function calculateLoan({ price, downPayment, loanTermMonths, annualRatePercent, ownershipYears }) {
-  const loanAmount = price - downPayment
+function calculateLoan({ price, downPayment, loanTermMonths, annualRatePercent, ownershipYears, tradeNetEquity = 0 }) {
+  const loanAmount = Math.max(0, price - downPayment - tradeNetEquity)
   const r = annualRatePercent / 12 / 100
   const n = loanTermMonths
   let monthlyPayment = 0
@@ -1356,6 +1357,12 @@ function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenan
         type: 'good',
         text: 'EVs eliminate oil changes and reduce brake wear — typical maintenance savings of $500–$900/yr vs. a comparable gas vehicle.',
       })
+      if (financeMode === 'buy' && loanAmount > 0) {
+        alerts.push({
+          type: 'info',
+          text: 'New EV? The federal IRA §30D tax credit ($7,500 for eligible vehicles, $4,000 for used) can offset your effective purchase cost. Check eligibility at fueleconomy.gov/feg/taxevb.shtml — income limits apply.',
+        })
+      }
     }
     if (alerts.length === 0) {
       alerts.push({ type: 'good', text: `${make}'s costs are in line with segment averages. No major red flags detected for this vehicle.` })
@@ -1491,6 +1498,13 @@ export default function TCOCalculator() {
   const [dealerPurchase,   setDealerPurchase]   = useState(true)
   const [taxRateOverride,  setTaxRateOverride]  = useState(null) // null = use state rate
   const [docFeeOverride,   setDocFeeOverride]   = useState(null) // null = use state avg
+  // Trade-in (buy mode only)
+  const [tradeInValue,     setTradeInValue]     = useState(0)
+  const [tradeInOwed,      setTradeInOwed]      = useState(0)
+  const [showTradeIn,      setShowTradeIn]      = useState(false)
+  // Lease mileage overage
+  const [leaseMileLimit,   setLeaseMileLimit]   = useState(12000)
+  const [leaseOverageRate, setLeaseOverageRate] = useState(0.25)
 
   // Restore last session when landing via ?resume=1
   useEffect(() => {
@@ -1672,10 +1686,12 @@ export default function TCOCalculator() {
   const effectivePrice = financeMode === 'buy' ? price + totalPurchaseExtras : price
   const regionalDemand = resolvedState ? getRegionalDemandPremium(resolvedState) : 0
 
+  const tradeNetEquity = tradeInValue - tradeInOwed
   const results = useMemo(() => calculateLoan({
     price: effectivePrice, downPayment: Math.min(downPayment, effectivePrice),
     loanTermMonths: loanTerm, annualRatePercent: rate, ownershipYears,
-  }), [effectivePrice, downPayment, loanTerm, rate, ownershipYears])
+    tradeNetEquity: financeMode === 'buy' && showTradeIn ? tradeNetEquity : 0,
+  }), [effectivePrice, downPayment, loanTerm, rate, ownershipYears, financeMode, showTradeIn, tradeNetEquity])
 
   const leaseResults = useMemo(() => calculateLease({
     msrp: price,
@@ -1765,6 +1781,18 @@ export default function TCOCalculator() {
   const catInfoForRender = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
   const effIsEV = modelData ? modelData.is_ev : (catInfoForRender?.isEV ?? false)
   const isPremium = !effIsEV && !!(selMake && requiresPremiumFuel(selMake, selModel))
+
+  // EV incentives — shown for new (current year) EV purchases
+  const evIncentives = useMemo(() => {
+    if (!effIsEV || financeMode !== 'buy' || vehicleAge > 1) return null
+    const seg = selMake ? classifySegment(selMake, selModel || '') : (catInfoForRender?.segment ?? 'electric')
+    return estimateNewEVIncentives(seg, price, resolvedState)
+  }, [effIsEV, financeMode, vehicleAge, selMake, selModel, catInfoForRender, price, resolvedState])
+
+  // Lease mileage overage cost per year
+  const leaseOveragePerYear = (financeMode === 'lease' && annualMileage > leaseMileLimit)
+    ? Math.round((annualMileage - leaseMileLimit) * leaseOverageRate)
+    : 0
 
   // Whether the detailed results are currently blocked by the paywall
   const isDetailBlocked = !isSubscribed && detailedCalcCount > FREE_DETAILED_LIMIT
@@ -2187,12 +2215,66 @@ export default function TCOCalculator() {
                     </div>
                   </div>
 
+                  {/* EV Incentives panel — new EVs only */}
+                  {evIncentives && (
+                    <div className="rounded-xl border p-4 flex flex-col gap-3"
+                      style={{ borderColor: 'rgba(96,200,255,0.3)', background: 'rgba(96,200,255,0.04)' }}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#60c8ff' }}>
+                          ⚡ EV Tax Incentives
+                        </span>
+                        <span className="text-[10px] text-[var(--text-muted)]">claim at tax time</span>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-[var(--text-muted)]">Federal IRA credit (§30D)</span>
+                          <span className={evIncentives.federal > 0 ? 'text-green-400 font-semibold' : 'text-[var(--text-muted)]'}>
+                            {evIncentives.federal > 0 ? `−$${evIncentives.federal.toLocaleString()}` : 'Not eligible'}
+                          </span>
+                        </div>
+                        {!evIncentives.federalEligible && (
+                          <p className="text-[10px] text-amber-400">
+                            MSRP ${price.toLocaleString()} exceeds ${evIncentives.msrpCap.toLocaleString()} cap for this vehicle type.
+                          </p>
+                        )}
+                        {evIncentives.state > 0 && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-[var(--text-muted)]">{evIncentives.stateLabel}</span>
+                            <span className="text-green-400 font-semibold">−${evIncentives.state.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {evIncentives.total > 0 && (
+                          <>
+                            <div className="h-px bg-[var(--border)]" />
+                            <div className="flex justify-between text-xs font-semibold">
+                              <span className="text-white">Net effective price after incentives</span>
+                              <span style={{ color: '#60c8ff' }}>
+                                ${Math.max(0, price - evIncentives.total).toLocaleString()}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                        Federal credit income limits: $150k single · $300k joint. Credits reduce your tax bill — they don't change the dealer price. Consider increasing your down payment by the credit amount to avoid excess interest.
+                        {!resolvedState && ' Add your state above to see state incentives.'}
+                      </p>
+                    </div>
+                  )}
+
                   <SliderInput label="Down Payment" value={safeDown}
                     onChange={v => setDownPayment(Math.min(v, effectivePrice))}
                     min={0} max={Math.min(effectivePrice, 50000)} step={500} prefix="$" />
 
                   <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
-                    <span className="text-sm text-[var(--text-muted)]">Loan amount</span>
+                    <div>
+                      <span className="text-sm text-[var(--text-muted)]">Loan amount</span>
+                      {showTradeIn && tradeNetEquity !== 0 && (
+                        <span className="ml-2 text-[10px]" style={{ color: tradeNetEquity > 0 ? '#4ade80' : '#f87171' }}>
+                          {tradeNetEquity > 0 ? `trade equity applied` : `neg. equity rolled in`}
+                        </span>
+                      )}
+                    </div>
                     <span className="font-display font-bold text-white text-lg">{formatCurrency(results.loanAmount)}</span>
                   </div>
 
@@ -2208,6 +2290,90 @@ export default function TCOCalculator() {
                       </p>
                     </div>
                   )}
+
+                  {/* Trade-In Section */}
+                  <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+                    <button
+                      onClick={() => setShowTradeIn(s => !s)}
+                      className="w-full flex items-center justify-between px-4 py-3 text-sm transition-colors hover:bg-[var(--surface-hover)]"
+                      style={{ background: showTradeIn ? 'var(--surface)' : 'transparent' }}>
+                      <span className="font-semibold text-white">Trade-In Vehicle</span>
+                      <div className="flex items-center gap-2">
+                        {showTradeIn && tradeInValue > 0 && (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded"
+                            style={{
+                              color: tradeNetEquity >= 0 ? '#4ade80' : '#f87171',
+                              background: tradeNetEquity >= 0 ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)',
+                            }}>
+                            {tradeNetEquity >= 0
+                              ? `+$${tradeNetEquity.toLocaleString()} equity`
+                              : `−$${Math.abs(tradeNetEquity).toLocaleString()} underwater`}
+                          </span>
+                        )}
+                        <span className="text-[var(--text-muted)] text-xs">{showTradeIn ? '▲ hide' : '▼ add'}</span>
+                      </div>
+                    </button>
+                    {showTradeIn && (
+                      <div className="px-4 pb-4 pt-1 flex flex-col gap-4 border-t" style={{ borderColor: 'var(--border)' }}>
+                        <p className="text-[11px] text-[var(--text-muted)] mt-2">
+                          Positive equity reduces your loan amount. Negative equity ("underwater") is rolled into your new loan.
+                        </p>
+                        <div className="flex flex-col gap-2">
+                          <label className="input-label">Trade-In Value</label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                            <input type="number" className="input-field pl-7" min={0} step={500}
+                              placeholder="0" value={tradeInValue || ''}
+                              onChange={e => setTradeInValue(Math.max(0, Number(e.target.value) || 0))} />
+                          </div>
+                          <p className="text-[10px] text-[var(--text-muted)]">
+                            What a dealer or private buyer will pay — check KBB or Edmunds for an estimate
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="input-label">Amount Still Owed on Trade</label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                            <input type="number" className="input-field pl-7" min={0} step={500}
+                              placeholder="0" value={tradeInOwed || ''}
+                              onChange={e => setTradeInOwed(Math.max(0, Number(e.target.value) || 0))} />
+                          </div>
+                          <p className="text-[10px] text-[var(--text-muted)]">
+                            Remaining loan balance on your current vehicle (enter 0 if paid off)
+                          </p>
+                        </div>
+                        {tradeInValue > 0 && (
+                          <div className="rounded-lg divide-y" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                            <div className="flex justify-between px-3 py-2 text-xs">
+                              <span className="text-[var(--text-muted)]">Trade-in value</span>
+                              <span className="text-white font-medium">{formatCurrency(tradeInValue)}</span>
+                            </div>
+                            <div className="flex justify-between px-3 py-2 text-xs">
+                              <span className="text-[var(--text-muted)]">Amount owed</span>
+                              <span className="text-white font-medium">−{formatCurrency(tradeInOwed)}</span>
+                            </div>
+                            <div className="flex justify-between px-3 py-2 text-xs font-semibold">
+                              <span className="text-white">Net trade equity</span>
+                              <span style={{ color: tradeNetEquity >= 0 ? '#4ade80' : '#f87171' }}>
+                                {tradeNetEquity >= 0 ? '+' : ''}{formatCurrency(tradeNetEquity)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                        {tradeNetEquity < 0 && (
+                          <div className="rounded-lg px-3 py-2.5 flex items-start gap-2.5 border"
+                            style={{ borderColor: 'rgba(248,113,113,0.35)', background: 'rgba(248,113,113,0.05)' }}>
+                            <span className="text-sm shrink-0 mt-0.5">⚠</span>
+                            <p className="text-[11px] leading-relaxed" style={{ color: '#f87171' }}>
+                              <span className="font-semibold">Negative equity rolled into new loan.</span>{' '}
+                              You owe {formatCurrency(Math.abs(tradeNetEquity))} more than the trade is worth.
+                              This amount is added to your new loan — consider paying it down first if possible.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   <SelectInput label="Loan Term" value={loanTerm} onChange={setLoanTerm} options={loanTermOptions} />
 
@@ -2271,6 +2437,54 @@ export default function TCOCalculator() {
                       {formatCurrency(leaseResults.capCost)}
                     </span>
                   </div>
+
+                  {/* Lease mileage & overage */}
+                  <div className="rounded-xl border divide-y" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                    <div className="flex items-center justify-between px-4 py-3 gap-3">
+                      <div>
+                        <span className="text-sm text-white">Annual Mileage Limit</span>
+                        <span className="ml-2 text-[10px] text-[var(--text-muted)]">in lease contract</span>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <input type="number" step={1000} min={5000} max={25000}
+                          value={leaseMileLimit}
+                          onChange={e => setLeaseMileLimit(Math.max(5000, Number(e.target.value) || 12000))}
+                          className="input-field text-right py-1 text-sm w-28" />
+                        <span className="text-[var(--text-muted)] text-xs">mi/yr</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between px-4 py-3 gap-3">
+                      <div>
+                        <span className="text-sm text-white">Overage Rate</span>
+                        <span className="ml-2 text-[10px] text-[var(--text-muted)]">per mile over limit</span>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="text-[var(--text-muted)] text-xs">$</span>
+                        <input type="number" step={0.01} min={0.10} max={0.50}
+                          value={leaseOverageRate}
+                          onChange={e => setLeaseOverageRate(Math.max(0.10, Number(e.target.value) || 0.25))}
+                          className="input-field text-right py-1 text-sm w-24" />
+                        <span className="text-[var(--text-muted)] text-xs">/mi</span>
+                      </div>
+                    </div>
+                    {annualMileage > leaseMileLimit ? (
+                      <div className="flex items-center justify-between px-4 py-3">
+                        <span className="text-sm text-amber-400 font-semibold">
+                          ⚠ Est. overage ({(annualMileage - leaseMileLimit).toLocaleString()} mi/yr)
+                        </span>
+                        <span className="font-semibold text-amber-400">{formatCurrency(leaseOveragePerYear)}/yr</span>
+                      </div>
+                    ) : (
+                      <div className="px-4 py-2.5">
+                        <p className="text-[10px] text-green-400">
+                          You're within your {leaseMileLimit.toLocaleString()} mi/yr limit — no projected overage.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-[var(--text-muted)] -mt-2 pl-1">
+                    Typical overage rate: $0.15–$0.30/mi. Negotiate a higher mileage limit upfront — it's cheaper than paying overage at lease end.
+                  </p>
                 </>
               )}
 
@@ -2727,6 +2941,65 @@ export default function TCOCalculator() {
                 )}
               </div>
 
+              {/* Loan Term Quick Comparison — buy mode */}
+              {financeMode === 'buy' && (
+                <div className="rounded-xl border p-4 flex flex-col gap-3"
+                  style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+                    Loan Term Comparison
+                  </p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="text-[var(--text-muted)] uppercase tracking-wide text-[10px]">
+                          <th className="text-left pb-2 font-semibold">Term</th>
+                          <th className="text-right pb-2 font-semibold">Monthly</th>
+                          <th className="text-right pb-2 font-semibold">Total Interest</th>
+                          <th className="text-right pb-2 font-semibold">Total Paid</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
+                        {[36, 48, 60, 72, 84].map(term => {
+                          const isSelected = term === loanTerm
+                          const r = calculateLoan({
+                            price: effectivePrice,
+                            downPayment: Math.min(downPayment, effectivePrice),
+                            loanTermMonths: term,
+                            annualRatePercent: rate,
+                            ownershipYears,
+                            tradeNetEquity: showTradeIn ? tradeNetEquity : 0,
+                          })
+                          return (
+                            <tr key={term}
+                              className="cursor-pointer transition-colors"
+                              style={{ background: isSelected ? 'rgba(200,255,0,0.06)' : 'transparent' }}
+                              onClick={() => setLoanTerm(term)}>
+                              <td className="py-2 pr-2" style={{ color: isSelected ? 'var(--accent)' : 'var(--text-muted)' }}>
+                                <span className="font-semibold">{term} mo</span>
+                                {isSelected && <span className="ml-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded"
+                                  style={{ background: 'rgba(200,255,0,0.15)', color: 'var(--accent)' }}>selected</span>}
+                              </td>
+                              <td className="py-2 text-right font-semibold tabular-nums"
+                                style={{ color: isSelected ? 'white' : 'var(--text-muted)' }}>
+                                {formatCurrency(r.monthlyPayment)}
+                              </td>
+                              <td className="py-2 text-right tabular-nums text-amber-400">
+                                {formatCurrency(r.totalInterestPaid)}
+                              </td>
+                              <td className="py-2 text-right tabular-nums"
+                                style={{ color: isSelected ? 'white' : 'var(--text-muted)' }}>
+                                {formatCurrency(r.totalCostOfLoan)}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-[10px] text-[var(--text-muted)]">Click a row to switch loan term. Shorter terms = less interest but higher monthly payments.</p>
+                </div>
+              )}
+
               {/* Annual cost breakdown */}
               <div className="rounded-xl border p-4 flex flex-col gap-3"
                 style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
@@ -2740,10 +3013,11 @@ export default function TCOCalculator() {
                     { label: (modelData?.is_ev || VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.isEV) ? 'Charging' : 'Fuel', value: annualFuel },
                     { label: 'Maintenance & repairs',  value: forecastRows[0]?.maintenance  ?? annualMaintenance },
                     { label: 'Registration & fees',    value: forecastRows[0]?.registration ?? annualRegistration },
-                  ].map(({ label, value }) => (
+                    ...(leaseOveragePerYear > 0 ? [{ label: '⚠ Lease mileage overage (est.)', value: leaseOveragePerYear, warn: true }] : []),
+                  ].map(({ label, value, warn }) => (
                     <div key={label} className="flex justify-between items-center">
-                      <span className="text-[var(--text-muted)]">{label}</span>
-                      <span className="text-white font-medium">{formatCurrency(value)}</span>
+                      <span style={{ color: warn ? '#fbbf24' : 'var(--text-muted)' }}>{label}</span>
+                      <span style={{ color: warn ? '#fbbf24' : 'white' }} className="font-medium">{formatCurrency(value)}</span>
                     </div>
                   ))}
                   <div className="h-px bg-[var(--border)] my-1" />

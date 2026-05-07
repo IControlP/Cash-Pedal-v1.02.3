@@ -93,10 +93,24 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
   }
 }
 
+// State income tax effective rates (approximate marginal/blended, 2025).
+// No-income-tax states: AK, FL, NV, NH, SD, TN, TX, WA, WY
+const STATE_INCOME_TAX = {
+  AL:0.040, AK:0.000, AZ:0.025, AR:0.049, CA:0.093, CO:0.044,
+  CT:0.055, DE:0.055, DC:0.085, FL:0.000, GA:0.055, HI:0.085,
+  ID:0.058, IL:0.050, IN:0.032, IA:0.057, KS:0.052, KY:0.050,
+  LA:0.033, ME:0.068, MD:0.053, MA:0.050, MI:0.043, MN:0.073,
+  MS:0.050, MO:0.048, MT:0.068, NE:0.062, NV:0.000, NH:0.000,
+  NJ:0.065, NM:0.049, NY:0.075, NC:0.050, ND:0.021, OH:0.040,
+  OK:0.047, OR:0.090, PA:0.031, RI:0.048, SC:0.070, SD:0.000,
+  TN:0.000, TX:0.000, UT:0.050, VT:0.068, VA:0.057, WA:0.000,
+  WV:0.055, WI:0.065, WY:0.000,
+}
+
 // Rough effective take-home estimate for a given gross annual salary.
-// Uses simplified federal brackets + FICA + 4% avg state income tax.
+// Uses simplified federal brackets + FICA + state income tax (state-specific when available).
 // Intended for ballpark context only, not tax advice.
-function estimateMonthlyTakeHome(grossAnnual) {
+function estimateMonthlyTakeHome(grossAnnual, state = null) {
   let federalEff
   if (grossAnnual <= 30000)       federalEff = 0.08
   else if (grossAnnual <= 55000)  federalEff = 0.12
@@ -104,7 +118,8 @@ function estimateMonthlyTakeHome(grossAnnual) {
   else if (grossAnnual <= 140000) federalEff = 0.21
   else if (grossAnnual <= 200000) federalEff = 0.24
   else                            federalEff = 0.28
-  const totalRate = federalEff + 0.0765 + 0.04  // federal + FICA + avg state
+  const stateRate = state ? (STATE_INCOME_TAX[state] ?? 0.04) : 0.04
+  const totalRate = federalEff + 0.0765 + stateRate  // federal + FICA + state
   return Math.round((grossAnnual * (1 - totalRate)) / 12)
 }
 
@@ -1040,7 +1055,7 @@ export default function SalaryCalculator() {
               {/* Take-home income context */}
               {(() => {
                 const grossConservative = results.conservative
-                const takeHome = estimateMonthlyTakeHome(grossConservative)
+                const takeHome = estimateMonthlyTakeHome(grossConservative, userState || null)
                 const vehiclePct = Math.round((results.totalMonthly / takeHome) * 100)
                 return (
                   <div className="rounded-xl border border-[var(--border)] p-4 text-sm"
@@ -1065,7 +1080,7 @@ export default function SalaryCalculator() {
                       </div>
                     </div>
                     <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
-                      Take-home estimate uses federal brackets + FICA + 4% avg state tax — actual varies by state, filing status &amp; deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
+                      Take-home uses federal brackets + FICA + {userState ? `${userState} state tax (${((STATE_INCOME_TAX[userState] ?? 0.04) * 100).toFixed(1)}%)` : 'avg state tax'} — actual varies by filing status &amp; deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, typically 13–16% of take-home.
                     </p>
                   </div>
                 )

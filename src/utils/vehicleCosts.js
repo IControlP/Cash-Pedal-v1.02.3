@@ -522,6 +522,55 @@ export const STATE_DOC_FEE_AVG = {
   WI:199, WY:249, DC:299,
 }
 
+// ── EV Tax Incentives ─────────────────────────────────
+// IRA §30D new clean vehicle credit: $7,500 for qualifying new EVs/PHEVs.
+// MSRP caps: ≤$80k for SUVs/vans/trucks; ≤$55k for all other vehicles.
+// Income limits: $150k single, $225k head of household, $300k joint.
+// Final assembly must be in North America.
+export const FEDERAL_EV_CREDIT = 7500
+
+// MSRP eligibility cap by vehicle segment
+export const FEDERAL_EV_MSRP_CAP = {
+  truck: 80000, suv: 80000, luxury_suv: 80000, minivan: 80000,
+  sedan: 55000, compact: 55000, economy: 55000, sports: 55000,
+  luxury: 55000, electric: 55000, hybrid: 55000,
+}
+
+// State-level EV incentives (rebates/tax credits, 2025 data).
+// Many programs have income limits, waitlists, or per-model eligibility.
+export const STATE_EV_INCENTIVES = {
+  CA: { amount: 2000,  label: 'CA Clean Vehicle Rebate Project' },
+  CO: { amount: 5000,  label: 'CO Innovative Motor Vehicle Credit' },
+  CT: { amount: 3000,  label: 'CT CHEAPR Rebate' },
+  IL: { amount: 4000,  label: 'IL Electric Vehicle Rebate' },
+  MA: { amount: 3500,  label: 'MA MOR-EV Rebate' },
+  MN: { amount: 2500,  label: 'MN Electric Vehicle Rebate' },
+  NJ: { amount: 4000,  label: 'NJ EV Incentive (+ sales tax exempt)' },
+  NY: { amount: 2000,  label: 'NY Drive Clean Rebate' },
+  OR: { amount: 2500,  label: 'OR Clean Vehicle Rebate' },
+  PA: { amount: 3000,  label: 'PA Alternative Fuel Vehicle Rebate' },
+  UT: { amount: 1500,  label: 'UT Clean Fuel Vehicle Tax Credit' },
+  VT: { amount: 5000,  label: 'VT MileageSmart Incentive' },
+  WA: { amount: 2500,  label: 'WA EV Incentive' },
+}
+
+// Returns expected EV incentives for a new vehicle purchase.
+// Only applies to new (not used) vehicles. State incentive requires resolvedState.
+export function estimateNewEVIncentives(segment, msrp, state) {
+  const msrpCap = FEDERAL_EV_MSRP_CAP[segment] ?? 55000
+  const federalEligible = msrp <= msrpCap
+  const federal = federalEligible ? FEDERAL_EV_CREDIT : 0
+  const stateInc = STATE_EV_INCENTIVES[state] ?? null
+  return {
+    federal,
+    federalEligible,
+    msrpCap,
+    state: stateInc ? stateInc.amount : 0,
+    stateLabel: stateInc?.label ?? null,
+    total: federal + (stateInc ? stateInc.amount : 0),
+  }
+}
+
 // ── Regional Used-Car Demand ──────────────────────────────
 // Static premium/discount vs. national average used-car asking prices.
 // Based on regional supply/demand patterns; updated periodically.

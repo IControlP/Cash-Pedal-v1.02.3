@@ -1491,6 +1491,13 @@ export default function TCOCalculator() {
   const [dealerPurchase,   setDealerPurchase]   = useState(true)
   const [taxRateOverride,  setTaxRateOverride]  = useState(null) // null = use state rate
   const [docFeeOverride,   setDocFeeOverride]   = useState(null) // null = use state avg
+  const [simpleMode,       setSimpleMode]       = useState(() => localStorage.getItem('cashpedal_simple_mode') !== 'false')
+
+  const toggleSimpleMode = () => {
+    const next = !simpleMode
+    setSimpleMode(next)
+    localStorage.setItem('cashpedal_simple_mode', String(next))
+  }
 
   // Restore last session when landing via ?resume=1
   useEffect(() => {
@@ -1885,6 +1892,32 @@ export default function TCOCalculator() {
           <p className="anim-2 text-[var(--text-muted)] mt-2 text-base max-w-lg">
             Pick any vehicle from our database of 35 makes &amp; 266 models — or enter your own numbers.
           </p>
+
+          {/* Simple / Detailed toggle */}
+          <div className="anim-2 mt-5 flex items-center gap-3">
+            <div className="flex gap-1 p-1 rounded-lg text-sm"
+              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              {[
+                { value: true,  label: 'Simple',   desc: 'Just the essentials' },
+                { value: false, label: 'Detailed',  desc: 'Full control' },
+              ].map(opt => (
+                <button key={String(opt.value)}
+                  onClick={() => { setSimpleMode(opt.value); localStorage.setItem('cashpedal_simple_mode', String(opt.value)) }}
+                  className="px-4 py-1.5 rounded-md font-semibold transition-all"
+                  style={{
+                    background: simpleMode === opt.value ? 'var(--accent)' : 'transparent',
+                    color:      simpleMode === opt.value ? '#000'          : 'var(--text-muted)',
+                  }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-[var(--text-muted)]">
+              {simpleMode
+                ? 'Showing the key numbers. Switch to Detailed for full control over every input.'
+                : 'All inputs unlocked. Switch to Simple for a cleaner view.'}
+            </p>
+          </div>
         </div>
 
         {/* Layout */}
@@ -2097,8 +2130,8 @@ export default function TCOCalculator() {
                 </p>
               )}
 
-              {/* Regional demand note */}
-              {financeMode === 'buy' && carAge > 0 && regionalDemand !== 0 && resolvedState && (
+              {/* Regional demand note — detailed mode only */}
+              {!simpleMode && financeMode === 'buy' && carAge > 0 && regionalDemand !== 0 && resolvedState && (
                 <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
                   Used-car market in <span className="text-white">{resolvedState}</span> typically runs{' '}
                   <span className={regionalDemand > 0 ? 'text-amber-400' : 'text-green-400'}>
@@ -2110,51 +2143,55 @@ export default function TCOCalculator() {
 
               {financeMode === 'buy' ? (
                 <>
-                  {/* Dealer / Private Party toggle */}
-                  <div className="flex gap-1 p-1 rounded-lg" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-                    {[{ v: true, l: 'Dealer Purchase' }, { v: false, l: 'Private Party' }].map(({ v, l }) => (
-                      <button key={String(v)} onClick={() => setDealerPurchase(v)}
-                        className="flex-1 py-1.5 rounded-md text-sm font-semibold transition-all"
-                        style={{
-                          background: dealerPurchase === v ? 'var(--accent)' : 'transparent',
-                          color:      dealerPurchase === v ? '#000' : 'var(--text-muted)',
-                        }}>
-                        {l}
-                      </button>
-                    ))}
-                  </div>
+                  {/* Dealer / Private Party toggle — detailed mode only */}
+                  {!simpleMode && (
+                    <div className="flex gap-1 p-1 rounded-lg" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                      {[{ v: true, l: 'Dealer Purchase' }, { v: false, l: 'Private Party' }].map(({ v, l }) => (
+                        <button key={String(v)} onClick={() => setDealerPurchase(v)}
+                          className="flex-1 py-1.5 rounded-md text-sm font-semibold transition-all"
+                          style={{
+                            background: dealerPurchase === v ? 'var(--accent)' : 'transparent',
+                            color:      dealerPurchase === v ? '#000' : 'var(--text-muted)',
+                          }}>
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Tax + Fees block */}
                   <div className="rounded-xl border divide-y" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
                     {/* Sales tax row */}
-                    <div className="flex items-center justify-between px-4 py-3 gap-3">
-                      <div className="min-w-0">
-                        <span className="text-sm text-white">Sales Tax</span>
-                        <span className="ml-2 text-[10px] text-[var(--text-muted)]">
-                          {resolvedState
-                            ? taxRateOverride === null && (STATE_VEHICLE_SALES_TAX[resolvedState] ?? 1) === 0
-                              ? <span className="text-green-400 font-semibold">No vehicle sales tax ({resolvedState})</span>
-                              : `${resolvedState} · ${((taxRateOverride !== null ? parseFloat(taxRateOverride) : (STATE_VEHICLE_SALES_TAX[resolvedState] ?? 0.0625) * 100)).toFixed(2)}%`
-                            : 'Enter location for exact rate'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div className="relative">
-                          <input
-                            type="number" step="0.01" min="0" max="20"
-                            placeholder={resolvedState ? ((STATE_VEHICLE_SALES_TAX[resolvedState] ?? 0.0625) * 100).toFixed(2) : '6.25'}
-                            value={taxRateOverride ?? ''}
-                            onChange={e => setTaxRateOverride(e.target.value === '' ? null : e.target.value)}
-                            className="input-field text-right pr-6 py-1 text-sm w-24"
-                          />
-                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs pointer-events-none">%</span>
+                    {!simpleMode && (
+                      <div className="flex items-center justify-between px-4 py-3 gap-3">
+                        <div className="min-w-0">
+                          <span className="text-sm text-white">Sales Tax</span>
+                          <span className="ml-2 text-[10px] text-[var(--text-muted)]">
+                            {resolvedState
+                              ? taxRateOverride === null && (STATE_VEHICLE_SALES_TAX[resolvedState] ?? 1) === 0
+                                ? <span className="text-green-400 font-semibold">No vehicle sales tax ({resolvedState})</span>
+                                : `${resolvedState} · ${((taxRateOverride !== null ? parseFloat(taxRateOverride) : (STATE_VEHICLE_SALES_TAX[resolvedState] ?? 0.0625) * 100)).toFixed(2)}%`
+                              : 'Enter location for exact rate'}
+                          </span>
                         </div>
-                        <span className="font-semibold text-white text-sm tabular-nums w-20 text-right">{formatCurrency(salesTaxAmt)}</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="relative">
+                            <input
+                              type="number" step="0.01" min="0" max="20"
+                              placeholder={resolvedState ? ((STATE_VEHICLE_SALES_TAX[resolvedState] ?? 0.0625) * 100).toFixed(2) : '6.25'}
+                              value={taxRateOverride ?? ''}
+                              onChange={e => setTaxRateOverride(e.target.value === '' ? null : e.target.value)}
+                              className="input-field text-right pr-6 py-1 text-sm w-24"
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs pointer-events-none">%</span>
+                          </div>
+                          <span className="font-semibold text-white text-sm tabular-nums w-20 text-right">{formatCurrency(salesTaxAmt)}</span>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    {/* Doc fee row — dealer only */}
-                    {dealerPurchase && (
+                    {/* Doc fee row — dealer only, detailed mode only */}
+                    {!simpleMode && dealerPurchase && (
                       <div className="flex items-center justify-between px-4 py-3 gap-3">
                         <div className="min-w-0">
                           <span className="text-sm text-white">Doc Fee</span>
@@ -2180,7 +2217,14 @@ export default function TCOCalculator() {
 
                     {/* Out-the-door total */}
                     <div className="flex items-center justify-between px-4 py-3">
-                      <span className="text-sm font-semibold text-white">Out-the-Door Price</span>
+                      <div>
+                        <span className="text-sm font-semibold text-white">Out-the-Door Price</span>
+                        {simpleMode && totalPurchaseExtras > 0 && (
+                          <span className="ml-2 text-[10px] text-[var(--text-muted)]">
+                            includes ~{formatCurrency(totalPurchaseExtras)} tax &amp; fees
+                          </span>
+                        )}
+                      </div>
                       <span className="font-display font-bold text-lg" style={{ color: 'var(--accent)' }}>
                         {formatCurrency(effectivePrice)}
                       </span>
@@ -2213,9 +2257,11 @@ export default function TCOCalculator() {
 
                   <SliderInput label="Annual Interest Rate" value={rate} onChange={setRate}
                     min={0} max={25} step={0.1} suffix="%" inputMin={0} inputMax={25} />
-                  <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                    Typical rates (new car): excellent credit 740+ ≈ 5–7% · good 680+ ≈ 7–9% · fair 620+ ≈ 10–13%
-                  </p>
+                  {!simpleMode && (
+                    <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                      Typical rates (new car): excellent credit 740+ ≈ 5–7% · good 680+ ≈ 7–9% · fair 620+ ≈ 10–13%
+                    </p>
+                  )}
 
                   <SelectInput label="Ownership Duration" value={ownershipYears}
                     onChange={setOwnershipYears} options={ownershipOptions} />
@@ -2227,50 +2273,62 @@ export default function TCOCalculator() {
                     onChange={v => setCapCostReduction(Math.min(v, price))}
                     min={0} max={Math.min(price, 20000)} step={250} prefix="$" />
 
-                  <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                    Lowers your monthly payment but is not recovered at lease end
-                  </p>
+                  {!simpleMode && (
+                    <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                      Lowers your monthly payment but is not recovered at lease end
+                    </p>
+                  )}
 
                   <SliderInput label="Acquisition Fee" value={acquisitionFee} onChange={setAcquisitionFee}
                     min={0} max={2000} step={25} prefix="$" />
 
-                  <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                    Dealer/lender fee added to cap cost — typically $595–$995
-                  </p>
+                  {!simpleMode && (
+                    <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                      Dealer/lender fee added to cap cost — typically $595–$995
+                    </p>
+                  )}
 
                   <SelectInput label="Lease Term" value={leaseTerm} onChange={setLeaseTerm} options={leaseTermOptions} />
 
                   <SliderInput label="Money Factor (APR equivalent)" value={leaseApr} onChange={setLeaseApr}
                     min={0} max={15} step={0.1} suffix="%" inputMin={0} inputMax={15} />
 
-                  <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                    Money factor = {(leaseApr / 2400).toFixed(5)} · Ask the dealer for the exact money factor — divide by 2,400 to convert to APR
-                  </p>
+                  {!simpleMode && (
+                    <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                      Money factor = {(leaseApr / 2400).toFixed(5)} · Ask the dealer for the exact money factor — divide by 2,400 to convert to APR
+                    </p>
+                  )}
 
                   <SliderInput label="Residual Value" value={residualPct} onChange={setResidualPct}
                     min={20} max={80} step={1} suffix="%" />
 
-                  <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
-                    <span className="text-sm text-[var(--text-muted)]">Residual amount</span>
-                    <span className="font-display font-bold text-white text-lg">
-                      {formatCurrency(price * residualPct / 100)}
-                    </span>
-                  </div>
+                  {!simpleMode && (
+                    <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
+                      <span className="text-sm text-[var(--text-muted)]">Residual amount</span>
+                      <span className="font-display font-bold text-white text-lg">
+                        {formatCurrency(price * residualPct / 100)}
+                      </span>
+                    </div>
+                  )}
 
-                  <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                    {leaseTerm <= 24
-                      ? 'Typical 24-month residual: 58–65% — higher residual = lower payment'
-                      : leaseTerm <= 36
-                      ? 'Typical 36-month residual: 48–58% — Toyota/Honda/Subaru tend toward top of range; luxury/EV toward bottom'
-                      : 'Typical 48-month residual: 40–50% — longer terms mean more depreciation and lower residuals'}
-                  </p>
+                  {!simpleMode && (
+                    <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                      {leaseTerm <= 24
+                        ? 'Typical 24-month residual: 58–65% — higher residual = lower payment'
+                        : leaseTerm <= 36
+                        ? 'Typical 36-month residual: 48–58% — Toyota/Honda/Subaru tend toward top of range; luxury/EV toward bottom'
+                        : 'Typical 48-month residual: 40–50% — longer terms mean more depreciation and lower residuals'}
+                    </p>
+                  )}
 
-                  <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
-                    <span className="text-sm text-[var(--text-muted)]">Capitalized cost</span>
-                    <span className="font-display font-bold text-white text-lg">
-                      {formatCurrency(leaseResults.capCost)}
-                    </span>
-                  </div>
+                  {!simpleMode && (
+                    <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
+                      <span className="text-sm text-[var(--text-muted)]">Capitalized cost</span>
+                      <span className="font-display font-bold text-white text-lg">
+                        {formatCurrency(leaseResults.capCost)}
+                      </span>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -2280,7 +2338,7 @@ export default function TCOCalculator() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <h2 className="font-display font-bold text-white text-lg">Annual Operating Costs</h2>
-                  {resolvedState && (
+                  {!simpleMode && resolvedState && (
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => {
@@ -2344,8 +2402,8 @@ export default function TCOCalculator() {
                 />
               )}
 
-              {/* Current odometer — always visible, drives which maintenance services are due */}
-              {!customCosts && (
+              {/* Current odometer — detailed mode only (defaults to auto: vehicleAge × annualMileage) */}
+              {!simpleMode && !customCosts && (
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <label className="input-label">Current Odometer (miles)</label>
@@ -2370,8 +2428,8 @@ export default function TCOCalculator() {
                 </div>
               )}
 
-              {/* EV Charging Setup — shown whenever an EV or electric category is active */}
-              {resolvedState && !customCosts && effIsEV && (
+              {/* EV Charging Setup — detailed mode only (simple mode defaults to home charging) */}
+              {!simpleMode && resolvedState && !customCosts && effIsEV && (
                 <div className="rounded-xl border p-4 flex flex-col gap-4"
                   style={{ borderColor: 'rgba(96,200,255,0.25)', background: 'rgba(96,200,255,0.03)' }}>
 
@@ -2462,8 +2520,8 @@ export default function TCOCalculator() {
                 </div>
               )}
 
-              {/* Detailed inputs panel */}
-              {resolvedState && detailedMode && !customCosts && (
+              {/* Detailed inputs panel — detailed mode only */}
+              {!simpleMode && resolvedState && detailedMode && !customCosts && (
                 <div className="rounded-xl border p-4 flex flex-col gap-5"
                   style={{ borderColor: 'rgba(255,184,0,0.2)', background: 'rgba(255,184,0,0.02)' }}>
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)]">
@@ -2706,26 +2764,28 @@ export default function TCOCalculator() {
                   highlight delay={0} />
               </div>
 
-              <div className="grid grid-cols-1 gap-4 anim-5">
-                {financeMode === 'lease' ? (
-                  <>
-                    <ResultCard label="Total Lease Cost"     value={leaseResults.totalLeaseCost}   delay={60}  />
-                    <ResultCard label="Residual Value"       value={leaseResults.residualValue}     delay={120} />
-                    <ResultCard label="Lease Cost Per Year"  value={leaseResults.annualLeaseCost}  delay={180} />
-                  </>
-                ) : (
-                  <>
-                    <ResultCard
-                      label={results.ownershipShorterThanLoan ? `Interest (${ownershipYears}-yr ownership)` : 'Total Interest Paid'}
-                      value={results.interestThroughOwnership}
-                      delay={60}
-                      note={results.ownershipShorterThanLoan ? `Full ${loanTerm}-mo loan: ${formatCurrency(results.totalInterestPaid)} total interest` : null}
-                    />
-                    <ResultCard label="Total Cost of Loan"   value={results.totalCostOfLoan}    delay={120} />
-                    <ResultCard label="Loan Cost Per Year"   value={results.trueAnnualCost}     delay={180} />
-                  </>
-                )}
-              </div>
+              {!simpleMode && (
+                <div className="grid grid-cols-1 gap-4 anim-5">
+                  {financeMode === 'lease' ? (
+                    <>
+                      <ResultCard label="Total Lease Cost"     value={leaseResults.totalLeaseCost}   delay={60}  />
+                      <ResultCard label="Residual Value"       value={leaseResults.residualValue}     delay={120} />
+                      <ResultCard label="Lease Cost Per Year"  value={leaseResults.annualLeaseCost}  delay={180} />
+                    </>
+                  ) : (
+                    <>
+                      <ResultCard
+                        label={results.ownershipShorterThanLoan ? `Interest (${ownershipYears}-yr ownership)` : 'Total Interest Paid'}
+                        value={results.interestThroughOwnership}
+                        delay={60}
+                        note={results.ownershipShorterThanLoan ? `Full ${loanTerm}-mo loan: ${formatCurrency(results.totalInterestPaid)} total interest` : null}
+                      />
+                      <ResultCard label="Total Cost of Loan"   value={results.totalCostOfLoan}    delay={120} />
+                      <ResultCard label="Loan Cost Per Year"   value={results.trueAnnualCost}     delay={180} />
+                    </>
+                  )}
+                </div>
+              )}
 
               {/* Annual cost breakdown */}
               <div className="rounded-xl border p-4 flex flex-col gap-3"
@@ -2753,14 +2813,16 @@ export default function TCOCalculator() {
                       {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-[var(--text-muted)]">Cost per mile</span>
-                    <span className="text-white font-medium tabular-nums">
-                      ${((forecastRows[0]?.total ?? totalAnnualCost) / annualMileage).toFixed(2)}/mi
-                    </span>
-                  </div>
-                  {/* Segment operating cost context */}
-                  {(() => {
+                  {!simpleMode && (
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-[var(--text-muted)]">Cost per mile</span>
+                      <span className="text-white font-medium tabular-nums">
+                        ${((forecastRows[0]?.total ?? totalAnnualCost) / annualMileage).toFixed(2)}/mi
+                      </span>
+                    </div>
+                  )}
+                  {/* Segment operating cost context — detailed mode only */}
+                  {!simpleMode && (() => {
                     const seg = selMake
                       ? classifySegment(selMake || '', selModel || '')
                       : (VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.segment ?? null)
@@ -2784,7 +2846,7 @@ export default function TCOCalculator() {
                       </div>
                     )
                   })()}
-                  {forecastRows.length > 1 && (() => {
+                  {!simpleMode && forecastRows.length > 1 && (() => {
                     const totals = forecastRows.map(r => r.total)
                     const lo = Math.min(...totals)
                     const hi = Math.max(...totals)
@@ -2810,8 +2872,8 @@ export default function TCOCalculator() {
                 </div>
               </div>
 
-              {/* Affordability check — 20/4/10 rule income bands */}
-              {(() => {
+              {/* Affordability check — 20/4/10 rule income bands — detailed mode only */}
+              {!simpleMode && (() => {
                 const year1Total = forecastRows[0]?.total ?? totalAnnualCost
                 const req10 = year1Total / 0.10
                 const req15 = year1Total / 0.15
@@ -2881,8 +2943,8 @@ export default function TCOCalculator() {
                 )}
               </div>
 
-              {/* ── Net Cost of Ownership ── */}
-              {financeMode === 'buy' && futureResaleValue != null && netCostOfOwnership != null && (
+              {/* ── Net Cost of Ownership — detailed mode only ── */}
+              {!simpleMode && financeMode === 'buy' && futureResaleValue != null && netCostOfOwnership != null && (
                 <div className="rounded-xl border p-4 flex flex-col gap-3"
                   style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
@@ -2921,8 +2983,8 @@ export default function TCOCalculator() {
                 formatCurrency={formatCurrency}
               />
 
-              {/* ── Export Report ── */}
-              <div className="flex gap-2">
+              {/* ── Export Report — detailed mode only ── */}
+              {!simpleMode && <div className="flex gap-2">
                 <button
                   onClick={() => {
                     const meta = {
@@ -2958,7 +3020,7 @@ export default function TCOCalculator() {
                     Export Detailed Maintenance CSV
                   </button>
                 )}
-              </div>
+              </div>}
 
               {/* ── Repair & Reliability Risk Score (Pro) ── */}
               <RepairRiskScore

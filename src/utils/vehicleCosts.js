@@ -427,11 +427,11 @@ export const STATE_ELEC_RATES = {
   WY:0.12,DC:0.17,
 }
 
-// Public DC fast-charging rate ≈ 2.2× home residential (floor $0.29, cap $0.65)
-// Cap raised from $0.55 — HI/CA public DCFC stations routinely exceed $0.60/kWh
+// Public DC fast-charging rate ≈ 2.2× home residential (floor $0.29, cap $0.80)
+// HI residential is $0.44 → DCFC ~$0.80+; CA residential $0.38 → DCFC ~$0.70+
 export function getPublicChargingRate(state) {
   const home = STATE_ELEC_RATES[state] ?? 0.16
-  return Math.round(Math.max(0.29, Math.min(0.65, home * 2.2)) * 100) / 100
+  return Math.round(Math.max(0.29, Math.min(0.80, home * 2.2)) * 100) / 100
 }
 
 // 'home' = 100% residential, 'mixed' = 80/20 home/DCFC, 'public' = 100% DCFC
@@ -445,12 +445,13 @@ export function getEffectiveElecRate(state, style) {
 
 // state=null → national average defaults ($3.50/gal gas, $0.16/kWh electricity)
 // isPremium: adds PREMIUM_PRICE_DELTA to the state average when no override is set
-export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 15000, fuelPriceOverride = null, isPremium = false) {
+// chargingStyle: 'home' | 'mixed' (80/20 home/DCFC, default) | 'public' — EVs only
+export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 15000, fuelPriceOverride = null, isPremium = false, chargingStyle = 'mixed') {
   const KWH_PER_GAL = 33.7
   if (isEV) {
     const mpge = mpgeCombined ?? 100
     const annualKwh = miles / (mpge / KWH_PER_GAL)
-    const rate = fuelPriceOverride !== null ? fuelPriceOverride : (STATE_ELEC_RATES[state] ?? 0.16)
+    const rate = fuelPriceOverride !== null ? fuelPriceOverride : getEffectiveElecRate(state, chargingStyle)
     return Math.round(annualKwh * rate / 50) * 50
   }
   const mpg = mpgCombined ?? 28

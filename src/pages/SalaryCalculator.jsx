@@ -9,6 +9,7 @@ import {
   classifySegment, determineMaintTier,
   estimateInsurance, generateMaintenanceServices,
   computeAnnualFuel, computeAnnualRegistration,
+  getEffectiveElecRate,
   STATE_INS_BASE,
 } from '../utils/vehicleCosts'
 
@@ -70,12 +71,15 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
   const mpgNum  = mpg && typeof mpg === 'object' ? (mpg.combined ?? null) : (mpg || null)
   const mpgeNum = mpg && typeof mpg === 'object' ? (mpg.mpge_combined ?? null) : null
 
+  // EVs: use mixed charging (80/20 home/DCFC) as the realistic default
+  const evRate = isEv ? getEffectiveElecRate(state || null, 'mixed') : null
   const fuel = Math.round(computeAnnualFuel(
     isEv,
     isEv ? null : mpgNum,
     isEv ? mpgeNum : null,
     state || null,
-    annualMiles
+    annualMiles,
+    evRate,
   ) / 12)
 
   const insurance = Math.round(estimateInsurance(price, make, model, year, state || null) / 12)
@@ -93,10 +97,22 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
   }
 }
 
+// Approximate effective state income tax rates at median income.
+// No-income-tax states = 0; others reflect blended effective rates (not marginal).
+const STATE_INCOME_TAX_EFF = {
+  AK:0.000, FL:0.000, NV:0.000, NH:0.000, SD:0.000, TN:0.000, TX:0.000, WA:0.000, WY:0.000,
+  AZ:0.028, CO:0.044, IL:0.049, IN:0.032, MI:0.042, PA:0.031, UT:0.046,
+  AL:0.040, AR:0.047, CT:0.053, DE:0.052, GA:0.052, HI:0.068, ID:0.054,
+  IA:0.056, KS:0.050, KY:0.045, LA:0.040, ME:0.068, MD:0.053, MA:0.050,
+  MN:0.068, MS:0.045, MO:0.044, MT:0.062, NE:0.052, NJ:0.060, NM:0.046,
+  NY:0.065, NC:0.047, ND:0.026, OH:0.037, OK:0.045, OR:0.085, RI:0.054,
+  SC:0.060, VA:0.053, VT:0.063, WI:0.063, WV:0.047, DC:0.085,
+}
+
 // Rough effective take-home estimate for a given gross annual salary.
-// Uses simplified federal brackets + FICA + 4% avg state income tax.
+// Uses simplified federal brackets + FICA + state-specific income tax (where available).
 // Intended for ballpark context only, not tax advice.
-function estimateMonthlyTakeHome(grossAnnual) {
+function estimateMonthlyTakeHome(grossAnnual, state) {
   let federalEff
   if (grossAnnual <= 30000)       federalEff = 0.08
   else if (grossAnnual <= 55000)  federalEff = 0.12
@@ -104,7 +120,8 @@ function estimateMonthlyTakeHome(grossAnnual) {
   else if (grossAnnual <= 140000) federalEff = 0.21
   else if (grossAnnual <= 200000) federalEff = 0.24
   else                            federalEff = 0.28
-  const totalRate = federalEff + 0.0765 + 0.04  // federal + FICA + avg state
+  const stateRate = state ? (STATE_INCOME_TAX_EFF[state] ?? 0.040) : 0.040
+  const totalRate = federalEff + 0.0765 + stateRate  // federal + FICA + state
   return Math.round((grossAnnual * (1 - totalRate)) / 12)
 }
 
@@ -1040,7 +1057,7 @@ export default function SalaryCalculator() {
               {/* Take-home income context */}
               {(() => {
                 const grossConservative = results.conservative
-                const takeHome = estimateMonthlyTakeHome(grossConservative)
+                const takeHome = estimateMonthlyTakeHome(grossConservative, userState || null)
                 const vehiclePct = Math.round((results.totalMonthly / takeHome) * 100)
                 return (
                   <div className="rounded-xl border border-[var(--border)] p-4 text-sm"
@@ -1065,7 +1082,7 @@ export default function SalaryCalculator() {
                       </div>
                     </div>
                     <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
-                      Take-home estimate uses federal brackets + FICA + 4% avg state tax — actual varies by state, filing status &amp; deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
+                      Take-home estimate uses simplified federal brackets + FICA + {userState ? `${userState} state` : 'avg state'} income tax — actual varies by filing status, deductions &amp; credits. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
                     </p>
                   </div>
                 )

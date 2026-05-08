@@ -1473,7 +1473,7 @@ export default function TCOCalculator() {
   const [detailedMode,   setDetailedMode]   = useState(false)
   const [annualMileage,  setAnnualMileage]  = useState(12000)
   const [vehicleCategory,setVehicleCategory]= useState('')      // used when no make/model selected
-  const [chargingStyle,  setChargingStyle]  = useState('home')  // 'home' | 'mixed' | 'public'
+  const [chargingStyle,  setChargingStyle]  = useState('mixed')  // 'home' | 'mixed' | 'public'
   const [customFuelPrice,setCustomFuelPrice]= useState('')      // empty = use state avg
   const [multiCarPolicy, setMultiCarPolicy] = useState(false)
   // Track original MSRP separately from price (which may be depreciation-adjusted)

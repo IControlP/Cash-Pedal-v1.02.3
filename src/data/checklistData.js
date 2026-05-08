@@ -198,6 +198,8 @@ export const sellerQuestions = [
       { q: 'Do you have the vehicle title in hand?', why: 'A missing or salvage title is a major red flag. Make sure the seller can hand over the title immediately.' },
       { q: 'Has it ever been in an accident?', why: 'Even repaired accident damage can affect structural integrity and resale value.' },
       { q: 'Has it ever been declared a total loss or salvage?', why: 'Salvage vehicles often have hidden damage and are much harder to insure and sell later.' },
+      { q: 'Has it ever been flood or fire damaged?', why: 'Flood and fire damage are catastrophic and often non-obvious. Water destroys electrical systems, causes mold, and leads to long-term corrosion. Always run a vehicle history report (Carfax or AutoCheck).' },
+      { q: 'Do you have a vehicle history report (Carfax or AutoCheck)?', why: 'A history report reveals accident records, title problems, odometer rollbacks, and service history that sellers may not disclose.' },
     ],
   },
   {
@@ -209,6 +211,7 @@ export const sellerQuestions = [
       { q: 'Have the timing belt or chain been replaced?', why: 'A failed timing belt can destroy an engine. Know where you stand before you buy.' },
       { q: 'Have the brakes been inspected or replaced recently?', why: 'Brake repairs are expensive. Knowing their condition affects your negotiating position.' },
       { q: 'Any recent major repairs or parts replacements?', why: 'Recent repairs can be a good sign (well-maintained) or a red flag (covering up a bigger issue).' },
+      { q: 'Is there an active manufacturer warranty or extended warranty — and is it transferable?', why: 'A remaining factory warranty or transferable extended warranty can be worth thousands in savings on repairs. Verify coverage directly with the dealer.' },
     ],
   },
   {

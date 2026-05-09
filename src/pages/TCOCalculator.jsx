@@ -451,8 +451,9 @@ function SpecsPanel({ specs, mpg, isEV }) {
 }
 
 // ── Maintenance breakdown panel ───────────────────────
-function MaintenanceBreakdown({ isEV, annualMileage, segment, make }) {
-  const services = generateMaintenanceServices(isEV, annualMileage, segment, make)
+function MaintenanceBreakdown({ isEV, annualMileage, segment, make, startMileage = 0 }) {
+  const yr1 = generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make, 1, startMileage)[0]
+  const services = yr1?.services ?? []
   return (
     <div className="px-4 pb-3 pt-2 border-t border-[var(--border)]"
       style={{ background: 'rgba(0,0,0,0.25)' }}>
@@ -460,15 +461,18 @@ function MaintenanceBreakdown({ isEV, annualMileage, segment, make }) {
         Planned services
       </p>
       <div className="flex flex-col gap-1">
-        {services.map(({ name, detail, annual }) => (
+        {services.map(({ name, occurrences, total }) => (
           <div key={name} className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="text-white/75 truncate">{name}</span>
-              <span className="text-[var(--text-muted)] opacity-70 shrink-0">{detail}</span>
+              <span className="text-[var(--text-muted)] opacity-70 shrink-0">×{occurrences}</span>
             </div>
-            <span className="text-white/60 font-mono ml-2 shrink-0">{annual > 0 ? `$${annual}` : '—'}</span>
+            <span className="text-white/60 font-mono ml-2 shrink-0">{total > 0 ? `$${total}` : '—'}</span>
           </div>
         ))}
+        {services.length === 0 && (
+          <span className="text-xs text-[var(--text-muted)]">No scheduled services in year 1</span>
+        )}
       </div>
     </div>
   )
@@ -2624,6 +2628,7 @@ export default function TCOCalculator() {
                             annualMileage={annualMileage}
                             segment={maintenanceSegment}
                             make={selMake}
+                            startMileage={effectiveStartMileage}
                           />
                         )}
                       </div>
@@ -2720,6 +2725,7 @@ export default function TCOCalculator() {
                           annualMileage={annualMileage}
                           segment={classifySegment(selMake||'', selModel||'')}
                           make={selMake}
+                          startMileage={effectiveStartMileage}
                         />
                       </div>
                     )}

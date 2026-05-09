@@ -271,8 +271,9 @@ export default function MultiVehicleComparison() {
       if (!Array.isArray(imports) || imports.length === 0) return
 
       setVehicles(prev => {
-        // Merge imports: replace existing slots or append, cap at 5
-        const merged = [...prev]
+        // Drop auto-named blank placeholders (e.g. "Vehicle 1") before adding imports
+        const nonDefault = prev.filter(v => v.isFromTCO || v.tcoId || !/^Vehicle \d+$/.test(v.name))
+        const merged = [...nonDefault]
         imports.forEach(imp => {
           const existing = merged.findIndex(v => v.tcoId === imp.id)
           const mapped = {

@@ -226,7 +226,7 @@ export default function CarSurvey() {
                   {Math.round(topMatch.score)}%
                 </span>
                 <span className="text-[var(--text-muted)] text-xs">
-                  {topMatch.score >= 75 ? 'strong match' : topMatch.score >= 55 ? 'good match' : 'moderate match'} · based on your answers
+                  {topMatch.score >= 75 ? 'strong match' : topMatch.score >= 65 ? 'good match' : topMatch.score >= 55 ? 'moderate match' : 'weak match — see all options below'} · based on your answers
                 </span>
               </div>
             )}
@@ -278,53 +278,76 @@ export default function CarSurvey() {
             </div>
           </div>
 
-          {/* Runner-up profiles — Pro only */}
+          {/* Runner-up profiles */}
+          {/* Free users see name + tagline + score for runner-ups when the match is close/weak.
+              Pro unlocks the full card with model picks for all runner-ups always. */}
           <div className="mb-6 anim-4">
-            {isSubscribed ? (
-              <div className="grid sm:grid-cols-2 gap-4">
-                {rankedProfiles.slice(1, 3).map(({ key, score, profile }) => (
-                  <div key={key} className="card hover:border-[#3a3a3e] transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">{profile.emoji}</span>
-                        <span className="font-display font-bold text-white text-base">{profile.name}</span>
-                      </div>
-                      <span className="text-xs font-bold text-[var(--text-muted)] bg-[var(--bg)] px-2 py-1 rounded">{Math.round(score)}%</span>
-                    </div>
-                    <p className="text-xs text-[var(--text-muted)] italic mb-3">"{profile.tagline}"</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {profile.topPicks.map(pick => (
-                        <span key={pick} className="px-2 py-1 rounded text-xs text-[var(--text-muted)] bg-[var(--bg)] border border-[var(--border)]">
-                          {pick}
-                        </span>
+            {(() => {
+              const weakTopMatch = topMatch && topMatch.score < 60
+              // Show full runner-up cards if subscribed, or if top match is weak (to give honest guidance)
+              if (isSubscribed || weakTopMatch) {
+                return (
+                  <div>
+                    {weakTopMatch && !isSubscribed && (
+                      <p className="text-xs text-yellow-400 mb-3 leading-relaxed">
+                        Your top match scored below 60% — your answers don't strongly favor one type.
+                        Consider all three options below before deciding.
+                      </p>
+                    )}
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {rankedProfiles.slice(1, weakTopMatch ? 3 : 3).map(({ key, score, profile }) => (
+                        <div key={key} className="card hover:border-[#3a3a3e] transition-colors">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-2xl">{profile.emoji}</span>
+                              <span className="font-display font-bold text-white text-base">{profile.name}</span>
+                            </div>
+                            <span className="text-xs font-bold text-[var(--text-muted)] bg-[var(--bg)] px-2 py-1 rounded">{Math.round(score)}%</span>
+                          </div>
+                          <p className="text-xs text-[var(--text-muted)] italic mb-3">"{profile.tagline}"</p>
+                          {isSubscribed ? (
+                            <div className="flex flex-wrap gap-1.5">
+                              {profile.topPicks.map(pick => (
+                                <span key={pick} className="px-2 py-1 rounded text-xs text-[var(--text-muted)] bg-[var(--bg)] border border-[var(--border)]">
+                                  {pick}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-[10px] text-[var(--text-muted)]">
+                              Upgrade to Pro for model recommendations →
+                            </p>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <ProGate
-                isPro={false}
-                title="Runner-up Matches"
-                description="See your #2 and #3 vehicle type matches with model recommendations — Pro feature."
-                preview={
-                  <div className="grid sm:grid-cols-2 gap-4 p-2">
-                    {rankedProfiles.slice(1, 3).map(({ key, score, profile }) => (
-                      <div key={key} className="card">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-2xl">{profile.emoji}</span>
-                            <span className="font-display font-bold text-white text-base">{profile.name}</span>
+                )
+              }
+              return (
+                <ProGate
+                  isPro={false}
+                  title="Runner-up Matches"
+                  description="See your #2 and #3 vehicle type matches with model recommendations — Pro feature."
+                  preview={
+                    <div className="grid sm:grid-cols-2 gap-4 p-2">
+                      {rankedProfiles.slice(1, 3).map(({ key, score, profile }) => (
+                        <div key={key} className="card">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-2xl">{profile.emoji}</span>
+                              <span className="font-display font-bold text-white text-base">{profile.name}</span>
+                            </div>
+                            <span className="text-xs font-bold text-[var(--text-muted)] bg-[var(--bg)] px-2 py-1 rounded">{Math.round(score)}%</span>
                           </div>
-                          <span className="text-xs font-bold text-[var(--text-muted)] bg-[var(--bg)] px-2 py-1 rounded">{Math.round(score)}%</span>
+                          <p className="text-xs text-[var(--text-muted)] italic">"{profile.tagline}"</p>
                         </div>
-                        <p className="text-xs text-[var(--text-muted)] italic">"{profile.tagline}"</p>
-                      </div>
-                    ))}
-                  </div>
-                }
-              />
-            )}
+                      ))}
+                    </div>
+                  }
+                />
+              )
+            })()}
           </div>
 
           {/* Full score breakdown — Pro only */}

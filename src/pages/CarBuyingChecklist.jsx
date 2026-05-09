@@ -136,8 +136,10 @@ export default function CarBuyingChecklist() {
   const notDone = dueItems.filter(i => statuses[i.id] === 'not_done')
   const unknown = dueItems.filter(i => !statuses[i.id] || statuses[i.id] === 'unknown')
 
+  // Critical unknown items are more likely to be problems than routine ones.
+  // Use 75% probability for critical unknowns, 50% for standard unknowns.
   const negotiationSavings = notDone.reduce((s, i) => s + i.cost, 0) +
-    unknown.reduce((s, i) => s + i.cost * 0.5, 0)
+    unknown.reduce((s, i) => s + i.cost * (i.critical ? 0.75 : 0.50), 0)
 
   const vehicleData = useMemo(() =>
     vehicleInfo.make && vehicleInfo.model ? VEHICLES[vehicleInfo.make]?.[vehicleInfo.model] : null,
@@ -303,6 +305,24 @@ export default function CarBuyingChecklist() {
                 <div className="flex justify-between text-[10px] text-[var(--text-muted)] mt-1">
                   <span>0</span><span>300,000</span>
                 </div>
+                {vehicleInfo.year && (() => {
+                  const age = new Date().getFullYear() - parseInt(vehicleInfo.year)
+                  if (age <= 0) return null
+                  const avgMi = age * 12000
+                  const diff = vehicleInfo.mileage - avgMi
+                  const absDiff = Math.abs(diff)
+                  const label = diff < -6000
+                    ? `${absDiff.toLocaleString()} mi below avg — low-mileage premium applies`
+                    : diff > 6000
+                    ? `${absDiff.toLocaleString()} mi above avg — price should reflect higher use`
+                    : 'Near average mileage for this age'
+                  const color = diff < -6000 ? 'text-green-400' : diff > 6000 ? 'text-yellow-400' : 'text-[var(--text-muted)]'
+                  return (
+                    <p className={`text-[10px] mt-1 ${color}`}>
+                      Avg for a {age}-year-old vehicle: ~{avgMi.toLocaleString()} mi · {label}
+                    </p>
+                  )
+                })()}
               </div>
 
               <div>
@@ -492,7 +512,8 @@ export default function CarBuyingChecklist() {
               </div>
             </div>
             <p className="text-xs text-[var(--text-muted)] mt-3">
-              Reduction = all "not done" costs + 50% of "unknown" costs. Use this as your negotiation floor.
+              Reduction = all "not done" costs + 75% of critical unknowns + 50% of standard unknowns.
+              This is a <span className="text-white font-semibold">floor for negotiation</span>, not a guarantee — a pre-purchase inspection ($100–$300) may reveal additional issues.
             </p>
 
             {/* Critical item call-outs */}

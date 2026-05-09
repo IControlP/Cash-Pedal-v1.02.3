@@ -94,7 +94,7 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
 }
 
 // Rough effective take-home estimate for a given gross annual salary.
-// Uses simplified federal brackets + FICA + 4% avg state income tax.
+// Returns {low, mid, high} reflecting variation by state tax, filing status, and deductions.
 // Intended for ballpark context only, not tax advice.
 function estimateMonthlyTakeHome(grossAnnual) {
   let federalEff
@@ -104,8 +104,12 @@ function estimateMonthlyTakeHome(grossAnnual) {
   else if (grossAnnual <= 140000) federalEff = 0.21
   else if (grossAnnual <= 200000) federalEff = 0.24
   else                            federalEff = 0.28
-  const totalRate = federalEff + 0.0765 + 0.04  // federal + FICA + avg state
-  return Math.round((grossAnnual * (1 - totalRate)) / 12)
+  const fica = 0.0765
+  // State tax range: 0% (TX/FL/WA) to ~9% (CA/OR). Use 0%, 4%, 9% for low/mid/high.
+  const mid  = Math.round((grossAnnual * (1 - federalEff - fica - 0.040)) / 12)
+  const high = Math.round((grossAnnual * (1 - federalEff - fica - 0.000)) / 12)
+  const low  = Math.round((grossAnnual * (1 - federalEff - fica - 0.090)) / 12)
+  return { low, mid, high }
 }
 
 // US state list for the selector (derived from STATE_INS_BASE keys for coverage)
@@ -168,8 +172,8 @@ export default function SalaryCalculator() {
   const [mode, setMode] = useState('buy')
   const [knownSalary, setKnownSalary] = useState('')
 
-  // State detection
-  const [userState, setUserState] = useState('')
+  // State detection — persist preference to localStorage
+  const [userState, setUserState] = useState(() => localStorage.getItem('cashpedal_user_state') || '')
   const [stateAutoDetected, setStateAutoDetected] = useState(false)
   const [stateDetecting, setStateDetecting] = useState(false)
   const [stateDetectFailed, setStateDetectFailed] = useState(false)
@@ -249,8 +253,12 @@ export default function SalaryCalculator() {
     }
   }, [proMode, selMake, selModel, selYear, selTrim])
 
-  // Auto-detect state from IP on mount
+  // Auto-detect state from IP on mount — skip if already saved in localStorage
   useEffect(() => {
+    if (localStorage.getItem('cashpedal_user_state')) {
+      setStateDetecting(false)
+      return
+    }
     setStateDetecting(true)
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 5000)
@@ -261,6 +269,7 @@ export default function SalaryCalculator() {
             US_STATES.some(([code]) => code === d.region_code)) {
           setUserState(d.region_code)
           setStateAutoDetected(true)
+          localStorage.setItem('cashpedal_user_state', d.region_code)
         } else {
           setStateDetectFailed(true)
         }
@@ -541,7 +550,7 @@ export default function SalaryCalculator() {
                     )}
                     {userState && (
                       <button
-                        onClick={() => { setUserState(''); setStateAutoDetected(false) }}
+                        onClick={() => { setUserState(''); setStateAutoDetected(false); localStorage.removeItem('cashpedal_user_state') }}
                         className="text-[10px] text-[var(--text-muted)] hover:text-white transition-colors"
                       >
                         Clear
@@ -551,7 +560,13 @@ export default function SalaryCalculator() {
                 </div>
                 <select
                   value={userState}
-                  onChange={e => { setUserState(e.target.value); setStateAutoDetected(false) }}
+                  onChange={e => {
+                    const v = e.target.value
+                    setUserState(v)
+                    setStateAutoDetected(false)
+                    if (v) localStorage.setItem('cashpedal_user_state', v)
+                    else localStorage.removeItem('cashpedal_user_state')
+                  }}
                   className="input-field text-sm"
                 >
                   <option value="">National average (no state)</option>
@@ -790,6 +805,15 @@ export default function SalaryCalculator() {
                       {leaseDown > 0 ? ` (${fmt(leaseDown)} due at signing + ${fmt(leaseMonthly * leaseTerm)} payments)` : ''} · No equity at lease end
                     </p>
                   </div>
+
+                  {/* Lease estimate accuracy notice */}
+                  {proMode && (
+                    <div className="rounded-lg px-3 py-2.5 border text-xs leading-relaxed"
+                      style={{ background: 'rgba(255,184,0,0.05)', borderColor: 'rgba(255,184,0,0.2)', color: 'var(--text-muted)' }}>
+                      <span className="text-yellow-400 font-semibold">Lease estimate note: </span>
+                      Monthly payment uses standard dealer math (avg residual &amp; money factor). Real quotes vary ±15–25% by brand, lender, and dealer markup. Always get a written quote before deciding.
+                    </div>
+                  )}
                 </>
               ) : (
                 <>
@@ -958,6 +982,7 @@ export default function SalaryCalculator() {
                   {userState
                     ? <>{US_STATES.find(([c]) => c === userState)?.[1]} insurance, fuel & registration rates applied.</>
                     : 'National average rates. Select your state above for tailored estimates.'}
+                  {' '}Insurance varies ±30–50% by age, credit score, and driving history — get real quotes to verify.
                 </p>
               </div>
             </div>
@@ -1041,7 +1066,9 @@ export default function SalaryCalculator() {
               {(() => {
                 const grossConservative = results.conservative
                 const takeHome = estimateMonthlyTakeHome(grossConservative)
-                const vehiclePct = Math.round((results.totalMonthly / takeHome) * 100)
+                const vehiclePctMid  = Math.round((results.totalMonthly / takeHome.mid)  * 100)
+                const vehiclePctHigh = Math.round((results.totalMonthly / takeHome.high) * 100)
+                const vehiclePctLow  = Math.round((results.totalMonthly / takeHome.low)  * 100)
                 return (
                   <div className="rounded-xl border border-[var(--border)] p-4 text-sm"
                     style={{ background: 'var(--surface)' }}>
@@ -1053,19 +1080,25 @@ export default function SalaryCalculator() {
                         <span className="text-[var(--text-muted)]">Gross (conservative)</span>
                         <span className="text-white font-semibold">{fmt(grossConservative / 12)}/mo</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-start">
                         <span className="text-[var(--text-muted)]">Est. take-home after taxes</span>
-                        <span className="text-white font-semibold">{fmt(takeHome)}/mo</span>
+                        <div className="text-right">
+                          <span className="text-white font-semibold">{fmt(takeHome.low)}–{fmt(takeHome.high)}/mo</span>
+                          <p className="text-[10px] text-[var(--text-muted)]">varies by state & deductions</p>
+                        </div>
                       </div>
-                      <div className="border-t border-[var(--border)] pt-2 flex justify-between">
+                      <div className="border-t border-[var(--border)] pt-2 flex justify-between items-start">
                         <span className="text-[var(--text-muted)]">Vehicle share of take-home</span>
-                        <span className={`font-bold ${vehiclePct <= 15 ? 'text-green-400' : vehiclePct <= 20 ? 'text-amber-400' : 'text-red-400'}`}>
-                          {vehiclePct}%
-                        </span>
+                        <div className="text-right">
+                          <span className={`font-bold ${vehiclePctMid <= 15 ? 'text-green-400' : vehiclePctMid <= 20 ? 'text-amber-400' : 'text-red-400'}`}>
+                            {vehiclePctHigh}–{vehiclePctLow}%
+                          </span>
+                          <p className="text-[10px] text-[var(--text-muted)]">range by state</p>
+                        </div>
                       </div>
                     </div>
                     <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
-                      Take-home estimate uses federal brackets + FICA + 4% avg state tax — actual varies by state, filing status &amp; deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
+                      Take-home range reflects federal brackets + FICA + 0–9% state tax. Actual varies by filing status, pre-tax deductions (401k, HSA), and local taxes. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–17% of take-home depending on your state.
                     </p>
                   </div>
                 )

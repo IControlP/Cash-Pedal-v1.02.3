@@ -2813,14 +2813,12 @@ export default function TCOCalculator() {
                       {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}
                     </span>
                   </div>
-                  {!simpleMode && (
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-[var(--text-muted)]">Cost per mile</span>
-                      <span className="text-white font-medium tabular-nums">
-                        ${((forecastRows[0]?.total ?? totalAnnualCost) / annualMileage).toFixed(2)}/mi
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[var(--text-muted)]">Cost per mile</span>
+                    <span className="text-white font-medium tabular-nums">
+                      ${((forecastRows[0]?.total ?? totalAnnualCost) / annualMileage).toFixed(2)}/mi
+                    </span>
+                  </div>
                   {/* Segment operating cost context — detailed mode only */}
                   {!simpleMode && (() => {
                     const seg = selMake
@@ -2872,13 +2870,29 @@ export default function TCOCalculator() {
                 </div>
               </div>
 
-              {/* Affordability check — 20/4/10 rule income bands — detailed mode only */}
-              {!simpleMode && (() => {
+              {/* Affordability check — 20/4/10 rule income bands */}
+              {(() => {
                 const year1Total = forecastRows[0]?.total ?? totalAnnualCost
                 const req10 = year1Total / 0.10
                 const req15 = year1Total / 0.15
                 const req20 = year1Total / 0.20
-                // Determine which band the user is likely in (no income input, so show all 3)
+                if (simpleMode) {
+                  return (
+                    <div className="flex items-center justify-between px-4 py-3 rounded-xl border"
+                      style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                      <div className="min-w-0">
+                        <p className="text-sm text-[var(--text-muted)]">Income needed to afford this</p>
+                        <p className="text-[10px] text-[var(--text-muted)] mt-0.5">15% of gross — comfortable guideline</p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0 ml-3">
+                        <span className="text-white font-bold tabular-nums">{formatCurrency(req15)}/yr</span>
+                        <a href="/salary" className="text-[10px] font-semibold" style={{ color: 'var(--accent)' }}>
+                          Full breakdown →
+                        </a>
+                      </div>
+                    </div>
+                  )
+                }
                 return (
                   <div className="rounded-xl border p-4 flex flex-col gap-3"
                     style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
@@ -2914,33 +2928,49 @@ export default function TCOCalculator() {
                 )
               })()}
 
-              {/* Summary */}
-              <div className="rounded-xl p-4 border text-sm leading-relaxed"
-                style={{ background:'rgba(255,184,0,0.04)', borderColor:'rgba(255,184,0,0.15)', color:'var(--text-muted)' }}>
-                <span className="text-[var(--accent)] font-semibold">The real picture: </span>
-                {financeMode === 'lease' ? (
-                  <>
-                    Over your {leaseTerm}-month lease, payments total{' '}
-                    <span className="text-white font-semibold">
-                      {formatCurrency(leaseResults.monthlyPayment * leaseTerm)}
-                    </span>{' '}
-                    — you don&apos;t own the vehicle at the end. Add insurance, fuel, maintenance, and fees and your{' '}
-                    <span className="text-white font-semibold">all-in Year 1 cost is {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}</span>{' '}
-                    — or {formatCurrency(leaseResults.totalLeaseCost + annualOperatingCost * (leaseTerm / 12))} over the full lease.
-                  </>
-                ) : (
-                  <>
-                    Over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}, loan payments total{' '}
-                    <span className="text-white font-semibold">
-                      {formatCurrency(results.monthlyPayment * Math.min(ownershipYears * 12, loanTerm))}
-                    </span>{' '}
-                    ({formatCurrency(results.interestThroughOwnership)} in interest
-                    {results.ownershipShorterThanLoan && <span className="text-amber-400/80"> — remaining balance paid off at sale</span>}
-                    ). Add insurance, fuel, maintenance, and fees and your{' '}
-                    <span className="text-white font-semibold">all-in Year 1 cost is {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}</span>{' '}
-                    — or {formatCurrency(forecastRows.reduce((s, r) => s + r.total, 0))} over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}.
-                  </>
-                )}
+              {/* Summary — key numbers at a glance */}
+              <div className="rounded-xl border overflow-hidden"
+                style={{ borderColor:'rgba(255,184,0,0.2)', background:'rgba(255,184,0,0.03)' }}>
+                <div className="px-4 py-2 border-b" style={{ borderColor:'rgba(255,184,0,0.15)' }}>
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color:'var(--accent)' }}>
+                    The big picture
+                  </span>
+                </div>
+                <div className={`grid ${financeMode === 'buy' && !simpleMode ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                  <div className="px-4 py-3 text-center">
+                    <p className="text-[10px] text-[var(--text-muted)] mb-1">Monthly payment</p>
+                    <p className="text-white font-bold text-base tabular-nums">
+                      {formatCurrency(financeMode === 'lease' ? leaseResults.monthlyPayment : results.monthlyPayment)}
+                    </p>
+                    <p className="text-[10px] text-[var(--text-muted)] mt-0.5">/mo</p>
+                  </div>
+                  <div className="px-4 py-3 text-center border-l" style={{ borderColor:'rgba(255,184,0,0.15)' }}>
+                    <p className="text-[10px] text-[var(--text-muted)] mb-1">All-in Year 1</p>
+                    <p className="font-bold text-base tabular-nums" style={{ color:'var(--accent)' }}>
+                      {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}
+                    </p>
+                    <p className="text-[10px] text-[var(--text-muted)] mt-0.5">/yr total</p>
+                  </div>
+                  {financeMode === 'buy' && !simpleMode && (
+                    <div className="px-4 py-3 text-center border-l" style={{ borderColor:'rgba(255,184,0,0.15)' }}>
+                      <p className="text-[10px] text-[var(--text-muted)] mb-1">Over {ownershipYears} yr{ownershipYears !== 1 ? 's' : ''}</p>
+                      <p className="text-white font-bold text-base tabular-nums">
+                        {formatCurrency(forecastRows.reduce((s, r) => s + r.total, 0))}
+                      </p>
+                      <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                        incl. {formatCurrency(results.interestThroughOwnership)} interest
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <div className="px-4 py-2 border-t text-[11px] text-[var(--text-muted)] leading-relaxed"
+                  style={{ borderColor:'rgba(255,184,0,0.15)' }}>
+                  {financeMode === 'lease' ? (
+                    <>Lease payments total <span className="text-white font-semibold">{formatCurrency(leaseResults.monthlyPayment * leaseTerm)}</span> over {leaseTerm} months — you don&apos;t own the vehicle at lease end. Full lease all-in: <span className="text-white font-semibold">{formatCurrency(leaseResults.totalLeaseCost + annualOperatingCost * (leaseTerm / 12))}</span>.</>
+                  ) : (
+                    <>{formatCurrency(results.interestThroughOwnership)} in interest over {ownershipYears} yr{ownershipYears !== 1 ? 's' : ''}{results.ownershipShorterThanLoan ? <span className="text-amber-400/80"> · remaining balance paid off at sale</span> : ''}. Insurance, fuel, maintenance, and fees add {formatCurrency(annualOperatingCost)}/yr on top of your loan.</>
+                  )}
+                </div>
               </div>
 
               {/* ── Net Cost of Ownership — detailed mode only ── */}

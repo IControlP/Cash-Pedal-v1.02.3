@@ -495,6 +495,22 @@ export default function CarBuyingChecklist() {
               Reduction = all "not done" costs + 50% of "unknown" costs. Use this as your negotiation floor.
             </p>
 
+            {/* Target offer callout */}
+            {vehicleInfo.price && Number(vehicleInfo.price) > 0 && negotiationSavings > 0 && (
+              <div className="mt-4 pt-4 border-t flex items-center justify-between gap-4"
+                style={{ borderColor: 'rgba(255,184,0,0.2)' }}>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-widest text-white">Your Target Offer</p>
+                  <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                    Asking {fmt(Number(vehicleInfo.price))} − {fmt(negotiationSavings)} in deferred maintenance
+                  </p>
+                </div>
+                <p className="font-display font-extrabold text-2xl shrink-0" style={{ color: 'var(--accent)' }}>
+                  {fmt(Math.max(0, Number(vehicleInfo.price) - negotiationSavings))}
+                </p>
+              </div>
+            )}
+
             {/* Critical item call-outs */}
             {(() => {
               const criticalFlags = dueItems.filter(

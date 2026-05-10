@@ -462,8 +462,28 @@ export default function SalaryCalculator() {
           <p className="anim-2 text-[var(--text-muted)] mt-2 text-base max-w-xl">
             {mode === 'lease'
               ? 'Enter your lease payment and see the gross income needed to keep vehicle costs under 10–20% of your salary.'
-              : 'The 20/4/10 rule: 20% down, max 4-year loan, total vehicle costs ≤ 10% of gross income. See the salary you need.'}
+              : 'Enter your vehicle price and financing terms to see the annual income you need for a financially healthy purchase.'}
           </p>
+
+          {/* 20/4/10 rule explainer — buy mode only */}
+          {mode !== 'lease' && (
+            <div className="anim-3 mt-5 inline-flex flex-wrap gap-3">
+              {[
+                { num: '20%', label: 'down payment', desc: 'Put at least 20% down to avoid being underwater on your loan.' },
+                { num: '4 yr', label: 'max loan term', desc: 'Finance for 48 months or less to minimize total interest paid.' },
+                { num: '10%', label: 'of gross income', desc: 'Keep all vehicle costs (loan + insurance + fuel + maintenance) under 10% of your salary.' },
+              ].map(({ num, label, desc }) => (
+                <div key={num} className="flex items-start gap-2.5 rounded-xl px-3 py-2.5 text-left"
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border)', maxWidth: 220 }}>
+                  <span className="font-display font-extrabold text-lg shrink-0 leading-tight" style={{ color: 'var(--accent)' }}>{num}</span>
+                  <div>
+                    <p className="text-xs font-semibold text-white capitalize">{label}</p>
+                    <p className="text-[10px] text-[var(--text-muted)] leading-snug mt-0.5">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6">

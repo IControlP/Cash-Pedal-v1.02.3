@@ -2593,7 +2593,7 @@ export default function TCOCalculator() {
                 const fuelNote = effIsEV
                   ? `$${activeElecRate.toFixed(3)}/kWh · ${customFuelPrice ? 'custom' : chargingStyleLabel}`
                   : `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${STATE_FUEL_PRICES[resolvedState] ?? 3.50}`}/gal`
-                const insNote = `${resolvedState} · ${selMake || 'avg'}${detailedMode && multiCarPolicy ? ' · multi-car' : ''}`
+                const insNote = `${resolvedState || 'national avg'} · ${selMake || 'avg'}${detailedMode && multiCarPolicy ? ' · multi-car' : ''} · driving record & credit score also affect your rate`
                 const maintNote = detailedMode
                   ? (effIsEV ? 'EV · itemized' : 'gas · itemized')
                   : (effIsEV ? 'EV avg' : 'gas avg')
@@ -2644,6 +2644,9 @@ export default function TCOCalculator() {
                           </>
                         : `${resolvedState} base rate · adjust for your coverage level`
                       }
+                    </p>
+                    <p className="text-[10px] text-[var(--text-muted)] pl-1 mt-0.5">
+                      Driving record, age, credit score, and coverage level often matter more than make/model. Get quotes from 3+ insurers for accuracy.
                     </p>
                   </div>
                   {/* Rate input so user can drive the annual cost from $/kWh or $/gal */}
@@ -2813,6 +2816,26 @@ export default function TCOCalculator() {
                       {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}
                     </span>
                   </div>
+                  {!simpleMode && (() => {
+                    const yr1 = forecastRows[0]
+                    if (!yr1) return null
+                    const costs = [
+                      { label: financeMode === 'lease' ? 'lease payments' : 'loan payments', value: yr1.loanCost },
+                      { label: 'insurance', value: yr1.insurance ?? annualInsurance },
+                      { label: (modelData?.is_ev || VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.isEV) ? 'charging cost' : 'fuel', value: annualFuel },
+                      { label: 'maintenance', value: yr1.maintenance ?? annualMaintenance },
+                    ]
+                    const top = costs.reduce((a, b) => (b.value > a.value ? b : a), costs[0])
+                    const pct = yr1.total > 0 ? Math.round((top.value / yr1.total) * 100) : 0
+                    return (
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-[var(--text-muted)]">Biggest cost driver</span>
+                        <span className="text-[var(--accent)] font-semibold capitalize">
+                          {top.label} ({pct}%)
+                        </span>
+                      </div>
+                    )
+                  })()}
                   {!simpleMode && (
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-[var(--text-muted)]">Cost per mile</span>

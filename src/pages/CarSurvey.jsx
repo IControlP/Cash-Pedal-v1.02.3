@@ -267,13 +267,25 @@ export default function CarSurvey() {
             </div>
 
             <div className="mt-6 pt-6 border-t border-[var(--border)]">
-              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">Top model picks</p>
-              <div className="flex flex-wrap gap-2">
-                {topMatch?.profile.topPicks.map(pick => (
-                  <span key={pick} className="px-3 py-1.5 rounded-full bg-[var(--bg)] border border-[var(--border)] text-sm text-white font-medium">
-                    {pick}
-                  </span>
-                ))}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-1">Top model picks</p>
+                  <div className="flex flex-wrap gap-2">
+                    {topMatch?.profile.topPicks.map(pick => (
+                      <span key={pick} className="px-3 py-1.5 rounded-full bg-[var(--bg)] border border-[var(--border)] text-sm text-white font-medium">
+                        {pick}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                {topMatch?.profile.priceRange && (
+                  <div className="shrink-0 text-right">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-1">Typical new MSRP</p>
+                    <p className="font-display font-bold text-white text-lg tabular-nums">
+                      ${(topMatch.profile.priceRange.low / 1000).toFixed(0)}k – ${(topMatch.profile.priceRange.high / 1000).toFixed(0)}k
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -365,9 +377,19 @@ export default function CarSurvey() {
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 anim-5">
             <Link to="/tco" className="btn-primary flex-1 justify-center py-4">
-              Calculate TCO for this vehicle →
+              Calculate full ownership cost →
             </Link>
-            <button onClick={handleRestart} className="btn-ghost flex-1 justify-center py-4">
+            <Link
+              to={topMatch?.profile.priceRange
+                ? `/salary?price=${Math.round((topMatch.profile.priceRange.low + topMatch.profile.priceRange.high) / 2 / 1000) * 1000}`
+                : '/salary'}
+              className="btn-ghost flex-1 justify-center py-4"
+            >
+              What salary do I need?
+            </Link>
+          </div>
+          <div className="mt-3 text-center">
+            <button onClick={handleRestart} className="text-sm text-[var(--text-muted)] hover:text-white transition-colors underline underline-offset-2">
               Retake the survey
             </button>
           </div>

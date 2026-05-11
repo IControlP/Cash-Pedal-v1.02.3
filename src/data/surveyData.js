@@ -203,6 +203,7 @@ export const vehicleProfiles = {
     name: 'SUV / Crossover',
     tagline: 'The I Need Options Mobile',
     emoji: '🚙',
+    priceRange: { low: 28000, high: 55000 },
     description:
       'You like being prepared for anything — road trips, Costco runs, and unexpected adventures. You want space, but you also want to not feel like you\'re driving a bus.',
     perfectFor: ['Families or soon-to-be families', 'People who like the option of AWD', 'Road-trippers and weekend warriors', 'Those who can\'t say no to cargo space'],
@@ -213,6 +214,7 @@ export const vehicleProfiles = {
     name: 'Sedan',
     tagline: 'The Sensible Royalty',
     emoji: '🚗',
+    priceRange: { low: 22000, high: 42000 },
     description:
       'Efficient, comfortable, and dependable. You know what you need and you\'re not paying for what you don\'t. The sedan is the unsung hero of the road.',
     perfectFor: ['Daily commuters', 'People who value fuel economy', 'Anyone parking in cities regularly', 'Those who want reliability over flash'],
@@ -223,6 +225,7 @@ export const vehicleProfiles = {
     name: 'Pickup Truck',
     tagline: 'The Hold My Beer Vehicle',
     emoji: '🛻',
+    priceRange: { low: 35000, high: 68000 },
     description:
       'You need a truck. Or you really, really want one. Either way, you\'ve never regretted having a bed when half the neighborhood needed help moving.',
     perfectFor: ['People who actually tow or haul things', 'Outdoor and off-road enthusiasts', 'Contractors and tradespeople', 'Anyone who gets asked to help move furniture constantly'],
@@ -233,6 +236,7 @@ export const vehicleProfiles = {
     name: 'Sports Car',
     tagline: "Life's Too Short Machine",
     emoji: '🏎️',
+    priceRange: { low: 28000, high: 65000 },
     description:
       'You\'ve already done the math and decided driving should be fun. The twisty road is the destination. Groceries can wait.',
     perfectFor: ['Solo drivers or couples without kids', 'People who genuinely enjoy driving', 'Weekend/second-car owners', 'Those willing to sacrifice practicality for a smile'],
@@ -243,6 +247,7 @@ export const vehicleProfiles = {
     name: 'Luxury Vehicle',
     tagline: 'The Treat Yourself Chariot',
     emoji: '✨',
+    priceRange: { low: 45000, high: 110000 },
     description:
       'You believe the daily commute should feel like something. Heated seats, smooth ride, premium everything — because you earned it.',
     perfectFor: ['People for whom comfort and refinement matter', 'Those who spend significant time in their car', 'Business professionals', 'Anyone who\'s upgraded and can\'t go back'],
@@ -253,6 +258,7 @@ export const vehicleProfiles = {
     name: 'Economy Car',
     tagline: 'The Money Isn\'t Everything Genius',
     emoji: '💚',
+    priceRange: { low: 18000, high: 30000 },
     description:
       'You\'re not cheap — you\'re smart. A car is not an identity, and you\'d rather put that money somewhere it grows. The economy car wins on total cost of ownership, every time.',
     perfectFor: ['First-time car buyers', 'City dwellers with limited parking budgets', 'People who drive < 10K miles/year', 'Those who want low insurance and maintenance costs'],
@@ -263,6 +269,7 @@ export const vehicleProfiles = {
     name: 'Electric Vehicle',
     tagline: 'Living in 2035 Pioneer',
     emoji: '⚡',
+    priceRange: { low: 35000, high: 70000 },
     description:
       'You\'re done with gas stations. You want tech, torque off the line, and the knowledge that your carbon footprint just shrank. Welcome to the future.',
     perfectFor: ['People with home charging capability', 'City and suburban drivers', 'Tech-forward buyers', 'Anyone who hates gas station trips'],
@@ -273,6 +280,7 @@ export const vehicleProfiles = {
     name: 'Hybrid',
     tagline: 'The Best of Both Worlds Strategist',
     emoji: '🔋',
+    priceRange: { low: 28000, high: 52000 },
     description:
       'You want to save money on fuel without committing to a full EV. Smart, practical, and increasingly available in every class. The hybrid is a no-brainer for high-mileage drivers.',
     perfectFor: ['High-mileage commuters', 'People unsure about going full EV', 'Families who want fuel savings + practicality', 'City + highway mixed drivers'],
@@ -283,6 +291,7 @@ export const vehicleProfiles = {
     name: 'Minivan',
     tagline: 'Embraced My Destiny Legend',
     emoji: '🚐',
+    priceRange: { low: 38000, high: 58000 },
     description:
       'You\'ve accepted the highest calling of automotive purpose: maximum people, maximum cargo, maximum sliding door satisfaction. This is not a compromise — this is a choice made by someone who knows exactly what they need.',
     perfectFor: ['Families with 3+ kids', 'Carpoolers and sports team parents', 'Anyone who values interior space above all else', 'People who need a mobile base camp'],

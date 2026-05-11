@@ -142,12 +142,12 @@ export function estimateCurrentValue(originalPrice, make, model, ageYears, curre
 
   const cap = SEGMENT_MAX_DEPR[segment] ?? 0.80
 
-  // Mileage adjustment: compare actual miles vs. expected 12 k/yr average.
+  // Mileage adjustment: compare actual miles vs. expected 13,500 mi/yr average (FHWA data).
   // Each 10 % deviation from average shifts depreciation by ~2.5 %.
   // Capped at +10 % extra depreciation (very high mileage) / -8 % (very low).
   let mileageFactor = 1.0
   if (currentMileage != null && ageYears > 0) {
-    const expectedMiles = ageYears * 12000
+    const expectedMiles = ageYears * 13500
     const mileageRatio  = currentMileage / expectedMiles
     mileageFactor = Math.max(0.92, Math.min(1.10, 1 + (mileageRatio - 1) * 0.25))
   }
@@ -372,8 +372,8 @@ export function generateMaintenanceByYear(isEV, annualMileage, segment, make = '
 
 // ── Fuel ─────────────────────────────────────────────────
 
-// Premium unleaded is ~$0.70/gal above regular (national avg, per EIA 2025)
-export const PREMIUM_PRICE_DELTA = 0.70
+// Premium unleaded is ~$0.75/gal above regular (national avg, per EIA 2025)
+export const PREMIUM_PRICE_DELTA = 0.75
 
 // Brands where every ICE model requires premium
 export const PREMIUM_FUEL_MAKES = new Set([

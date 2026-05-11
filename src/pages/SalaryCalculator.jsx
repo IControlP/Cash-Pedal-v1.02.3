@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PaywallModal from '../components/PaywallModal'
@@ -163,6 +163,7 @@ function classifyCarCategory(make, type, basePrice) {
 export default function SalaryCalculator() {
   const { isSubscribed } = useSubscription()
   const [showPaywall, setShowPaywall] = useState(false)
+  const [searchParams] = useSearchParams()
 
   // Finance mode
   const [mode, setMode] = useState('buy')
@@ -187,8 +188,11 @@ export default function SalaryCalculator() {
   // Car suggestion filter
   const [carFilterCategory, setCarFilterCategory] = useState('all')
 
-  // Buy inputs
-  const [vehiclePrice, setVehiclePrice] = useState(30000)
+  // Buy inputs — seed price from ?price= URL param (e.g. coming from survey results)
+  const [vehiclePrice, setVehiclePrice] = useState(() => {
+    const p = parseInt(searchParams.get('price') || '', 10)
+    return p > 0 ? Math.min(Math.max(p, 5000), 200000) : 30000
+  })
   const [downPct, setDownPct] = useState(20)
   const [loanTerm, setLoanTerm] = useState(48)
   const [rate, setRate] = useState(6.5)
@@ -413,7 +417,7 @@ export default function SalaryCalculator() {
         if (basePrice <= (affordableResults.conservative || 0)) tier = 'conservative'
         else if (basePrice <= (affordableResults.comfortable || 0)) tier = 'comfortable'
         const ops = estimateBasicMonthlyCosts(basePrice, userState || null, annualMiles)
-        const annualFinancing = Math.round(monthlyPayment(basePrice * 0.80, rate, 60) * 12)
+        const annualFinancing = Math.round(monthlyPayment(basePrice * (1 - downPct / 100), rate, loanTerm) * 12)
         const annualOperating = ops.total * 12
         entries.push({
           make, model, type: data.type, is_ev: data.is_ev,
@@ -1267,7 +1271,7 @@ export default function SalaryCalculator() {
                           <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1">
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Est. annual costs</p>
                             {[
-                              { label: `Financing (80% · 5yr · ${rate}%)`, val: v.annualFinancing },
+                              { label: `Financing (${downPct}% down · ${loanTerm}mo · ${rate}%)`, val: v.annualFinancing },
                               { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.annualFuel },
                               { label: 'Insurance', val: v.annualInsurance },
                               { label: 'Maintenance', val: v.annualMaintenance },

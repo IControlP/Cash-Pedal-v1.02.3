@@ -13,7 +13,7 @@ export const BRAND_DEPRECIATION_MULT = {
   Cadillac: 1.08, Volkswagen: 1.08, Audi: 1.05, Mini: 1.10, BMW: 1.05, Lincoln: 1.05,
   'Mercedes-Benz': 1.06, 'Land Rover': 1.10, Dodge: 1.22, Jaguar: 1.12,
   Chrysler: 1.28, 'Alfa Romeo': 1.30, Fiat: 1.35, Mitsubishi: 1.25,
-  Tesla: 0.90, Rivian: 1.15, Lucid: 1.22, Polestar: 1.15,
+  Tesla: 0.95, Rivian: 1.20, Lucid: 1.28, Polestar: 1.18,
   Maserati: 1.38,
 }
 
@@ -149,7 +149,7 @@ export function estimateCurrentValue(originalPrice, make, model, ageYears, curre
   if (currentMileage != null && ageYears > 0) {
     const expectedMiles = ageYears * 12000
     const mileageRatio  = currentMileage / expectedMiles
-    mileageFactor = Math.max(0.92, Math.min(1.10, 1 + (mileageRatio - 1) * 0.25))
+    mileageFactor = Math.max(0.95, Math.min(1.10, 1 + (mileageRatio - 1) * 0.25))
   }
 
   const finalRate = Math.min(baseRate * adjBrand * mileageFactor, cap)
@@ -159,8 +159,8 @@ export function estimateCurrentValue(originalPrice, make, model, ageYears, curre
 // ── Insurance ────────────────────────────────────────────
 // Ported from advanced_insurance.py (AdvancedInsuranceCalculator)
 
-// National average full-coverage premium — updated to 2025 levels (Bankrate/NAIC data)
-export const INSURANCE_BASE_RATE = 1760
+// National average full-coverage premium — updated to 2026 levels (Bankrate/NAIC data)
+export const INSURANCE_BASE_RATE = 1900
 
 export const INSURANCE_VALUE_BRACKETS = [
   [0, 15000, .80], [15000, 30000, 1.00], [30000, 50000, 1.18],
@@ -175,15 +175,15 @@ export const INSURANCE_BRAND_MULT = {
   Tesla: 1.35, Rivian: 1.30, Lucid: 1.25,
 }
 
-// State base premiums updated to 2025 averages (Bankrate/NAIC)
+// State base premiums updated to 2026 averages (Bankrate/NAIC)
 export const STATE_INS_BASE = {
-  AL:1840,AK:1380,AZ:1810,AR:1740,CA:2310,CO:2100,CT:1980,
-  DE:1790,FL:3100,GA:2070,HI:1340,ID:1190,IL:1700,IN:1420,
-  IA:1250,KS:1580,KY:2030,LA:3090,ME:1160,MD:1980,MA:1520,
-  MI:2520,MN:1680,MS:1800,MO:1880,MT:1560,NE:1490,NV:2060,
-  NH:1190,NJ:2030,NM:1700,NY:2280,NC:1440,ND:1440,OH:1270,
-  OK:2100,OR:1530,PA:1720,RI:2020,SC:1660,SD:1540,TN:1680,
-  TX:2310,UT:1640,VT:1160,VA:1480,WA:1620,WV:1610,WI:1330,WY:1420,
+  AL:1970,AK:1470,AZ:2060,AR:1870,CA:2560,CO:2380,CT:2100,
+  DE:1920,FL:3380,GA:2230,HI:1440,ID:1290,IL:1850,IN:1540,
+  IA:1360,KS:1710,KY:2190,LA:3380,ME:1270,MD:2110,MA:1670,
+  MI:2300,MN:1820,MS:1940,MO:2040,MT:1700,NE:1630,NV:2250,
+  NH:1310,NJ:2190,NM:1850,NY:2550,NC:1570,ND:1570,OH:1400,
+  OK:2350,OR:1680,PA:1870,RI:2190,SC:1810,SD:1690,TN:1840,
+  TX:2580,UT:1790,VT:1280,VA:1630,WA:1780,WV:1760,WI:1470,WY:1560,
 }
 
 // state=null → national average
@@ -445,7 +445,7 @@ export function getEffectiveElecRate(state, style) {
 
 // state=null → national average defaults ($3.50/gal gas, $0.16/kWh electricity)
 // isPremium: adds PREMIUM_PRICE_DELTA to the state average when no override is set
-export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 15000, fuelPriceOverride = null, isPremium = false) {
+export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 12000, fuelPriceOverride = null, isPremium = false) {
   const KWH_PER_GAL = 33.7
   if (isEV) {
     const mpge = mpgeCombined ?? 100

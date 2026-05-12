@@ -1294,7 +1294,8 @@ function RepairRiskScore({ isPro, make, model, isEV, maintBrandMult, determineTi
 
 // ── Cost Alerts ───────────────────────────────────────
 function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenance,
-  maintBrandMult, classifySegment, formatCurrency, loanAmount, price, rate, financeMode }) {
+  maintBrandMult, classifySegment, formatCurrency, loanAmount, price, rate, financeMode,
+  vehicleAge = null, startMileage = 0 }) {
 
   const ProBadge = () => (
     <span className="text-[10px] font-bold px-2 py-0.5 rounded"
@@ -1359,6 +1360,18 @@ function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenan
       alerts.push({
         type: 'good',
         text: 'EVs eliminate oil changes and reduce brake wear — typical maintenance savings of $500–$900/yr vs. a comparable gas vehicle.',
+      })
+    }
+    if (isEV && startMileage >= 80000) {
+      alerts.push({
+        type: 'warning',
+        text: `At ${startMileage.toLocaleString()} miles, this EV is approaching the range where battery degradation becomes noticeable. Out-of-warranty battery replacement runs $8,000–$20,000. Confirm battery health (state of charge %, capacity %) before purchase.`,
+      })
+    }
+    if (vehicleAge !== null && vehicleAge <= 2 && !isEV) {
+      alerts.push({
+        type: 'info',
+        text: `New vehicles typically include a 3yr/36,000-mile bumper-to-bumper warranty. Most scheduled maintenance costs shown may be reimbursed by the manufacturer's service plan or covered dealer visits during this period.`,
       })
     }
     if (alerts.length === 0) {
@@ -3053,6 +3066,8 @@ export default function TCOCalculator() {
                 price={price}
                 rate={rate}
                 financeMode={financeMode}
+                vehicleAge={vehicleAge}
+                startMileage={effectiveStartMileage}
               />
 
               {/* ── PDF Export (Pro) ── */}

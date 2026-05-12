@@ -7,7 +7,7 @@ export default function ProGate({ isPro, title, description, preview = null }) {
     <div className="relative rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
       {/* Blurred ghost preview */}
       {preview && (
-        <div className="opacity-[0.12] pointer-events-none select-none" aria-hidden>
+        <div className="opacity-[0.22] pointer-events-none select-none" aria-hidden>
           {preview}
         </div>
       )}

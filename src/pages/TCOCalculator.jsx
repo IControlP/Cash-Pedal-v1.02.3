@@ -1358,7 +1358,7 @@ function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenan
     if (isEV) {
       alerts.push({
         type: 'good',
-        text: 'EVs eliminate oil changes and reduce brake wear — typical maintenance savings of $500–$900/yr vs. a comparable gas vehicle.',
+        text: 'EVs eliminate oil changes and reduce brake wear — typical maintenance savings of $500–$900/yr vs. a comparable gas vehicle. Estimates here include a $200/yr battery reserve. Full battery replacement ($8k–$20k+) is a separate risk to budget for if keeping long-term.',
       })
     }
     if (alerts.length === 0) {
@@ -1478,6 +1478,7 @@ export default function TCOCalculator() {
   const [annualMileage,  setAnnualMileage]  = useState(12000)
   const [vehicleCategory,setVehicleCategory]= useState('')      // used when no make/model selected
   const [chargingStyle,  setChargingStyle]  = useState('home')  // 'home' | 'mixed' | 'public'
+  const [drivingStyle,   setDrivingStyle]   = useState('mixed') // 'city' | 'mixed' | 'highway' — ICE only
   const [customFuelPrice,setCustomFuelPrice]= useState('')      // empty = use state avg
   const [multiCarPolicy, setMultiCarPolicy] = useState(false)
   // Track original MSRP separately from price (which may be depreciation-adjusted)
@@ -1562,13 +1563,21 @@ export default function TCOCalculator() {
       const fuelOverride = (modelData.is_ev && customOverride === null)
         ? getEffectiveElecRate(resolvedState, chargingStyle)
         : customOverride
-      setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel)))
+      // Driving style adjusts effective MPG for ICE vehicles (city -18%, highway +22% vs EPA combined)
+      const iceMpgMult = !modelData.is_ev ? (drivingStyle === 'city' ? 0.82 : drivingStyle === 'highway' ? 1.22 : 1.0) : 1.0
+      setAnnualFuel(computeAnnualFuel(
+        modelData.is_ev,
+        modelData.mpg?.combined != null ? modelData.mpg.combined * iceMpgMult : null,
+        modelData.mpg?.mpge_combined,
+        resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel)
+      ))
       if (detailedMode) {
         const seg = classifySegment(selMake||'', selModel||'')
         const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake)
         setAnnualMaintenance(services.reduce((s, x) => s + x.annual, 0))
       } else {
-        setAnnualMaintenance(modelData.is_ev ? 700 : 1200)
+        // $900 EV avg = ~$700 ops + $200 HV battery reserve; $1200 ICE avg
+        setAnnualMaintenance(modelData.is_ev ? 900 : 1200)
       }
     } else {
       const catInfo = VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)
@@ -1578,20 +1587,21 @@ export default function TCOCalculator() {
       const fuelOverride = (catIsEV && customOverride === null)
         ? getEffectiveElecRate(resolvedState, chargingStyle)
         : customOverride
-      setAnnualFuel(computeAnnualFuel(catIsEV, catMpg, catMpge, resolvedState, annualMileage, fuelOverride))
+      const catMpgMult = !catIsEV ? (drivingStyle === 'city' ? 0.82 : drivingStyle === 'highway' ? 1.22 : 1.0) : 1.0
+      setAnnualFuel(computeAnnualFuel(catIsEV, catMpg * catMpgMult, catMpge, resolvedState, annualMileage, fuelOverride))
       if (detailedMode) {
         const catSeg = catInfo?.segment ?? 'sedan'
         const services = generateMaintenanceServices(catIsEV, annualMileage, catSeg, '')
         setAnnualMaintenance(services.reduce((s, x) => s + x.annual, 0))
       } else {
-        setAnnualMaintenance(catIsEV ? 700 : 1200)
+        setAnnualMaintenance(catIsEV ? 900 : 1200)
       }
     }
     const currentVal = (selYear && (selMake || selModel))
       ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)), currentMileage)
       : price
     setAnnualRegistration(computeAnnualRegistration(resolvedState, currentVal))
-  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, drivingStyle, currentMileage]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLocationInput = useCallback((val) => {
     setLocationInput(val)
@@ -2267,6 +2277,17 @@ export default function TCOCalculator() {
                     </p>
                   )}
 
+                  {rate >= 10 && (
+                    <div className="rounded-lg px-3 py-2.5 flex items-start gap-2.5 border"
+                      style={{ borderColor: 'rgba(248,113,113,0.35)', background: 'rgba(248,113,113,0.05)' }}>
+                      <span className="text-sm shrink-0 mt-0.5">⚠</span>
+                      <p className="text-[11px] leading-relaxed" style={{ color: '#f87171' }}>
+                        <span className="font-semibold">Rate above 10%.</span>{' '}
+                        Credit unions typically offer 2–4% less than dealer financing. Getting pre-approved before visiting a dealership can save hundreds in interest.
+                      </p>
+                    </div>
+                  )}
+
                   <SelectInput label="Ownership Duration" value={ownershipYears}
                     onChange={setOwnershipYears} options={ownershipOptions} />
                 </>
@@ -2432,6 +2453,47 @@ export default function TCOCalculator() {
                 </div>
               )}
 
+              {/* Driving Conditions — ICE vehicles, detailed mode only */}
+              {!simpleMode && resolvedState && !customCosts && !effIsEV && (
+                <div className="rounded-xl border p-4 flex flex-col gap-4"
+                  style={{ borderColor: 'rgba(255,184,0,0.2)', background: 'rgba(255,184,0,0.02)' }}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>
+                      ⛽ Driving Conditions
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs font-semibold text-[var(--text-muted)]">
+                      What best describes your typical driving mix? (affects fuel economy estimate)
+                    </p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { value: 'city',    label: 'City-Heavy',    sub: 'Lots of stop-and-go', note: '~18% less MPG', noteColor: '#f87171' },
+                        { value: 'mixed',   label: 'Mixed',          sub: 'EPA combined (default)', note: 'Baseline',  noteColor: 'var(--text-muted)' },
+                        { value: 'highway', label: 'Highway-Heavy', sub: 'Mostly open roads',   note: '~22% more MPG', noteColor: '#4ade80' },
+                      ].map(opt => (
+                        <button key={opt.value}
+                          onClick={() => setDrivingStyle(opt.value)}
+                          className="rounded-lg border px-2 py-2.5 text-center transition-all"
+                          style={{
+                            borderColor: drivingStyle === opt.value ? 'rgba(200,255,0,0.6)' : 'var(--border)',
+                            background:  drivingStyle === opt.value ? 'rgba(200,255,0,0.1)' : 'transparent',
+                          }}>
+                          <p className="text-xs font-semibold"
+                            style={{ color: drivingStyle === opt.value ? 'var(--accent)' : 'white' }}>
+                            {opt.label}
+                          </p>
+                          <p className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-tight">{opt.sub}</p>
+                          <p className="text-[10px] mt-0.5 font-semibold leading-tight" style={{ color: opt.noteColor }}>
+                            {opt.note}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* EV Charging Setup — detailed mode only (simple mode defaults to home charging) */}
               {!simpleMode && resolvedState && !customCosts && effIsEV && (
                 <div className="rounded-xl border p-4 flex flex-col gap-4"
@@ -2594,13 +2656,14 @@ export default function TCOCalculator() {
                   : getEffectiveElecRate(resolvedState, chargingStyle)
                 const chargingStyleLabel = { home: 'home', mixed: 'home+public', public: 'public DCFC' }[chargingStyle]
                 const effectiveGasPrice = (STATE_FUEL_PRICES[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)
+                const drivingStyleSuffix = !effIsEV && drivingStyle !== 'mixed' ? ` · ${drivingStyle === 'city' ? 'city mix' : 'hwy mix'}` : ''
                 const fuelNote = effIsEV
                   ? `$${activeElecRate.toFixed(3)}/kWh · ${customFuelPrice ? 'custom' : chargingStyleLabel}`
-                  : `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${STATE_FUEL_PRICES[resolvedState] ?? 3.50}`}/gal`
+                  : `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${STATE_FUEL_PRICES[resolvedState] ?? 3.50}`}/gal${drivingStyleSuffix}`
                 const insNote = `${resolvedState} · ${selMake || 'avg'}${detailedMode && multiCarPolicy ? ' · multi-car' : ''}`
                 const maintNote = detailedMode
-                  ? (effIsEV ? 'EV · itemized' : 'gas · itemized')
-                  : (effIsEV ? 'EV avg' : 'gas avg')
+                  ? (effIsEV ? 'EV · itemized' : `gas · itemized${drivingStyleSuffix}`)
+                  : (effIsEV ? 'EV avg' : `gas avg${drivingStyleSuffix}`)
                 const maintenanceSegment = selMake
                   ? classifySegment(selMake, selModel||'')
                   : (catInfoForRender?.segment ?? 'sedan')

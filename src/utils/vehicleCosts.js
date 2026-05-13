@@ -235,6 +235,11 @@ export const MAINT_TIER_COSTS = {
 
 export const LABOR_RATE = 100
 
+// Annual reserve for high-voltage battery degradation / eventual replacement.
+// Full replacement runs $8k–$20k+ depending on vehicle; this amortizes the risk
+// across ownership years as a planning reserve. Not a guarantee of replacement.
+export const EV_BATTERY_RESERVE_ANNUAL = 200
+
 export function generateMaintenanceServices(isEV, annualMileage, segment, make = '') {
   const tier  = determineMaintTier(make)
   const c     = MAINT_TIER_COSTS[tier]
@@ -288,6 +293,10 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
   svc.push({ name: 'Brake pads & rotors (amortized)', detail: isEV ? 'extended — regen braking' : '~60k–90k mi', annual: Math.round(brakeAnnual) })
 
   svc.push({ name: '12V battery (amortized)', detail: 'every ~5 years', annual: amortize(180, 0.3, 65000) })
+
+  if (isEV) {
+    svc.push({ name: 'HV battery reserve', detail: 'long-term replacement planning ($8k–$20k+)', annual: EV_BATTERY_RESERVE_ANNUAL })
+  }
 
   return svc
 }
@@ -351,6 +360,11 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
   defs.push({ name: 'Rear rotors',      costPerOcc: occCost(250, 1.5), intervalMiles: 90000 * brakeMult })
 
   defs.push({ name: '12V battery', costPerOcc: occCost(180, 0.3), intervalMiles: 65000 })
+
+  if (isEV) {
+    // One occurrence per year (intervalMiles = annualMileage)
+    defs.push({ name: 'HV battery reserve', costPerOcc: EV_BATTERY_RESERVE_ANNUAL, intervalMiles: annualMileage })
+  }
 
   return Array.from({ length: years }, (_, i) => {
     const yr = i + 1

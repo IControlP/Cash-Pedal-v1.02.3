@@ -39,10 +39,25 @@ export default function Blog() {
                 <Link
                   key={post.slug}
                   to={`/blog/${post.slug}`}
-                  className={`card hover:border-[#3a3a3e] transition-colors anim-${Math.min(i + 2, 5)} group block`}
+                  className={`card hover:border-[#3a3a3e] transition-colors anim-${Math.min(i + 2, 5)} group block overflow-hidden`}
                 >
+                  {post.cover && (
+                    <div className="-mx-6 -mt-6 mb-5">
+                      <img
+                        src={post.cover}
+                        alt={post.title}
+                        className="w-full object-cover max-h-52"
+                      />
+                    </div>
+                  )}
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <span className="text-xs text-[var(--text-muted)]">{formatDate(post.date)}</span>
+                    {post.author && (
+                      <span className="text-xs text-[var(--text-muted)]">· {post.author}</span>
+                    )}
+                    {post.readTime && (
+                      <span className="text-xs text-[var(--text-muted)]">· {post.readTime}</span>
+                    )}
                     {post.tags.map(tag => (
                       <span
                         key={tag}
@@ -56,6 +71,9 @@ export default function Blog() {
                   <h2 className="font-display font-bold text-white text-xl mb-1 group-hover:text-[var(--accent)] transition-colors">
                     {post.title}
                   </h2>
+                  {post.subtitle && (
+                    <p className="text-[var(--accent)] text-sm font-semibold mb-1">{post.subtitle}</p>
+                  )}
                   <p className="text-[var(--text-muted)] text-sm leading-relaxed">{post.excerpt}</p>
                   <p className="mt-3 text-xs font-semibold text-[var(--accent)]">Read more →</p>
                 </Link>

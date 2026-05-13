@@ -42,9 +42,26 @@ export default function BlogPost() {
             ← All posts
           </Link>
 
+          {/* Cover image */}
+          {post.cover && (
+            <div className="mb-8 rounded-xl overflow-hidden">
+              <img
+                src={post.cover}
+                alt={post.title}
+                className="w-full object-cover"
+              />
+            </div>
+          )}
+
           {/* Meta */}
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="text-xs text-[var(--text-muted)]">{formatDate(post.date)}</span>
+            {post.author && (
+              <span className="text-xs text-[var(--text-muted)]">· {post.author}</span>
+            )}
+            {post.readTime && (
+              <span className="text-xs text-[var(--text-muted)]">· {post.readTime}</span>
+            )}
             {post.tags.map(tag => (
               <span
                 key={tag}
@@ -57,9 +74,16 @@ export default function BlogPost() {
           </div>
 
           {/* Title */}
-          <h1 className="font-display font-extrabold text-white text-3xl sm:text-4xl leading-tight mb-4">
+          <h1 className="font-display font-extrabold text-white text-3xl sm:text-4xl leading-tight mb-2">
             {post.title}
           </h1>
+
+          {/* Subtitle */}
+          {post.subtitle && (
+            <p className="text-[var(--accent)] font-semibold text-lg mb-6">
+              {post.subtitle}
+            </p>
+          )}
 
           <p className="text-[var(--text-muted)] text-base mb-8 leading-relaxed border-b border-[var(--border)] pb-8">
             {post.excerpt}

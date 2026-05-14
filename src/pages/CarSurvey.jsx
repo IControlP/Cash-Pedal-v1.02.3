@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import ProGate from '../components/ProGate'
@@ -58,8 +58,20 @@ function ScoreMeter({ score, label }) {
   )
 }
 
+const MULTI_WORD_MAKES = ['Mercedes-Benz', 'Land Rover', 'Alfa Romeo']
+
+function parseSurveyPick(pick) {
+  for (const make of MULTI_WORD_MAKES) {
+    if (pick.startsWith(make + ' ')) return { make, model: pick.slice(make.length + 1) }
+  }
+  const idx = pick.indexOf(' ')
+  if (idx === -1) return null
+  return { make: pick.slice(0, idx), model: pick.slice(idx + 1) }
+}
+
 export default function CarSurvey() {
   const { isSubscribed } = useSubscription()
+  const navigate = useNavigate()
   const [step, setStep] = useState('intro') // intro | quiz | results
   const [currentQ, setCurrentQ] = useState(0)
   const [answers, setAnswers] = useState(Array(questions.length).fill(3))
@@ -102,6 +114,15 @@ export default function CarSurvey() {
     setSelectedAnswer(null)
     setShowAllScores(false)
     setStep('intro')
+  }
+
+  function handleAnalyzeInTCO() {
+    const pick = topMatch?.profile.topPicks[0]
+    if (pick) {
+      const parsed = parseSurveyPick(pick)
+      if (parsed) localStorage.setItem('cashpedal_survey_rec', JSON.stringify(parsed))
+    }
+    navigate('/tco')
   }
 
   if (step === 'intro') {
@@ -364,9 +385,9 @@ export default function CarSurvey() {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 anim-5">
-            <Link to="/tco" className="btn-primary flex-1 justify-center py-4">
-              Calculate TCO for this vehicle →
-            </Link>
+            <button onClick={handleAnalyzeInTCO} className="btn-primary flex-1 justify-center py-4">
+              Analyze {topMatch?.profile.topPicks[0] ?? 'top pick'} in TCO →
+            </button>
             <button onClick={handleRestart} className="btn-ghost flex-1 justify-center py-4">
               Retake the survey
             </button>

@@ -1495,6 +1495,7 @@ export default function TCOCalculator() {
   const [dealerPurchase,   setDealerPurchase]   = useState(true)
   const [taxRateOverride,  setTaxRateOverride]  = useState(null) // null = use state rate
   const [docFeeOverride,   setDocFeeOverride]   = useState(null) // null = use state avg
+  const [evTaxCredit,      setEvTaxCredit]      = useState(false)
   const [simpleMode,       setSimpleMode]       = useState(() => localStorage.getItem('cashpedal_simple_mode') !== 'false')
 
   const toggleSimpleMode = () => {
@@ -1521,6 +1522,40 @@ export default function TCOCalculator() {
       if (i.selTrim)  setSelTrim(i.selTrim)
       if (i.financeMode) setFinanceMode(i.financeMode)
     } catch { /* ignore corrupt data */ }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Pre-fill vehicle picker from survey recommendation (written by CarSurvey on CTA click)
+  useEffect(() => {
+    const raw = localStorage.getItem('cashpedal_survey_rec')
+    if (!raw) return
+    localStorage.removeItem('cashpedal_survey_rec')
+    try {
+      const { make, model: modelName } = JSON.parse(raw)
+      if (!make || !modelName) return
+      const makeData = VEHICLES[make]
+      if (!makeData) { setSelMake(make); return }
+      const resolvedModel = makeData[modelName]
+        ? modelName
+        : makeData[modelName.replace(/ Hybrid$/, '')]
+          ? modelName.replace(/ Hybrid$/, '')
+          : makeData[modelName.replace(/ EV$/, '')]
+            ? modelName.replace(/ EV$/, '')
+            : null
+      setSelMake(make)
+      if (!resolvedModel) return
+      setSelModel(resolvedModel)
+      const yrs = getAvailableYears(make, resolvedModel)
+      if (!yrs.length) return
+      const yr = yrs[0]
+      setSelYear(yr)
+      const trimMap = getTrims(make, resolvedModel, yr)
+      const entries = Object.entries(trimMap)
+      if (!entries.length) return
+      const [cheapestTrim, msrp] = entries.reduce((a, b) => b[1] < a[1] ? b : a)
+      setSelTrim(cheapestTrim)
+      setOrigMsrp(msrp)
+      setPrice(msrp)
+    } catch { /* ignore */ }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Derived model data (type, specs, mpg, isEV)
@@ -1680,7 +1715,9 @@ export default function TCOCalculator() {
     ? (docFeeOverride !== null ? Number(docFeeOverride) : autoDocFee)
     : 0
   const totalPurchaseExtras = salesTaxAmt + effectiveDocFee
-  const effectivePrice = financeMode === 'buy' ? price + totalPurchaseExtras : price
+  const isCurrentlyEV = modelData ? modelData.is_ev : (VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.isEV ?? false)
+  const evCreditAmount = (evTaxCredit && isCurrentlyEV && financeMode === 'buy') ? 7500 : 0
+  const effectivePrice = financeMode === 'buy' ? price + totalPurchaseExtras - evCreditAmount : price
   const regionalDemand = resolvedState ? getRegionalDemandPremium(resolvedState) : 0
 
   const results = useMemo(() => calculateLoan({
@@ -1756,6 +1793,11 @@ export default function TCOCalculator() {
     setPrice(Math.round((dealerPurchase ? market * 1.10 : market) / 500) * 500)
   }, [dealerPurchase]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Clear EV credit toggle when switching away from an EV
+  useEffect(() => {
+    if (!isCurrentlyEV) setEvTaxCredit(false)
+  }, [isCurrentlyEV])
+
   // For the insurance note: estimated current market value after depreciation
   const carAge            = selYear ? Math.max(0, new Date().getFullYear() - parseInt(selYear)) : 0
   const estimatedCarValue = selYear
@@ -1774,7 +1816,7 @@ export default function TCOCalculator() {
 
   // Derived EV flag, charging rate, and premium fuel flag — used across the render
   const catInfoForRender = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
-  const effIsEV = modelData ? modelData.is_ev : (catInfoForRender?.isEV ?? false)
+  const effIsEV = isCurrentlyEV
   const isPremium = !effIsEV && !!(selMake && requiresPremiumFuel(selMake, selModel))
 
   // Whether the detailed results are currently blocked by the paywall
@@ -2230,10 +2272,41 @@ export default function TCOCalculator() {
                         )}
                       </div>
                       <span className="font-display font-bold text-lg" style={{ color: 'var(--accent)' }}>
-                        {formatCurrency(effectivePrice)}
+                        {formatCurrency(effectivePrice + evCreditAmount)}
                       </span>
                     </div>
                   </div>
+
+                  {/* Federal EV tax credit */}
+                  {effIsEV && (
+                    <div className="rounded-xl border px-4 py-3 flex items-center justify-between gap-3"
+                      style={{
+                        borderColor: evTaxCredit ? 'rgba(74,222,128,0.4)' : 'var(--border)',
+                        background: evTaxCredit ? 'rgba(74,222,128,0.05)' : 'var(--surface)',
+                      }}>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-white">Federal EV Tax Credit</p>
+                        <p className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-relaxed">
+                          Up to $7,500 · eligibility depends on income, vehicle price &amp; assembly. Apply as a price reduction below.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <button
+                          onClick={() => setEvTaxCredit(c => !c)}
+                          className="relative w-10 h-5 rounded-full transition-colors shrink-0"
+                          style={{ background: evTaxCredit ? '#4ade80' : 'var(--border)' }}
+                          aria-label="Toggle EV tax credit"
+                        >
+                          <span className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform"
+                            style={{ left: evTaxCredit ? '1.25rem' : '0.125rem' }} />
+                        </button>
+                        <span className="text-sm font-bold tabular-nums w-16 text-right"
+                          style={{ color: evTaxCredit ? '#4ade80' : 'var(--text-muted)' }}>
+                          {evTaxCredit ? '−$7,500' : 'Off'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
                   <SliderInput label="Down Payment" value={safeDown}
                     onChange={v => setDownPayment(Math.min(v, effectivePrice))}

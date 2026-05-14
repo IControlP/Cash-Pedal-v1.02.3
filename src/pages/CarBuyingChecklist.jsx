@@ -108,6 +108,16 @@ export default function CarBuyingChecklist() {
   const [notes, setNotes] = useState({})
   const [activeTab, setActiveTab] = useState('maintenance')
 
+  // Persist item statuses across navigation using a vehicle-specific key
+  const checklistStorageKey = vehicleInfo.make && vehicleInfo.model && vehicleInfo.year
+    ? `cashpedal_cl_${vehicleInfo.make}_${vehicleInfo.model}_${vehicleInfo.year}`.replace(/\s+/g, '_')
+    : null
+
+  useEffect(() => {
+    if (step !== 'checklist' || !checklistStorageKey) return
+    localStorage.setItem(checklistStorageKey, JSON.stringify(statuses))
+  }, [statuses, step, checklistStorageKey])
+
   const categories = useMemo(() => {
     const cats = {}
     maintenanceItems.forEach(item => {
@@ -189,6 +199,13 @@ export default function CarBuyingChecklist() {
     if (!isSubscribed && checklistCount >= FREE_CHECKLIST_LIMIT) {
       setShowPaywall(true)
       return
+    }
+    // Restore previously saved statuses for this vehicle if any
+    if (checklistStorageKey) {
+      try {
+        const saved = JSON.parse(localStorage.getItem(checklistStorageKey) || 'null')
+        if (saved && typeof saved === 'object') setStatuses(saved)
+      } catch { /* ignore */ }
     }
     const next = checklistCount + 1
     setChecklistCount(next)

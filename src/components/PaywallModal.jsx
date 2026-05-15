@@ -2,77 +2,25 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useSubscription } from '../hooks/useSubscription'
 
-const FEATURE_COPY = {
-  tco: {
-    icon: '🔬',
-    title: 'Detailed TCO Analysis',
-    description: 'vehicle-specific cost breakdowns with depreciation curves, insurance models by state, and itemized maintenance estimates',
-    freeLimit: 3,
-    unit: 'detailed analysis',
-    units: 'detailed analyses',
-  },
-  checklist: {
-    icon: '🔍',
-    title: 'Used Car Checklist',
-    description: 'maintenance audits, negotiation leverage calculations, and seller question guides',
-    freeLimit: 5,
-    unit: 'checklist',
-    units: 'checklists',
-  },
-  forecast: {
-    icon: '📈',
-    title: '5-Year Ownership Forecast',
-    description: 'year-by-year cost projections showing how loan payoff, rising maintenance, and depreciation shift your total cost over time',
-    freeLimit: 0,
-    unit: 'forecast',
-    units: 'forecasts',
-  },
-  compare: {
-    icon: '⚖️',
-    title: 'Multi-Vehicle Comparison',
-    description: 'compare up to 5 vehicles side by side across payment, fuel, insurance, maintenance, and total ownership cost',
-    freeLimit: 0,
-    unit: 'comparison',
-    units: 'comparisons',
-  },
-  salary: {
-    icon: '💵',
-    title: 'Salary Optimization Tool',
-    description: 'vehicle-specific salary requirements with brand-accurate cost models — pick any make, model, year, and trim',
-    freeLimit: 0,
-    unit: 'optimization',
-    units: 'optimizations',
-  },
-  quiz: {
-    icon: '🎯',
-    title: 'Full Quiz Ranked Results',
-    description: 'see all vehicle type scores ranked from best to worst match, not just your top result',
-    freeLimit: 0,
-    unit: 'result',
-    units: 'results',
-  },
-  repair: {
-    icon: '🛠️',
-    title: 'Repair & Reliability Risk Score',
-    description: 'brand- and model-specific reliability ratings with estimated repair frequency and cost-of-ownership risk',
-    freeLimit: 0,
-    unit: 'risk score',
-    units: 'risk scores',
-  },
-}
+const FEATURES = [
+  "See if that car costs $8k more than it looks over 5 years",
+  "Find which of 5 vehicles is actually the best deal",
+  "Know exactly what salary you need before you commit",
+  "Spot reliability red flags before you sign",
+  "Compare buy vs. lease — which actually wins for you",
+  "Get your full ranked vehicle type matches",
+  "Export a clean PDF to share or negotiate with",
+]
 
 export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocked }) {
-  const copy = FEATURE_COPY[feature] || FEATURE_COPY.tco
+  const [email,       setEmail]       = useState('')
+  const [restoreMode, setRestoreMode] = useState(false)
+  const [loading,     setLoading]     = useState(false)
+  const [restoreErr,  setRestoreErr]  = useState('')
+  const [checkoutErr, setCheckoutErr] = useState('')
+  const [deviceLimit, setDeviceLimit] = useState(false)
 
-  const [email,        setEmail]        = useState('')
-  const [restoreMode,  setRestoreMode]  = useState(false)
-  const [loading,      setLoading]      = useState(false)
-  const [restoreErr,   setRestoreErr]   = useState('')
-  const [checkoutErr,  setCheckoutErr]  = useState('')
-  const [annual,       setAnnual]       = useState(false)
-  const [deviceLimit,  setDeviceLimit]  = useState(false)
-
-  const { verifySubscription, activateFromSession } = useSubscription()
+  const { verifySubscription } = useSubscription()
 
   async function handleCheckout() {
     setCheckoutErr('')
@@ -81,7 +29,7 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
       const res  = await fetch('/api/create-checkout-session', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email: email || undefined, cancelPath, annual }),
+        body:    JSON.stringify({ passType: 'one_time', email: email || undefined, cancelPath }),
       })
       const data = await res.json()
       if (data.url) {
@@ -110,7 +58,7 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
     } else if (result.error === 'network') {
       setRestoreErr('Could not reach server. Please check your connection.')
     } else {
-      setRestoreErr('No active subscription found for that email. Subscribe below to get access.')
+      setRestoreErr('No active pass found for that email. Get access below.')
       setRestoreMode(false)
     }
   }
@@ -119,74 +67,28 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm px-4">
       <div className="card w-full max-w-md">
 
-        {/* Icon + heading */}
         <div className="text-center mb-6">
-          <div className="text-5xl mb-3">{copy.icon}</div>
           <div className="inline-flex items-center gap-2 text-xs font-semibold text-[var(--accent)] uppercase tracking-wider mb-3">
             <span className="w-4 h-px bg-[var(--accent)]" />
-            CashPedal Pro
+            Cash Pedal Pro
             <span className="w-4 h-px bg-[var(--accent)]" />
           </div>
-          <h2 className="font-display font-extrabold text-white text-xl sm:text-2xl">
-            {copy.freeLimit > 0 ? 'Free limit reached' : 'Pro feature'}
+          <h2 className="font-display font-extrabold text-white text-xl sm:text-2xl leading-snug">
+            You're about to spend $25,000+.<br />Spend $19 first.
           </h2>
           <p className="text-[var(--text-muted)] text-sm mt-2 leading-relaxed">
-            {copy.freeLimit > 0
-              ? <>You've used <span className="text-white font-semibold">{usedCount} of {copy.freeLimit}</span> free {copy.units}. Unlock unlimited access to {copy.description}.</>
-              : <>Upgrade to Pro to unlock {copy.description}.</>
-            }
+            Unlock every tool to make the smartest car-buying decision — one payment, no subscription.
           </p>
         </div>
 
-        {/* Billing toggle */}
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <span className={`text-sm font-semibold ${!annual ? 'text-white' : 'text-[var(--text-muted)]'}`}>Monthly</span>
-          <button
-            onClick={() => setAnnual(a => !a)}
-            className="relative w-10 h-5 rounded-full transition-colors duration-200"
-            style={{ background: annual ? 'var(--accent)' : 'var(--border)' }}
-            aria-label="Toggle annual billing"
-          >
-            <span
-              className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200"
-              style={{ transform: annual ? 'translateX(20px)' : 'translateX(0)' }}
-            />
-          </button>
-          <span className={`text-sm font-semibold ${annual ? 'text-white' : 'text-[var(--text-muted)]'}`}>
-            Annual
-            <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full font-bold"
-              style={{ background: 'rgba(200,255,0,0.15)', color: 'var(--accent)' }}>
-              Save 20%
-            </span>
-          </span>
-        </div>
-
-        {/* Pricing card */}
-        <div className="rounded-xl border p-4 mb-5 text-center"
+        <div className="rounded-xl border p-4 mb-5"
           style={{ borderColor: 'rgba(255,184,0,0.25)', background: 'rgba(255,184,0,0.04)' }}>
-          {annual ? (
-            <div>
-              <div className="font-display font-extrabold text-white text-3xl">
-                $8<span className="text-lg font-normal text-[var(--text-muted)]">/month</span>
-              </div>
-              <p className="text-xs text-[var(--text-muted)] mt-1">Billed as $96/year — you save $24</p>
-            </div>
-          ) : (
-            <div className="font-display font-extrabold text-white text-3xl">
-              $10<span className="text-lg font-normal text-[var(--text-muted)]">/month</span>
-            </div>
-          )}
-          <ul className="mt-3 text-sm text-[var(--text-muted)] space-y-1.5 text-left mx-auto max-w-xs">
-            {[
-              'Full 5-year ownership forecast',
-              'Multi-vehicle comparison (up to 5)',
-              'Buy vs. lease comparison',
-              'Repair & reliability risk score',
-              'Salary optimization tool',
-              'Full quiz ranked results',
-              'PDF report export',
-              'Alerts for better alternatives',
-            ].map(item => (
+          <div className="text-center mb-3">
+            <div className="font-display font-extrabold text-white text-3xl">$19</div>
+            <p className="text-xs text-[var(--text-muted)] mt-1">60 days of full Pro access · One payment · No subscription</p>
+          </div>
+          <ul className="text-sm text-[var(--text-muted)] space-y-1.5">
+            {FEATURES.map(item => (
               <li key={item} className="flex items-start gap-2">
                 <span className="mt-0.5 shrink-0" style={{ color: 'var(--accent)' }}>✓</span>
                 <span>{item}</span>
@@ -195,7 +97,6 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
           </ul>
         </div>
 
-        {/* Restore existing subscription */}
         {restoreMode ? (
           deviceLimit ? (
             <div className="flex flex-col gap-3 mb-4">
@@ -203,7 +104,7 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
                 style={{ borderColor: 'rgba(255,100,100,0.3)', background: 'rgba(255,100,100,0.06)' }}>
                 <p className="text-red-400 font-semibold mb-1">Device limit reached</p>
                 <p className="text-[var(--text-muted)] leading-relaxed">
-                  This subscription is already active on 2 devices. To use it here,
+                  This pass is already active on 2 devices. To use it here,
                   go to your subscription page to reset your registered devices.
                 </p>
               </div>
@@ -214,44 +115,41 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
                   className="flex-1 py-2 rounded-xl border border-[var(--border)] text-[var(--text-muted)] text-sm hover:border-[var(--accent)] transition-colors">
                   Back
                 </button>
-                <Link
-                  to="/subscribe"
-                  className="flex-1 btn-primary text-sm text-center">
+                <Link to="/subscribe" className="flex-1 btn-primary text-sm text-center">
                   Manage Devices
                 </Link>
               </div>
             </div>
           ) : (
-          <form onSubmit={handleRestore} className="flex flex-col gap-3 mb-4">
-            <p className="text-sm text-white font-semibold">Restore your subscription</p>
-            <input
-              type="email"
-              className="input-field"
-              placeholder="your@email.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              autoFocus
-            />
-            {restoreErr && <p className="text-xs text-red-400">{restoreErr}</p>}
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => { setRestoreMode(false); setRestoreErr('') }}
-                className="flex-1 py-2 rounded-xl border border-[var(--border)] text-[var(--text-muted)] text-sm hover:border-[var(--accent)] transition-colors">
-                Back
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 btn-primary disabled:opacity-40 text-sm">
-                {loading ? 'Checking…' : 'Restore Access'}
-              </button>
-            </div>
-          </form>
+            <form onSubmit={handleRestore} className="flex flex-col gap-3 mb-4">
+              <p className="text-sm text-white font-semibold">Restore your pass</p>
+              <input
+                type="email"
+                className="input-field"
+                placeholder="your@email.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                autoFocus
+              />
+              {restoreErr && <p className="text-xs text-red-400">{restoreErr}</p>}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setRestoreMode(false); setRestoreErr('') }}
+                  className="flex-1 py-2 rounded-xl border border-[var(--border)] text-[var(--text-muted)] text-sm hover:border-[var(--accent)] transition-colors">
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 btn-primary disabled:opacity-40 text-sm">
+                  {loading ? 'Checking…' : 'Restore Access'}
+                </button>
+              </div>
+            </form>
           )
         ) : (
           <div className="flex flex-col gap-3 mb-4">
-            {/* Optional email for checkout prefill */}
             <input
               type="email"
               className="input-field text-sm"
@@ -264,19 +162,21 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
               onClick={handleCheckout}
               disabled={loading}
               className="btn-primary w-full disabled:opacity-40">
-              {loading ? 'Redirecting…' : annual ? 'Subscribe — $96/year ($8/mo)' : 'Subscribe — $10/month'}
+              {loading ? 'Redirecting…' : 'Get the Car Buying Pass — $19'}
             </button>
+            <p className="text-center text-xs text-[var(--text-muted)]">
+              One payment. Access lasts 60 days. No subscription, no surprises.
+            </p>
             <button
               onClick={() => { setRestoreMode(true); setRestoreErr('') }}
               className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors text-center">
-              Already subscribed? Restore access →
+              Already have a pass? Restore access →
             </button>
           </div>
         )}
 
         <p className="text-center text-[var(--text-muted)] text-xs leading-relaxed">
-          Secure payment via Stripe. Cancel anytime — access lasts through the end of your billing period.
-          Simple calculator &amp; basic results are always free.
+          Secure payment via Stripe. Simple calculator &amp; basic results are always free.
         </p>
       </div>
     </div>

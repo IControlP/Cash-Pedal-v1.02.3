@@ -302,21 +302,21 @@ export default function Landing() {
                 className="font-display font-extrabold text-white leading-tight mb-4"
                 style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.5rem)' }}
               >
-                Go deeper for <span className="text-[var(--accent)]">$10/month</span>
+                Make a $25,000 decision with a <span className="text-[var(--accent)]">$19 advantage.</span>
               </h2>
               <p className="text-[var(--text-muted)] text-base max-w-xl mx-auto">
-                Free tools cover the basics. Pro unlocks the full forecasting, comparison, and optimization suite.
+                Free tools cover the basics. The Car Buying Pass unlocks the full analysis suite — one payment, 60 days, no subscription.
               </p>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-3 mb-8 max-w-2xl mx-auto">
               {[
-                { icon: '📈', title: 'Full 5-year ownership forecast', body: 'Year-by-year cost breakdown: loan payoff, rising maintenance, total cumulative spend.' },
-                { icon: '⚖️', title: 'Multi-vehicle comparison', body: 'Compare up to 5 vehicles side by side — buy or lease — on every cost metric.' },
-                { icon: '🛠️', title: 'Repair & reliability risk score', body: 'Brand-specific reliability rating with repair cost multiplier and ownership risk notes.' },
-                { icon: '💵', title: 'Salary optimization tool', body: 'Vehicle-specific salary requirements using brand-accurate insurance, fuel, and maintenance.' },
-                { icon: '🎯', title: 'Full quiz ranked results', body: 'All vehicle types ranked by match percentage — not just your top pick.' },
-                { icon: '⬇', title: 'PDF report export', body: 'Download a clean PDF summary of your TCO analysis to share or keep.' },
+                { icon: '📈', title: 'Full 5-year ownership forecast', body: 'Reveals the hidden 5-year cost — find which car costs $8k more than the sticker suggests.' },
+                { icon: '⚖️', title: 'Multi-vehicle comparison', body: 'Compare up to 5 vehicles on every cost metric — see the winner clearly.' },
+                { icon: '🛠️', title: 'Repair & reliability risk score', body: 'Brand-specific reliability scores so you know the risk before you buy.' },
+                { icon: '💵', title: 'Salary optimization tool', body: 'Know exactly what you need to earn to afford any vehicle responsibly.' },
+                { icon: '🎯', title: 'Full quiz ranked results', body: 'See all vehicle types ranked by fit — not just your top match.' },
+                { icon: '⬇', title: 'PDF report export', body: 'Download a clean report to share with a co-buyer or use in negotiation.' },
               ].map(({ icon, title, body }) => (
                 <div key={title} className="card flex items-start gap-3">
                   <span className="text-xl mt-0.5 shrink-0">{icon}</span>
@@ -330,9 +330,9 @@ export default function Landing() {
 
             <div className="text-center">
               <Link to="/subscribe" className="btn-primary text-base px-8 py-4 shadow-[0_4px_20px_rgba(255,184,0,0.3)]">
-                Get Pro — $10/month →
+                Get the Car Buying Pass — $19 →
               </Link>
-              <p className="text-xs text-[var(--text-muted)] mt-3">Cancel anytime. Basic tools are always free.</p>
+              <p className="text-xs text-[var(--text-muted)] mt-3">One payment · 60-day access · No subscription</p>
             </div>
           </div>
         </section>

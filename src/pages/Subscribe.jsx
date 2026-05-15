@@ -1,426 +1,271 @@
-import { useState, useEffect } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import { useState } from 'react'
 import Navbar from '../components/Navbar'
-import Footer from '../components/Footer'
 import { useSubscription } from '../hooks/useSubscription'
+import { SUVSVG, SedanSVG, getPal } from '../components/CarSVGs'
 
-function fmt(iso) {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-}
+const INCLUDED = [
+  {
+    title: 'Unlimited comparisons',
+    body: 'Stack as many cars as you want, run as many scenarios as you need. Two-at-a-time deep dives, or six-up grid views for shortlists.',
+  },
+  {
+    title: 'Wealth-impact verdicts',
+    body: 'Every report ends with the future-value of the difference if you invested it instead. Your car choice IS a retirement choice.',
+  },
+  {
+    title: 'Live market data',
+    body: 'Fuel, electricity, insurance, registration, sales tax, financing rates — all localized to your ZIP and refreshed weekly.',
+  },
+  {
+    title: 'Money-pit detector',
+    body: 'Red-flag warnings for vehicles with steep depreciation, runaway insurance, or maintenance traps — before you sign.',
+  },
+  {
+    title: 'Shareable PDF reports',
+    body: 'Send the math to your spouse, financial advisor, or finance manager. Branded with your scenario, not ours.',
+  },
+  {
+    title: 'Negotiation-grade detail',
+    body: 'Every cost broken down by year, by category, with sensitivity sliders for the assumptions you want to test.',
+  },
+]
 
 export default function Subscribe() {
-  const [searchParams]   = useSearchParams()
-  const success          = searchParams.get('success') === 'true'
-  const sessionId        = searchParams.get('session_id') || ''
+  const [loading, setLoading] = useState(false)
+  const sub = useSubscription() || {}
+  const isActive = !!sub.isSubscribed
+  const expiresAt = sub.expiresAt || sub.pass_expires_at || sub.passExpiresAt
+  const daysLeft = typeof sub.daysRemaining === 'number'
+    ? Math.max(0, sub.daysRemaining)
+    : (expiresAt
+        ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86400000))
+        : null)
 
-  const { isSubscribed, subscriberEmail, verifySubscription, activateFromSession, clearSubscription, resetDevices } = useSubscription()
-
-  // ── States ────────────────────────────────────────────
-  const [verifying,    setVerifying]    = useState(success && !!sessionId)
-  const [sessionData,  setSessionData]  = useState(null)  // { email, expires }
-  const [sessionErr,   setSessionErr]   = useState('')
-
-  const [restoreEmail,      setRestoreEmail]      = useState('')
-  const [restoring,         setRestoring]         = useState(false)
-  const [restoreMsg,        setRestoreMsg]        = useState('')
-  const [restoreErr,        setRestoreErr]        = useState('')
-  const [deviceLimitEmail,  setDeviceLimitEmail]  = useState('')
-  const [resettingDevices,  setResettingDevices]  = useState(false)
-  const [deviceResetMsg,    setDeviceResetMsg]    = useState('')
-  const [deviceResetErr,    setDeviceResetErr]    = useState('')
-
-  const [cancelEmail,     setCancelEmail]     = useState(subscriberEmail)
-  const [canceling,       setCanceling]       = useState(false)
-  const [cancelMsg,       setCancelMsg]       = useState('')
-  const [cancelErr,       setCancelErr]       = useState('')
-  const [cancelPurchaseType, setCancelPurchaseType] = useState(null)
-
-  const [checkoutEmail,   setCheckoutEmail]   = useState('')
-  const [checkoutLoading, setCheckoutLoading] = useState(false)
-  const [checkoutErr,     setCheckoutErr]     = useState('')
-
-  // ── Verify Stripe session on success redirect ─────────
-  useEffect(() => {
-    if (!success || !sessionId) return
-    ;(async () => {
-      try {
-        const res  = await fetch(`/api/verify-session?session_id=${encodeURIComponent(sessionId)}`)
-        const data = await res.json()
-        if (data.valid && data.email) {
-          activateFromSession(data.email, data.expires)
-          setSessionData({ email: data.email, expires: data.expires, purchaseType: data.purchaseType })
-        } else {
-          setSessionErr('We could not confirm your payment. If you were charged, please contact support.')
-        }
-      } catch {
-        setSessionErr('Could not reach server. Please refresh the page or contact support.')
-      } finally {
-        setVerifying(false)
-      }
-    })()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Restore access ────────────────────────────────────
-  async function handleRestore(e) {
-    e.preventDefault()
-    setRestoreMsg(''); setRestoreErr(''); setDeviceLimitEmail(''); setDeviceResetMsg(''); setDeviceResetErr('')
-    if (!restoreEmail.trim()) { setRestoreErr('Please enter your email.'); return }
-    setRestoring(true)
-    const result = await verifySubscription(restoreEmail)
-    setRestoring(false)
-    if (result.active) {
-      setRestoreMsg(`Access restored for ${restoreEmail.trim().toLowerCase()}. You can now use all Pro features.`)
-    } else if (result.reason === 'device_limit') {
-      setDeviceLimitEmail(restoreEmail.trim().toLowerCase())
-    } else if (result.error === 'network') {
-      setRestoreErr('Could not reach server. Check your connection and try again.')
-    } else {
-      setRestoreErr('No active subscription found for that email.')
-    }
-  }
-
-  // ── Reset devices ─────────────────────────────────────
-  async function handleResetDevices() {
-    setDeviceResetMsg(''); setDeviceResetErr('')
-    setResettingDevices(true)
-    const result = await resetDevices(deviceLimitEmail)
-    setResettingDevices(false)
-    if (result.success) {
-      setDeviceResetMsg('All devices cleared. You can now restore access on this device.')
-      setDeviceLimitEmail('')
-      // Immediately re-verify so the user is logged in
-      const verify = await verifySubscription(restoreEmail || deviceLimitEmail)
-      if (verify.active) {
-        setRestoreMsg(`Access restored for ${(restoreEmail || deviceLimitEmail).trim().toLowerCase()}. You can now use all Pro features.`)
-      }
-    } else if (result.error === 'network') {
-      setDeviceResetErr('Connection error. Please try again.')
-    } else {
-      setDeviceResetErr(result.error || 'Could not reset devices. Please try again.')
-    }
-  }
-
-  // ── Look up purchase type then cancel if subscription ────
-  async function handleCancel(e) {
-    e.preventDefault()
-    setCancelMsg(''); setCancelErr(''); setCancelPurchaseType(null)
-    if (!cancelEmail.trim()) { setCancelErr('Please enter your email.'); return }
-    setCanceling(true)
+  async function handleCheckout() {
+    setLoading(true)
+    // TODO: replace with your real checkout flow.
+    // Examples:
+    //   • POST to /api/checkout to create a Stripe Checkout Session, then redirect.
+    //   • Or open Stripe Payment Element in a modal.
     try {
-      const statusRes  = await fetch(`/api/subscription-status?email=${encodeURIComponent(cancelEmail.trim().toLowerCase())}`)
-      const statusData = await statusRes.json()
-
-      if (statusData.purchaseType === 'one_time') {
-        setCancelPurchaseType('one_time')
-        setCanceling(false)
-        return
-      }
-
-      const res  = await fetch('/api/cancel-subscription', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email: cancelEmail }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        setCancelMsg(`Subscription canceled. Your access continues until ${fmt(data.access_until)}.`)
-        clearSubscription()
-      } else {
-        setCancelErr(data.error || 'Something went wrong. Please try again.')
-      }
-    } catch {
-      setCancelErr('Connection error. Please try again.')
-    }
-    setCanceling(false)
-  }
-
-  // ── New checkout ──────────────────────────────────────
-  async function handleNewCheckout() {
-    setCheckoutErr('')
-    setCheckoutLoading(true)
-    try {
-      const res  = await fetch('/api/create-checkout-session', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ passType: 'one_time', email: checkoutEmail || undefined, cancelPath: '/subscribe' }),
-      })
-      const data = await res.json()
-      if (data.url) {
-        window.location.href = data.url
-      } else {
-        setCheckoutErr(data.error || 'Could not start checkout.')
-        setCheckoutLoading(false)
-      }
-    } catch {
-      setCheckoutErr('Connection error. Please try again.')
-      setCheckoutLoading(false)
+      // const res = await fetch('/api/create-checkout-session', { method: 'POST' })
+      // const { url } = await res.json()
+      // window.location.href = url
+      alert('Wire this button up to your Stripe one-time charge for $19 → 60-day access grant.')
+    } finally {
+      setLoading(false)
     }
   }
 
-  // ── Render ────────────────────────────────────────────
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg)]">
+    <div className="landing-page">
+      <div className="bg-glow" />
+      <div className="grid-bg" />
+
       <Navbar />
-      <main className="flex-1 pt-20 pb-16">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-10">
 
-          {/* Page header */}
-          <div className="mb-10">
-            <div className="anim-0 mb-2 inline-flex items-center gap-2 text-xs font-semibold text-[var(--accent)] uppercase tracking-wider">
-              <span className="w-4 h-px bg-[var(--accent)]" />
-              CashPedal Pro
-            </div>
-            <h1 className="anim-1 font-display font-extrabold text-white text-3xl sm:text-4xl mt-1">
-              Manage Access
-            </h1>
-            <p className="anim-2 text-[var(--text-muted)] mt-2 text-base">
-              One payment. 60 days of Pro access. Built for the car buying journey.
-            </p>
-          </div>
-
-          {/* ── Payment success banner ── */}
-          {success && (
-            <div className="anim-2 mb-8 rounded-xl border p-5"
-              style={{ borderColor: 'rgba(255,184,0,0.3)', background: 'rgba(255,184,0,0.06)' }}>
-              {verifying ? (
-                <div className="flex items-center gap-3">
-                  <div className="w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin shrink-0" />
-                  <p className="text-white text-sm">Confirming your payment…</p>
-                </div>
-              ) : sessionErr ? (
-                <div>
-                  <p className="text-red-400 font-semibold text-sm mb-1">Payment confirmation issue</p>
-                  <p className="text-[var(--text-muted)] text-sm">{sessionErr}</p>
-                </div>
-              ) : sessionData ? (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-2xl">🎉</span>
-                    <p className="font-display font-bold text-white text-lg">You're in!</p>
-                  </div>
-                  <p className="text-[var(--text-muted)] text-sm mb-1">
-                    Access confirmed for <span className="text-white">{sessionData.email}</span>.
-                  </p>
-                  {sessionData.expires && (
-                    <p className="text-[var(--text-muted)] text-sm">
-                      {sessionData.purchaseType === 'subscription' ? 'Next billing date:' : 'Access until:'}{' '}
-                      <span className="text-white">{fmt(sessionData.expires)}</span>
-                    </p>
-                  )}
-                  <div className="flex gap-3 mt-4">
-                    <Link to="/tco" className="btn-primary text-sm">Open TCO Calculator →</Link>
-                    <Link to="/checklist" className="btn-ghost text-sm">Used Car Checklist →</Link>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          )}
-
-          {/* ── Current status (if subscribed) ── */}
-          {isSubscribed && !success && (
-            <div className="anim-2 mb-8 card">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="w-2.5 h-2.5 rounded-full bg-green-400 shrink-0" />
-                <p className="font-display font-bold text-white">Active subscription</p>
-              </div>
-              <p className="text-[var(--text-muted)] text-sm mb-1">
-                Subscribed as <span className="text-white">{subscriberEmail}</span>
-              </p>
-              <p className="text-[var(--text-muted)] text-sm">
-                All Pro features are unlocked.
-              </p>
-              <div className="flex gap-3 mt-4">
-                <Link to="/tco" className="btn-primary text-sm">TCO Calculator →</Link>
-                <Link to="/checklist" className="btn-ghost text-sm">Checklist →</Link>
-              </div>
-            </div>
-          )}
-
-          <div className="flex flex-col gap-6">
-
-            {/* ── Car Buying Pass (not subscribed) ── */}
-            {!isSubscribed && !success && (
-              <div className="card anim-3">
-                <h2 className="font-display font-bold text-white text-lg mb-1">Car Buying Pass</h2>
-                <p className="text-[var(--text-muted)] text-sm mb-4">
-                  You're about to spend tens of thousands. $19 gives you every tool to make the smartest decision — and it's yours for 60 days. No subscription.
+      <main className="relative z-10 pt-14">
+        <section className="py-16 lg:py-20">
+          <div className="max-w-[1180px] mx-auto px-7">
+            <div className="grid lg:grid-cols-[1fr_1.1fr] gap-16 items-start">
+              {/* Left: pitch */}
+              <div>
+                <span className="eyebrow anim-0">
+                  <span className="dot" />
+                  60-day shopper pass · one payment
+                </span>
+                <h1 className="font-display text-[clamp(36px,5vw,56px)] font-bold leading-[1.05] tracking-tight mt-5 mb-5 anim-1">
+                  $19 to know the real cost of <span className="text-gold-gradient">every car</span> on your list.
+                </h1>
+                <p className="text-[17px] text-[var(--text-muted)] leading-relaxed mb-7 anim-2">
+                  You're about to make the second-largest purchase of your life. For one payment of
+                  $19, Cash Pedal rides along with you through the entire car-shopping window —
+                  unlimited comparisons, full wealth-impact reports, the same model the calculator
+                  uses. When you sign, we go away. <strong className="text-white">No subscription. No card on file. No upsells.</strong>
                 </p>
-                <ul className="mb-5 text-sm text-[var(--text-muted)] space-y-1.5">
-                  {[
-                    "See if that car costs $8k more than it looks over 5 years",
-                    "Find which of 5 vehicles is actually the best deal",
-                    "Know exactly what salary you need before you commit",
-                    "Spot reliability red flags before you sign",
-                    "Compare buy vs. lease — which actually wins for you",
-                    "Get your full ranked vehicle type matches",
-                    "Export a clean PDF to share or negotiate with",
-                  ].map(item => (
-                    <li key={item} className="flex items-start gap-2">
-                      <span className="shrink-0 mt-0.5" style={{ color: 'var(--accent)' }}>✓</span>
-                      {item}
+
+                <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-4 anim-3">
+                  {INCLUDED.map(item => (
+                    <li key={item.title} className="flex gap-3">
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full mt-0.5 grid place-items-center"
+                        style={{ background: 'rgba(95,224,184,0.18)', color: 'var(--success)', fontSize: 11, fontWeight: 800 }}>
+                        ✓
+                      </span>
+                      <div>
+                        <div className="font-display font-semibold text-[14px] text-white mb-0.5">{item.title}</div>
+                        <div className="text-[13px] text-[var(--text-muted)] leading-snug">{item.body}</div>
+                      </div>
                     </li>
                   ))}
                 </ul>
-                <input
-                  type="email"
-                  className="input-field mb-3 text-sm"
-                  placeholder="Email (optional — prefills checkout)"
-                  value={checkoutEmail}
-                  onChange={e => setCheckoutEmail(e.target.value)}
-                />
-                {checkoutErr && <p className="text-xs text-red-400 mb-2">{checkoutErr}</p>}
-                <button
-                  onClick={handleNewCheckout}
-                  disabled={checkoutLoading}
-                  className="btn-primary w-full disabled:opacity-40">
-                  {checkoutLoading ? 'Redirecting to checkout…' : 'Get the Car Buying Pass — $19'}
-                </button>
-                <p className="text-center text-[var(--text-muted)] text-xs mt-3">
-                  One payment · 60-day access · No recurring charges
+
+                {/* Mini comparison teaser */}
+                <div className="mt-10 grid grid-cols-2 gap-3 max-w-[480px] anim-4">
+                  <MiniCar make="Rivian R1S" carType="suv_large" isEV winner />
+                  <MiniCar make="BMW X5" carType="sedan" />
+                </div>
+                <p className="mt-3 text-xs text-[var(--text-dim)] anim-4">
+                  Sample comparison — runs in seconds inside the app.
                 </p>
               </div>
-            )}
 
-            {/* ── Restore access ── */}
-            <div className="card anim-4">
-              <h2 className="font-display font-bold text-white text-lg mb-1">Restore Access</h2>
-              <p className="text-[var(--text-muted)] text-sm mb-4">
-                Already subscribed? Enter your email to restore Pro access on this device.
-              </p>
+              {/* Right: offer card */}
+              <div className="lg:sticky lg:top-24 anim-2">
+                {isActive ? (
+                  /* Already a member */
+                  <div className="offer-card-lg" style={{ borderColor: 'rgba(95,224,184,0.45)', boxShadow: '0 0 0 1px rgba(95,224,184,0.10) inset, 0 40px 80px -30px rgba(95,224,184,0.30)' }}>
+                    <span className="offer-badge" style={{ background: 'var(--success)', color: '#07251e' }}>
+                      ✓ MEMBERSHIP ACTIVE
+                    </span>
+                    <div className="font-display font-bold leading-none tracking-tight mt-1" style={{ fontSize: 88, color: 'var(--success)' }}>
+                      {daysLeft != null ? daysLeft : '—'}
+                    </div>
+                    <div className="text-sm text-[var(--text-muted)] mb-1">
+                      {daysLeft === 1 ? 'day' : 'days'} left on your shopper pass
+                    </div>
+                    {expiresAt && (
+                      <div className="font-mono text-xs text-[var(--text-muted)] opacity-70 mb-6">
+                        expires {new Date(expiresAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </div>
+                    )}
 
-              {deviceLimitEmail ? (
-                <div className="flex flex-col gap-3">
-                  <div className="rounded-xl border p-4 text-sm"
-                    style={{ borderColor: 'rgba(255,100,100,0.3)', background: 'rgba(255,100,100,0.06)' }}>
-                    <p className="text-red-400 font-semibold mb-1">Device limit reached</p>
-                    <p className="text-[var(--text-muted)] leading-relaxed">
-                      This subscription is already active on 2 devices. To add this device,
-                      reset your registered devices below — all other devices will need to
-                      re-verify with their email.
-                    </p>
+                    <Link to="/tco" className="btn-primary w-full justify-center text-base py-3.5">
+                      Open the calculator →
+                    </Link>
+
+                    <div className="mt-4 text-xs text-[var(--text-muted)] flex flex-wrap justify-center gap-x-4 gap-y-1.5">
+                      <span><Pip /> Unlimited comparisons</span>
+                      <span><Pip /> PDF exports unlocked</span>
+                      <span><Pip /> No renewal</span>
+                    </div>
+
+                    {daysLeft != null && daysLeft <= 7 && daysLeft > 0 && (
+                      <div className="mt-6 pt-5 border-t border-[var(--border)]/60 text-left">
+                        <div className="text-[11px] uppercase tracking-widest text-[var(--text-muted)] mb-1.5">
+                          Still shopping after this expires?
+                        </div>
+                        <p className="text-xs text-white leading-relaxed mb-3">
+                          Most decisions land inside 60 days. If you need another window, you can buy a fresh pass anytime — no auto-renewal pressure either way.
+                        </p>
+                        <button
+                          onClick={handleCheckout}
+                          disabled={loading}
+                          className="text-xs font-semibold text-[var(--accent)] hover:underline"
+                        >
+                          {loading ? 'Opening…' : 'Renew for another 60 days · $19 →'}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  {deviceResetErr && <p className="text-xs text-red-400">{deviceResetErr}</p>}
-                  {deviceResetMsg && <p className="text-xs text-green-400">{deviceResetMsg}</p>}
-                  <div className="flex gap-2">
+                ) : (
+                  /* Buy CTA */
+                  <div className="offer-card-lg">
+                    <span className="offer-badge">60-DAY SHOPPER PASS</span>
+
+                    <div className="offer-price">
+                      <span className="offer-dollar">$</span>
+                      <span className="offer-amount">19</span>
+                    </div>
+                    <div className="text-sm text-[var(--text-muted)] mb-1">
+                      one-time · 60 days of unlimited access
+                    </div>
+                    <div className="font-mono text-xs text-[var(--text-muted)] opacity-70 mb-6">
+                      less than one tank of gas
+                    </div>
+
                     <button
-                      type="button"
-                      onClick={() => { setDeviceLimitEmail(''); setDeviceResetMsg(''); setDeviceResetErr('') }}
-                      className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-muted)] text-sm hover:border-[var(--accent)] transition-colors">
-                      Back
+                      className="btn-primary w-full justify-center text-base py-3.5"
+                      onClick={handleCheckout}
+                      disabled={loading}
+                    >
+                      {loading ? 'Opening checkout…' : 'Unlock my 60 days →'}
                     </button>
-                    <button
-                      type="button"
-                      onClick={handleResetDevices}
-                      disabled={resettingDevices}
-                      className="flex-1 btn-primary disabled:opacity-40 text-sm">
-                      {resettingDevices ? 'Resetting…' : 'Reset My Devices'}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <form onSubmit={handleRestore} className="flex flex-col gap-3">
-                  <input
-                    type="email"
-                    className="input-field text-sm"
-                    placeholder="your@email.com"
-                    value={restoreEmail}
-                    onChange={e => setRestoreEmail(e.target.value)}
-                  />
-                  {restoreErr && <p className="text-xs text-red-400">{restoreErr}</p>}
-                  {restoreMsg && <p className="text-xs text-green-400">{restoreMsg}</p>}
-                  <button
-                    type="submit"
-                    disabled={restoring}
-                    className="btn-primary w-full disabled:opacity-40 text-sm">
-                    {restoring ? 'Checking…' : 'Restore Access'}
-                  </button>
-                </form>
-              )}
-            </div>
 
-            {/* ── Pass & Subscription Info ── */}
-            <div className="card anim-5">
-              <h2 className="font-display font-bold text-white text-lg mb-1">Pass &amp; Subscription Info</h2>
-              <p className="text-[var(--text-muted)] text-sm mb-4">
-                Enter your email to check your access status or cancel a legacy subscription.
-              </p>
-              <form onSubmit={handleCancel} className="flex flex-col gap-3">
-                <input
-                  type="email"
-                  className="input-field text-sm"
-                  placeholder="your@email.com"
-                  value={cancelEmail}
-                  onChange={e => { setCancelEmail(e.target.value); setCancelPurchaseType(null) }}
-                />
-                {cancelErr && <p className="text-xs text-red-400">{cancelErr}</p>}
-                {cancelPurchaseType === 'one_time' && (
-                  <div className="rounded-lg border p-3 text-sm"
-                    style={{ borderColor: 'rgba(255,184,0,0.2)', background: 'rgba(255,184,0,0.04)' }}>
-                    <p className="text-[var(--accent)] font-semibold mb-0.5">One-time pass</p>
-                    <p className="text-[var(--text-muted)]">Your 60-day pass expires automatically — no cancellation needed.</p>
-                  </div>
-                )}
-                {cancelMsg && (
-                  <div className="rounded-lg border p-3 text-sm"
-                    style={{ borderColor: 'rgba(255,184,0,0.2)', background: 'rgba(255,184,0,0.04)' }}>
-                    <p className="text-[var(--accent)] font-semibold mb-0.5">Subscription canceled</p>
-                    <p className="text-[var(--text-muted)]">{cancelMsg}</p>
-                  </div>
-                )}
-                {!cancelMsg && !cancelPurchaseType && (
-                  <button
-                    type="submit"
-                    disabled={canceling}
-                    className="py-2.5 rounded-xl border border-red-500/40 text-red-400 text-sm hover:bg-red-500/10 transition-colors disabled:opacity-40">
-                    {canceling ? 'Checking…' : 'Cancel Subscription'}
-                  </button>
-                )}
-              </form>
-            </div>
+                    <div className="mt-4 text-xs text-[var(--text-muted)] flex flex-wrap justify-center gap-x-4 gap-y-1.5">
+                      <span><Pip /> Instant access</span>
+                      <span><Pip /> No subscription</span>
+                      <span><Pip /> Stripe-secured</span>
+                    </div>
 
-            {/* ── FAQ ── */}
-            <div className="card anim-5">
-              <h2 className="font-display font-bold text-white text-lg mb-4">FAQ</h2>
-              <div className="flex flex-col gap-4 text-sm">
-                {[
-                  {
-                    q: "What's always free?",
-                    a: 'Single-vehicle TCO (year 1), basic affordability score, buy vs. lease (single vehicle), state taxes & fees, ZIP-based fuel pricing, top car quiz match, used-car checklist, Wheel-Zard AI, and the resource library.',
-                  },
-                  {
-                    q: 'What does Pro unlock?',
-                    a: 'The Car Buying Pass unlocks: full 5-year ownership forecast (see which car costs $8k more over time), multi-vehicle comparison (up to 5), buy vs. lease comparison, repair & reliability risk score, salary optimization tool, full quiz ranked results, and PDF report export.',
-                  },
-                  {
-                    q: 'Is there a recurring charge?',
-                    a: 'No. The Car Buying Pass is a single $19 payment. There is no subscription, no auto-renewal, and no cancellation needed.',
-                  },
-                  {
-                    q: 'What happens when my pass expires?',
-                    a: 'After 60 days, you revert to the free tier. If you\'re still in the market, you can purchase another pass.',
-                  },
-                  {
-                    q: 'How do I access Pro on a new device?',
-                    a: 'Use the "Restore Access" form above with your email. Pro access is limited to 2 devices at a time. If you\'ve reached the limit, use "Reset My Devices" to clear your registered devices and re-register.',
-                  },
-                  {
-                    q: 'Is my payment secure?',
-                    a: 'Yes. Payments are processed by Stripe — we never store your card details.',
-                  },
-                ].map(({ q, a }) => (
-                  <div key={q}>
-                    <p className="text-white font-semibold mb-1">{q}</p>
-                    <p className="text-[var(--text-muted)] leading-relaxed">{a}</p>
+                    <div className="mt-6 pt-5 border-t border-[var(--border)]/60 text-left grid gap-3">
+                      <FineLine label="When does access start?" value="Immediately after payment." />
+                      <FineLine label="What expires after 60 days?" value="Unlimited comparisons + PDF exports. Saved reports remain readable." />
+                      <FineLine label="Auto-renew?" value="Never. There is no card on file after checkout." />
+                      <FineLine label="Refunds" value="7-day money back, no questions asked." />
+                    </div>
                   </div>
-                ))}
+                )}
+
+                <p className="mt-4 text-center text-[11px] text-[var(--text-dim)] leading-relaxed">
+                  {isActive ? (
+                    <>Need help? <a href="mailto:hello@cashpedal.io" className="underline hover:text-white">hello@cashpedal.io</a></>
+                  ) : (
+                    <>By purchasing you agree to our <Link to="/about" className="underline hover:text-white">terms</Link> and{' '}
+                    <Link to="/about" className="underline hover:text-white">privacy policy</Link>. <br />
+                    Cash Pedal does not accept dealer placements or insurer kickbacks.</>
+                  )}
+                </p>
               </div>
             </div>
 
+            {/* Closing wealth-impact reminder */}
+            <div className="mt-20 max-w-[820px] mx-auto text-center">
+              <div className="section-eyebrow">Why $19 pays for itself</div>
+              <p className="font-display text-[24px] sm:text-[28px] leading-tight tracking-tight">
+                The average Cash Pedal user finds a <span className="text-gold-gradient">$9,150</span> swing between
+                their top two finalists. Invested at 7% real return over 25 years, that's{' '}
+                <span style={{ color: 'var(--success)', fontFamily: 'var(--font-mono)' }}>$49,700</span>{' '}
+                more in retirement — from a single, smarter purchase.
+              </p>
+              <p className="mt-4 text-sm text-[var(--text-muted)]">
+                Not seeing $9,150 in your case? Even <span className="text-white">a single bad rate quote</span> caught
+                by Cash Pedal pays for the pass dozens of times over.
+              </p>
+            </div>
           </div>
-        </div>
+        </section>
       </main>
-      <Footer />
+    </div>
+  )
+}
+
+function Pip() {
+  return <span className="inline-block w-1.5 h-1.5 rounded-full mr-1.5" style={{ background: 'var(--success)' }} />
+}
+
+function FineLine({ label, value }) {
+  return (
+    <div className="flex justify-between items-baseline gap-3 text-xs">
+      <span className="text-[var(--text-muted)]">{label}</span>
+      <span className="text-white text-right">{value}</span>
+    </div>
+  )
+}
+
+function MiniCar({ make, carType, isEV, winner }) {
+  const pal = getPal(make.split(' ')[0])
+  const Svg = carType === 'suv_large' ? SUVSVG : SedanSVG
+  return (
+    <div
+      className="car-visual-wrap rounded-xl border p-3"
+      style={{
+        background: 'linear-gradient(160deg,#1f0838,#0f0520)',
+        borderColor: winner ? 'rgba(95,224,184,0.5)' : 'var(--border)',
+      }}
+    >
+      <Svg pal={pal} isEV={isEV} isLarge={carType === 'suv_large'} />
+      <div className="flex items-center justify-between mt-1">
+        <span className="text-[11px] font-semibold text-white truncate">{make}</span>
+        {winner && (
+          <span
+            className="text-[8px] font-extrabold tracking-widest px-1.5 py-0.5 rounded"
+            style={{ background: 'var(--success)', color: '#07251e' }}
+          >
+            WINNER
+          </span>
+        )}
+      </div>
     </div>
   )
 }

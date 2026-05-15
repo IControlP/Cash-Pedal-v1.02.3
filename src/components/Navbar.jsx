@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useSubscription } from '../hooks/useSubscription'
 
 const navLinks = [
   { to: '/tco', label: 'TCO Calculator' },
@@ -8,14 +9,51 @@ const navLinks = [
   { to: '/survey', label: 'Car Survey' },
   { to: '/checklist', label: 'Checklist' },
   { to: '/wheelzard', label: 'Wheel-Zard' },
-  { to: '/resources', label: 'Resources' },
-  { to: '/blog', label: 'Blog' },
-  { to: '/about', label: 'About' },
 ]
+
+// Compute days remaining defensively — supports whatever shape the hook returns.
+function getMembership(sub) {
+  if (!sub) return { active: false, daysLeft: null }
+  const active = !!sub.isSubscribed
+  if (!active) return { active: false, daysLeft: null }
+
+  if (typeof sub.daysRemaining === 'number') {
+    return { active: true, daysLeft: Math.max(0, sub.daysRemaining) }
+  }
+  const expiresAt = sub.expiresAt || sub.pass_expires_at || sub.passExpiresAt
+  if (expiresAt) {
+    const ms = new Date(expiresAt).getTime() - Date.now()
+    return { active: true, daysLeft: Math.max(0, Math.ceil(ms / 86400000)) }
+  }
+  return { active: true, daysLeft: null }
+}
 
 export default function Navbar() {
   const { pathname } = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+  const subscription = useSubscription()
+  const { active, daysLeft } = getMembership(subscription)
+  const onSubscribePage = pathname === '/subscribe'
+
+  // Pill content: active membership vs offer-state
+  const pillLabel = active
+    ? (daysLeft != null
+        ? <>✓ Active <span className="opacity-70">·</span> {daysLeft}d left</>
+        : <>✓ Active</>)
+    : '$19 Pass'
+
+  // Membership color: green when active, gold when offering
+  const pillStyle = active
+    ? {
+        borderColor: 'rgba(95,224,184,0.45)',
+        color: 'var(--success, #5FE0B8)',
+        background: onSubscribePage ? 'rgba(95,224,184,0.08)' : 'transparent',
+      }
+    : {
+        borderColor: 'rgba(255,184,0,0.45)',
+        color: 'var(--accent)',
+        background: onSubscribePage ? 'rgba(255,184,0,0.08)' : 'transparent',
+      }
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/90 backdrop-blur-md">
@@ -46,13 +84,11 @@ export default function Navbar() {
           ))}
           <Link
             to="/subscribe"
-            className={`ml-1 px-3 py-1.5 rounded-md text-sm font-bold transition-all border ${
-              pathname === '/subscribe'
-                ? 'border-[var(--accent)] text-[var(--accent)] bg-[rgba(200,255,0,0.06)]'
-                : 'border-[rgba(200,255,0,0.35)] text-[var(--accent)] hover:bg-[rgba(200,255,0,0.06)]'
-            }`}
+            className="ml-1 px-3 py-1.5 rounded-md text-sm font-bold transition-all border hover:brightness-110"
+            style={pillStyle}
+            aria-label={active ? `Membership active, ${daysLeft ?? '—'} days left` : 'Buy 19 dollar shopper pass'}
           >
-            Pro
+            {pillLabel}
           </Link>
         </div>
 
@@ -86,12 +122,28 @@ export default function Navbar() {
             </Link>
           ))}
           <Link
+            to="/about"
+            onClick={() => setMenuOpen(false)}
+            className="px-3 py-2.5 rounded-md text-sm font-medium text-[var(--text-muted)] hover:text-white"
+          >
+            About
+          </Link>
+          <Link
+            to="/resources"
+            onClick={() => setMenuOpen(false)}
+            className="px-3 py-2.5 rounded-md text-sm font-medium text-[var(--text-muted)] hover:text-white"
+          >
+            Resources
+          </Link>
+          <Link
             to="/subscribe"
             onClick={() => setMenuOpen(false)}
             className="px-3 py-2.5 rounded-md text-sm font-bold border"
-            style={{ borderColor: 'rgba(200,255,0,0.35)', color: 'var(--accent)' }}
+            style={pillStyle}
           >
-            Get Pro →
+            {active
+              ? (daysLeft != null ? `✓ Active · ${daysLeft} days left` : '✓ Active membership')
+              : 'Get $19 pass →'}
           </Link>
         </div>
       )}

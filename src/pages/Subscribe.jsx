@@ -30,10 +30,11 @@ export default function Subscribe() {
   const [deviceResetMsg,    setDeviceResetMsg]    = useState('')
   const [deviceResetErr,    setDeviceResetErr]    = useState('')
 
-  const [cancelEmail,  setCancelEmail]  = useState(subscriberEmail)
-  const [canceling,    setCanceling]    = useState(false)
-  const [cancelMsg,    setCancelMsg]    = useState('')
-  const [cancelErr,    setCancelErr]    = useState('')
+  const [cancelEmail,     setCancelEmail]     = useState(subscriberEmail)
+  const [canceling,       setCanceling]       = useState(false)
+  const [cancelMsg,       setCancelMsg]       = useState('')
+  const [cancelErr,       setCancelErr]       = useState('')
+  const [cancelPurchaseType, setCancelPurchaseType] = useState(null)
 
   const [checkoutEmail,   setCheckoutEmail]   = useState('')
   const [checkoutLoading, setCheckoutLoading] = useState(false)
@@ -48,7 +49,7 @@ export default function Subscribe() {
         const data = await res.json()
         if (data.valid && data.email) {
           activateFromSession(data.email, data.expires)
-          setSessionData({ email: data.email, expires: data.expires })
+          setSessionData({ email: data.email, expires: data.expires, purchaseType: data.purchaseType })
         } else {
           setSessionErr('We could not confirm your payment. If you were charged, please contact support.')
         }
@@ -100,13 +101,22 @@ export default function Subscribe() {
     }
   }
 
-  // ── Cancel subscription ───────────────────────────────
+  // ── Look up purchase type then cancel if subscription ────
   async function handleCancel(e) {
     e.preventDefault()
-    setCancelMsg(''); setCancelErr('')
+    setCancelMsg(''); setCancelErr(''); setCancelPurchaseType(null)
     if (!cancelEmail.trim()) { setCancelErr('Please enter your email.'); return }
     setCanceling(true)
     try {
+      const statusRes  = await fetch(`/api/subscription-status?email=${encodeURIComponent(cancelEmail.trim().toLowerCase())}`)
+      const statusData = await statusRes.json()
+
+      if (statusData.purchaseType === 'one_time') {
+        setCancelPurchaseType('one_time')
+        setCanceling(false)
+        return
+      }
+
       const res  = await fetch('/api/cancel-subscription', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -133,7 +143,7 @@ export default function Subscribe() {
       const res  = await fetch('/api/create-checkout-session', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email: checkoutEmail || undefined, cancelPath: '/subscribe' }),
+        body:    JSON.stringify({ passType: 'one_time', email: checkoutEmail || undefined, cancelPath: '/subscribe' }),
       })
       const data = await res.json()
       if (data.url) {
@@ -162,10 +172,10 @@ export default function Subscribe() {
               CashPedal Pro
             </div>
             <h1 className="anim-1 font-display font-extrabold text-white text-3xl sm:text-4xl mt-1">
-              Manage Subscription
+              Manage Access
             </h1>
             <p className="anim-2 text-[var(--text-muted)] mt-2 text-base">
-              $10/month — full forecasting, comparison, risk scoring, and more.
+              One payment. 60 days of Pro access. Built for the car buying journey.
             </p>
           </div>
 
@@ -187,14 +197,15 @@ export default function Subscribe() {
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-2xl">🎉</span>
-                    <p className="font-display font-bold text-white text-lg">You're subscribed!</p>
+                    <p className="font-display font-bold text-white text-lg">You're in!</p>
                   </div>
                   <p className="text-[var(--text-muted)] text-sm mb-1">
-                    Subscription confirmed for <span className="text-white">{sessionData.email}</span>.
+                    Access confirmed for <span className="text-white">{sessionData.email}</span>.
                   </p>
                   {sessionData.expires && (
                     <p className="text-[var(--text-muted)] text-sm">
-                      Next billing date: <span className="text-white">{fmt(sessionData.expires)}</span>
+                      {sessionData.purchaseType === 'subscription' ? 'Next billing date:' : 'Access until:'}{' '}
+                      <span className="text-white">{fmt(sessionData.expires)}</span>
                     </p>
                   )}
                   <div className="flex gap-3 mt-4">
@@ -228,24 +239,22 @@ export default function Subscribe() {
 
           <div className="flex flex-col gap-6">
 
-            {/* ── Subscribe (not subscribed) ── */}
+            {/* ── Car Buying Pass (not subscribed) ── */}
             {!isSubscribed && !success && (
               <div className="card anim-3">
-                <h2 className="font-display font-bold text-white text-lg mb-1">Get Pro Access</h2>
+                <h2 className="font-display font-bold text-white text-lg mb-1">Car Buying Pass</h2>
                 <p className="text-[var(--text-muted)] text-sm mb-4">
-                  Unlock unlimited detailed analyses and checklists for $10/month. Cancel anytime.
+                  You're about to spend tens of thousands. $19 gives you every tool to make the smartest decision — and it's yours for 60 days. No subscription.
                 </p>
                 <ul className="mb-5 text-sm text-[var(--text-muted)] space-y-1.5">
                   {[
-                    'Full 5-year ownership forecast',
-                    'Multi-vehicle comparison (up to 5)',
-                    'Buy vs. lease comparison',
-                    'Repair & reliability risk score',
-                    'Salary optimization (vehicle-specific)',
-                    'Full quiz ranked results',
-                    'PDF report export',
-                    'Alerts for better alternatives',
-                    'Cancel anytime — access through billing period',
+                    "See if that car costs $8k more than it looks over 5 years",
+                    "Find which of 5 vehicles is actually the best deal",
+                    "Know exactly what salary you need before you commit",
+                    "Spot reliability red flags before you sign",
+                    "Compare buy vs. lease — which actually wins for you",
+                    "Get your full ranked vehicle type matches",
+                    "Export a clean PDF to share or negotiate with",
                   ].map(item => (
                     <li key={item} className="flex items-start gap-2">
                       <span className="shrink-0 mt-0.5" style={{ color: 'var(--accent)' }}>✓</span>
@@ -265,10 +274,10 @@ export default function Subscribe() {
                   onClick={handleNewCheckout}
                   disabled={checkoutLoading}
                   className="btn-primary w-full disabled:opacity-40">
-                  {checkoutLoading ? 'Redirecting to checkout…' : 'Subscribe — $10/month'}
+                  {checkoutLoading ? 'Redirecting to checkout…' : 'Get the Car Buying Pass — $19'}
                 </button>
                 <p className="text-center text-[var(--text-muted)] text-xs mt-3">
-                  Secure payment via Stripe. Cancel anytime.
+                  One payment · 60-day access · No recurring charges
                 </p>
               </div>
             )}
@@ -330,11 +339,11 @@ export default function Subscribe() {
               )}
             </div>
 
-            {/* ── Cancel subscription ── */}
+            {/* ── Pass & Subscription Info ── */}
             <div className="card anim-5">
-              <h2 className="font-display font-bold text-white text-lg mb-1">Cancel Subscription</h2>
+              <h2 className="font-display font-bold text-white text-lg mb-1">Pass &amp; Subscription Info</h2>
               <p className="text-[var(--text-muted)] text-sm mb-4">
-                Your access continues through the end of your current billing period after canceling.
+                Enter your email to check your access status or cancel a legacy subscription.
               </p>
               <form onSubmit={handleCancel} className="flex flex-col gap-3">
                 <input
@@ -342,9 +351,16 @@ export default function Subscribe() {
                   className="input-field text-sm"
                   placeholder="your@email.com"
                   value={cancelEmail}
-                  onChange={e => setCancelEmail(e.target.value)}
+                  onChange={e => { setCancelEmail(e.target.value); setCancelPurchaseType(null) }}
                 />
                 {cancelErr && <p className="text-xs text-red-400">{cancelErr}</p>}
+                {cancelPurchaseType === 'one_time' && (
+                  <div className="rounded-lg border p-3 text-sm"
+                    style={{ borderColor: 'rgba(255,184,0,0.2)', background: 'rgba(255,184,0,0.04)' }}>
+                    <p className="text-[var(--accent)] font-semibold mb-0.5">One-time pass</p>
+                    <p className="text-[var(--text-muted)]">Your 60-day pass expires automatically — no cancellation needed.</p>
+                  </div>
+                )}
                 {cancelMsg && (
                   <div className="rounded-lg border p-3 text-sm"
                     style={{ borderColor: 'rgba(255,184,0,0.2)', background: 'rgba(255,184,0,0.04)' }}>
@@ -352,12 +368,12 @@ export default function Subscribe() {
                     <p className="text-[var(--text-muted)]">{cancelMsg}</p>
                   </div>
                 )}
-                {!cancelMsg && (
+                {!cancelMsg && !cancelPurchaseType && (
                   <button
                     type="submit"
                     disabled={canceling}
                     className="py-2.5 rounded-xl border border-red-500/40 text-red-400 text-sm hover:bg-red-500/10 transition-colors disabled:opacity-40">
-                    {canceling ? 'Canceling…' : 'Cancel Subscription'}
+                    {canceling ? 'Checking…' : 'Cancel Subscription'}
                   </button>
                 )}
               </form>
@@ -374,15 +390,19 @@ export default function Subscribe() {
                   },
                   {
                     q: 'What does Pro unlock?',
-                    a: 'Full 5-year ownership forecast, multi-vehicle comparison (up to 5), buy vs. lease comparison, repair & reliability risk score, salary optimization tool (vehicle-specific), full quiz ranked results, PDF report export, and alerts for better alternatives.',
+                    a: 'The Car Buying Pass unlocks: full 5-year ownership forecast (see which car costs $8k more over time), multi-vehicle comparison (up to 5), buy vs. lease comparison, repair & reliability risk score, salary optimization tool, full quiz ranked results, and PDF report export.',
+                  },
+                  {
+                    q: 'Is there a recurring charge?',
+                    a: 'No. The Car Buying Pass is a single $19 payment. There is no subscription, no auto-renewal, and no cancellation needed.',
+                  },
+                  {
+                    q: 'What happens when my pass expires?',
+                    a: 'After 60 days, you revert to the free tier. If you\'re still in the market, you can purchase another pass.',
                   },
                   {
                     q: 'How do I access Pro on a new device?',
-                    a: 'Use the "Restore Access" form above with your subscription email. Pro access is limited to 2 devices at a time. If you\'ve reached the limit, use "Reset My Devices" to clear your registered devices and re-register.',
-                  },
-                  {
-                    q: 'What happens when I cancel?',
-                    a: 'You keep full Pro access until the end of your current billing period. After that, you revert to the free tier limits.',
+                    a: 'Use the "Restore Access" form above with your email. Pro access is limited to 2 devices at a time. If you\'ve reached the limit, use "Reset My Devices" to clear your registered devices and re-register.',
                   },
                   {
                     q: 'Is my payment secure?',

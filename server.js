@@ -9,13 +9,15 @@ const { Pool } = pg
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
 
-const PORT        = process.env.PORT || 3000
-const APP_URL     = (process.env.APP_URL || 'https://cashpedal.io').replace(/\/$/, '')
-const PRICE_ID    = process.env.STRIPE_PRICE_ID || ''
-const WEBHOOK_SEC = process.env.STRIPE_WEBHOOK_SECRET || ''
+const PORT             = process.env.PORT || 3000
+const APP_URL          = (process.env.APP_URL || 'https://cashpedal.io').replace(/\/$/, '')
+const PRICE_ID         = process.env.STRIPE_PRICE_ID || ''
+const ONE_TIME_PRICE_ID = process.env.STRIPE_ONE_TIME_PRICE_ID || ''
+const WEBHOOK_SEC      = process.env.STRIPE_WEBHOOK_SECRET || ''
 
 const MAX_DEVICES        = 2
 const DEVICE_EXPIRY_DAYS = 30
+const ACCESS_DAYS        = 60
 // Emails that bypass all subscription and device checks
 const PRO_USERS_SERVER   = new Set(['pro@cashpedal.io', 'noah@cashpedal.io'])
 
@@ -52,22 +54,40 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object
-        if (session.mode !== 'subscription') break
         const email = (session.customer_details?.email || '').toLowerCase()
         if (!email || !pool) break
-        const sub = await stripe.subscriptions.retrieve(session.subscription)
-        await pool.query(
-          `INSERT INTO subscribers
-             (email, stripe_customer_id, stripe_subscription_id, subscription_status, current_period_end)
-           VALUES ($1,$2,$3,'active',to_timestamp($4))
-           ON CONFLICT (email) DO UPDATE SET
-             stripe_customer_id     = EXCLUDED.stripe_customer_id,
-             stripe_subscription_id = EXCLUDED.stripe_subscription_id,
-             subscription_status    = 'active',
-             current_period_end     = to_timestamp($4),
-             updated_at             = NOW()`,
-          [email, session.customer, session.subscription, sub.current_period_end]
-        )
+
+        if (session.mode === 'subscription') {
+          const sub = await stripe.subscriptions.retrieve(session.subscription)
+          await pool.query(
+            `INSERT INTO subscribers
+               (email, stripe_customer_id, stripe_subscription_id, subscription_status, current_period_end, purchase_type)
+             VALUES ($1,$2,$3,'active',to_timestamp($4),'subscription')
+             ON CONFLICT (email) DO UPDATE SET
+               stripe_customer_id     = EXCLUDED.stripe_customer_id,
+               stripe_subscription_id = EXCLUDED.stripe_subscription_id,
+               subscription_status    = 'active',
+               current_period_end     = to_timestamp($4),
+               purchase_type          = 'subscription',
+               updated_at             = NOW()`,
+            [email, session.customer, session.subscription, sub.current_period_end]
+          )
+        } else if (session.mode === 'payment') {
+          const accessUntil = new Date(Date.now() + ACCESS_DAYS * 24 * 60 * 60 * 1000)
+          await pool.query(
+            `INSERT INTO subscribers
+               (email, stripe_customer_id, stripe_subscription_id, subscription_status, current_period_end, purchase_type)
+             VALUES ($1,$2,NULL,'active',$3,'one_time')
+             ON CONFLICT (email) DO UPDATE SET
+               stripe_customer_id     = EXCLUDED.stripe_customer_id,
+               stripe_subscription_id = NULL,
+               subscription_status    = 'active',
+               current_period_end     = $3,
+               purchase_type          = 'one_time',
+               updated_at             = NOW()`,
+            [email, session.customer, accessUntil]
+          )
+        }
         break
       }
 
@@ -186,6 +206,7 @@ async function initTables() {
         updated_at              TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `)
+    await client.query(`ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS purchase_type VARCHAR(20) DEFAULT 'subscription'`)
     await client.query(`CREATE INDEX IF NOT EXISTS idx_subscribers_email ON subscribers(email)`)
     await client.query(`CREATE INDEX IF NOT EXISTS idx_subscribers_stripe_sub ON subscribers(stripe_subscription_id)`)
     await client.query(`CREATE INDEX IF NOT EXISTS idx_subscribers_customer ON subscribers(stripe_customer_id)`)
@@ -297,16 +318,20 @@ app.post('/api/user-data', async (req, res) => {
 // ── API: Create Stripe checkout session ───────────────
 app.post('/api/create-checkout-session', async (req, res) => {
   if (!stripe) return res.status(503).json({ error: 'Payments not configured' })
-  if (!PRICE_ID) return res.status(503).json({ error: 'Stripe price not configured' })
 
-  const { email, cancelPath = '/tco' } = req.body
+  const { email, cancelPath = '/tco', passType = 'one_time' } = req.body
+
+  const isSubscription = passType === 'subscription'
+  const priceId = isSubscription ? PRICE_ID : ONE_TIME_PRICE_ID
+
+  if (!priceId) return res.status(503).json({ error: 'Stripe price not configured' })
 
   try {
     const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
+      mode: isSubscription ? 'subscription' : 'payment',
       payment_method_types: ['card'],
       customer_email: email ? email.trim().toLowerCase() : undefined,
-      line_items: [{ price: PRICE_ID, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${APP_URL}/subscribe?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url:  `${APP_URL}${cancelPath}`,
       metadata: { source: 'cashpedal' },
@@ -335,20 +360,41 @@ app.get('/api/verify-session', async (req, res) => {
     }
 
     const email = (session.customer_details?.email || '').toLowerCase()
-    const sub   = session.subscription
 
-    // Upsert subscriber in case webhook hasn't fired yet
+    if (session.mode === 'payment') {
+      const accessUntil = new Date(Date.now() + ACCESS_DAYS * 24 * 60 * 60 * 1000)
+      if (email && pool) {
+        await pool.query(
+          `INSERT INTO subscribers
+             (email, stripe_customer_id, stripe_subscription_id, subscription_status, current_period_end, purchase_type)
+           VALUES ($1,$2,NULL,'active',$3,'one_time')
+           ON CONFLICT (email) DO UPDATE SET
+             stripe_customer_id     = EXCLUDED.stripe_customer_id,
+             stripe_subscription_id = NULL,
+             subscription_status    = 'active',
+             current_period_end     = $3,
+             purchase_type          = 'one_time',
+             updated_at             = NOW()`,
+          [email, session.customer, accessUntil]
+        )
+      }
+      return res.json({ valid: true, email, expires: accessUntil.toISOString(), purchaseType: 'one_time' })
+    }
+
+    const sub = session.subscription
+
     if (email && pool && sub) {
       const periodEnd = typeof sub === 'object' ? sub.current_period_end : null
       await pool.query(
         `INSERT INTO subscribers
-           (email, stripe_customer_id, stripe_subscription_id, subscription_status, current_period_end)
-         VALUES ($1,$2,$3,'active', ${periodEnd ? 'to_timestamp($4)' : 'NULL'})
+           (email, stripe_customer_id, stripe_subscription_id, subscription_status, current_period_end, purchase_type)
+         VALUES ($1,$2,$3,'active', ${periodEnd ? 'to_timestamp($4)' : 'NULL'},'subscription')
          ON CONFLICT (email) DO UPDATE SET
            stripe_customer_id     = EXCLUDED.stripe_customer_id,
            stripe_subscription_id = EXCLUDED.stripe_subscription_id,
            subscription_status    = 'active',
            current_period_end     = ${periodEnd ? 'to_timestamp($4)' : 'NULL'},
+           purchase_type          = 'subscription',
            updated_at             = NOW()`,
         periodEnd
           ? [email, session.customer, typeof sub === 'object' ? sub.id : sub, periodEnd]
@@ -360,7 +406,7 @@ app.get('/api/verify-session', async (req, res) => {
       ? new Date(sub.current_period_end * 1000).toISOString()
       : null
 
-    res.json({ valid: true, email, expires: expiresAt })
+    res.json({ valid: true, email, expires: expiresAt, purchaseType: 'subscription' })
   } catch (err) {
     console.error('[verify-session] error:', err.message)
     res.status(500).json({ error: err.message })
@@ -380,13 +426,13 @@ app.get('/api/subscription-status', async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT subscription_status, current_period_end
+      `SELECT subscription_status, current_period_end, purchase_type
        FROM subscribers WHERE email = $1`,
       [email]
     )
     if (result.rows.length === 0) return res.json({ active: false })
 
-    const { subscription_status, current_period_end } = result.rows[0]
+    const { subscription_status, current_period_end, purchase_type } = result.rows[0]
     const active = (subscription_status === 'active' || subscription_status === 'canceling') &&
       (!current_period_end || new Date(current_period_end) > new Date())
 
@@ -445,7 +491,7 @@ app.get('/api/subscription-status', async (req, res) => {
       )
     }
 
-    res.json({ active: true, status: subscription_status, expires: current_period_end })
+    res.json({ active: true, status: subscription_status, expires: current_period_end, purchaseType: purchase_type })
   } catch (err) {
     console.error('[subscription-status] error:', err.message)
     res.status(500).json({ error: err.message })
@@ -494,7 +540,7 @@ app.post('/api/cancel-subscription', async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT stripe_subscription_id FROM subscribers
+      `SELECT stripe_subscription_id, purchase_type FROM subscribers
        WHERE email = $1 AND subscription_status = 'active'`,
       [email.trim().toLowerCase()]
     )
@@ -502,7 +548,11 @@ app.post('/api/cancel-subscription', async (req, res) => {
       return res.status(404).json({ error: 'No active subscription found for this email' })
     }
 
-    const { stripe_subscription_id } = result.rows[0]
+    const { stripe_subscription_id, purchase_type } = result.rows[0]
+
+    if (purchase_type === 'one_time') {
+      return res.status(400).json({ error: 'One-time passes cannot be canceled — access expires automatically.' })
+    }
     await stripe.subscriptions.update(stripe_subscription_id, {
       cancel_at_period_end: true,
     })

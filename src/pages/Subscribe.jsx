@@ -44,16 +44,12 @@ export default function Subscribe() {
 
   async function handleCheckout() {
     setLoading(true)
-    // TODO: replace with your real checkout flow.
-    // Examples:
-    //   • POST to /api/checkout to create a Stripe Checkout Session, then redirect.
-    //   • Or open Stripe Payment Element in a modal.
     try {
-      // const res = await fetch('/api/create-checkout-session', { method: 'POST' })
-      // const { url } = await res.json()
-      // window.location.href = url
-      alert('Wire this button up to your Stripe one-time charge for $19 → 60-day access grant.')
-    } finally {
+      const res = await fetch('/api/create-checkout-session', { method: 'POST' })
+      const { url } = await res.json()
+      window.location.href = url
+    } catch (e) {
+      console.error(e)
       setLoading(false)
     }
   }

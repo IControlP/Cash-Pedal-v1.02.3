@@ -444,20 +444,28 @@ export default function CarBuyingChecklist() {
                   <p className="font-display font-bold text-white text-xl">{fmt(priceRange.high)}</p>
                 </div>
               </div>
-              {vehicleInfo.price && (
-                <div className="flex items-center gap-2 pt-2 border-t border-[var(--border)]">
-                  <span className="text-xs text-[var(--text-muted)]">Asking price {fmt(Number(vehicleInfo.price))} —</span>
-                  <span className={`text-xs font-bold ${
-                    Number(vehicleInfo.price) <= priceRange.low ? 'text-green-400' :
-                    Number(vehicleInfo.price) <= priceRange.fair ? 'text-green-400' :
-                    Number(vehicleInfo.price) <= priceRange.high ? 'text-yellow-400' : 'text-red-400'
-                  }`}>
-                    {Number(vehicleInfo.price) <= priceRange.low ? 'Great deal' :
-                     Number(vehicleInfo.price) <= priceRange.fair ? 'Fair price' :
-                     Number(vehicleInfo.price) <= priceRange.high ? 'Above fair value' : 'Overpriced'}
-                  </span>
-                </div>
-              )}
+              {vehicleInfo.price && (() => {
+                const askingPrice = Number(vehicleInfo.price)
+                const priceLabel = askingPrice <= priceRange.low ? 'Great deal' :
+                  askingPrice <= priceRange.fair ? 'Fair price' :
+                  askingPrice <= priceRange.high ? 'Above fair value' : 'Overpriced'
+                const labelColor = askingPrice <= priceRange.fair ? 'text-green-400' :
+                  askingPrice <= priceRange.high ? 'text-yellow-400' : 'text-red-400'
+                const premium = Math.max(0, askingPrice - priceRange.fair)
+                return (
+                  <div className="flex flex-col gap-1 pt-2 border-t border-[var(--border)]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-[var(--text-muted)]">Asking price {fmt(askingPrice)} —</span>
+                      <span className={`text-xs font-bold ${labelColor}`}>{priceLabel}</span>
+                    </div>
+                    {premium > 0 && (
+                      <p className="text-[10px] text-[var(--text-muted)]">
+                        {fmt(premium)} above fair value — use deferred maintenance as negotiation justification
+                      </p>
+                    )}
+                  </div>
+                )
+              })()}
               {priceRange.regionNote && (
                 <p className="text-xs font-semibold text-[var(--accent)] mt-2">{priceRange.regionNote}</p>
               )}
@@ -494,6 +502,25 @@ export default function CarBuyingChecklist() {
             <p className="text-xs text-[var(--text-muted)] mt-3">
               Reduction = all "not done" costs + 50% of "unknown" costs. Use this as your negotiation floor.
             </p>
+
+            {priceRange && vehicleInfo.price && negotiationSavings > 0 && (() => {
+              const askingPrice = Number(vehicleInfo.price)
+              const targetOffer = Math.max(
+                priceRange.low,
+                Math.min(askingPrice, priceRange.fair) - negotiationSavings
+              )
+              return (
+                <div className="mt-3 pt-3 border-t border-[var(--border)] flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-white">Suggested opening offer</p>
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      Fair value ({fmt(priceRange.fair)}) minus deferred maintenance
+                    </p>
+                  </div>
+                  <p className="font-display font-bold text-[var(--accent)] text-xl tabular-nums">{fmt(Math.round(targetOffer / 100) * 100)}</p>
+                </div>
+              )
+            })()}
 
             {/* Critical item call-outs */}
             {(() => {

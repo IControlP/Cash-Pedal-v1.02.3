@@ -1226,6 +1226,22 @@ export default function TCOCalculator() {
     } catch { /* ignore corrupt data */ }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Pre-populate from salary calculator deep-link: ?make=X&model=Y&year=Z&price=P
+  useEffect(() => {
+    const mk = searchParams.get('make')
+    const md = searchParams.get('model')
+    const yr = searchParams.get('year')
+    const pr = searchParams.get('price')
+    if (!mk) return
+    if (mk && VEHICLES[mk]) setSelMake(mk)
+    if (md && VEHICLES[mk]?.[md]) setSelModel(md)
+    if (yr) setSelYear(yr)
+    if (pr) {
+      const p = parseInt(pr, 10)
+      if (!isNaN(p) && p > 0) { setPrice(p); setDownPayment(Math.round(p * 0.20 / 500) * 500) }
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Derived model data (type, specs, mpg, isEV)
   const modelData = useMemo(() => getModelData(selMake, selModel), [selMake, selModel])
 
@@ -2524,14 +2540,12 @@ export default function TCOCalculator() {
                       {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}
                     </span>
                   </div>
-                  {!simpleMode && (
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-[var(--text-muted)]">Cost per mile</span>
-                      <span className="text-white font-medium tabular-nums">
-                        ${((forecastRows[0]?.total ?? totalAnnualCost) / annualMileage).toFixed(2)}/mi
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[var(--text-muted)]">Cost per mile</span>
+                    <span className="text-white font-medium tabular-nums">
+                      ${((forecastRows[0]?.total ?? totalAnnualCost) / annualMileage).toFixed(2)}/mi
+                    </span>
+                  </div>
                   {/* Segment operating cost context — detailed mode only */}
                   {!simpleMode && (() => {
                     const seg = selMake
@@ -2582,6 +2596,25 @@ export default function TCOCalculator() {
                   </div>
                 </div>
               </div>
+
+              {/* Compact affordability indicator in simple mode */}
+              {simpleMode && (() => {
+                const year1Total = forecastRows[0]?.total ?? totalAnnualCost
+                const req10 = Math.round(year1Total / 0.10)
+                return (
+                  <div className="rounded-xl border px-4 py-3 flex items-center justify-between"
+                    style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                    <div>
+                      <p className="text-xs font-semibold text-[var(--text-muted)]">Salary needed <span className="opacity-60">(safe at 10%)</span></p>
+                      <p className="font-display font-bold text-white text-base tabular-nums">{formatCurrency(req10)}/yr</p>
+                    </div>
+                    <a href="/salary" className="text-[10px] font-semibold px-3 py-1.5 rounded-lg"
+                      style={{ color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.25)', background: 'rgba(200,255,0,0.05)' }}>
+                      Full analysis →
+                    </a>
+                  </div>
+                )
+              })()}
 
               {/* Affordability check — 20/4/10 rule income bands — detailed mode only */}
               {!simpleMode && (() => {

@@ -413,7 +413,8 @@ export default function SalaryCalculator() {
         if (basePrice <= (affordableResults.conservative || 0)) tier = 'conservative'
         else if (basePrice <= (affordableResults.comfortable || 0)) tier = 'comfortable'
         const ops = estimateBasicMonthlyCosts(basePrice, userState || null, annualMiles)
-        const annualFinancing = Math.round(monthlyPayment(basePrice * 0.80, rate, 60) * 12)
+        const downAmt = basePrice * (downPct / 100)
+        const annualFinancing = Math.round(monthlyPayment(basePrice - downAmt, rate, loanTerm) * 12)
         const annualOperating = ops.total * 12
         entries.push({
           make, model, type: data.type, is_ev: data.is_ev,
@@ -1267,7 +1268,7 @@ export default function SalaryCalculator() {
                           <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1">
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Est. annual costs</p>
                             {[
-                              { label: `Financing (80% · 5yr · ${rate}%)`, val: v.annualFinancing },
+                              { label: `Financing (${downPct}% down · ${loanTerm}mo · ${rate}%)`, val: v.annualFinancing },
                               { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.annualFuel },
                               { label: 'Insurance', val: v.annualInsurance },
                               { label: 'Maintenance', val: v.annualMaintenance },
@@ -1283,6 +1284,13 @@ export default function SalaryCalculator() {
                               <span className="text-[10px] font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(v.annualTotal)}</span>
                             </div>
                           </div>
+                          <Link
+                            to={`/tco?make=${encodeURIComponent(v.make)}&model=${encodeURIComponent(v.model)}&year=${encodeURIComponent(v.year)}&price=${v.basePrice}`}
+                            className="mt-1 text-[10px] font-semibold text-center w-full block py-1 rounded-md transition-colors"
+                            style={{ color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.25)', background: 'rgba(200,255,0,0.05)' }}
+                          >
+                            Full TCO analysis →
+                          </Link>
                         </div>
                       )
                     })}

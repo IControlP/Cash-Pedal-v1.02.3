@@ -1770,7 +1770,8 @@ export default function TCOCalculator() {
     ? Math.round(estimateCurrentValue(origMsrp, selMake || null, selModel || null, carAge + ownershipYears))
     : null
   const totalOwnershipPaid = forecastRows.reduce((s, r) => s + r.total, 0)
-  const netCostOfOwnership = futureResaleValue != null ? totalOwnershipPaid - futureResaleValue : null
+  // Include the down payment: it's paid upfront and only partially recovered via resale.
+  const netCostOfOwnership = futureResaleValue != null ? totalOwnershipPaid + safeDown - futureResaleValue : null
 
   // Derived EV flag, charging rate, and premium fuel flag — used across the render
   const catInfoForRender = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
@@ -1809,10 +1810,11 @@ export default function TCOCalculator() {
       ? Math.round((futureValue / origMsrp) * 100)
       : null
 
-    const leasePeriodYears = leaseTerm / 12
+    // Use the same escalating forecastRows total displayed in the TCO summary,
+    // plus the down payment (not captured in monthly payments).
     const totalOwnership = financeMode === 'lease'
-      ? leaseResults.totalLeaseCost + annualOperatingCost * leasePeriodYears
-      : totalAnnualCost * ownershipYears
+      ? forecastRows.reduce((s, r) => s + r.total, 0)
+      : forecastRows.reduce((s, r) => s + r.total, 0) + safeDown
 
     const entry = {
       id:                crypto.randomUUID(),

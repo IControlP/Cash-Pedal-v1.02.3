@@ -87,7 +87,7 @@ export function classifySegment(make, model) {
   const m = (model ?? '').toLowerCase()
   const mk = (make ?? '').toLowerCase()
   if (mk === 'tesla' || ['rivian','lucid','polestar','fisker'].includes(mk)) return 'electric'
-  const evKw = ['leaf','ariya','bolt ev','bolt euv','equinox ev','blazer ev','lyriq','ioniq 5','ioniq 6','ioniq electric','kona electric','niro ev','ev6','ev9','gv60','i3 ','i4','i5','i7',' ix','e-tron','taycan','id.4','id.3','mach-e','lightning','eqb','eqc','eqe','eqs','bz4x',' rz ','solterra','mx-30','i-pace','prologue','zdx']
+  const evKw = ['leaf','ariya','bolt ev','bolt euv','equinox ev','blazer ev','lyriq','ioniq 5','ioniq 6','ioniq electric','kona electric','niro ev','ev6','ev9','gv60','i3','i4','i5','i7','ix','e-tron','taycan','id.4','id.3','mach-e','lightning','eqb','eqc','eqe','eqs','bz4x','rz','solterra','mx-30','i-pace','prologue','zdx']
   if (evKw.some(k => m.includes(k))) return 'electric'
   if (['prius','insight','sienna','maverick'].some(k => m.includes(k))) return 'hybrid'
   if (m.includes('hybrid') || m.includes('phev') || m.includes('4xe') || m.includes('plug-in')) return 'hybrid'

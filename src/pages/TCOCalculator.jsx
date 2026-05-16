@@ -21,7 +21,7 @@ import {
   PREMIUM_PRICE_DELTA, requiresPremiumFuel,
   STATE_REG_FEE, STATE_VLF, computeAnnualRegistration,
   computeSalesTax, STATE_VEHICLE_SALES_TAX, STATE_DOC_FEE_AVG, getRegionalDemandPremium,
-  ZIP_RANGES, zipToState, resolveLocation,
+  ZIP_RANGES, zipToState, resolveLocation, computeEvBatteryRisk,
 } from '../utils/vehicleCosts'
 
 
@@ -892,6 +892,16 @@ function FiveYearForecast({ isPro, financeMode, rows, formatCurrency }) {
           {rows.length}-yr total: {formatCurrency(cumulTotal)}
         </span>
       </div>
+      {rows.length > 1 && rows[rows.length - 1].fuel > rows[0].fuel && (
+        <p className="text-[10px] text-[var(--text-muted)] leading-relaxed -mt-1">
+          ↑ Fuel cost rises slightly each year — ICE engines lose ~0.5% efficiency annually, increasing real-world fuel spend.
+        </p>
+      )}
+      {rows.some(r => r.batteryRisk > 0) && (
+        <p className="text-[10px] text-amber-400 leading-relaxed -mt-1">
+          ⚡ Battery risk surcharge included in maintenance for years where the vehicle exceeds 8 years old — reflects probability-weighted replacement cost ($6k–$15k pack).
+        </p>
+      )}
     </div>
   )
 }
@@ -1408,6 +1418,8 @@ export default function TCOCalculator() {
   const forecastRows = useMemo(() => {
     const years = Math.min(5, Math.max(1, ownershipYears))
     const leasePeriodYears = Math.ceil(leaseTerm / 12)
+    const isEV = modelData?.is_ev ?? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.isEV ?? false
+    const vehicleCurrentAge = selYear ? Math.max(0, new Date().getFullYear() - parseInt(selYear)) : 0
     return Array.from({ length: years }, (_, i) => {
       const yr = i + 1
       const loanMonths = financeMode === 'lease'
@@ -1417,15 +1429,19 @@ export default function TCOCalculator() {
         ? (yr <= leasePeriodYears ? leaseResults.annualLeaseCost : 0)
         : results.monthlyPayment * loanMonths
       const insurance    = Math.round(annualInsurance    * Math.pow(1.02, i))
-      const fuel         = annualFuel
-      const maintenance  = maintenanceByYear?.[i] ?? Math.round(annualMaintenance * Math.pow(1.08, i))
+      // ICE vehicles lose ~0.5%/yr fuel efficiency; costs rise correspondingly
+      const fuel         = isEV ? annualFuel : Math.round(annualFuel * Math.pow(1.005, i))
+      const baseMaint    = maintenanceByYear?.[i] ?? Math.round(annualMaintenance * Math.pow(1.08, i))
+      // EV battery replacement risk escalates after year 8 of vehicle life
+      const batteryRisk  = isEV ? computeEvBatteryRisk(vehicleCurrentAge + yr) : 0
+      const maintenance  = baseMaint + batteryRisk
       const registration = Math.round(annualRegistration * Math.pow(0.95, i))
       const total = loanCost + insurance + fuel + maintenance + registration
-      return { yr, loanCost, insurance, fuel, maintenance, registration, total }
+      return { yr, loanCost, insurance, fuel, maintenance, registration, batteryRisk, total }
     })
   }, [ownershipYears, leaseTerm, financeMode, loanTerm, leaseResults.annualLeaseCost,
       results.monthlyPayment, annualInsurance, annualFuel, maintenanceByYear,
-      annualMaintenance, annualRegistration])
+      annualMaintenance, annualRegistration, modelData, vehicleCategory, selYear])
 
   // Auto-suggest residual % based on the depreciation model for the selected lease term.
   // Fires whenever the lease term, make, or model changes.

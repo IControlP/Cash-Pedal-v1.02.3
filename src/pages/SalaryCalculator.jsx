@@ -95,18 +95,41 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
 
 // Rough effective take-home estimate for a given gross annual salary.
 // Uses simplified federal brackets + FICA + 4% avg state income tax.
+// MFJ brackets are roughly double single filer thresholds with higher standard deduction,
+// resulting in meaningfully lower effective federal rates at the same gross income.
 // Intended for ballpark context only, not tax advice.
-function estimateMonthlyTakeHome(grossAnnual) {
+function estimateMonthlyTakeHome(grossAnnual, filingStatus = 'single') {
   let federalEff
-  if (grossAnnual <= 30000)       federalEff = 0.08
-  else if (grossAnnual <= 55000)  federalEff = 0.12
-  else if (grossAnnual <= 90000)  federalEff = 0.17
-  else if (grossAnnual <= 140000) federalEff = 0.21
-  else if (grossAnnual <= 200000) federalEff = 0.24
-  else                            federalEff = 0.28
+  if (filingStatus === 'married') {
+    // MFJ: wider brackets + $29,200 standard deduction significantly lowers effective rate
+    if (grossAnnual <= 50000)       federalEff = 0.05
+    else if (grossAnnual <= 90000)  federalEff = 0.08
+    else if (grossAnnual <= 150000) federalEff = 0.13
+    else if (grossAnnual <= 250000) federalEff = 0.18
+    else if (grossAnnual <= 400000) federalEff = 0.22
+    else                            federalEff = 0.26
+  } else {
+    // Single / head of household
+    if (grossAnnual <= 30000)       federalEff = 0.08
+    else if (grossAnnual <= 55000)  federalEff = 0.12
+    else if (grossAnnual <= 90000)  federalEff = 0.17
+    else if (grossAnnual <= 140000) federalEff = 0.21
+    else if (grossAnnual <= 200000) federalEff = 0.24
+    else                            federalEff = 0.28
+  }
   const totalRate = federalEff + 0.0765 + 0.04  // federal + FICA + avg state
   return Math.round((grossAnnual * (1 - totalRate)) / 12)
 }
+
+// Credit score tiers mapped to typical new-car APRs (2025 avg, per Experian/CFPB data).
+// These auto-fill the interest rate field as a starting point — actual rates vary by lender.
+const CREDIT_SCORE_TIERS = [
+  { label: 'Excellent  750+',  range: '750+',    apr: 5.5  },
+  { label: 'Good  700–749',    range: '700–749', apr: 6.5  },
+  { label: 'Fair  650–699',    range: '650–699', apr: 9.5  },
+  { label: 'Poor  600–649',    range: '600–649', apr: 13.5 },
+  { label: 'Very Poor  <600',  range: '<600',    apr: 18.0 },
+]
 
 // US state list for the selector (derived from STATE_INS_BASE keys for coverage)
 const US_STATES = [
@@ -186,6 +209,10 @@ export default function SalaryCalculator() {
 
   // Car suggestion filter
   const [carFilterCategory, setCarFilterCategory] = useState('all')
+
+  // Credit score / filing status
+  const [creditTier, setCreditTier] = useState(1)  // index into CREDIT_SCORE_TIERS (Good = 6.5%)
+  const [filingStatus, setFilingStatus] = useState('single')
 
   // Buy inputs
   const [vehiclePrice, setVehiclePrice] = useState(30000)
@@ -311,6 +338,12 @@ export default function SalaryCalculator() {
     }
   }, [mode])
 
+  // Sync credit score tier → interest rate (buy mode only)
+  useEffect(() => {
+    if (mode !== 'buy') return
+    setRate(CREDIT_SCORE_TIERS[creditTier].apr)
+  }, [creditTier, mode])
+
   // Reset cascade on upstream change
   function handleMakeChange(v) { setSelMake(v); setSelModel(''); setSelYear(''); setSelTrim('') }
   function handleModelChange(v) { setSelModel(v); setSelYear(''); setSelTrim('') }
@@ -374,16 +407,19 @@ export default function SalaryCalculator() {
     function solve(thresholdPct) {
       const maxMonthly = (s * thresholdPct) / 12
       let estPrice = 30000
-      for (let i = 0; i < 4; i++) {
+      const r = rate / 12 / 100
+      const n = loanTerm
+      const loanFactor = r > 0
+        ? (Math.pow(1 + r, n) - 1) / (r * Math.pow(1 + r, n))
+        : n
+      // Iterate until price converges (operating costs depend on price tier, so iterate)
+      for (let i = 0; i < 10; i++) {
         const ops = estimateBasicMonthlyCosts(estPrice, userState || null, annualMiles)
         const loanBudget = maxMonthly - ops.total
         if (loanBudget <= 0) return 0
-        const r = rate / 12 / 100
-        const n = loanTerm
-        const factor = r > 0
-          ? (Math.pow(1 + r, n) - 1) / (r * Math.pow(1 + r, n))
-          : n
-        estPrice = Math.max(500, (loanBudget * factor) / (1 - downPct / 100))
+        const newPrice = Math.max(500, (loanBudget * loanFactor) / (1 - downPct / 100))
+        if (Math.abs(newPrice - estPrice) < 100) { estPrice = newPrice; break }
+        estPrice = newPrice
       }
       return Math.round(estPrice / 500) * 500
     }
@@ -801,7 +837,8 @@ export default function SalaryCalculator() {
                       <input
                         type="number"
                         value={vehiclePrice}
-                        onChange={e => setVehiclePrice(Number(e.target.value))}
+                        min={1000}
+                        onChange={e => setVehiclePrice(Math.max(0, Number(e.target.value)))}
                         className="input-field"
                         style={{ paddingLeft: '1.75rem' }}
                       />
@@ -862,6 +899,34 @@ export default function SalaryCalculator() {
                     )}
                   </div>
 
+                  {/* Credit score → APR helper */}
+                  <div className="flex flex-col gap-2">
+                    <label className="input-label">Credit Score (sets APR estimate)</label>
+                    <div className="grid grid-cols-5 gap-1">
+                      {CREDIT_SCORE_TIERS.map((t, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setCreditTier(idx)}
+                          className="flex flex-col items-center px-1 py-2 rounded-lg border text-center transition-all"
+                          style={{
+                            borderColor: creditTier === idx ? 'var(--accent)' : 'var(--border)',
+                            background: creditTier === idx ? 'rgba(200,255,0,0.08)' : 'var(--bg)',
+                          }}
+                        >
+                          <span className="text-[9px] font-bold leading-tight"
+                            style={{ color: creditTier === idx ? 'var(--accent)' : 'var(--text-muted)' }}>
+                            {t.range}
+                          </span>
+                          <span className="text-[10px] font-bold text-white mt-0.5">{t.apr}%</span>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      {CREDIT_SCORE_TIERS[creditTier].label.split('  ')[0]} score — sets APR to {CREDIT_SCORE_TIERS[creditTier].apr}%. Adjust below if you have a rate offer.
+                    </p>
+                  </div>
+
                   {/* Interest rate */}
                   <div className="flex flex-col gap-2">
                     <label className="input-label">Annual Interest Rate</label>
@@ -879,7 +944,7 @@ export default function SalaryCalculator() {
                     <input
                       type="range" min={0} max={25} step={0.1}
                       value={rate}
-                      onChange={e => setRate(Number(e.target.value))}
+                      onChange={e => { setRate(Number(e.target.value)); setCreditTier(-1) }}
                       style={{ background: `linear-gradient(to right, var(--accent) ${(rate / 25) * 100}%, var(--border) ${(rate / 25) * 100}%)` }}
                     />
                   </div>
@@ -1040,21 +1105,42 @@ export default function SalaryCalculator() {
               {/* Take-home income context */}
               {(() => {
                 const grossConservative = results.conservative
-                const takeHome = estimateMonthlyTakeHome(grossConservative)
+                const takeHome = estimateMonthlyTakeHome(grossConservative, filingStatus)
                 const vehiclePct = Math.round((results.totalMonthly / takeHome) * 100)
                 return (
                   <div className="rounded-xl border border-[var(--border)] p-4 text-sm"
                     style={{ background: 'var(--surface)' }}>
-                    <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
-                      What that salary looks like monthly
-                    </p>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+                        What that salary looks like monthly
+                      </p>
+                      {/* Filing status toggle */}
+                      <div className="flex gap-0.5 p-0.5 rounded-lg" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                        {[
+                          { value: 'single',  label: 'Single' },
+                          { value: 'married', label: 'Married' },
+                        ].map(opt => (
+                          <button key={opt.value} type="button"
+                            onClick={() => setFilingStatus(opt.value)}
+                            className="px-2 py-0.5 rounded-md text-[10px] font-semibold transition-all"
+                            style={{
+                              background: filingStatus === opt.value ? 'var(--accent)' : 'transparent',
+                              color: filingStatus === opt.value ? '#000' : 'var(--text-muted)',
+                            }}>
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <div className="flex flex-col gap-2">
                       <div className="flex justify-between">
                         <span className="text-[var(--text-muted)]">Gross (conservative)</span>
                         <span className="text-white font-semibold">{fmt(grossConservative / 12)}/mo</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-[var(--text-muted)]">Est. take-home after taxes</span>
+                        <span className="text-[var(--text-muted)]">
+                          Est. take-home · {filingStatus === 'married' ? 'Married filing jointly' : 'Single filer'}
+                        </span>
                         <span className="text-white font-semibold">{fmt(takeHome)}/mo</span>
                       </div>
                       <div className="border-t border-[var(--border)] pt-2 flex justify-between">
@@ -1065,7 +1151,7 @@ export default function SalaryCalculator() {
                       </div>
                     </div>
                     <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
-                      Take-home estimate uses federal brackets + FICA + 4% avg state tax — actual varies by state, filing status &amp; deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
+                      Take-home estimate uses federal brackets + FICA + 4% avg state tax — actual varies by deductions &amp; credits. The 20/4/10 rule targets 10% of <em>gross</em> income, typically 13–16% of take-home.
                     </p>
                   </div>
                 )

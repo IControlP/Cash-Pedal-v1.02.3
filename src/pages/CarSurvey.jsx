@@ -27,6 +27,27 @@ function scoreVehicles(answers) {
   return scores
 }
 
+// Returns the top factors (question + direction) that most influenced a category's score
+function getTopDrivers(answers, targetCategory, topN = 3) {
+  const drivers = []
+  answers.forEach((answer, qi) => {
+    const multiplier = answer - 3  // -2 to +2; 0 = neutral, skip
+    if (multiplier === 0) return
+    const impact = questionImpacts[qi].find(i => i.category === targetCategory)
+    if (!impact) return
+    const contribution = impact.impact * multiplier
+    if (contribution === 0) return
+    drivers.push({
+      question: questions[qi],
+      contribution,
+      answer,
+    })
+  })
+  // Sort by absolute contribution descending, prefer positive first
+  drivers.sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution))
+  return drivers.filter(d => d.contribution > 0).slice(0, topN)
+}
+
 function ProgressBar({ current, total }) {
   return (
     <div className="flex items-center gap-3 mb-8">
@@ -236,6 +257,37 @@ export default function CarSurvey() {
               </p>
             )}
           </div>
+
+          {/* Key factors driving the result */}
+          {topMatch && (() => {
+            const drivers = getTopDrivers(answers, topMatch.key)
+            if (!drivers.length) return null
+            return (
+              <div className="mb-6 anim-2 rounded-xl border border-[var(--border)] p-4"
+                style={{ background: 'var(--surface)' }}>
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
+                  Why {topMatch.profile.name}? — key factors
+                </p>
+                <div className="flex flex-col gap-2">
+                  {drivers.map(({ question, answer }, i) => {
+                    const dir = answer >= 4 ? question.highLabel : question.lowLabel
+                    return (
+                      <div key={i} className="flex items-start gap-2 text-xs">
+                        <span className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center font-bold text-[10px] mt-0.5"
+                          style={{ background: 'rgba(200,255,0,0.15)', color: 'var(--accent)' }}>
+                          {i + 1}
+                        </span>
+                        <span className="text-[var(--text-muted)] leading-relaxed">
+                          <span className="text-white font-medium">"{dir}"</span>
+                          {' '}— {question.text.split('—')[0].split(':')[0].trim().replace(/\?$/, '').toLowerCase()}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Top match card */}
           <div className="card border-[var(--accent)] mb-6 anim-3" style={{ background: 'rgba(255,184,0,0.04)' }}>

@@ -538,6 +538,22 @@ export function getRegionalDemandPremium(state) {
   return STATE_USED_CAR_DEMAND[state] ?? 0.0
 }
 
+// ── EV Battery Risk ───────────────────────────────────────
+// Annualized battery-replacement risk surcharge for EVs based on vehicle age.
+// Most EV warranties cover 8 years / 100k miles. Beyond that, replacement
+// ($6k–$15k depending on model) becomes a real risk for long-term owners.
+// Probability-weighted annualized cost:
+//   Years 1–7 : $0   (under warranty / very low risk)
+//   Years 8–9 : $700  (~15% probability × $9k avg pack ÷ 2 yrs)
+//   Years 10–12: $1100 (~25% probability × $9k avg pack ÷ 3 yrs)
+//   Years 12+  : $1400 (older pack, higher probability)
+export function computeEvBatteryRisk(vehicleAge) {
+  if (vehicleAge < 8)  return 0
+  if (vehicleAge < 10) return 700
+  if (vehicleAge < 12) return 1100
+  return 1400
+}
+
 // ── Location ─────────────────────────────────────────────
 
 export const ZIP_RANGES = [

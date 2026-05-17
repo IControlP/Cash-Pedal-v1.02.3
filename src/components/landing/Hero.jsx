@@ -42,8 +42,8 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Annotated hero car */}
-          <div className="hero-visual anim-1">
+          {/* Annotated hero car — hidden below lg where grid collapses */}
+          <div className="hero-visual anim-1 hidden lg:block">
             <div className="hero-car-wrap">
               <SUVSVG pal={getPal('Rivian')} isEV isLarge />
             </div>

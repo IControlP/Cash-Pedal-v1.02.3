@@ -775,3 +775,48 @@ select.input-field {
 .offer-card-lg .offer-price { margin-top: 6px; }
 .offer-card-lg .offer-amount { font-size: 104px; }
 .offer-card-lg .offer-dollar { font-size: 36px; top: 16px; }
+
+/* ── Mobile overrides ─────────────────────────────── */
+@media (max-width: 860px) {
+  /* Hero: remove excessive vertical space without the side visual */
+  .hero-section { padding-top: 20px; }
+  .hero-h { font-size: clamp(40px, 12vw, 68px); }
+  .hero-sub { font-size: 17px; }
+  .hero-cta { flex-direction: column; align-items: flex-start; }
+  .btn-lg { width: 100%; text-align: center; justify-content: center; }
+}
+
+@media (max-width: 640px) {
+  /* General section spacing */
+  .section-sub { font-size: 15px; margin-bottom: 36px; }
+
+  /* Hero */
+  .hero-h { font-size: clamp(36px, 13vw, 52px); }
+  .hero-sub { font-size: 15px; }
+  .hero-meta { font-size: 12px; gap: 10px; }
+
+  /* Problem stats */
+  .problem-stat { font-size: 36px; }
+  .problem-card { padding: 20px; }
+
+  /* Step cards */
+  .step-card { padding: 20px 18px 18px; }
+
+  /* TCO preview */
+  .tco-bar-row { grid-template-columns: 68px 1fr 56px; gap: 6px; font-size: 11px; }
+  .tco-total-val { font-size: 20px; }
+  .tco-title { font-size: 18px; }
+
+  /* CTA section */
+  .cta-card { padding: 24px 18px; }
+  .offer-amount { font-size: 72px; }
+  .offer-card-lg .offer-amount { font-size: 80px; }
+  .offer-card-lg { padding: 26px 22px; }
+
+  /* Feature cards */
+  .feature-card { padding: 20px; }
+
+  /* FAQ */
+  .faq-q { font-size: 15px; padding: 16px 18px; }
+  .faq-a { padding: 0 18px 16px; }
+}

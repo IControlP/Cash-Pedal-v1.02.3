@@ -23,10 +23,11 @@ function monthlyPayment(principal, annualRate, months) {
   return (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1)
 }
 
-// Estimated monthly lease payment using standard dealer math
-// residual ≈ 55% (36mo), 60% (24mo), 50% (48mo); money factor ≈ 0.00250 (~6% APR)
+// Estimated monthly lease payment using market-realistic residuals.
+// OEM programs average 49–54% (24mo), 44–49% (36mo), 40–44% (48mo) as of 2025.
+// Conservative estimates — actual residuals vary by make, model, and incentive program.
 function estimateLeaseMonthly(msrp, capReduction, termMonths) {
-  const residualPct = termMonths <= 24 ? 0.60 : termMonths <= 36 ? 0.55 : 0.50
+  const residualPct = termMonths <= 24 ? 0.52 : termMonths <= 36 ? 0.47 : 0.42
   const residual = msrp * residualPct
   const capCost = msrp - capReduction
   const depreciation = (capCost - residual) / termMonths
@@ -789,6 +790,11 @@ export default function SalaryCalculator() {
                       Total out-of-pocket: {fmt(leaseMonthly * leaseTerm + leaseDown)}
                       {leaseDown > 0 ? ` (${fmt(leaseDown)} due at signing + ${fmt(leaseMonthly * leaseTerm)} payments)` : ''} · No equity at lease end
                     </p>
+                    {proMode && (
+                      <p className="text-[10px] text-[var(--text-muted)]">
+                        Estimate uses market-realistic residuals ({leaseTerm <= 24 ? '52%' : leaseTerm <= 36 ? '47%' : '42%'} of MSRP). Actual dealer programs vary — verify with the manufacturer.
+                      </p>
+                    )}
                   </div>
                 </>
               ) : (

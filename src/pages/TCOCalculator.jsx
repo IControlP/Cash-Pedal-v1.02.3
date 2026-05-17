@@ -125,11 +125,13 @@ function SpecsPanel({ specs, mpg, isEV }) {
 
   if (mpg) {
     if (mpg.mpge_combined) {
-      items.push({ label: 'Efficiency', value: `${mpg.mpge_combined} MPGe` })
+      items.push({ label: 'Efficiency (EPA)', value: `${mpg.mpge_combined} MPGe` })
+      items.push({ label: 'Real-world est.', value: `${Math.round(mpg.mpge_combined * 0.93)} MPGe` })
     } else if (mpg.combined) {
-      items.push({ label: 'MPG (comb.)', value: `${mpg.combined} mpg` })
+      items.push({ label: 'MPG EPA (comb.)', value: `${mpg.combined} mpg` })
+      items.push({ label: 'Real-world est.', value: `${Math.round(mpg.combined * 0.93)} mpg` })
       if (mpg.city && mpg.highway)
-        items.push({ label: 'City / Hwy', value: `${mpg.city} / ${mpg.highway}` })
+        items.push({ label: 'City / Hwy (EPA)', value: `${mpg.city} / ${mpg.highway}` })
     }
   }
 
@@ -1058,6 +1060,12 @@ function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenan
         text: `You're financing more than 80% of the vehicle's value. Gap insurance (~$300 one-time or $20–$40/mo) protects you if the car is totaled before your loan balance drops below market value.`,
       })
     }
+    if (financeMode === 'lease') {
+      alerts.push({
+        type: 'info',
+        text: `Leases typically include gap coverage, but confirm with the dealer. Also check whether your auto insurance policy extends gap protection to leased vehicles.`,
+      })
+    }
     if (isEV) {
       alerts.push({
         type: 'good',
@@ -1157,6 +1165,7 @@ export default function TCOCalculator() {
   const [loanTerm, setLoanTerm]     = useState(60)
   const [rate, setRate]             = useState(6.5)
   const [ownershipYears, setOwnershipYears] = useState(5)
+  const [annualSalary, setAnnualSalary] = useState('')
 
   // Annual operating costs (pre-filled with national averages)
   const [annualInsurance,    setAnnualInsurance]    = useState(2000)
@@ -2094,7 +2103,8 @@ export default function TCOCalculator() {
                           const catInfo = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
                           const effIsEV = modelData ? modelData.is_ev : (catInfo?.isEV ?? false)
                           const effMpg  = modelData ? (modelData.mpg?.combined ?? 28) : (catInfo?.mpg ?? 28)
-                          const mpgNote = effIsEV ? ' · EV' : ` · ${effMpg} MPG${catInfo && !modelData ? ' avg' : ''}`
+                          const realMpg = Math.round(effMpg * 0.93)
+                          const mpgNote = effIsEV ? ' · EV (real-world adjusted)' : ` · ${effMpg} EPA → ${realMpg} real-world MPG${catInfo && !modelData ? ' avg' : ''}`
                           return `${detailedMode ? 'Detailed estimates' : 'Estimated'} for ${resolvedState} · ${annualMileage.toLocaleString()} mi/yr${mpgNote}.`
                         })()}
                   </p>
@@ -2583,43 +2593,95 @@ export default function TCOCalculator() {
                 </div>
               </div>
 
-              {/* Affordability check — 20/4/10 rule income bands — detailed mode only */}
-              {!simpleMode && (() => {
+              {/* Affordability check — 20/4/10 rule income bands */}
+              {(() => {
                 const year1Total = forecastRows[0]?.total ?? totalAnnualCost
                 const req10 = year1Total / 0.10
                 const req15 = year1Total / 0.15
                 const req20 = year1Total / 0.20
-                // Determine which band the user is likely in (no income input, so show all 3)
+                const salary = Number(annualSalary)
+                const hasSalary = salary >= 10000
+                const salaryPct = hasSalary ? (year1Total / salary) * 100 : null
+                const salaryBand = salaryPct === null ? null
+                  : salaryPct <= 10 ? { label: 'Conservative', color: '#4ade80', desc: '≤ 10% of income — well within budget' }
+                  : salaryPct <= 15 ? { label: 'Comfortable',  color: '#FFB800', desc: `${salaryPct.toFixed(0)}% of income — manageable for most` }
+                  : salaryPct <= 20 ? { label: 'Aggressive',   color: '#fb923c', desc: `${salaryPct.toFixed(0)}% of income — stretched budget` }
+                  : { label: 'Over Budget', color: '#f87171', desc: `${salaryPct.toFixed(0)}% of income — likely unaffordable` }
                 return (
                   <div className="rounded-xl border p-4 flex flex-col gap-3"
                     style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
-                        Income Required (20/4/10 rule)
+                        Affordability Check
                       </p>
                       <a href="/salary" className="text-[10px] font-semibold"
                         style={{ color: 'var(--accent)' }}>
                         Full analysis →
                       </a>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { label: 'Conservative', sub: '10% of income', value: req10, color: '#f87171' },
-                        { label: 'Comfortable',  sub: '15% of income', value: req15, color: '#FFB800' },
-                        { label: 'Aggressive',   sub: '20% of income', value: req20, color: '#4ade80' },
-                      ].map(({ label, sub, value, color }) => (
-                        <div key={label} className="rounded-lg px-2 py-2.5 text-center"
-                          style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-                          <p className="text-[10px] font-semibold" style={{ color }}>{label}</p>
-                          <p className="text-[10px] text-[var(--text-muted)] mb-1">{sub}</p>
-                          <p className="text-white font-bold text-xs tabular-nums">{formatCurrency(value)}</p>
-                          <p className="text-[10px] text-[var(--text-muted)]">/yr gross</p>
-                        </div>
-                      ))}
+
+                    {/* Optional salary input */}
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs pointer-events-none">$</span>
+                        <input
+                          type="number"
+                          value={annualSalary}
+                          onChange={e => setAnnualSalary(e.target.value)}
+                          placeholder="Your gross annual income (optional)"
+                          className="input-field text-xs"
+                          style={{ paddingLeft: '1.5rem', paddingTop: '0.5rem', paddingBottom: '0.5rem' }}
+                          min={0}
+                          step={1000}
+                        />
+                      </div>
+                      {annualSalary && (
+                        <button onClick={() => setAnnualSalary('')}
+                          className="text-xs text-[var(--text-muted)] hover:text-white transition-colors shrink-0">
+                          ✕
+                        </button>
+                      )}
                     </div>
+
+                    {/* Salary result badge */}
+                    {hasSalary && salaryBand && (
+                      <div className="rounded-lg px-3 py-2.5 flex items-center justify-between"
+                        style={{ background: `${salaryBand.color}18`, border: `1px solid ${salaryBand.color}40` }}>
+                        <div>
+                          <p className="text-xs font-bold" style={{ color: salaryBand.color }}>{salaryBand.label}</p>
+                          <p className="text-[10px] text-[var(--text-muted)]">{salaryBand.desc}</p>
+                        </div>
+                        <div className="text-right shrink-0 ml-2">
+                          <p className="text-lg font-display font-bold tabular-nums" style={{ color: salaryBand.color }}>
+                            {salaryPct.toFixed(0)}%
+                          </p>
+                          <p className="text-[10px] text-[var(--text-muted)]">of income</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Required income bands — show when no salary entered */}
+                    {!hasSalary && (
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { label: 'Conservative', sub: '10% of income', value: req10, color: '#4ade80' },
+                          { label: 'Comfortable',  sub: '15% of income', value: req15, color: '#FFB800' },
+                          { label: 'Aggressive',   sub: '20% of income', value: req20, color: '#fb923c' },
+                        ].map(({ label, sub, value, color }) => (
+                          <div key={label} className="rounded-lg px-2 py-2.5 text-center"
+                            style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                            <p className="text-[10px] font-semibold" style={{ color }}>{label}</p>
+                            <p className="text-[10px] text-[var(--text-muted)] mb-1">{sub}</p>
+                            <p className="text-white font-bold text-xs tabular-nums">{formatCurrency(value)}</p>
+                            <p className="text-[10px] text-[var(--text-muted)]">/yr gross</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
-                      Based on your Year 1 all-in cost of <span className="text-white">{formatCurrency(year1Total)}</span>.
-                      The 10% band is the safest; above 20% strains most budgets.
+                      Based on Year 1 all-in cost of <span className="text-white">{formatCurrency(year1Total)}</span>.
+                      {hasSalary ? ' Enter your income above to see your affordability rating.' : ' Enter your income above for a personalized check.'}
                     </p>
                   </div>
                 )

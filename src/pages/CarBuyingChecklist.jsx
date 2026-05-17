@@ -76,6 +76,8 @@ function regionalLabel(vehicleType, multiplier) {
 
 const FREE_CHECKLIST_LIMIT = 5
 const LS_CHECKLIST_COUNT   = 'cashpedal_checklist_count'
+const LS_CHECKLIST_STATUSES = 'cashpedal_checklist_statuses'
+const LS_CHECKLIST_NOTES    = 'cashpedal_checklist_notes'
 
 function fmt(n) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
@@ -104,9 +106,22 @@ export default function CarBuyingChecklist() {
   const [step, setStep] = useState('input') // input | checklist
   const [vehicleInfo, setVehicleInfo] = useState({ year: '', make: '', model: '', trim: '', mileage: 80000, price: '', state: '' })
   const [priceSource, setPriceSource] = useState('auto') // 'auto' | 'user'
-  const [statuses, setStatuses] = useState({})
-  const [notes, setNotes] = useState({})
+  const [statuses, setStatuses] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(LS_CHECKLIST_STATUSES) || '{}') } catch { return {} }
+  })
+  const [notes, setNotes] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(LS_CHECKLIST_NOTES) || '{}') } catch { return {} }
+  })
   const [activeTab, setActiveTab] = useState('maintenance')
+
+  // Persist checklist progress across tab switches and page refreshes
+  useEffect(() => {
+    localStorage.setItem(LS_CHECKLIST_STATUSES, JSON.stringify(statuses))
+  }, [statuses])
+
+  useEffect(() => {
+    localStorage.setItem(LS_CHECKLIST_NOTES, JSON.stringify(notes))
+  }, [notes])
 
   const categories = useMemo(() => {
     const cats = {}
@@ -193,7 +208,15 @@ export default function CarBuyingChecklist() {
     const next = checklistCount + 1
     setChecklistCount(next)
     localStorage.setItem(LS_CHECKLIST_COUNT, String(next))
+    // Clear previous checklist progress when starting a new vehicle
+    setStatuses({})
+    setNotes({})
     setStep('checklist')
+  }
+
+  function handleResetProgress() {
+    setStatuses({})
+    setNotes({})
   }
 
   if (step === 'input') {
@@ -421,9 +444,19 @@ export default function CarBuyingChecklist() {
                 )}
               </div>
             </div>
-            <button onClick={() => setStep('input')} className="btn-ghost text-sm shrink-0">
-              ← Start Over
-            </button>
+            <div className="flex gap-2 shrink-0">
+              {Object.keys(statuses).length > 0 && (
+                <button
+                  onClick={handleResetProgress}
+                  className="text-xs text-[var(--text-muted)] hover:text-red-400 transition-colors px-3 py-1.5 rounded-lg border border-[var(--border)]"
+                >
+                  Reset Progress
+                </button>
+              )}
+              <button onClick={() => setStep('input')} className="btn-ghost text-sm">
+                ← Start Over
+              </button>
+            </div>
           </div>
 
           {/* Price range card */}
@@ -538,6 +571,58 @@ export default function CarBuyingChecklist() {
               )
             })()}
           </div>
+
+          {/* Negotiate vs. Walk Away recommendation */}
+          {vehicleInfo.price && Number(vehicleInfo.price) > 0 && (() => {
+            const askingPrice = Number(vehicleInfo.price)
+            const totalDeferredCost = negotiationSavings
+            const pct = totalDeferredCost / askingPrice
+            const criticalNotDone = dueItems.filter(i => i.critical && statuses[i.id] === 'not_done').length
+
+            let rec, color, bg, border, icon
+            if (pct > 0.20 || criticalNotDone >= 2) {
+              rec = {
+                title: 'Consider Walking Away',
+                body: `Deferred maintenance represents ${Math.round(pct * 100)}% of the asking price${criticalNotDone >= 2 ? ` with ${criticalNotDone} critical unresolved items` : ''}. The true cost of ownership may far exceed the sticker price. Unless the seller makes substantial concessions, look elsewhere.`,
+                action: 'If you proceed: demand at least ' + fmt(negotiationSavings) + ' off or a pre-purchase repair agreement.',
+              }
+              color = '#f87171'; bg = 'rgba(248,113,113,0.06)'; border = 'rgba(248,113,113,0.25)'; icon = '🚫'
+            } else if (pct > 0.10) {
+              rec = {
+                title: 'Negotiate Firmly',
+                body: `Significant deferred maintenance detected (${Math.round(pct * 100)}% of asking price). You have strong leverage. Push for a price reduction or ask the seller to complete repairs before closing.`,
+                action: 'Target: at least ' + fmt(negotiationSavings) + ' off. Walk if seller refuses.',
+              }
+              color = '#fb923c'; bg = 'rgba(251,146,60,0.06)'; border = 'rgba(251,146,60,0.25)'; icon = '⚠️'
+            } else if (pct > 0.05) {
+              rec = {
+                title: 'Room to Negotiate',
+                body: `Some deferred maintenance found (${Math.round(pct * 100)}% of asking price). Standard negotiation leverage — a reasonable seller should expect a modest discount.`,
+                action: 'Ask for ' + fmt(negotiationSavings) + ' off, or split the difference.',
+              }
+              color = '#FFB800'; bg = 'rgba(255,184,0,0.05)'; border = 'rgba(255,184,0,0.2)'; icon = '💬'
+            } else if (totalDeferredCost === 0 && Object.keys(statuses).length > 0) {
+              rec = {
+                title: 'Well Maintained',
+                body: 'All checked items are confirmed done. No significant deferred maintenance found at this mileage.',
+                action: 'Get a pre-purchase inspection to confirm, then proceed with confidence.',
+              }
+              color = '#4ade80'; bg = 'rgba(74,222,128,0.05)'; border = 'rgba(74,222,128,0.2)'; icon = '✅'
+            } else {
+              return null
+            }
+
+            return (
+              <div className="rounded-xl p-5 mb-6 border" style={{ background: bg, borderColor: border }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">{icon}</span>
+                  <p className="font-display font-bold text-white text-base">{rec.title}</p>
+                </div>
+                <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-2">{rec.body}</p>
+                <p className="text-xs font-semibold leading-relaxed" style={{ color }}>{rec.action}</p>
+              </div>
+            )
+          })()}
 
           {/* Pre-purchase inspection callout */}
           <div className="rounded-xl p-4 mb-6 flex items-start gap-3 border"

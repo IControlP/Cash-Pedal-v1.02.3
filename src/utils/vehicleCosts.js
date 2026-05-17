@@ -142,14 +142,19 @@ export function estimateCurrentValue(originalPrice, make, model, ageYears, curre
 
   const cap = SEGMENT_MAX_DEPR[segment] ?? 0.80
 
-  // Mileage adjustment: compare actual miles vs. expected 12 k/yr average.
-  // Each 10 % deviation from average shifts depreciation by ~2.5 %.
-  // Capped at +10 % extra depreciation (very high mileage) / -8 % (very low).
+  // Mileage adjustment: compare actual miles vs. expected 12k/yr average.
+  // Excess mileage has a larger impact than deficit (buyers discount high-mileage more than they pay up for low-mileage).
+  // High mileage: up to +20% additional depreciation for 2× expected miles.
+  // Low mileage: up to −10% depreciation reduction (buyers discount doubts about storage).
   let mileageFactor = 1.0
   if (currentMileage != null && ageYears > 0) {
     const expectedMiles = ageYears * 12000
     const mileageRatio  = currentMileage / expectedMiles
-    mileageFactor = Math.max(0.92, Math.min(1.10, 1 + (mileageRatio - 1) * 0.25))
+    if (mileageRatio > 1) {
+      mileageFactor = Math.min(1.20, 1 + (mileageRatio - 1) * 0.35)
+    } else {
+      mileageFactor = Math.max(0.90, 1 - (1 - mileageRatio) * 0.20)
+    }
   }
 
   const finalRate = Math.min(baseRate * adjBrand * mileageFactor, cap)
@@ -289,6 +294,11 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
 
   svc.push({ name: '12V battery (amortized)', detail: 'every ~5 years', annual: amortize(180, 0.3, 65000) })
 
+  if (isEV) {
+    // Battery thermal management coolant flush — unique to EVs
+    svc.push({ name: 'Battery coolant flush (EV)', detail: 'every ~100,000 mi', annual: amortize(200, 1.0, 100000) })
+  }
+
   return svc
 }
 
@@ -352,6 +362,11 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
 
   defs.push({ name: '12V battery', costPerOcc: occCost(180, 0.3), intervalMiles: 65000 })
 
+  if (isEV) {
+    // EV thermal management coolant flush (battery cooling loop, distinct from regular coolant)
+    defs.push({ name: 'Battery coolant flush (EV)', costPerOcc: occCost(200, 1.0), intervalMiles: 100000 })
+  }
+
   return Array.from({ length: years }, (_, i) => {
     const yr = i + 1
     const services = defs
@@ -371,6 +386,10 @@ export function generateMaintenanceByYear(isEV, annualMileage, segment, make = '
 }
 
 // ── Fuel ─────────────────────────────────────────────────
+
+// EPA-rated MPG consistently overestimates real-world fuel economy by 5–10%.
+// 7% is the documented midpoint from NHTSA / DOT real-world adjustment data.
+export const REAL_WORLD_MPG_FACTOR = 0.93
 
 // Premium unleaded is ~$0.70/gal above regular (national avg, per EIA 2025)
 export const PREMIUM_PRICE_DELTA = 0.70
@@ -445,15 +464,16 @@ export function getEffectiveElecRate(state, style) {
 
 // state=null → national average defaults ($3.50/gal gas, $0.16/kWh electricity)
 // isPremium: adds PREMIUM_PRICE_DELTA to the state average when no override is set
+// Applies REAL_WORLD_MPG_FACTOR to EPA ratings for more accurate cost projections.
 export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 15000, fuelPriceOverride = null, isPremium = false) {
   const KWH_PER_GAL = 33.7
   if (isEV) {
-    const mpge = mpgeCombined ?? 100
+    const mpge = (mpgeCombined ?? 100) * REAL_WORLD_MPG_FACTOR
     const annualKwh = miles / (mpge / KWH_PER_GAL)
     const rate = fuelPriceOverride !== null ? fuelPriceOverride : (STATE_ELEC_RATES[state] ?? 0.16)
     return Math.round(annualKwh * rate / 50) * 50
   }
-  const mpg = mpgCombined ?? 28
+  const mpg = (mpgCombined ?? 28) * REAL_WORLD_MPG_FACTOR
   const base = STATE_FUEL_PRICES[state] ?? 3.50
   const price = fuelPriceOverride !== null
     ? fuelPriceOverride

@@ -17,7 +17,7 @@ const faqs = [
   },
   {
     q: 'Do I need to create an account?',
-    a: 'No. All basic tools are free and require no sign-up. Cash Pedal Pro ($10/month) unlocks unlimited detailed TCO analyses, unlimited used-car checklists, and multi-vehicle comparison exports — no account required for the free tier.',
+    a: 'No. All basic tools are free and require no sign-up. Cash Pedal Pro ($19 for a 60-day shopper pass) unlocks unlimited detailed TCO analyses, unlimited used-car checklists, and multi-vehicle comparison exports — no account required for the free tier.',
   },
   {
     q: 'How does the Car Survey work?',
@@ -25,7 +25,7 @@ const faqs = [
   },
   {
     q: 'What is the 20/4/10 rule?',
-    a: 'It\'s a widely used personal finance guideline: put at least 20% down, finance for no more than 4 years, and keep total vehicle costs (payment + insurance + fuel) under 10% of your gross income. The Salary Calculator uses this to show the income you\'d need.',
+    a: 'It\'s a widely used personal finance guideline: put at least 20% down, finance for no more than 4 years, and keep total vehicle costs (payment + insurance + fuel + maintenance) under 10% of your gross income. The Salary Calculator uses this to show the income you\'d need. Note: the 10% threshold refers to gross income, not take-home pay — as a rough guide, that\'s about 13–16% of your actual paycheck after taxes. For high earners or people in low-cost-of-living areas, 15–20% may still be financially comfortable.',
   },
   {
     q: 'Is this financial advice?',
@@ -105,6 +105,28 @@ export default function About() {
                 <p className="text-xs text-[var(--text-muted)]">{desc}</p>
               </Link>
             ))}
+          </div>
+
+          {/* Methodology */}
+          <h2 className="font-display font-bold text-white text-xl mb-4 anim-4">How we estimate costs</h2>
+          <div className="card mb-10 anim-4 flex flex-col gap-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)]">Data sources & methodology</p>
+            {[
+              { title: 'Depreciation', detail: 'Brand-specific multipliers derived from JD Power, iSeeCars, and CarEdge 5-year resale data. Model-level adjustments applied for elite-demand vehicles (Toyota 4Runner, Jeep Wrangler, etc.) and models with historically poor retention (luxury German sedans, certain EVs). Values are adjusted for mileage deviation from the 12,000 mi/yr average.' },
+              { title: 'Insurance', detail: 'Base premiums from 2025 Bankrate/NAIC state averages. Vehicle value brackets and brand multipliers calibrated to national frequency/severity data. Driver age multipliers from IIHS actuarial tables — teen drivers typically pay 2–2.5× adult rates. Multi-car policy discount (~15%) available in detailed mode.' },
+              { title: 'Maintenance', detail: 'Service intervals and costs from manufacturer schedules, RepairPal, and YourMechanic aggregated data. Brand-specific maintenance multipliers (Toyota 0.85×, BMW 1.50×, Porsche 1.80×) reflect real ownership-cost differences. EV maintenance is fully separate — no oil changes, spark plugs, or transmission fluid.' },
+              { title: 'Fuel', detail: '2025 state gas prices from EIA/GasBuddy. Residential electricity rates from EIA 2025 state averages. Blended EV charging rate available (80% home / 20% public DCFC). Premium fuel premium set at $0.70/gal above regular, applied automatically for brands/models that require it.' },
+              { title: 'Registration & Taxes', detail: 'State registration fees and vehicle license fees from state DMV schedules. Sales tax rates include statutory caps (NC $2,000, SC $500) and trade-in deduction logic (most states reduce tax base by trade-in value). Dealer doc fees from state averages.' },
+              { title: 'EV Incentives', detail: 'Federal EV tax credit (Inflation Reduction Act, up to $7,500 new / $4,000 used) is an adjustable field — income and vehicle price limits apply that we cannot verify for each buyer. State incentives vary widely and are not automatically included; check your state\'s DMV or energy office.' },
+            ].map(({ title, detail }) => (
+              <div key={title}>
+                <p className="text-sm font-semibold text-white mb-1">{title}</p>
+                <p className="text-xs text-[var(--text-muted)] leading-relaxed">{detail}</p>
+              </div>
+            ))}
+            <p className="text-[10px] text-[var(--text-muted)] border-t border-[var(--border)] pt-3 mt-1">
+              All data is updated periodically. If you spot an error or outdated figure, email us at <strong className="text-white">support@cashpedal.io</strong>.
+            </p>
           </div>
 
           {/* FAQ */}

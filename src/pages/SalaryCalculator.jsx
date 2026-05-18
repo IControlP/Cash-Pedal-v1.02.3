@@ -94,7 +94,7 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
 }
 
 // Rough effective take-home estimate for a given gross annual salary.
-// Uses simplified federal brackets + FICA + 4% avg state income tax.
+// Uses simplified federal brackets + FICA (with 2025 SS wage cap) + avg state income tax.
 // Intended for ballpark context only, not tax advice.
 function estimateMonthlyTakeHome(grossAnnual) {
   let federalEff
@@ -104,7 +104,15 @@ function estimateMonthlyTakeHome(grossAnnual) {
   else if (grossAnnual <= 140000) federalEff = 0.21
   else if (grossAnnual <= 200000) federalEff = 0.24
   else                            federalEff = 0.28
-  const totalRate = federalEff + 0.0765 + 0.04  // federal + FICA + avg state
+
+  // FICA: SS (6.2%) capped at $176,100 in 2025 + Medicare (1.45%) uncapped
+  // Additional 0.9% Medicare surtax above $200k (single filer)
+  const SS_CAP = 176100
+  const ssTax = Math.min(grossAnnual, SS_CAP) * 0.062
+  const medicareTax = grossAnnual * 0.0145 + (grossAnnual > 200000 ? (grossAnnual - 200000) * 0.009 : 0)
+  const ficaEff = (ssTax + medicareTax) / grossAnnual
+
+  const totalRate = federalEff + ficaEff + 0.04  // federal + FICA + avg state
   return Math.round((grossAnnual * (1 - totalRate)) / 12)
 }
 
@@ -1065,7 +1073,7 @@ export default function SalaryCalculator() {
                       </div>
                     </div>
                     <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
-                      Take-home estimate uses federal brackets + FICA + 4% avg state tax — actual varies by state, filing status &amp; deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
+                      Take-home estimate uses simplified federal brackets + FICA (SS capped at $176,100 for 2025) + 4% avg state tax — actual varies by state, filing status &amp; deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
                     </p>
                   </div>
                 )

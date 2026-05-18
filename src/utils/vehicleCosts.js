@@ -186,8 +186,22 @@ export const STATE_INS_BASE = {
   TX:2310,UT:1640,VT:1160,VA:1480,WA:1620,WV:1610,WI:1330,WY:1420,
 }
 
+// Driver age brackets → insurance premium multiplier (actuarial data, IIHS/NAIC)
+// Teens and young adults pay significantly more; seniors also pay a modest premium.
+export const DRIVER_AGE_BRACKETS = [
+  { id: 'teen',        label: 'Teen (16–20)',        mult: 2.20 },
+  { id: 'young_adult', label: 'Young adult (21–25)', mult: 1.45 },
+  { id: 'adult',       label: 'Adult (26–65)',        mult: 1.00 },
+  { id: 'senior',      label: 'Senior (66+)',         mult: 1.18 },
+]
+
+export function getDriverAgeMult(bracketId) {
+  return DRIVER_AGE_BRACKETS.find(b => b.id === bracketId)?.mult ?? 1.0
+}
+
 // state=null → national average
-export function estimateInsurance(purchasePrice, make, model, modelYear, state, multiCarDiscount = false) {
+// driverAgeBracket: 'teen' | 'young_adult' | 'adult' | 'senior' — defaults to adult (1.0×)
+export function estimateInsurance(purchasePrice, make, model, modelYear, state, multiCarDiscount = false, driverAgeBracket = 'adult') {
   const ageYears   = modelYear ? Math.max(0, new Date().getFullYear() - parseInt(modelYear)) : 0
   const currentVal = estimateCurrentValue(purchasePrice, make || null, model || null, ageYears)
   const [,,valueMult] = INSURANCE_VALUE_BRACKETS.find(([mn, mx]) => currentVal >= mn && currentVal < mx) ?? [0,0,1.0]
@@ -199,7 +213,8 @@ export function estimateInsurance(purchasePrice, make, model, modelYear, state, 
   // and the insurer's reduced exposure as car value falls beyond bracket thresholds.
   // ~1.5% per year, floored at 0.85 for vehicles 10+ years old.
   const ageMult = ageYears > 0 ? Math.max(0.85, 1 - ageYears * 0.015) : 1.0
-  return Math.round((stateBase * valueMult * brandMult * ageMult * multiCarMult) / 50) * 50
+  const driverMult = getDriverAgeMult(driverAgeBracket)
+  return Math.round((stateBase * valueMult * brandMult * ageMult * multiCarMult * driverMult) / 50) * 50
 }
 
 // ── Maintenance ──────────────────────────────────────────
@@ -503,9 +518,17 @@ export const STATE_VEHICLE_SALES_TAX = {
 // States with a statutory dollar cap on vehicle sales tax
 export const STATE_VEHICLE_TAX_CAP = { NC: 2000, SC: 500 }
 
-export function computeSalesTax(state, vehiclePrice) {
+// States that do NOT reduce taxable vehicle price by trade-in value
+// (they tax the full sale price regardless of trade-in)
+export const NO_TRADE_IN_TAX_CREDIT = new Set(['CA', 'DC', 'HI', 'MD', 'MI'])
+
+// tradeInValue: amount to deduct from taxable price (most states allow this)
+export function computeSalesTax(state, vehiclePrice, tradeInValue = 0) {
   const rate = STATE_VEHICLE_SALES_TAX[state] ?? 0.0625
-  const raw  = vehiclePrice * rate
+  const taxablePrice = (tradeInValue > 0 && !NO_TRADE_IN_TAX_CREDIT.has(state))
+    ? Math.max(0, vehiclePrice - tradeInValue)
+    : vehiclePrice
+  const raw  = taxablePrice * rate
   const cap  = STATE_VEHICLE_TAX_CAP[state]
   return Math.round((cap != null ? Math.min(raw, cap) : raw) / 25) * 25
 }

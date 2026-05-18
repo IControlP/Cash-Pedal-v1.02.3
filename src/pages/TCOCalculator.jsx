@@ -13,7 +13,7 @@ import {
   HIGH_RETENTION, POOR_RETENTION,
   classifySegment, applyModelAdjustments, estimateCurrentValue,
   INSURANCE_BASE_RATE, INSURANCE_VALUE_BRACKETS, INSURANCE_BRAND_MULT, STATE_INS_BASE,
-  estimateInsurance,
+  estimateInsurance, DRIVER_AGE_BRACKETS,
   MAINT_BRAND_MULT, MAINT_LUXURY_MAKES, MAINT_PREMIUM_MAKES, MAINT_ECONOMY_MAKES,
   determineMaintTier, MAINT_TIER_COSTS, LABOR_RATE, generateMaintenanceServices, generateMaintenanceByYear, generateDetailedMaintenanceByYear,
   STATE_FUEL_PRICES, STATE_ELEC_RATES,
@@ -21,6 +21,7 @@ import {
   PREMIUM_PRICE_DELTA, requiresPremiumFuel,
   STATE_REG_FEE, STATE_VLF, computeAnnualRegistration,
   computeSalesTax, STATE_VEHICLE_SALES_TAX, STATE_DOC_FEE_AVG, getRegionalDemandPremium,
+  NO_TRADE_IN_TAX_CREDIT,
   ZIP_RANGES, zipToState, resolveLocation,
 } from '../utils/vehicleCosts'
 
@@ -315,7 +316,7 @@ const LS_USER_SUBMITTED   = 'cashpedal_user_data_submitted'
 const LS_LAST_CALC        = 'cashpedal_last_calc'
 
 // ── Paywall constants ─────────────────────────────────
-const FREE_DETAILED_LIMIT  = 3
+const FREE_DETAILED_LIMIT  = 5
 const LS_DETAILED_COUNT    = 'cashpedal_detailed_calc_count'
 
 function getSessionId() {
@@ -1199,6 +1200,11 @@ export default function TCOCalculator() {
   const [taxRateOverride,  setTaxRateOverride]  = useState(null) // null = use state rate
   const [docFeeOverride,   setDocFeeOverride]   = useState(null) // null = use state avg
   const [simpleMode,       setSimpleMode]       = useState(() => localStorage.getItem('cashpedal_simple_mode') !== 'false')
+  // Driver profile
+  const [driverAgeBracket, setDriverAgeBracket] = useState('adult')
+  // Trade-in & incentives
+  const [tradeInValue,     setTradeInValue]     = useState(0)
+  const [evTaxCredit,      setEvTaxCredit]      = useState(0)
 
   const toggleSimpleMode = () => {
     const next = !simpleMode
@@ -1258,7 +1264,7 @@ export default function TCOCalculator() {
 
   useEffect(() => {
     if (customCosts) return
-    setAnnualInsurance(estimateInsurance(price, selMake||null, selModel||null, selYear||null, resolvedState||null, detailedMode && multiCarPolicy))
+    setAnnualInsurance(estimateInsurance(price, selMake||null, selModel||null, selYear||null, resolvedState||null, detailedMode && multiCarPolicy, driverAgeBracket))
     const customOverride = customFuelPrice !== '' ? parseFloat(customFuelPrice) : null
     if (modelData) {
       // For EVs: use charging-style blended rate unless user has manually overridden it
@@ -1294,7 +1300,7 @@ export default function TCOCalculator() {
       ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)), currentMileage)
       : price
     setAnnualRegistration(computeAnnualRegistration(resolvedState, currentVal))
-  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage, driverAgeBracket]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLocationInput = useCallback((val) => {
     setLocationInput(val)
@@ -1375,15 +1381,19 @@ export default function TCOCalculator() {
   // Purchase extras (tax + dealer fees) — only for buy mode
   const salesTaxAmt = financeMode === 'buy'
     ? (taxRateOverride !== null
-        ? Math.round(price * (parseFloat(taxRateOverride) / 100) / 25) * 25
-        : computeSalesTax(resolvedState, price))
+        ? Math.round(Math.max(0, price - tradeInValue) * (parseFloat(taxRateOverride) / 100) / 25) * 25
+        : computeSalesTax(resolvedState, price, tradeInValue))
     : 0
   const autoDocFee = resolvedState ? (STATE_DOC_FEE_AVG[resolvedState] ?? 299) : 299
   const effectiveDocFee = (financeMode === 'buy' && dealerPurchase)
     ? (docFeeOverride !== null ? Number(docFeeOverride) : autoDocFee)
     : 0
   const totalPurchaseExtras = salesTaxAmt + effectiveDocFee
-  const effectivePrice = financeMode === 'buy' ? price + totalPurchaseExtras : price
+  // EV tax credit reduces net price paid in buy mode (applied at purchase, year 1)
+  const effectiveEvCredit = (financeMode === 'buy' && effIsEV) ? evTaxCredit : 0
+  const effectivePrice = financeMode === 'buy'
+    ? Math.max(0, price + totalPurchaseExtras - effectiveEvCredit - tradeInValue)
+    : price
   const regionalDemand = resolvedState ? getRegionalDemandPremium(resolvedState) : 0
 
   const results = useMemo(() => calculateLoan({
@@ -1480,6 +1490,19 @@ export default function TCOCalculator() {
   const catInfoForRender = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
   const effIsEV = modelData ? modelData.is_ev : (catInfoForRender?.isEV ?? false)
   const isPremium = !effIsEV && !!(selMake && requiresPremiumFuel(selMake, selModel))
+
+  // Auto-suggest $7,500 federal EV credit when user selects a new EV; clear for ICE vehicles.
+  // User can always override the value manually.
+  const prevIsEVRef = useRef(effIsEV)
+  useEffect(() => {
+    if (effIsEV === prevIsEVRef.current) return
+    prevIsEVRef.current = effIsEV
+    if (effIsEV && financeMode === 'buy') {
+      setEvTaxCredit(7500)
+    } else {
+      setEvTaxCredit(0)
+    }
+  }, [effIsEV, financeMode])
 
   // Whether the detailed results are currently blocked by the paywall
   const isDetailBlocked = !isSubscribed && detailedCalcCount > FREE_DETAILED_LIMIT
@@ -1924,13 +1947,37 @@ export default function TCOCalculator() {
                       </div>
                     )}
 
+                    {/* Trade-in deduction row */}
+                    {tradeInValue > 0 && (
+                      <div className="flex items-center justify-between px-4 py-2">
+                        <span className="text-sm text-green-400">Trade-In Value</span>
+                        <span className="font-semibold text-green-400 text-sm tabular-nums">−{formatCurrency(tradeInValue)}</span>
+                      </div>
+                    )}
+
+                    {/* EV tax credit row */}
+                    {effectiveEvCredit > 0 && (
+                      <div className="flex items-center justify-between px-4 py-2">
+                        <div>
+                          <span className="text-sm text-green-400">Federal EV Tax Credit</span>
+                          <span className="ml-2 text-[10px] text-[var(--text-muted)]">IRA credit applied</span>
+                        </div>
+                        <span className="font-semibold text-green-400 text-sm tabular-nums">−{formatCurrency(effectiveEvCredit)}</span>
+                      </div>
+                    )}
+
                     {/* Out-the-door total */}
                     <div className="flex items-center justify-between px-4 py-3">
                       <div>
-                        <span className="text-sm font-semibold text-white">Out-the-Door Price</span>
+                        <span className="text-sm font-semibold text-white">Net Cost</span>
                         {simpleMode && totalPurchaseExtras > 0 && (
                           <span className="ml-2 text-[10px] text-[var(--text-muted)]">
                             includes ~{formatCurrency(totalPurchaseExtras)} tax &amp; fees
+                          </span>
+                        )}
+                        {(tradeInValue > 0 || effectiveEvCredit > 0) && (
+                          <span className="ml-2 text-[10px] text-green-400">
+                            after {[tradeInValue > 0 && 'trade-in', effectiveEvCredit > 0 && 'EV credit'].filter(Boolean).join(' & ')}
                           </span>
                         )}
                       </div>
@@ -1962,11 +2009,47 @@ export default function TCOCalculator() {
                     </div>
                   )}
 
+                  {/* Trade-in value */}
+                  <SliderInput label="Trade-In Value" value={tradeInValue}
+                    onChange={setTradeInValue}
+                    min={0} max={80000} step={500} prefix="$" />
+                  {!simpleMode && tradeInValue > 0 && (
+                    <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                      {NO_TRADE_IN_TAX_CREDIT.has(resolvedState)
+                        ? `${resolvedState} taxes the full sale price — trade-in value applied to net purchase cost only.`
+                        : `Reduces taxable amount by ${formatCurrency(tradeInValue)} — saving ~${formatCurrency(Math.round(salesTaxAmt > 0 ? (tradeInValue * (STATE_VEHICLE_SALES_TAX[resolvedState] ?? 0.0625)) : 0))} in sales tax${resolvedState ? ` (${resolvedState})` : ''}.`}
+                    </p>
+                  )}
+
+                  {/* Federal EV tax credit — only for EVs */}
+                  {effIsEV && (
+                    <>
+                      <SliderInput label="Federal EV Tax Credit" value={evTaxCredit}
+                        onChange={setEvTaxCredit}
+                        min={0} max={7500} step={250} prefix="$" />
+                      {!simpleMode && (
+                        <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                          New EVs qualify for up to $7,500 (IRA). Set to $0 if buying used (max $4,000 used EV credit) or if income exceeds the AGI limit ($150k single / $300k joint). PHEVs may qualify for partial credit.
+                        </p>
+                      )}
+                    </>
+                  )}
+
                   <SelectInput label="Loan Term" value={loanTerm} onChange={setLoanTerm} options={loanTermOptions} />
 
                   <SliderInput label="Annual Interest Rate" value={rate} onChange={setRate}
                     min={0} max={25} step={0.1} suffix="%" inputMin={0} inputMax={25} />
-                  {!simpleMode && (
+                  {rate > 15 && (
+                    <div className="rounded-lg px-3 py-2.5 flex items-start gap-2.5 border -mt-2"
+                      style={{ borderColor: 'rgba(248,113,113,0.35)', background: 'rgba(248,113,113,0.05)' }}>
+                      <span className="text-sm shrink-0 mt-0.5">⚠</span>
+                      <p className="text-[11px] leading-relaxed text-red-400">
+                        <span className="font-semibold">{rate}% is a high interest rate.</span>{' '}
+                        Check credit unions and online lenders — they typically offer rates 2–4% lower than dealer financing for the same loan term.
+                      </p>
+                    </div>
+                  )}
+                  {!simpleMode && rate <= 15 && (
                     <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
                       Typical rates (new car): excellent credit 740+ ≈ 5–7% · good 680+ ≈ 7–9% · fair 620+ ≈ 10–13%
                     </p>
@@ -1974,6 +2057,15 @@ export default function TCOCalculator() {
 
                   <SelectInput label="Ownership Duration" value={ownershipYears}
                     onChange={setOwnershipYears} options={ownershipOptions} />
+                  {ownershipYears * 12 < loanTerm && (
+                    <div className="rounded-lg px-3 py-2.5 flex items-start gap-2.5 border -mt-2"
+                      style={{ borderColor: 'rgba(251,191,36,0.35)', background: 'rgba(251,191,36,0.05)' }}>
+                      <span className="text-sm shrink-0 mt-0.5">ℹ</span>
+                      <p className="text-[11px] leading-relaxed" style={{ color: '#fbbf24' }}>
+                        You plan to own for {ownershipYears} yr but the loan runs {loanTerm / 12} yr. If you sell before payoff, your remaining loan balance must be paid from the sale proceeds.
+                      </p>
+                    </div>
+                  )}
                 </>
               ) : (
                 <>
@@ -2271,6 +2363,27 @@ export default function TCOCalculator() {
                     </p>
                   </div>
 
+                  {/* Driver age bracket */}
+                  <div className="flex flex-col gap-2">
+                    <label className="input-label">Primary Driver Age</label>
+                    <select
+                      value={driverAgeBracket}
+                      onChange={e => setDriverAgeBracket(e.target.value)}
+                      className="input-field"
+                    >
+                      {DRIVER_AGE_BRACKETS.map(b => (
+                        <option key={b.id} value={b.id}>{b.label}</option>
+                      ))}
+                    </select>
+                    {driverAgeBracket !== 'adult' && (
+                      <p className="text-[10px] text-[var(--text-muted)]">
+                        {driverAgeBracket === 'teen' && 'Teen drivers typically pay 2–2.5× the adult rate. Adding a teen to an existing policy is cheaper than a separate policy.'}
+                        {driverAgeBracket === 'young_adult' && 'Rates drop significantly after age 25. Good student and defensive driver discounts can reduce this by 10–15%.'}
+                        {driverAgeBracket === 'senior' && 'Rates begin to rise modestly after 65. Completing a senior driver safety course often earns a discount.'}
+                      </p>
+                    )}
+                  </div>
+
                   {/* Multi-car policy toggle */}
                   <div className="flex items-center justify-between">
                     <div>
@@ -2302,7 +2415,8 @@ export default function TCOCalculator() {
                 const fuelNote = effIsEV
                   ? `$${activeElecRate.toFixed(3)}/kWh · ${customFuelPrice ? 'custom' : chargingStyleLabel}`
                   : `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${STATE_FUEL_PRICES[resolvedState] ?? 3.50}`}/gal`
-                const insNote = `${resolvedState} · ${selMake || 'avg'}${detailedMode && multiCarPolicy ? ' · multi-car' : ''}`
+                const driverAgeLabel = DRIVER_AGE_BRACKETS.find(b => b.id === driverAgeBracket)?.label ?? 'adult'
+                const insNote = `${resolvedState} · ${selMake || 'avg'}${detailedMode && multiCarPolicy ? ' · multi-car' : ''}${detailedMode && driverAgeBracket !== 'adult' ? ` · ${driverAgeLabel}` : ''}`
                 const maintNote = detailedMode
                   ? (effIsEV ? 'EV · itemized' : 'gas · itemized')
                   : (effIsEV ? 'EV avg' : 'gas avg')

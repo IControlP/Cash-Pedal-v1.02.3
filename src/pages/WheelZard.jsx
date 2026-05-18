@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { useSubscription } from '../hooks/useSubscription'
@@ -143,7 +143,7 @@ function buildWizardSummary(answers) {
 
   return {
     text: `Based on your answers — <em>${use_case}, ${budget}, ${condition}, ${fuel}, ${mileage}/yr</em> — here's what I'd recommend:\n\n${recList}${tipList ? '\n' + tipList : ''}\n\nWant me to dig into any of these models, compare costs, or talk negotiation strategy?`,
-    followUps: ['How do I negotiate the price?', 'What should I check on a used car?', 'How much will insurance cost?', 'Run me through total cost of ownership'],
+    followUps: ['How do I negotiate the price?', 'What should I check on a used car?', 'How much will insurance cost?', 'Run me through total cost of ownership', 'Calculate total cost of ownership'],
   }
 }
 
@@ -328,6 +328,14 @@ function getLocalResponse(msg, context) {
     }
   }
 
+  // TCO / total cost of ownership
+  if (/\b(total cost of ownership|tco|true cost|cost to own|how much (to own|does it cost to own))\b/.test(m)) {
+    return {
+      text: "Total cost of ownership is what most buyers miss. Beyond the sticker price, your real annual cost includes:<ul class='mt-1 space-y-1 pl-1'><li>• <strong class='text-white'>Loan/lease payment</strong> — often the smallest variable if you negotiate well</li><li>• <strong class='text-white'>Insurance</strong> — $1,200–$3,500/yr depending on vehicle, state, and driver</li><li>• <strong class='text-white'>Fuel or electricity</strong> — $900–$3,000+/yr depending on MPG and mileage</li><li>• <strong class='text-white'>Maintenance</strong> — $500/yr for a Toyota to $2,500+/yr for a German luxury vehicle</li><li>• <strong class='text-white'>Registration &amp; taxes</strong> — varies widely by state</li><li>• <strong class='text-white'>Depreciation</strong> — the hidden cost; a $40k car losing 40% in 5 years costs you $3,200/yr just in value</li></ul>Use our <a href='/tco' class='text-[var(--accent)] hover:underline font-semibold'>TCO Calculator</a> to get exact numbers for any make/model/trim with your state's rates and your loan terms.",
+      followUps: ['Open TCO Calculator', 'What car has the lowest ownership cost?', 'EV vs gas ownership cost?', 'How do I negotiate the purchase price?'],
+    }
+  }
+
   // Lease vs buy
   if (/\b(lease|leasing)\b/.test(m)) {
     return {
@@ -381,6 +389,7 @@ const INITIAL_MESSAGE = {
 
 export default function WheelZard() {
   const { isSubscribed } = useSubscription()
+  const navigate = useNavigate()
   const [messages, setMessages] = useState([INITIAL_MESSAGE])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
@@ -413,6 +422,10 @@ export default function WheelZard() {
   function handleSend(text) {
     const msg = (text ?? input).trim()
     if (!msg || isTyping) return
+
+    // Inline navigation shortcuts from follow-up buttons
+    if (msg === 'Open TCO Calculator') { navigate('/tco'); return }
+    if (msg === 'Calculate total cost of ownership') { navigate('/tco'); return }
 
     if (msg === 'Walk me through it') {
       setMessages(m => [...m, { role: 'user', text: msg }])
@@ -695,7 +708,7 @@ export default function WheelZard() {
                     ))}
                   </ul>
                   <Link to="/subscribe" className="btn-primary text-xs py-2 block text-center">
-                    Try Pro — $10/month →
+                    Get Pro — $19 / 60-day pass →
                   </Link>
                 </div>
               )}

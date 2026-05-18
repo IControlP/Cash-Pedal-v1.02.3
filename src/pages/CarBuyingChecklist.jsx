@@ -3,7 +3,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PaywallModal from '../components/PaywallModal'
 import { useSubscription } from '../hooks/useSubscription'
-import { maintenanceItems, sellerQuestions, US_STATES, getClimateFlags, getContextualQuestions } from '../data/checklistData'
+import { maintenanceItems, sellerQuestions, US_STATES, getClimateFlags, getContextualQuestions, getApplicableMaintenanceItems } from '../data/checklistData'
 import { estimateCurrentValue } from '../utils/vehicleCosts'
 import VEHICLES from '../data/vehicles.json'
 
@@ -108,28 +108,36 @@ export default function CarBuyingChecklist() {
   const [notes, setNotes] = useState({})
   const [activeTab, setActiveTab] = useState('maintenance')
 
+  const vehicleData = useMemo(() =>
+    vehicleInfo.make && vehicleInfo.model ? VEHICLES[vehicleInfo.make]?.[vehicleInfo.model] : null,
+    [vehicleInfo.make, vehicleInfo.model]
+  )
+
+  const isEV = vehicleData?.is_ev ?? false
+  const applicableItems = useMemo(() => getApplicableMaintenanceItems(isEV), [isEV])
+
   const categories = useMemo(() => {
     const cats = {}
-    maintenanceItems.forEach(item => {
+    applicableItems.forEach(item => {
       if (!cats[item.category]) cats[item.category] = []
       cats[item.category].push(item)
     })
     return cats
-  }, [])
+  }, [applicableItems])
 
   // Items that should have been done by this mileage
   const dueItems = useMemo(() =>
-    maintenanceItems.filter(item => vehicleInfo.mileage >= item.interval),
-    [vehicleInfo.mileage]
+    applicableItems.filter(item => vehicleInfo.mileage >= item.interval),
+    [applicableItems, vehicleInfo.mileage]
   )
 
   // Items due in the next year (~12,000 miles)
   const upcomingItems = useMemo(() =>
-    maintenanceItems.filter(item => {
+    applicableItems.filter(item => {
       const milesTilDue = item.interval - (vehicleInfo.mileage % item.interval)
       return milesTilDue <= 12000 && !dueItems.includes(item)
     }),
-    [vehicleInfo.mileage, dueItems]
+    [applicableItems, vehicleInfo.mileage, dueItems]
   )
 
   const confirmed = dueItems.filter(i => statuses[i.id] === 'confirmed')
@@ -138,11 +146,6 @@ export default function CarBuyingChecklist() {
 
   const negotiationSavings = notDone.reduce((s, i) => s + i.cost, 0) +
     unknown.reduce((s, i) => s + i.cost * 0.5, 0)
-
-  const vehicleData = useMemo(() =>
-    vehicleInfo.make && vehicleInfo.model ? VEHICLES[vehicleInfo.make]?.[vehicleInfo.model] : null,
-    [vehicleInfo.make, vehicleInfo.model]
-  )
 
   const climateFlags = useMemo(() =>
     vehicleInfo.state ? getClimateFlags(vehicleInfo.state) : [],

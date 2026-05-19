@@ -52,7 +52,7 @@ export default function CTAOffer() {
               <div className="text-sm text-[var(--text-muted)] mb-1">
                 one-time · 60 days of full access
               </div>
-              <div className="font-mono text-xs text-[var(--text-muted)] opacity-70 mb-5">
+              <div className="font-mono text-xs text-[var(--text-muted)] mb-5">
                 less than one tank of gas
               </div>
               <Link to="/subscribe" className="btn-primary w-full justify-center">

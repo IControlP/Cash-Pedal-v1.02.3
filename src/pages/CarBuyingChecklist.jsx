@@ -582,7 +582,33 @@ export default function CarBuyingChecklist() {
                   <p className="text-[var(--text-muted)]">No maintenance items appear due at {vehicleInfo.mileage.toLocaleString()} miles.</p>
                 </div>
               ) : (
-                Object.entries(
+                <>
+                  {/* Bulk action controls */}
+                  <div className="flex items-center justify-between flex-wrap gap-2 px-1">
+                    <p className="text-xs text-[var(--text-muted)]">
+                      {confirmed.length} confirmed · {notDone.length} not done · {unknown.length} unknown
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          const updates = {}
+                          dueItems.forEach(i => { updates[i.id] = 'confirmed' })
+                          setStatuses(s => ({ ...s, ...updates }))
+                        }}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors border"
+                        style={{ borderColor: 'rgba(200,255,0,0.3)', color: 'var(--accent)', background: 'rgba(200,255,0,0.07)' }}
+                      >
+                        ✓ All done
+                      </button>
+                      <button
+                        onClick={() => setStatuses({})}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors border border-[var(--border)] text-[var(--text-muted)] hover:text-white"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+                  {Object.entries(
                   dueItems.reduce((acc, item) => {
                     if (!acc[item.category]) acc[item.category] = []
                     acc[item.category].push(item)
@@ -623,7 +649,8 @@ export default function CarBuyingChecklist() {
                       ))}
                     </div>
                   </div>
-                ))
+                  ))}
+                </>
               )}
             </div>
           )}

@@ -23,12 +23,14 @@ function monthlyPayment(principal, annualRate, months) {
   return (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1)
 }
 
-// Estimated monthly lease payment using standard dealer math
-// residual ≈ 55% (36mo), 60% (24mo), 50% (48mo); money factor ≈ 0.00250 (~6% APR)
+// Estimated monthly lease payment using standard dealer math.
+// residual ≈ 55% (36mo), 60% (24mo), 50% (48mo); money factor ≈ 0.00250 (~6% APR).
+// Includes typical $795 acquisition fee rolled into cap cost.
+const LEASE_ACQUISITION_FEE = 795
 function estimateLeaseMonthly(msrp, capReduction, termMonths) {
   const residualPct = termMonths <= 24 ? 0.60 : termMonths <= 36 ? 0.55 : 0.50
   const residual = msrp * residualPct
-  const capCost = msrp - capReduction
+  const capCost = msrp - capReduction + LEASE_ACQUISITION_FEE
   const depreciation = (capCost - residual) / termMonths
   const financeCharge = (capCost + residual) * 0.00250
   return Math.max(0, Math.round(depreciation + financeCharge))
@@ -93,10 +95,22 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
   }
 }
 
+// Approximate effective state income tax rates for a single median filer (2025).
+// Excludes states with no income tax (FL, TX, WA, NV, SD, WY, AK, NH, TN).
+const STATE_INCOME_TAX_EFF = {
+  AK:0.000, FL:0.000, NV:0.000, NH:0.000, SD:0.000, TN:0.000, TX:0.000, WA:0.000, WY:0.000,
+  AL:0.040, AR:0.040, AZ:0.025, CA:0.076, CO:0.044, CT:0.055, DC:0.063, DE:0.044,
+  GA:0.055, HI:0.068, ID:0.058, IL:0.050, IN:0.032, IA:0.047, KS:0.046, KY:0.045,
+  LA:0.035, ME:0.052, MD:0.055, MA:0.050, MI:0.043, MN:0.063, MS:0.044, MO:0.041,
+  MT:0.056, NE:0.051, NJ:0.057, NM:0.043, NY:0.066, NC:0.053, ND:0.016, OH:0.039,
+  OK:0.042, OR:0.085, PA:0.031, RI:0.049, SC:0.052, UT:0.049, VA:0.052, VT:0.053,
+  WI:0.055, WV:0.048,
+}
+
 // Rough effective take-home estimate for a given gross annual salary.
-// Uses simplified federal brackets + FICA + 4% avg state income tax.
+// Uses simplified federal brackets + FICA + state-specific effective income tax rate.
 // Intended for ballpark context only, not tax advice.
-function estimateMonthlyTakeHome(grossAnnual) {
+function estimateMonthlyTakeHome(grossAnnual, state) {
   let federalEff
   if (grossAnnual <= 30000)       federalEff = 0.08
   else if (grossAnnual <= 55000)  federalEff = 0.12
@@ -104,7 +118,10 @@ function estimateMonthlyTakeHome(grossAnnual) {
   else if (grossAnnual <= 140000) federalEff = 0.21
   else if (grossAnnual <= 200000) federalEff = 0.24
   else                            federalEff = 0.28
-  const totalRate = federalEff + 0.0765 + 0.04  // federal + FICA + avg state
+  const stateRate = state && STATE_INCOME_TAX_EFF[state] !== undefined
+    ? STATE_INCOME_TAX_EFF[state]
+    : 0.040  // national average fallback
+  const totalRate = federalEff + 0.0765 + stateRate  // federal + FICA + state
   return Math.round((grossAnnual * (1 - totalRate)) / 12)
 }
 
@@ -311,9 +328,16 @@ export default function SalaryCalculator() {
     }
   }, [mode])
 
-  // Reset cascade on upstream change
-  function handleMakeChange(v) { setSelMake(v); setSelModel(''); setSelYear(''); setSelTrim('') }
-  function handleModelChange(v) { setSelModel(v); setSelYear(''); setSelTrim('') }
+  // Reset cascade on upstream change; clear price fields in pro mode so stale
+  // prices from the previous vehicle don't persist while the user picks a new trim.
+  function handleMakeChange(v) {
+    setSelMake(v); setSelModel(''); setSelYear(''); setSelTrim('')
+    if (proMode) { setVehiclePrice(30000); setLeaseMsrp(30000) }
+  }
+  function handleModelChange(v) {
+    setSelModel(v); setSelYear(''); setSelTrim('')
+    if (proMode) { setVehiclePrice(30000); setLeaseMsrp(30000) }
+  }
   function handleYearChange(v) { setSelYear(v); setSelTrim('') }
 
   const activePrice = mode === 'lease' ? leaseMsrp : vehiclePrice
@@ -1040,7 +1064,7 @@ export default function SalaryCalculator() {
               {/* Take-home income context */}
               {(() => {
                 const grossConservative = results.conservative
-                const takeHome = estimateMonthlyTakeHome(grossConservative)
+                const takeHome = estimateMonthlyTakeHome(grossConservative, userState)
                 const vehiclePct = Math.round((results.totalMonthly / takeHome) * 100)
                 return (
                   <div className="rounded-xl border border-[var(--border)] p-4 text-sm"
@@ -1065,7 +1089,7 @@ export default function SalaryCalculator() {
                       </div>
                     </div>
                     <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
-                      Take-home estimate uses federal brackets + FICA + 4% avg state tax — actual varies by state, filing status &amp; deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
+                      Take-home estimate uses federal brackets + FICA + {userState ? `${userState} effective state rate` : '4% avg state tax'} — actual varies by filing status &amp; deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
                     </p>
                   </div>
                 )

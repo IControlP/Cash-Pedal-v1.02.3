@@ -167,12 +167,13 @@ export const INSURANCE_VALUE_BRACKETS = [
   [50000, 80000, 1.40], [80000, Infinity, 1.65],
 ]
 
+// Updated to 2025 NAIC/Bankrate data. EV rates have fallen as repair networks matured.
 export const INSURANCE_BRAND_MULT = {
   BMW: 1.25, 'Mercedes-Benz': 1.30, Audi: 1.20, Lexus: 1.15, Acura: 1.10,
   Infiniti: 1.10, Cadillac: 1.15, Toyota: 0.88, Honda: 0.90,
   Hyundai: 0.87, Kia: 0.87, Subaru: 0.95, Mazda: 0.93,
   Chevrolet: 1.00, Ford: 1.05, Ram: 1.10, Jeep: 1.10,
-  Tesla: 1.35, Rivian: 1.30, Lucid: 1.25,
+  Tesla: 1.20, Rivian: 1.25, Lucid: 1.22,
 }
 
 // State base premiums updated to 2025 averages (Bankrate/NAIC)

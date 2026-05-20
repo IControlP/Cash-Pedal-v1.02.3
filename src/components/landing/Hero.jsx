@@ -33,9 +33,6 @@ export default function Hero() {
               </a>
             </div>
             <div className="hero-meta anim-3">
-              <span className="stars">★★★★★</span>
-              <span>4.8 from 2,400+ smart buyers</span>
-              <span>·</span>
               <span>One payment, no subscription</span>
               <span>·</span>
               <span>Pays for itself in minutes</span>

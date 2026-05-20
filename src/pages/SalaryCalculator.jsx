@@ -864,7 +864,15 @@ export default function SalaryCalculator() {
 
                   {/* Interest rate */}
                   <div className="flex flex-col gap-2">
-                    <label className="input-label">Annual Interest Rate</label>
+                    <div className="flex items-center justify-between">
+                      <label className="input-label">Annual Interest Rate</label>
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                        style={{ color: rate > 9 ? '#f87171' : rate > 7 ? '#FFB800' : '#4ade80',
+                                 background: rate > 9 ? 'rgba(248,113,113,0.08)' : rate > 7 ? 'rgba(255,184,0,0.08)' : 'rgba(74,222,128,0.08)',
+                                 border: `1px solid ${rate > 9 ? 'rgba(248,113,113,0.2)' : rate > 7 ? 'rgba(255,184,0,0.2)' : 'rgba(74,222,128,0.2)'}` }}>
+                        {rate <= 7 ? 'Good rate' : rate <= 9 ? 'Average rate' : 'High rate'}
+                      </span>
+                    </div>
                     <div className="relative">
                       <input
                         type="number"
@@ -882,6 +890,10 @@ export default function SalaryCalculator() {
                       onChange={e => setRate(Number(e.target.value))}
                       style={{ background: `linear-gradient(to right, var(--accent) ${(rate / 25) * 100}%, var(--border) ${(rate / 25) * 100}%)` }}
                     />
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      Current avg (new car): excellent credit 740+ ≈ 5–7% · good 680+ ≈ 7–9% · fair 620+ ≈ 10–13%.
+                      Enter your pre-approved rate for the most accurate result.
+                    </p>
                   </div>
                 </>
               )}

@@ -397,8 +397,15 @@ export default function WheelZard() {
   function extractContext(msg) {
     const m = msg.toLowerCase()
     const updates = {}
-    const budgetMatch = m.match(/\$(\d[\d,k]+)/i)
-    if (budgetMatch) updates.budget = budgetMatch[0]
+    // Match "$35k", "$35,000", "35k", "35 thousand", "thirty five thousand" style budgets
+    const budgetMatch = m.match(/\$?([\d,]+)\s*k\b/) ||
+                        m.match(/\$(\d[\d,]+)/) ||
+                        m.match(/\b(\d+)\s*thousand\b/)
+    if (budgetMatch) {
+      const raw = budgetMatch[1].replace(/,/g, '')
+      const num = parseInt(raw) * (m.includes('thousand') || budgetMatch[0].includes('k') ? 1000 : 1)
+      if (num >= 5000 && num <= 300000) updates.budget = `$${num.toLocaleString()}`
+    }
     if (/\b(suv|truck|sedan|coupe|van|minivan|hatchback)\b/.test(m)) {
       updates.vehicleType = m.match(/\b(suv|truck|sedan|coupe|van|minivan|hatchback)\b/)[0]
     }

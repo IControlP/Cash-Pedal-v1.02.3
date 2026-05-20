@@ -699,6 +699,8 @@ function metaSection(meta, line) {
   out.push(line(['Vehicle', meta.vehicle || 'Not specified']))
   out.push(line(['Purchase price', meta.price]))
   out.push(line(['Down payment', meta.downPayment]))
+  if (meta.tradeInValue > 0) out.push(line(['Trade-in value', `$${meta.tradeInValue.toLocaleString()}`]))
+  if (meta.incentives > 0)   out.push(line(['Tax credits & incentives', `$${meta.incentives.toLocaleString()}`]))
   if (meta.financeMode === 'lease') {
     out.push(line(['Finance mode', 'Lease']))
     out.push(line(['Lease term', `${meta.leaseTerm} months`]))
@@ -997,7 +999,8 @@ function RepairRiskScore({ isPro, make, model, isEV, maintBrandMult, determineTi
 
 // ── Cost Alerts ───────────────────────────────────────
 function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenance,
-  maintBrandMult, classifySegment, formatCurrency, loanAmount, price, rate, financeMode }) {
+  maintBrandMult, classifySegment, formatCurrency, loanAmount, price, rate, financeMode,
+  ownershipYears }) {
 
   const ProBadge = () => (
     <span className="text-[10px] font-bold px-2 py-0.5 rounded"
@@ -1040,10 +1043,14 @@ function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenan
         text: `${make}'s repair costs run ~${Math.round((mult - 1) * 100)}% above average. Budget an extra ${formatCurrency(Math.round(annualMaintenance * (mult - 1)))}/yr for surprises.`,
       })
     }
-    if (totalAnnualCost > 15000 && !isEV) {
+    // Segment-aware annual cost benchmark — avoids falsely flagging luxury/truck/EV buyers
+    const segment = (make && model) ? classifySegment(make, model) : 'sedan'
+    const segAvg = SEGMENT_OP_COST_AVG[segment] ?? 6000
+    const segThreshold = segAvg * 1.40 // 40% above the segment average is a genuine red flag
+    if (!isEV && totalAnnualCost > segThreshold) {
       alerts.push({
         type: 'info',
-        text: `Your all-in annual cost of ${formatCurrency(totalAnnualCost)} is above average. Reducing the purchase price by 10% or shortening the loan term can save meaningfully on interest.`,
+        text: `Your all-in annual cost of ${formatCurrency(totalAnnualCost)} is well above average for a ${segment.replace('_', ' ')} (~${formatCurrency(segAvg)}/yr). Reducing the purchase price by 10% or shortening the loan term can save meaningfully.`,
       })
     }
     if (financeMode === 'buy' && rate >= 10) {
@@ -1063,6 +1070,13 @@ function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenan
         type: 'good',
         text: 'EVs eliminate oil changes and reduce brake wear — typical maintenance savings of $500–$900/yr vs. a comparable gas vehicle.',
       })
+      // Battery replacement is a significant long-term EV cost that doesn't appear in routine maintenance
+      if (ownershipYears >= 7) {
+        alerts.push({
+          type: 'info',
+          text: `Keeping an EV for ${ownershipYears}+ years: budget for a potential battery replacement ($5,000–$15,000 depending on make and pack size). Most modern packs hold >80% capacity for 8–10 years but degrade faster in extreme climates.`,
+        })
+      }
     }
     if (alerts.length === 0) {
       alerts.push({ type: 'good', text: `${make}'s costs are in line with segment averages. No major red flags detected for this vehicle.` })
@@ -1154,6 +1168,8 @@ export default function TCOCalculator() {
 
   const [price, setPrice]           = useState(30000)
   const [downPayment, setDownPayment] = useState(5000)
+  const [tradeInValue, setTradeInValue] = useState(0)
+  const [incentives,   setIncentives]   = useState(0)
   const [loanTerm, setLoanTerm]     = useState(60)
   const [rate, setRate]             = useState(6.5)
   const [ownershipYears, setOwnershipYears] = useState(5)
@@ -1386,10 +1402,15 @@ export default function TCOCalculator() {
   const effectivePrice = financeMode === 'buy' ? price + totalPurchaseExtras : price
   const regionalDemand = resolvedState ? getRegionalDemandPremium(resolvedState) : 0
 
+  // Trade-in equity + incentives (e.g. EV tax credits) both act as additional cost offsets,
+  // reducing the amount that needs to be financed without changing the vehicle purchase price.
+  const totalOffsets = financeMode === 'buy' ? Math.min(tradeInValue + incentives, effectivePrice) : 0
+  const effectiveDownForLoan = Math.min(downPayment + totalOffsets, effectivePrice)
+
   const results = useMemo(() => calculateLoan({
-    price: effectivePrice, downPayment: Math.min(downPayment, effectivePrice),
+    price: effectivePrice, downPayment: effectiveDownForLoan,
     loanTermMonths: loanTerm, annualRatePercent: rate, ownershipYears,
-  }), [effectivePrice, downPayment, loanTerm, rate, ownershipYears])
+  }), [effectivePrice, effectiveDownForLoan, loanTerm, rate, ownershipYears])
 
   const leaseResults = useMemo(() => calculateLease({
     msrp: price,
@@ -1468,12 +1489,13 @@ export default function TCOCalculator() {
   const safeDown = Math.min(downPayment, effectivePrice)
   const usingMSRP = !!(selMake && selModel && selYear && selTrim)
 
-  // Net cost of ownership: total paid minus estimated future resale value
+  // Net cost of ownership: total paid minus estimated future resale value.
+  // Incentives reduce true out-of-pocket; trade-in equity is a real offset too.
   const futureResaleValue = (financeMode === 'buy' && origMsrp && selYear)
     ? Math.round(estimateCurrentValue(origMsrp, selMake || null, selModel || null, carAge + ownershipYears))
     : null
   const totalOwnershipPaid = forecastRows.reduce((s, r) => s + r.total, 0)
-  // Include the down payment: it's paid upfront and only partially recovered via resale.
+  // Include cash down payment only — trade-in and incentives were already subtracted from loan.
   const netCostOfOwnership = futureResaleValue != null ? totalOwnershipPaid + safeDown - futureResaleValue : null
 
   // Derived EV flag, charging rate, and premium fuel flag — used across the render
@@ -1530,6 +1552,8 @@ export default function TCOCalculator() {
       // Loan inputs (used when isLease === false)
       price,
       downPayment:       safeDown,
+      tradeInValue:      financeMode === 'buy' ? tradeInValue : 0,
+      incentives:        financeMode === 'buy' ? incentives : 0,
       loanTerm,
       rate,
       ownershipYears:    financeMode === 'lease' ? leasePeriodYears : ownershipYears,
@@ -1940,9 +1964,46 @@ export default function TCOCalculator() {
                     </div>
                   </div>
 
-                  <SliderInput label="Down Payment" value={safeDown}
+                  <SliderInput label="Down Payment (cash)" value={safeDown}
                     onChange={v => setDownPayment(Math.min(v, effectivePrice))}
                     min={0} max={Math.min(effectivePrice, 50000)} step={500} prefix="$" />
+
+                  {/* Trade-in value */}
+                  <SliderInput label="Trade-In Value (equity)"
+                    value={tradeInValue}
+                    onChange={setTradeInValue}
+                    min={0} max={Math.min(effectivePrice, 80000)} step={500} prefix="$" />
+                  {!simpleMode && (
+                    <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                      Your trade-in's equity reduces the amount financed. Enter 0 if you have no trade-in or owe more than it's worth.
+                    </p>
+                  )}
+
+                  {/* EV / Plug-in incentives */}
+                  {(effIsEV || (selModel && /phev|plug.?in|4xe/i.test(selModel))) && (
+                    <>
+                      <SliderInput
+                        label="Tax Credits & Incentives"
+                        value={incentives}
+                        onChange={setIncentives}
+                        min={0} max={10000} step={250} prefix="$"
+                      />
+                      {!simpleMode && (
+                        <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                          Federal EV clean vehicle credit: up to $7,500 (income limits apply).{' '}
+                          Many states add $500–$4,500 on top — check your state DMV for current offers.
+                        </p>
+                      )}
+                    </>
+                  )}
+
+                  {totalOffsets > 0 && (
+                    <div className="rounded-lg px-3 py-2.5 flex items-center justify-between border"
+                      style={{ borderColor: 'rgba(74,222,128,0.3)', background: 'rgba(74,222,128,0.05)' }}>
+                      <span className="text-xs text-green-300">Trade-in + credits applied</span>
+                      <span className="text-sm font-bold text-green-400">−{formatCurrency(totalOffsets)}</span>
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
                     <span className="text-sm text-[var(--text-muted)]">Loan amount</span>
@@ -2700,7 +2761,7 @@ export default function TCOCalculator() {
                   onClick={() => {
                     const meta = {
                       vehicle: [selYear, selMake, selModel, selTrim].filter(Boolean).join(' ') || vehicleCategory || 'Unknown vehicle',
-                      price, downPayment, financeMode, loanTerm, rate, leaseTerm, leaseApr, residualPct,
+                      price, downPayment, tradeInValue, incentives, financeMode, loanTerm, rate, leaseTerm, leaseApr, residualPct,
                       annualMileage, startMileage: effectiveStartMileage,
                       location: locationLabel || resolvedState || 'Not set',
                       ownershipYears,
@@ -2718,7 +2779,7 @@ export default function TCOCalculator() {
                     onClick={() => {
                       const meta = {
                         vehicle: [selYear, selMake, selModel, selTrim].filter(Boolean).join(' ') || vehicleCategory || 'Unknown vehicle',
-                        price, downPayment, financeMode, loanTerm, rate, leaseTerm, leaseApr, residualPct,
+                        price, downPayment, tradeInValue, incentives, financeMode, loanTerm, rate, leaseTerm, leaseApr, residualPct,
                         annualMileage, startMileage: effectiveStartMileage,
                         location: locationLabel || resolvedState || 'Not set',
                         ownershipYears,
@@ -2758,6 +2819,7 @@ export default function TCOCalculator() {
                 price={price}
                 rate={rate}
                 financeMode={financeMode}
+                ownershipYears={ownershipYears}
               />
 
               {/* ── PDF Export (Pro) ── */}

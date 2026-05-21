@@ -374,16 +374,16 @@ export default function SalaryCalculator() {
     function solve(thresholdPct) {
       const maxMonthly = (s * thresholdPct) / 12
       let estPrice = 30000
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 6; i++) {
         const ops = estimateBasicMonthlyCosts(estPrice, userState || null, annualMiles)
         const loanBudget = maxMonthly - ops.total
-        if (loanBudget <= 0) return 0
+        if (loanBudget <= 0) return Math.max(0, Math.round(maxMonthly * 12 * 0.5 / 500) * 500)
         const r = rate / 12 / 100
         const n = loanTerm
         const factor = r > 0
           ? (Math.pow(1 + r, n) - 1) / (r * Math.pow(1 + r, n))
           : n
-        estPrice = Math.max(500, (loanBudget * factor) / (1 - downPct / 100))
+        estPrice = Math.min(500000, Math.max(1000, (loanBudget * factor) / (1 - downPct / 100)))
       }
       return Math.round(estPrice / 500) * 500
     }
@@ -463,6 +463,10 @@ export default function SalaryCalculator() {
             {mode === 'lease'
               ? 'Enter your lease payment and see the gross income needed to keep vehicle costs under 10–20% of your salary.'
               : 'The 20/4/10 rule: 20% down, max 4-year loan, total vehicle costs ≤ 10% of gross income. See the salary you need.'}
+          </p>
+          <p className="anim-2 text-[var(--text-muted)] text-xs mt-2 max-w-xl">
+            20/4/10 is a popular guideline, not a hard rule. All figures use <span className="text-white font-semibold">gross income</span> (before taxes).
+            {mode === 'buy' && ' Many financial advisors allow up to 15% for households with low debt.'}
           </p>
         </div>
 

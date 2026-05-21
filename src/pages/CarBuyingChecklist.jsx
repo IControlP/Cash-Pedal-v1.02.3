@@ -305,6 +305,37 @@ export default function CarBuyingChecklist() {
                 </div>
               </div>
 
+              {/* Mileage-to-age sanity check */}
+              {vehicleInfo.year && (() => {
+                const vehicleAge = new Date().getFullYear() - parseInt(vehicleInfo.year)
+                const expectedMileage = vehicleAge * 12000
+                if (vehicleAge < 1 || expectedMileage <= 0) return null
+                const ratio = vehicleInfo.mileage / expectedMileage
+                if (ratio > 1.3) return (
+                  <div className="rounded-lg p-3 border border-red-500/30 bg-red-500/5">
+                    <p className="text-xs font-bold text-red-400 mb-0.5">High mileage for vehicle age</p>
+                    <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                      {vehicleInfo.mileage.toLocaleString()} mi is{' '}
+                      <span className="text-red-400 font-semibold">{Math.round((ratio - 1) * 100)}% above average</span>{' '}
+                      for a {vehicleInfo.year} vehicle ({expectedMileage.toLocaleString()} mi expected at 12k/yr).
+                      Ask for maintenance records and request a pre-purchase inspection.
+                    </p>
+                  </div>
+                )
+                if (ratio < 0.5 && vehicleAge >= 2) return (
+                  <div className="rounded-lg p-3 border border-yellow-500/30 bg-yellow-500/5">
+                    <p className="text-xs font-bold text-yellow-400 mb-0.5">Unusually low mileage</p>
+                    <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                      Only {vehicleInfo.mileage.toLocaleString()} mi on a {vehicleInfo.year} vehicle —{' '}
+                      <span className="text-yellow-400 font-semibold">{Math.round((1 - ratio) * 100)}% below average</span>{' '}
+                      ({expectedMileage.toLocaleString()} mi expected). Verify title history and
+                      confirm the odometer hasn't been rolled back.
+                    </p>
+                  </div>
+                )
+                return null
+              })()}
+
               <div>
                 <label className="input-label">Asking Price</label>
                 <div className="relative">
@@ -491,8 +522,10 @@ export default function CarBuyingChecklist() {
                 <p className="font-display font-bold text-[var(--accent)] text-xl">{fmt(negotiationSavings)}</p>
               </div>
             </div>
-            <p className="text-xs text-[var(--text-muted)] mt-3">
-              Reduction = all "not done" costs + 50% of "unknown" costs. Use this as your negotiation floor.
+            <p className="text-xs text-[var(--text-muted)] mt-3 leading-relaxed">
+              <span className="text-white font-semibold">How to use this:</span> Present the "Suggested reduction" to the seller
+              as justification for a lower price. Unknown items use 50% of their cost since they may already be done —
+              ask for records to confirm and move them to "Confirmed" or "Not Done."
             </p>
 
             {/* Critical item call-outs */}
@@ -577,6 +610,13 @@ export default function CarBuyingChecklist() {
           {/* Maintenance due tab */}
           {activeTab === 'maintenance' && (
             <div className="flex flex-col gap-3">
+              {dueItems.length > 0 && (
+                <div className="flex flex-wrap gap-x-5 gap-y-1 px-1 text-xs text-[var(--text-muted)]">
+                  <span><span className="text-green-400 font-semibold">✅ Confirmed</span> — seller showed records or you verified it was done</span>
+                  <span><span className="text-red-400 font-semibold">❌ Not Done</span> — seller confirmed it hasn't been done</span>
+                  <span><span className="text-yellow-400 font-semibold">❓ Unknown</span> — no records or seller wasn't asked yet</span>
+                </div>
+              )}
               {dueItems.length === 0 ? (
                 <div className="card text-center py-10">
                   <p className="text-[var(--text-muted)]">No maintenance items appear due at {vehicleInfo.mileage.toLocaleString()} miles.</p>
@@ -636,6 +676,19 @@ export default function CarBuyingChecklist() {
                   <p className="text-[var(--text-muted)]">No upcoming maintenance in the next 12,000 miles.</p>
                 </div>
               ) : (
+                <>
+                <div className="rounded-lg p-3 border border-yellow-500/25 bg-yellow-500/5 flex items-start gap-2.5">
+                  <span className="text-base shrink-0">💰</span>
+                  <div>
+                    <p className="text-xs font-bold text-yellow-400">
+                      Budget ~{fmt(upcomingItems.reduce((s, i) => s + i.cost, 0))} for upcoming services
+                    </p>
+                    <p className="text-xs text-[var(--text-muted)] mt-0.5 leading-relaxed">
+                      These services will likely be due within the next 12,000 miles — roughly one year of typical driving.
+                      Factor this into your total cost of ownership.
+                    </p>
+                  </div>
+                </div>
                 <div className="card">
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-4">
                     Services due in the next 12,000 miles
@@ -665,6 +718,7 @@ export default function CarBuyingChecklist() {
                     })}
                   </div>
                 </div>
+                </>
               )}
             </div>
           )}

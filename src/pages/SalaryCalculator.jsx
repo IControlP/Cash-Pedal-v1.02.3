@@ -132,6 +132,14 @@ const loanTermOptions = [
   { value: 72, label: '72 months' },
 ]
 
+const CREDIT_SCORE_PRESETS = [
+  { label: 'Excellent (720+)',  rate: 5.5,  range: '4–7%' },
+  { label: 'Good (680–719)',    rate: 7.5,  range: '6–9%' },
+  { label: 'Fair (640–679)',    rate: 10.5, range: '9–13%' },
+  { label: 'Poor (580–639)',    rate: 14.0, range: '12–16%' },
+  { label: 'Very Poor (<580)',  rate: 18.0, range: '15–21%' },
+]
+
 const TYPE_LABELS = {
   electric: 'Electric', hybrid: 'Hybrid', truck: 'Truck', suv: 'SUV',
   luxury_suv: 'Luxury SUV', sports: 'Sports', compact: 'Compact',
@@ -192,6 +200,7 @@ export default function SalaryCalculator() {
   const [downPct, setDownPct] = useState(20)
   const [loanTerm, setLoanTerm] = useState(48)
   const [rate, setRate] = useState(6.5)
+  const [creditScore, setCreditScore] = useState('')
 
   // Lease inputs
   const [leaseMsrp, setLeaseMsrp] = useState(30000)
@@ -862,6 +871,30 @@ export default function SalaryCalculator() {
                     )}
                   </div>
 
+                  {/* Credit score → APR preset */}
+                  <div className="flex flex-col gap-2">
+                    <label className="input-label">Credit Score</label>
+                    <select
+                      value={creditScore}
+                      onChange={e => {
+                        setCreditScore(e.target.value)
+                        const preset = CREDIT_SCORE_PRESETS.find(p => p.label === e.target.value)
+                        if (preset) setRate(preset.rate)
+                      }}
+                      className="input-field"
+                    >
+                      <option value="">I'll enter my rate manually</option>
+                      {CREDIT_SCORE_PRESETS.map(p => (
+                        <option key={p.label} value={p.label}>{p.label} · ~{p.range} APR</option>
+                      ))}
+                    </select>
+                    {creditScore && (
+                      <p className="text-[10px] text-[var(--text-muted)]">
+                        Rate set to {rate}% — typical for {creditScore.split(' ')[0].toLowerCase()} credit. Adjust below to match your actual offer.
+                      </p>
+                    )}
+                  </div>
+
                   {/* Interest rate */}
                   <div className="flex flex-col gap-2">
                     <label className="input-label">Annual Interest Rate</label>
@@ -870,7 +903,7 @@ export default function SalaryCalculator() {
                         type="number"
                         value={rate}
                         min={0} max={25} step={0.1}
-                        onChange={e => setRate(Number(e.target.value))}
+                        onChange={e => { setRate(Number(e.target.value)); setCreditScore('') }}
                         className="input-field"
                         style={{ paddingRight: '2.5rem' }}
                       />
@@ -879,9 +912,12 @@ export default function SalaryCalculator() {
                     <input
                       type="range" min={0} max={25} step={0.1}
                       value={rate}
-                      onChange={e => setRate(Number(e.target.value))}
+                      onChange={e => { setRate(Number(e.target.value)); setCreditScore('') }}
                       style={{ background: `linear-gradient(to right, var(--accent) ${(rate / 25) * 100}%, var(--border) ${(rate / 25) * 100}%)` }}
                     />
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      Shop credit unions and online lenders — rates vary significantly by lender.
+                    </p>
                   </div>
                 </>
               )}

@@ -106,6 +106,7 @@ export default function CarBuyingChecklist() {
   const [priceSource, setPriceSource] = useState('auto') // 'auto' | 'user'
   const [statuses, setStatuses] = useState({})
   const [notes, setNotes] = useState({})
+  const [redFlags, setRedFlags] = useState({})
   const [activeTab, setActiveTab] = useState('maintenance')
 
   const categories = useMemo(() => {
@@ -558,7 +559,7 @@ export default function CarBuyingChecklist() {
             {[
               { key: 'maintenance', label: `Maintenance Due (${dueItems.length})` },
               { key: 'upcoming', label: `Coming Up (${upcomingItems.length})` },
-              { key: 'questions', label: `Seller Questions (${allSellerQuestions.length})` },
+              { key: 'questions', label: Object.values(redFlags).filter(Boolean).length > 0 ? `Seller Questions · 🚩 ${Object.values(redFlags).filter(Boolean).length}` : `Seller Questions (${allSellerQuestions.length})` },
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -672,6 +673,33 @@ export default function CarBuyingChecklist() {
           {/* Seller questions tab */}
           {activeTab === 'questions' && (
             <div className="flex flex-col gap-4">
+              {/* Red flag summary */}
+              {Object.values(redFlags).some(Boolean) && (
+                <div className="rounded-xl border p-5"
+                  style={{ borderColor: 'rgba(239,68,68,0.35)', background: 'rgba(239,68,68,0.04)' }}>
+                  <p className="text-xs font-bold uppercase tracking-widest text-red-400 mb-3">
+                    🚩 {Object.values(redFlags).filter(Boolean).length} Flagged Concern{Object.values(redFlags).filter(Boolean).length !== 1 ? 's' : ''}
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    {allSellerQuestions.flatMap(section =>
+                      section.questions
+                        .map((item, qi) => ({ item, key: `${section.category}-${qi}`, category: section.category }))
+                        .filter(({ key }) => redFlags[key])
+                        .map(({ item, key, category }) => (
+                          <div key={key}>
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-0.5">{category}</p>
+                            <p className="text-sm text-white font-semibold">{item.q}</p>
+                            {notes[key] && <p className="text-xs text-red-300 mt-0.5 italic">"{notes[key]}"</p>}
+                          </div>
+                        ))
+                    )}
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] mt-3 leading-relaxed">
+                    Flagged concerns may signal undisclosed issues. Verify before purchase or ask the seller for documentation.
+                  </p>
+                </div>
+              )}
+
               {allSellerQuestions.map(section => (
                 <div key={section.category} className="card">
                   <div className="flex items-center gap-3 mb-4">
@@ -681,19 +709,38 @@ export default function CarBuyingChecklist() {
                     </span>
                   </div>
                   <div className="flex flex-col gap-5">
-                    {section.questions.map((item, qi) => (
-                      <div key={qi}>
-                        <p className="text-sm font-semibold text-white mb-1">{item.q}</p>
-                        <p className="text-xs text-[var(--text-muted)] mb-2 leading-relaxed">{item.why}</p>
-                        <textarea
-                          value={notes[`${section.category}-${qi}`] || ''}
-                          onChange={e => setNotes(n => ({ ...n, [`${section.category}-${qi}`]: e.target.value }))}
-                          placeholder="Seller's answer..."
-                          rows={2}
-                          className="input-field text-sm resize-none"
-                        />
-                      </div>
-                    ))}
+                    {section.questions.map((item, qi) => {
+                      const questionKey = `${section.category}-${qi}`
+                      const isFlagged = redFlags[questionKey] || false
+                      return (
+                        <div key={qi}>
+                          <p className="text-sm font-semibold text-white mb-1">{item.q}</p>
+                          <p className="text-xs text-[var(--text-muted)] mb-2 leading-relaxed">{item.why}</p>
+                          <div className="relative">
+                            <textarea
+                              value={notes[questionKey] || ''}
+                              onChange={e => setNotes(n => ({ ...n, [questionKey]: e.target.value }))}
+                              placeholder="Seller's answer..."
+                              rows={2}
+                              className="input-field text-sm resize-none"
+                              style={isFlagged ? { borderColor: 'rgba(239,68,68,0.45)', background: 'rgba(239,68,68,0.04)', paddingRight: '5rem' } : { paddingRight: '5rem' }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setRedFlags(f => ({ ...f, [questionKey]: !f[questionKey] }))}
+                              className="absolute right-2 top-2 text-xs font-semibold px-2 py-1 rounded transition-all"
+                              style={{
+                                background: isFlagged ? 'rgba(239,68,68,0.2)' : 'transparent',
+                                color: isFlagged ? 'rgb(239,68,68)' : 'var(--text-muted)',
+                                border: `1px solid ${isFlagged ? 'rgba(239,68,68,0.45)' : 'var(--border)'}`,
+                              }}
+                            >
+                              🚩 Flag
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               ))}

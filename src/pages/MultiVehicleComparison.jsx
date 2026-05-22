@@ -477,34 +477,25 @@ export default function MultiVehicleComparison() {
           </p>
         </div>
 
-        {/* ── Pro gate banner ── */}
+        {/* ── Free tier notice ── */}
         {!isSubscribed && (
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 mb-6">
-            <div className="rounded-xl border p-6 text-center"
-              style={{ borderColor: 'rgba(255,184,0,0.25)', background: 'rgba(255,184,0,0.04)' }}>
-              <div className="text-3xl mb-3">⚖️</div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)] mb-2">Pro Feature</p>
-              <h2 className="font-display font-bold text-white text-xl mb-2">Multi-vehicle comparison is a Pro feature</h2>
-              <p className="text-[var(--text-muted)] text-sm mb-5 max-w-md mx-auto leading-relaxed">
-                Compare up to 5 vehicles side by side — payments, interest, insurance, fuel, maintenance, and total ownership cost.
-                Free users get a single-vehicle TCO estimate.
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 mb-4">
+            <div className="rounded-xl border px-4 py-3 flex items-center justify-between gap-4 flex-wrap"
+              style={{ borderColor: 'rgba(255,184,0,0.2)', background: 'rgba(255,184,0,0.03)' }}>
+              <p className="text-sm text-[var(--text-muted)]">
+                <span className="text-white font-semibold">Free plan: compare 2 vehicles.</span>{' '}
+                Upgrade Pro to compare up to 5 side by side with full TCO data.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <button
-                  onClick={() => setShowPaywall(true)}
-                  className="btn-primary text-sm px-6 py-3"
-                >
-                  Unlock Multi-Vehicle Comparison →
-                </button>
-                <Link to="/tco" className="btn-ghost text-sm px-6 py-3 justify-center">
-                  Back to TCO Calculator
-                </Link>
-              </div>
+              <button
+                onClick={() => setShowPaywall(true)}
+                className="btn-primary text-xs px-4 py-2 shrink-0">
+                Upgrade to Pro →
+              </button>
             </div>
           </div>
         )}
 
-        {isSubscribed && <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
 
           {/* Import banner */}
           {importBanner && (
@@ -563,8 +554,14 @@ export default function MultiVehicleComparison() {
           {/* Add vehicle / import button row */}
           <div className="flex items-center gap-3 mb-8 anim-3 flex-wrap">
             {vehicles.length < 5 && (
-              <button onClick={addVehicle} className="btn-ghost text-sm">
+              <button
+                onClick={() => {
+                  if (!isSubscribed && vehicles.length >= 2) { setShowPaywall(true); return }
+                  addVehicle()
+                }}
+                className="btn-ghost text-sm flex items-center gap-1.5">
                 + Add Vehicle
+                {!isSubscribed && <span className="text-[10px] opacity-50">🔒 Pro</span>}
               </button>
             )}
             <button
@@ -750,7 +747,7 @@ export default function MultiVehicleComparison() {
           <div className="mt-6 anim-5">
             <Link to="/tco" className="btn-ghost text-sm">← Back to TCO Calculator</Link>
           </div>
-        </div>}
+        </div>
       </main>
       <Footer />
     </div>

@@ -18,8 +18,14 @@ const WEBHOOK_SEC      = process.env.STRIPE_WEBHOOK_SECRET || ''
 const MAX_DEVICES        = 2
 const DEVICE_EXPIRY_DAYS = 30
 const ACCESS_DAYS        = 60
-// Emails that bypass all subscription and device checks
-const PRO_USERS_SERVER   = new Set(['pro@cashpedal.io', 'noah@cashpedal.io'])
+// Emails that bypass all subscription and device checks — configure via env var
+// PRO_USER_EMAILS=pro@cashpedal.io,owner@example.com
+const PRO_USERS_SERVER = new Set(
+  (process.env.PRO_USER_EMAILS || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean)
+)
 
 function getClientIp(req) {
   return (
@@ -272,7 +278,7 @@ app.post('/api/consent', async (req, res) => {
     res.json({ success: true, record_id })
   } catch (err) {
     console.error('[consent] DB error:', err.message)
-    res.status(500).json({ success: false, error: err.message })
+    res.status(500).json({ success: false, error: 'Internal server error' })
   }
 })
 
@@ -311,7 +317,7 @@ app.post('/api/user-data', async (req, res) => {
     res.json({ success: true, record_id })
   } catch (err) {
     console.error('[user-data] DB error:', err.message)
-    res.status(500).json({ success: false, error: err.message })
+    res.status(500).json({ success: false, error: 'Internal server error' })
   }
 })
 
@@ -339,7 +345,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
     res.json({ url: session.url })
   } catch (err) {
     console.error('[checkout] error:', err.message)
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Internal server error' })
   }
 })
 
@@ -409,7 +415,7 @@ app.get('/api/verify-session', async (req, res) => {
     res.json({ valid: true, email, expires: expiresAt, purchaseType: 'subscription' })
   } catch (err) {
     console.error('[verify-session] error:', err.message)
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Internal server error' })
   }
 })
 
@@ -494,7 +500,7 @@ app.get('/api/subscription-status', async (req, res) => {
     res.json({ active: true, status: subscription_status, expires: current_period_end, purchaseType: purchase_type })
   } catch (err) {
     console.error('[subscription-status] error:', err.message)
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Internal server error' })
   }
 })
 
@@ -526,7 +532,7 @@ app.post('/api/reset-devices', async (req, res) => {
     res.json({ success: true })
   } catch (err) {
     console.error('[reset-devices] error:', err.message)
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Internal server error' })
   }
 })
 
@@ -575,7 +581,7 @@ app.post('/api/cancel-subscription', async (req, res) => {
     })
   } catch (err) {
     console.error('[cancel-subscription] error:', err.message)
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Internal server error' })
   }
 })
 

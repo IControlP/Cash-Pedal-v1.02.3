@@ -196,13 +196,47 @@ const cancelLimiter = rateLimit({
 
 app.use('/api/', apiLimiter)
 
-// ── Input validation helpers ──────────────────────────
+// ── PII helpers ───────────────────────────────────────
 const UUID_RE  = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{1,63}$/
 
 function isValidUUID(v)  { return typeof v === 'string' && UUID_RE.test(v) }
 function isValidEmail(v) { return typeof v === 'string' && v.length <= 255 && EMAIL_RE.test(v) }
 function clamp(str, max) { return typeof str === 'string' ? str.slice(0, max) : str }
+
+// Canonical email form — lowercase, trimmed. Used everywhere email is stored or queried.
+function normalizeEmail(raw) {
+  return (typeof raw === 'string' ? raw : '').trim().toLowerCase()
+}
+
+// Strip HTML tags, ASCII control characters, and collapse whitespace in name fields.
+// Keeps Unicode letters/punctuation so international names work correctly.
+function sanitizeName(raw) {
+  if (typeof raw !== 'string') return ''
+  return raw
+    .replace(/[\x00-\x1F\x7F-\x9F]/g, '')  // ASCII control chars
+    .replace(/<[^>]*>/g, '')                  // HTML tags
+    .replace(/\s+/g, ' ')                     // collapse whitespace
+    .trim()
+    .slice(0, 100)
+}
+
+// Anonymize IP before storing: mask the last IPv4 octet or last 64 IPv6 bits.
+// The full req.ip is still used inline for device-limit checks (never persisted).
+function anonymizeIp(ip) {
+  if (!ip || ip === 'unknown') return 'unknown'
+  if (ip.includes('.'))  return ip.replace(/\.\d+$/, '.0')        // 192.168.1.x → .0
+  if (ip.includes(':'))  return ip.split(':').slice(0, 4).join(':') + '::/64'  // /64 prefix
+  return 'unknown'
+}
+
+// Redact email middle for audit logs — keeps domain and first char for debugging
+// without writing full PII to log output.
+function redactEmail(email) {
+  if (!email || !email.includes('@')) return '[invalid]'
+  const [local, domain] = email.split('@')
+  return `${local[0]}***@${domain}`
+}
 
 // ── JSON body for all other routes ────────────────────
 app.use(express.json())
@@ -304,6 +338,21 @@ async function initTables() {
       CREATE INDEX IF NOT EXISTS idx_sub_devices_email
         ON subscriber_devices(email)
     `)
+
+    // ── Data-retention enforcement ────────────────────
+    // user_data_collection is marketing/analytics data — 365-day retention.
+    // Consent records are legal evidence of agreement and are intentionally exempt
+    // from automatic purging per GDPR Art. 17(3)(b).
+    await client.query(`
+      DELETE FROM user_data_collection
+      WHERE created_at < NOW() - INTERVAL '365 days'
+    `)
+    // Stale device slots (no login in 30 days) are cleaned per-request already,
+    // but also sweep on startup to catch orphaned rows from inactive subscribers.
+    await client.query(`
+      DELETE FROM subscriber_devices
+      WHERE last_seen < NOW() - INTERVAL '${DEVICE_EXPIRY_DAYS} days'
+    `)
   } finally {
     client.release()
   }
@@ -323,13 +372,15 @@ app.post('/api/consent', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Invalid terms_version' })
   }
 
-  const ip = req.ip || 'unknown'
-  // Truncate user-agent to stay within column limits and prevent oversized inserts
-  const user_agent     = clamp(req.headers['user-agent'] || 'unknown', 512)
-  const timestamp_utc  = new Date().toISOString()
+  const rawIp        = req.ip || 'unknown'
+  const storedIp     = anonymizeIp(rawIp)              // last octet masked for GDPR storage
+  const user_agent   = clamp(req.headers['user-agent'] || 'unknown', 512)
+  const timestamp_utc = new Date().toISOString()
+  // Integrity hash uses the raw IP so the fingerprint stays unique per client,
+  // even though we only store the anonymized form.
   const integrity_hash = crypto
     .createHash('sha256')
-    .update(`${session_id}|${timestamp_utc}|${terms_version}|${ip}`)
+    .update(`${session_id}|${timestamp_utc}|${terms_version}|${rawIp}`)
     .digest('hex')
 
   if (!pool) {
@@ -346,7 +397,7 @@ app.post('/api/consent', async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        ON CONFLICT (record_id) DO NOTHING`,
       [
-        record_id, session_id, timestamp_utc, terms_version, ip, user_agent,
+        record_id, session_id, timestamp_utc, terms_version, storedIp, user_agent,
         !!disclaimers_acknowledged, !!liability_acknowledged, !!final_consent_given,
         'explicit_checkbox_and_button', integrity_hash,
       ]
@@ -376,7 +427,7 @@ app.post('/api/user-data', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Invalid calculation_count' })
   }
 
-  const ip = req.ip || 'unknown'
+  const storedIp      = anonymizeIp(req.ip || 'unknown')
   const user_agent    = clamp(req.headers['user-agent'] || 'unknown', 512)
   const timestamp_utc = new Date().toISOString()
 
@@ -394,10 +445,10 @@ app.post('/api/user-data', async (req, res) => {
        ON CONFLICT (record_id) DO NOTHING`,
       [
         record_id, session_id, timestamp_utc,
-        clamp(first_name.trim(), 100), clamp(last_name.trim(), 100),
-        email.trim().toLowerCase(),
+        sanitizeName(first_name), sanitizeName(last_name),
+        normalizeEmail(email),
         count,
-        ip, user_agent,
+        storedIp, user_agent,
       ]
     )
     res.json({ success: true, record_id })
@@ -510,7 +561,7 @@ app.get('/api/verify-session', async (req, res) => {
 
 // ── API: Check subscription status by email ───────────
 app.get('/api/subscription-status', async (req, res) => {
-  const email = (req.query.email || '').trim().toLowerCase()
+  const email = normalizeEmail(req.query.email || '')
   if (!isValidEmail(email)) return res.status(400).json({ error: 'Valid email required' })
   if (!pool)  return res.json({ active: false, reason: 'db_not_configured' })
 
@@ -595,10 +646,10 @@ app.get('/api/subscription-status', async (req, res) => {
 
 // ── API: Reset all registered devices for an email ────
 app.post('/api/reset-devices', sensitiveLimiter, async (req, res) => {
-  const email = ((req.body && req.body.email) || '').trim().toLowerCase()
+  const email = normalizeEmail((req.body && req.body.email) || '')
   if (!isValidEmail(email)) return res.status(400).json({ error: 'Valid email required' })
   if (!pool)  return res.status(503).json({ error: 'DB not configured' })
-  console.log(`[reset-devices] attempt — email: ${email}, IP: ${req.ip}`)
+  console.log(`[reset-devices] attempt — email: ${redactEmail(email)}, IP: ${req.ip}`)
 
   // Only allow reset for confirmed active subscribers
   try {
@@ -635,8 +686,8 @@ app.post('/api/cancel-subscription', cancelLimiter, async (req, res) => {
   if (!isValidEmail(email)) return res.status(400).json({ error: 'Valid email required' })
   if (!pool)  return res.status(503).json({ error: 'DB not configured' })
 
-  const normalizedEmail = email.trim().toLowerCase()
-  console.log(`[cancel-subscription] attempt — email: ${normalizedEmail}, IP: ${req.ip}`)
+  const normalizedEmail = normalizeEmail(email)
+  console.log(`[cancel-subscription] attempt — email: ${redactEmail(normalizedEmail)}, IP: ${req.ip}`)
 
   try {
     const result = await pool.query(
@@ -675,6 +726,57 @@ app.post('/api/cancel-subscription', cancelLimiter, async (req, res) => {
     })
   } catch (err) {
     console.error('[cancel-subscription] error:', err.message)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// ── API: GDPR / CCPA right-to-erasure ────────────────
+// Deletes all user-submitted profile data (name, email, calculation count).
+// Consent records are retained — they are legal proof of agreement and are
+// exempt from erasure under GDPR Art. 17(3)(b). Stripe payment records are
+// also retained for financial dispute resolution; erasure requests for those
+// must be submitted directly to Stripe.
+app.post('/api/delete-my-data', sensitiveLimiter, async (req, res) => {
+  const { email } = req.body
+  if (!isValidEmail(email)) return res.status(400).json({ error: 'Valid email required' })
+  if (!pool) return res.status(503).json({ error: 'DB not configured' })
+
+  const normalizedEmail = normalizeEmail(email)
+
+  try {
+    const subResult = await pool.query(
+      `SELECT subscription_status FROM subscribers WHERE email = $1`,
+      [normalizedEmail]
+    )
+    const isActive = subResult.rows.length > 0 &&
+      ['active', 'canceling'].includes(subResult.rows[0].subscription_status)
+
+    if (isActive) {
+      return res.status(409).json({
+        error: 'Cannot erase data while a subscription is active. Please cancel your subscription first.',
+      })
+    }
+
+    // Remove user-provided profile data
+    await pool.query(`DELETE FROM user_data_collection WHERE email = $1`, [normalizedEmail])
+    // Remove device registrations — no longer needed once subscription is gone
+    await pool.query(`DELETE FROM subscriber_devices WHERE email = $1`, [normalizedEmail])
+    // Soft-delete the subscriber row so Stripe audit trail is preserved
+    // but the email is no longer queryable for access checks.
+    await pool.query(
+      `UPDATE subscribers SET
+         subscription_status = 'erased',
+         email               = $2,
+         updated_at          = NOW()
+       WHERE email = $1`,
+      [normalizedEmail, crypto.createHash('sha256').update(normalizedEmail).digest('hex')]
+    )
+
+    console.log(`[delete-my-data] erasure completed — email: ${redactEmail(normalizedEmail)}, IP: ${req.ip}`)
+    // Return the same shape whether or not the email existed to prevent enumeration.
+    res.json({ success: true, message: 'Your data has been erased.' })
+  } catch (err) {
+    console.error('[delete-my-data] error:', err.message)
     res.status(500).json({ error: 'Internal server error' })
   }
 })

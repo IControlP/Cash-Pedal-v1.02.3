@@ -4,10 +4,17 @@ import { dirname, join } from 'path'
 import pg from 'pg'
 import crypto from 'crypto'
 import Stripe from 'stripe'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
 
 const { Pool } = pg
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
+
+// Trust Railway's single load-balancer hop so req.ip reflects the real client IP
+// rather than the proxy's IP. This also prevents X-Forwarded-For spoofing at the
+// left-most position since Railway appends (not prepends) the real client IP.
+app.set('trust proxy', 1)
 
 const PORT             = process.env.PORT || 3000
 const APP_URL          = (process.env.APP_URL || 'https://cashpedal.io').replace(/\/$/, '')
@@ -26,16 +33,6 @@ const PRO_USERS_SERVER = new Set(
     .map(e => e.trim().toLowerCase())
     .filter(Boolean)
 )
-
-function getClientIp(req) {
-  return (
-    (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
-    req.headers['x-real-ip'] ||
-    req.headers['cf-connecting-ip'] ||
-    req.socket.remoteAddress ||
-    'unknown'
-  )
-}
 
 // ── Stripe ────────────────────────────────────────────
 const stripe = process.env.STRIPE_SECRET_KEY
@@ -133,18 +130,64 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
   }
 })
 
+// ── Security headers ──────────────────────────────────
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc:              ["'self'"],
+      scriptSrc:               ["'self'"],
+      styleSrc:                ["'self'", "'unsafe-inline'"],
+      imgSrc:                  ["'self'", "data:"],
+      fontSrc:                 ["'self'"],
+      connectSrc:              ["'self'"],
+      frameSrc:                ["'none'"],
+      objectSrc:               ["'none'"],
+      baseUri:                 ["'self'"],
+      formAction:              ["'self'", "https://checkout.stripe.com"],
+      frameAncestors:          ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
+  // COEP is intentionally relaxed — the SPA loads no cross-origin subresources
+  // that require explicit CORP headers, so strict COEP would break nothing but
+  // is unnecessary overhead here.
+  crossOriginEmbedderPolicy: false,
+}))
+
+// ── Rate limiting ─────────────────────────────────────
+// General cap for all API routes (webhook is already handled above and won't reach this)
+const apiLimiter = rateLimit({
+  windowMs:       15 * 60 * 1000,
+  max:            100,
+  standardHeaders: true,
+  legacyHeaders:  false,
+  message:        { error: 'Too many requests — please try again later.' },
+})
+
+// Tighter cap for endpoints that mutate subscription / device state
+const sensitiveLimiter = rateLimit({
+  windowMs:       15 * 60 * 1000,
+  max:            15,
+  standardHeaders: true,
+  legacyHeaders:  false,
+  message:        { error: 'Too many requests — please try again later.' },
+})
+
+app.use('/api/', apiLimiter)
+
 // ── JSON body for all other routes ────────────────────
 app.use(express.json())
 
 // ── PostgreSQL ────────────────────────────────────────
 const dbUrl = (process.env.DATABASE_PRIVATE_URL || process.env.DATABASE_URL || '').trim()
 
+const isInternalDb = dbUrl.includes('.railway.internal') || dbUrl.includes('localhost') || dbUrl.includes('127.0.0.1')
 const pool = dbUrl
   ? new Pool({
       connectionString: dbUrl,
-      ssl: dbUrl.includes('.railway.internal') || dbUrl.includes('localhost')
+      ssl: isInternalDb
         ? false
-        : { rejectUnauthorized: false },
+        : { rejectUnauthorized: true },
     })
   : null
 
@@ -248,7 +291,7 @@ app.post('/api/consent', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Missing required fields' })
   }
 
-  const ip = getClientIp(req)
+  const ip = req.ip || 'unknown'
   const user_agent     = req.headers['user-agent'] || 'unknown'
   const timestamp_utc  = new Date().toISOString()
   const integrity_hash = crypto
@@ -290,7 +333,7 @@ app.post('/api/user-data', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Missing required fields' })
   }
 
-  const ip = getClientIp(req)
+  const ip = req.ip || 'unknown'
   const user_agent    = req.headers['user-agent'] || 'unknown'
   const timestamp_utc = new Date().toISOString()
 
@@ -322,10 +365,13 @@ app.post('/api/user-data', async (req, res) => {
 })
 
 // ── API: Create Stripe checkout session ───────────────
-app.post('/api/create-checkout-session', async (req, res) => {
+app.post('/api/create-checkout-session', sensitiveLimiter, async (req, res) => {
   if (!stripe) return res.status(503).json({ error: 'Payments not configured' })
 
-  const { email, cancelPath = '/tco', passType = 'one_time' } = req.body
+  const { email, passType = 'one_time' } = req.body
+  // Only allow relative paths that start with / to prevent URL manipulation
+  const rawCancel = typeof req.body.cancelPath === 'string' ? req.body.cancelPath : ''
+  const cancelPath = /^\/[^/]/.test(rawCancel) ? rawCancel : '/tco'
 
   const isSubscription = passType === 'subscription'
   const priceId = isSubscription ? PRICE_ID : ONE_TIME_PRICE_ID
@@ -447,7 +493,7 @@ app.get('/api/subscription-status', async (req, res) => {
     }
 
     // ── Device-limit enforcement ──────────────────────
-    const ip = getClientIp(req)
+    const ip = req.ip || 'unknown'
 
     // Expire stale devices (not seen in DEVICE_EXPIRY_DAYS days)
     await pool.query(
@@ -505,7 +551,7 @@ app.get('/api/subscription-status', async (req, res) => {
 })
 
 // ── API: Reset all registered devices for an email ────
-app.post('/api/reset-devices', async (req, res) => {
+app.post('/api/reset-devices', sensitiveLimiter, async (req, res) => {
   const email = ((req.body && req.body.email) || '').trim().toLowerCase()
   if (!email) return res.status(400).json({ error: 'Email required' })
   if (!pool)  return res.status(503).json({ error: 'DB not configured' })
@@ -537,7 +583,7 @@ app.post('/api/reset-devices', async (req, res) => {
 })
 
 // ── API: Cancel subscription ──────────────────────────
-app.post('/api/cancel-subscription', async (req, res) => {
+app.post('/api/cancel-subscription', sensitiveLimiter, async (req, res) => {
   if (!stripe) return res.status(503).json({ error: 'Payments not configured' })
 
   const { email } = req.body

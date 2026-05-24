@@ -162,6 +162,10 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders:  false,
   message:        { error: 'Too many requests — please try again later.' },
+  handler(req, res, next, options) {
+    console.warn(`[rate-limit] ${req.method} ${req.path} blocked — IP: ${req.ip}`)
+    res.status(options.statusCode).json(options.message)
+  },
 })
 
 // Tighter cap for endpoints that mutate subscription / device state
@@ -171,9 +175,34 @@ const sensitiveLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders:  false,
   message:        { error: 'Too many requests — please try again later.' },
+  handler(req, res, next, options) {
+    console.warn(`[rate-limit:sensitive] ${req.method} ${req.path} blocked — IP: ${req.ip}`)
+    res.status(options.statusCode).json(options.message)
+  },
+})
+
+// Very strict cap for subscription cancellation — destructive, irreversible
+const cancelLimiter = rateLimit({
+  windowMs:       60 * 60 * 1000,
+  max:            5,
+  standardHeaders: true,
+  legacyHeaders:  false,
+  message:        { error: 'Too many cancellation attempts — please try again later.' },
+  handler(req, res, next, options) {
+    console.warn(`[rate-limit:cancel] cancellation blocked — IP: ${req.ip}, body.email: ${req.body?.email}`)
+    res.status(options.statusCode).json(options.message)
+  },
 })
 
 app.use('/api/', apiLimiter)
+
+// ── Input validation helpers ──────────────────────────
+const UUID_RE  = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{1,63}$/
+
+function isValidUUID(v)  { return typeof v === 'string' && UUID_RE.test(v) }
+function isValidEmail(v) { return typeof v === 'string' && v.length <= 255 && EMAIL_RE.test(v) }
+function clamp(str, max) { return typeof str === 'string' ? str.slice(0, max) : str }
 
 // ── JSON body for all other routes ────────────────────
 app.use(express.json())
@@ -287,12 +316,16 @@ app.post('/api/consent', async (req, res) => {
     disclaimers_acknowledged, liability_acknowledged, final_consent_given,
   } = req.body
 
-  if (!record_id || !session_id || !terms_version) {
-    return res.status(400).json({ success: false, error: 'Missing required fields' })
+  if (!isValidUUID(record_id) || !isValidUUID(session_id)) {
+    return res.status(400).json({ success: false, error: 'Invalid record_id or session_id format' })
+  }
+  if (!terms_version || typeof terms_version !== 'string' || terms_version.length > 20) {
+    return res.status(400).json({ success: false, error: 'Invalid terms_version' })
   }
 
   const ip = req.ip || 'unknown'
-  const user_agent     = req.headers['user-agent'] || 'unknown'
+  // Truncate user-agent to stay within column limits and prevent oversized inserts
+  const user_agent     = clamp(req.headers['user-agent'] || 'unknown', 512)
   const timestamp_utc  = new Date().toISOString()
   const integrity_hash = crypto
     .createHash('sha256')
@@ -329,12 +362,22 @@ app.post('/api/consent', async (req, res) => {
 app.post('/api/user-data', async (req, res) => {
   const { record_id, session_id, first_name, last_name, email, calculation_count } = req.body
 
-  if (!record_id || !session_id || !first_name || !last_name || !email) {
+  if (!isValidUUID(record_id) || !isValidUUID(session_id)) {
+    return res.status(400).json({ success: false, error: 'Invalid record_id or session_id format' })
+  }
+  if (!first_name || !last_name || typeof first_name !== 'string' || typeof last_name !== 'string') {
     return res.status(400).json({ success: false, error: 'Missing required fields' })
+  }
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ success: false, error: 'Invalid email address' })
+  }
+  const count = parseInt(calculation_count, 10)
+  if (isNaN(count) || count < 0 || count > 99999) {
+    return res.status(400).json({ success: false, error: 'Invalid calculation_count' })
   }
 
   const ip = req.ip || 'unknown'
-  const user_agent    = req.headers['user-agent'] || 'unknown'
+  const user_agent    = clamp(req.headers['user-agent'] || 'unknown', 512)
   const timestamp_utc = new Date().toISOString()
 
   if (!pool) {
@@ -351,9 +394,9 @@ app.post('/api/user-data', async (req, res) => {
        ON CONFLICT (record_id) DO NOTHING`,
       [
         record_id, session_id, timestamp_utc,
-        first_name.trim(), last_name.trim(),
+        clamp(first_name.trim(), 100), clamp(last_name.trim(), 100),
         email.trim().toLowerCase(),
-        Number(calculation_count) || 0,
+        count,
         ip, user_agent,
       ]
     )
@@ -468,7 +511,7 @@ app.get('/api/verify-session', async (req, res) => {
 // ── API: Check subscription status by email ───────────
 app.get('/api/subscription-status', async (req, res) => {
   const email = (req.query.email || '').trim().toLowerCase()
-  if (!email) return res.status(400).json({ error: 'Email required' })
+  if (!isValidEmail(email)) return res.status(400).json({ error: 'Valid email required' })
   if (!pool)  return res.json({ active: false, reason: 'db_not_configured' })
 
   // Pro users bypass all checks
@@ -553,8 +596,9 @@ app.get('/api/subscription-status', async (req, res) => {
 // ── API: Reset all registered devices for an email ────
 app.post('/api/reset-devices', sensitiveLimiter, async (req, res) => {
   const email = ((req.body && req.body.email) || '').trim().toLowerCase()
-  if (!email) return res.status(400).json({ error: 'Email required' })
+  if (!isValidEmail(email)) return res.status(400).json({ error: 'Valid email required' })
   if (!pool)  return res.status(503).json({ error: 'DB not configured' })
+  console.log(`[reset-devices] attempt — email: ${email}, IP: ${req.ip}`)
 
   // Only allow reset for confirmed active subscribers
   try {
@@ -583,18 +627,22 @@ app.post('/api/reset-devices', sensitiveLimiter, async (req, res) => {
 })
 
 // ── API: Cancel subscription ──────────────────────────
-app.post('/api/cancel-subscription', sensitiveLimiter, async (req, res) => {
+// Uses the stricter cancelLimiter (5/hr) on top of the general apiLimiter (100/15min)
+app.post('/api/cancel-subscription', cancelLimiter, async (req, res) => {
   if (!stripe) return res.status(503).json({ error: 'Payments not configured' })
 
   const { email } = req.body
-  if (!email) return res.status(400).json({ error: 'Email required' })
+  if (!isValidEmail(email)) return res.status(400).json({ error: 'Valid email required' })
   if (!pool)  return res.status(503).json({ error: 'DB not configured' })
+
+  const normalizedEmail = email.trim().toLowerCase()
+  console.log(`[cancel-subscription] attempt — email: ${normalizedEmail}, IP: ${req.ip}`)
 
   try {
     const result = await pool.query(
       `SELECT stripe_subscription_id, purchase_type FROM subscribers
        WHERE email = $1 AND subscription_status = 'active'`,
-      [email.trim().toLowerCase()]
+      [normalizedEmail]
     )
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'No active subscription found for this email' })
@@ -611,7 +659,7 @@ app.post('/api/cancel-subscription', sensitiveLimiter, async (req, res) => {
     await pool.query(
       `UPDATE subscribers SET subscription_status = 'canceling', updated_at = NOW()
        WHERE email = $1`,
-      [email.trim().toLowerCase()]
+      [normalizedEmail]
     )
 
     // Get the period end so we can tell the user when access ends

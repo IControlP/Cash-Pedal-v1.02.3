@@ -1010,6 +1010,23 @@ export default function SalaryCalculator() {
                     {fmt(value)}
                   </p>
                   <p className="text-[var(--text-muted)] text-xs mt-1">{sublabel}</p>
+                  {knownSalary && Number(knownSalary) >= 10000 && (() => {
+                    const salary = Number(knownSalary)
+                    const gap = salary - value
+                    const aboveBelow = gap >= 0
+                    return (
+                      <div className="mt-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between"
+                        style={{
+                          background: aboveBelow ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)',
+                          color: aboveBelow ? '#4ade80' : '#f87171',
+                        }}>
+                        <span>{aboveBelow ? 'Your salary qualifies' : 'Income shortfall'}</span>
+                        <span className="tabular-nums font-bold">
+                          {aboveBelow ? `+${fmt(gap)}` : fmt(-gap) + ' needed'}
+                        </span>
+                      </div>
+                    )
+                  })()}
                 </div>
               ))}
 

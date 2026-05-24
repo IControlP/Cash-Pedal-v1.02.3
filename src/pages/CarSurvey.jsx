@@ -266,6 +266,34 @@ export default function CarSurvey() {
               </div>
             </div>
 
+            {/* Cost context */}
+            {topMatch?.profile.priceRange && (
+              <div className="mt-5 rounded-xl border border-[var(--border)] p-4 flex flex-col gap-3"
+                style={{ background: 'var(--bg)' }}>
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+                  What it actually costs
+                </p>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="rounded-lg px-3 py-2.5" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Typical price range</p>
+                    <p className="text-white font-semibold text-sm mt-0.5">{topMatch.profile.priceRange}</p>
+                  </div>
+                  <div className="rounded-lg px-3 py-2.5" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Annual ownership cost</p>
+                    <p className="text-white font-semibold text-sm mt-0.5">{topMatch.profile.annualCostRange}</p>
+                  </div>
+                </div>
+                {topMatch.profile.costNote && (
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">{topMatch.profile.costNote}</p>
+                )}
+                <Link to="/tco"
+                  className="text-xs font-semibold"
+                  style={{ color: 'var(--accent)' }}>
+                  Calculate exact TCO for these models →
+                </Link>
+              </div>
+            )}
+
             <div className="mt-6 pt-6 border-t border-[var(--border)]">
               <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">Top model picks</p>
               <div className="flex flex-wrap gap-2">
@@ -283,15 +311,21 @@ export default function CarSurvey() {
             {isSubscribed ? (
               <div className="grid sm:grid-cols-2 gap-4">
                 {rankedProfiles.slice(1, 3).map(({ key, score, profile }) => (
-                  <div key={key} className="card hover:border-[#3a3a3e] transition-colors">
-                    <div className="flex items-center justify-between mb-2">
+                  <div key={key} className="card hover:border-[#3a3a3e] transition-colors flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-2xl">{profile.emoji}</span>
                         <span className="font-display font-bold text-white text-base">{profile.name}</span>
                       </div>
                       <span className="text-xs font-bold text-[var(--text-muted)] bg-[var(--bg)] px-2 py-1 rounded">{Math.round(score)}%</span>
                     </div>
-                    <p className="text-xs text-[var(--text-muted)] italic mb-3">"{profile.tagline}"</p>
+                    <p className="text-xs text-[var(--text-muted)] italic">"{profile.tagline}"</p>
+                    {profile.annualCostRange && (
+                      <div className="rounded-lg px-3 py-2" style={{ background: 'var(--bg)' }}>
+                        <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Annual ownership cost</p>
+                        <p className="text-white font-semibold text-sm mt-0.5">{profile.annualCostRange}</p>
+                      </div>
+                    )}
                     <div className="flex flex-wrap gap-1.5">
                       {profile.topPicks.map(pick => (
                         <span key={pick} className="px-2 py-1 rounded text-xs text-[var(--text-muted)] bg-[var(--bg)] border border-[var(--border)]">

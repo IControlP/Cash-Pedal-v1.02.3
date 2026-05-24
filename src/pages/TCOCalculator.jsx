@@ -795,7 +795,8 @@ function downloadCSV(content, filename) {
 
 // ── 5-Year Forecast ───────────────────────────────────
 function FiveYearForecast({ isPro, financeMode, rows, formatCurrency }) {
-  const maxTotal   = Math.max(...rows.map(r => r.total), 1)
+  const hasDepr    = rows.some(r => r.depreciation != null && r.depreciation > 0)
+  const maxTotal   = Math.max(...rows.map(r => r.total + (hasDepr ? (r.depreciation ?? 0) : 0)), 1)
   const cumulTotal = rows.reduce((s, r) => s + r.total, 0)
 
   const SEGS = [
@@ -804,6 +805,7 @@ function FiveYearForecast({ isPro, financeMode, rows, formatCurrency }) {
     { key: 'fuel',         label: 'Fuel',         color: '#f472b6' },
     { key: 'maintenance',  label: 'Maintenance',  color: '#fb923c' },
     { key: 'registration', label: 'Registration', color: '#a78bfa' },
+    ...(hasDepr ? [{ key: 'depreciation', label: 'Equity loss (depr.)', color: '#64748b' }] : []),
   ]
 
   const ProBadge = () => (
@@ -863,35 +865,48 @@ function FiveYearForecast({ isPro, financeMode, rows, formatCurrency }) {
       </div>
 
       <div className="flex flex-col gap-2.5">
-        {rows.map(row => (
-          <div key={row.yr}>
-            <div className="flex items-center justify-between text-xs mb-1">
-              <span className="text-[var(--text-muted)] font-semibold">Year {row.yr}</span>
-              <span className="text-white font-bold tabular-nums">{formatCurrency(row.total)}</span>
+        {rows.map(row => {
+          const econTotal = row.total + (row.depreciation ?? 0)
+          return (
+            <div key={row.yr}>
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-[var(--text-muted)] font-semibold">Year {row.yr}</span>
+                <div className="flex items-center gap-2 tabular-nums">
+                  <span className="text-white font-bold">{formatCurrency(row.total)}</span>
+                  {row.depreciation > 0 && (
+                    <span className="text-[#64748b] text-[10px]">+{formatCurrency(row.depreciation)} depr.</span>
+                  )}
+                </div>
+              </div>
+              <div className="h-3 w-full rounded overflow-hidden flex gap-px" style={{ background: 'var(--bg)' }}>
+                {SEGS.map(({ key, color }) =>
+                  (row[key] ?? 0) > 0 ? (
+                    <div key={key} className="h-full transition-all duration-500"
+                      style={{ width: `${((row[key] ?? 0) / maxTotal) * 100}%`, background: color, minWidth: 2 }} />
+                  ) : null
+                )}
+              </div>
             </div>
-            <div className="h-3 w-full rounded overflow-hidden flex gap-px" style={{ background: 'var(--bg)' }}>
-              {SEGS.map(({ key, color }) =>
-                row[key] > 0 ? (
-                  <div key={key} className="h-full transition-all duration-500"
-                    style={{ width: `${(row[key] / maxTotal) * 100}%`, background: color, minWidth: 2 }} />
-                ) : null
-              )}
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[10px] text-[var(--text-muted)] border-t border-[var(--border)] pt-3">
-        {SEGS.map(({ label, color }) => (
+        {SEGS.map(({ label, color, key }) => (
           <span key={label} className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: color }} />
-            {label}
+            <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: color, opacity: key === 'depreciation' ? 0.7 : 1 }} />
+            {key === 'depreciation' ? <em>{label}</em> : label}
           </span>
         ))}
         <span className="ml-auto font-semibold text-white tabular-nums">
-          {rows.length}-yr total: {formatCurrency(cumulTotal)}
+          {rows.length}-yr cash total: {formatCurrency(cumulTotal)}
         </span>
       </div>
+      {hasDepr && (
+        <p className="text-[10px] text-[#64748b] leading-relaxed -mt-1">
+          Equity loss (depreciation) shown in gray is value your car loses each year — not a cash payment, but part of the true economic cost of ownership.
+        </p>
+      )}
     </div>
   )
 }
@@ -997,7 +1012,8 @@ function RepairRiskScore({ isPro, make, model, isEV, maintBrandMult, determineTi
 
 // ── Cost Alerts ───────────────────────────────────────
 function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenance,
-  maintBrandMult, classifySegment, formatCurrency, loanAmount, price, rate, financeMode }) {
+  maintBrandMult, classifySegment, formatCurrency, loanAmount, price, rate, financeMode,
+  year1Depreciation, origMsrp }) {
 
   const ProBadge = () => (
     <span className="text-[10px] font-bold px-2 py-0.5 rounded"
@@ -1063,6 +1079,21 @@ function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenan
         type: 'good',
         text: 'EVs eliminate oil changes and reduce brake wear — typical maintenance savings of $500–$900/yr vs. a comparable gas vehicle.',
       })
+    }
+    // Depreciation alert: flag vehicles that lose >25% of value in year 1
+    if (financeMode === 'buy' && year1Depreciation != null && origMsrp > 0) {
+      const deprPct = Math.round((year1Depreciation / origMsrp) * 100)
+      if (deprPct >= 20) {
+        alerts.push({
+          type: 'warning',
+          text: `This ${make} is projected to lose ~${deprPct}% of its value (${formatCurrency(year1Depreciation)}) in the first year — among the highest depreciation in its class. Buying used (1–2 years old) can save you ${formatCurrency(Math.round(year1Depreciation * 0.8))}+ on purchase price.`,
+        })
+      } else if (deprPct <= 10 && deprPct > 0) {
+        alerts.push({
+          type: 'good',
+          text: `Strong resale: this ${make} retains value well (~${deprPct}% depreciation in year 1). You're less likely to be underwater on your loan, and resale will be easier.`,
+        })
+      }
     }
     if (alerts.length === 0) {
       alerts.push({ type: 'good', text: `${make}'s costs are in line with segment averages. No major red flags detected for this vehicle.` })
@@ -1405,9 +1436,10 @@ export default function TCOCalculator() {
 
   // Forecast rows computed at parent level so both the summary panel and FiveYearForecast
   // share identical totals (prevents the visual vs. summary number discrepancy).
+  const leasePeriodYears = Math.ceil(leaseTerm / 12)
+
   const forecastRows = useMemo(() => {
     const years = Math.min(5, Math.max(1, ownershipYears))
-    const leasePeriodYears = Math.ceil(leaseTerm / 12)
     return Array.from({ length: years }, (_, i) => {
       const yr = i + 1
       const loanMonths = financeMode === 'lease'
@@ -1421,11 +1453,18 @@ export default function TCOCalculator() {
       const maintenance  = maintenanceByYear?.[i] ?? Math.round(annualMaintenance * Math.pow(1.08, i))
       const registration = Math.round(annualRegistration * Math.pow(0.95, i))
       const total = loanCost + insurance + fuel + maintenance + registration
-      return { yr, loanCost, insurance, fuel, maintenance, registration, total }
+      // Per-year depreciation: equity value lost this year (buy mode + specific vehicle only)
+      const depreciation = (financeMode === 'buy' && origMsrp && selMake && selModel)
+        ? Math.max(0, Math.round(
+            estimateCurrentValue(origMsrp, selMake, selModel, carAge + i) -
+            estimateCurrentValue(origMsrp, selMake, selModel, carAge + i + 1)
+          ))
+        : null
+      return { yr, loanCost, insurance, fuel, maintenance, registration, total, depreciation }
     })
-  }, [ownershipYears, leaseTerm, financeMode, loanTerm, leaseResults.annualLeaseCost,
+  }, [ownershipYears, leasePeriodYears, financeMode, loanTerm, leaseResults.annualLeaseCost,
       results.monthlyPayment, annualInsurance, annualFuel, maintenanceByYear,
-      annualMaintenance, annualRegistration])
+      annualMaintenance, annualRegistration, origMsrp, selMake, selModel, carAge]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-suggest residual % based on the depreciation model for the selected lease term.
   // Fires whenever the lease term, make, or model changes.
@@ -2327,6 +2366,11 @@ export default function TCOCalculator() {
                           </div>
                           <span className="font-display font-semibold text-white text-sm">{formatCurrency(value)}/yr</span>
                         </div>
+                        {key === 'maint' && !effIsEV && (
+                          <div className="px-4 pb-2 text-[10px] text-[#64748b]">
+                            Budget 15–20% extra for unplanned repairs not in the scheduled service list.
+                          </div>
+                        )}
                         {key === 'maint' && detailedMode && (
                           <MaintenanceBreakdown
                             isEV={effIsEV}
@@ -2524,14 +2568,33 @@ export default function TCOCalculator() {
                       {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}
                     </span>
                   </div>
-                  {!simpleMode && (
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-[var(--text-muted)]">Cost per mile</span>
-                      <span className="text-white font-medium tabular-nums">
-                        ${((forecastRows[0]?.total ?? totalAnnualCost) / annualMileage).toFixed(2)}/mi
-                      </span>
-                    </div>
+                  {/* Depreciation insight — buy mode, specific vehicle only */}
+                  {financeMode === 'buy' && forecastRows[0]?.depreciation != null && forecastRows[0].depreciation > 0 && (
+                    <>
+                      <div className="h-px bg-[var(--border)] my-0.5" style={{ opacity: 0.4 }} />
+                      <div className="flex justify-between items-center text-xs">
+                        <div>
+                          <span className="text-[#94a3b8]">+ Est. equity loss (depreciation)</span>
+                          <p className="text-[9px] text-[#64748b] mt-0.5">value lost this year · not a cash payment</p>
+                        </div>
+                        <span className="text-[#94a3b8] font-medium tabular-nums">
+                          {formatCurrency(forecastRows[0].depreciation)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-[#94a3b8] font-semibold">True economic cost</span>
+                        <span className="text-[#94a3b8] font-bold tabular-nums">
+                          {formatCurrency((forecastRows[0]?.total ?? totalAnnualCost) + forecastRows[0].depreciation)}
+                        </span>
+                      </div>
+                    </>
                   )}
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[var(--text-muted)]">Cost per mile</span>
+                    <span className="text-white font-medium tabular-nums">
+                      ${((forecastRows[0]?.total ?? totalAnnualCost) / annualMileage).toFixed(2)}/mi
+                    </span>
+                  </div>
                   {/* Segment operating cost context — detailed mode only */}
                   {!simpleMode && (() => {
                     const seg = selMake
@@ -2758,6 +2821,8 @@ export default function TCOCalculator() {
                 price={price}
                 rate={rate}
                 financeMode={financeMode}
+                year1Depreciation={forecastRows[0]?.depreciation ?? null}
+                origMsrp={origMsrp}
               />
 
               {/* ── PDF Export (Pro) ── */}

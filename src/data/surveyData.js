@@ -208,6 +208,9 @@ export const vehicleProfiles = {
     perfectFor: ['Families or soon-to-be families', 'People who like the option of AWD', 'Road-trippers and weekend warriors', 'Those who can\'t say no to cargo space'],
     considerations: ['Higher fuel costs than sedans', 'Parking can be trickier in cities', 'Higher sticker price than equivalent sedan'],
     topPicks: ['Toyota RAV4', 'Honda CR-V', 'Mazda CX-5'],
+    priceRange: '$28K–$55K new · $14K–$30K used',
+    annualCostRange: '$7,000–$12,000/yr all-in',
+    costNote: 'Mid-range ownership cost — fuel is the biggest variable depending on MPG.',
   },
   sedan: {
     name: 'Sedan',
@@ -218,6 +221,9 @@ export const vehicleProfiles = {
     perfectFor: ['Daily commuters', 'People who value fuel economy', 'Anyone parking in cities regularly', 'Those who want reliability over flash'],
     considerations: ['Less cargo space than SUVs', 'Doesn\'t feel as "premium" to some', 'Back seat headroom can be tight'],
     topPicks: ['Honda Accord', 'Toyota Camry', 'Mazda3'],
+    priceRange: '$22K–$38K new · $12K–$24K used',
+    annualCostRange: '$5,500–$9,000/yr all-in',
+    costNote: 'One of the most affordable categories to own — strong fuel economy and lower insurance rates.',
   },
   pickup: {
     name: 'Pickup Truck',
@@ -228,6 +234,9 @@ export const vehicleProfiles = {
     perfectFor: ['People who actually tow or haul things', 'Outdoor and off-road enthusiasts', 'Contractors and tradespeople', 'Anyone who gets asked to help move furniture constantly'],
     considerations: ['High fuel costs', 'Expensive to own vs. smaller vehicles', 'Can be a pain to park', 'Overkill for pure city driving'],
     topPicks: ['Ford F-150', 'Toyota Tacoma', 'Ram 1500'],
+    priceRange: '$35K–$75K new · $22K–$50K used',
+    annualCostRange: '$8,000–$15,000/yr all-in',
+    costNote: 'Trucks cost significantly more to fuel and insure. Strong resale softens the blow — F-150 and Tacoma hold value exceptionally well.',
   },
   sports: {
     name: 'Sports Car',
@@ -238,6 +247,9 @@ export const vehicleProfiles = {
     perfectFor: ['Solo drivers or couples without kids', 'People who genuinely enjoy driving', 'Weekend/second-car owners', 'Those willing to sacrifice practicality for a smile'],
     considerations: ['Not great for families or cargo', 'Can be expensive to insure', 'Ride quality often stiffer', 'Impractical in snow/ice'],
     topPicks: ['Mazda MX-5 Miata', 'Ford Mustang', 'Toyota GR86'],
+    priceRange: '$28K–$65K new · $18K–$45K used',
+    annualCostRange: '$7,000–$13,000/yr all-in',
+    costNote: 'Insurance runs 20–40% higher than comparable sedans. Iconic models (Porsche 911, Corvette) actually hold value better than average.',
   },
   luxury: {
     name: 'Luxury Vehicle',
@@ -248,6 +260,9 @@ export const vehicleProfiles = {
     perfectFor: ['People for whom comfort and refinement matter', 'Those who spend significant time in their car', 'Business professionals', 'Anyone who\'s upgraded and can\'t go back'],
     considerations: ['Significantly higher cost of ownership', 'More expensive maintenance and repairs', 'Faster depreciation than mainstream brands', 'Flashier = higher insurance rates'],
     topPicks: ['Lexus ES', 'BMW 3 Series', 'Mercedes-Benz C-Class'],
+    priceRange: '$45K–$120K new · $28K–$75K used',
+    annualCostRange: '$10,000–$22,000/yr all-in',
+    costNote: 'High depreciation (especially German brands) + premium maintenance = true cost often 2× the sticker shock. Lexus is the outlier: luxury feel with near-Toyota reliability.',
   },
   economy: {
     name: 'Economy Car',
@@ -258,6 +273,9 @@ export const vehicleProfiles = {
     perfectFor: ['First-time car buyers', 'City dwellers with limited parking budgets', 'People who drive < 10K miles/year', 'Those who want low insurance and maintenance costs'],
     considerations: ['Fewer features at base trim', 'Less road presence', 'Can feel underpowered on highways'],
     topPicks: ['Honda Civic', 'Toyota Corolla', 'Hyundai Elantra'],
+    priceRange: '$18K–$28K new · $10K–$20K used',
+    annualCostRange: '$4,000–$7,000/yr all-in',
+    costNote: 'The lowest total cost of ownership of any category. Honda Civic and Toyota Corolla routinely top reliability charts.',
   },
   electric: {
     name: 'Electric Vehicle',
@@ -268,6 +286,9 @@ export const vehicleProfiles = {
     perfectFor: ['People with home charging capability', 'City and suburban drivers', 'Tech-forward buyers', 'Anyone who hates gas station trips'],
     considerations: ['Range anxiety on long trips', 'Charging infrastructure still building out', 'Higher upfront cost', 'Apartment charging can be complicated'],
     topPicks: ['Tesla Model 3', 'Hyundai Ioniq 6', 'Chevrolet Equinox EV'],
+    priceRange: '$32K–$65K new · $20K–$42K used',
+    annualCostRange: '$4,500–$9,500/yr all-in',
+    costNote: 'No oil changes + lower brake wear = $500–$900/yr maintenance savings. Watch out: some EVs depreciate fast in years 1–3 — buying used can save $10K+.',
   },
   hybrid: {
     name: 'Hybrid',
@@ -278,6 +299,9 @@ export const vehicleProfiles = {
     perfectFor: ['High-mileage commuters', 'People unsure about going full EV', 'Families who want fuel savings + practicality', 'City + highway mixed drivers'],
     considerations: ['Less exciting to drive than pure EV', 'Can be more expensive to service if battery issues arise', 'Still requires gas stations'],
     topPicks: ['Toyota Prius', 'Honda Accord Hybrid', 'Toyota RAV4 Hybrid'],
+    priceRange: '$27K–$52K new · $15K–$34K used',
+    annualCostRange: '$5,000–$9,000/yr all-in',
+    costNote: 'Fuel savings of $600–$1,200/yr vs. equivalent gas vehicle at 12K mi/yr. Toyota hybrids hold value better than almost any segment.',
   },
   minivan: {
     name: 'Minivan',
@@ -288,5 +312,8 @@ export const vehicleProfiles = {
     perfectFor: ['Families with 3+ kids', 'Carpoolers and sports team parents', 'Anyone who values interior space above all else', 'People who need a mobile base camp'],
     considerations: ['Not exactly a head-turner', 'Higher fuel costs', 'Limited parking in tight spots', 'That sliding door sound is now your life'],
     topPicks: ['Honda Odyssey', 'Toyota Sienna', 'Kia Carnival'],
+    priceRange: '$35K–$55K new · $20K–$38K used',
+    annualCostRange: '$7,500–$12,000/yr all-in',
+    costNote: 'Better value per seat-mile than SUVs. Toyota Sienna (hybrid-only) adds fuel savings on top of already-solid reliability.',
   },
 }

@@ -47,7 +47,11 @@ export function useSubscription() {
     if (!clean) return { active: false }
 
     try {
-      const res  = await fetch(`/api/subscription-status?email=${encodeURIComponent(clean)}`)
+      const res  = await fetch('/api/subscription-status', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email: clean }),
+      })
       const data = await res.json()
 
       if (data.active) {

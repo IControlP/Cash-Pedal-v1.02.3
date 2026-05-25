@@ -50,7 +50,7 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
     event = stripe.webhooks.constructEvent(req.body, sig, WEBHOOK_SEC)
   } catch (err) {
     console.error('[webhook] sig fail:', err.message)
-    return res.status(400).send(`Webhook Error: ${err.message}`)
+    return res.status(400).send('Webhook signature verification failed')
   }
 
   try {
@@ -189,7 +189,7 @@ const cancelLimiter = rateLimit({
   legacyHeaders:  false,
   message:        { error: 'Too many cancellation attempts — please try again later.' },
   handler(req, res, next, options) {
-    console.warn(`[rate-limit:cancel] cancellation blocked — IP: ${req.ip}, body.email: ${req.body?.email}`)
+    console.warn(`[rate-limit:cancel] cancellation blocked — IP: ${req.ip}, email: ${redactEmail(req.body?.email || '')}`)
     res.status(options.statusCode).json(options.message)
   },
 })
@@ -560,8 +560,10 @@ app.get('/api/verify-session', async (req, res) => {
 })
 
 // ── API: Check subscription status by email ───────────
-app.get('/api/subscription-status', async (req, res) => {
-  const email = normalizeEmail(req.query.email || '')
+// POST (not GET) so the email address never appears in server access logs,
+// browser history, CDN logs, or Referer headers.
+app.post('/api/subscription-status', async (req, res) => {
+  const email = normalizeEmail((req.body && req.body.email) || '')
   if (!isValidEmail(email)) return res.status(400).json({ error: 'Valid email required' })
   if (!pool)  return res.json({ active: false, reason: 'db_not_configured' })
 
@@ -583,7 +585,9 @@ app.get('/api/subscription-status', async (req, res) => {
       (!current_period_end || new Date(current_period_end) > new Date())
 
     if (!active) {
-      return res.json({ active: false, status: subscription_status, expires: current_period_end })
+      // Return the same shape as "email not found" — callers must not be able
+      // to distinguish "unknown email" from "email exists but inactive".
+      return res.json({ active: false })
     }
 
     // ── Device-limit enforcement ──────────────────────
@@ -619,7 +623,7 @@ app.get('/api/subscription-status', async (req, res) => {
       const deviceCount = parseInt(countResult.rows[0].cnt, 10)
 
       if (deviceCount >= MAX_DEVICES) {
-        console.log(`[device-limit] ${email} blocked — ${deviceCount} devices registered`)
+        console.log(`[device-limit] ${redactEmail(email)} blocked — ${deviceCount} devices registered`)
         return res.json({
           active:  false,
           reason:  'device_limit',
@@ -669,7 +673,7 @@ app.post('/api/reset-devices', sensitiveLimiter, async (req, res) => {
     }
 
     await pool.query(`DELETE FROM subscriber_devices WHERE email = $1`, [email])
-    console.log(`[reset-devices] cleared devices for ${email}`)
+    console.log(`[reset-devices] cleared devices for ${redactEmail(email)}`)
     res.json({ success: true })
   } catch (err) {
     console.error('[reset-devices] error:', err.message)

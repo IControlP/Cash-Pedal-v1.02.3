@@ -692,6 +692,9 @@ const leaseTermOptions = [
   { value: 48, label: '48 months (4 years)' },
 ]
 
+// States where trade-in value does NOT reduce the taxable purchase price
+const NO_TRADEIN_TAX_STATES = new Set(['CA', 'DC', 'HI', 'KY', 'MD', 'MI', 'MT', 'VA'])
+
 // ── Export helpers ────────────────────────────────────
 function metaSection(meta, line) {
   const out = []
@@ -1196,6 +1199,9 @@ export default function TCOCalculator() {
   const [acquisitionFee,   setAcquisitionFee]   = useState(795)
   const [currentMileage,   setCurrentMileage]   = useState(null) // null = auto (carAge × annualMileage)
   const [dealerPurchase,   setDealerPurchase]   = useState(true)
+  const [tradeInValue,     setTradeInValue]     = useState(0)
+  const [incentiveAmount,  setIncentiveAmount]  = useState(0)
+  const [federalEvCredit,  setFederalEvCredit]  = useState(0)
   const [taxRateOverride,  setTaxRateOverride]  = useState(null) // null = use state rate
   const [docFeeOverride,   setDocFeeOverride]   = useState(null) // null = use state avg
   const [simpleMode,       setSimpleMode]       = useState(() => localStorage.getItem('cashpedal_simple_mode') !== 'false')
@@ -1373,17 +1379,26 @@ export default function TCOCalculator() {
   }, [])
 
   // Purchase extras (tax + dealer fees) — only for buy mode
+  // Trade-in reduces taxable price in most states; manufacturer rebates always do.
+  // Federal EV credit is a point-of-sale credit, not a price reduction, so no tax benefit.
+  const tradeInTaxBenefit = (financeMode === 'buy' && tradeInValue > 0 && resolvedState && !NO_TRADEIN_TAX_STATES.has(resolvedState))
+    ? Math.min(tradeInValue, price)
+    : 0
+  const taxablePrice = Math.max(0, price - tradeInTaxBenefit - Math.min(incentiveAmount, price))
   const salesTaxAmt = financeMode === 'buy'
     ? (taxRateOverride !== null
-        ? Math.round(price * (parseFloat(taxRateOverride) / 100) / 25) * 25
-        : computeSalesTax(resolvedState, price))
+        ? Math.round(taxablePrice * (parseFloat(taxRateOverride) / 100) / 25) * 25
+        : computeSalesTax(resolvedState, taxablePrice))
     : 0
   const autoDocFee = resolvedState ? (STATE_DOC_FEE_AVG[resolvedState] ?? 299) : 299
   const effectiveDocFee = (financeMode === 'buy' && dealerPurchase)
     ? (docFeeOverride !== null ? Number(docFeeOverride) : autoDocFee)
     : 0
+  const totalIncentivesAndTradeIn = financeMode === 'buy' ? tradeInValue + incentiveAmount + federalEvCredit : 0
   const totalPurchaseExtras = salesTaxAmt + effectiveDocFee
-  const effectivePrice = financeMode === 'buy' ? price + totalPurchaseExtras : price
+  const effectivePrice = financeMode === 'buy'
+    ? Math.max(0, price + totalPurchaseExtras - totalIncentivesAndTradeIn)
+    : price
   const regionalDemand = resolvedState ? getRegionalDemandPremium(resolvedState) : 0
 
   const results = useMemo(() => calculateLoan({
@@ -1827,6 +1842,9 @@ export default function TCOCalculator() {
                   {totalPurchaseExtras > 0 && (
                     <> · tax + fees <span className="text-white">{formatCurrency(totalPurchaseExtras)}</span></>
                   )}
+                  {totalIncentivesAndTradeIn > 0 && (
+                    <> · incentives &amp; trade-in <span className="text-green-400">−{formatCurrency(totalIncentivesAndTradeIn)}</span></>
+                  )}
                   {origMsrp && carAge > 0 && (
                     <>
                       {' '}·{' '}
@@ -1868,6 +1886,66 @@ export default function TCOCalculator() {
                     </div>
                   )}
 
+                  {/* Trade-in & Incentives */}
+                  <div className="rounded-xl border p-4 flex flex-col gap-4"
+                    style={{ borderColor: 'rgba(74,222,128,0.25)', background: 'rgba(74,222,128,0.02)' }}>
+                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#4ade80' }}>
+                      Trade-in &amp; Incentives
+                    </p>
+
+                    <SliderInput
+                      label="Trade-in Value"
+                      value={tradeInValue}
+                      onChange={v => setTradeInValue(Math.max(0, v))}
+                      min={0} max={80000} step={500} prefix="$"
+                    />
+                    {tradeInValue > 0 && (
+                      <p className="text-[10px] text-[var(--text-muted)] -mt-3 pl-1">
+                        {resolvedState && NO_TRADEIN_TAX_STATES.has(resolvedState)
+                          ? `${resolvedState} doesn't offer a trade-in sales tax credit — applied to reduce your loan amount`
+                          : `Reduces taxable purchase price${resolvedState ? ` in ${resolvedState}` : ''} · saves ${formatCurrency(salesTaxAmt > 0 ? Math.round((tradeInValue > 0 ? Math.min(tradeInValue, price) : 0) * ((STATE_VEHICLE_SALES_TAX[resolvedState] ?? 0.0625))) : 0)} in tax`}
+                      </p>
+                    )}
+
+                    <SliderInput
+                      label="Manufacturer / Dealer Rebate"
+                      value={incentiveAmount}
+                      onChange={v => setIncentiveAmount(Math.max(0, v))}
+                      min={0} max={15000} step={250} prefix="$"
+                    />
+                    {incentiveAmount > 0 && (
+                      <p className="text-[10px] text-[var(--text-muted)] -mt-3 pl-1">
+                        Reduces purchase price and taxable amount
+                      </p>
+                    )}
+
+                    {effIsEV && (
+                      <div className="flex flex-col gap-2">
+                        <label className="input-label">Federal EV Tax Credit (IRA)</label>
+                        <select
+                          className="input-field"
+                          value={federalEvCredit}
+                          onChange={e => setFederalEvCredit(Number(e.target.value))}
+                        >
+                          <option value={0}>None — $0</option>
+                          <option value={3750}>Partial credit — $3,750</option>
+                          <option value={7500}>Full credit — $7,500</option>
+                        </select>
+                        <p className="text-[10px] text-[var(--text-muted)]">
+                          Point-of-sale credit under IRA (does not reduce sales tax) · confirm eligibility at fueleconomy.gov
+                        </p>
+                      </div>
+                    )}
+
+                    {totalIncentivesAndTradeIn > 0 && (
+                      <div className="flex items-center justify-between rounded-lg px-3 py-2"
+                        style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)' }}>
+                        <span className="text-xs font-semibold text-green-400">Total savings</span>
+                        <span className="text-sm font-bold text-green-400">−{formatCurrency(totalIncentivesAndTradeIn)}</span>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Tax + Fees block */}
                   <div className="rounded-xl border divide-y" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
                     {/* Sales tax row */}
@@ -1879,7 +1957,10 @@ export default function TCOCalculator() {
                             {resolvedState
                               ? taxRateOverride === null && (STATE_VEHICLE_SALES_TAX[resolvedState] ?? 1) === 0
                                 ? <span className="text-green-400 font-semibold">No vehicle sales tax ({resolvedState})</span>
-                                : `${resolvedState} · ${((taxRateOverride !== null ? parseFloat(taxRateOverride) : (STATE_VEHICLE_SALES_TAX[resolvedState] ?? 0.0625) * 100)).toFixed(2)}%`
+                                : <>
+                                    {`${resolvedState} · ${((taxRateOverride !== null ? parseFloat(taxRateOverride) : (STATE_VEHICLE_SALES_TAX[resolvedState] ?? 0.0625) * 100)).toFixed(2)}%`}
+                                    {taxablePrice < price && <span className="text-green-400"> · on {formatCurrency(taxablePrice)} (reduced)</span>}
+                                  </>
                               : 'Enter location for exact rate'}
                           </span>
                         </div>
@@ -1927,10 +2008,13 @@ export default function TCOCalculator() {
                     {/* Out-the-door total */}
                     <div className="flex items-center justify-between px-4 py-3">
                       <div>
-                        <span className="text-sm font-semibold text-white">Out-the-Door Price</span>
+                        <span className="text-sm font-semibold text-white">
+                          {totalIncentivesAndTradeIn > 0 ? 'Net Amount to Finance' : 'Out-the-Door Price'}
+                        </span>
                         {simpleMode && totalPurchaseExtras > 0 && (
                           <span className="ml-2 text-[10px] text-[var(--text-muted)]">
                             includes ~{formatCurrency(totalPurchaseExtras)} tax &amp; fees
+                            {totalIncentivesAndTradeIn > 0 && ` · −${formatCurrency(totalIncentivesAndTradeIn)} incentives`}
                           </span>
                         )}
                       </div>
@@ -2038,6 +2122,16 @@ export default function TCOCalculator() {
                       </span>
                     </div>
                   )}
+
+                  {/* Lease end-of-term cost warning */}
+                  <div className="rounded-lg px-3 py-2.5 flex items-start gap-2.5 border"
+                    style={{ borderColor: 'rgba(251,191,36,0.3)', background: 'rgba(251,191,36,0.04)' }}>
+                    <span className="text-sm shrink-0 mt-0.5" style={{ color: '#fbbf24' }}>⚠</span>
+                    <div className="text-[11px] leading-relaxed" style={{ color: '#fbbf24' }}>
+                      <span className="font-semibold">Lease-end costs not included above.</span>{' '}
+                      Budget for: disposition fee (~$300–$500), excess mileage ({leaseTerm <= 36 ? '10k–12k mi/yr' : '10k mi/yr'} typical allowance at $0.15–$0.30/mi over), and excess wear charges for dings, tires, or upholstery.
+                    </div>
+                  </div>
                 </>
               )}
 

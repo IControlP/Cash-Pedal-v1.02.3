@@ -93,10 +93,55 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
   }
 }
 
+// Approximate state income tax effective rates by gross income bracket.
+// Brackets: [≤$30k, ≤$60k, ≤$100k, ≤$150k, >$150k]
+// These are simplified effective (not marginal) rates for single filers.
+const STATE_INCOME_TAX_RATES = {
+  // No income tax
+  AK:[0,0,0,0,0], FL:[0,0,0,0,0], NV:[0,0,0,0,0], NH:[0,0,0,0,0],
+  SD:[0,0,0,0,0], TN:[0,0,0,0,0], TX:[0,0,0,0,0], WY:[0,0,0,0,0],
+  WA:[0,0,0,0,0],
+  // Flat or low rate
+  CO:[.044,.044,.044,.044,.044], IL:[.0495,.0495,.0495,.0495,.0495],
+  IN:[.032,.032,.032,.032,.032], KY:[.045,.045,.045,.045,.045],
+  MA:[.05,.05,.05,.05,.09],      MI:[.0425,.0425,.0425,.0425,.0425],
+  NC:[.0475,.0475,.0475,.0475,.0475], PA:[.0307,.0307,.0307,.0307,.0307],
+  UT:[.0465,.0465,.0465,.0465,.0465],
+  // Mid rate
+  AL:[.02,.04,.05,.05,.05],      AZ:[.02,.025,.025,.025,.025],
+  AR:[.02,.04,.055,.055,.055],   DE:[.02,.04,.066,.066,.066],
+  GA:[.025,.055,.055,.055,.055], ID:[.02,.04,.058,.058,.058],
+  IA:[.02,.045,.057,.057,.057],  KS:[.025,.052,.057,.057,.057],
+  LA:[.018,.03,.045,.045,.045],  MD:[.02,.04,.055,.055,.055],
+  ME:[.02,.045,.0715,.0715,.0715],
+  MO:[.02,.04,.054,.054,.054],   MS:[.05,.05,.05,.05,.05],
+  MT:[.01,.04,.06,.068,.069],    NE:[.02,.04,.0564,.0564,.0564],
+  NM:[.017,.032,.049,.059,.059], ND:[.01,.015,.015,.015,.025],
+  OH:[.01,.025,.035,.035,.035],  OK:[.02,.04,.05,.05,.05],
+  RI:[.02,.035,.0599,.0599,.0599], SC:[.02,.04,.06,.063,.065],
+  VA:[.02,.04,.0575,.0575,.0575], VT:[.025,.05,.065,.076,.0875],
+  WI:[.025,.045,.065,.0765,.0765], WV:[.03,.05,.065,.065,.065],
+  // Higher rate
+  CA:[.02,.05,.08,.093,.123],    CT:[.03,.05,.065,.069,.0699],
+  DC:[.04,.065,.085,.0875,.095], HI:[.014,.06,.08,.10,.11],
+  MN:[.02,.068,.0785,.0985,.0985], NJ:[.015,.035,.055,.065,.0897],
+  NY:[.04,.055,.065,.075,.109],  OR:[.04,.065,.085,.099,.099],
+}
+
+function getStateIncomeTaxRate(state, grossAnnual) {
+  const brackets = STATE_INCOME_TAX_RATES[state]
+  if (!brackets) return 0.04
+  if (grossAnnual <= 30000)  return brackets[0]
+  if (grossAnnual <= 60000)  return brackets[1]
+  if (grossAnnual <= 100000) return brackets[2]
+  if (grossAnnual <= 150000) return brackets[3]
+  return brackets[4]
+}
+
 // Rough effective take-home estimate for a given gross annual salary.
-// Uses simplified federal brackets + FICA + 4% avg state income tax.
+// Uses simplified federal brackets + FICA + state-specific income tax when known.
 // Intended for ballpark context only, not tax advice.
-function estimateMonthlyTakeHome(grossAnnual) {
+function estimateMonthlyTakeHome(grossAnnual, state = null) {
   let federalEff
   if (grossAnnual <= 30000)       federalEff = 0.08
   else if (grossAnnual <= 55000)  federalEff = 0.12
@@ -104,7 +149,8 @@ function estimateMonthlyTakeHome(grossAnnual) {
   else if (grossAnnual <= 140000) federalEff = 0.21
   else if (grossAnnual <= 200000) federalEff = 0.24
   else                            federalEff = 0.28
-  const totalRate = federalEff + 0.0765 + 0.04  // federal + FICA + avg state
+  const stateRate = state ? getStateIncomeTaxRate(state, grossAnnual) : 0.04
+  const totalRate = federalEff + 0.0765 + stateRate
   return Math.round((grossAnnual * (1 - totalRate)) / 12)
 }
 
@@ -1040,7 +1086,7 @@ export default function SalaryCalculator() {
               {/* Take-home income context */}
               {(() => {
                 const grossConservative = results.conservative
-                const takeHome = estimateMonthlyTakeHome(grossConservative)
+                const takeHome = estimateMonthlyTakeHome(grossConservative, userState || null)
                 const vehiclePct = Math.round((results.totalMonthly / takeHome) * 100)
                 return (
                   <div className="rounded-xl border border-[var(--border)] p-4 text-sm"
@@ -1065,7 +1111,7 @@ export default function SalaryCalculator() {
                       </div>
                     </div>
                     <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
-                      Take-home estimate uses federal brackets + FICA + 4% avg state tax — actual varies by state, filing status &amp; deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
+                      Take-home estimate uses federal brackets + FICA + {userState ? `${userState} state income tax (${(getStateIncomeTaxRate(userState, results.conservative) * 100).toFixed(1)}%)` : 'avg state tax (~4%)'} — actual varies by filing status &amp; deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–17% of take-home.
                     </p>
                   </div>
                 )

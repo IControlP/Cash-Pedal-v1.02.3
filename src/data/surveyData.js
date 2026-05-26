@@ -208,6 +208,8 @@ export const vehicleProfiles = {
     perfectFor: ['Families or soon-to-be families', 'People who like the option of AWD', 'Road-trippers and weekend warriors', 'Those who can\'t say no to cargo space'],
     considerations: ['Higher fuel costs than sedans', 'Parking can be trickier in cities', 'Higher sticker price than equivalent sedan'],
     topPicks: ['Toyota RAV4', 'Honda CR-V', 'Mazda CX-5'],
+    priceNote: 'From ~$28k new · $16k–$28k used (2–5 yr old)',
+    mpgNote: '28–35 mpg · hybrid versions reach 40+ mpg',
   },
   sedan: {
     name: 'Sedan',
@@ -218,6 +220,8 @@ export const vehicleProfiles = {
     perfectFor: ['Daily commuters', 'People who value fuel economy', 'Anyone parking in cities regularly', 'Those who want reliability over flash'],
     considerations: ['Less cargo space than SUVs', 'Doesn\'t feel as "premium" to some', 'Back seat headroom can be tight'],
     topPicks: ['Honda Accord', 'Toyota Camry', 'Mazda3'],
+    priceNote: 'From ~$23k new · $13k–$22k used (2–5 yr old)',
+    mpgNote: '30–40 mpg combined — among the best for gas cars',
   },
   pickup: {
     name: 'Pickup Truck',
@@ -228,6 +232,8 @@ export const vehicleProfiles = {
     perfectFor: ['People who actually tow or haul things', 'Outdoor and off-road enthusiasts', 'Contractors and tradespeople', 'Anyone who gets asked to help move furniture constantly'],
     considerations: ['High fuel costs', 'Expensive to own vs. smaller vehicles', 'Can be a pain to park', 'Overkill for pure city driving'],
     topPicks: ['Ford F-150', 'Toyota Tacoma', 'Ram 1500'],
+    priceNote: 'From ~$33k new · $22k–$45k used (2–5 yr old)',
+    mpgNote: '17–24 mpg — plan for significantly higher fuel bills',
   },
   sports: {
     name: 'Sports Car',
@@ -238,6 +244,8 @@ export const vehicleProfiles = {
     perfectFor: ['Solo drivers or couples without kids', 'People who genuinely enjoy driving', 'Weekend/second-car owners', 'Those willing to sacrifice practicality for a smile'],
     considerations: ['Not great for families or cargo', 'Can be expensive to insure', 'Ride quality often stiffer', 'Impractical in snow/ice'],
     topPicks: ['Mazda MX-5 Miata', 'Ford Mustang', 'Toyota GR86'],
+    priceNote: 'From ~$28k new · $20k–$38k used (2–5 yr old)',
+    mpgNote: '25–35 mpg — reasonable if driven for fun, not daily miles',
   },
   luxury: {
     name: 'Luxury Vehicle',
@@ -248,6 +256,8 @@ export const vehicleProfiles = {
     perfectFor: ['People for whom comfort and refinement matter', 'Those who spend significant time in their car', 'Business professionals', 'Anyone who\'s upgraded and can\'t go back'],
     considerations: ['Significantly higher cost of ownership', 'More expensive maintenance and repairs', 'Faster depreciation than mainstream brands', 'Flashier = higher insurance rates'],
     topPicks: ['Lexus ES', 'BMW 3 Series', 'Mercedes-Benz C-Class'],
+    priceNote: 'From ~$45k new · $25k–$55k used (2–5 yr old)',
+    mpgNote: '25–35 mpg · premium fuel often required — adds ~$500/yr vs. regular',
   },
   economy: {
     name: 'Economy Car',
@@ -258,6 +268,8 @@ export const vehicleProfiles = {
     perfectFor: ['First-time car buyers', 'City dwellers with limited parking budgets', 'People who drive < 10K miles/year', 'Those who want low insurance and maintenance costs'],
     considerations: ['Fewer features at base trim', 'Less road presence', 'Can feel underpowered on highways'],
     topPicks: ['Honda Civic', 'Toyota Corolla', 'Hyundai Elantra'],
+    priceNote: 'From ~$21k new · $12k–$20k used (2–5 yr old)',
+    mpgNote: '33–42 mpg combined — lowest fuel costs of any gas category',
   },
   electric: {
     name: 'Electric Vehicle',
@@ -268,6 +280,8 @@ export const vehicleProfiles = {
     perfectFor: ['People with home charging capability', 'City and suburban drivers', 'Tech-forward buyers', 'Anyone who hates gas station trips'],
     considerations: ['Range anxiety on long trips', 'Charging infrastructure still building out', 'Higher upfront cost', 'Apartment charging can be complicated'],
     topPicks: ['Tesla Model 3', 'Hyundai Ioniq 6', 'Chevrolet Equinox EV'],
+    priceNote: 'From ~$35k new · $22k–$45k used (2–5 yr old) · federal tax credit may apply',
+    mpgNote: 'Equiv. 90–140 MPGe · $0.03–0.05/mile to charge vs. $0.12+ for gas',
   },
   hybrid: {
     name: 'Hybrid',
@@ -278,6 +292,8 @@ export const vehicleProfiles = {
     perfectFor: ['High-mileage commuters', 'People unsure about going full EV', 'Families who want fuel savings + practicality', 'City + highway mixed drivers'],
     considerations: ['Less exciting to drive than pure EV', 'Can be more expensive to service if battery issues arise', 'Still requires gas stations'],
     topPicks: ['Toyota Prius', 'Honda Accord Hybrid', 'Toyota RAV4 Hybrid'],
+    priceNote: 'From ~$28k new · $18k–$32k used (2–5 yr old)',
+    mpgNote: '42–58 mpg combined — breaks even vs. gas in ~2–3 years at 12k mi/yr',
   },
   minivan: {
     name: 'Minivan',
@@ -288,5 +304,7 @@ export const vehicleProfiles = {
     perfectFor: ['Families with 3+ kids', 'Carpoolers and sports team parents', 'Anyone who values interior space above all else', 'People who need a mobile base camp'],
     considerations: ['Not exactly a head-turner', 'Higher fuel costs', 'Limited parking in tight spots', 'That sliding door sound is now your life'],
     topPicks: ['Honda Odyssey', 'Toyota Sienna', 'Kia Carnival'],
+    priceNote: 'From ~$35k new · $22k–$38k used (2–5 yr old)',
+    mpgNote: '28–36 mpg · Sienna is hybrid-only at 36 mpg',
   },
 }

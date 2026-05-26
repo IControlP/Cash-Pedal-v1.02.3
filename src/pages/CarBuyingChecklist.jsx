@@ -537,6 +537,58 @@ export default function CarBuyingChecklist() {
                 </div>
               )
             })()}
+
+            {/* Negotiation Script */}
+            {(() => {
+              const notDoneItems = dueItems.filter(i => statuses[i.id] === 'not_done')
+              const unknownItems = dueItems.filter(i => !statuses[i.id] || statuses[i.id] === 'unknown')
+              if (notDoneItems.length === 0 && unknownItems.length === 0) return null
+              if (negotiationSavings <= 0) return null
+
+              const askingPrice = Number(vehicleInfo.price) || 0
+              const targetPrice = askingPrice > 0 ? Math.max(0, askingPrice - negotiationSavings) : 0
+              const topItems = [...notDoneItems, ...unknownItems.filter(i => i.critical)].slice(0, 3)
+
+              return (
+                <div className="mt-4 pt-4 border-t border-[rgba(255,184,0,0.15)]">
+                  <p className="text-xs font-bold uppercase tracking-widest text-[var(--accent)] mb-3">Suggested Negotiation Script</p>
+                  <div className="rounded-lg border border-[var(--border)] bg-[var(--bg)] p-4 text-xs text-[var(--text-muted)] leading-relaxed space-y-2">
+                    <p className="text-white font-semibold">Opening line:</p>
+                    <p className="italic">
+                      "I've gone through the maintenance history and noticed a few items that are overdue. Based on the service records
+                      {notDoneItems.length > 0 ? ` and the ${notDoneItems.length} confirmed deferred service${notDoneItems.length !== 1 ? 's' : ''}` : ''},
+                      I'd like to propose{' '}
+                      {targetPrice > 0
+                        ? <span className="text-white font-bold not-italic">{fmt(targetPrice)}</span>
+                        : <span className="not-italic">a price reduction</span>
+                      }
+                      {askingPrice > 0 ? ` instead of the asking price of ${fmt(askingPrice)}` : ''}.
+                      That accounts for the work I'll need to take care of as the new owner."
+                    </p>
+                    {topItems.length > 0 && (
+                      <>
+                        <p className="text-white font-semibold pt-1">Back it up with specifics:</p>
+                        <ul className="list-disc list-inside space-y-1">
+                          {topItems.map(item => (
+                            <li key={item.id}>
+                              <span className="text-white">{item.name}</span>
+                              {' — '}
+                              {statuses[item.id] === 'not_done'
+                                ? `confirmed not done, est. ${fmt(item.cost)} to address`
+                                : `no records provided, est. ${fmt(item.cost)} if needed`}
+                              {item.critical ? ' (safety-critical)' : ''}
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
+                    <p className="pt-1">
+                      If the seller pushes back, ask them to either complete the services before closing or split the cost — both are reasonable asks backed by documented deferred maintenance.
+                    </p>
+                  </div>
+                </div>
+              )
+            })()}
           </div>
 
           {/* Pre-purchase inspection callout */}

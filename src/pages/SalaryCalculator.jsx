@@ -187,6 +187,11 @@ export default function SalaryCalculator() {
   // Car suggestion filter
   const [carFilterCategory, setCarFilterCategory] = useState('all')
 
+  // Existing monthly debt (student loans, credit cards, other car payments)
+  const [monthlyDebt, setMonthlyDebt] = useState(0)
+  // Credit APR guide visibility
+  const [showAprGuide, setShowAprGuide] = useState(false)
+
   // Buy inputs
   const [vehiclePrice, setVehiclePrice] = useState(30000)
   const [downPct, setDownPct] = useState(20)
@@ -372,7 +377,8 @@ export default function SalaryCalculator() {
     if (!s || s < 10000) return null
 
     function solve(thresholdPct) {
-      const maxMonthly = (s * thresholdPct) / 12
+      // Subtract existing monthly debt obligations from the available vehicle budget
+      const maxMonthly = Math.max(0, (s * thresholdPct) / 12 - monthlyDebt)
       let estPrice = 30000
       for (let i = 0; i < 4; i++) {
         const ops = estimateBasicMonthlyCosts(estPrice, userState || null, annualMiles)
@@ -393,7 +399,7 @@ export default function SalaryCalculator() {
       comfortable:  solve(0.15),
       aggressive:   solve(0.20),
     }
-  }, [knownSalary, userState, rate, loanTerm, downPct, annualMiles])
+  }, [knownSalary, userState, rate, loanTerm, downPct, annualMiles, monthlyDebt])
 
   const matchedVehicles = useMemo(() => {
     if (!affordableResults) return []
@@ -864,7 +870,39 @@ export default function SalaryCalculator() {
 
                   {/* Interest rate */}
                   <div className="flex flex-col gap-2">
-                    <label className="input-label">Annual Interest Rate</label>
+                    <div className="flex items-center justify-between">
+                      <label className="input-label">Annual Interest Rate</label>
+                      <button
+                        type="button"
+                        onClick={() => setShowAprGuide(g => !g)}
+                        className="text-[10px] font-semibold transition-colors"
+                        style={{ color: 'var(--accent)' }}
+                      >
+                        {showAprGuide ? 'Hide guide' : 'What rate should I use?'}
+                      </button>
+                    </div>
+                    {showAprGuide && (
+                      <div className="rounded-lg p-3 border border-[var(--border)] bg-[var(--bg)]">
+                        <p className="text-xs font-semibold text-white mb-2">Typical auto loan APR by credit score</p>
+                        <div className="flex flex-col gap-1.5">
+                          {[
+                            { label: 'Excellent (760+)',  apr: '4–6%',   color: 'text-green-400' },
+                            { label: 'Good (700–759)',    apr: '6–8%',   color: 'text-[var(--accent)]' },
+                            { label: 'Fair (640–699)',    apr: '9–12%',  color: 'text-yellow-400' },
+                            { label: 'Poor (580–639)',    apr: '14–18%', color: 'text-orange-400' },
+                            { label: 'Very poor (<580)',  apr: '18%+',   color: 'text-red-400' },
+                          ].map(({ label, apr, color }) => (
+                            <div key={label} className="flex justify-between items-center text-xs">
+                              <span className="text-[var(--text-muted)]">{label}</span>
+                              <span className={`font-bold ${color}`}>{apr}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-[var(--text-muted)] mt-2 leading-relaxed">
+                          Rates vary by lender and term. Get a pre-approval from your bank or credit union before visiting a dealer — dealers often mark up the rate by 1–2%.
+                        </p>
+                      </div>
+                    )}
                     <div className="relative">
                       <input
                         type="number"
@@ -1079,31 +1117,64 @@ export default function SalaryCalculator() {
                 <p className="text-xs text-[var(--text-muted)] mb-3 leading-relaxed">
                   Enter your gross annual salary to see the vehicle price you can target at each spending tier.
                 </p>
-                <div className="flex flex-col gap-2 mb-4">
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
-                    <input
-                      type="number"
-                      value={knownSalary}
-                      onChange={e => setKnownSalary(e.target.value)}
-                      placeholder="e.g. 75,000"
-                      className="input-field"
-                      style={{ paddingLeft: '1.75rem' }}
-                      min={0}
-                      step={1000}
-                    />
+                <div className="flex flex-col gap-3 mb-4">
+                  {/* Salary input */}
+                  <div className="flex flex-col gap-2">
+                    <label className="input-label text-[10px]">Annual Gross Salary</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                      <input
+                        type="number"
+                        value={knownSalary}
+                        onChange={e => setKnownSalary(e.target.value)}
+                        placeholder="e.g. 75,000"
+                        className="input-field"
+                        style={{ paddingLeft: '1.75rem' }}
+                        min={0}
+                        step={1000}
+                      />
+                    </div>
+                    {knownSalary && Number(knownSalary) >= 10000 && (
+                      <input
+                        type="range" min={20000} max={400000} step={1000}
+                        value={Number(knownSalary)}
+                        onChange={e => setKnownSalary(e.target.value)}
+                        style={{ background: `linear-gradient(to right, var(--accent) ${((Number(knownSalary) - 20000) / 380000) * 100}%, var(--border) ${((Number(knownSalary) - 20000) / 380000) * 100}%)` }}
+                      />
+                    )}
                   </div>
-                  {knownSalary && Number(knownSalary) >= 10000 && (
-                    <input
-                      type="range" min={20000} max={400000} step={1000}
-                      value={Number(knownSalary)}
-                      onChange={e => setKnownSalary(e.target.value)}
-                      style={{ background: `linear-gradient(to right, var(--accent) ${((Number(knownSalary) - 20000) / 380000) * 100}%, var(--border) ${((Number(knownSalary) - 20000) / 380000) * 100}%)` }}
-                    />
-                  )}
+                  {/* Existing debt input */}
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="input-label text-[10px]">Other Monthly Debt Payments</label>
+                      <span className="text-[10px] text-[var(--text-muted)]">optional</span>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                      <input
+                        type="number"
+                        value={monthlyDebt || ''}
+                        onChange={e => setMonthlyDebt(Math.max(0, Number(e.target.value)))}
+                        placeholder="0"
+                        className="input-field text-sm"
+                        style={{ paddingLeft: '1.75rem' }}
+                        min={0}
+                        step={50}
+                      />
+                    </div>
+                    <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                      Student loans, credit cards, other car or personal loans — reduces your vehicle budget
+                    </p>
+                  </div>
                 </div>
                 {affordableResults ? (
                   <div className="flex flex-col gap-2">
+                    {monthlyDebt > 0 && (
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-yellow-500/30 bg-yellow-500/5 text-xs">
+                        <span className="text-yellow-400 font-semibold shrink-0">Debt adjusted</span>
+                        <span className="text-[var(--text-muted)]">Results reduced by {fmt(monthlyDebt)}/mo in existing obligations</span>
+                      </div>
+                    )}
                     {[
                       { label: 'Conservative', pct: '10%', badge: '✓ Safest', value: affordableResults.conservative, accent: true },
                       { label: 'Comfortable',  pct: '15%', badge: null,        value: affordableResults.comfortable,  accent: false },
@@ -1134,6 +1205,7 @@ export default function SalaryCalculator() {
                     <p className="text-[10px] text-[var(--text-muted)] leading-relaxed mt-1">
                       Assumes {downPct}% down · {loanTerm}-month loan · {rate}% APR · includes estimated insurance, fuel, maintenance &amp; registration.
                       {userState ? ` ${userState} rates applied.` : ' National average rates.'}
+                      {monthlyDebt > 0 ? ` Adjusted for ${fmt(monthlyDebt)}/mo existing debt.` : ''}
                     </p>
                   </div>
                 ) : (

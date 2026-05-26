@@ -276,6 +276,26 @@ export default function CarSurvey() {
                 ))}
               </div>
             </div>
+
+            {(topMatch?.profile.priceNote || topMatch?.profile.mpgNote) && (
+              <div className="mt-6 pt-6 border-t border-[var(--border)]">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">Cost & Efficiency</p>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {topMatch.profile.priceNote && (
+                    <div className="rounded-lg p-3 border border-[var(--border)] bg-[var(--bg)]">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Typical Price</p>
+                      <p className="text-sm text-white leading-snug">{topMatch.profile.priceNote}</p>
+                    </div>
+                  )}
+                  {topMatch.profile.mpgNote && (
+                    <div className="rounded-lg p-3 border border-[var(--border)] bg-[var(--bg)]">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1">Fuel Economy</p>
+                      <p className="text-sm text-white leading-snug">{topMatch.profile.mpgNote}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Runner-up profiles — Pro only */}
@@ -363,14 +383,29 @@ export default function CarSurvey() {
           </div>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-4 anim-5">
-            <Link to="/tco" className="btn-primary flex-1 justify-center py-4">
-              Calculate TCO for this vehicle →
-            </Link>
-            <button onClick={handleRestart} className="btn-ghost flex-1 justify-center py-4">
-              Retake the survey
-            </button>
+          <div className="card mb-4 anim-5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">Run the numbers</p>
+            <p className="text-sm text-[var(--text-muted)] mb-4 leading-relaxed">
+              Now that you know your vehicle type, put real numbers to it — see what salary you need, what you can afford, and the full 5-year ownership cost.
+            </p>
+            <div className="grid sm:grid-cols-3 gap-3">
+              <Link to="/salary" className="flex flex-col gap-1 px-4 py-3 rounded-xl border border-[var(--border)] hover:border-[var(--accent)] transition-colors bg-[var(--bg)]">
+                <span className="text-xs font-bold text-[var(--accent)]">Salary Check</span>
+                <span className="text-xs text-[var(--text-muted)]">See what salary supports this vehicle type</span>
+              </Link>
+              <Link to="/tco" className="flex flex-col gap-1 px-4 py-3 rounded-xl border border-[var(--border)] hover:border-[var(--accent)] transition-colors bg-[var(--bg)]">
+                <span className="text-xs font-bold text-[var(--accent)]">Total Cost (TCO)</span>
+                <span className="text-xs text-[var(--text-muted)]">5-year ownership cost including fuel, insurance, depreciation</span>
+              </Link>
+              <Link to="/compare" className="flex flex-col gap-1 px-4 py-3 rounded-xl border border-[var(--border)] hover:border-[var(--accent)] transition-colors bg-[var(--bg)]">
+                <span className="text-xs font-bold text-[var(--accent)]">Compare Models</span>
+                <span className="text-xs text-[var(--text-muted)]">Side-by-side cost comparison for your top picks</span>
+              </Link>
+            </div>
           </div>
+          <button onClick={handleRestart} className="btn-ghost w-full justify-center py-3 anim-5">
+            Retake the survey
+          </button>
         </div>
       </main>
       <Footer />

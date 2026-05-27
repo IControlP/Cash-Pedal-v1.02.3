@@ -64,7 +64,7 @@ function estimateBasicMonthlyCosts(price, state, annualMiles = DEFAULT_ANNUAL_MI
 }
 
 // Pro mode: vehicle-specific + state-aware
-function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, annualMiles = DEFAULT_ANNUAL_MILES) {
+function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, annualMiles = DEFAULT_ANNUAL_MILES, driverAge = null) {
   const segment = isEv ? 'electric' : classifySegment(make, model)
 
   const mpgNum  = mpg && typeof mpg === 'object' ? (mpg.combined ?? null) : (mpg || null)
@@ -78,7 +78,8 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
     annualMiles
   ) / 12)
 
-  const insurance = Math.round(estimateInsurance(price, make, model, year, state || null) / 12)
+  const driverAgeNum = driverAge !== '' && driverAge !== null ? Number(driverAge) : null
+  const insurance = Math.round(estimateInsurance(price, make, model, year, state || null, false, driverAgeNum) / 12)
 
   const maintServices = generateMaintenanceServices(isEv, annualMiles, segment, make)
   const maintenance = Math.round(maintServices.reduce((s, x) => s + x.annual, 0) / 12)
@@ -183,6 +184,9 @@ export default function SalaryCalculator() {
 
   // Annual mileage (affects fuel cost)
   const [annualMiles, setAnnualMiles] = useState(DEFAULT_ANNUAL_MILES)
+
+  // Driver age for accurate insurance estimates
+  const [driverAge, setDriverAge] = useState('')
 
   // Car suggestion filter
   const [carFilterCategory, setCarFilterCategory] = useState('all')
@@ -321,8 +325,8 @@ export default function SalaryCalculator() {
   const proExtras = useMemo(() => {
     if (!proMode || !selectedVehicleInfo) return null
     const { make, model, year, is_ev, mpg } = selectedVehicleInfo
-    return estimateProMonthlyCosts(activePrice, make, model, year, is_ev, mpg, userState, annualMiles)
-  }, [proMode, selectedVehicleInfo, activePrice, userState, annualMiles])
+    return estimateProMonthlyCosts(activePrice, make, model, year, is_ev, mpg, userState, annualMiles, driverAge)
+  }, [proMode, selectedVehicleInfo, activePrice, userState, annualMiles, driverAge])
 
   const results = useMemo(() => {
     const extra = proExtras
@@ -903,6 +907,29 @@ export default function SalaryCalculator() {
                   <span className="font-semibold text-[var(--accent)]">12,000 avg</span>
                   <span>30,000</span>
                 </div>
+              </div>
+
+              {/* Driver age for insurance accuracy */}
+              <div className="flex flex-col gap-2">
+                <label className="input-label">Primary Driver Age</label>
+                <select
+                  className="input-field"
+                  value={driverAge}
+                  onChange={e => setDriverAge(e.target.value)}
+                >
+                  <option value="">Not specified (adult baseline)</option>
+                  <option value="17">Under 18 (teen driver)</option>
+                  <option value="19">18–19 years old</option>
+                  <option value="21">20–21 years old</option>
+                  <option value="23">22–24 years old</option>
+                  <option value="27">25–29 years old</option>
+                  <option value="35">30–64 years old</option>
+                  <option value="67">65–69 years old</option>
+                  <option value="72">70 and older</option>
+                </select>
+                <p className="text-[10px] text-[var(--text-muted)]">
+                  Young drivers (under 25) typically pay 1.5–3× more — affects your insurance estimate.
+                </p>
               </div>
 
               {/* Monthly cost breakdown */}

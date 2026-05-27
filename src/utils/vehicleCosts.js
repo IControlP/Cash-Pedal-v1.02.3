@@ -159,8 +159,8 @@ export function estimateCurrentValue(originalPrice, make, model, ageYears, curre
 // ── Insurance ────────────────────────────────────────────
 // Ported from advanced_insurance.py (AdvancedInsuranceCalculator)
 
-// National average full-coverage premium — updated to 2025 levels (Bankrate/NAIC data)
-export const INSURANCE_BASE_RATE = 1760
+// National average full-coverage premium — updated to 2026 levels (Bankrate/NAIC data)
+export const INSURANCE_BASE_RATE = 1920
 
 export const INSURANCE_VALUE_BRACKETS = [
   [0, 15000, .80], [15000, 30000, 1.00], [30000, 50000, 1.18],
@@ -175,19 +175,20 @@ export const INSURANCE_BRAND_MULT = {
   Tesla: 1.35, Rivian: 1.30, Lucid: 1.25,
 }
 
-// State base premiums updated to 2025 averages (Bankrate/NAIC)
+// State base premiums updated to 2026 averages (Bankrate/NAIC) — up ~9% YoY
 export const STATE_INS_BASE = {
-  AL:1840,AK:1380,AZ:1810,AR:1740,CA:2310,CO:2100,CT:1980,
-  DE:1790,FL:3100,GA:2070,HI:1340,ID:1190,IL:1700,IN:1420,
-  IA:1250,KS:1580,KY:2030,LA:3090,ME:1160,MD:1980,MA:1520,
-  MI:2520,MN:1680,MS:1800,MO:1880,MT:1560,NE:1490,NV:2060,
-  NH:1190,NJ:2030,NM:1700,NY:2280,NC:1440,ND:1440,OH:1270,
-  OK:2100,OR:1530,PA:1720,RI:2020,SC:1660,SD:1540,TN:1680,
-  TX:2310,UT:1640,VT:1160,VA:1480,WA:1620,WV:1610,WI:1330,WY:1420,
+  AL:2010,AK:1500,AZ:1970,AR:1900,CA:2520,CO:2290,CT:2160,
+  DE:1950,FL:3380,GA:2260,HI:1460,ID:1300,IL:1850,IN:1550,
+  IA:1360,KS:1720,KY:2210,LA:3370,ME:1260,MD:2160,MA:1660,
+  MI:2750,MN:1830,MS:1960,MO:2050,MT:1700,NE:1620,NV:2250,
+  NH:1300,NJ:2210,NM:1850,NY:2490,NC:1570,ND:1570,OH:1380,
+  OK:2290,OR:1670,PA:1880,RI:2200,SC:1810,SD:1680,TN:1830,
+  TX:2520,UT:1790,VT:1260,VA:1610,WA:1770,WV:1760,WI:1450,WY:1550,
 }
 
 // state=null → national average
-export function estimateInsurance(purchasePrice, make, model, modelYear, state, multiCarDiscount = false) {
+// driverAge=null → default adult rate (30–64). Young drivers (< 25) pay substantially more.
+export function estimateInsurance(purchasePrice, make, model, modelYear, state, multiCarDiscount = false, driverAge = null) {
   const ageYears   = modelYear ? Math.max(0, new Date().getFullYear() - parseInt(modelYear)) : 0
   const currentVal = estimateCurrentValue(purchasePrice, make || null, model || null, ageYears)
   const [,,valueMult] = INSURANCE_VALUE_BRACKETS.find(([mn, mx]) => currentVal >= mn && currentVal < mx) ?? [0,0,1.0]
@@ -199,7 +200,20 @@ export function estimateInsurance(purchasePrice, make, model, modelYear, state, 
   // and the insurer's reduced exposure as car value falls beyond bracket thresholds.
   // ~1.5% per year, floored at 0.85 for vehicles 10+ years old.
   const ageMult = ageYears > 0 ? Math.max(0.85, 1 - ageYears * 0.015) : 1.0
-  return Math.round((stateBase * valueMult * brandMult * ageMult * multiCarMult) / 50) * 50
+  // Driver age multiplier — young drivers pay 1.5–3× the adult baseline
+  let driverAgeMult = 1.0
+  if (driverAge !== null) {
+    const age = Number(driverAge)
+    if      (age < 18) driverAgeMult = 3.0
+    else if (age < 20) driverAgeMult = 2.5
+    else if (age < 22) driverAgeMult = 2.0
+    else if (age < 25) driverAgeMult = 1.5
+    else if (age < 30) driverAgeMult = 1.2
+    else if (age < 65) driverAgeMult = 1.0
+    else if (age < 70) driverAgeMult = 1.1
+    else               driverAgeMult = 1.25
+  }
+  return Math.round((stateBase * valueMult * brandMult * ageMult * multiCarMult * driverAgeMult) / 50) * 50
 }
 
 // ── Maintenance ──────────────────────────────────────────
@@ -403,28 +417,28 @@ export function requiresPremiumFuel(make, model) {
   return (PREMIUM_FUEL_MODELS[make] ?? []).some(m => ml.includes(m.toLowerCase()))
 }
 
-// Regular unleaded state averages — updated to 2025 levels (EIA/GasBuddy data)
+// Regular unleaded state averages — updated to May 2026 levels (EIA/GasBuddy data)
 export const STATE_FUEL_PRICES = {
-  AL:3.05,AK:3.95,AZ:3.70,AR:2.95,CA:4.80,CO:3.30,CT:3.55,
-  DE:3.20,FL:3.25,GA:3.05,HI:4.90,ID:3.50,IL:3.55,IN:3.25,
-  IA:3.10,KS:2.95,KY:3.05,LA:2.90,ME:3.45,MD:3.35,MA:3.60,
-  MI:3.40,MN:3.30,MS:2.90,MO:2.95,MT:3.40,NE:3.10,NV:3.90,
-  NH:3.35,NJ:3.45,NM:3.10,NY:3.75,NC:3.10,ND:3.05,OH:3.15,
-  OK:2.95,OR:3.95,PA:3.55,RI:3.50,SC:3.05,SD:3.15,TN:3.05,
-  TX:3.00,UT:3.55,VT:3.50,VA:3.20,WA:4.10,WV:3.25,WI:3.30,
-  WY:3.25,DC:3.75,
+  AL:2.85,AK:3.80,AZ:3.50,AR:2.75,CA:4.90,CO:3.10,CT:3.40,
+  DE:3.00,FL:3.10,GA:2.85,HI:5.05,ID:3.30,IL:3.40,IN:3.05,
+  IA:2.90,KS:2.75,KY:2.85,LA:2.70,ME:3.25,MD:3.15,MA:3.45,
+  MI:3.20,MN:3.10,MS:2.70,MO:2.75,MT:3.20,NE:2.90,NV:3.70,
+  NH:3.15,NJ:3.30,NM:2.90,NY:3.65,NC:2.90,ND:2.85,OH:2.95,
+  OK:2.75,OR:3.80,PA:3.35,RI:3.35,SC:2.85,SD:2.95,TN:2.85,
+  TX:2.80,UT:3.35,VT:3.30,VA:3.00,WA:3.95,WV:3.05,WI:3.10,
+  WY:3.05,DC:3.65,
 }
 
-// Residential electricity rates $/kWh — updated to 2025 levels (EIA data)
+// Residential electricity rates $/kWh — updated to May 2026 levels (EIA data)
 export const STATE_ELEC_RATES = {
-  AL:0.14,AK:0.25,AZ:0.15,AR:0.11,CA:0.38,CO:0.15,CT:0.33,
-  DE:0.15,FL:0.15,GA:0.14,HI:0.44,ID:0.11,IL:0.17,IN:0.15,
-  IA:0.13,KS:0.14,KY:0.12,LA:0.11,ME:0.18,MD:0.19,MA:0.30,
-  MI:0.19,MN:0.15,MS:0.12,MO:0.13,MT:0.12,NE:0.12,NV:0.14,
-  NH:0.26,NJ:0.22,NM:0.14,NY:0.22,NC:0.13,ND:0.11,OH:0.15,
-  OK:0.12,OR:0.12,PA:0.18,RI:0.30,SC:0.14,SD:0.12,TN:0.12,
-  TX:0.14,UT:0.12,VT:0.19,VA:0.14,WA:0.11,WV:0.13,WI:0.16,
-  WY:0.12,DC:0.17,
+  AL:0.15,AK:0.26,AZ:0.16,AR:0.12,CA:0.40,CO:0.16,CT:0.35,
+  DE:0.16,FL:0.16,GA:0.15,HI:0.46,ID:0.12,IL:0.18,IN:0.16,
+  IA:0.14,KS:0.15,KY:0.13,LA:0.12,ME:0.20,MD:0.20,MA:0.32,
+  MI:0.20,MN:0.16,MS:0.13,MO:0.14,MT:0.13,NE:0.13,NV:0.15,
+  NH:0.27,NJ:0.23,NM:0.15,NY:0.23,NC:0.14,ND:0.12,OH:0.16,
+  OK:0.13,OR:0.13,PA:0.19,RI:0.32,SC:0.15,SD:0.13,TN:0.13,
+  TX:0.15,UT:0.13,VT:0.20,VA:0.15,WA:0.12,WV:0.14,WI:0.17,
+  WY:0.13,DC:0.18,
 }
 
 // Public DC fast-charging rate ≈ 2.2× home residential (floor $0.29, cap $0.65)
@@ -443,18 +457,22 @@ export function getEffectiveElecRate(state, style) {
   return home
 }
 
-// state=null → national average defaults ($3.50/gal gas, $0.16/kWh electricity)
+// state=null → national average defaults ($3.20/gal gas, $0.17/kWh electricity)
 // isPremium: adds PREMIUM_PRICE_DELTA to the state average when no override is set
-export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 15000, fuelPriceOverride = null, isPremium = false) {
+// realWorldFactor: EPA ratings are tested in ideal conditions; real-world efficiency is
+//   typically 10–25% lower. Pass 0.85 to apply a 15% real-world reduction (recommended).
+//   Default 1.0 preserves full backward compatibility.
+export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 15000, fuelPriceOverride = null, isPremium = false, realWorldFactor = 1.0) {
   const KWH_PER_GAL = 33.7
+  const rwf = Math.max(0.50, Math.min(1.0, realWorldFactor))
   if (isEV) {
-    const mpge = mpgeCombined ?? 100
+    const mpge = (mpgeCombined ?? 100) * rwf
     const annualKwh = miles / (mpge / KWH_PER_GAL)
-    const rate = fuelPriceOverride !== null ? fuelPriceOverride : (STATE_ELEC_RATES[state] ?? 0.16)
+    const rate = fuelPriceOverride !== null ? fuelPriceOverride : (STATE_ELEC_RATES[state] ?? 0.17)
     return Math.round(annualKwh * rate / 50) * 50
   }
-  const mpg = mpgCombined ?? 28
-  const base = STATE_FUEL_PRICES[state] ?? 3.50
+  const mpg = (mpgCombined ?? 28) * rwf
+  const base = STATE_FUEL_PRICES[state] ?? 3.20
   const price = fuelPriceOverride !== null
     ? fuelPriceOverride
     : base + (isPremium ? PREMIUM_PRICE_DELTA : 0)

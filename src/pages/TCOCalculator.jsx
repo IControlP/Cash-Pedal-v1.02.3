@@ -997,7 +997,8 @@ function RepairRiskScore({ isPro, make, model, isEV, maintBrandMult, determineTi
 
 // ── Cost Alerts ───────────────────────────────────────
 function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenance,
-  maintBrandMult, classifySegment, formatCurrency, loanAmount, price, rate, financeMode }) {
+  maintBrandMult, classifySegment, formatCurrency, loanAmount, price, rate, financeMode,
+  loanTerm, modelYear, driverAge }) {
 
   const ProBadge = () => (
     <span className="text-[10px] font-bold px-2 py-0.5 rounded"
@@ -1052,10 +1053,28 @@ function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenan
         text: `Your interest rate of ${rate}% is high. Check credit union rates — they typically run 2–4% below dealer-arranged financing for the same loan term.`,
       })
     }
+    if (financeMode === 'buy' && loanTerm >= 72) {
+      alerts.push({
+        type: 'warning',
+        text: `A ${loanTerm}-month loan stretches payments but means you'll be "underwater" (owing more than the car is worth) for 2–3+ years. Consider a shorter term or larger down payment if possible.`,
+      })
+    }
     if (financeMode === 'buy' && loanAmount > 0 && price > 0 && loanAmount / price > 0.80) {
       alerts.push({
         type: 'warning',
         text: `You're financing more than 80% of the vehicle's value. Gap insurance (~$300 one-time or $20–$40/mo) protects you if the car is totaled before your loan balance drops below market value.`,
+      })
+    }
+    if (driverAge !== '' && Number(driverAge) < 25) {
+      alerts.push({
+        type: 'warning',
+        text: `Young drivers under 25 pay significantly higher insurance premiums. Adding to a parent's policy as a secondary driver is often 30–50% cheaper than a standalone policy.`,
+      })
+    }
+    if (isEV && modelYear && (new Date().getFullYear() - parseInt(modelYear)) <= 1) {
+      alerts.push({
+        type: 'good',
+        text: 'New EVs may qualify for up to $7,500 in federal tax credits (IRA Clean Vehicle Credit) and additional state incentives — check eligibility before buying.',
       })
     }
     if (isEV) {
@@ -1199,6 +1218,10 @@ export default function TCOCalculator() {
   const [taxRateOverride,  setTaxRateOverride]  = useState(null) // null = use state rate
   const [docFeeOverride,   setDocFeeOverride]   = useState(null) // null = use state avg
   const [simpleMode,       setSimpleMode]       = useState(() => localStorage.getItem('cashpedal_simple_mode') !== 'false')
+  // Real-world MPG adjustment: EPA tests in ideal conditions; real driving is typically 10–20% worse
+  const [mpgRealWorldPct,  setMpgRealWorldPct]  = useState(85)  // 85% of EPA by default
+  // Driver age for insurance accuracy: young drivers (< 25) pay significantly higher premiums
+  const [driverAge,        setDriverAge]        = useState('')  // empty = not specified
 
   const toggleSimpleMode = () => {
     const next = !simpleMode
@@ -1258,14 +1281,16 @@ export default function TCOCalculator() {
 
   useEffect(() => {
     if (customCosts) return
-    setAnnualInsurance(estimateInsurance(price, selMake||null, selModel||null, selYear||null, resolvedState||null, detailedMode && multiCarPolicy))
+    const driverAgeNum = driverAge !== '' ? Number(driverAge) : null
+    setAnnualInsurance(estimateInsurance(price, selMake||null, selModel||null, selYear||null, resolvedState||null, detailedMode && multiCarPolicy, driverAgeNum))
     const customOverride = customFuelPrice !== '' ? parseFloat(customFuelPrice) : null
+    const rwf = mpgRealWorldPct / 100
     if (modelData) {
       // For EVs: use charging-style blended rate unless user has manually overridden it
       const fuelOverride = (modelData.is_ev && customOverride === null)
         ? getEffectiveElecRate(resolvedState, chargingStyle)
         : customOverride
-      setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel)))
+      setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel), rwf))
       if (detailedMode) {
         const seg = classifySegment(selMake||'', selModel||'')
         const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake)
@@ -1281,7 +1306,7 @@ export default function TCOCalculator() {
       const fuelOverride = (catIsEV && customOverride === null)
         ? getEffectiveElecRate(resolvedState, chargingStyle)
         : customOverride
-      setAnnualFuel(computeAnnualFuel(catIsEV, catMpg, catMpge, resolvedState, annualMileage, fuelOverride))
+      setAnnualFuel(computeAnnualFuel(catIsEV, catMpg, catMpge, resolvedState, annualMileage, fuelOverride, false, rwf))
       if (detailedMode) {
         const catSeg = catInfo?.segment ?? 'sedan'
         const services = generateMaintenanceServices(catIsEV, annualMileage, catSeg, '')
@@ -1294,7 +1319,7 @@ export default function TCOCalculator() {
       ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)), currentMileage)
       : price
     setAnnualRegistration(computeAnnualRegistration(resolvedState, currentVal))
-  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage, driverAge, mpgRealWorldPct]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLocationInput = useCallback((val) => {
     setLocationInput(val)
@@ -1407,7 +1432,6 @@ export default function TCOCalculator() {
   // share identical totals (prevents the visual vs. summary number discrepancy).
   const forecastRows = useMemo(() => {
     const years = Math.min(5, Math.max(1, ownershipYears))
-    const leasePeriodYears = Math.ceil(leaseTerm / 12)
     return Array.from({ length: years }, (_, i) => {
       const yr = i + 1
       const loanMonths = financeMode === 'lease'
@@ -1419,13 +1443,19 @@ export default function TCOCalculator() {
       const insurance    = Math.round(annualInsurance    * Math.pow(1.02, i))
       const fuel         = annualFuel
       const maintenance  = maintenanceByYear?.[i] ?? Math.round(annualMaintenance * Math.pow(1.08, i))
-      const registration = Math.round(annualRegistration * Math.pow(0.95, i))
+      // For VLF states (CA, VA, etc.) registration scales with vehicle value — use depreciated value per year
+      const depVal = (financeMode === 'buy' && origMsrp != null && resolvedState)
+        ? estimateCurrentValue(origMsrp, selMake || null, selModel || null, carAge + yr)
+        : null
+      const registration = depVal != null
+        ? computeAnnualRegistration(resolvedState, depVal)
+        : Math.round(annualRegistration * Math.pow(0.95, i))
       const total = loanCost + insurance + fuel + maintenance + registration
       return { yr, loanCost, insurance, fuel, maintenance, registration, total }
     })
-  }, [ownershipYears, leaseTerm, financeMode, loanTerm, leaseResults.annualLeaseCost,
+  }, [ownershipYears, leasePeriodYears, financeMode, loanTerm, leaseResults.annualLeaseCost,
       results.monthlyPayment, annualInsurance, annualFuel, maintenanceByYear,
-      annualMaintenance, annualRegistration])
+      annualMaintenance, annualRegistration, origMsrp, selMake, selModel, carAge, resolvedState])
 
   // Auto-suggest residual % based on the depreciation model for the selected lease term.
   // Fires whenever the lease term, make, or model changes.
@@ -1458,6 +1488,9 @@ export default function TCOCalculator() {
     const market = estimateCurrentValue(origMsrp, selMake, selModel, ageYrs, currentMileage ?? undefined)
     setPrice(Math.round((dealerPurchase ? market * 1.10 : market) / 500) * 500)
   }, [dealerPurchase]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Needed in both forecastRows and handleAddToComparison
+  const leasePeriodYears = Math.ceil(leaseTerm / 12)
 
   // For the insurance note: estimated current market value after depreciation
   const carAge            = selYear ? Math.max(0, new Date().getFullYear() - parseInt(selYear)) : 0
@@ -2250,7 +2283,7 @@ export default function TCOCalculator() {
                           className="input-field pl-7"
                           placeholder={effIsEV
                             ? `${getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)} (${{ home: 'home', mixed: 'blended', public: 'public DCFC' }[chargingStyle]})`
-                            : `${((STATE_FUEL_PRICES[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)} (${resolvedState} ${isPremium ? 'premium' : 'regular'} avg)`}
+                            : `${((STATE_FUEL_PRICES[resolvedState] ?? 3.20) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)} (${resolvedState} ${isPremium ? 'premium' : 'regular'} avg)`}
                           value={customFuelPrice}
                           onChange={e => setCustomFuelPrice(e.target.value)}
                           step={effIsEV ? 0.001 : 0.05}
@@ -2267,7 +2300,7 @@ export default function TCOCalculator() {
                     <p className="text-[10px] text-[var(--text-muted)]">
                       {effIsEV
                         ? `Leave blank to use charging-style rate ($${getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)}/kWh)`
-                        : `Leave blank to use ${resolvedState} ${isPremium ? 'premium' : 'regular'} avg ($${((STATE_FUEL_PRICES[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)}/gal)`}
+                        : `Leave blank to use ${resolvedState} ${isPremium ? 'premium' : 'regular'} avg ($${((STATE_FUEL_PRICES[resolvedState] ?? 3.20) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)}/gal)`}
                     </p>
                   </div>
 
@@ -2290,6 +2323,55 @@ export default function TCOCalculator() {
                     </button>
                   </div>
 
+                  {/* Driver age — for insurance accuracy */}
+                  <div className="flex flex-col gap-2">
+                    <label className="input-label">Primary Driver Age</label>
+                    <select
+                      className="input-field"
+                      value={driverAge}
+                      onChange={e => setDriverAge(e.target.value)}
+                    >
+                      <option value="">Not specified (adult baseline)</option>
+                      <option value="17">Under 18 (teen driver)</option>
+                      <option value="19">18–19 years old</option>
+                      <option value="21">20–21 years old</option>
+                      <option value="23">22–24 years old</option>
+                      <option value="27">25–29 years old</option>
+                      <option value="35">30–64 years old</option>
+                      <option value="67">65–69 years old</option>
+                      <option value="72">70 and older</option>
+                    </select>
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      Drivers under 25 typically pay 1.5–3× more for insurance — this significantly affects your estimate.
+                    </p>
+                  </div>
+
+                  {/* Real-world MPG adjustment — gas and hybrid vehicles only */}
+                  {!effIsEV && (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <label className="input-label">Real-world MPG</label>
+                        <span className="text-sm font-bold tabular-nums" style={{ color: 'var(--accent)' }}>
+                          {mpgRealWorldPct}% of EPA
+                          {selMake && modelData?.mpg?.combined ? ` (${Math.round(modelData.mpg.combined * mpgRealWorldPct / 100)} mpg)` : ''}
+                        </span>
+                      </div>
+                      <input
+                        type="range" min={70} max={100} step={1}
+                        value={mpgRealWorldPct}
+                        onChange={e => setMpgRealWorldPct(Number(e.target.value))}
+                        style={{ background: `linear-gradient(to right, var(--accent) ${((mpgRealWorldPct - 70) / 30) * 100}%, var(--border) ${((mpgRealWorldPct - 70) / 30) * 100}%)` }}
+                      />
+                      <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+                        <span>70% (very conservative)</span>
+                        <span>100% (EPA official)</span>
+                      </div>
+                      <p className="text-[10px] text-[var(--text-muted)]">
+                        EPA fuel economy is measured in controlled lab conditions. Real-world driving (traffic, A/C, cold weather, highway speeds) is typically 10–20% worse. Default: 85%.
+                      </p>
+                    </div>
+                  )}
+
                 </div>
               )}
 
@@ -2298,11 +2380,11 @@ export default function TCOCalculator() {
                   ? parseFloat(customFuelPrice)
                   : getEffectiveElecRate(resolvedState, chargingStyle)
                 const chargingStyleLabel = { home: 'home', mixed: 'home+public', public: 'public DCFC' }[chargingStyle]
-                const effectiveGasPrice = (STATE_FUEL_PRICES[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)
+                const effectiveGasPrice = (STATE_FUEL_PRICES[resolvedState] ?? 3.20) + (isPremium ? PREMIUM_PRICE_DELTA : 0)
                 const fuelNote = effIsEV
                   ? `$${activeElecRate.toFixed(3)}/kWh · ${customFuelPrice ? 'custom' : chargingStyleLabel}`
-                  : `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${STATE_FUEL_PRICES[resolvedState] ?? 3.50}`}/gal`
-                const insNote = `${resolvedState} · ${selMake || 'avg'}${detailedMode && multiCarPolicy ? ' · multi-car' : ''}`
+                  : `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${STATE_FUEL_PRICES[resolvedState] ?? 3.20}`}/gal${detailedMode && mpgRealWorldPct < 100 ? ` · ${mpgRealWorldPct}% real-world` : ''}`
+                const insNote = `${resolvedState} · ${selMake || 'avg'}${detailedMode && multiCarPolicy ? ' · multi-car' : ''}${detailedMode && driverAge ? ` · age ${driverAge}` : ''}`
                 const maintNote = detailedMode
                   ? (effIsEV ? 'EV · itemized' : 'gas · itemized')
                   : (effIsEV ? 'EV avg' : 'gas avg')
@@ -2388,7 +2470,7 @@ export default function TCOCalculator() {
                         className="input-field pl-7"
                         placeholder={effIsEV
                           ? `${getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)} (${resolvedState} avg)`
-                          : `${((STATE_FUEL_PRICES[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)} (${resolvedState}${isPremium ? ' premium' : ''} avg)`}
+                          : `${((STATE_FUEL_PRICES[resolvedState] ?? 3.20) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)} (${resolvedState}${isPremium ? ' premium' : ''} avg)`}
                         value={customFuelPrice}
                         onChange={e => {
                           const val = e.target.value
@@ -2414,7 +2496,7 @@ export default function TCOCalculator() {
                     <p className="text-[10px] text-[var(--text-muted)]">
                       {effIsEV
                         ? `Leave blank to use ${resolvedState} avg ($${getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)}/kWh)`
-                        : `Leave blank to use ${resolvedState} ${isPremium ? 'premium' : ''} avg ($${((STATE_FUEL_PRICES[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)}/gal)`}
+                        : `Leave blank to use ${resolvedState} ${isPremium ? 'premium' : ''} avg ($${((STATE_FUEL_PRICES[resolvedState] ?? 3.20) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)}/gal)`}
                     </p>
                   </div>
                   <SliderInput label={effIsEV ? 'Annual Charging Cost' : 'Annual Fuel Cost'} value={annualFuel} onChange={setAnnualFuel}
@@ -2758,6 +2840,9 @@ export default function TCOCalculator() {
                 price={price}
                 rate={rate}
                 financeMode={financeMode}
+                loanTerm={loanTerm}
+                modelYear={selYear}
+                driverAge={driverAge}
               />
 
               {/* ── PDF Export (Pro) ── */}

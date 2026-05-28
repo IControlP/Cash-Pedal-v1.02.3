@@ -11,7 +11,7 @@ const INCLUDED = [
   },
   {
     title: 'Wealth-impact verdicts',
-    body: 'Every report ends with the future-value of the difference if you invested it instead. Your car choice IS a retirement choice.',
+    body: 'Every report ends with the future-value of the difference if you invested it instead. Your car choice shapes your financial stability — pick right and that savings compounds into something real.',
   },
   {
     title: 'Live market data',
@@ -92,13 +92,13 @@ export default function Subscribe() {
                   60-day shopper pass · one payment
                 </span>
                 <h1 className="font-display text-[clamp(36px,5vw,56px)] font-bold leading-[1.05] tracking-tight mt-5 mb-5 anim-1">
-                  $19 to know the real cost of <span className="text-gold-gradient">every car</span> on your list.
+                  $19 to know <span className="text-gold-gradient">this car is right</span> for you.
                 </h1>
                 <p className="text-[17px] text-[var(--text-muted)] leading-relaxed mb-7 anim-2">
                   You're about to make the second-largest purchase of your life. For one payment of
-                  $19, Cash Pedal rides along with you through the entire car-shopping window —
-                  unlimited comparisons, full wealth-impact reports, the same model the calculator
-                  uses. When you sign, we go away. <strong className="text-white">No subscription. No card on file. No upsells.</strong>
+                  $19, Cash Pedal gives you the confidence to know you're making the right choice —
+                  for your finances, your needs, and the costs that won't show up until after you
+                  sign. When you're done, we go away. <strong className="text-white">No subscription. No card on file. No upsells.</strong>
                 </p>
 
                 <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-4 anim-3">
@@ -278,7 +278,7 @@ export default function Subscribe() {
                 The average Cash Pedal user finds a <span className="text-gold-gradient">$9,150</span> swing between
                 their top two finalists. Invested at 7% real return over 25 years, that's{' '}
                 <span style={{ color: 'var(--success)', fontFamily: 'var(--font-mono)' }}>$49,700</span>{' '}
-                more in retirement — from a single, smarter purchase.
+                toward your financial future — from a single, smarter purchase.
               </p>
               <p className="mt-4 text-sm text-[var(--text-muted)]">
                 Not seeing $9,150 in your case? Even <span className="text-white">a single bad rate quote</span> caught

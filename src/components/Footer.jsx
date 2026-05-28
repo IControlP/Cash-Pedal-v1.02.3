@@ -22,7 +22,7 @@ export default function Footer() {
               <span className="text-white">Cash Pedal</span>
             </Link>
             <p className="text-[var(--text-muted)] text-sm leading-relaxed">
-              Know what you're really paying before you sign. Free vehicle cost tools — no account required.
+              Buy your next car with confidence. Know if it's the right fit for your finances — before you sign.
             </p>
           </div>
 

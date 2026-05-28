@@ -22,7 +22,7 @@ export default function HowItWorks() {
           </Step>
           <Step n="03" title="See the financial winner" visual={<SportsSVG pal={getPal('Porsche')} />}>
             One verdict per car, broken into seven categories — plus what the difference looks like
-            invested in your retirement instead. Buy with confidence, not regret.
+            invested toward your financial stability instead. Buy with confidence, not regret.
           </Step>
         </div>
       </div>

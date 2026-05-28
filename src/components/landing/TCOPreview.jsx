@@ -76,7 +76,7 @@ export default function TCOPreview() {
                   <div className="v-line">
                     Pick the R1S and invest the <span className="num">$9,150</span> savings — at 7%
                     real return over 25 years it becomes <span className="gold">$49,700</span> in
-                    your retirement account.
+                    long-term savings.
                   </div>
                 </div>
                 <div className="verdict-cta">

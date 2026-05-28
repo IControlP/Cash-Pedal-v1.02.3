@@ -19,10 +19,9 @@ export default function Hero() {
             </h1>
             <p className="hero-sub anim-2">
               Your next vehicle is the <strong>second-largest purchase</strong> of your life — and
-              the only one that loses money every day you own it. Cash Pedal tells you which cars
-              build your financial future and which quietly bleed your savings. Compare any two,
-              see the real 5-year cost, and find out what the difference becomes if you invest it
-              instead.
+              there's no one-size answer. Cash Pedal shows you whether that car actually fits your
+              situation: your income, your needs, and the costs that won't show up until after you
+              sign. Buy with confidence. Not optimism.
             </p>
             <div className="hero-cta anim-2">
               <Link to="/subscribe" className="btn-primary btn-lg">

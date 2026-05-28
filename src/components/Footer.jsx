@@ -9,6 +9,7 @@ const links = [
   { to: '/wheelzard', label: 'Wheel-Zard AI' },
   { to: '/resources', label: 'Resources' },
   { to: '/about', label: 'About' },
+  { to: '/privacy', label: 'Privacy Policy' },
 ]
 
 export default function Footer() {
@@ -41,7 +42,10 @@ export default function Footer() {
 
         <div className="border-t border-[var(--border)] pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--text-muted)]">
           <span>© {new Date().getFullYear()} Cash Pedal · cashpedal.io</span>
-          <span>Results are estimates only — not financial advice.</span>
+          <div className="flex items-center gap-4">
+            <span>Results are estimates only — not financial advice.</span>
+            <Link to="/privacy" className="hover:text-[var(--accent)] transition-colors">Privacy &amp; Data Rights</Link>
+          </div>
         </div>
       </div>
     </footer>

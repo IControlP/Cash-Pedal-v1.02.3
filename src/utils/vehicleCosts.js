@@ -142,12 +142,12 @@ export function estimateCurrentValue(originalPrice, make, model, ageYears, curre
 
   const cap = SEGMENT_MAX_DEPR[segment] ?? 0.80
 
-  // Mileage adjustment: compare actual miles vs. expected 12 k/yr average.
+  // Mileage adjustment: compare actual miles vs. FHWA 2024 average of 13,500 mi/yr.
   // Each 10 % deviation from average shifts depreciation by ~2.5 %.
   // Capped at +10 % extra depreciation (very high mileage) / -8 % (very low).
   let mileageFactor = 1.0
   if (currentMileage != null && ageYears > 0) {
-    const expectedMiles = ageYears * 12000
+    const expectedMiles = ageYears * 13500
     const mileageRatio  = currentMileage / expectedMiles
     mileageFactor = Math.max(0.92, Math.min(1.10, 1 + (mileageRatio - 1) * 0.25))
   }
@@ -176,9 +176,10 @@ export const INSURANCE_VALUE_BRACKETS = [
 ]
 
 // Make-specific multipliers relative to Toyota (anchor = 1.00 at 0.92 effective).
-// Recalibrated for 2025: luxury brand inflation compressed (value brackets do the
-// heavy lifting for price tier); Tesla reset to 1.00 — driver demographics and
-// improved parts availability have narrowed Tesla's premium vs. mainstream brands.
+// Recalibrated against Insurify/Bankrate 2025-2026 model-level data. Luxury brand
+// inflation compressed (value brackets do the heavy lifting for price tier). Tesla
+// set to 0.82 — calibrated to Tesla Model 3 national avg $2,818 (Insurify 2025);
+// Tesla Insurance program and mature repair network push rates below typical EV levels.
 export const INSURANCE_BRAND_MULT = {
   Toyota: 0.92, Honda: 0.93, Mazda: 0.94, Subaru: 0.97, Hyundai: 0.91,
   Kia: 0.91, Chevrolet: 0.98, Ford: 0.95, GMC: 1.00, Ram: 0.88,
@@ -189,16 +190,18 @@ export const INSURANCE_BRAND_MULT = {
   Mini: 1.10, 'Alfa Romeo': 1.10, Audi: 1.10,
   Jaguar: 1.12, BMW: 1.15, Porsche: 1.15,
   'Land Rover': 1.18, 'Mercedes-Benz': 1.18, Maserati: 1.20, Lucid: 1.20,
-  Tesla: 1.00, Rivian: 1.15, Polestar: 1.10,
+  Tesla: 0.82, Rivian: 1.15, Polestar: 1.10,
 }
 
-// Segment-specific risk multipliers (Bankrate 2025 segment averages):
-// EVs cost 20–28% more than equivalent gas vehicles (battery/repair complexity).
-// Sports cars cost 25–34% more (theft rates, performance risk profile).
-// Standard trucks cost 10–20% LESS than the average (rural use, cautious driver
-// demographics, lower theft rates than sports/luxury). SUVs slightly below avg.
+// Segment-specific risk multipliers verified against Insurify / Bankrate 2025-2026 data.
+// EV multiplier reflects price-controlled comparison (vehicle value already captured by
+// brackets above): non-Tesla EVs run ~10-15% higher for repair complexity, battery costs,
+// and limited independent shop availability. Sports cars 25-34% above average (risk
+// profile, theft). Trucks 10-20% below average (rural use, lower theft/accident rates).
+// NOTE: Tesla brand mult (0.82) is set below 1.0 to reflect Tesla Insurance program and
+// better-than-average repair outcomes — calibrated to Tesla Model 3 national avg $2,818.
 export const INSURANCE_SEGMENT_MULT = {
-  electric:   1.22,
+  electric:   1.10,
   sports:     1.28,
   truck:      0.90,
   luxury_suv: 1.04,

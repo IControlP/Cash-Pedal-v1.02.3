@@ -1178,7 +1178,7 @@ export default function TCOCalculator() {
   const [customCosts,    setCustomCosts]    = useState(false)
   // Detailed estimates mode
   const [detailedMode,   setDetailedMode]   = useState(false)
-  const [annualMileage,  setAnnualMileage]  = useState(12000)
+  const [annualMileage,  setAnnualMileage]  = useState(13500)
   const [vehicleCategory,setVehicleCategory]= useState('')      // used when no make/model selected
   const [chargingStyle,  setChargingStyle]  = useState('home')  // 'home' | 'mixed' | 'public'
   const [customFuelPrice,setCustomFuelPrice]= useState('')      // empty = use state avg

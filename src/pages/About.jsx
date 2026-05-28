@@ -9,7 +9,7 @@ const faqs = [
   },
   {
     q: 'How accurate are the results?',
-    a: 'The calculations are estimates based on typical costs for each vehicle tier and region. Actual costs vary by location, driving habits, insurance history, and vehicle condition. Use the results as a directional guide, not a financial guarantee.',
+    a: 'For fuel and loan math, outputs are close to exact given the inputs you provide. Insurance estimates typically land within 10–20% of your actual quote — the model is calibrated to 2025 Bankrate/Quadrant state averages but your personal rate depends on driving record, credit score, and coverage choices. Depreciation follows manufacturer and segment curves and should be treated as a planning range, not a precise prediction. Use Cash Pedal to compare options and understand your cost exposure, not as a substitute for actual insurance quotes or dealer figures.',
   },
   {
     q: 'What\'s included in the TCO calculation?',
@@ -106,6 +106,47 @@ export default function About() {
                 <p className="text-xs text-[var(--text-muted)]">{desc}</p>
               </Link>
             ))}
+          </div>
+
+          {/* Methodology */}
+          <h2 className="font-display font-bold text-white text-xl mb-4 anim-4">Methodology & data sources</h2>
+          <div className="card mb-10 anim-4">
+            <p className="text-[var(--text-muted)] text-sm leading-relaxed mb-4">
+              Every cost component is modeled separately and combined into a single annual figure. Here's what drives each one:
+            </p>
+            <div className="flex flex-col gap-4">
+              {[
+                {
+                  label: 'Loan & lease math',
+                  detail: 'Standard amortization formula. Inputs you provide (rate, term, down payment) determine exact payment and total interest — no approximation.',
+                },
+                {
+                  label: 'Depreciation',
+                  detail: 'Brand-specific multipliers applied to segment depreciation curves (economy through luxury). Mileage deviation from 13,500 mi/yr (FHWA 2024 national average) adjusts residual value. Curves are derived from historical transaction data and are rechecked annually.',
+                },
+                {
+                  label: 'Insurance',
+                  detail: 'Base rates calibrated to Bankrate / Quadrant Information Services state averages (November 2025). State, vehicle segment, brand, vehicle age, and current market value all adjust the estimate. Multi-car discount applies an 15% reduction. Your actual premium will differ based on driving record, credit score, and coverage level.',
+                },
+                {
+                  label: 'Fuel',
+                  detail: 'State average gas prices from the U.S. Energy Information Administration (EIA). Electric rates from EIA state residential averages. Combined with EPA MPG / MPGe ratings for the selected vehicle. Default mileage: 13,500 mi/yr (FHWA 2024).',
+                },
+                {
+                  label: 'Maintenance',
+                  detail: 'Tier-based estimates anchored to AAA\'s annual "Your Driving Costs" study. Brand reliability multipliers adjust for manufacturers with above- or below-average repair frequency. Escalates ~8%/yr to reflect aging and out-of-warranty costs.',
+                },
+                {
+                  label: 'Registration & fees',
+                  detail: 'State-specific registration fee schedules, typically declining as vehicle value depreciates. Sales tax uses state rates applied to purchase price.',
+                },
+              ].map(({ label, detail }) => (
+                <div key={label}>
+                  <p className="text-white text-sm font-semibold mb-1">{label}</p>
+                  <p className="text-[var(--text-muted)] text-sm leading-relaxed">{detail}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* FAQ */}

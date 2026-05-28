@@ -38,7 +38,7 @@ function estimateLeaseMonthly(msrp, capReduction, termMonths) {
 // All shared functions come from src/utils/vehicleCosts.js (same as TCOCalculator).
 // state=null throughout means national average fallbacks.
 
-const DEFAULT_ANNUAL_MILES = 12000
+const DEFAULT_ANNUAL_MILES = 13500
 
 // Basic mode: state-aware when state is provided, otherwise flat tier estimates
 function estimateBasicMonthlyCosts(price, state, annualMiles = DEFAULT_ANNUAL_MILES) {
@@ -900,7 +900,7 @@ export default function SalaryCalculator() {
                 />
                 <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
                   <span>3,000</span>
-                  <span className="font-semibold text-[var(--accent)]">12,000 avg</span>
+                  <span className="font-semibold text-[var(--accent)]">13,500 avg</span>
                   <span>30,000</span>
                 </div>
               </div>

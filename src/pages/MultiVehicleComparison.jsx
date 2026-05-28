@@ -247,12 +247,9 @@ export default function MultiVehicleComparison() {
   const [vehicles, setVehicles] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('cashpedal_comparison_vehicles') || 'null')
-      if (saved && Array.isArray(saved) && saved.length >= 2) return saved
+      if (saved && Array.isArray(saved) && saved.length >= 1) return saved
     } catch { /* ignore */ }
-    return [
-      { ...defaultVehicle, name: 'Vehicle 1', price: 25000, downPayment: 5000 },
-      { ...defaultVehicle, name: 'Vehicle 2', price: 35000, downPayment: 7000 },
-    ]
+    return []
   })
 
   const [importBanner, setImportBanner] = useState(null) // { count }
@@ -357,10 +354,7 @@ export default function MultiVehicleComparison() {
   function restartComparison() {
     localStorage.removeItem('cashpedal_comparison_vehicles')
     localStorage.removeItem('cashpedal_tco_for_comparison')
-    setVehicles([
-      { ...defaultVehicle, name: 'Vehicle 1', price: 25000, downPayment: 5000 },
-      { ...defaultVehicle, name: 'Vehicle 2', price: 35000, downPayment: 7000 },
-    ])
+    setVehicles([])
     setImportBanner(null)
   }
 
@@ -543,26 +537,35 @@ export default function MultiVehicleComparison() {
           </div>
 
           {/* Vehicle input cards */}
-          <div
-            className="grid gap-4 mb-6 anim-3"
-            style={{ gridTemplateColumns: `repeat(${vehicles.length}, minmax(220px, 1fr))` }}
-          >
-            {vehicles.map((v, i) => (
-              <VehicleCard
-                key={v.tcoId || i}
-                index={i}
-                vehicle={v}
-                color={COLORS[i]}
-                onChange={updated => updateVehicle(i, updated)}
-                onRemove={() => removeVehicle(i)}
-                canRemove={vehicles.length > 2}
-              />
-            ))}
-          </div>
+          {vehicles.length === 0 ? (
+            <div className="anim-3 mb-6 rounded-xl border border-dashed border-[var(--border)] p-10 text-center">
+              <p className="text-[var(--text-muted)] text-sm mb-4">No vehicles added yet. Add your first vehicle to get started.</p>
+              <button onClick={addVehicle} className="btn-primary text-sm px-6 py-2">
+                + Add Vehicle
+              </button>
+            </div>
+          ) : (
+            <div
+              className="grid gap-4 mb-6 anim-3"
+              style={{ gridTemplateColumns: `repeat(${vehicles.length}, minmax(220px, 1fr))` }}
+            >
+              {vehicles.map((v, i) => (
+                <VehicleCard
+                  key={v.tcoId || i}
+                  index={i}
+                  vehicle={v}
+                  color={COLORS[i]}
+                  onChange={updated => updateVehicle(i, updated)}
+                  onRemove={() => removeVehicle(i)}
+                  canRemove={true}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Add vehicle / import button row */}
           <div className="flex items-center gap-3 mb-8 anim-3 flex-wrap">
-            {vehicles.length < 5 && (
+            {vehicles.length > 0 && vehicles.length < 5 && (
               <button onClick={addVehicle} className="btn-ghost text-sm">
                 + Add Vehicle
               </button>
@@ -578,7 +581,7 @@ export default function MultiVehicleComparison() {
           </div>
 
           {/* ── Ranking table (shown if any param is active) ── */}
-          {rankingRows.length > 0 && (
+          {vehicles.length > 0 && rankingRows.length > 0 && (
             <div className="card anim-4 overflow-x-auto mb-5">
               <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-4">
                 Rankings — your selected parameters
@@ -621,7 +624,7 @@ export default function MultiVehicleComparison() {
           )}
 
           {/* ── Main comparison table ── */}
-          <div className="card anim-4 overflow-x-auto">
+          {vehicles.length > 0 && (<div className="card anim-4 overflow-x-auto">
             <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-6">
               Side-by-side results
             </p>
@@ -694,10 +697,10 @@ export default function MultiVehicleComparison() {
                 })}
               </tbody>
             </table>
-          </div>
+          </div>)}
 
           {/* Bar chart: monthly payment visual */}
-          <div className="card mt-6 anim-5">
+          {vehicles.length > 0 && <div className="card mt-6 anim-5">
             <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-6">Monthly payment comparison</p>
             <div className="flex flex-col gap-3">
               {vehicles.map((v, i) => {
@@ -717,10 +720,10 @@ export default function MultiVehicleComparison() {
                 )
               })}
             </div>
-          </div>
+          </div>}
 
           {/* Total out-of-pocket bar chart (if TCO data present) */}
-          {hasTCOData && (
+          {vehicles.length > 0 && hasTCOData && (
             <div className="card mt-6 anim-5">
               <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-6">Total ownership cost comparison</p>
               <div className="flex flex-col gap-3">

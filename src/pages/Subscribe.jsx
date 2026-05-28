@@ -33,6 +33,9 @@ const INCLUDED = [
 
 export default function Subscribe() {
   const [loading, setLoading] = useState(false)
+  const [showEmailEntry, setShowEmailEntry] = useState(false)
+  const [emailInput, setEmailInput] = useState('')
+  const [verifyStatus, setVerifyStatus] = useState(null) // null | 'loading' | 'success' | 'not_found' | 'device_limit' | 'error'
   const sub = useSubscription() || {}
   const isActive = !!sub.isSubscribed
   const expiresAt = sub.expiresAt || sub.pass_expires_at || sub.passExpiresAt
@@ -41,6 +44,23 @@ export default function Subscribe() {
     : (expiresAt
         ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86400000))
         : null)
+
+  async function handleVerifyEmail(e) {
+    e.preventDefault()
+    const email = emailInput.trim()
+    if (!email) return
+    setVerifyStatus('loading')
+    const result = await sub.verifySubscription(email)
+    if (result.active) {
+      setVerifyStatus('success')
+    } else if (result.reason === 'device_limit') {
+      setVerifyStatus('device_limit')
+    } else if (result.error === 'network') {
+      setVerifyStatus('error')
+    } else {
+      setVerifyStatus('not_found')
+    }
+  }
 
   async function handleCheckout() {
     setLoading(true)
@@ -189,6 +209,52 @@ export default function Subscribe() {
                       <FineLine label="What expires after 60 days?" value="Unlimited comparisons + PDF exports. Saved reports remain readable." />
                       <FineLine label="Auto-renew?" value="Never. There is no card on file after checkout." />
                       <FineLine label="Refunds" value="7-day money back, no questions asked." />
+                    </div>
+
+                    <div className="mt-6 pt-5 border-t border-[var(--border)]/60 text-left">
+                      {!showEmailEntry ? (
+                        <button
+                          className="text-xs text-[var(--text-muted)] hover:text-white transition-colors"
+                          onClick={() => setShowEmailEntry(true)}
+                        >
+                          Already a subscriber? →
+                        </button>
+                      ) : (
+                        <div>
+                          <div className="text-[11px] uppercase tracking-widest text-[var(--text-muted)] mb-2">
+                            Restore access
+                          </div>
+                          <form onSubmit={handleVerifyEmail} className="flex gap-2">
+                            <input
+                              type="email"
+                              required
+                              placeholder="your@email.com"
+                              value={emailInput}
+                              onChange={e => { setEmailInput(e.target.value); setVerifyStatus(null) }}
+                              className="flex-1 min-w-0 rounded-lg px-3 py-2 text-sm text-white placeholder-[var(--text-dim)] border border-[var(--border)] focus:outline-none focus:border-[var(--accent)]/60"
+                              style={{ background: 'rgba(255,255,255,0.04)' }}
+                              disabled={verifyStatus === 'loading' || verifyStatus === 'success'}
+                            />
+                            <button
+                              type="submit"
+                              disabled={verifyStatus === 'loading' || verifyStatus === 'success'}
+                              className="flex-shrink-0 rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
+                              style={{ background: 'var(--accent)', color: '#07251e' }}
+                            >
+                              {verifyStatus === 'loading' ? '…' : 'Verify'}
+                            </button>
+                          </form>
+                          {verifyStatus === 'not_found' && (
+                            <p className="mt-2 text-xs text-red-400">No active subscription found for that email.</p>
+                          )}
+                          {verifyStatus === 'device_limit' && (
+                            <p className="mt-2 text-xs text-yellow-400">Device limit reached. <a href="mailto:hello@cashpedal.io" className="underline">Contact support</a> to reset.</p>
+                          )}
+                          {verifyStatus === 'error' && (
+                            <p className="mt-2 text-xs text-red-400">Network error — please try again.</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

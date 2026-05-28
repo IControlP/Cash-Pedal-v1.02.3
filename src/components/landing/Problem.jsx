@@ -22,14 +22,14 @@ export default function Problem() {
       <div className="max-w-[1240px] mx-auto px-7">
         <div className="section-eyebrow">Why this matters</div>
         <h2 className="section-h font-display">
-          Your car is either a wealth-builder or a wealth-killer.
+          The wrong car doesn't just cost more. It catches you off guard.
         </h2>
         <p className="section-sub">
           Most people pick a car the same way they pick a restaurant — what looks good, what's
           nearby, what fits the budget today. But two $40,000 cars can have a $25,000 swing in real
-          cost over five years. That gap is your down payment, your emergency fund, your kid's
-          first semester. Cash Pedal makes that invisible math visible — so you can put your money
-          toward your future, not your dealer's quota.
+          cost over five years. That gap is your emergency fund, your down payment, your breathing
+          room when something breaks. Cash Pedal makes that invisible math visible before you sign —
+          so you choose with confidence, not scramble with regret.
         </p>
 
         <div className="grid md:grid-cols-3 gap-5">

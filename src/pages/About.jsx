@@ -64,13 +64,14 @@ export default function About() {
 
           <div className="card mb-8 anim-2">
             <p className="text-[var(--text-muted)] leading-relaxed mb-4">
-              Cash Pedal is a free, no-signup toolkit for making smarter vehicle decisions. We built it because
+              Cash Pedal is a free, no-signup toolkit for buying your next car with confidence. We built it because
               buying a car is one of the biggest financial commitments most people make — and most of the tools
               available are designed by dealerships, lenders, or media companies with something to sell you.
             </p>
             <p className="text-[var(--text-muted)] leading-relaxed mb-4">
               We don't have an agenda. No affiliate commissions built into the calculators, no upsells, no
-              "sponsored results." Just the math — presented as clearly as possible — so you can make your own decision.
+              "sponsored results." Just the math — presented clearly enough that you can make the right call
+              for your own situation, and not be caught off guard by what comes after.
             </p>
             <p className="text-[var(--text-muted)] leading-relaxed">
               Every tool on Cash Pedal runs entirely in your browser. No data is collected or stored.

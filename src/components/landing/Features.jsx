@@ -6,8 +6,8 @@ const ITEMS = [
         <path d="M7 14l4-4 4 4 5-5" />
       </svg>
     ),
-    title: 'See your car as a financial decision',
-    body: "Every Cash Pedal report ends with a wealth-impact verdict: what the savings between two cars become if you invest them instead. Your car shouldn't just be a ride — it should be a step toward the life you're building.",
+    title: 'Know if this car is right for you',
+    body: "Every report tells you whether this car fits your actual financial situation — not just today's payment, but the insurance, maintenance, and costs you'd otherwise meet as a surprise in year two.",
   },
   {
     icon: (
@@ -49,11 +49,11 @@ export default function Features() {
       <div className="max-w-[1240px] mx-auto px-7">
         <div className="section-eyebrow">Why Cash Pedal</div>
         <h2 className="section-h font-display">
-          Built for buyers who care about year 10, not just year 1.
+          Built for buyers who want to be sure — not surprised later.
         </h2>
         <p className="section-sub">
-          Most car calculators tell you a monthly payment. We tell you whether this purchase sets
-          you up for financial stability — or quietly works against it.
+          Most calculators show you a monthly payment. We show you whether this car actually fits
+          your life — and everything that comes with it.
         </p>
 
         <div className="grid md:grid-cols-2 gap-5">

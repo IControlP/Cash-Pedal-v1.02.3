@@ -74,10 +74,10 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
             <span className="w-4 h-px bg-[var(--accent)]" />
           </div>
           <h2 className="font-display font-extrabold text-white text-xl sm:text-2xl leading-snug">
-            You're about to spend $25,000+.<br />Spend $19 first.
+            Is this car right for you?<br />Know before you sign — $19.
           </h2>
           <p className="text-[var(--text-muted)] text-sm mt-2 leading-relaxed">
-            Unlock every tool to make the smartest car-buying decision — one payment, no subscription.
+            Get the confidence to say yes — or the clarity to walk away. One payment, no subscription.
           </p>
         </div>
 

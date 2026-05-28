@@ -271,18 +271,18 @@ export default function Subscribe() {
               </div>
             </div>
 
-            {/* Closing wealth-impact reminder */}
+            {/* Closing value reminder */}
             <div className="mt-20 max-w-[820px] mx-auto text-center">
               <div className="section-eyebrow">Why $19 pays for itself</div>
               <p className="font-display text-[24px] sm:text-[28px] leading-tight tracking-tight">
-                The average Cash Pedal user finds a <span className="text-gold-gradient">$9,150</span> swing between
-                their top two finalists. Invested at 7% real return over 25 years, that's{' '}
-                <span style={{ color: 'var(--success)', fontFamily: 'var(--font-mono)' }}>$49,700</span>{' '}
-                toward your financial future — from a single, smarter purchase.
+                Most buyers discover the real cost of their car after they've already signed.
+                Cash Pedal gives you full visibility before you're locked in — so a surprise bill
+                in year two isn't a surprise at all.
               </p>
               <p className="mt-4 text-sm text-[var(--text-muted)]">
-                Not seeing $9,150 in your case? Even <span className="text-white">a single bad rate quote</span> caught
-                by Cash Pedal pays for the pass dozens of times over.
+                Spot one hidden maintenance trap, catch one inflated insurance estimate, or find a
+                better financing rate — and the pass pays for itself{' '}
+                <span className="text-white">many times over.</span>
               </p>
             </div>
           </div>

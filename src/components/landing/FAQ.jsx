@@ -3,7 +3,7 @@ import { useState } from 'react'
 const QS = [
   {
     q: 'How accurate are the forecasts?',
-    a: 'Cash Pedal uses the same model your in-app calculator does — 12,000 mi/yr default, 6.5% loan rate, 5-year hold, plus state-level fuel, electricity, insurance, registration, and sales-tax data refreshed on a rolling cadence. Within roughly ±4% on a 5-year horizon, validated against thousands of real buyer outcomes. We publish our methodology and assumptions openly.',
+    a: 'Cash Pedal uses the same model your in-app calculator does — 12,000 mi/yr default, 6.5% loan rate, 5-year hold, plus state-level fuel, electricity, insurance, registration, and sales-tax data refreshed on a rolling cadence. Every assumption is visible and adjustable so you can tune the model to your actual situation. Results are estimates, not guarantees.',
   },
   {
     q: 'Is the offer actually one-time?',
@@ -19,7 +19,7 @@ const QS = [
   },
   {
     q: 'What about used cars?',
-    a: "Fully supported back to 2015 model years. The depreciation math actually gets more accurate on used — there's more auction data behind it.",
+    a: "Fully supported back to 2015 model years. Depreciation estimates are applied per vehicle tier and model year, reflecting the real-world cost curve of used ownership.",
   },
   {
     q: 'Can I run more than two cars?',

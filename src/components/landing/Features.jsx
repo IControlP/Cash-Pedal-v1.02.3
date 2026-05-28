@@ -52,8 +52,8 @@ export default function Features() {
           Built for buyers who care about year 10, not just year 1.
         </h2>
         <p className="section-sub">
-          Most car calculators tell you a monthly payment. We tell you whether this purchase moves
-          you toward financial freedom — or away from it.
+          Most car calculators tell you a monthly payment. We tell you whether this purchase sets
+          you up for financial stability — or quietly works against it.
         </p>
 
         <div className="grid md:grid-cols-2 gap-5">

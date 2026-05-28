@@ -7,12 +7,12 @@ const ITEMS = [
   {
     stat: '$92k',
     title: 'Drained per lifetime',
-    body: "A typical American buys 10+ cars over their adult life. That hidden gap, compounded, is a paid-off house. A college fund. The retirement you actually want — not the one you settle for.",
+    body: "A typical American buys 10+ cars over their adult life. That hidden gap, compounded, is a paid-off house. A college fund. The financial security you can actually build — instead of watching it drain away.",
   },
   {
     stat: '$440k',
     title: 'Or invested instead',
-    body: 'The same dollars, put into a low-cost index fund at 7% real return over a working life, become roughly $440,000 by retirement. Your car choice IS a retirement choice.',
+    body: 'The same dollars, put into a low-cost index fund at 7% real return over a working life, become roughly $440,000 in long-term wealth. Your car choice IS a financial stability choice.',
   },
 ]
 

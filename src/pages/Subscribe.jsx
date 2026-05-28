@@ -11,7 +11,7 @@ const INCLUDED = [
   },
   {
     title: 'Wealth-impact verdicts',
-    body: 'Every report ends with the future-value of the difference if you invested it instead. Your car choice IS a retirement choice.',
+    body: 'Every report ends with the future-value of the difference if you invested it instead. Your car choice shapes your financial stability — pick right and that savings compounds into something real.',
   },
   {
     title: 'Live market data',
@@ -278,7 +278,7 @@ export default function Subscribe() {
                 The average Cash Pedal user finds a <span className="text-gold-gradient">$9,150</span> swing between
                 their top two finalists. Invested at 7% real return over 25 years, that's{' '}
                 <span style={{ color: 'var(--success)', fontFamily: 'var(--font-mono)' }}>$49,700</span>{' '}
-                more in retirement — from a single, smarter purchase.
+                toward your financial future — from a single, smarter purchase.
               </p>
               <p className="mt-4 text-sm text-[var(--text-muted)]">
                 Not seeing $9,150 in your case? Even <span className="text-white">a single bad rate quote</span> caught

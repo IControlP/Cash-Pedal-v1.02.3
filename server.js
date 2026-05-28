@@ -222,12 +222,20 @@ function sanitizeName(raw) {
 }
 
 // Anonymize IP before storing: mask the last IPv4 octet or last 64 IPv6 bits.
-// The full req.ip is still used inline for device-limit checks (never persisted).
 function anonymizeIp(ip) {
   if (!ip || ip === 'unknown') return 'unknown'
   if (ip.includes('.'))  return ip.replace(/\.\d+$/, '.0')        // 192.168.1.x → .0
   if (ip.includes(':'))  return ip.split(':').slice(0, 4).join(':') + '::/64'  // /64 prefix
   return 'unknown'
+}
+
+// Pseudonymize IP for device-tracking storage using a keyed HMAC so the value
+// is unlinkable without the secret but still uniquely matchable per-IP.
+// Requires IP_HMAC_SECRET env var; without it device tracking is bypassed (returns 'unknown').
+function pseudonymizeIp(ip) {
+  const secret = process.env.IP_HMAC_SECRET
+  if (!secret || !ip || ip === 'unknown') return 'unknown'
+  return crypto.createHmac('sha256', secret).update(ip).digest('hex')
 }
 
 // Redact email middle for audit logs — keeps domain and first char for debugging
@@ -337,6 +345,19 @@ async function initTables() {
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_sub_devices_email
         ON subscriber_devices(email)
+    `)
+    // Widen column for 64-char HMAC hashes (no-op if already wide enough)
+    await client.query(`
+      ALTER TABLE subscriber_devices
+        ALTER COLUMN ip_address TYPE VARCHAR(64)
+    `)
+    // One-time migration: wipe any legacy rows that contain raw IP addresses.
+    // HMAC hashes are always exactly 64 lowercase hex chars; raw IPs are shorter.
+    // Affected subscribers re-register their device on next subscription check.
+    await client.query(`
+      DELETE FROM subscriber_devices
+      WHERE ip_address != 'unknown'
+        AND NOT ip_address ~ '^[0-9a-f]{64}$'
     `)
 
     // ── Data-retention enforcement ────────────────────
@@ -591,7 +612,8 @@ app.post('/api/subscription-status', async (req, res) => {
     }
 
     // ── Device-limit enforcement ──────────────────────
-    const ip = req.ip || 'unknown'
+    // Raw IP is used only in-process for HMAC computation and never persisted.
+    const pseudoIp = pseudonymizeIp(req.ip || 'unknown')
 
     // Expire stale devices (not seen in DEVICE_EXPIRY_DAYS days)
     await pool.query(
@@ -601,44 +623,48 @@ app.post('/api/subscription-status', async (req, res) => {
       [email]
     )
 
-    // Check if this IP is already registered for this subscriber
-    const existing = await pool.query(
-      `SELECT id FROM subscriber_devices WHERE email = $1 AND ip_address = $2`,
-      [email, ip]
-    )
-
-    if (existing.rows.length > 0) {
-      // Known device — refresh last_seen and allow
-      await pool.query(
-        `UPDATE subscriber_devices SET last_seen = NOW()
-         WHERE email = $1 AND ip_address = $2`,
-        [email, ip]
-      )
+    if (pseudoIp === 'unknown') {
+      // IP_HMAC_SECRET not configured — skip device enforcement, allow access
     } else {
-      // New device — count how many active devices exist
-      const countResult = await pool.query(
-        `SELECT COUNT(*) AS cnt FROM subscriber_devices WHERE email = $1`,
-        [email]
+      // Check if this IP is already registered for this subscriber
+      const existing = await pool.query(
+        `SELECT id FROM subscriber_devices WHERE email = $1 AND ip_address = $2`,
+        [email, pseudoIp]
       )
-      const deviceCount = parseInt(countResult.rows[0].cnt, 10)
 
-      if (deviceCount >= MAX_DEVICES) {
-        console.log(`[device-limit] ${redactEmail(email)} blocked — ${deviceCount} devices registered`)
-        return res.json({
-          active:  false,
-          reason:  'device_limit',
-          limit:   MAX_DEVICES,
-          current: deviceCount,
-        })
+      if (existing.rows.length > 0) {
+        // Known device — refresh last_seen and allow
+        await pool.query(
+          `UPDATE subscriber_devices SET last_seen = NOW()
+           WHERE email = $1 AND ip_address = $2`,
+          [email, pseudoIp]
+        )
+      } else {
+        // New device — count how many active devices exist
+        const countResult = await pool.query(
+          `SELECT COUNT(*) AS cnt FROM subscriber_devices WHERE email = $1`,
+          [email]
+        )
+        const deviceCount = parseInt(countResult.rows[0].cnt, 10)
+
+        if (deviceCount >= MAX_DEVICES) {
+          console.log(`[device-limit] ${redactEmail(email)} blocked — ${deviceCount} devices registered`)
+          return res.json({
+            active:  false,
+            reason:  'device_limit',
+            limit:   MAX_DEVICES,
+            current: deviceCount,
+          })
+        }
+
+        // Slot available — register new device
+        await pool.query(
+          `INSERT INTO subscriber_devices (email, ip_address)
+           VALUES ($1, $2)
+           ON CONFLICT (email, ip_address) DO UPDATE SET last_seen = NOW()`,
+          [email, pseudoIp]
+        )
       }
-
-      // Slot available — register new device
-      await pool.query(
-        `INSERT INTO subscriber_devices (email, ip_address)
-         VALUES ($1, $2)
-         ON CONFLICT (email, ip_address) DO UPDATE SET last_seen = NOW()`,
-        [email, ip]
-      )
     }
 
     res.json({ active: true, status: subscription_status, expires: current_period_end, purchaseType: purchase_type })
@@ -791,6 +817,19 @@ app.get('*', (_req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'))
 })
 
+// ── Daily data-retention sweep ────────────────────────
+// initTables() handles the startup sweep; this catches long-running Railway
+// instances that haven't restarted in days or weeks.
+async function runRetentionSweep() {
+  if (!pool) return
+  try {
+    await pool.query(`DELETE FROM user_data_collection WHERE created_at < NOW() - INTERVAL '365 days'`)
+    await pool.query(`DELETE FROM subscriber_devices WHERE last_seen < NOW() - INTERVAL '${DEVICE_EXPIRY_DAYS} days'`)
+  } catch (err) {
+    console.error('[retention] daily sweep error:', err.message)
+  }
+}
+
 // ── Start ─────────────────────────────────────────────
 app.listen(PORT, '0.0.0.0', async () => {
   console.log(`Cash Pedal server running on port ${PORT}`)
@@ -805,4 +844,7 @@ app.listen(PORT, '0.0.0.0', async () => {
     console.log('No DATABASE_URL configured — running without DB')
   }
   if (!stripe) console.log('No STRIPE_SECRET_KEY configured — payments disabled')
+  if (!process.env.IP_HMAC_SECRET) console.warn('[privacy] IP_HMAC_SECRET not set — device tracking disabled; set this env var on Railway')
 })
+
+setInterval(runRetentionSweep, 24 * 60 * 60 * 1000)

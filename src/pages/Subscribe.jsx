@@ -263,8 +263,8 @@ export default function Subscribe() {
                   {isActive ? (
                     <>Need help? <a href="mailto:hello@cashpedal.io" className="underline hover:text-white">hello@cashpedal.io</a></>
                   ) : (
-                    <>By purchasing you agree to our <Link to="/about" className="underline hover:text-white">terms</Link> and{' '}
-                    <Link to="/about" className="underline hover:text-white">privacy policy</Link>. <br />
+                    <>By purchasing you agree to our <Link to="/tco" className="underline hover:text-white">terms</Link> and{' '}
+                    <Link to="/privacy" className="underline hover:text-white">privacy policy</Link>. <br />
                     Cash Pedal does not accept dealer placements or insurer kickbacks.</>
                   )}
                 </p>

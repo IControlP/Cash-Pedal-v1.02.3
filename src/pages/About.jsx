@@ -74,7 +74,9 @@ export default function About() {
               for your own situation, and not be caught off guard by what comes after.
             </p>
             <p className="text-[var(--text-muted)] leading-relaxed">
-              Every tool on Cash Pedal runs entirely in your browser. No data is collected or stored.
+              Calculation tools run entirely in your browser — no account is required. If you subscribe
+              or accept our terms, limited data is stored for service delivery. See our{' '}
+              <Link to="/privacy" className="text-[var(--accent)] underline hover:brightness-110">Privacy Policy</Link>.
             </p>
           </div>
 
@@ -85,7 +87,7 @@ export default function About() {
               'Enter your vehicle details — price, financing, or ownership duration.',
               'Adjust the inputs until the scenario matches your real situation.',
               'Read the results. Use them to negotiate, compare, or decide.',
-              'No submission, no account, no data collection.',
+              'No account required. Calculator tools run in your browser.',
             ].map((step, i) => (
               <div key={i} className="flex items-start gap-4 card">
                 <span className="font-display font-bold text-[var(--accent)] text-lg shrink-0">{i + 1}</span>

@@ -366,6 +366,25 @@ export default function SalaryCalculator() {
     }
   }, [mode, vehiclePrice, downPct, loanTerm, rate, leaseMsrp, leaseDown, leaseMonthly, leaseTerm, proExtras, userState, annualMiles])
 
+  // 20/4/10 rule compliance — buy mode only
+  const ruleCompliance = useMemo(() => {
+    if (mode !== 'buy') return null
+    const downOk = downPct >= 20
+    const termOk = loanTerm <= 48
+    let extraInterest = 0
+    if (!termOk) {
+      const loanAmt = vehiclePrice * (1 - downPct / 100)
+      if (loanAmt > 0) {
+        const mp48 = monthlyPayment(loanAmt, rate, 48)
+        const interest48 = mp48 * 48 - loanAmt
+        const mpCurrent = monthlyPayment(loanAmt, rate, loanTerm)
+        const interestCurrent = mpCurrent * loanTerm - loanAmt
+        extraInterest = Math.max(0, interestCurrent - interest48)
+      }
+    }
+    return { downOk, termOk, extraInterest, allOk: downOk && termOk }
+  }, [mode, downPct, loanTerm, vehiclePrice, rate])
+
   // Reverse mode: given a salary, solve for the max affordable vehicle price
   const affordableResults = useMemo(() => {
     const s = Number(knownSalary)
@@ -843,6 +862,17 @@ export default function SalaryCalculator() {
                     <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
                       <span>0%</span><span className="font-semibold text-[var(--accent)]">20% recommended</span><span>100%</span>
                     </div>
+                    {downPct < 20 && (
+                      <p className="text-xs text-amber-400 flex items-start gap-1.5 mt-0.5">
+                        <span className="shrink-0 mt-0.5">⚠</span>
+                        <span>
+                          Below the 20% the 20/4/10 rule recommends.
+                          {downPct < 10
+                            ? ' Under 10% down — gap insurance is strongly recommended if values drop.'
+                            : ` ${fmt(vehiclePrice * 0.20 - vehiclePrice * (downPct / 100))} more gets you to 20% and protects against early negative equity.`}
+                        </span>
+                      </p>
+                    )}
                   </div>
 
                   {/* Loan term */}
@@ -858,7 +888,12 @@ export default function SalaryCalculator() {
                       ))}
                     </select>
                     {loanTerm > 48 && (
-                      <p className="text-xs text-yellow-500">⚠ The 20/4/10 rule recommends 48 months max to keep total cost down.</p>
+                      <p className="text-xs text-amber-400">
+                        ⚠ The 20/4/10 rule caps at 48 months.
+                        {ruleCompliance?.extraInterest > 0
+                          ? ` This ${loanTerm}-month term adds ~${fmt(ruleCompliance.extraInterest)} in extra interest vs 48 months.`
+                          : ''}
+                      </p>
                     )}
                   </div>
 
@@ -1032,6 +1067,62 @@ export default function SalaryCalculator() {
                   {results.totalInterest > 0 && (
                     <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
                       You pay {fmt(results.totalInterest)} extra in interest — {Math.round((results.totalInterest / results.loanAmount) * 100)}% above the loan principal. A shorter term or larger down payment reduces this.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* 20/4/10 Rule Status */}
+              {mode === 'buy' && ruleCompliance && (
+                <div className="card border-[var(--border)]">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
+                    20/4/10 Rule Check
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    {/* 20% down */}
+                    <div className="flex items-start gap-2">
+                      <span className={`text-sm font-bold shrink-0 mt-0.5 ${ruleCompliance.downOk ? 'text-green-400' : 'text-amber-400'}`}>
+                        {ruleCompliance.downOk ? '✓' : '✗'}
+                      </span>
+                      <div>
+                        <p className={`text-xs font-semibold ${ruleCompliance.downOk ? 'text-green-400' : 'text-amber-400'}`}>
+                          {ruleCompliance.downOk
+                            ? `${downPct}% down — meets the "20" guideline`
+                            : `${downPct}% down — below the 20% guideline`}
+                        </p>
+                        {!ruleCompliance.downOk && (
+                          <p className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-relaxed">
+                            {fmt(vehiclePrice * 0.20 - vehiclePrice * (downPct / 100))} more down reaches 20% and lowers interest paid + early negative-equity risk.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {/* 4-year term */}
+                    <div className="flex items-start gap-2">
+                      <span className={`text-sm font-bold shrink-0 mt-0.5 ${ruleCompliance.termOk ? 'text-green-400' : 'text-amber-400'}`}>
+                        {ruleCompliance.termOk ? '✓' : '✗'}
+                      </span>
+                      <div>
+                        <p className={`text-xs font-semibold ${ruleCompliance.termOk ? 'text-green-400' : 'text-amber-400'}`}>
+                          {ruleCompliance.termOk
+                            ? `${loanTerm}-month term — within the "4-year" guideline`
+                            : `${loanTerm}-month term — exceeds the 48-month guideline`}
+                        </p>
+                        {!ruleCompliance.termOk && ruleCompliance.extraInterest > 0 && (
+                          <p className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-relaxed">
+                            ~{fmt(ruleCompliance.extraInterest)} more in interest vs a 48-month loan. Shorter term = less interest, faster equity.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {ruleCompliance.allOk ? (
+                    <p className="text-[10px] text-green-400 mt-3 leading-relaxed">
+                      Both inputs follow the 20/4/10 rule. Focus on keeping total monthly costs at or below 10% of gross income (the "Conservative" tier above).
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
+                      The 20/4/10 rule: 20% down · 4-year max term · total costs ≤10% of gross income. Each violation adds cost and risk.
                     </p>
                   )}
                 </div>

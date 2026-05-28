@@ -666,6 +666,17 @@ export default function MultiVehicleComparison() {
                   )
                 })}
 
+                {/* Lease vs Buy equity note */}
+                {hasLease && vehicles.some(v => !v.isLease) && (
+                  <tr className="border-t border-[var(--border)]">
+                    <td colSpan={vehicles.length + 1} className="pt-3 pb-3">
+                      <p className="text-[10px] text-amber-400 leading-relaxed">
+                        <span className="font-bold">⚠ Lease vs. Buy:</span> Lease totals above cover payments only — at term end you have zero equity and typically owe a ~$300–500 disposition fee. Buyers usually recover 35–65% of purchase price at resale. To compare apples-to-apples, subtract the buy vehicle's estimated resale value from its total cost.
+                      </p>
+                    </td>
+                  </tr>
+                )}
+
                 {/* TCO extended metrics section header */}
                 {tcoMetrics.length > 0 && (
                   <tr className="border-t border-[var(--border)]">

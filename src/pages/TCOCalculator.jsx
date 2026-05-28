@@ -1887,7 +1887,8 @@ export default function TCOCalculator() {
                           const catInfo = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
                           const effIsEV = modelData ? modelData.is_ev : (catInfo?.isEV ?? false)
                           const effMpg  = modelData ? (modelData.mpg?.combined ?? 28) : (catInfo?.mpg ?? 28)
-                          const mpgNote = effIsEV ? ' · EV' : ` · ${effMpg} MPG${catInfo && !modelData ? ' avg' : ''}`
+                          const mpgIsDefaulted = modelData && !modelData.is_ev && !modelData.mpg
+                          const mpgNote = effIsEV ? ' · EV' : ` · ${effMpg} MPG${catInfo && !modelData ? ' avg' : mpgIsDefaulted ? ' avg (no data for this model)' : ''}`
                           return `${detailedMode ? 'Detailed estimates' : 'Estimated'} for ${resolvedState} · ${annualMileage.toLocaleString()} mi/yr${mpgNote}.`
                         })()}
                   </p>

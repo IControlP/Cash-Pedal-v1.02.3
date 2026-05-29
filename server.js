@@ -152,6 +152,14 @@ app.use(helmet({
   // that require explicit CORP headers, so strict COEP would break nothing but
   // is unnecessary overhead here.
   crossOriginEmbedderPolicy: false,
+  permissionsPolicy: {
+    features: {
+      camera:      "'none'",
+      microphone:  "'none'",
+      geolocation: "'none'",
+      payment:     "'self'",
+    },
+  },
 }))
 
 // ── Rate limiting ─────────────────────────────────────
@@ -163,7 +171,7 @@ const apiLimiter = rateLimit({
   legacyHeaders:  false,
   message:        { error: 'Too many requests — please try again later.' },
   handler(req, res, next, options) {
-    console.warn(`[rate-limit] ${req.method} ${req.path} blocked — IP: ${req.ip}`)
+    console.warn(`[rate-limit] ${req.method} ${req.path} blocked — IP: ${anonymizeIp(req.ip)}`)
     res.status(options.statusCode).json(options.message)
   },
 })
@@ -176,7 +184,7 @@ const sensitiveLimiter = rateLimit({
   legacyHeaders:  false,
   message:        { error: 'Too many requests — please try again later.' },
   handler(req, res, next, options) {
-    console.warn(`[rate-limit:sensitive] ${req.method} ${req.path} blocked — IP: ${req.ip}`)
+    console.warn(`[rate-limit:sensitive] ${req.method} ${req.path} blocked — IP: ${anonymizeIp(req.ip)}`)
     res.status(options.statusCode).json(options.message)
   },
 })
@@ -189,7 +197,7 @@ const cancelLimiter = rateLimit({
   legacyHeaders:  false,
   message:        { error: 'Too many cancellation attempts — please try again later.' },
   handler(req, res, next, options) {
-    console.warn(`[rate-limit:cancel] cancellation blocked — IP: ${req.ip}, email: ${redactEmail(req.body?.email || '')}`)
+    console.warn(`[rate-limit:cancel] cancellation blocked — IP: ${anonymizeIp(req.ip)}, email: ${redactEmail(req.body?.email || '')}`)
     res.status(options.statusCode).json(options.message)
   },
 })
@@ -583,7 +591,7 @@ app.get('/api/verify-session', async (req, res) => {
 // ── API: Check subscription status by email ───────────
 // POST (not GET) so the email address never appears in server access logs,
 // browser history, CDN logs, or Referer headers.
-app.post('/api/subscription-status', async (req, res) => {
+app.post('/api/subscription-status', sensitiveLimiter, async (req, res) => {
   const email = normalizeEmail((req.body && req.body.email) || '')
   if (!isValidEmail(email)) return res.status(400).json({ error: 'Valid email required' })
   if (!pool)  return res.json({ active: false, reason: 'db_not_configured' })
@@ -679,7 +687,7 @@ app.post('/api/reset-devices', sensitiveLimiter, async (req, res) => {
   const email = normalizeEmail((req.body && req.body.email) || '')
   if (!isValidEmail(email)) return res.status(400).json({ error: 'Valid email required' })
   if (!pool)  return res.status(503).json({ error: 'DB not configured' })
-  console.log(`[reset-devices] attempt — email: ${redactEmail(email)}, IP: ${req.ip}`)
+  console.log(`[reset-devices] attempt — email: ${redactEmail(email)}, IP: ${anonymizeIp(req.ip)}`)
 
   // Only allow reset for confirmed active subscribers
   try {
@@ -717,7 +725,7 @@ app.post('/api/cancel-subscription', cancelLimiter, async (req, res) => {
   if (!pool)  return res.status(503).json({ error: 'DB not configured' })
 
   const normalizedEmail = normalizeEmail(email)
-  console.log(`[cancel-subscription] attempt — email: ${redactEmail(normalizedEmail)}, IP: ${req.ip}`)
+  console.log(`[cancel-subscription] attempt — email: ${redactEmail(normalizedEmail)}, IP: ${anonymizeIp(req.ip)}`)
 
   try {
     const result = await pool.query(
@@ -802,7 +810,7 @@ app.post('/api/delete-my-data', sensitiveLimiter, async (req, res) => {
       [normalizedEmail, crypto.createHash('sha256').update(normalizedEmail).digest('hex')]
     )
 
-    console.log(`[delete-my-data] erasure completed — email: ${redactEmail(normalizedEmail)}, IP: ${req.ip}`)
+    console.log(`[delete-my-data] erasure completed — email: ${redactEmail(normalizedEmail)}, IP: ${anonymizeIp(req.ip)}`)
     // Return the same shape whether or not the email existed to prevent enumeration.
     res.json({ success: true, message: 'Your data has been erased.' })
   } catch (err) {

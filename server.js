@@ -623,55 +623,75 @@ app.post('/api/subscription-status', sensitiveLimiter, async (req, res) => {
     // Raw IP is used only in-process for HMAC computation and never persisted.
     const pseudoIp = pseudonymizeIp(req.ip || 'unknown')
 
-    // Expire stale devices (not seen in DEVICE_EXPIRY_DAYS days)
-    await pool.query(
-      `DELETE FROM subscriber_devices
-       WHERE email = $1
-         AND last_seen < NOW() - INTERVAL '${DEVICE_EXPIRY_DAYS} days'`,
-      [email]
-    )
-
     if (pseudoIp === 'unknown') {
       // IP_HMAC_SECRET not configured — skip device enforcement, allow access
     } else {
-      // Check if this IP is already registered for this subscriber
-      const existing = await pool.query(
-        `SELECT id FROM subscriber_devices WHERE email = $1 AND ip_address = $2`,
-        [email, pseudoIp]
-      )
+      // Use a transaction + advisory lock keyed on this subscriber's email to
+      // prevent a TOCTOU race where two concurrent requests from different IPs
+      // both read deviceCount < MAX_DEVICES and both insert, exceeding the limit.
+      const client = await pool.connect()
+      try {
+        await client.query('BEGIN')
+        // Advisory lock is scoped to the transaction and released on COMMIT/ROLLBACK.
+        // hashtext() returns a stable 32-bit int for the email string.
+        await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [email])
 
-      if (existing.rows.length > 0) {
-        // Known device — refresh last_seen and allow
-        await pool.query(
-          `UPDATE subscriber_devices SET last_seen = NOW()
-           WHERE email = $1 AND ip_address = $2`,
-          [email, pseudoIp]
-        )
-      } else {
-        // New device — count how many active devices exist
-        const countResult = await pool.query(
-          `SELECT COUNT(*) AS cnt FROM subscriber_devices WHERE email = $1`,
+        // Expire stale devices inside the lock so the count is fresh
+        await client.query(
+          `DELETE FROM subscriber_devices
+           WHERE email = $1
+             AND last_seen < NOW() - INTERVAL '${DEVICE_EXPIRY_DAYS} days'`,
           [email]
         )
-        const deviceCount = parseInt(countResult.rows[0].cnt, 10)
 
-        if (deviceCount >= MAX_DEVICES) {
-          console.log(`[device-limit] ${redactEmail(email)} blocked — ${deviceCount} devices registered`)
-          return res.json({
-            active:  false,
-            reason:  'device_limit',
-            limit:   MAX_DEVICES,
-            current: deviceCount,
-          })
-        }
-
-        // Slot available — register new device
-        await pool.query(
-          `INSERT INTO subscriber_devices (email, ip_address)
-           VALUES ($1, $2)
-           ON CONFLICT (email, ip_address) DO UPDATE SET last_seen = NOW()`,
+        // Check if this IP is already registered for this subscriber
+        const existing = await client.query(
+          `SELECT id FROM subscriber_devices WHERE email = $1 AND ip_address = $2`,
           [email, pseudoIp]
         )
+
+        if (existing.rows.length > 0) {
+          // Known device — refresh last_seen and allow
+          await client.query(
+            `UPDATE subscriber_devices SET last_seen = NOW()
+             WHERE email = $1 AND ip_address = $2`,
+            [email, pseudoIp]
+          )
+        } else {
+          // New device — count how many active devices exist (under the lock)
+          const countResult = await client.query(
+            `SELECT COUNT(*) AS cnt FROM subscriber_devices WHERE email = $1`,
+            [email]
+          )
+          const deviceCount = parseInt(countResult.rows[0].cnt, 10)
+
+          if (deviceCount >= MAX_DEVICES) {
+            await client.query('ROLLBACK')
+            client.release()
+            console.log(`[device-limit] ${redactEmail(email)} blocked — ${deviceCount} devices registered`)
+            return res.json({
+              active:  false,
+              reason:  'device_limit',
+              limit:   MAX_DEVICES,
+              current: deviceCount,
+            })
+          }
+
+          // Slot available — register new device
+          await client.query(
+            `INSERT INTO subscriber_devices (email, ip_address)
+             VALUES ($1, $2)
+             ON CONFLICT (email, ip_address) DO UPDATE SET last_seen = NOW()`,
+            [email, pseudoIp]
+          )
+        }
+
+        await client.query('COMMIT')
+      } catch (lockErr) {
+        await client.query('ROLLBACK')
+        throw lockErr
+      } finally {
+        client.release()
       }
     }
 

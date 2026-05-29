@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import DOMPurify from 'dompurify'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { useSubscription } from '../hooks/useSubscription'
@@ -534,7 +535,7 @@ export default function WheelZard() {
                         }`}
                       >
                         {msg.html
-                          ? <span dangerouslySetInnerHTML={{ __html: msg.text }} />
+                          ? <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(msg.text) }} />
                           : msg.text
                         }
                         {msg.cta && (

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Navbar from '../components/Navbar'
 import { useSubscription } from '../hooks/useSubscription'
 import { SUVSVG, SedanSVG, getPal } from '../components/CarSVGs'
+import EmailCaptureModal from '../components/EmailCaptureModal'
 
 const INCLUDED = [
   {
@@ -33,6 +34,7 @@ const INCLUDED = [
 
 export default function Subscribe() {
   const [loading, setLoading] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
   const [showEmailEntry, setShowEmailEntry] = useState(false)
   const [emailInput, setEmailInput] = useState('')
   const [verifyStatus, setVerifyStatus] = useState(null) // null | 'loading' | 'success' | 'not_found' | 'device_limit' | 'error'
@@ -62,10 +64,16 @@ export default function Subscribe() {
     }
   }
 
-  async function handleCheckout() {
+  // Used only by the renewal button for active subscribers (they already have an account)
+  async function handleRenewalCheckout() {
     setLoading(true)
     try {
-      const res = await fetch('/api/create-checkout-session', { method: 'POST' })
+      const email = sub.subscriberEmail || ''
+      const res = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, cancelPath: '/subscribe' }),
+      })
       const { url } = await res.json()
       window.location.href = url
     } catch (e) {
@@ -75,220 +83,233 @@ export default function Subscribe() {
   }
 
   return (
-    <div className="landing-page">
-      <div className="bg-glow" />
-      <div className="grid-bg" />
+    <>
+      <div className="landing-page">
+        <div className="bg-glow" />
+        <div className="grid-bg" />
 
-      <Navbar />
+        <Navbar />
 
-      <main className="relative z-10 pt-14">
-        <section className="py-16 lg:py-20">
-          <div className="max-w-[1180px] mx-auto px-7">
-            <div className="grid lg:grid-cols-[1fr_1.1fr] gap-16 items-start">
-              {/* Left: pitch */}
-              <div>
-                <span className="eyebrow anim-0">
-                  <span className="dot" />
-                  60-day shopper pass · one payment
-                </span>
-                <h1 className="font-display text-[clamp(36px,5vw,56px)] font-bold leading-[1.05] tracking-tight mt-5 mb-5 anim-1">
-                  $19 to know <span className="text-gold-gradient">this car is right</span> for you.
-                </h1>
-                <p className="text-[17px] text-[var(--text-muted)] leading-relaxed mb-7 anim-2">
-                  You're about to make the second-largest purchase of your life. For one payment of
-                  $19, Cash Pedal gives you the confidence to know you're making the right choice —
-                  for your finances, your needs, and the costs that won't show up until after you
-                  sign. When you're done, we go away. <strong className="text-white">No subscription. No card on file. No upsells.</strong>
-                </p>
+        <main className="relative z-10 pt-14">
+          <section className="py-16 lg:py-20">
+            <div className="max-w-[1180px] mx-auto px-7">
+              <div className="grid lg:grid-cols-[1fr_1.1fr] gap-16 items-start">
+                {/* Left: pitch */}
+                <div>
+                  <span className="eyebrow anim-0">
+                    <span className="dot" />
+                    60-day shopper pass · one payment
+                  </span>
+                  <h1 className="font-display text-[clamp(36px,5vw,56px)] font-bold leading-[1.05] tracking-tight mt-5 mb-5 anim-1">
+                    <span className="text-gold-gradient">$19.</span> The cost of being wrong is $9,150.
+                  </h1>
+                  <p className="text-[17px] text-[var(--text-muted)] leading-relaxed mb-7 anim-2">
+                    You're about to make the second-largest purchase of your life. For one payment of
+                    $19, Cash Pedal gives you the confidence to know you're making the right choice —
+                    for your finances, your needs, and the costs that won't show up until after you
+                    sign. When you're done, we go away. <strong className="text-white">No subscription. No card on file. No upsells.</strong>
+                  </p>
 
-                <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-4 anim-3">
-                  {INCLUDED.map(item => (
-                    <li key={item.title} className="flex gap-3">
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full mt-0.5 grid place-items-center"
-                        style={{ background: 'rgba(95,224,184,0.18)', color: 'var(--success)', fontSize: 11, fontWeight: 800 }}>
-                        ✓
-                      </span>
-                      <div>
-                        <div className="font-display font-semibold text-[14px] text-white mb-0.5">{item.title}</div>
-                        <div className="text-[13px] text-[var(--text-muted)] leading-snug">{item.body}</div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* Mini comparison teaser */}
-                <div className="mt-10 grid grid-cols-2 gap-3 max-w-[480px] anim-4">
-                  <MiniCar make="Rivian R1S" carType="suv_large" isEV winner />
-                  <MiniCar make="BMW X5" carType="sedan" />
-                </div>
-                <p className="mt-3 text-xs text-[var(--text-dim)] anim-4">
-                  Sample comparison — runs in seconds inside the app.
-                </p>
-              </div>
-
-              {/* Right: offer card */}
-              <div className="lg:sticky lg:top-24 anim-2">
-                {isActive ? (
-                  /* Already a member */
-                  <div className="offer-card-lg" style={{ borderColor: 'rgba(95,224,184,0.45)', boxShadow: '0 0 0 1px rgba(95,224,184,0.10) inset, 0 40px 80px -30px rgba(95,224,184,0.30)' }}>
-                    <span className="offer-badge" style={{ background: 'var(--success)', color: '#07251e' }}>
-                      ✓ MEMBERSHIP ACTIVE
-                    </span>
-                    <div className="font-display font-bold leading-none tracking-tight mt-1" style={{ fontSize: 88, color: 'var(--success)' }}>
-                      {daysLeft != null ? daysLeft : '—'}
-                    </div>
-                    <div className="text-sm text-[var(--text-muted)] mb-1">
-                      {daysLeft === 1 ? 'day' : 'days'} left on your shopper pass
-                    </div>
-                    {expiresAt && (
-                      <div className="font-mono text-xs text-[var(--text-muted)] opacity-70 mb-6">
-                        expires {new Date(expiresAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </div>
-                    )}
-
-                    <Link to="/tco" className="btn-primary w-full justify-center text-base py-3.5">
-                      Open the calculator →
-                    </Link>
-
-                    <div className="mt-4 text-xs text-[var(--text-muted)] flex flex-wrap justify-center gap-x-4 gap-y-1.5">
-                      <span><Pip /> Unlimited comparisons</span>
-                      <span><Pip /> PDF exports unlocked</span>
-                      <span><Pip /> No renewal</span>
-                    </div>
-
-                    {daysLeft != null && daysLeft <= 7 && daysLeft > 0 && (
-                      <div className="mt-6 pt-5 border-t border-[var(--border)]/60 text-left">
-                        <div className="text-[11px] uppercase tracking-widest text-[var(--text-muted)] mb-1.5">
-                          Still shopping after this expires?
-                        </div>
-                        <p className="text-xs text-white leading-relaxed mb-3">
-                          Most decisions land inside 60 days. If you need another window, you can buy a fresh pass anytime — no auto-renewal pressure either way.
-                        </p>
-                        <button
-                          onClick={handleCheckout}
-                          disabled={loading}
-                          className="text-xs font-semibold text-[var(--accent)] hover:underline"
-                        >
-                          {loading ? 'Opening…' : 'Renew for another 60 days · $19 →'}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  /* Buy CTA */
-                  <div className="offer-card-lg">
-                    <span className="offer-badge">60-DAY SHOPPER PASS</span>
-
-                    <div className="offer-price">
-                      <span className="offer-dollar">$</span>
-                      <span className="offer-amount">19</span>
-                    </div>
-                    <div className="text-sm text-[var(--text-muted)] mb-1">
-                      one-time · 60 days of unlimited access
-                    </div>
-                    <div className="font-mono text-xs text-[var(--text-muted)] opacity-70 mb-6">
-                      less than one tank of gas
-                    </div>
-
-                    <button
-                      className="btn-primary w-full justify-center text-base py-3.5"
-                      onClick={handleCheckout}
-                      disabled={loading}
-                    >
-                      {loading ? 'Opening checkout…' : 'Unlock my 60 days →'}
-                    </button>
-
-                    <div className="mt-4 text-xs text-[var(--text-muted)] flex flex-wrap justify-center gap-x-4 gap-y-1.5">
-                      <span><Pip /> Instant access</span>
-                      <span><Pip /> No subscription</span>
-                      <span><Pip /> Stripe-secured</span>
-                    </div>
-
-                    <div className="mt-6 pt-5 border-t border-[var(--border)]/60 text-left grid gap-3">
-                      <FineLine label="When does access start?" value="Immediately after payment." />
-                      <FineLine label="What expires after 60 days?" value="Unlimited comparisons + PDF exports. Saved reports remain readable." />
-                      <FineLine label="Auto-renew?" value="Never. There is no card on file after checkout." />
-                      <FineLine label="Refunds" value="7-day money back, no questions asked." />
-                    </div>
-
-                    <div className="mt-6 pt-5 border-t border-[var(--border)]/60 text-left">
-                      {!showEmailEntry ? (
-                        <button
-                          className="text-xs text-[var(--text-muted)] hover:text-white transition-colors"
-                          onClick={() => setShowEmailEntry(true)}
-                        >
-                          Already a subscriber? →
-                        </button>
-                      ) : (
+                  <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-4 anim-3">
+                    {INCLUDED.map(item => (
+                      <li key={item.title} className="flex gap-3">
+                        <span className="flex-shrink-0 w-5 h-5 rounded-full mt-0.5 grid place-items-center"
+                          style={{ background: 'rgba(95,224,184,0.18)', color: 'var(--success)', fontSize: 11, fontWeight: 800 }}>
+                          ✓
+                        </span>
                         <div>
-                          <div className="text-[11px] uppercase tracking-widest text-[var(--text-muted)] mb-2">
-                            Restore access
+                          <div className="font-display font-semibold text-[14px] text-white mb-0.5">{item.title}</div>
+                          <div className="text-[13px] text-[var(--text-muted)] leading-snug">{item.body}</div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Mini comparison teaser */}
+                  <div className="mt-10 grid grid-cols-2 gap-3 max-w-[480px] anim-4">
+                    <MiniCar make="Rivian R1S" carType="suv_large" isEV winner />
+                    <MiniCar make="BMW X5" carType="sedan" />
+                  </div>
+                  <p className="mt-3 text-xs text-[var(--text-dim)] anim-4">
+                    Sample comparison — runs in seconds inside the app.
+                  </p>
+                </div>
+
+                {/* Right: offer card */}
+                <div className="lg:sticky lg:top-24 anim-2">
+                  {isActive ? (
+                    /* Already a member */
+                    <div className="offer-card-lg" style={{ borderColor: 'rgba(95,224,184,0.45)', boxShadow: '0 0 0 1px rgba(95,224,184,0.10) inset, 0 40px 80px -30px rgba(95,224,184,0.30)' }}>
+                      <span className="offer-badge" style={{ background: 'var(--success)', color: '#07251e' }}>
+                        ✓ MEMBERSHIP ACTIVE
+                      </span>
+                      <div className="font-display font-bold leading-none tracking-tight mt-1" style={{ fontSize: 88, color: 'var(--success)' }}>
+                        {daysLeft != null ? daysLeft : '—'}
+                      </div>
+                      <div className="text-sm text-[var(--text-muted)] mb-1">
+                        {daysLeft === 1 ? 'day' : 'days'} left on your shopper pass
+                      </div>
+                      {expiresAt && (
+                        <div className="font-mono text-xs text-[var(--text-muted)] opacity-70 mb-6">
+                          expires {new Date(expiresAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </div>
+                      )}
+
+                      <Link to="/tco" className="btn-primary w-full justify-center text-base py-3.5">
+                        Open the calculator →
+                      </Link>
+
+                      <div className="mt-4 text-xs text-[var(--text-muted)] flex flex-wrap justify-center gap-x-4 gap-y-1.5">
+                        <span><Pip /> Unlimited comparisons</span>
+                        <span><Pip /> PDF exports unlocked</span>
+                        <span><Pip /> No renewal</span>
+                      </div>
+
+                      {daysLeft != null && daysLeft <= 7 && daysLeft > 0 && (
+                        <div className="mt-6 pt-5 border-t border-[var(--border)]/60 text-left">
+                          <div className="text-[11px] uppercase tracking-widest text-[var(--text-muted)] mb-1.5">
+                            Still shopping after this expires?
                           </div>
-                          <form onSubmit={handleVerifyEmail} className="flex gap-2">
-                            <input
-                              type="email"
-                              required
-                              placeholder="your@email.com"
-                              value={emailInput}
-                              onChange={e => { setEmailInput(e.target.value); setVerifyStatus(null) }}
-                              className="flex-1 min-w-0 rounded-lg px-3 py-2 text-sm text-white placeholder-[var(--text-dim)] border border-[var(--border)] focus:outline-none focus:border-[var(--accent)]/60"
-                              style={{ background: 'rgba(255,255,255,0.04)' }}
-                              disabled={verifyStatus === 'loading' || verifyStatus === 'success'}
-                            />
-                            <button
-                              type="submit"
-                              disabled={verifyStatus === 'loading' || verifyStatus === 'success'}
-                              className="flex-shrink-0 rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
-                              style={{ background: 'var(--accent)', color: '#07251e' }}
-                            >
-                              {verifyStatus === 'loading' ? '…' : 'Verify'}
-                            </button>
-                          </form>
-                          {verifyStatus === 'not_found' && (
-                            <p className="mt-2 text-xs text-red-400">No active subscription found for that email.</p>
-                          )}
-                          {verifyStatus === 'device_limit' && (
-                            <p className="mt-2 text-xs text-yellow-400">Device limit reached. <a href="mailto:hello@cashpedal.io" className="underline">Contact support</a> to reset.</p>
-                          )}
-                          {verifyStatus === 'error' && (
-                            <p className="mt-2 text-xs text-red-400">Network error — please try again.</p>
-                          )}
+                          <p className="text-xs text-white leading-relaxed mb-3">
+                            Most decisions land inside 60 days. If you need another window, you can buy a fresh pass anytime — no auto-renewal pressure either way.
+                          </p>
+                          <button
+                            onClick={handleRenewalCheckout}
+                            disabled={loading}
+                            className="text-xs font-semibold text-[var(--accent)] hover:underline"
+                          >
+                            {loading ? 'Opening…' : 'Renew for another 60 days · $19 →'}
+                          </button>
                         </div>
                       )}
                     </div>
-                  </div>
-                )}
-
-                <p className="mt-4 text-center text-[11px] text-[var(--text-dim)] leading-relaxed">
-                  {isActive ? (
-                    <>Need help? <a href="mailto:hello@cashpedal.io" className="underline hover:text-white">hello@cashpedal.io</a></>
                   ) : (
-                    <>By purchasing you agree to our <Link to="/tco" className="underline hover:text-white">terms</Link> and{' '}
-                    <Link to="/privacy" className="underline hover:text-white">privacy policy</Link>. <br />
-                    Cash Pedal does not accept dealer placements or insurer kickbacks.</>
+                    /* Buy CTA */
+                    <div className="offer-card-lg">
+                      <span className="offer-badge">60-DAY SHOPPER PASS</span>
+
+                      <div className="offer-price">
+                        <span className="offer-dollar">$</span>
+                        <span className="offer-amount">19</span>
+                      </div>
+                      <div className="text-sm text-[var(--text-muted)] mb-1">
+                        one-time · 60 days of unlimited access
+                      </div>
+                      <div className="font-mono text-xs text-[var(--text-muted)] opacity-70 mb-1">
+                        less than one tank of gas
+                      </div>
+                      <div className="text-xs text-[var(--text-muted)] mb-5" style={{ opacity: 0.75 }}>
+                        A financial advisor charges $200/hr. This takes 10 minutes.
+                      </div>
+
+                      {/* Anchor callout */}
+                      <div className="mb-4 px-3 py-2.5 rounded-lg text-xs text-[var(--text-muted)] leading-relaxed" style={{ border: '1px solid var(--border)', background: 'rgba(255,184,0,0.04)' }}>
+                        The average hidden cost gap on a $30k vehicle is{' '}
+                        <span className="text-white font-semibold">$9,150 over 5 years.</span>{' '}
+                        This report costs $19.
+                      </div>
+
+                      <button
+                        className="btn-primary w-full justify-center text-base py-3.5"
+                        onClick={() => setModalOpen(true)}
+                      >
+                        Unlock my 60 days →
+                      </button>
+
+                      <div className="mt-4 text-xs text-[var(--text-muted)] flex flex-wrap justify-center gap-x-4 gap-y-1.5">
+                        <span><Pip /> Instant access</span>
+                        <span><Pip /> No subscription</span>
+                        <span><Pip /> Stripe-secured</span>
+                      </div>
+
+                      <div className="mt-6 pt-5 border-t border-[var(--border)]/60 text-left grid gap-3">
+                        <FineLine label="When does access start?" value="Immediately after payment." />
+                        <FineLine label="What expires after 60 days?" value="Unlimited comparisons + PDF exports. Saved reports remain readable." />
+                        <FineLine label="Auto-renew?" value="Never. There is no card on file after checkout." />
+                        <FineLine label="Refunds" value="7-day money back, no questions asked." />
+                      </div>
+
+                      <div className="mt-6 pt-5 border-t border-[var(--border)]/60 text-left">
+                        {!showEmailEntry ? (
+                          <button
+                            className="text-xs text-[var(--text-muted)] hover:text-white transition-colors"
+                            onClick={() => setShowEmailEntry(true)}
+                          >
+                            Already a subscriber? →
+                          </button>
+                        ) : (
+                          <div>
+                            <div className="text-[11px] uppercase tracking-widest text-[var(--text-muted)] mb-2">
+                              Restore access
+                            </div>
+                            <form onSubmit={handleVerifyEmail} className="flex gap-2">
+                              <input
+                                type="email"
+                                required
+                                placeholder="your@email.com"
+                                value={emailInput}
+                                onChange={e => { setEmailInput(e.target.value); setVerifyStatus(null) }}
+                                className="flex-1 min-w-0 rounded-lg px-3 py-2 text-sm text-white placeholder-[var(--text-dim)] border border-[var(--border)] focus:outline-none focus:border-[var(--accent)]/60"
+                                style={{ background: 'rgba(255,255,255,0.04)' }}
+                                disabled={verifyStatus === 'loading' || verifyStatus === 'success'}
+                              />
+                              <button
+                                type="submit"
+                                disabled={verifyStatus === 'loading' || verifyStatus === 'success'}
+                                className="flex-shrink-0 rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
+                                style={{ background: 'var(--accent)', color: '#07251e' }}
+                              >
+                                {verifyStatus === 'loading' ? '…' : 'Verify'}
+                              </button>
+                            </form>
+                            {verifyStatus === 'not_found' && (
+                              <p className="mt-2 text-xs text-red-400">No active subscription found for that email.</p>
+                            )}
+                            {verifyStatus === 'device_limit' && (
+                              <p className="mt-2 text-xs text-yellow-400">Device limit reached. <a href="mailto:hello@cashpedal.io" className="underline">Contact support</a> to reset.</p>
+                            )}
+                            {verifyStatus === 'error' && (
+                              <p className="mt-2 text-xs text-red-400">Network error — please try again.</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   )}
+
+                  <p className="mt-4 text-center text-[11px] text-[var(--text-dim)] leading-relaxed">
+                    {isActive ? (
+                      <>Need help? <a href="mailto:hello@cashpedal.io" className="underline hover:text-white">hello@cashpedal.io</a></>
+                    ) : (
+                      <>By purchasing you agree to our <Link to="/tco" className="underline hover:text-white">terms</Link> and{' '}
+                      <Link to="/privacy" className="underline hover:text-white">privacy policy</Link>. <br />
+                      Cash Pedal does not accept dealer placements or insurer kickbacks.</>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {/* Closing value reminder */}
+              <div className="mt-20 max-w-[820px] mx-auto text-center">
+                <div className="section-eyebrow">Why $19 pays for itself</div>
+                <p className="font-display text-[24px] sm:text-[28px] leading-tight tracking-tight">
+                  Most buyers discover the real cost of their car after they've already signed.
+                  Cash Pedal gives you full visibility before you're locked in — so a surprise bill
+                  in year two isn't a surprise at all.
+                </p>
+                <p className="mt-4 text-sm text-[var(--text-muted)]">
+                  Spot one hidden maintenance trap, catch one inflated insurance estimate, or find a
+                  better financing rate — and the pass pays for itself{' '}
+                  <span className="text-white">many times over.</span>
                 </p>
               </div>
             </div>
+          </section>
+        </main>
+      </div>
 
-            {/* Closing value reminder */}
-            <div className="mt-20 max-w-[820px] mx-auto text-center">
-              <div className="section-eyebrow">Why $19 pays for itself</div>
-              <p className="font-display text-[24px] sm:text-[28px] leading-tight tracking-tight">
-                Most buyers discover the real cost of their car after they've already signed.
-                Cash Pedal gives you full visibility before you're locked in — so a surprise bill
-                in year two isn't a surprise at all.
-              </p>
-              <p className="mt-4 text-sm text-[var(--text-muted)]">
-                Spot one hidden maintenance trap, catch one inflated insurance estimate, or find a
-                better financing rate — and the pass pays for itself{' '}
-                <span className="text-white">many times over.</span>
-              </p>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
+      <EmailCaptureModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+    </>
   )
 }
 

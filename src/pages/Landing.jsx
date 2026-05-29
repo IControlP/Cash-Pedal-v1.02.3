@@ -3,7 +3,7 @@ import Hero from '../components/landing/Hero'
 import Problem from '../components/landing/Problem'
 import HowItWorks from '../components/landing/HowItWorks'
 import FreeTools from '../components/landing/FreeTools'
-import TCOPreview from '../components/landing/TCOPreview'
+import LiveTCOPreview from '../components/landing/LiveTCOPreview'
 import Coverage from '../components/landing/Coverage'
 import Features from '../components/landing/Features'
 import WhyNotFree from '../components/landing/WhyNotFree'
@@ -24,7 +24,7 @@ export default function Landing() {
         <Problem />
         <HowItWorks />
         <FreeTools />
-        <TCOPreview />
+        <LiveTCOPreview />
         <Coverage />
         <Features />
         <WhyNotFree />

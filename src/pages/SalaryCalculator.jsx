@@ -413,7 +413,8 @@ export default function SalaryCalculator() {
         if (basePrice <= (affordableResults.conservative || 0)) tier = 'conservative'
         else if (basePrice <= (affordableResults.comfortable || 0)) tier = 'comfortable'
         const ops = estimateBasicMonthlyCosts(basePrice, userState || null, annualMiles)
-        const annualFinancing = Math.round(monthlyPayment(basePrice * 0.80, rate, 60) * 12)
+        const downAmt = basePrice * (downPct / 100)
+        const annualFinancing = Math.round(monthlyPayment(basePrice - downAmt, rate, loanTerm) * 12)
         const annualOperating = ops.total * 12
         entries.push({
           make, model, type: data.type, is_ev: data.is_ev,
@@ -428,8 +429,12 @@ export default function SalaryCalculator() {
         })
       })
     })
-    return entries.sort((a, b) => b.basePrice - a.basePrice)
-  }, [affordableResults, userState, annualMiles, rate])
+    const TIER_ORDER = { conservative: 0, comfortable: 1, aggressive: 2 }
+    return entries.sort((a, b) => {
+      const tierDiff = TIER_ORDER[a.tier] - TIER_ORDER[b.tier]
+      return tierDiff !== 0 ? tierDiff : a.basePrice - b.basePrice
+    })
+  }, [affordableResults, userState, annualMiles, rate, downPct, loanTerm])
 
   const filteredVehicles = useMemo(() => {
     if (carFilterCategory === 'all') return matchedVehicles
@@ -1267,7 +1272,7 @@ export default function SalaryCalculator() {
                           <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1">
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Est. annual costs</p>
                             {[
-                              { label: `Financing (80% · 5yr · ${rate}%)`, val: v.annualFinancing },
+                              { label: `Financing (${downPct}% dn · ${loanTerm}mo · ${rate}%)`, val: v.annualFinancing },
                               { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.annualFuel },
                               { label: 'Insurance', val: v.annualInsurance },
                               { label: 'Maintenance', val: v.annualMaintenance },
@@ -1283,6 +1288,15 @@ export default function SalaryCalculator() {
                               <span className="text-[10px] font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(v.annualTotal)}</span>
                             </div>
                           </div>
+                          <Link
+                            to={`/tco?make=${encodeURIComponent(v.make)}&model=${encodeURIComponent(v.model)}`}
+                            className="mt-2 block text-center text-[10px] font-semibold py-1.5 rounded-lg border transition-colors"
+                            style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)' }}
+                          >
+                            Full TCO →
+                          </Link>
                         </div>
                       )
                     })}

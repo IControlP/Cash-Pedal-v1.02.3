@@ -1020,6 +1020,22 @@ export default function TCOCalculator() {
     } catch { /* ignore corrupt data */ }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Pre-fill make/model from ?make=&model= query params (e.g. deep-linked from Salary Calculator)
+  useEffect(() => {
+    const qMake  = searchParams.get('make')
+    const qModel = searchParams.get('model')
+    if (!qMake) return
+    if (VEHICLES[qMake]) {
+      setSelMake(qMake)
+      if (qModel && VEHICLES[qMake]?.[qModel]) {
+        setSelModel(qModel)
+        // Auto-select the most recent year
+        const years = Object.keys(VEHICLES[qMake][qModel].trims_by_year || {}).sort((a, b) => Number(b) - Number(a))
+        if (years.length > 0) setSelYear(years[0])
+      }
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Derived model data (type, specs, mpg, isEV)
   const modelData = useMemo(() => getModelData(selMake, selModel), [selMake, selModel])
 
@@ -1197,18 +1213,20 @@ export default function TCOCalculator() {
   const annualOperatingCost = annualInsurance + annualFuel + annualMaintenance + annualRegistration
   const totalAnnualCost = (financeMode === 'lease' ? leaseResults.annualLeaseCost : results.trueAnnualCost) + annualOperatingCost
 
+  const leasePeriodYears = Math.ceil(leaseTerm / 12)
+
   // Forecast rows computed at parent level so both the summary panel and FiveYearForecast
   // share identical totals (prevents the visual vs. summary number discrepancy).
   const forecastRows = useMemo(() => {
     const years = Math.min(5, Math.max(1, ownershipYears))
-    const leasePeriodYears = Math.ceil(leaseTerm / 12)
+    const leasePeriodYrs = Math.ceil(leaseTerm / 12)
     return Array.from({ length: years }, (_, i) => {
       const yr = i + 1
       const loanMonths = financeMode === 'lease'
         ? 0
         : Math.max(0, Math.min(12, loanTerm - i * 12))
       const loanCost = financeMode === 'lease'
-        ? (yr <= leasePeriodYears ? leaseResults.annualLeaseCost : 0)
+        ? (yr <= leasePeriodYrs ? leaseResults.annualLeaseCost : 0)
         : results.monthlyPayment * loanMonths
       const insurance    = Math.round(annualInsurance    * Math.pow(1.02, i))
       const fuel         = annualFuel
@@ -2376,6 +2394,46 @@ export default function TCOCalculator() {
                 </div>
               </div>
 
+              {/* ── EV fuel savings vs comparable gas vehicle ── */}
+              {effIsEV && resolvedState && (() => {
+                const mpge = modelData?.mpg?.mpge_combined ?? 100
+                const avgGasMpg = 28
+                const annualGasFuel = computeAnnualFuel(false, avgGasMpg, null, resolvedState, annualMileage, null, false)
+                const evFuelSavings = annualGasFuel - annualFuel
+                if (evFuelSavings <= 0) return null
+                const lifetimeSavings = evFuelSavings * ownershipYears
+                return (
+                  <div className="rounded-xl border p-4 flex flex-col gap-2.5"
+                    style={{ borderColor: 'rgba(96,200,255,0.3)', background: 'rgba(96,200,255,0.04)' }}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#60c8ff' }}>
+                        ⚡ EV Fuel Savings
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="rounded-lg px-3 py-2" style={{ background: 'rgba(0,0,0,0.25)' }}>
+                        <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Annual savings</p>
+                        <p className="font-display font-bold text-sm mt-0.5" style={{ color: '#60c8ff' }}>
+                          {formatCurrency(evFuelSavings)}/yr
+                        </p>
+                        <p className="text-[10px] text-[var(--text-muted)] mt-0.5">vs. {avgGasMpg} MPG gas car</p>
+                      </div>
+                      <div className="rounded-lg px-3 py-2" style={{ background: 'rgba(0,0,0,0.25)' }}>
+                        <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">{ownershipYears}-yr savings</p>
+                        <p className="font-display font-bold text-sm mt-0.5" style={{ color: '#60c8ff' }}>
+                          {formatCurrency(lifetimeSavings)}
+                        </p>
+                        <p className="text-[10px] text-[var(--text-muted)] mt-0.5">over ownership period</p>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                      Based on {resolvedState} electricity vs. gas prices · {annualMileage.toLocaleString()} mi/yr · {mpge} MPGe vs. {avgGasMpg} MPG average.
+                      Does not include EV tax credits.
+                    </p>
+                  </div>
+                )
+              })()}
+
               {/* Affordability check — 20/4/10 rule income bands — detailed mode only */}
               {!simpleMode && (() => {
                 const year1Total = forecastRows[0]?.total ?? totalAnnualCost
@@ -2447,8 +2505,8 @@ export default function TCOCalculator() {
                 )}
               </div>
 
-              {/* ── Net Cost of Ownership — detailed mode only ── */}
-              {!simpleMode && financeMode === 'buy' && futureResaleValue != null && netCostOfOwnership != null && (
+              {/* ── Net Cost of Ownership — shown in all modes for buy ── */}
+              {financeMode === 'buy' && futureResaleValue != null && netCostOfOwnership != null && (
                 <div className="rounded-xl border p-4 flex flex-col gap-3"
                   style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">

@@ -38,12 +38,12 @@ const faqs = [
 ]
 
 const tools = [
-  { to: '/tco', emoji: '🧮', title: 'TCO Calculator', desc: 'Monthly payment, total interest, and true annual cost.' },
-  { to: '/compare', emoji: '⚖️', title: 'Compare Vehicles', desc: 'Side-by-side cost comparison for up to 5 vehicles.' },
-  { to: '/salary', emoji: '💵', title: 'Salary Calculator', desc: 'The income you need using the 20/4/10 rule.' },
-  { to: '/survey', emoji: '🎯', title: 'Car Survey', desc: 'Personality-based vehicle type matching.' },
-  { to: '/checklist', emoji: '🔍', title: 'Buying Checklist', desc: 'Used car maintenance audit and seller questions.' },
-  { to: '/wheelzard', emoji: '🤖', title: 'Wheel-Zard AI', desc: 'AI-powered vehicle advisor.' },
+  { to: '/tco', emoji: '🧮', title: 'TCO Calculator', desc: 'Monthly payment, total interest, and true annual cost.', hint: 'You\'ve picked a vehicle and want to see the real 5-year cost.' },
+  { to: '/compare', emoji: '⚖️', title: 'Compare Vehicles', desc: 'Side-by-side cost comparison for up to 5 vehicles.', hint: 'You\'re deciding between 2–5 options and need a fair comparison.' },
+  { to: '/salary', emoji: '💵', title: 'Salary Calculator', desc: 'The income you need using the 20/4/10 rule.', hint: 'You want to know how much car you can actually afford.' },
+  { to: '/survey', emoji: '🎯', title: 'Car Survey', desc: 'Personality-based vehicle type matching.', hint: 'You\'re not sure what type of vehicle fits your life.' },
+  { to: '/checklist', emoji: '🔍', title: 'Buying Checklist', desc: 'Used car maintenance audit and seller questions.', hint: 'You\'re about to inspect a used car and need a negotiation edge.' },
+  { to: '/wheelzard', emoji: '🤖', title: 'Wheel-Zard AI', desc: 'AI-powered vehicle advisor.', hint: 'You have a specific question and want a guided conversation.' },
 ]
 
 export default function About() {
@@ -99,13 +99,14 @@ export default function About() {
           {/* Tools overview */}
           <h2 className="font-display font-bold text-white text-xl mb-4 anim-4">All tools</h2>
           <div className="grid sm:grid-cols-2 gap-4 mb-10 anim-4">
-            {tools.map(({ to, emoji, title, desc }) => (
+            {tools.map(({ to, emoji, title, desc, hint }) => (
               <Link key={to} to={to} className="card hover:border-[var(--accent)] transition-colors group">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xl">{emoji}</span>
                   <span className="font-display font-bold text-white group-hover:text-[var(--accent)] transition-colors">{title}</span>
                 </div>
-                <p className="text-xs text-[var(--text-muted)]">{desc}</p>
+                <p className="text-xs text-[var(--text-muted)] mb-2">{desc}</p>
+                <p className="text-[10px] font-semibold" style={{ color: 'rgba(200,255,0,0.6)' }}>Start here if: {hint}</p>
               </Link>
             ))}
           </div>

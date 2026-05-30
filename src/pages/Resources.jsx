@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
@@ -148,9 +149,22 @@ export default function Resources() {
             ))}
           </div>
 
-          <p className="text-center text-xs text-[var(--text-muted)] mt-10 max-w-lg mx-auto leading-relaxed">
-            Cash Pedal is not affiliated with any of the resources listed above.
-            Links are provided for convenience only.
+          {/* Cross-tool CTA */}
+          <div className="mt-10 rounded-xl p-6 border flex flex-col sm:flex-row items-center justify-between gap-6"
+            style={{ background: 'rgba(200,255,0,0.04)', borderColor: 'rgba(200,255,0,0.2)' }}>
+            <div>
+              <p className="font-display font-bold text-white text-base mb-1">Found a vehicle you like?</p>
+              <p className="text-sm text-[var(--text-muted)]">Run the numbers on your shortlist — loan math, insurance, fuel, and depreciation in one place.</p>
+            </div>
+            <div className="flex gap-3 shrink-0">
+              <Link to="/tco" className="btn-primary text-sm py-2.5 px-5 whitespace-nowrap">Calculate TCO →</Link>
+              <Link to="/checklist" className="btn-ghost text-sm py-2.5 px-5 whitespace-nowrap">Used Car Checklist</Link>
+            </div>
+          </div>
+
+          <p className="text-center text-xs text-[var(--text-muted)] mt-6 max-w-lg mx-auto leading-relaxed">
+            Cash Pedal is not affiliated with the resources listed above and earns no commission from these links.
+            They are provided for convenience only.
           </p>
         </div>
       </main>

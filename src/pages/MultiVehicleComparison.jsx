@@ -50,6 +50,7 @@ const defaultVehicle = {
 // ── Ranking parameters available to the user ──────────
 const RANK_PARAMS = [
   { key: 'totalOutOfPocket', label: 'Most Affordable (Total Out-of-Pocket)', lowerIsBetter: true },
+  { key: 'costPerMile',      label: 'Lowest Cost Per Mile',                  lowerIsBetter: true },
   { key: 'mpgCombined',      label: 'Best MPG',                               lowerIsBetter: false },
   { key: 'cargoSqFt',        label: 'Most Cargo Space',                       lowerIsBetter: false },
   { key: 'valueRetentionPct',label: 'Best Value Retention',                   lowerIsBetter: false },
@@ -464,6 +465,15 @@ export default function MultiVehicleComparison() {
       rows.push({
         label: 'Best Value Retention',
         scores: vals.map((v, i) => ({ display: fmtRetention(v), isBest: i === best, hasValue: v != null })),
+      })
+    }
+
+    if (activeRankParams.costPerMile) {
+      const vals = vehicles.map(v => v.costPerMile)
+      const best = bestIdx(vals, true)
+      rows.push({
+        label: 'Lowest Cost Per Mile',
+        scores: vals.map((v, i) => ({ display: v != null ? `$${v.toFixed(2)}/mi` : '—', isBest: i === best, hasValue: v != null })),
       })
     }
 

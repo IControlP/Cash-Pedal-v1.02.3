@@ -893,6 +893,112 @@ function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenan
   )
 }
 
+// ── Wealth Impact ─────────────────────────────────────
+function WealthImpact({ isPro, totalAnnualCost, annualOperatingCost, segment, formatCurrency }) {
+  const ProBadge = () => (
+    <span className="text-[10px] font-bold px-2 py-0.5 rounded"
+      style={{ background: 'rgba(200,255,0,0.1)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.25)' }}>
+      Pro
+    </span>
+  )
+
+  const RATE = 0.07
+  const YEARS = 25
+  // Future value factor for $1/yr at 7% for 25 years
+  const growthFactor = (Math.pow(1 + RATE, YEARS) - 1) / RATE  // ≈ 63.25
+  const wealthImpact = Math.round(totalAnnualCost * growthFactor)
+  const per1k        = Math.round(1000 * growthFactor)
+
+  const segAvg   = SEGMENT_OP_COST_AVG[segment]
+  const opDiff   = segAvg != null ? Math.round(annualOperatingCost - segAvg) : null
+  const diffGrow = opDiff != null ? Math.round(Math.abs(opDiff) * growthFactor) : null
+
+  if (!isPro) {
+    return (
+      <div className="relative rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+        <div className="opacity-[0.12] pointer-events-none select-none p-4 flex flex-col gap-3" aria-hidden>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Wealth Impact</p>
+            <ProBadge />
+          </div>
+          <p className="text-3xl font-display font-bold text-white">$──,───</p>
+          <p className="text-xs text-[var(--text-muted)]">25-year opportunity cost at 7%</p>
+          <p className="text-xs text-[var(--text-muted)]">Every $1,000/yr saved = $──,─── in 25 years</p>
+        </div>
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 p-6 text-center"
+          style={{ background: 'rgba(13,13,18,0.82)', backdropFilter: 'blur(6px)' }}>
+          <div className="w-9 h-9 rounded-full flex items-center justify-center text-base"
+            style={{ background: 'rgba(255,184,0,0.1)', border: '1px solid rgba(255,184,0,0.25)' }}>
+            🔒
+          </div>
+          <div>
+            <p className="font-display font-bold text-white text-sm mb-1">Wealth Impact</p>
+            <p className="text-[var(--text-muted)] text-xs max-w-xs leading-relaxed mx-auto">
+              See what your vehicle spend translates to in long-term wealth — and how much every $1,000 saved compounds over 25 years.
+            </p>
+          </div>
+          <a href="/subscribe" className="text-xs font-bold px-4 py-2 rounded-lg"
+            style={{ background: 'var(--accent)', color: '#000' }}>
+            Unlock with Pro →
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-xl border p-4 flex flex-col gap-4"
+      style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Wealth Impact</p>
+        <ProBadge />
+      </div>
+
+      <div>
+        <p className="text-xs text-[var(--text-muted)] mb-1">
+          Your {formatCurrency(totalAnnualCost)}/yr in vehicle costs, invested at 7% for 25 years:
+        </p>
+        <p className="font-display font-extrabold text-3xl" style={{ color: 'var(--accent)' }}>
+          {formatCurrency(wealthImpact)}
+        </p>
+        <p className="text-[10px] text-[var(--text-muted)] mt-1 leading-relaxed">
+          That's the wealth equivalent of your annual vehicle spend — capital traded for transportation.
+        </p>
+      </div>
+
+      <div className="rounded-lg p-3 border" style={{ background: 'var(--bg)', borderColor: 'var(--border)' }}>
+        <p className="text-xs font-semibold text-white mb-0.5">Reduce annual costs by $1,000</p>
+        <p className="text-lg font-display font-bold" style={{ color: 'var(--accent)' }}>
+          = {formatCurrency(per1k)} in 25 years
+        </p>
+        <p className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-relaxed">
+          Negotiate the price, choose a more efficient trim, or shop insurance — every dollar compounds.
+        </p>
+      </div>
+
+      {opDiff != null && Math.abs(opDiff) > 250 && diffGrow != null && (
+        <div className="flex items-start gap-2.5">
+          <span className="text-sm font-bold mt-0.5 shrink-0"
+            style={{ color: opDiff > 0 ? '#f87171' : '#4ade80' }}>
+            {opDiff > 0 ? '⚠' : '✓'}
+          </span>
+          <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+            {opDiff > 0 ? (
+              <>Operating costs run <span className="text-white font-semibold">{formatCurrency(Math.abs(opDiff))}/yr</span> above the {segment.replace('_', ' ')} average. That gap compounds to <span className="text-white font-semibold">{formatCurrency(diffGrow)}</span> in 25 years.</>
+            ) : (
+              <>Operating costs are <span className="text-white font-semibold">{formatCurrency(Math.abs(opDiff))}/yr</span> below the {segment.replace('_', ' ')} average — an advantage that grows to <span className="text-white font-semibold">{formatCurrency(diffGrow)}</span> in 25 years.</>
+            )}
+          </p>
+        </div>
+      )}
+
+      <p className="text-[10px] text-[var(--text-muted)] border-t border-[var(--border)] pt-2 leading-relaxed">
+        Assumes 7% real annual return (S&amp;P 500 long-term avg). Opportunity cost illustration — not financial advice.
+      </p>
+    </div>
+  )
+}
+
 // ── Main page ─────────────────────────────────────────
 export default function TCOCalculator() {
   const navigate = useNavigate()
@@ -2642,6 +2748,20 @@ export default function TCOCalculator() {
                   label={financeMode === 'lease' ? 'Monthly Lease Payment' : 'Monthly Payment'}
                   value={financeMode === 'lease' ? leaseResults.monthlyPayment : results.monthlyPayment}
                   highlight delay={0} />
+                {financeMode === 'buy' && annualMileage > 0 && (
+                  <div className="flex items-center gap-4 text-xs mt-2 px-1">
+                    <span className="text-[var(--text-muted)]">All-in:</span>
+                    <span>
+                      <span className="text-white font-semibold">{formatCurrency(Math.round(totalAnnualCost / 365))}</span>
+                      <span className="text-[var(--text-muted)]">/day</span>
+                    </span>
+                    <span className="text-[var(--border)]">·</span>
+                    <span>
+                      <span className="text-white font-semibold">${(totalAnnualCost / annualMileage).toFixed(2)}</span>
+                      <span className="text-[var(--text-muted)]">/mile</span>
+                    </span>
+                  </div>
+                )}
               </div>
               )}
 
@@ -2841,8 +2961,8 @@ export default function TCOCalculator() {
                 )}
               </div>
 
-              {/* ── Net Cost of Ownership — detailed mode only ── */}
-              {!simpleMode && (financeMode === 'buy' || financeMode === 'own') && futureResaleValue != null && netCostOfOwnership != null && (
+              {/* ── Net Cost of Ownership ── */}
+              {(financeMode === 'buy' || financeMode === 'own') && futureResaleValue != null && netCostOfOwnership != null && (
                 <div className="rounded-xl border p-4 flex flex-col gap-3"
                   style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
@@ -2880,6 +3000,19 @@ export default function TCOCalculator() {
                 rows={forecastRows}
                 formatCurrency={formatCurrency}
               />
+
+              {/* ── Wealth Impact (Pro) ── */}
+              {financeMode !== 'own' && (
+                <WealthImpact
+                  isPro={isSubscribed}
+                  totalAnnualCost={totalAnnualCost}
+                  annualOperatingCost={annualOperatingCost}
+                  segment={selMake
+                    ? classifySegment(selMake, selModel || '')
+                    : (VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.segment ?? 'sedan')}
+                  formatCurrency={formatCurrency}
+                />
+              )}
 
               {/* ── Export Report — detailed mode only ── */}
               {!simpleMode && <div className="flex gap-2">

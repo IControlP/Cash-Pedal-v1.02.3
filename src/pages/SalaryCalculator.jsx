@@ -1282,7 +1282,22 @@ export default function SalaryCalculator() {
                               <span className="text-[10px] font-bold text-white">Total/yr</span>
                               <span className="text-[10px] font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(v.annualTotal)}</span>
                             </div>
+                            {annualMiles > 0 && (
+                              <div className="flex items-center justify-between text-[10px]">
+                                <span className="text-[var(--text-muted)]">Per mile</span>
+                                <span className="text-[var(--text-muted)] tabular-nums">${(v.annualTotal / annualMiles).toFixed(2)}/mi</span>
+                              </div>
+                            )}
                           </div>
+                          <Link
+                            to="/tco"
+                            className="block text-center text-[10px] font-semibold py-1.5 mt-1 rounded-lg border transition-colors"
+                            style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.borderColor = 'rgba(200,255,0,0.4)' }}
+                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+                          >
+                            Full TCO →
+                          </Link>
                         </div>
                       )
                     })}

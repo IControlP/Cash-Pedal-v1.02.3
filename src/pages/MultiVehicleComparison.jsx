@@ -129,9 +129,9 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
             onChange={e => onChange({ ...vehicle, price: Number(e.target.value) })}
             className="input-field text-sm py-2" style={{ paddingLeft: '1.75rem' }} />
         </div>
-        <input type="range" min={5000} max={150000} step={500} value={vehicle.price}
+        <input type="range" min={5000} max={200000} step={500} value={vehicle.price}
           onChange={e => onChange({ ...vehicle, price: Number(e.target.value) })}
-          style={{ background: `linear-gradient(to right, ${color} ${pct(vehicle.price, 5000, 150000)}%, var(--border) ${pct(vehicle.price, 5000, 150000)}%)` }} />
+          style={{ background: `linear-gradient(to right, ${color} ${pct(vehicle.price, 5000, 200000)}%, var(--border) ${pct(vehicle.price, 5000, 200000)}%)` }} />
       </div>
 
       {vehicle.isLease ? (

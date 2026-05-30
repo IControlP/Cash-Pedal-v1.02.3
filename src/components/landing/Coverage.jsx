@@ -52,10 +52,10 @@ export default function Coverage() {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-4 items-center text-sm text-[var(--text-muted)] opacity-80">
-          <span><strong className="text-[var(--accent)] font-mono">14,200+</strong> trims indexed</span>
+          <span><strong className="text-[var(--accent)] font-mono">11,000+</strong> trims indexed</span>
           <span>·</span>
           <span>
-            <strong className="text-[var(--accent)] font-mono">52</strong> brands · model years{' '}
+            <strong className="text-[var(--accent)] font-mono">36</strong> brands · model years{' '}
             <strong className="text-[var(--accent)] font-mono">2015 → 2026</strong>
           </span>
           <span>·</span>

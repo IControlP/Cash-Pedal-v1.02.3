@@ -23,7 +23,7 @@ const QS = [
   },
   {
     q: 'Can I run more than two cars?',
-    a: 'Yes — the 60-day pass is fully unlimited. Compare two at a time, stack up to six in a grid, or rerun the same pair with different financing scenarios. Whatever helps you decide.',
+    a: 'Yes — the 60-day pass is fully unlimited. Compare two at a time, stack up to five in a grid, or rerun the same vehicle with different financing scenarios. Whatever helps you decide.',
   },
 ]
 

@@ -2822,6 +2822,21 @@ export default function TCOCalculator() {
                       {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}
                     </span>
                   </div>
+                  {/* Depreciation line — buy mode only, requires resale estimate */}
+                  {financeMode === 'buy' && futureResaleValue != null && (() => {
+                    const annualDepr = Math.round((price - futureResaleValue) / ownershipYears)
+                    if (annualDepr <= 0) return null
+                    return (
+                      <div className="flex justify-between items-center text-xs pt-1 border-t border-dashed" style={{ borderColor: 'var(--border)' }}>
+                        <span className="text-[var(--text-muted)]">+ Est. depreciation
+                          <span className="ml-1 opacity-60">(avg/yr · see Net Cost below)</span>
+                        </span>
+                        <span className="font-medium tabular-nums" style={{ color: '#f87171' }}>
+                          −{formatCurrency(annualDepr)}
+                        </span>
+                      </div>
+                    )
+                  })()}
                   {!simpleMode && (
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-[var(--text-muted)]">Cost per mile</span>

@@ -142,8 +142,17 @@ function buildWizardSummary(answers) {
     ? `<strong class='text-white'>Key tips for your situation:</strong><ul class='mt-1 space-y-0.5 pl-1'>${tips.map(t => `<li>• ${t}</li>`).join('')}</ul>`
     : ''
 
+  const useCaseTCOCategory = {
+    'Daily commuter': wantsEV ? 'electric' : wantsHybrid ? 'sedan' : 'sedan',
+    'Family hauler': wantsEV || wantsPHEV ? 'suv' : 'suv',
+    'Weekend fun / sporty': 'sports',
+    'Off-road / adventure': 'suv',
+    'Work / hauling stuff': 'truck',
+  }[use_case] ?? 'sedan'
+  const tcoLink = `<a href='/tco?category=${useCaseTCOCategory}' class='text-[var(--accent)] hover:underline font-semibold'>Run the TCO numbers →</a>`
+
   return {
-    text: `Based on your answers — <em>${use_case}, ${budget}, ${condition}, ${fuel}, ${mileage}/yr</em> — here's what I'd recommend:\n\n${recList}${tipList ? '\n' + tipList : ''}\n\nWant me to dig into any of these models, compare costs, or talk negotiation strategy?`,
+    text: `Based on your answers — <em>${use_case}, ${budget}, ${condition}, ${fuel}, ${mileage}/yr</em> — here's what I'd recommend:\n\n${recList}${tipList ? '\n' + tipList : ''}\n\nWant me to dig into any of these models, compare costs, or talk negotiation strategy? ${tcoLink}`,
     followUps: ['How do I negotiate the price?', 'What should I check on a used car?', 'How much will insurance cost?', 'Run me through total cost of ownership'],
   }
 }

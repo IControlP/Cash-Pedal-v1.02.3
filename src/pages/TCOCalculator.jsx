@@ -991,6 +991,9 @@ export default function TCOCalculator() {
   // "I Own It" mode inputs
   const [remainingLoanBalance, setRemainingLoanBalance] = useState(0)
   const [remainingLoanTerm,    setRemainingLoanTerm]    = useState(60)
+  const [ownPurchasePrice,     setOwnPurchasePrice]     = useState(null)   // null = not set
+  const [ownPurchaseMonth,     setOwnPurchaseMonth]     = useState(null)   // 1–12
+  const [ownPurchaseYear,      setOwnPurchaseYear]      = useState(null)   // e.g. 2021
   const [currentMileage,   setCurrentMileage]   = useState(null) // null = auto (carAge × annualMileage)
   const [dealerPurchase,   setDealerPurchase]   = useState(true)
   const [taxRateOverride,  setTaxRateOverride]  = useState(null) // null = use state rate
@@ -1187,6 +1190,14 @@ export default function TCOCalculator() {
   const regionalDemand = resolvedState ? getRegionalDemandPremium(resolvedState) : 0
 
   const leasePeriodYears = Math.ceil(leaseTerm / 12)
+
+  // "I Own It" — how long the user has owned the vehicle
+  const now = new Date()
+  const monthsOwned = (ownPurchaseYear != null && ownPurchaseMonth != null)
+    ? Math.max(0, (now.getFullYear() - ownPurchaseYear) * 12 + (now.getMonth() + 1 - ownPurchaseMonth))
+    : null
+  const yearsOwnedWhole = monthsOwned != null ? Math.floor(monthsOwned / 12) : null
+  const monthsOwnedRem  = monthsOwned != null ? monthsOwned % 12 : null
 
   const results = useMemo(() => {
     if (financeMode === 'own') {
@@ -1875,6 +1886,73 @@ export default function TCOCalculator() {
 
               {financeMode === 'own' && (
                 <>
+                  {/* Purchase history — optional, unlocks "costs to date" analysis */}
+                  <div className="rounded-xl border p-4 flex flex-col gap-4"
+                    style={{ borderColor: 'rgba(96,200,255,0.2)', background: 'rgba(96,200,255,0.03)' }}>
+                    <p className="text-xs font-semibold uppercase tracking-widest"
+                      style={{ color: '#60c8ff' }}>
+                      Purchase History
+                      <span className="ml-2 font-normal text-[var(--text-muted)] normal-case tracking-normal">
+                        optional — unlocks costs-to-date analysis
+                      </span>
+                    </p>
+
+                    {/* What you paid */}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <label className="input-label">Original Purchase Price</label>
+                        {ownPurchasePrice != null && (
+                          <button onClick={() => setOwnPurchasePrice(null)}
+                            className="text-[10px] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
+                            Clear
+                          </button>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none select-none">$</span>
+                        <input
+                          type="number"
+                          className="input-field pl-7"
+                          placeholder="e.g. 32000"
+                          value={ownPurchasePrice ?? ''}
+                          onChange={e => setOwnPurchasePrice(e.target.value === '' ? null : Math.max(0, parseInt(e.target.value) || 0))}
+                          min={0} step={500}
+                        />
+                      </div>
+                      <p className="text-[10px] text-[var(--text-muted)]">Out-the-door price you paid including tax and fees</p>
+                    </div>
+
+                    {/* When you bought it */}
+                    <div className="flex flex-col gap-2">
+                      <label className="input-label">Purchase Date</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <select
+                          className="input-field"
+                          value={ownPurchaseMonth ?? ''}
+                          onChange={e => setOwnPurchaseMonth(e.target.value === '' ? null : Number(e.target.value))}>
+                          <option value="">Month…</option>
+                          {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map((m, i) => (
+                            <option key={m} value={i + 1}>{m}</option>
+                          ))}
+                        </select>
+                        <select
+                          className="input-field"
+                          value={ownPurchaseYear ?? ''}
+                          onChange={e => setOwnPurchaseYear(e.target.value === '' ? null : Number(e.target.value))}>
+                          <option value="">Year…</option>
+                          {Array.from({ length: 26 }, (_, i) => now.getFullYear() - i).map(y => (
+                            <option key={y} value={y}>{y}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {monthsOwned != null && (
+                        <p className="text-[10px] font-semibold" style={{ color: '#60c8ff' }}>
+                          Owned for {yearsOwnedWhole > 0 ? `${yearsOwnedWhole} yr${yearsOwnedWhole !== 1 ? 's' : ''}` : ''}{yearsOwnedWhole > 0 && monthsOwnedRem > 0 ? ', ' : ''}{monthsOwnedRem > 0 ? `${monthsOwnedRem} mo` : yearsOwnedWhole === 0 ? 'less than 1 month' : ''}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
                   <SliderInput
                     label="Remaining Loan Balance"
                     value={remainingLoanBalance}
@@ -2341,9 +2419,84 @@ export default function TCOCalculator() {
                 )
               })()}
 
+              {/* ── Costs to Date (own mode + purchase history filled) ── */}
+              {financeMode === 'own' && monthsOwned != null && ownPurchasePrice != null && (() => {
+                const depreciation   = Math.max(0, ownPurchasePrice - price)
+                const loanPaidMonths = Math.min(monthsOwned, remainingLoanTerm)
+                const loanPaidAmt    = remainingLoanBalance > 0 ? Math.round(results.monthlyPayment * loanPaidMonths) : 0
+                const operatingToDate = Math.round(annualOperatingCost * monthsOwned / 12)
+                const totalToDate    = depreciation + loanPaidAmt + operatingToDate
+                const totalFuture    = forecastRows.reduce((s, r) => s + r.total, 0)
+
+                return (
+                  <div className="rounded-xl border p-4 flex flex-col gap-3 anim-3"
+                    style={{ borderColor: 'rgba(96,200,255,0.25)', background: 'rgba(96,200,255,0.04)' }}>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#60c8ff' }}>
+                        Costs to Date
+                      </p>
+                      <span className="text-[10px] text-[var(--text-muted)]">
+                        {yearsOwnedWhole > 0 ? `${yearsOwnedWhole}yr ` : ''}{monthsOwnedRem > 0 ? `${monthsOwnedRem}mo` : ''}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-2 text-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[var(--text-muted)]">Purchase price paid</span>
+                        <span className="text-white font-medium">{formatCurrency(ownPurchasePrice)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[var(--text-muted)]">Current market value</span>
+                        <span className="text-white font-medium">− {formatCurrency(price)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[var(--text-muted)]">Value lost (depreciation)</span>
+                        <span className="font-medium" style={{ color: depreciation > 0 ? '#f87171' : '#4ade80' }}>
+                          {formatCurrency(depreciation)}
+                        </span>
+                      </div>
+                      {loanPaidAmt > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-[var(--text-muted)]">Loan payments made</span>
+                          <span className="text-white font-medium">{formatCurrency(loanPaidAmt)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center">
+                        <span className="text-[var(--text-muted)]">Est. operating costs</span>
+                        <span className="text-white font-medium">{formatCurrency(operatingToDate)}</span>
+                      </div>
+                      <div className="h-px bg-[var(--border)] my-0.5" />
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-white">Total spent to date</span>
+                        <span className="font-display font-bold text-lg" style={{ color: '#60c8ff' }}>
+                          {formatCurrency(totalToDate)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-px bg-[var(--border)]" />
+                    <div className="flex flex-col gap-2 text-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[var(--text-muted)]">
+                          Future cost ({ownershipYears} more yr{ownershipYears !== 1 ? 's' : ''})
+                        </span>
+                        <span className="text-white font-medium">{formatCurrency(totalFuture)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-white">Lifetime total</span>
+                        <span className="font-display font-bold text-lg" style={{ color: 'var(--accent)' }}>
+                          {formatCurrency(totalToDate + totalFuture)}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                      Operating costs to date are estimated at your current annual rate of {formatCurrency(annualOperatingCost)}/yr.
+                    </p>
+                  </div>
+                )
+              })()}
+
               <div className="anim-4">
                 <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
-                  Your results
+                  {financeMode === 'own' && monthsOwned != null ? 'Future costs' : 'Your results'}
                 </p>
                 <ResultCard
                   label={financeMode === 'lease' ? 'Monthly Lease Payment' : financeMode === 'own' ? (remainingLoanBalance > 0 ? 'Monthly Loan Payment' : 'Monthly Operating Cost') : 'Monthly Payment'}

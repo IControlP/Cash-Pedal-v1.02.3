@@ -705,7 +705,7 @@ export default function WheelZard() {
                     ))}
                   </ul>
                   <Link to="/subscribe" className="btn-primary text-xs py-2 block text-center">
-                    Try Pro — $10/month →
+                    Unlock — $19 · 60 days →
                   </Link>
                 </div>
               )}

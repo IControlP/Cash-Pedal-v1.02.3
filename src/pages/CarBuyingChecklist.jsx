@@ -758,13 +758,20 @@ export default function CarBuyingChecklist() {
                       <div key={qi}>
                         <p className="text-sm font-semibold text-white mb-1">{item.q}</p>
                         <p className="text-xs text-[var(--text-muted)] mb-2 leading-relaxed">{item.why}</p>
-                        <textarea
-                          value={notes[`${section.category}-${qi}`] || ''}
-                          onChange={e => setNotes(n => ({ ...n, [`${section.category}-${qi}`]: e.target.value }))}
-                          placeholder="Seller's answer..."
-                          rows={2}
-                          className="input-field text-sm resize-none"
-                        />
+                        {printMode ? (
+                          <p className="text-sm text-white min-h-[2.5rem] px-3 py-2 rounded-lg border"
+                            style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                            {notes[`${section.category}-${qi}`] || <span className="text-[var(--text-muted)] italic">No notes recorded.</span>}
+                          </p>
+                        ) : (
+                          <textarea
+                            value={notes[`${section.category}-${qi}`] || ''}
+                            onChange={e => setNotes(n => ({ ...n, [`${section.category}-${qi}`]: e.target.value }))}
+                            placeholder="Seller's answer..."
+                            rows={2}
+                            className="input-field text-sm resize-none"
+                          />
+                        )}
                       </div>
                     ))}
                   </div>

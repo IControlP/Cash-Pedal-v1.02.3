@@ -1085,6 +1085,7 @@ export default function TCOCalculator() {
   const [multiCarPolicy, setMultiCarPolicy] = useState(false)
   // Track original MSRP separately from price (which may be depreciation-adjusted)
   const [origMsrp,       setOrigMsrp]       = useState(null)
+  const [quickIncome,    setQuickIncome]    = useState('')    // optional: income for affordability check
 
   // Finance mode: 'buy' | 'lease'
   const [financeMode,      setFinanceMode]      = useState('buy')
@@ -2756,7 +2757,7 @@ export default function TCOCalculator() {
                   label={financeMode === 'lease' ? 'Monthly Lease Payment' : 'Monthly Payment'}
                   value={financeMode === 'lease' ? leaseResults.monthlyPayment : results.monthlyPayment}
                   highlight delay={0} />
-                {financeMode === 'buy' && annualMileage > 0 && (
+                {(financeMode === 'buy' || financeMode === 'lease') && annualMileage > 0 && (
                   <div className="flex items-center gap-4 text-xs mt-2 px-1">
                     <span className="text-[var(--text-muted)]">All-in:</span>
                     <span>
@@ -2904,7 +2905,14 @@ export default function TCOCalculator() {
                 const req10 = year1Total / 0.10
                 const req15 = year1Total / 0.15
                 const req20 = year1Total / 0.20
-                // Determine which band the user is likely in (no income input, so show all 3)
+                const userIncome = quickIncome ? Number(quickIncome.replace(/,/g, '')) : null
+                const pct = userIncome ? Math.round((year1Total / userIncome) * 100) : null
+                const verdict = pct != null
+                  ? pct <= 10 ? { label: 'Conservative', color: '#4ade80', note: 'Comfortably within the 10% guideline.' }
+                  : pct <= 15 ? { label: 'Comfortable',  color: '#FFB800', note: 'Within a comfortable range for most budgets.' }
+                  : pct <= 20 ? { label: 'Aggressive',   color: '#fb923c', note: 'Stretching the budget — manageable but tight.' }
+                  : { label: 'Over Budget', color: '#f87171', note: `${pct}% of income — above the 20% ceiling. Consider a less expensive vehicle or larger down payment.` }
+                  : null
                 return (
                   <div className="rounded-xl border p-4 flex flex-col gap-3"
                     style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
@@ -2912,29 +2920,58 @@ export default function TCOCalculator() {
                       <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
                         Income Required (20/4/10 rule)
                       </p>
-                      <a href="/salary" className="text-[10px] font-semibold"
+                      <Link to="/salary" className="text-[10px] font-semibold"
                         style={{ color: 'var(--accent)' }}>
                         Full analysis →
-                      </a>
+                      </Link>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { label: 'Conservative', sub: '10% of income', value: req10, color: '#f87171' },
-                        { label: 'Comfortable',  sub: '15% of income', value: req15, color: '#FFB800' },
-                        { label: 'Aggressive',   sub: '20% of income', value: req20, color: '#4ade80' },
-                      ].map(({ label, sub, value, color }) => (
-                        <div key={label} className="rounded-lg px-2 py-2.5 text-center"
-                          style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-                          <p className="text-[10px] font-semibold" style={{ color }}>{label}</p>
-                          <p className="text-[10px] text-[var(--text-muted)] mb-1">{sub}</p>
-                          <p className="text-white font-bold text-xs tabular-nums">{formatCurrency(value)}</p>
-                          <p className="text-[10px] text-[var(--text-muted)]">/yr gross</p>
+                    {/* Optional quick income check */}
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs pointer-events-none">$</span>
+                        <input
+                          type="number"
+                          value={quickIncome}
+                          onChange={e => setQuickIncome(e.target.value)}
+                          placeholder="Enter your annual income (optional)"
+                          className="input-field text-xs py-2 w-full"
+                          style={{ paddingLeft: '1.5rem' }}
+                        />
+                      </div>
+                      {quickIncome && (
+                        <button onClick={() => setQuickIncome('')}
+                          className="text-[var(--text-muted)] hover:text-white text-xs shrink-0">×</button>
+                      )}
+                    </div>
+                    {verdict ? (
+                      <div className="rounded-lg px-3 py-2.5 flex items-center justify-between gap-3"
+                        style={{ background: 'var(--bg)', border: `1px solid ${verdict.color}33` }}>
+                        <div>
+                          <p className="text-xs font-bold" style={{ color: verdict.color }}>{verdict.label} — {pct}% of income</p>
+                          <p className="text-[10px] text-[var(--text-muted)] mt-0.5">{verdict.note}</p>
                         </div>
-                      ))}
-                    </div>
+                        <span className="font-display font-bold text-xl tabular-nums shrink-0" style={{ color: verdict.color }}>{pct}%</span>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { label: 'Conservative', sub: '10% of income', value: req10, color: '#f87171' },
+                          { label: 'Comfortable',  sub: '15% of income', value: req15, color: '#FFB800' },
+                          { label: 'Aggressive',   sub: '20% of income', value: req20, color: '#4ade80' },
+                        ].map(({ label, sub, value, color }) => (
+                          <div key={label} className="rounded-lg px-2 py-2.5 text-center"
+                            style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                            <p className="text-[10px] font-semibold" style={{ color }}>{label}</p>
+                            <p className="text-[10px] text-[var(--text-muted)] mb-1">{sub}</p>
+                            <p className="text-white font-bold text-xs tabular-nums">{formatCurrency(value)}</p>
+                            <p className="text-[10px] text-[var(--text-muted)]">/yr gross</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
-                      Based on your Year 1 all-in cost of <span className="text-white">{formatCurrency(year1Total)}</span>.
-                      The 10% band is the safest; above 20% strains most budgets.
+                      Based on Year 1 all-in cost of <span className="text-white">{formatCurrency(year1Total)}</span>.
+                      The 10% band is safest; above 20% strains most budgets.
                     </p>
                   </div>
                 )

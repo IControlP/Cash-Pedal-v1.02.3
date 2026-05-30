@@ -997,6 +997,7 @@ export default function TCOCalculator() {
   const [ownPurchasePrice,     setOwnPurchasePrice]     = useState(null)   // null = not set
   const [ownPurchaseMonth,     setOwnPurchaseMonth]     = useState(null)   // 1–12
   const [ownPurchaseYear,      setOwnPurchaseYear]      = useState(null)   // e.g. 2021
+  const [showAcquisitionCosts, setShowAcquisitionCosts] = useState(false)
   const [currentMileage,   setCurrentMileage]   = useState(null) // null = auto (carAge × annualMileage)
   const [dealerPurchase,   setDealerPurchase]   = useState(true)
   const [taxRateOverride,  setTaxRateOverride]  = useState(null) // null = use state rate
@@ -1641,14 +1642,12 @@ export default function TCOCalculator() {
                 )}
               </div>
 
-              <div className="h-px bg-[var(--border)]" />
+              {financeMode !== 'current' && <div className="h-px bg-[var(--border)]" />}
 
-              {/* Financing */}
-              <div>
+              {/* Financing — hidden for "Currently Have" mode */}
+              {financeMode !== 'current' && <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="font-display font-bold text-white text-lg">
-                    {financeMode === 'current' ? 'Vehicle History & Financing' : 'Purchase & Financing'}
-                  </h2>
+                  <h2 className="font-display font-bold text-white text-lg">Purchase &amp; Financing</h2>
                   {usingMSRP && (
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded"
                       style={{ color:'#FFB800', background:'rgba(255,184,0,0.08)', border:'1px solid rgba(255,184,0,0.2)' }}>
@@ -1657,13 +1656,11 @@ export default function TCOCalculator() {
                   )}
                 </div>
                 <p className="text-[var(--text-muted)] text-sm">
-                  {financeMode === 'current'
-                    ? 'Tell us when you got it, your original financing terms, and how long you plan to keep it.'
-                    : financeMode === 'lease'
+                  {financeMode === 'lease'
                     ? 'Lease inputs: MSRP, cap cost reduction, term, APR & residual.'
                     : 'Adjust any value — results update live.'}
                 </p>
-              </div>
+              </div>}
 
               <SliderInput
                 label={financeMode === 'current' ? 'Current Market Value' : financeMode === 'lease' ? 'Vehicle MSRP' : 'Vehicle Purchase Price (Out-the-Door)'}
@@ -1911,204 +1908,234 @@ export default function TCOCalculator() {
 
               {financeMode === 'current' && (
                 <>
-                  {/* When did you get it */}
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-2">
-                      <label className="input-label">When did you get this vehicle?</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <select className="input-field" value={ownPurchaseMonth ?? ''}
-                          onChange={e => setOwnPurchaseMonth(e.target.value === '' ? null : Number(e.target.value))}>
-                          <option value="">Month…</option>
-                          {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map((m, i) => (
-                            <option key={m} value={i + 1}>{m}</option>
-                          ))}
-                        </select>
-                        <select className="input-field" value={ownPurchaseYear ?? ''}
-                          onChange={e => setOwnPurchaseYear(e.target.value === '' ? null : Number(e.target.value))}>
-                          <option value="">Year…</option>
-                          {Array.from({ length: 26 }, (_, i) => now.getFullYear() - i).map(y => (
-                            <option key={y} value={y}>{y}</option>
-                          ))}
-                        </select>
-                      </div>
-                      {monthsOwned != null && (
-                        <p className="text-[10px] font-semibold" style={{ color: '#60c8ff' }}>
-                          {[yearsOwnedWhole > 0 ? `${yearsOwnedWhole} yr${yearsOwnedWhole !== 1 ? 's' : ''}` : '',
-                            monthsOwnedRem > 0 ? `${monthsOwnedRem} mo` : ''].filter(Boolean).join(', ') || 'Less than 1 month'} ago
-                        </p>
-                      )}
+                  {/* Current mileage — primary input */}
+                  <div className="flex flex-col gap-2">
+                    <label className="input-label">Current mileage</label>
+                    <div className="relative">
+                      <input type="number" className="input-field pr-12"
+                        placeholder="e.g. 45,000"
+                        value={currentMileage ?? ''}
+                        onChange={e => setCurrentMileage(e.target.value === '' ? null : Math.max(0, parseInt(e.target.value) || 0))}
+                        min={0} step={1000} />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">mi</span>
                     </div>
-
-                    {/* What you paid */}
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <label className="input-label">Original purchase price <span className="text-[var(--text-muted)] font-normal normal-case">(optional)</span></label>
-                        {ownPurchasePrice != null && (
-                          <button onClick={() => setOwnPurchasePrice(null)}
-                            className="text-[10px] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">Clear</button>
-                        )}
-                      </div>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
-                        <input type="number" className="input-field pl-7" placeholder="e.g. 32000"
-                          value={ownPurchasePrice ?? ''} min={0} step={500}
-                          onChange={e => setOwnPurchasePrice(e.target.value === '' ? null : Math.max(0, parseInt(e.target.value) || 0))} />
-                      </div>
-                      <p className="text-[10px] text-[var(--text-muted)]">Out-the-door price including tax & fees — unlocks costs-to-date analysis</p>
-                    </div>
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      Sets the starting point for maintenance scheduling and market value estimation
+                    </p>
                   </div>
-
-                  <div className="h-px bg-[var(--border)]" />
-
-                  {/* Financed / Leased / Paid Off */}
-                  <div className="flex flex-col gap-3">
-                    <label className="input-label">How is this vehicle financed?</label>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {[
-                        { value: 'financed',  label: 'Financed' },
-                        { value: 'leased',    label: 'Leased' },
-                        { value: 'paid_off',  label: 'Paid Off' },
-                      ].map(opt => (
-                        <button key={opt.value} onClick={() => setCurrentVehicleType(opt.value)}
-                          className="py-2 rounded-lg text-sm font-semibold transition-all border"
-                          style={{
-                            background:  currentVehicleType === opt.value ? 'var(--accent)' : 'transparent',
-                            color:       currentVehicleType === opt.value ? '#000' : 'var(--text-muted)',
-                            borderColor: currentVehicleType === opt.value ? 'var(--accent)' : 'var(--border)',
-                          }}>
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Financed inputs */}
-                  {currentVehicleType === 'financed' && (
-                    <>
-                      <div className="flex flex-col gap-2">
-                        <label className="input-label">Original loan amount</label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
-                          <input type="number" className="input-field pl-7" placeholder="e.g. 25000"
-                            value={originalLoanAmount || ''} min={0} step={500}
-                            onChange={e => setOriginalLoanAmount(Math.max(0, parseInt(e.target.value) || 0))} />
-                        </div>
-                        <p className="text-[10px] text-[var(--text-muted)]">Amount you financed at purchase, not the vehicle price</p>
-                      </div>
-
-                      <SelectInput label="Original loan term" value={originalLoanTerm} onChange={setOriginalLoanTerm} options={loanTermOptions} />
-
-                      <SliderInput label="Interest rate" value={rate} onChange={setRate}
-                        min={0} max={25} step={0.1} suffix="%" inputMin={0} inputMax={25} />
-
-                      {/* Live loan progress summary */}
-                      {originalLoanAmount > 0 && originalLoanTerm > 0 && (
-                        <div className="rounded-xl border divide-y" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-                          <div className="flex items-center justify-between px-4 py-3">
-                            <span className="text-sm text-[var(--text-muted)]">Monthly payment</span>
-                            <span className="font-display font-bold text-white text-lg">
-                              {formatCurrency(calculateLoan({ price: originalLoanAmount, downPayment: 0, loanTermMonths: originalLoanTerm, annualRatePercent: rate, ownershipYears: 100 }).monthlyPayment)}
-                            </span>
-                          </div>
-                          {monthsOwned != null && (
-                            <>
-                              <div className="flex items-center justify-between px-4 py-3">
-                                <div>
-                                  <span className="text-sm text-white">Loan progress</span>
-                                  <span className="ml-2 text-[10px] text-[var(--text-muted)]">
-                                    Month {Math.min(currentMonthsPaid, originalLoanTerm)} of {originalLoanTerm}
-                                  </span>
-                                </div>
-                                <span className="text-sm font-semibold tabular-nums"
-                                  style={{ color: currentRemainingTerm > 0 ? '#FFB800' : '#4ade80' }}>
-                                  {currentRemainingTerm > 0 ? `${currentRemainingTerm} mo left` : 'Paid off'}
-                                </span>
-                              </div>
-                              {currentRemainingBalance > 0 && (
-                                <div className="flex items-center justify-between px-4 py-3">
-                                  <span className="text-sm text-[var(--text-muted)]">Remaining balance</span>
-                                  <span className="font-semibold text-white tabular-nums">{formatCurrency(currentRemainingBalance)}</span>
-                                </div>
-                              )}
-                              {/* Progress bar */}
-                              <div className="px-4 py-3">
-                                <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg)' }}>
-                                  <div className="h-full rounded-full transition-all duration-500"
-                                    style={{ width: `${Math.min(100, (currentMonthsPaid / originalLoanTerm) * 100)}%`, background: 'var(--accent)' }} />
-                                </div>
-                                <div className="flex justify-between text-[10px] text-[var(--text-muted)] mt-1">
-                                  <span>{Math.round((currentMonthsPaid / originalLoanTerm) * 100)}% paid</span>
-                                  <span>{Math.round(((originalLoanTerm - currentMonthsPaid) / originalLoanTerm) * 100)}% remaining</span>
-                                </div>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {/* Leased inputs */}
-                  {currentVehicleType === 'leased' && (
-                    <>
-                      <div className="flex flex-col gap-2">
-                        <label className="input-label">Monthly lease payment</label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
-                          <input type="number" className="input-field pl-7" placeholder="e.g. 399"
-                            value={currentLeasePayment || ''} min={0} step={10}
-                            onChange={e => setCurrentLeasePayment(Math.max(0, parseInt(e.target.value) || 0))} />
-                        </div>
-                      </div>
-
-                      <SelectInput label="Original lease term" value={currentLeaseTerm} onChange={setCurrentLeaseTerm}
-                        options={leaseTermOptions} />
-
-                      {monthsOwned != null && (
-                        <div className="rounded-xl border divide-y" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-                          <div className="flex items-center justify-between px-4 py-3">
-                            <div>
-                              <span className="text-sm text-white">Lease progress</span>
-                              <span className="ml-2 text-[10px] text-[var(--text-muted)]">
-                                Month {Math.min(monthsOwned, currentLeaseTerm)} of {currentLeaseTerm}
-                              </span>
-                            </div>
-                            <span className="text-sm font-semibold tabular-nums"
-                              style={{ color: currentLeaseRemainingMonths > 0 ? '#FFB800' : '#f87171' }}>
-                              {currentLeaseRemainingMonths > 0 ? `${currentLeaseRemainingMonths} mo left` : 'Expired'}
-                            </span>
-                          </div>
-                          <div className="px-4 py-3">
-                            <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg)' }}>
-                              <div className="h-full rounded-full transition-all duration-500"
-                                style={{ width: `${Math.min(100, (Math.min(monthsOwned, currentLeaseTerm) / currentLeaseTerm) * 100)}%`, background: '#60a5fa' }} />
-                            </div>
-                            <div className="flex justify-between text-[10px] text-[var(--text-muted)] mt-1">
-                              <span>{Math.round((Math.min(monthsOwned, currentLeaseTerm) / currentLeaseTerm) * 100)}% complete</span>
-                              <span>{currentLeaseRemainingMonths} mo remaining</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {/* Paid off */}
-                  {currentVehicleType === 'paid_off' && (
-                    <div className="rounded-xl border px-4 py-3 flex items-start gap-3"
-                      style={{ borderColor: 'rgba(74,222,128,0.3)', background: 'rgba(74,222,128,0.04)' }}>
-                      <span className="text-green-400 mt-0.5">✓</span>
-                      <div>
-                        <p className="text-sm font-semibold text-white">No loan payment</p>
-                        <p className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-relaxed">
-                          Your analysis will show operating costs, depreciation, and out-of-pocket cash spend only.
-                        </p>
-                      </div>
-                    </div>
-                  )}
 
                   <SelectInput label="How many more years do you plan to keep it?"
                     value={ownershipYears} onChange={setOwnershipYears} options={ownershipOptions} />
+
+                  {/* Optional: costs since acquisition */}
+                  <button onClick={() => setShowAcquisitionCosts(v => !v)}
+                    className="flex items-center gap-2 text-sm font-semibold py-2.5 px-4 rounded-xl border transition-all w-full"
+                    style={{
+                      borderColor: showAcquisitionCosts ? 'var(--accent)' : 'var(--border)',
+                      color: showAcquisitionCosts ? 'var(--accent)' : 'var(--text-muted)',
+                      background: showAcquisitionCosts ? 'rgba(200,255,0,0.04)' : 'transparent',
+                    }}>
+                    <span className="text-base leading-none">{showAcquisitionCosts ? '−' : '+'}</span>
+                    Include costs since you got it
+                  </button>
+
+                  {showAcquisitionCosts && (
+                    <>
+                      <div className="h-px bg-[var(--border)]" />
+
+                      {/* When did you get it */}
+                      <div className="flex flex-col gap-2">
+                        <label className="input-label">When did you get this vehicle?</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <select className="input-field" value={ownPurchaseMonth ?? ''}
+                            onChange={e => setOwnPurchaseMonth(e.target.value === '' ? null : Number(e.target.value))}>
+                            <option value="">Month…</option>
+                            {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map((m, i) => (
+                              <option key={m} value={i + 1}>{m}</option>
+                            ))}
+                          </select>
+                          <select className="input-field" value={ownPurchaseYear ?? ''}
+                            onChange={e => setOwnPurchaseYear(e.target.value === '' ? null : Number(e.target.value))}>
+                            <option value="">Year…</option>
+                            {Array.from({ length: 26 }, (_, i) => now.getFullYear() - i).map(y => (
+                              <option key={y} value={y}>{y}</option>
+                            ))}
+                          </select>
+                        </div>
+                        {monthsOwned != null && (
+                          <p className="text-[10px] font-semibold" style={{ color: '#60c8ff' }}>
+                            {[yearsOwnedWhole > 0 ? `${yearsOwnedWhole} yr${yearsOwnedWhole !== 1 ? 's' : ''}` : '',
+                              monthsOwnedRem > 0 ? `${monthsOwnedRem} mo` : ''].filter(Boolean).join(', ') || 'Less than 1 month'} ago
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Original purchase price */}
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <label className="input-label">Original purchase price <span className="text-[var(--text-muted)] font-normal normal-case">(optional)</span></label>
+                          {ownPurchasePrice != null && (
+                            <button onClick={() => setOwnPurchasePrice(null)}
+                              className="text-[10px] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">Clear</button>
+                          )}
+                        </div>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                          <input type="number" className="input-field pl-7" placeholder="e.g. 32000"
+                            value={ownPurchasePrice ?? ''} min={0} step={500}
+                            onChange={e => setOwnPurchasePrice(e.target.value === '' ? null : Math.max(0, parseInt(e.target.value) || 0))} />
+                        </div>
+                        <p className="text-[10px] text-[var(--text-muted)]">Out-the-door price including tax &amp; fees</p>
+                      </div>
+
+                      <div className="h-px bg-[var(--border)]" />
+
+                      {/* Financed / Leased / Paid Off */}
+                      <div className="flex flex-col gap-3">
+                        <label className="input-label">How is this vehicle financed?</label>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {[
+                            { value: 'financed',  label: 'Financed' },
+                            { value: 'leased',    label: 'Leased' },
+                            { value: 'paid_off',  label: 'Paid Off' },
+                          ].map(opt => (
+                            <button key={opt.value} onClick={() => setCurrentVehicleType(opt.value)}
+                              className="py-2 rounded-lg text-sm font-semibold transition-all border"
+                              style={{
+                                background:  currentVehicleType === opt.value ? 'var(--accent)' : 'transparent',
+                                color:       currentVehicleType === opt.value ? '#000' : 'var(--text-muted)',
+                                borderColor: currentVehicleType === opt.value ? 'var(--accent)' : 'var(--border)',
+                              }}>
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Financed inputs */}
+                      {currentVehicleType === 'financed' && (
+                        <>
+                          <div className="flex flex-col gap-2">
+                            <label className="input-label">Original loan amount</label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                              <input type="number" className="input-field pl-7" placeholder="e.g. 25000"
+                                value={originalLoanAmount || ''} min={0} step={500}
+                                onChange={e => setOriginalLoanAmount(Math.max(0, parseInt(e.target.value) || 0))} />
+                            </div>
+                            <p className="text-[10px] text-[var(--text-muted)]">Amount financed at purchase, not the vehicle price</p>
+                          </div>
+
+                          <SelectInput label="Original loan term" value={originalLoanTerm} onChange={setOriginalLoanTerm} options={loanTermOptions} />
+
+                          <SliderInput label="Interest rate" value={rate} onChange={setRate}
+                            min={0} max={25} step={0.1} suffix="%" inputMin={0} inputMax={25} />
+
+                          {originalLoanAmount > 0 && originalLoanTerm > 0 && (
+                            <div className="rounded-xl border divide-y" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                              <div className="flex items-center justify-between px-4 py-3">
+                                <span className="text-sm text-[var(--text-muted)]">Monthly payment</span>
+                                <span className="font-display font-bold text-white text-lg">
+                                  {formatCurrency(calculateLoan({ price: originalLoanAmount, downPayment: 0, loanTermMonths: originalLoanTerm, annualRatePercent: rate, ownershipYears: 100 }).monthlyPayment)}
+                                </span>
+                              </div>
+                              {monthsOwned != null && (
+                                <>
+                                  <div className="flex items-center justify-between px-4 py-3">
+                                    <div>
+                                      <span className="text-sm text-white">Loan progress</span>
+                                      <span className="ml-2 text-[10px] text-[var(--text-muted)]">
+                                        Month {Math.min(currentMonthsPaid, originalLoanTerm)} of {originalLoanTerm}
+                                      </span>
+                                    </div>
+                                    <span className="text-sm font-semibold tabular-nums"
+                                      style={{ color: currentRemainingTerm > 0 ? '#FFB800' : '#4ade80' }}>
+                                      {currentRemainingTerm > 0 ? `${currentRemainingTerm} mo left` : 'Paid off'}
+                                    </span>
+                                  </div>
+                                  {currentRemainingBalance > 0 && (
+                                    <div className="flex items-center justify-between px-4 py-3">
+                                      <span className="text-sm text-[var(--text-muted)]">Remaining balance</span>
+                                      <span className="font-semibold text-white tabular-nums">{formatCurrency(currentRemainingBalance)}</span>
+                                    </div>
+                                  )}
+                                  <div className="px-4 py-3">
+                                    <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg)' }}>
+                                      <div className="h-full rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.min(100, (currentMonthsPaid / originalLoanTerm) * 100)}%`, background: 'var(--accent)' }} />
+                                    </div>
+                                    <div className="flex justify-between text-[10px] text-[var(--text-muted)] mt-1">
+                                      <span>{Math.round((currentMonthsPaid / originalLoanTerm) * 100)}% paid</span>
+                                      <span>{Math.round(((originalLoanTerm - currentMonthsPaid) / originalLoanTerm) * 100)}% remaining</span>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {/* Leased inputs */}
+                      {currentVehicleType === 'leased' && (
+                        <>
+                          <div className="flex flex-col gap-2">
+                            <label className="input-label">Monthly lease payment</label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                              <input type="number" className="input-field pl-7" placeholder="e.g. 399"
+                                value={currentLeasePayment || ''} min={0} step={10}
+                                onChange={e => setCurrentLeasePayment(Math.max(0, parseInt(e.target.value) || 0))} />
+                            </div>
+                          </div>
+
+                          <SelectInput label="Original lease term" value={currentLeaseTerm} onChange={setCurrentLeaseTerm}
+                            options={leaseTermOptions} />
+
+                          {monthsOwned != null && (
+                            <div className="rounded-xl border divide-y" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                              <div className="flex items-center justify-between px-4 py-3">
+                                <div>
+                                  <span className="text-sm text-white">Lease progress</span>
+                                  <span className="ml-2 text-[10px] text-[var(--text-muted)]">
+                                    Month {Math.min(monthsOwned, currentLeaseTerm)} of {currentLeaseTerm}
+                                  </span>
+                                </div>
+                                <span className="text-sm font-semibold tabular-nums"
+                                  style={{ color: currentLeaseRemainingMonths > 0 ? '#FFB800' : '#f87171' }}>
+                                  {currentLeaseRemainingMonths > 0 ? `${currentLeaseRemainingMonths} mo left` : 'Expired'}
+                                </span>
+                              </div>
+                              <div className="px-4 py-3">
+                                <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg)' }}>
+                                  <div className="h-full rounded-full transition-all duration-500"
+                                    style={{ width: `${Math.min(100, (Math.min(monthsOwned, currentLeaseTerm) / currentLeaseTerm) * 100)}%`, background: '#60a5fa' }} />
+                                </div>
+                                <div className="flex justify-between text-[10px] text-[var(--text-muted)] mt-1">
+                                  <span>{Math.round((Math.min(monthsOwned, currentLeaseTerm) / currentLeaseTerm) * 100)}% complete</span>
+                                  <span>{currentLeaseRemainingMonths} mo remaining</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {/* Paid off */}
+                      {currentVehicleType === 'paid_off' && (
+                        <div className="rounded-xl border px-4 py-3 flex items-start gap-3"
+                          style={{ borderColor: 'rgba(74,222,128,0.3)', background: 'rgba(74,222,128,0.04)' }}>
+                          <span className="text-green-400 mt-0.5">✓</span>
+                          <div>
+                            <p className="text-sm font-semibold text-white">No loan payment</p>
+                            <p className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-relaxed">
+                              Your analysis shows operating costs and depreciation only.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </>
               )}
 
@@ -2182,8 +2209,8 @@ export default function TCOCalculator() {
                 />
               )}
 
-              {/* Current odometer — detailed mode only (defaults to auto: vehicleAge × annualMileage) */}
-              {!simpleMode && !customCosts && (
+              {/* Current odometer — detailed mode only, hidden in 'current' mode since mileage is entered above */}
+              {!simpleMode && !customCosts && financeMode !== 'current' && (
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <label className="input-label">Current Odometer (miles)</label>

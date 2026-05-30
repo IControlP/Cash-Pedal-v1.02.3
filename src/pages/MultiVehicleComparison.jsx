@@ -398,6 +398,30 @@ export default function MultiVehicleComparison() {
     hasRetention   && { key: 'retention',         label: 'Value Retention',        vals: vehicles.map(v => v.valueRetentionPct), lowerIsBetter: false, fmt: fmtRetention },
   ].filter(Boolean)
 
+  // ── CSV export ──────────────────────────────────────
+  function exportCSV() {
+    const headers = ['Metric', ...vehicles.map((v, i) => v.name || `Vehicle ${i + 1}`)]
+    const rows = [
+      ['Price', ...vehicles.map(v => v.price)],
+      ['Down Payment', ...vehicles.map(v => v.isLease ? '—' : v.downPayment)],
+      ['Monthly Payment', ...results.map(r => r.monthlyPayment.toFixed(2))],
+      ['Total Interest', ...results.map(r => r.totalInterest != null ? r.totalInterest.toFixed(2) : '—')],
+      ['Total Cost of Loan', ...results.map(r => r.totalCostOfLoan.toFixed(2))],
+      ...(hasTCOData ? [
+        ['All-In Annual Cost', ...vehicles.map(v => v.totalAnnualCost != null ? v.totalAnnualCost : '—')],
+        ['Total Ownership Cost', ...vehicles.map(v => v.totalOwnershipCost != null ? v.totalOwnershipCost : '—')],
+      ] : []),
+      ...(hasMpg ? [['MPG (Combined)', ...vehicles.map(v => v.mpgCombined ?? '—')]] : []),
+      ...(hasCargo ? [['Cargo Space (cu ft)', ...vehicles.map(v => v.cargoSqFt ?? '—')]] : []),
+      ...(hasRetention ? [['Value Retention (%)', ...vehicles.map(v => v.valueRetentionPct ?? '—')]] : []),
+    ]
+    const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a'); a.href = url; a.download = 'vehicle-comparison.csv'; a.click()
+    URL.revokeObjectURL(url)
+  }
+
   // ── Ranking panel (user-selected parameters) ──────────
   const rankingRows = useMemo(() => {
     const rows = []
@@ -579,6 +603,41 @@ export default function MultiVehicleComparison() {
               ← Calculate in TCO first, then add here
             </Link>
           </div>
+
+          {/* ── Winner summary ── */}
+          {vehicles.length >= 2 && rankingRows.length > 0 && (() => {
+            const winCounts = vehicles.map((_, vi) =>
+              rankingRows.filter(row => row.scores[vi]?.isBest && row.scores[vi]?.hasValue).length
+            )
+            const maxWins = Math.max(...winCounts)
+            if (maxWins === 0) return null
+            const winners = winCounts.map((w, i) => ({ w, i })).filter(x => x.w === maxWins)
+            const isTie = winners.length > 1
+            return (
+              <div className="card anim-4 mb-5 flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-3 flex-wrap flex-1">
+                  <span className="text-xl">{isTie ? '🤝' : '🏆'}</span>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+                      {isTie ? 'Tied across selected parameters' : 'Best overall'}
+                    </p>
+                    <p className="font-display font-bold text-white text-base">
+                      {winners.map(w => vehicles[w.i].name || `Vehicle ${w.i + 1}`).join(' & ')}
+                      <span className="text-[var(--accent)] ml-2">({maxWins}/{rankingRows.length} wins)</span>
+                    </p>
+                  </div>
+                </div>
+                <button onClick={exportCSV}
+                  className="text-xs font-semibold px-3 py-2 rounded-lg border transition-colors no-print"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.borderColor = 'rgba(255,184,0,0.4)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+                >
+                  ↓ Export CSV
+                </button>
+              </div>
+            )
+          })()}
 
           {/* ── Ranking table (shown if any param is active) ── */}
           {vehicles.length > 0 && rankingRows.length > 0 && (

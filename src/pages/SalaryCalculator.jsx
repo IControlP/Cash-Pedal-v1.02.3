@@ -211,6 +211,7 @@ export default function SalaryCalculator() {
       mpgCombined:      null,
       cargoSqFt:        null,
       valueRetentionPct: null,
+      costPerMile:      annualMiles > 0 ? Math.round((v.annualTotal / annualMiles) * 100) / 100 : null,
       isFromTCO:        true,
     }
     const existing = JSON.parse(localStorage.getItem('cashpedal_tco_for_comparison') || '[]')

@@ -291,6 +291,7 @@ export default function MultiVehicleComparison() {
             mpgCombined:         imp.mpgCombined ?? null,
             cargoSqFt:           imp.cargoSqFt ?? null,
             valueRetentionPct:   imp.valueRetentionPct ?? null,
+            costPerMile:         imp.costPerMile ?? null,
             isFromTCO:           true,
           }
           if (existing >= 0) {
@@ -413,7 +414,8 @@ export default function MultiVehicleComparison() {
       ] : []),
       ...(hasMpg ? [['MPG (Combined)', ...vehicles.map(v => v.mpgCombined ?? '—')]] : []),
       ...(hasCargo ? [['Cargo Space (cu ft)', ...vehicles.map(v => v.cargoSqFt ?? '—')]] : []),
-      ...(hasRetention ? [['Value Retention (%)', ...vehicles.map(v => v.valueRetentionPct ?? '—')]] : []),
+      ...(hasRetention   ? [['Value Retention (%)', ...vehicles.map(v => v.valueRetentionPct ?? '—')]] : []),
+      ...(hasCostPerMile ? [['Cost Per Mile ($)',   ...vehicles.map(v => v.costPerMile != null ? v.costPerMile.toFixed(2) : '—')]] : []),
     ]
     const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })

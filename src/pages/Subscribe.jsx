@@ -15,7 +15,7 @@ const INCLUDED = [
   },
   {
     title: 'Live market data',
-    body: 'Fuel, electricity, insurance, registration, sales tax, financing rates — all localized to your ZIP and refreshed weekly.',
+    body: 'Fuel, electricity, insurance, registration, sales tax, financing rates — all localized to your state and refreshed weekly.',
   },
   {
     title: 'Money-pit detector',

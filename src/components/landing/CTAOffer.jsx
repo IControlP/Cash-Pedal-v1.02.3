@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 const BULLETS = [
   <><strong>Unlimited comparisons</strong> for 60 days — stack as many cars as you want, run as many scenarios as you need.</>,
   <><strong>Full wealth-impact reports</strong> on every vehicle, with shareable PDF exports for your spouse, advisor, or future self.</>,
-  <><strong>Live market data</strong> — fuel, electricity, insurance, registration, sales tax, financing rates, all localized to your ZIP.</>,
+  <><strong>Live market data</strong> — fuel, electricity, insurance, registration, sales tax, financing rates, all localized to your state.</>,
   <><strong>Money-pit detector</strong> flags vehicles with red-flag depreciation, runaway insurance, or maintenance traps before you sign.</>,
   <span className="muted">One payment. No subscription. No card on file after this. We never sell your data or take dealer kickbacks.</span>,
 ]

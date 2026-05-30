@@ -369,13 +369,23 @@ export default function CarSurvey() {
             const tcoCategory = topMatch ? surveyToTCO[topMatch.key] : null
             const tcoPath = tcoCategory ? `/tco?category=${tcoCategory}` : '/tco'
             return (
-          <div className="flex flex-col sm:flex-row gap-4 anim-5">
-            <Link to={tcoPath} className="btn-primary flex-1 justify-center py-4">
-              Calculate TCO for this vehicle →
-            </Link>
-            <button onClick={handleRestart} className="btn-ghost flex-1 justify-center py-4">
-              Retake the survey
-            </button>
+          <div className="flex flex-col gap-3 anim-5">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link to={tcoPath} className="btn-primary flex-1 justify-center py-4">
+                Calculate TCO for this vehicle →
+              </Link>
+              <Link to="/salary" className="btn-ghost flex-1 justify-center py-4">
+                Check affordability →
+              </Link>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link to="/checklist" className="btn-ghost flex-1 justify-center py-3 text-sm">
+                Used car buying checklist →
+              </Link>
+              <button onClick={handleRestart} className="btn-ghost flex-1 justify-center py-3 text-sm">
+                Retake the survey
+              </button>
+            </div>
           </div>
             )
           })()}

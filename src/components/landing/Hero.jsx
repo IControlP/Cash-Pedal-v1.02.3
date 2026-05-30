@@ -27,14 +27,14 @@ export default function Hero() {
               <Link to="/subscribe" className="btn-primary btn-lg">
                 Get my 60-day access — $19 →
               </Link>
-              <a href="#preview" className="btn-ghost btn-lg">
-                See a sample report first
-              </a>
+              <Link to="/tco" className="btn-ghost btn-lg">
+                Try the calculator free →
+              </Link>
             </div>
             <div className="hero-meta anim-3">
               <span>One payment, no subscription</span>
               <span>·</span>
-              <span>Pays for itself in minutes</span>
+              <span>Core tools free, no sign-up</span>
             </div>
           </div>
 

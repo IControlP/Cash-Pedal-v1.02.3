@@ -188,6 +188,37 @@ export default function SalaryCalculator() {
   const [carFilterCategory, setCarFilterCategory] = useState('all')
   const [carSortKey, setCarSortKey] = useState('price_asc')
 
+  // Comparison queue
+  const [compCount, setCompCount] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('cashpedal_tco_for_comparison') || '[]').length } catch { return 0 }
+  })
+
+  function addToCompare(v) {
+    const entry = {
+      id:               crypto.randomUUID(),
+      name:             `${v.make} ${v.model}`,
+      addedAt:          new Date().toISOString(),
+      isLease:          false,
+      price:            v.basePrice,
+      downPayment:      Math.round(v.basePrice * downPct / 100),
+      loanTerm:         loanTerm,
+      rate:             rate,
+      ownershipYears:   5,
+      leaseMonthlyPayment: 0,
+      leaseTerm:        36,
+      totalAnnualCost:  v.annualTotal,
+      totalOwnershipCost: v.annualTotal * 5,
+      mpgCombined:      null,
+      cargoSqFt:        null,
+      valueRetentionPct: null,
+      isFromTCO:        true,
+    }
+    const existing = JSON.parse(localStorage.getItem('cashpedal_tco_for_comparison') || '[]')
+    const updated = [...existing.filter(e => e.name !== entry.name), entry].slice(-5)
+    localStorage.setItem('cashpedal_tco_for_comparison', JSON.stringify(updated))
+    setCompCount(updated.length)
+  }
+
   // Buy inputs
   const [vehiclePrice, setVehiclePrice] = useState(30000)
   const [downPct, setDownPct] = useState(20)
@@ -1218,6 +1249,15 @@ export default function SalaryCalculator() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                  {compCount > 0 && (
+                    <Link
+                      to="/compare"
+                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors shrink-0"
+                      style={{ borderColor: 'rgba(200,255,0,0.4)', color: 'var(--accent)', background: 'rgba(200,255,0,0.08)' }}
+                    >
+                      ⚖ {compCount} queued → Compare
+                    </Link>
+                  )}
                   <select
                     value={carSortKey}
                     onChange={e => setCarSortKey(e.target.value)}
@@ -1319,6 +1359,29 @@ export default function SalaryCalculator() {
                               </div>
                             )}
                           </div>
+                          {(() => {
+                            const isQueued = (() => {
+                              try {
+                                const q = JSON.parse(localStorage.getItem('cashpedal_tco_for_comparison') || '[]')
+                                return q.some(e => e.name === `${v.make} ${v.model}`)
+                              } catch { return false }
+                            })()
+                            return (
+                              <button
+                                onClick={() => addToCompare(v)}
+                                disabled={isQueued || compCount >= 5}
+                                className="block w-full text-center text-[10px] font-semibold py-1.5 mt-1 rounded-lg border transition-colors"
+                                style={{
+                                  borderColor: isQueued ? 'rgba(200,255,0,0.4)' : 'var(--border)',
+                                  color: isQueued ? 'var(--accent)' : 'var(--text-muted)',
+                                  background: isQueued ? 'rgba(200,255,0,0.06)' : 'transparent',
+                                  cursor: (isQueued || compCount >= 5) ? 'default' : 'pointer',
+                                }}
+                              >
+                                {isQueued ? '✓ Queued' : compCount >= 5 ? 'Queue full' : '⚖ Add to Compare'}
+                              </button>
+                            )
+                          })()}
                           <Link
                             to="/tco"
                             className="block text-center text-[10px] font-semibold py-1.5 mt-1 rounded-lg border transition-colors"

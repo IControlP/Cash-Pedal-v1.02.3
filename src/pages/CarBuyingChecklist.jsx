@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PaywallModal from '../components/PaywallModal'
@@ -120,6 +120,18 @@ export default function CarBuyingChecklist() {
   )
   const [showPaywall, setShowPaywall] = useState(false)
   const [scriptCopied, setScriptCopied] = useState(false)
+  const [printMode, setPrintMode] = useState(false)
+
+  useEffect(() => {
+    const onBefore = () => setPrintMode(true)
+    const onAfter  = () => setPrintMode(false)
+    window.addEventListener('beforeprint', onBefore)
+    window.addEventListener('afterprint',  onAfter)
+    return () => {
+      window.removeEventListener('beforeprint', onBefore)
+      window.removeEventListener('afterprint',  onAfter)
+    }
+  }, [])
 
   const [step, setStep] = useState('input') // input | checklist
   const [vehicleInfo, setVehicleInfo] = useState({ year: '', make: '', model: '', trim: '', mileage: 80000, price: '', state: '' })
@@ -615,7 +627,7 @@ export default function CarBuyingChecklist() {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 mb-6 overflow-x-auto pb-1">
+          <div className="flex gap-1 mb-6 overflow-x-auto pb-1 no-print">
             {[
               { key: 'maintenance', label: `Maintenance Due (${dueItems.length})` },
               { key: 'upcoming', label: `Coming Up (${upcomingItems.length})` },
@@ -636,7 +648,7 @@ export default function CarBuyingChecklist() {
           </div>
 
           {/* Maintenance due tab */}
-          {activeTab === 'maintenance' && (
+          {(activeTab === 'maintenance' || printMode) && (
             <div className="flex flex-col gap-3">
               {dueItems.length === 0 ? (
                 <div className="card text-center py-10">
@@ -690,7 +702,7 @@ export default function CarBuyingChecklist() {
           )}
 
           {/* Upcoming tab */}
-          {activeTab === 'upcoming' && (
+          {(activeTab === 'upcoming' || printMode) && (
             <div className="flex flex-col gap-3">
               {upcomingItems.length === 0 ? (
                 <div className="card text-center py-10">
@@ -731,7 +743,7 @@ export default function CarBuyingChecklist() {
           )}
 
           {/* Seller questions tab */}
-          {activeTab === 'questions' && (
+          {(activeTab === 'questions' || printMode) && (
             <div className="flex flex-col gap-4">
               {allSellerQuestions.map(section => (
                 <div key={section.category} className="card">

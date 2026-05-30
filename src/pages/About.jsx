@@ -17,7 +17,7 @@ const faqs = [
   },
   {
     q: 'Do I need to create an account?',
-    a: 'No. All basic tools are free and require no sign-up. Cash Pedal Pro ($10/month) unlocks unlimited detailed TCO analyses, unlimited used-car checklists, and multi-vehicle comparison exports — no account required for the free tier.',
+    a: 'No. All basic tools are free and require no sign-up. Cash Pedal Pro ($19 one-time · 60 days) unlocks unlimited detailed TCO analyses, unlimited used-car checklists, and multi-vehicle comparison exports — no account required for the free tier.',
   },
   {
     q: 'How does the Car Survey work?',

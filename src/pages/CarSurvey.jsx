@@ -363,14 +363,22 @@ export default function CarSurvey() {
           </div>
 
           {/* CTAs */}
+          {(() => {
+            // Map survey profile key → TCO vehicle category value
+            const surveyToTCO = { suv: 'suv', sedan: 'sedan', pickup: 'truck', sports: 'sports', luxury: 'luxury', economy: 'economy', electric: 'electric', hybrid: 'sedan', minivan: 'minivan' }
+            const tcoCategory = topMatch ? surveyToTCO[topMatch.key] : null
+            const tcoPath = tcoCategory ? `/tco?category=${tcoCategory}` : '/tco'
+            return (
           <div className="flex flex-col sm:flex-row gap-4 anim-5">
-            <Link to="/tco" className="btn-primary flex-1 justify-center py-4">
+            <Link to={tcoPath} className="btn-primary flex-1 justify-center py-4">
               Calculate TCO for this vehicle →
             </Link>
             <button onClick={handleRestart} className="btn-ghost flex-1 justify-center py-4">
               Retake the survey
             </button>
           </div>
+            )
+          })()}
         </div>
       </main>
       <Footer />

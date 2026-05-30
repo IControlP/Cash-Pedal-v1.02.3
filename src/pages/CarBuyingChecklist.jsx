@@ -93,6 +93,25 @@ const importanceBadge = {
   medium: 'bg-[var(--accent-muted)] text-[var(--accent)] border-[var(--accent)]/30',
 }
 
+function copyNegotiationScript({ vehicleLabel, askingPrice, notDone, unknown, negotiationSavings }) {
+  const targetPrice = askingPrice ? Math.max(0, Number(askingPrice) - negotiationSavings) : null
+  const lines = [
+    `I'm interested in the ${vehicleLabel} at your asking price of ${askingPrice ? fmt(Number(askingPrice)) : '[asking price]'}.`,
+    '',
+    `Based on its mileage, several scheduled maintenance items appear to be due:`,
+  ]
+  notDone.forEach(i => lines.push(`  • ${i.name} — ${fmt(i.cost)} (not done)`))
+  unknown.forEach(i => lines.push(`  • ${i.name} — ~${fmt(Math.round(i.cost * 0.5))} (status unknown)`))
+  lines.push('')
+  lines.push(`These represent approximately ${fmt(negotiationSavings)} in deferred maintenance I'll need to address as the new owner.`)
+  if (targetPrice) {
+    lines.push(`Based on this, I'd like to offer ${fmt(targetPrice)}, which accounts for these costs.`)
+  }
+  lines.push('')
+  lines.push('Would you be open to adjusting the price, or addressing these items before purchase?')
+  return lines.join('\n')
+}
+
 export default function CarBuyingChecklist() {
   const { isSubscribed } = useSubscription()
 
@@ -100,6 +119,7 @@ export default function CarBuyingChecklist() {
     parseInt(localStorage.getItem(LS_CHECKLIST_COUNT) || '0', 10)
   )
   const [showPaywall, setShowPaywall] = useState(false)
+  const [scriptCopied, setScriptCopied] = useState(false)
 
   const [step, setStep] = useState('input') // input | checklist
   const [vehicleInfo, setVehicleInfo] = useState({ year: '', make: '', model: '', trim: '', mileage: 80000, price: '', state: '' })
@@ -421,9 +441,18 @@ export default function CarBuyingChecklist() {
                 )}
               </div>
             </div>
-            <button onClick={() => setStep('input')} className="btn-ghost text-sm shrink-0">
-              ← Start Over
-            </button>
+            <div className="flex items-center gap-2 no-print">
+              <button
+                onClick={() => window.print()}
+                className="btn-ghost text-sm shrink-0"
+                title="Print or save as PDF"
+              >
+                🖨 Print
+              </button>
+              <button onClick={() => setStep('input')} className="btn-ghost text-sm shrink-0">
+                ← Start Over
+              </button>
+            </div>
           </div>
 
           {/* Price range card */}
@@ -494,6 +523,38 @@ export default function CarBuyingChecklist() {
             <p className="text-xs text-[var(--text-muted)] mt-3">
               Reduction = all "not done" costs + 50% of "unknown" costs. Use this as your negotiation floor.
             </p>
+
+            {/* Copy negotiation script */}
+            {negotiationSavings > 0 && (
+              <div className="mt-4 pt-4 border-t border-[rgba(255,184,0,0.15)] no-print">
+                <button
+                  onClick={() => {
+                    const script = copyNegotiationScript({
+                      vehicleLabel,
+                      askingPrice: vehicleInfo.price,
+                      notDone,
+                      unknown,
+                      negotiationSavings,
+                    })
+                    navigator.clipboard.writeText(script).then(() => {
+                      setScriptCopied(true)
+                      setTimeout(() => setScriptCopied(false), 2500)
+                    })
+                  }}
+                  className="flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg border transition-colors"
+                  style={{
+                    borderColor: scriptCopied ? 'rgba(74,222,128,0.4)' : 'rgba(255,184,0,0.3)',
+                    color: scriptCopied ? 'rgb(74,222,128)' : 'var(--accent)',
+                    background: scriptCopied ? 'rgba(74,222,128,0.08)' : 'rgba(255,184,0,0.08)',
+                  }}
+                >
+                  {scriptCopied ? '✓ Copied!' : '📋 Copy negotiation script'}
+                </button>
+                <p className="text-[10px] text-[var(--text-muted)] mt-1.5">
+                  Copies a ready-to-send message to your clipboard — personalized with this vehicle's unverified items.
+                </p>
+              </div>
+            )}
 
             {/* Critical item call-outs */}
             {(() => {

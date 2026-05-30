@@ -820,3 +820,10 @@ select.input-field {
   .faq-q { font-size: 15px; padding: 16px 18px; }
   .faq-a { padding: 0 18px 16px; }
 }
+
+@media print {
+  nav, footer, .no-print { display: none !important; }
+  body { background: white !important; color: black !important; }
+  .card { border: 1px solid #ccc !important; background: white !important; box-shadow: none !important; }
+  .print-all-tabs > div { display: block !important; }
+}

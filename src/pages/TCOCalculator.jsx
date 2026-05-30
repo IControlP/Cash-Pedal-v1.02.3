@@ -1112,6 +1112,14 @@ export default function TCOCalculator() {
     localStorage.setItem('cashpedal_simple_mode', String(next))
   }
 
+  // Pre-select vehicle category when landing via ?category=<value> (e.g. from CarSurvey)
+  useEffect(() => {
+    const cat = searchParams.get('category')
+    if (!cat) return
+    const match = VEHICLE_CATEGORIES.find(c => c.value === cat)
+    if (match) setVehicleCategory(match.value)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Restore last session when landing via ?resume=1
   useEffect(() => {
     if (searchParams.get('resume') !== '1') return

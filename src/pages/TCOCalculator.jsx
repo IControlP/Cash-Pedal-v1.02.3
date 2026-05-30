@@ -2419,112 +2419,239 @@ export default function TCOCalculator() {
                 )
               })()}
 
-              {/* ── Costs to Date (own mode + purchase history filled) ── */}
-              {financeMode === 'own' && monthsOwned != null && ownPurchasePrice != null && (() => {
-                const depreciation   = Math.max(0, ownPurchasePrice - price)
-                const loanPaidMonths = Math.min(monthsOwned, remainingLoanTerm)
-                const loanPaidAmt    = remainingLoanBalance > 0 ? Math.round(results.monthlyPayment * loanPaidMonths) : 0
-                const operatingToDate = Math.round(annualOperatingCost * monthsOwned / 12)
-                const totalToDate    = depreciation + loanPaidAmt + operatingToDate
-                const totalFuture    = forecastRows.reduce((s, r) => s + r.total, 0)
+              {/* ── OWN MODE: True cost hero + breakdown ── */}
+              {financeMode === 'own' && (() => {
+                // Estimate monthly depreciation
+                const annualDeprEst = origMsrp
+                  ? Math.max(0, price - estimateCurrentValue(origMsrp, selMake||null, selModel||null, carAge + 1))
+                  : Math.round(price * 0.12)
+                const monthlyDepr = ownPurchasePrice != null && monthsOwned != null && monthsOwned > 0
+                  ? Math.round(Math.max(0, ownPurchasePrice - price) / monthsOwned)
+                  : Math.round(annualDeprEst / 12)
+
+                const monthlyLoan  = results.monthlyPayment
+                const monthlyIns   = Math.round(annualInsurance    / 12)
+                const monthlyFuel  = Math.round(annualFuel         / 12)
+                const monthlyMaint = Math.round(annualMaintenance  / 12)
+                const monthlyReg   = Math.round(annualRegistration / 12)
+                const monthlyOps   = monthlyIns + monthlyFuel + monthlyMaint + monthlyReg
+                const trueMonthlyCash = monthlyLoan + monthlyOps
+                const trueMonthlyAll  = trueMonthlyCash + monthlyDepr
+
+                const costPerDay  = Math.round(trueMonthlyAll * 12 / 365)
+                const costPerMile = annualMileage > 0
+                  ? ((trueMonthlyAll * 12) / annualMileage).toFixed(2)
+                  : null
+
+                const segments = [
+                  { label: remainingLoanBalance > 0 ? 'Loan payment' : null, value: monthlyLoan,  color: 'var(--accent)' },
+                  { label: 'Depreciation',  value: monthlyDepr,  color: '#f87171' },
+                  { label: 'Insurance',     value: monthlyIns,   color: '#60a5fa' },
+                  { label: 'Fuel',          value: monthlyFuel,  color: '#f472b6' },
+                  { label: 'Maintenance',   value: monthlyMaint, color: '#fb923c' },
+                  { label: 'Registration',  value: monthlyReg,   color: '#a78bfa' },
+                ].filter(s => s.label !== null && s.value > 0)
+
+                const hiddenMonthly = trueMonthlyAll - monthlyLoan
 
                 return (
-                  <div className="rounded-xl border p-4 flex flex-col gap-3 anim-3"
-                    style={{ borderColor: 'rgba(96,200,255,0.25)', background: 'rgba(96,200,255,0.04)' }}>
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#60c8ff' }}>
-                        Costs to Date
+                  <div className="flex flex-col gap-4 anim-3">
+                    {/* Hero card */}
+                    <div className="rounded-xl p-5 flex flex-col gap-3"
+                      style={{ background: 'linear-gradient(135deg, rgba(200,255,0,0.08) 0%, rgba(200,255,0,0.03) 100%)', border: '1px solid rgba(200,255,0,0.2)' }}>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+                        Your car is costing you
                       </p>
-                      <span className="text-[10px] text-[var(--text-muted)]">
-                        {yearsOwnedWhole > 0 ? `${yearsOwnedWhole}yr ` : ''}{monthsOwnedRem > 0 ? `${monthsOwnedRem}mo` : ''}
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-2 text-sm">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[var(--text-muted)]">Purchase price paid</span>
-                        <span className="text-white font-medium">{formatCurrency(ownPurchasePrice)}</span>
+                      <div className="flex items-end gap-3">
+                        <span className="font-display font-extrabold text-5xl leading-none" style={{ color: 'var(--accent)' }}>
+                          {formatCurrency(trueMonthlyAll)}
+                        </span>
+                        <span className="text-[var(--text-muted)] text-lg pb-1">/month</span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[var(--text-muted)]">Current market value</span>
-                        <span className="text-white font-medium">− {formatCurrency(price)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[var(--text-muted)]">Value lost (depreciation)</span>
-                        <span className="font-medium" style={{ color: depreciation > 0 ? '#f87171' : '#4ade80' }}>
-                          {formatCurrency(depreciation)}
+                      <div className="flex items-center gap-4 flex-wrap">
+                        <span className="text-sm font-semibold text-white">
+                          {formatCurrency(costPerDay)}<span className="text-[var(--text-muted)] font-normal">/day</span>
+                        </span>
+                        {costPerMile && (
+                          <span className="text-sm font-semibold text-white">
+                            ${costPerMile}<span className="text-[var(--text-muted)] font-normal">/mile</span>
+                          </span>
+                        )}
+                        <span className="text-sm font-semibold text-white">
+                          {formatCurrency(trueMonthlyAll * 12)}<span className="text-[var(--text-muted)] font-normal">/year</span>
                         </span>
                       </div>
-                      {loanPaidAmt > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-[var(--text-muted)]">Loan payments made</span>
-                          <span className="text-white font-medium">{formatCurrency(loanPaidAmt)}</span>
+                      <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                        Includes loan payments, insurance, fuel, maintenance, registration, and depreciation.
+                      </p>
+                    </div>
+
+                    {/* "What you see vs. reality" comparison */}
+                    {remainingLoanBalance > 0 && hiddenMonthly > 0 && (
+                      <div className="rounded-xl border p-4 flex flex-col gap-3"
+                        style={{ borderColor: 'rgba(248,113,113,0.25)', background: 'rgba(248,113,113,0.04)' }}>
+                        <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#f87171' }}>
+                          The hidden cost gap
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="rounded-lg p-3 text-center" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)' }}>
+                            <p className="text-[10px] text-[var(--text-muted)] mb-1">Loan payment only</p>
+                            <p className="font-display font-bold text-white text-xl">{formatCurrency(monthlyLoan)}</p>
+                            <p className="text-[10px] text-[var(--text-muted)]">what you see</p>
+                          </div>
+                          <div className="rounded-lg p-3 text-center" style={{ background: 'rgba(200,255,0,0.06)', border: '1px solid rgba(200,255,0,0.2)' }}>
+                            <p className="text-[10px] text-[var(--text-muted)] mb-1">True monthly cost</p>
+                            <p className="font-display font-bold text-xl" style={{ color: 'var(--accent)' }}>{formatCurrency(trueMonthlyAll)}</p>
+                            <p className="text-[10px] text-[var(--text-muted)]">full picture</p>
+                          </div>
                         </div>
-                      )}
-                      <div className="flex justify-between items-center">
-                        <span className="text-[var(--text-muted)]">Est. operating costs</span>
-                        <span className="text-white font-medium">{formatCurrency(operatingToDate)}</span>
+                        <p className="text-xs leading-relaxed" style={{ color: '#f87171' }}>
+                          Beyond your loan payment, you're spending an additional{' '}
+                          <span className="font-bold text-white">{formatCurrency(hiddenMonthly)}/mo</span> on
+                          depreciation, insurance, fuel, maintenance, and fees —{' '}
+                          <span className="font-bold">{Math.round((hiddenMonthly / trueMonthlyAll) * 100)}% of your true cost</span>.
+                        </p>
                       </div>
-                      <div className="h-px bg-[var(--border)] my-0.5" />
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-white">Total spent to date</span>
-                        <span className="font-display font-bold text-lg" style={{ color: '#60c8ff' }}>
-                          {formatCurrency(totalToDate)}
-                        </span>
+                    )}
+
+                    {/* Monthly breakdown with visual bars */}
+                    <div className="rounded-xl border p-4 flex flex-col gap-3"
+                      style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                      <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+                        Monthly Cost Breakdown
+                      </p>
+                      <div className="flex flex-col gap-2.5">
+                        {segments.map(({ label, value, color }) => {
+                          const pct = Math.round((value / trueMonthlyAll) * 100)
+                          return (
+                            <div key={label}>
+                              <div className="flex items-center justify-between text-xs mb-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: color }} />
+                                  <span className="text-[var(--text-muted)]">{label}</span>
+                                  {label === 'Depreciation' && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold"
+                                      style={{ background: 'rgba(248,113,113,0.12)', color: '#f87171', border: '1px solid rgba(248,113,113,0.2)' }}>
+                                      often missed
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[var(--text-muted)]">{pct}%</span>
+                                  <span className="text-white font-semibold tabular-nums w-16 text-right">{formatCurrency(value)}/mo</span>
+                                </div>
+                              </div>
+                              <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg)' }}>
+                                <div className="h-full rounded-full transition-all duration-700"
+                                  style={{ width: `${pct}%`, background: color }} />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      <div className="flex justify-between items-center pt-1 border-t border-[var(--border)] text-sm">
+                        <span className="font-bold text-white">Total per month</span>
+                        <span className="font-display font-bold" style={{ color: 'var(--accent)' }}>{formatCurrency(trueMonthlyAll)}</span>
                       </div>
                     </div>
-                    <div className="h-px bg-[var(--border)]" />
-                    <div className="flex flex-col gap-2 text-sm">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[var(--text-muted)]">
-                          Future cost ({ownershipYears} more yr{ownershipYears !== 1 ? 's' : ''})
-                        </span>
-                        <span className="text-white font-medium">{formatCurrency(totalFuture)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-white">Lifetime total</span>
-                        <span className="font-display font-bold text-lg" style={{ color: 'var(--accent)' }}>
-                          {formatCurrency(totalToDate + totalFuture)}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
-                      Operating costs to date are estimated at your current annual rate of {formatCurrency(annualOperatingCost)}/yr.
-                    </p>
+
+                    {/* Costs to date — only when purchase history is filled in */}
+                    {monthsOwned != null && ownPurchasePrice != null && (() => {
+                      const depreciation    = Math.max(0, ownPurchasePrice - price)
+                      const loanPaidMonths  = Math.min(monthsOwned, remainingLoanTerm)
+                      const loanPaidAmt     = remainingLoanBalance > 0 ? Math.round(results.monthlyPayment * loanPaidMonths) : 0
+                      const operatingToDate = Math.round(annualOperatingCost * monthsOwned / 12)
+                      const totalToDate     = depreciation + loanPaidAmt + operatingToDate
+                      const totalFuture     = forecastRows.reduce((s, r) => s + r.total, 0)
+                      const ownedLabel      = [
+                        yearsOwnedWhole > 0 ? `${yearsOwnedWhole} yr${yearsOwnedWhole !== 1 ? 's' : ''}` : '',
+                        monthsOwnedRem  > 0 ? `${monthsOwnedRem} mo` : '',
+                      ].filter(Boolean).join(', ') || 'less than 1 month'
+
+                      return (
+                        <div className="rounded-xl border p-4 flex flex-col gap-3"
+                          style={{ borderColor: 'rgba(96,200,255,0.25)', background: 'rgba(96,200,255,0.04)' }}>
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#60c8ff' }}>
+                              What You've Spent So Far
+                            </p>
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded"
+                              style={{ color: '#60c8ff', background: 'rgba(96,200,255,0.1)', border: '1px solid rgba(96,200,255,0.2)' }}>
+                              {ownedLabel}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-col gap-2 text-sm">
+                            {depreciation > 0 && (
+                              <div className="flex justify-between items-center">
+                                <div className="flex flex-col">
+                                  <span className="text-[var(--text-muted)]">Value lost to depreciation</span>
+                                  <span className="text-[10px] text-[var(--text-muted)]">
+                                    {formatCurrency(ownPurchasePrice)} paid → {formatCurrency(price)} today
+                                  </span>
+                                </div>
+                                <span className="font-semibold shrink-0 ml-3" style={{ color: '#f87171' }}>{formatCurrency(depreciation)}</span>
+                              </div>
+                            )}
+                            {loanPaidAmt > 0 && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-[var(--text-muted)]">Loan payments made</span>
+                                <span className="text-white font-semibold">{formatCurrency(loanPaidAmt)}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between items-center">
+                              <span className="text-[var(--text-muted)]">Insurance, fuel, maintenance, fees</span>
+                              <span className="text-white font-semibold">{formatCurrency(operatingToDate)}</span>
+                            </div>
+                            <div className="h-px bg-[var(--border)] my-0.5" />
+                            <div className="flex justify-between items-center">
+                              <span className="font-bold text-white">Total spent to date</span>
+                              <span className="font-display font-bold text-xl" style={{ color: '#60c8ff' }}>
+                                {formatCurrency(totalToDate)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="rounded-lg p-3 flex flex-col gap-1.5"
+                            style={{ background: 'rgba(0,0,0,0.3)' }}>
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-[var(--text-muted)]">+ To keep {ownershipYears} more yr{ownershipYears !== 1 ? 's' : ''}</span>
+                              <span className="text-white font-semibold">{formatCurrency(totalFuture)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm border-t border-[var(--border)] pt-1.5">
+                              <span className="font-bold text-white">Lifetime total</span>
+                              <span className="font-display font-bold text-xl" style={{ color: 'var(--accent)' }}>
+                                {formatCurrency(totalToDate + totalFuture)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })()}
                   </div>
                 )
               })()}
 
+              {/* ── Non-own mode results ── */}
+              {financeMode !== 'own' && (
               <div className="anim-4">
                 <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
-                  {financeMode === 'own' && monthsOwned != null ? 'Future costs' : 'Your results'}
+                  Your results
                 </p>
                 <ResultCard
-                  label={financeMode === 'lease' ? 'Monthly Lease Payment' : financeMode === 'own' ? (remainingLoanBalance > 0 ? 'Monthly Loan Payment' : 'Monthly Operating Cost') : 'Monthly Payment'}
-                  value={financeMode === 'lease' ? leaseResults.monthlyPayment : financeMode === 'own' ? (remainingLoanBalance > 0 ? results.monthlyPayment : Math.round(annualOperatingCost / 12)) : results.monthlyPayment}
+                  label={financeMode === 'lease' ? 'Monthly Lease Payment' : 'Monthly Payment'}
+                  value={financeMode === 'lease' ? leaseResults.monthlyPayment : results.monthlyPayment}
                   highlight delay={0} />
               </div>
+              )}
 
-              {!simpleMode && (
+              {!simpleMode && financeMode !== 'own' && (
                 <div className="grid grid-cols-1 gap-4 anim-5">
                   {financeMode === 'lease' ? (
                     <>
                       <ResultCard label="Total Lease Cost"     value={leaseResults.totalLeaseCost}   delay={60}  />
                       <ResultCard label="Residual Value"       value={leaseResults.residualValue}     delay={120} />
                       <ResultCard label="Lease Cost Per Year"  value={leaseResults.annualLeaseCost}  delay={180} />
-                    </>
-                  ) : financeMode === 'own' ? (
-                    <>
-                      {remainingLoanBalance > 0 && (
-                        <>
-                          <ResultCard
-                            label={results.ownershipShorterThanLoan ? `Loan Interest (${ownershipYears}-yr)` : 'Total Remaining Interest'}
-                            value={results.interestThroughOwnership}
-                            delay={60}
-                          />
-                          <ResultCard label="Total Left on Loan"  value={results.totalCostOfLoan}  delay={120} />
-                        </>
-                      )}
-                      <ResultCard label="Annual Operating Cost"  value={annualOperatingCost}  delay={180} />
                     </>
                   ) : (
                     <>
@@ -2541,8 +2668,8 @@ export default function TCOCalculator() {
                 </div>
               )}
 
-              {/* Annual cost breakdown */}
-              <div className="rounded-xl border p-4 flex flex-col gap-3"
+              {/* Annual cost breakdown — skip for own mode (it has its own breakdown above) */}
+              {financeMode !== 'own' && <div className="rounded-xl border p-4 flex flex-col gap-3"
                 style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
                 <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
                   Annual Cost Breakdown
@@ -2626,7 +2753,7 @@ export default function TCOCalculator() {
                     </span>
                   </div>
                 </div>
-              </div>
+              </div>}
 
               {/* Affordability check — 20/4/10 rule income bands — detailed mode only */}
               {!simpleMode && (() => {

@@ -1021,6 +1021,8 @@ export default function TCOCalculator() {
   )
   const [showPaywall,  setShowPaywall]  = useState(false)
 
+  const [summaryCopied, setSummaryCopied] = useState(false)
+
   // ── Comparison queue count ──
   const [comparisonCount, setComparisonCount] = useState(() => {
     try { return JSON.parse(localStorage.getItem('cashpedal_tco_for_comparison') || '[]').length } catch { return 0 }
@@ -3112,6 +3114,37 @@ export default function TCOCalculator() {
                   </button>
                 )}
               </div>}
+
+              {/* ── Copy summary ── */}
+              <button
+                onClick={() => {
+                  const vehicleStr = [selYear, selMake, selModel, selTrim].filter(Boolean).join(' ') || vehicleCategory || 'Vehicle'
+                  const lines = [
+                    `Cash Pedal TCO Summary — ${vehicleStr}`,
+                    `Price: ${formatCurrency(price)} | Mode: ${financeMode}`,
+                    financeMode !== 'own' ? `Monthly payment: ${formatCurrency(financeMode === 'lease' ? leaseResults.monthlyPayment : results.monthlyPayment)}` : null,
+                    `All-in Year 1 cost: ${formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}`,
+                    `  Loan/lease: ${formatCurrency(forecastRows[0]?.loanCost ?? 0)}`,
+                    `  Insurance: ${formatCurrency(forecastRows[0]?.insurance ?? annualInsurance)}`,
+                    `  Fuel: ${formatCurrency(annualFuel)} | Maintenance: ${formatCurrency(forecastRows[0]?.maintenance ?? annualMaintenance)}`,
+                    `  Registration: ${formatCurrency(forecastRows[0]?.registration ?? annualRegistration)}`,
+                    netCostOfOwnership != null ? `Net cost of ownership (${ownershipYears} yr, after resale): ${formatCurrency(netCostOfOwnership)}` : null,
+                    `Generated at cashpedal.io`,
+                  ].filter(Boolean)
+                  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+                    setSummaryCopied(true)
+                    setTimeout(() => setSummaryCopied(false), 2500)
+                  })
+                }}
+                className="w-full py-2 rounded-lg border text-xs font-semibold transition-colors"
+                style={{
+                  borderColor: summaryCopied ? 'rgba(74,222,128,0.4)' : 'var(--border)',
+                  color: summaryCopied ? 'rgb(74,222,128)' : 'var(--text-muted)',
+                  background: summaryCopied ? 'rgba(74,222,128,0.05)' : 'var(--surface)',
+                }}
+              >
+                {summaryCopied ? '✓ Copied to clipboard' : '📋 Copy summary to share'}
+              </button>
 
               {/* ── Repair & Reliability Risk Score (Pro) ── */}
               <RepairRiskScore

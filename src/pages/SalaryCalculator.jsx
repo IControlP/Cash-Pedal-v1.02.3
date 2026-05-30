@@ -433,7 +433,11 @@ export default function SalaryCalculator() {
   }, [affordableResults, userState, annualMiles, rate])
 
   const filteredVehicles = useMemo(() => {
-    const filtered = carFilterCategory === 'all' ? matchedVehicles : matchedVehicles.filter(v => v.category === carFilterCategory)
+    const filtered = carFilterCategory === 'all'
+      ? matchedVehicles
+      : carFilterCategory === 'ev'
+      ? matchedVehicles.filter(v => v.is_ev)
+      : matchedVehicles.filter(v => v.category === carFilterCategory)
     return [...filtered].sort((a, b) => {
       if (carSortKey === 'price_asc') return a.basePrice - b.basePrice
       if (carSortKey === 'price_desc') return b.basePrice - a.basePrice
@@ -1231,6 +1235,7 @@ export default function SalaryCalculator() {
                     { value: 'all', label: 'All' },
                     { value: 'economy', label: 'Economy' },
                     { value: 'luxury', label: 'Luxury' },
+                    { value: 'ev', label: '⚡ EV' },
                     { value: 'other', label: 'Other' },
                   ].map(opt => (
                     <button
@@ -1247,6 +1252,8 @@ export default function SalaryCalculator() {
                       <span className="opacity-60 font-normal">
                         ({carFilterCategory === opt.value || opt.value === 'all'
                           ? (opt.value === 'all' ? matchedVehicles.length : filteredVehicles.length)
+                          : opt.value === 'ev'
+                          ? matchedVehicles.filter(v => v.is_ev).length
                           : matchedVehicles.filter(v => v.category === opt.value).length})
                       </span>
                     </button>

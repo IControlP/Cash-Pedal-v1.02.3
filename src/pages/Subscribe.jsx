@@ -7,7 +7,7 @@ import { SUVSVG, SedanSVG, getPal } from '../components/CarSVGs'
 const INCLUDED = [
   {
     title: 'Unlimited comparisons',
-    body: 'Stack as many cars as you want, run as many scenarios as you need. Two-at-a-time deep dives, or six-up grid views for shortlists.',
+    body: 'Stack as many cars as you want, run as many scenarios as you need. Two-at-a-time deep dives, or five-up grid views for shortlists.',
   },
   {
     title: 'Wealth-impact verdicts',

@@ -1942,11 +1942,9 @@ export default function TCOCalculator() {
                     onChange={v => setCapCostReduction(Math.min(v, price))}
                     min={0} max={Math.min(price, 20000)} step={250} prefix="$" />
 
-                  {!simpleMode && (
-                    <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                      Lowers your monthly payment but is not recovered at lease end
-                    </p>
-                  )}
+                  <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                    Lowers your monthly payment but is not recovered at lease end
+                  </p>
 
                   <SliderInput label="Acquisition Fee" value={acquisitionFee} onChange={setAcquisitionFee}
                     min={0} max={2000} step={25} prefix="$" />
@@ -1962,11 +1960,9 @@ export default function TCOCalculator() {
                   <SliderInput label="Money Factor (APR equivalent)" value={leaseApr} onChange={setLeaseApr}
                     min={0} max={15} step={0.1} suffix="%" inputMin={0} inputMax={15} />
 
-                  {!simpleMode && (
-                    <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                      Money factor = {(leaseApr / 2400).toFixed(5)} · Ask the dealer for the exact money factor — divide by 2,400 to convert to APR
-                    </p>
-                  )}
+                  <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                    Money factor = {(leaseApr / 2400).toFixed(5)} · Ask the dealer for the exact money factor — divide by 2,400 to convert to APR
+                  </p>
 
                   <SliderInput label="Residual Value" value={residualPct} onChange={setResidualPct}
                     min={20} max={80} step={1} suffix="%" />
@@ -1980,15 +1976,13 @@ export default function TCOCalculator() {
                     </div>
                   )}
 
-                  {!simpleMode && (
-                    <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                      {leaseTerm <= 24
-                        ? 'Typical 24-month residual: 58–65% — higher residual = lower payment'
-                        : leaseTerm <= 36
-                        ? 'Typical 36-month residual: 48–58% — Toyota/Honda/Subaru tend toward top of range; luxury/EV toward bottom'
-                        : 'Typical 48-month residual: 40–50% — longer terms mean more depreciation and lower residuals'}
-                    </p>
-                  )}
+                  <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                    {leaseTerm <= 24
+                      ? 'Typical 24-month residual: 58–65% — higher residual = lower payment'
+                      : leaseTerm <= 36
+                      ? 'Typical 36-month residual: 48–58% — Toyota/Honda/Subaru tend toward top of range; luxury/EV toward bottom'
+                      : 'Typical 48-month residual: 40–50% — longer terms mean more depreciation and lower residuals'}
+                  </p>
 
                   {!simpleMode && (
                     <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">

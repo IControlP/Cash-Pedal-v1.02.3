@@ -184,8 +184,9 @@ export default function SalaryCalculator() {
   // Annual mileage (affects fuel cost)
   const [annualMiles, setAnnualMiles] = useState(DEFAULT_ANNUAL_MILES)
 
-  // Car suggestion filter
+  // Car suggestion filter and sort
   const [carFilterCategory, setCarFilterCategory] = useState('all')
+  const [carSortKey, setCarSortKey] = useState('price_asc')
 
   // Buy inputs
   const [vehiclePrice, setVehiclePrice] = useState(30000)
@@ -428,13 +429,22 @@ export default function SalaryCalculator() {
         })
       })
     })
-    return entries.sort((a, b) => b.basePrice - a.basePrice)
+    return entries.sort((a, b) => a.basePrice - b.basePrice)
   }, [affordableResults, userState, annualMiles, rate])
 
   const filteredVehicles = useMemo(() => {
-    if (carFilterCategory === 'all') return matchedVehicles
-    return matchedVehicles.filter(v => v.category === carFilterCategory)
-  }, [matchedVehicles, carFilterCategory])
+    const filtered = carFilterCategory === 'all' ? matchedVehicles : matchedVehicles.filter(v => v.category === carFilterCategory)
+    return [...filtered].sort((a, b) => {
+      if (carSortKey === 'price_asc') return a.basePrice - b.basePrice
+      if (carSortKey === 'price_desc') return b.basePrice - a.basePrice
+      if (carSortKey === 'total_asc') return a.annualTotal - b.annualTotal
+      if (carSortKey === 'tier') {
+        const order = { conservative: 0, comfortable: 1, aggressive: 2 }
+        return (order[a.tier] ?? 3) - (order[b.tier] ?? 3)
+      }
+      return 0
+    })
+  }, [matchedVehicles, carFilterCategory, carSortKey])
 
   const downAmount = vehiclePrice * (downPct / 100)
 
@@ -1203,6 +1213,18 @@ export default function SalaryCalculator() {
                     {userState ? ` · ${userState} rates` : ''}
                   </p>
                 </div>
+                <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                  <select
+                    value={carSortKey}
+                    onChange={e => setCarSortKey(e.target.value)}
+                    className="input-field text-xs py-1.5 shrink-0"
+                    style={{ width: 'auto', minWidth: '160px' }}
+                  >
+                    <option value="price_asc">Price: Low → High</option>
+                    <option value="price_desc">Price: High → Low</option>
+                    <option value="total_asc">Annual Cost: Low → High</option>
+                    <option value="tier">Tier: Conservative First</option>
+                  </select>
                 <div className="flex gap-1 p-1 rounded-lg shrink-0"
                   style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
                   {[
@@ -1229,6 +1251,7 @@ export default function SalaryCalculator() {
                       </span>
                     </button>
                   ))}
+                </div>
                 </div>
               </div>
 

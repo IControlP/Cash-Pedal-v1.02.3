@@ -988,6 +988,9 @@ export default function TCOCalculator() {
   const [residualPct,      setResidualPct]      = useState(55)
   const [capCostReduction, setCapCostReduction] = useState(0)
   const [acquisitionFee,   setAcquisitionFee]   = useState(795)
+  // "I Own It" mode inputs
+  const [remainingLoanBalance, setRemainingLoanBalance] = useState(0)
+  const [remainingLoanTerm,    setRemainingLoanTerm]    = useState(60)
   const [currentMileage,   setCurrentMileage]   = useState(null) // null = auto (carAge × annualMileage)
   const [dealerPurchase,   setDealerPurchase]   = useState(true)
   const [taxRateOverride,  setTaxRateOverride]  = useState(null) // null = use state rate
@@ -1118,7 +1121,10 @@ export default function TCOCalculator() {
     // or a slight below-sticker discount (private). Used cars get dealer (+10%) or
     // private-party (market) pricing depending on the purchase channel toggle.
     let base
-    if (financeMode === 'lease' || ageYrs <= 1) {
+    if (financeMode === 'own') {
+      // For "I Own It" mode, use straight market value — no dealer markup
+      base = ageYrs <= 1 ? msrp : Math.round(estimateCurrentValue(msrp, make, model, ageYrs) / 500) * 500
+    } else if (financeMode === 'lease' || ageYrs <= 1) {
       base = dealerPurchase ? msrp : Math.round(msrp * 0.97 / 500) * 500
     } else {
       const market = estimateCurrentValue(msrp, make, model, ageYrs)
@@ -1180,10 +1186,24 @@ export default function TCOCalculator() {
   const effectivePrice = financeMode === 'buy' ? price + totalPurchaseExtras : price
   const regionalDemand = resolvedState ? getRegionalDemandPremium(resolvedState) : 0
 
-  const results = useMemo(() => calculateLoan({
-    price: effectivePrice, downPayment: Math.min(downPayment, effectivePrice),
-    loanTermMonths: loanTerm, annualRatePercent: rate, ownershipYears,
-  }), [effectivePrice, downPayment, loanTerm, rate, ownershipYears])
+  const leasePeriodYears = Math.ceil(leaseTerm / 12)
+
+  const results = useMemo(() => {
+    if (financeMode === 'own') {
+      if (remainingLoanBalance <= 0) {
+        return { loanAmount: 0, monthlyPayment: 0, totalInterestPaid: 0, totalCostOfLoan: 0,
+          trueAnnualCost: 0, interestThroughOwnership: 0, ownershipShorterThanLoan: false }
+      }
+      return calculateLoan({
+        price: remainingLoanBalance, downPayment: 0,
+        loanTermMonths: remainingLoanTerm, annualRatePercent: rate, ownershipYears,
+      })
+    }
+    return calculateLoan({
+      price: effectivePrice, downPayment: Math.min(downPayment, effectivePrice),
+      loanTermMonths: loanTerm, annualRatePercent: rate, ownershipYears,
+    })
+  }, [financeMode, remainingLoanBalance, remainingLoanTerm, effectivePrice, downPayment, loanTerm, rate, ownershipYears])
 
   const leaseResults = useMemo(() => calculateLease({
     msrp: price,
@@ -1267,8 +1287,11 @@ export default function TCOCalculator() {
     ? Math.round(estimateCurrentValue(origMsrp, selMake || null, selModel || null, carAge + ownershipYears))
     : null
   const totalOwnershipPaid = forecastRows.reduce((s, r) => s + r.total, 0)
-  // Include the down payment: it's paid upfront and only partially recovered via resale.
-  const netCostOfOwnership = futureResaleValue != null ? totalOwnershipPaid + safeDown - futureResaleValue : null
+  // For buy mode: include down payment (paid upfront, only partially recovered via resale).
+  // For own mode: no purchase occurred — just the ongoing costs.
+  const netCostOfOwnership = futureResaleValue != null
+    ? totalOwnershipPaid + (financeMode === 'buy' ? safeDown : 0) - futureResaleValue
+    : null
 
   // Derived EV flag, charging rate, and premium fuel flag — used across the render
   const catInfoForRender = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
@@ -1499,17 +1522,17 @@ export default function TCOCalculator() {
 
               <div className="h-px bg-[var(--border)]" />
 
-              {/* Buy / Lease toggle */}
+              {/* Buy / Lease / Own toggle */}
               <div className="flex gap-1 p-1 rounded-lg"
                 style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
                 {[
                   { value: 'buy',   label: 'Buy / Finance' },
                   { value: 'lease', label: 'Lease' },
+                  { value: 'own',   label: 'I Own It' },
                 ].map(opt => (
                   <button key={opt.value}
                     onClick={() => {
                       setFinanceMode(opt.value)
-                      // When switching to lease, enforce latest year if a model is already selected
                       if (opt.value === 'lease' && selMake && selModel) {
                         if (selYear !== LEASE_YEAR) {
                           setSelYear(LEASE_YEAR)
@@ -1532,14 +1555,18 @@ export default function TCOCalculator() {
               {/* Vehicle selector */}
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h2 className="font-display font-bold text-white text-lg">Select Your Vehicle</h2>
+                  <h2 className="font-display font-bold text-white text-lg">
+                    {financeMode === 'own' ? 'Your Current Vehicle' : 'Select Your Vehicle'}
+                  </h2>
                   <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded"
                     style={{ color:'var(--text-muted)', border:'1px solid var(--border)' }}>
                     Optional
                   </span>
                 </div>
                 <p className="text-[var(--text-muted)] text-sm mb-5">
-                  35 makes · 266 models · trims by year with MSRP, MPG &amp; specs.
+                  {financeMode === 'own'
+                    ? 'Select your vehicle to auto-estimate current market value, insurance, fuel, and maintenance.'
+                    : '35 makes · 266 models · trims by year with MSRP, MPG & specs.'}
                 </p>
                 <VehiclePicker
                   make={selMake} model={selModel} year={selYear} trim={selTrim}
@@ -1583,7 +1610,9 @@ export default function TCOCalculator() {
               {/* Financing */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="font-display font-bold text-white text-lg">Purchase &amp; Financing</h2>
+                  <h2 className="font-display font-bold text-white text-lg">
+                    {financeMode === 'own' ? 'Ownership Details' : 'Purchase & Financing'}
+                  </h2>
                   {usingMSRP && (
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded"
                       style={{ color:'#FFB800', background:'rgba(255,184,0,0.08)', border:'1px solid rgba(255,184,0,0.2)' }}>
@@ -1592,14 +1621,16 @@ export default function TCOCalculator() {
                   )}
                 </div>
                 <p className="text-[var(--text-muted)] text-sm">
-                  {financeMode === 'lease'
+                  {financeMode === 'own'
+                    ? 'Enter your remaining loan balance (or $0 if paid off) and how long you plan to keep the vehicle.'
+                    : financeMode === 'lease'
                     ? 'Lease inputs: MSRP, cap cost reduction, term, APR & residual.'
                     : 'Adjust any value — results update live.'}
                 </p>
               </div>
 
               <SliderInput
-                label={financeMode === 'lease' ? 'Vehicle MSRP' : 'Vehicle Purchase Price (Out-the-Door)'}
+                label={financeMode === 'own' ? 'Current Market Value' : financeMode === 'lease' ? 'Vehicle MSRP' : 'Vehicle Purchase Price (Out-the-Door)'}
                 value={price}
                 onChange={setPrice}
                 displayValue={financeMode === 'buy' ? effectivePrice : undefined}
@@ -1613,6 +1644,14 @@ export default function TCOCalculator() {
                 min={5000} max={150000} step={500} prefix="$"
                 inputMax={financeMode === 'buy' ? 175000 : undefined}
               />
+
+              {financeMode === 'own' && (
+                <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                  {origMsrp && carAge > 0
+                    ? <>Est. market value for a {carAge}yr {selMake} · MSRP was <span className="text-white">{formatCurrency(origMsrp)}</span></>
+                    : 'Adjust to match your vehicle\'s current private-party value'}
+                </p>
+              )}
 
               {financeMode === 'buy' && (
                 <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
@@ -1831,6 +1870,50 @@ export default function TCOCalculator() {
                       </span>
                     </div>
                   )}
+                </>
+              )}
+
+              {financeMode === 'own' && (
+                <>
+                  <SliderInput
+                    label="Remaining Loan Balance"
+                    value={remainingLoanBalance}
+                    onChange={setRemainingLoanBalance}
+                    min={0} max={80000} step={500} prefix="$"
+                  />
+                  <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                    Set to $0 if your vehicle is paid off — only operating costs will be included.
+                  </p>
+
+                  {remainingLoanBalance > 0 && (
+                    <>
+                      <SelectInput
+                        label="Remaining Loan Term"
+                        value={remainingLoanTerm}
+                        onChange={setRemainingLoanTerm}
+                        options={loanTermOptions}
+                      />
+
+                      <SliderInput
+                        label="Current Interest Rate"
+                        value={rate} onChange={setRate}
+                        min={0} max={25} step={0.1} suffix="%"
+                        inputMin={0} inputMax={25}
+                      />
+
+                      <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
+                        <span className="text-sm text-[var(--text-muted)]">Monthly loan payment</span>
+                        <span className="font-display font-bold text-white text-lg">{formatCurrency(results.monthlyPayment)}</span>
+                      </div>
+                    </>
+                  )}
+
+                  <SelectInput
+                    label="Years to Keep Vehicle"
+                    value={ownershipYears}
+                    onChange={setOwnershipYears}
+                    options={ownershipOptions}
+                  />
                 </>
               )}
 
@@ -2263,8 +2346,8 @@ export default function TCOCalculator() {
                   Your results
                 </p>
                 <ResultCard
-                  label={financeMode === 'lease' ? 'Monthly Lease Payment' : 'Monthly Payment'}
-                  value={financeMode === 'lease' ? leaseResults.monthlyPayment : results.monthlyPayment}
+                  label={financeMode === 'lease' ? 'Monthly Lease Payment' : financeMode === 'own' ? (remainingLoanBalance > 0 ? 'Monthly Loan Payment' : 'Monthly Operating Cost') : 'Monthly Payment'}
+                  value={financeMode === 'lease' ? leaseResults.monthlyPayment : financeMode === 'own' ? (remainingLoanBalance > 0 ? results.monthlyPayment : Math.round(annualOperatingCost / 12)) : results.monthlyPayment}
                   highlight delay={0} />
               </div>
 
@@ -2275,6 +2358,20 @@ export default function TCOCalculator() {
                       <ResultCard label="Total Lease Cost"     value={leaseResults.totalLeaseCost}   delay={60}  />
                       <ResultCard label="Residual Value"       value={leaseResults.residualValue}     delay={120} />
                       <ResultCard label="Lease Cost Per Year"  value={leaseResults.annualLeaseCost}  delay={180} />
+                    </>
+                  ) : financeMode === 'own' ? (
+                    <>
+                      {remainingLoanBalance > 0 && (
+                        <>
+                          <ResultCard
+                            label={results.ownershipShorterThanLoan ? `Loan Interest (${ownershipYears}-yr)` : 'Total Remaining Interest'}
+                            value={results.interestThroughOwnership}
+                            delay={60}
+                          />
+                          <ResultCard label="Total Left on Loan"  value={results.totalCostOfLoan}  delay={120} />
+                        </>
+                      )}
+                      <ResultCard label="Annual Operating Cost"  value={annualOperatingCost}  delay={180} />
                     </>
                   ) : (
                     <>
@@ -2299,12 +2396,12 @@ export default function TCOCalculator() {
                 </p>
                 <div className="flex flex-col gap-2 text-sm">
                   {[
-                    { label: financeMode === 'lease' ? 'Lease payments' : 'Loan payments', value: forecastRows[0]?.loanCost ?? (financeMode === 'lease' ? leaseResults.annualLeaseCost : results.trueAnnualCost) },
+                    { label: financeMode === 'lease' ? 'Lease payments' : financeMode === 'own' ? (remainingLoanBalance > 0 ? 'Remaining loan payments' : null) : 'Loan payments', value: forecastRows[0]?.loanCost ?? (financeMode === 'lease' ? leaseResults.annualLeaseCost : results.trueAnnualCost) },
                     { label: 'Insurance',              value: forecastRows[0]?.insurance    ?? annualInsurance },
                     { label: (modelData?.is_ev || VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.isEV) ? 'Charging' : 'Fuel', value: annualFuel },
                     { label: 'Maintenance & repairs',  value: forecastRows[0]?.maintenance  ?? annualMaintenance },
                     { label: 'Registration & fees',    value: forecastRows[0]?.registration ?? annualRegistration },
-                  ].map(({ label, value }) => (
+                  ].filter(({ label }) => label !== null).map(({ label, value }) => (
                     <div key={label} className="flex justify-between items-center">
                       <span className="text-[var(--text-muted)]">{label}</span>
                       <span className="text-white font-medium">{formatCurrency(value)}</span>
@@ -2365,7 +2462,9 @@ export default function TCOCalculator() {
                   })()}
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-[var(--text-muted)]">
-                      Total over {financeMode === 'lease' ? `${leaseTerm} mo lease` : `${ownershipYears} yr${ownershipYears !== 1 ? 's' : ''}`}
+                      {financeMode === 'own'
+                        ? `Total cost to keep ${ownershipYears} yr${ownershipYears !== 1 ? 's' : ''}`
+                        : `Total over ${financeMode === 'lease' ? `${leaseTerm} mo lease` : `${ownershipYears} yr${ownershipYears !== 1 ? 's' : ''}`}`}
                     </span>
                     <span className="text-[var(--text-muted)] font-medium">
                       {formatCurrency(financeMode === 'lease'
@@ -2432,6 +2531,21 @@ export default function TCOCalculator() {
                     <span className="text-white font-semibold">all-in Year 1 cost is {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}</span>{' '}
                     — or {formatCurrency(leaseResults.totalLeaseCost + annualOperatingCost * (leaseTerm / 12))} over the full lease.
                   </>
+                ) : financeMode === 'own' ? (
+                  <>
+                    {remainingLoanBalance > 0 ? (
+                      <>
+                        You still owe <span className="text-white font-semibold">{formatCurrency(remainingLoanBalance)}</span> at{' '}
+                        {rate}% — that&apos;s <span className="text-white font-semibold">{formatCurrency(results.monthlyPayment)}/mo</span> for{' '}
+                        {remainingLoanTerm} months. Add{' '}
+                      </>
+                    ) : (
+                      <>Your vehicle is paid off. Add </>
+                    )}
+                    insurance, fuel, maintenance, and fees and your{' '}
+                    <span className="text-white font-semibold">all-in Year 1 cost is {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}</span>{' '}
+                    — or {formatCurrency(forecastRows.reduce((s, r) => s + r.total, 0))} to keep it for {ownershipYears} more year{ownershipYears !== 1 ? 's' : ''}.
+                  </>
                 ) : (
                   <>
                     Over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}, loan payments total{' '}
@@ -2448,7 +2562,7 @@ export default function TCOCalculator() {
               </div>
 
               {/* ── Net Cost of Ownership — detailed mode only ── */}
-              {!simpleMode && financeMode === 'buy' && futureResaleValue != null && netCostOfOwnership != null && (
+              {!simpleMode && (financeMode === 'buy' || financeMode === 'own') && futureResaleValue != null && netCostOfOwnership != null && (
                 <div className="rounded-xl border p-4 flex flex-col gap-3"
                   style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">

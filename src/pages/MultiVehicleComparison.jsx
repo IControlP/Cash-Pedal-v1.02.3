@@ -338,6 +338,13 @@ export default function MultiVehicleComparison() {
         : results[i].totalCostOfLoan
     ), [vehicles, results])
 
+  // True when some vehicles have full TCO data and others have loan-only data
+  const hasMixedCostData = useMemo(() =>
+    vehicles.some(v => v.totalOwnershipCost != null) &&
+    vehicles.some(v => v.totalOwnershipCost == null),
+    [vehicles]
+  )
+
   function updateVehicle(i, v) {
     setVehicles(vs => vs.map((orig, idx) => idx === i ? v : orig))
   }
@@ -586,6 +593,12 @@ export default function MultiVehicleComparison() {
               <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-4">
                 Rankings — your selected parameters
               </p>
+              {hasMixedCostData && activeRankParams.totalOutOfPocket && (
+                <div className="mb-4 px-3 py-2.5 rounded-lg text-xs text-amber-300 leading-relaxed"
+                  style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
+                  <span className="font-bold">⚠ Heads up:</span> Some vehicles were imported from the TCO Calculator (insurance + fuel + maintenance included) while others were entered manually (loan cost only). The "Total Out-of-Pocket" ranking may not be directly comparable — run manually-entered vehicles through TCO first for a fair comparison.
+                </div>
+              )}
               <table className="w-full text-sm" style={{ minWidth: `${vehicles.length * 140 + 180}px` }}>
                 <thead>
                   <tr>

@@ -492,7 +492,8 @@ export default function CarBuyingChecklist() {
               </div>
             </div>
             <p className="text-xs text-[var(--text-muted)] mt-3">
-              Reduction = all "not done" costs + 50% of "unknown" costs. Use this as your negotiation floor.
+              Reduction = all "not done" costs + 50% of "unknown" costs. Use this as your negotiation floor — sellers typically concede 50–75% of documented deferred maintenance costs, so your realistic target range is{' '}
+              <span className="text-white font-semibold">{fmt(Math.round(negotiationSavings * 0.5))}–{fmt(Math.round(negotiationSavings * 0.75))}</span>.
             </p>
 
             {/* Critical item call-outs */}
@@ -532,7 +533,8 @@ export default function CarBuyingChecklist() {
                     <span className="text-red-400 font-semibold">Negotiation tip:</span>{' '}
                     Lead with the critical items above — they represent{' '}
                     <span className="text-white font-semibold">{fmt(criticalTotal)}</span> in deferred costs you'll face as the new owner.
-                    Ask the seller to address them before purchase or reduce the asking price accordingly.
+                    Sellers typically concede <span className="text-white font-semibold">50–75%</span> of documented repair costs.
+                    Request a price reduction of <span className="text-white font-semibold">{fmt(Math.round(criticalTotal * 0.5))}&ndash;{fmt(Math.round(criticalTotal * 0.75))}</span> or ask the seller to complete the repairs before closing.
                   </p>
                 </div>
               )
@@ -540,7 +542,7 @@ export default function CarBuyingChecklist() {
           </div>
 
           {/* Pre-purchase inspection callout */}
-          <div className="rounded-xl p-4 mb-6 flex items-start gap-3 border"
+          <div className="rounded-xl p-4 mb-4 flex items-start gap-3 border"
             style={{ borderColor: 'rgba(200,255,0,0.25)', background: 'rgba(200,255,0,0.04)' }}>
             <span className="text-lg shrink-0">🔧</span>
             <div>
@@ -550,6 +552,26 @@ export default function CarBuyingChecklist() {
                 the vehicle before you buy. A PPI can reveal hidden issues not visible in a test drive and gives you
                 additional negotiation leverage on top of the maintenance items below.
               </p>
+            </div>
+          </div>
+
+          {/* NHTSA recall check */}
+          <div className="rounded-xl p-4 mb-6 flex items-start gap-3 border"
+            style={{ borderColor: 'rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.04)' }}>
+            <span className="text-lg shrink-0">⚠️</span>
+            <div>
+              <p className="text-sm font-semibold text-white mb-1">Check for open safety recalls</p>
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-2">
+                NHTSA's free database covers all US recalls. Enter the 17-digit VIN to see any open safety recalls — unresolved recalls transfer to the new owner and can be costly or dangerous.
+              </p>
+              <a
+                href="https://www.nhtsa.gov/vehicle-safety/recalls#recalls-by-vin"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-300 transition-colors"
+              >
+                Check NHTSA recall database →
+              </a>
             </div>
           </div>
 

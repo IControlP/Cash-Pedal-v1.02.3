@@ -93,10 +93,25 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
   }
 }
 
-// Rough effective take-home estimate for a given gross annual salary.
-// Uses simplified federal brackets + FICA + 4% avg state income tax.
+// Approximate effective state income tax rates (blended, moderate earner ~$50k–$120k).
+// States with 0% have no income tax. Used for take-home estimation only.
+const STATE_INCOME_TAX_RATE = {
+  AK: 0, FL: 0, NV: 0, NH: 0, SD: 0, TN: 0, TX: 0, WA: 0, WY: 0,
+  CO: 0.044, IL: 0.0495, IN: 0.032, KY: 0.045, MI: 0.0425,
+  NC: 0.0525, ND: 0.022, OH: 0.032, PA: 0.031, UT: 0.0485,
+  AL: 0.040, AZ: 0.025, AR: 0.049, DE: 0.052, GA: 0.055,
+  HI: 0.066, ID: 0.058, IA: 0.057, KS: 0.053, LA: 0.042,
+  ME: 0.065, MD: 0.052, MA: 0.050, MN: 0.065, MS: 0.047,
+  MO: 0.054, MT: 0.064, NE: 0.068, NJ: 0.065, NM: 0.051,
+  NY: 0.065, OK: 0.045, OR: 0.086, RI: 0.048, SC: 0.065,
+  VT: 0.066, VA: 0.058, WI: 0.053, WV: 0.065,
+  CA: 0.083, CT: 0.055, DC: 0.077,
+}
+
+// Rough effective take-home estimate for a given gross annual salary and state.
+// Uses simplified federal brackets + FICA + state-specific income tax rate.
 // Intended for ballpark context only, not tax advice.
-function estimateMonthlyTakeHome(grossAnnual) {
+function estimateMonthlyTakeHome(grossAnnual, state = null) {
   let federalEff
   if (grossAnnual <= 30000)       federalEff = 0.08
   else if (grossAnnual <= 55000)  federalEff = 0.12
@@ -104,7 +119,10 @@ function estimateMonthlyTakeHome(grossAnnual) {
   else if (grossAnnual <= 140000) federalEff = 0.21
   else if (grossAnnual <= 200000) federalEff = 0.24
   else                            federalEff = 0.28
-  const totalRate = federalEff + 0.0765 + 0.04  // federal + FICA + avg state
+  const stateRate = state && STATE_INCOME_TAX_RATE[state] != null
+    ? STATE_INCOME_TAX_RATE[state]
+    : 0.04  // national average fallback
+  const totalRate = federalEff + 0.0765 + stateRate  // federal + FICA + state
   return Math.round((grossAnnual * (1 - totalRate)) / 12)
 }
 
@@ -399,37 +417,47 @@ export default function SalaryCalculator() {
     if (!affordableResults) return []
     const maxPrice = affordableResults.aggressive || 0
     if (maxPrice <= 0) return []
+    const YEARS_TO_SHOW = 3  // latest year + 2 used model years per model
     const entries = []
     Object.entries(VEHICLES).forEach(([make, models]) => {
       Object.entries(models).forEach(([model, data]) => {
-        const years = Object.keys(data.trims_by_year || {}).sort((a, b) => Number(b) - Number(a))
-        if (!years.length) return
-        const latestYear = years[0]
-        const trims = data.trims_by_year[latestYear]
-        const basePrice = Math.min(...Object.values(trims))
-        if (basePrice > maxPrice || basePrice <= 0) return
-        const category = classifyCarCategory(make, data.type, basePrice)
-        let tier = 'aggressive'
-        if (basePrice <= (affordableResults.conservative || 0)) tier = 'conservative'
-        else if (basePrice <= (affordableResults.comfortable || 0)) tier = 'comfortable'
-        const ops = estimateBasicMonthlyCosts(basePrice, userState || null, annualMiles)
-        const annualFinancing = Math.round(monthlyPayment(basePrice * 0.80, rate, 60) * 12)
-        const annualOperating = ops.total * 12
-        entries.push({
-          make, model, type: data.type, is_ev: data.is_ev,
-          basePrice, year: latestYear, category, tier,
-          annualFinancing,
-          annualFuel: ops.fuel * 12,
-          annualInsurance: ops.insurance * 12,
-          annualMaintenance: ops.maintenance * 12,
-          annualRegistration: ops.registration * 12,
-          annualOperating,
-          annualTotal: annualFinancing + annualOperating,
-        })
+        const allYears = Object.keys(data.trims_by_year || {}).sort((a, b) => Number(b) - Number(a))
+        if (!allYears.length) return
+        const latestYear = allYears[0]
+        let addedForModel = 0
+        for (const year of allYears) {
+          if (addedForModel >= YEARS_TO_SHOW) break
+          const trims = data.trims_by_year[year]
+          const basePrice = Math.min(...Object.values(trims))
+          if (basePrice > maxPrice || basePrice <= 0) continue
+          const isUsed = year !== latestYear
+          const category = classifyCarCategory(make, data.type, basePrice)
+          let tier = 'aggressive'
+          if (basePrice <= (affordableResults.conservative || 0)) tier = 'conservative'
+          else if (basePrice <= (affordableResults.comfortable || 0)) tier = 'comfortable'
+          const ops = estimateBasicMonthlyCosts(basePrice, userState || null, annualMiles)
+          const downFraction = downPct / 100
+          const moPayment = monthlyPayment(basePrice * (1 - downFraction), rate, loanTerm)
+          const annualFinancing = Math.round(moPayment * 12)
+          const annualOperating = ops.total * 12
+          entries.push({
+            make, model, type: data.type, is_ev: data.is_ev,
+            basePrice, year, category, tier, isUsed,
+            monthlyLoan: Math.round(moPayment),
+            annualFinancing,
+            annualFuel: ops.fuel * 12,
+            annualInsurance: ops.insurance * 12,
+            annualMaintenance: ops.maintenance * 12,
+            annualRegistration: ops.registration * 12,
+            annualOperating,
+            annualTotal: annualFinancing + annualOperating,
+          })
+          addedForModel++
+        }
       })
     })
     return entries.sort((a, b) => b.basePrice - a.basePrice)
-  }, [affordableResults, userState, annualMiles, rate])
+  }, [affordableResults, userState, annualMiles, rate, downPct, loanTerm])
 
   const filteredVehicles = useMemo(() => {
     if (carFilterCategory === 'all') return matchedVehicles
@@ -843,6 +871,9 @@ export default function SalaryCalculator() {
                     <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
                       <span>0%</span><span className="font-semibold text-[var(--accent)]">20% recommended</span><span>100%</span>
                     </div>
+                    {downPct < 20 && (
+                      <p className="text-xs text-yellow-500">⚠ The 20/4/10 rule recommends 20% down to build equity and avoid being underwater on your loan.</p>
+                    )}
                   </div>
 
                   {/* Loan term */}
@@ -1040,7 +1071,7 @@ export default function SalaryCalculator() {
               {/* Take-home income context */}
               {(() => {
                 const grossConservative = results.conservative
-                const takeHome = estimateMonthlyTakeHome(grossConservative)
+                const takeHome = estimateMonthlyTakeHome(grossConservative, userState || null)
                 const vehiclePct = Math.round((results.totalMonthly / takeHome) * 100)
                 return (
                   <div className="rounded-xl border border-[var(--border)] p-4 text-sm"
@@ -1065,7 +1096,7 @@ export default function SalaryCalculator() {
                       </div>
                     </div>
                     <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
-                      Take-home estimate uses federal brackets + FICA + 4% avg state tax — actual varies by state, filing status &amp; deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
+                      Take-home estimate uses federal brackets + FICA + {userState && STATE_INCOME_TAX_RATE[userState] != null ? `${(STATE_INCOME_TAX_RATE[userState] * 100).toFixed(1)}% ${userState}` : '4% avg'} state income tax — actual varies by filing status &amp; deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
                     </p>
                   </div>
                 )
@@ -1248,26 +1279,37 @@ export default function SalaryCalculator() {
                       }[v.tier]
                       return (
                         <div
-                          key={`${v.make}-${v.model}`}
+                          key={`${v.make}-${v.model}-${v.year}`}
                           className="card p-3 flex flex-col gap-1 hover:border-[var(--accent)] transition-all"
                         >
                           <div className="flex items-start justify-between gap-1 mb-0.5">
                             <p className="text-[11px] font-semibold text-[var(--text-muted)] leading-tight">{v.make}</p>
-                            {v.is_ev && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
-                                style={{ background: 'rgba(200,255,0,0.15)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.3)' }}>
-                                EV
-                              </span>
-                            )}
+                            <div className="flex items-center gap-1 shrink-0">
+                              {v.isUsed && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                                  style={{ background: 'rgba(96,165,250,0.15)', color: '#60a5fa', border: '1px solid rgba(96,165,250,0.3)' }}>
+                                  Used
+                                </span>
+                              )}
+                              {v.is_ev && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                                  style={{ background: 'rgba(200,255,0,0.15)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.3)' }}>
+                                  EV
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <p className="text-sm font-bold text-white leading-tight">{v.model}</p>
-                          <p className="text-[11px] text-[var(--text-muted)] capitalize">{v.type.replace('_', ' ')}</p>
+                          <p className="text-[11px] text-[var(--text-muted)]">{v.year} · <span className="capitalize">{v.type.replace('_', ' ')}</span></p>
                           <p className="font-display font-bold text-white tabular-nums text-base mt-1.5">{fmt(v.basePrice)}</p>
-                          <span className={`text-[10px] font-semibold ${tierStyles.color} mb-1`}>{tierStyles.label}</span>
+                          <span className={`text-[10px] font-semibold ${tierStyles.color}`}>{tierStyles.label}</span>
+                          <p className="text-[11px] font-bold tabular-nums mb-1" style={{ color: 'var(--accent)' }}>
+                            ~{fmt(v.monthlyLoan)}/mo loan
+                          </p>
                           <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1">
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Est. annual costs</p>
                             {[
-                              { label: `Financing (80% · 5yr · ${rate}%)`, val: v.annualFinancing },
+                              { label: `Financing (${100-downPct}% · ${loanTerm/12}yr · ${rate}%)`, val: v.annualFinancing },
                               { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.annualFuel },
                               { label: 'Insurance', val: v.annualInsurance },
                               { label: 'Maintenance', val: v.annualMaintenance },
@@ -1299,6 +1341,7 @@ export default function SalaryCalculator() {
                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-400 inline-block" /> Conservative ≤ {fmt(affordableResults.conservative)}</span>
                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[var(--accent)] inline-block" /> Comfortable ≤ {fmt(affordableResults.comfortable)}</span>
                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> Stretched ≤ {fmt(affordableResults.aggressive)}</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" /> Used (prior model years)</span>
                 <span className="opacity-60">Base MSRP only · final price varies by trim, dealer, and region</span>
               </div>
             </div>

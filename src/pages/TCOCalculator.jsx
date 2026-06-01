@@ -1068,9 +1068,12 @@ export default function TCOCalculator() {
       const fuelOverride = (modelData.is_ev && customOverride === null)
         ? getEffectiveElecRate(resolvedState, chargingStyle)
         : customOverride
-      setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel)))
+      // When MPG data is missing from the database, use the segment-average rather than a flat 28
+      const seg = classifySegment(selMake||'', selModel||'')
+      const segCatMpg = VEHICLE_CATEGORIES.find(c => c.segment === seg)?.mpg ?? 28
+      const effectiveMpg = modelData.mpg?.combined ?? segCatMpg
+      setAnnualFuel(computeAnnualFuel(modelData.is_ev, effectiveMpg, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel)))
       if (detailedMode) {
-        const seg = classifySegment(selMake||'', selModel||'')
         const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake)
         setAnnualMaintenance(services.reduce((s, x) => s + x.annual, 0))
       } else {
@@ -1333,6 +1336,10 @@ export default function TCOCalculator() {
   const catInfoForRender = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
   const effIsEV = modelData ? modelData.is_ev : (catInfoForRender?.isEV ?? false)
   const isPremium = !effIsEV && !!(selMake && requiresPremiumFuel(selMake, selModel))
+  // Effective MPG for display and inline fuel-override resets: prefer database value, fall back to segment avg, then category avg
+  const effectiveMpgForRender = modelData
+    ? (modelData.mpg?.combined ?? (VEHICLE_CATEGORIES.find(c => c.segment === classifySegment(selMake||'', selModel||''))?.mpg ?? 28))
+    : (catInfoForRender?.mpg ?? 28)
 
   // Whether the detailed results are currently blocked by the paywall
   const isDetailBlocked = !isSubscribed && detailedCalcCount > FREE_DETAILED_LIMIT
@@ -2164,8 +2171,9 @@ export default function TCOCalculator() {
                       : (() => {
                           const catInfo = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
                           const effIsEV = modelData ? modelData.is_ev : (catInfo?.isEV ?? false)
-                          const effMpg  = modelData ? (modelData.mpg?.combined ?? 28) : (catInfo?.mpg ?? 28)
-                          const mpgNote = effIsEV ? ' · EV' : ` · ${effMpg} MPG${catInfo && !modelData ? ' avg' : ''}`
+                          const mpgIsEstimated = modelData && !modelData.mpg?.combined
+                          const effMpg  = modelData ? (modelData.mpg?.combined ?? (VEHICLE_CATEGORIES.find(c => c.segment === classifySegment(selMake||'', selModel||''))?.mpg ?? 28)) : (catInfo?.mpg ?? 28)
+                          const mpgNote = effIsEV ? ' · EV' : ` · ${effMpg} MPG${(catInfo && !modelData) || mpgIsEstimated ? ' est.' : ''}`
                           return `${detailedMode ? 'Detailed estimates' : 'Estimated'} for ${resolvedState} · ${annualMileage.toLocaleString()} mi/yr${mpgNote}.`
                         })()}
                   </p>
@@ -2440,7 +2448,7 @@ export default function TCOCalculator() {
                             const defaultRate = effIsEV ? getEffectiveElecRate(resolvedState, chargingStyle) : null
                             setAnnualFuel(computeAnnualFuel(
                               effIsEV,
-                              modelData?.mpg?.combined ?? (catInfoForRender?.mpg ?? 28),
+                              effectiveMpgForRender,
                               modelData?.mpg?.mpge_combined ?? (catInfoForRender?.mpge ?? null),
                               resolvedState,
                               annualMileage,
@@ -2469,7 +2477,7 @@ export default function TCOCalculator() {
                             if (!isNaN(rate)) {
                               setAnnualFuel(computeAnnualFuel(
                                 effIsEV,
-                                modelData?.mpg?.combined ?? (catInfoForRender?.mpg ?? 28),
+                                effectiveMpgForRender,
                                 modelData?.mpg?.mpge_combined ?? (catInfoForRender?.mpge ?? null),
                                 resolvedState,
                                 annualMileage,

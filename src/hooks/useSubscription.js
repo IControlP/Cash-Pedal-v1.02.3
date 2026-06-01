@@ -42,6 +42,19 @@ export function useSubscription() {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Re-verify on window focus so a lapsed pass is caught without requiring a page reload
+  useEffect(() => {
+    function onFocus() {
+      const email      = localStorage.getItem(LS_SUB_EMAIL)
+      const verifiedAt = localStorage.getItem(LS_SUB_VERIFIED_AT)
+      if (!email) return
+      const stale = !verifiedAt || (Date.now() - parseInt(verifiedAt, 10)) > VERIFY_INTERVAL_MS
+      if (stale) verifySubscription(email).catch(() => {})
+    }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   async function verifySubscription(email) {
     const clean = (email || '').trim().toLowerCase()
     if (!clean) return { active: false }

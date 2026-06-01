@@ -143,13 +143,13 @@ export function estimateCurrentValue(originalPrice, make, model, ageYears, curre
   const cap = SEGMENT_MAX_DEPR[segment] ?? 0.80
 
   // Mileage adjustment: compare actual miles vs. FHWA 2024 average of 13,500 mi/yr.
-  // Each 10 % deviation from average shifts depreciation by ~2.5 %.
-  // Capped at +10 % extra depreciation (very high mileage) / -8 % (very low).
+  // Each 10 % deviation from average shifts depreciation by ~3.5 %.
+  // Capped at +20 % extra depreciation (very high mileage) / -15 % (very low).
   let mileageFactor = 1.0
   if (currentMileage != null && ageYears > 0) {
     const expectedMiles = ageYears * 13500
     const mileageRatio  = currentMileage / expectedMiles
-    mileageFactor = Math.max(0.92, Math.min(1.10, 1 + (mileageRatio - 1) * 0.25))
+    mileageFactor = Math.max(0.85, Math.min(1.20, 1 + (mileageRatio - 1) * 0.35))
   }
 
   const finalRate = Math.min(baseRate * adjBrand * mileageFactor, cap)
@@ -243,7 +243,7 @@ export function estimateInsurance(purchasePrice, make, model, modelYear, state, 
   // ageMult captures the additional liability/frequency discount on older vehicles:
   // ~1.5%/yr reduction, floored at 0.85 for vehicles 10+ years old.
   const ageMult  = ageYears > 0 ? Math.max(0.85, 1 - ageYears * 0.015) : 1.0
-  return Math.round((stateBase * valueMult * brandMult * segMult * ageMult * multiCarMult) / 50) * 50
+  return Math.round((stateBase * valueMult * brandMult * segMult * ageMult * multiCarMult) / 25) * 25
 }
 
 // ── Maintenance ──────────────────────────────────────────

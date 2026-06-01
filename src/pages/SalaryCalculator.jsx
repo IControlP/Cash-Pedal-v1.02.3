@@ -57,7 +57,9 @@ function estimateBasicMonthlyCosts(price, state, annualMiles = DEFAULT_ANNUAL_MI
   }
 
   // State provided: use shared utility functions for insurance, fuel, registration
-  const fuel = Math.round(computeAnnualFuel(false, 28, null, state, annualMiles) / 12)
+  // MPG varies meaningfully by price tier (luxury sedans ~22, economy ~36)
+  const mpgByTier = { luxury: 22, premium: 26, standard: 30, economy: 36 }
+  const fuel = Math.round(computeAnnualFuel(false, mpgByTier[tierKey], null, state, annualMiles) / 12)
   const insurance = Math.round(estimateInsurance(price, null, null, null, state) / 12)
   const registration = Math.round(computeAnnualRegistration(state, price) / 12)
   return { fuel, insurance, maintenance, registration, total: fuel + insurance + maintenance + registration, tier: tierLabel[tierKey] }

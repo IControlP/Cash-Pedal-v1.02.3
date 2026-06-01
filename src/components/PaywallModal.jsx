@@ -150,13 +150,20 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
           )
         ) : (
           <div className="flex flex-col gap-3 mb-4">
-            <input
-              type="email"
-              className="input-field text-sm"
-              placeholder="Email (optional — prefills checkout)"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-            />
+            <div className="flex flex-col gap-1">
+              <input
+                type="email"
+                className="input-field text-sm"
+                placeholder="your@email.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+              />
+              <p className="text-xs text-[var(--text-muted)] px-1">
+                {email.trim()
+                  ? <span style={{ color: 'var(--accent)' }}>✓ You can restore access on any device with this email.</span>
+                  : 'Add your email to restore access later or use on another device.'}
+              </p>
+            </div>
             {checkoutErr && <p className="text-xs text-red-400">{checkoutErr}</p>}
             <button
               onClick={handleCheckout}

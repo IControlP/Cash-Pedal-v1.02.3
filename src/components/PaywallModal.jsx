@@ -22,14 +22,22 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
 
   const { verifySubscription } = useSubscription()
 
+  function isValidEmail(val) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim())
+  }
+
   async function handleCheckout() {
     setCheckoutErr('')
+    if (email.trim() && !isValidEmail(email)) {
+      setCheckoutErr('Please enter a valid email address (or leave it blank).')
+      return
+    }
     setLoading(true)
     try {
       const res  = await fetch('/api/create-checkout-session', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ passType: 'one_time', email: email || undefined, cancelPath }),
+        body:    JSON.stringify({ passType: 'one_time', email: email.trim() || undefined, cancelPath }),
       })
       const data = await res.json()
       if (data.url) {

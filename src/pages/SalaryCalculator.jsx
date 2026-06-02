@@ -428,7 +428,7 @@ export default function SalaryCalculator() {
         })
       })
     })
-    return entries.sort((a, b) => b.basePrice - a.basePrice)
+    return entries.sort((a, b) => a.annualTotal - b.annualTotal)
   }, [affordableResults, userState, annualMiles, rate])
 
   const filteredVehicles = useMemo(() => {
@@ -843,6 +843,9 @@ export default function SalaryCalculator() {
                     <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
                       <span>0%</span><span className="font-semibold text-[var(--accent)]">20% recommended</span><span>100%</span>
                     </div>
+                    {downPct < 20 && (
+                      <p className="text-xs text-yellow-500">⚠ The 20/4/10 rule recommends at least 20% down to avoid negative equity early in the loan.</p>
+                    )}
                   </div>
 
                   {/* Loan term */}
@@ -893,15 +896,15 @@ export default function SalaryCalculator() {
                   <span className="text-sm font-bold text-white">{annualMiles.toLocaleString()} mi/yr</span>
                 </div>
                 <input
-                  type="range" min={3000} max={30000} step={1000}
+                  type="range" min={3000} max={40000} step={1000}
                   value={annualMiles}
                   onChange={e => setAnnualMiles(Number(e.target.value))}
-                  style={{ background: `linear-gradient(to right, var(--accent) ${((annualMiles - 3000) / 27000) * 100}%, var(--border) ${((annualMiles - 3000) / 27000) * 100}%)` }}
+                  style={{ background: `linear-gradient(to right, var(--accent) ${((annualMiles - 3000) / 37000) * 100}%, var(--border) ${((annualMiles - 3000) / 37000) * 100}%)` }}
                 />
                 <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
                   <span>3,000</span>
                   <span className="font-semibold text-[var(--accent)]">13,500 avg</span>
-                  <span>30,000</span>
+                  <span>40,000</span>
                 </div>
               </div>
 
@@ -1199,7 +1202,7 @@ export default function SalaryCalculator() {
                     Cars within your budget
                   </h2>
                   <p className="text-xs text-[var(--text-muted)] mt-1">
-                    Base MSRP fits your {downPct}% down · {loanTerm}-mo loan · {rate}% APR · includes operating costs
+                    Sorted by lowest annual cost · {downPct}% down · {loanTerm}-mo loan · {rate}% APR · includes operating costs
                     {userState ? ` · ${userState} rates` : ''}
                   </p>
                 </div>
@@ -1289,7 +1292,7 @@ export default function SalaryCalculator() {
                   </div>
                   {filteredVehicles.length > 20 && (
                     <p className="text-xs text-[var(--text-muted)] text-center mt-4">
-                      Showing 20 of {filteredVehicles.length} matches — filter by category or adjust your salary to refine.
+                      Showing 20 lowest-cost of {filteredVehicles.length} matches — filter by category or adjust your salary to refine results.
                     </p>
                   )}
                 </>

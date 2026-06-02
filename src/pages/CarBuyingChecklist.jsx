@@ -426,6 +426,44 @@ export default function CarBuyingChecklist() {
             </button>
           </div>
 
+          {/* Climate-specific inspection tips */}
+          {climateFlags.length > 0 && (
+            <div className="flex flex-col gap-2 mb-6">
+              {(climateFlags.includes('snow') || climateFlags.includes('coastal')) && (
+                <div className="rounded-xl p-4 flex items-start gap-3 border"
+                  style={{ borderColor: 'rgba(96,165,250,0.3)', background: 'rgba(96,165,250,0.05)' }}>
+                  <span className="shrink-0 text-blue-400 text-base">❄</span>
+                  <div>
+                    <p className="text-xs font-semibold text-blue-400 mb-1">
+                      {climateFlags.includes('snow') && climateFlags.includes('coastal')
+                        ? 'Snow Belt + Coastal Inspection Priority'
+                        : climateFlags.includes('snow') ? 'Snow Belt Inspection Priority' : 'Coastal Inspection Priority'}
+                    </p>
+                    <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                      Inspect the <span className="text-white">undercarriage, wheel wells, frame rails, and exhaust system</span> closely for rust and salt damage.
+                      Check struts, brake lines, and the subframe — rust here is expensive and often not visible until a lift.
+                      {climateFlags.includes('coastal') && ' Coastal humidity also accelerates corrosion on brake rotors and suspension bushings.'}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {climateFlags.includes('hot') && (
+                <div className="rounded-xl p-4 flex items-start gap-3 border"
+                  style={{ borderColor: 'rgba(251,146,60,0.3)', background: 'rgba(251,146,60,0.05)' }}>
+                  <span className="shrink-0 text-orange-400 text-base">☀</span>
+                  <div>
+                    <p className="text-xs font-semibold text-orange-400 mb-1">Hot Climate Inspection Priority</p>
+                    <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                      Test the <span className="text-white">AC thoroughly</span> — recharging or compressor replacement runs $150–$1,500+.
+                      Check rubber seals, hoses, and belts for heat-cracking. For EVs and hybrids,
+                      ask about <span className="text-white">battery health</span>; sustained heat is the #1 degrader of lithium-ion capacity.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Price range card */}
           {priceRange && (
             <div className="rounded-xl p-5 mb-6 border" style={{ background: 'rgba(200,255,0,0.03)', borderColor: 'rgba(200,255,0,0.15)' }}>
@@ -600,7 +638,10 @@ export default function CarBuyingChecklist() {
                                 {item.name}
                               </span>
                               {item.critical && (
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/30">
+                                <span
+                                  title="Safety or high-cost item — confirm this before buying, or negotiate a price reduction"
+                                  className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/30 cursor-help"
+                                >
                                   Critical
                                 </span>
                               )}
@@ -672,6 +713,10 @@ export default function CarBuyingChecklist() {
           {/* Seller questions tab */}
           {activeTab === 'questions' && (
             <div className="flex flex-col gap-4">
+              <div className="rounded-xl p-4 border border-[var(--border)] bg-[var(--surface)] text-xs text-[var(--text-muted)] leading-relaxed">
+                <span className="font-semibold text-white">Red flag signals to watch for: </span>
+                evasive or inconsistent answers, "I don't know" on basic maintenance questions, answers that contradict the odometer or title, and reluctance to allow a pre-purchase inspection. Document every answer — it becomes negotiation leverage.
+              </div>
               {allSellerQuestions.map(section => (
                 <div key={section.category} className="card">
                   <div className="flex items-center gap-3 mb-4">

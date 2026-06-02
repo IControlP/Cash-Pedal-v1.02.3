@@ -363,11 +363,19 @@ export default function CarSurvey() {
           </div>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-4 anim-5">
-            <Link to="/tco" className="btn-primary flex-1 justify-center py-4">
-              Calculate TCO for this vehicle →
-            </Link>
-            <button onClick={handleRestart} className="btn-ghost flex-1 justify-center py-4">
+          <div className="flex flex-col gap-3 anim-5">
+            <p className="text-xs text-[var(--text-muted)] text-center">
+              Next: check if your top picks fit your budget with the calculators below.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link to="/tco" className="btn-primary flex-1 justify-center py-3.5 text-sm">
+                Run TCO Calculator →
+              </Link>
+              <Link to="/salary" className="flex-1 justify-center py-3.5 text-sm font-semibold rounded-xl border border-[var(--border)] text-white hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors flex items-center text-center">
+                Check Required Salary →
+              </Link>
+            </div>
+            <button onClick={handleRestart} className="btn-ghost justify-center py-2.5 text-sm">
               Retake the survey
             </button>
           </div>

@@ -143,13 +143,15 @@ export function estimateCurrentValue(originalPrice, make, model, ageYears, curre
   const cap = SEGMENT_MAX_DEPR[segment] ?? 0.80
 
   // Mileage adjustment: compare actual miles vs. FHWA 2024 average of 13,500 mi/yr.
-  // Each 10 % deviation from average shifts depreciation by ~2.5 %.
-  // Capped at +10 % extra depreciation (very high mileage) / -8 % (very low).
+  // Each 10 % deviation from average shifts depreciation by ~2.8 %.
+  // Capped at +20 % extra depreciation (very high mileage) / -8 % (very low mileage).
+  // The wider upper cap (~1.40× average mileage triggers max) better reflects real-world
+  // market discounts on high-mileage vehicles (200k+ miles on a 10-yr-old car, etc.).
   let mileageFactor = 1.0
   if (currentMileage != null && ageYears > 0) {
     const expectedMiles = ageYears * 13500
     const mileageRatio  = currentMileage / expectedMiles
-    mileageFactor = Math.max(0.92, Math.min(1.10, 1 + (mileageRatio - 1) * 0.25))
+    mileageFactor = Math.max(0.92, Math.min(1.20, 1 + (mileageRatio - 1) * 0.28))
   }
 
   const finalRate = Math.min(baseRate * adjBrand * mileageFactor, cap)
@@ -167,12 +169,17 @@ export function estimateCurrentValue(originalPrice, make, model, ageYears, curre
 // National fallback (no state provided) — calibrated the same way.
 export const INSURANCE_BASE_RATE = 2870
 
-// Vehicle current-value brackets — comp/collision exposure scales with value,
-// but only modestly: a $60k car is ~18% more expensive to insure than a $30k car
-// for a given driver profile. Range narrowed from prior model to avoid over-stacking.
+// Vehicle current-value brackets — comp/collision exposure scales with value.
+// Expanded to 7 tiers for better accuracy on high-value vehicles where real-world
+// rates diverge more sharply (luxury repair costs, limited parts availability).
 export const INSURANCE_VALUE_BRACKETS = [
-  [0, 15000, 0.84], [15000, 25000, 0.93], [25000, 40000, 1.00],
-  [40000, 60000, 1.08], [60000, Infinity, 1.18],
+  [0,      15000,    0.84],
+  [15000,  25000,    0.93],
+  [25000,  40000,    1.00],
+  [40000,  60000,    1.08],
+  [60000,  85000,    1.18],
+  [85000,  120000,   1.28],
+  [120000, Infinity, 1.38],
 ]
 
 // Make-specific multipliers relative to Toyota (anchor = 1.00 at 0.92 effective).

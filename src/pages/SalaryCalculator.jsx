@@ -9,8 +9,26 @@ import {
   classifySegment, determineMaintTier,
   estimateInsurance, generateMaintenanceServices,
   computeAnnualFuel, computeAnnualRegistration,
-  STATE_INS_BASE,
+  STATE_INS_BASE, STATE_VEHICLE_SALES_TAX,
 } from '../utils/vehicleCosts'
+
+// Effective state income tax rates for take-home estimation (approximate flat effective rate).
+// Sources: Tax Foundation 2025 data, ITEP estimates at median income.
+const STATE_INCOME_TAX = {
+  // No state income tax
+  AK: 0,  FL: 0,  NV: 0,  NH: 0,  SD: 0,  TN: 0,  TX: 0,  WA: 0,  WY: 0,
+  // Flat rates
+  CO: 0.044, IL: 0.0495, IN: 0.032, KY: 0.045, MA: 0.05,
+  MI: 0.043, NC: 0.0525, PA: 0.031, UT: 0.0465,
+  // Graduated (effective rate at $60k–$80k income)
+  AL: 0.048, AR: 0.052, AZ: 0.025, CA: 0.085, CT: 0.065,
+  DC: 0.085, DE: 0.062, GA: 0.055, HI: 0.10,  ID: 0.055,
+  IA: 0.055, KS: 0.054, LA: 0.055, ME: 0.065, MD: 0.055,
+  MN: 0.085, MS: 0.048, MO: 0.052, MT: 0.065, NE: 0.062,
+  NJ: 0.075, NM: 0.055, NY: 0.085, ND: 0.022, OH: 0.036,
+  OK: 0.048, OR: 0.09,  RI: 0.055, SC: 0.065, VA: 0.055,
+  VT: 0.082, WI: 0.070, WV: 0.058,
+}
 
 function fmt(n) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
@@ -94,9 +112,9 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
 }
 
 // Rough effective take-home estimate for a given gross annual salary.
-// Uses simplified federal brackets + FICA + 4% avg state income tax.
+// Uses simplified federal brackets + FICA + state-specific income tax.
 // Intended for ballpark context only, not tax advice.
-function estimateMonthlyTakeHome(grossAnnual) {
+function estimateMonthlyTakeHome(grossAnnual, state = null) {
   let federalEff
   if (grossAnnual <= 30000)       federalEff = 0.08
   else if (grossAnnual <= 55000)  federalEff = 0.12
@@ -104,7 +122,8 @@ function estimateMonthlyTakeHome(grossAnnual) {
   else if (grossAnnual <= 140000) federalEff = 0.21
   else if (grossAnnual <= 200000) federalEff = 0.24
   else                            federalEff = 0.28
-  const totalRate = federalEff + 0.0765 + 0.04  // federal + FICA + avg state
+  const stateRate = state != null ? (STATE_INCOME_TAX[state] ?? 0.04) : 0.04
+  const totalRate = federalEff + 0.0765 + stateRate  // federal + FICA + state
   return Math.round((grossAnnual * (1 - totalRate)) / 12)
 }
 
@@ -366,15 +385,18 @@ export default function SalaryCalculator() {
     }
   }, [mode, vehiclePrice, downPct, loanTerm, rate, leaseMsrp, leaseDown, leaseMonthly, leaseTerm, proExtras, userState, annualMiles])
 
-  // Reverse mode: given a salary, solve for the max affordable vehicle price
+  // Reverse mode: given a salary, solve for the max affordable vehicle price.
+  // Sales tax is included in the loan amount because it's financed along with
+  // the vehicle purchase price in most states.
   const affordableResults = useMemo(() => {
     const s = Number(knownSalary)
     if (!s || s < 10000) return null
+    const salesTaxRate = STATE_VEHICLE_SALES_TAX[userState] ?? 0.0625
 
     function solve(thresholdPct) {
       const maxMonthly = (s * thresholdPct) / 12
       let estPrice = 30000
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 5; i++) {
         const ops = estimateBasicMonthlyCosts(estPrice, userState || null, annualMiles)
         const loanBudget = maxMonthly - ops.total
         if (loanBudget <= 0) return 0
@@ -383,7 +405,12 @@ export default function SalaryCalculator() {
         const factor = r > 0
           ? (Math.pow(1 + r, n) - 1) / (r * Math.pow(1 + r, n))
           : n
-        estPrice = Math.max(500, (loanBudget * factor) / (1 - downPct / 100))
+        // Loan = (price - down) + sales tax on price
+        // Monthly payment = (price * (1-downPct/100) + price * taxRate) * 1/factor
+        // → maxLoanAmt = loanBudget * factor
+        // → price * (1 - downPct/100 + taxRate) = maxLoanAmt
+        const maxLoanAmt = loanBudget * factor
+        estPrice = Math.max(500, maxLoanAmt / ((1 - downPct / 100) + salesTaxRate))
       }
       return Math.round(estPrice / 500) * 500
     }
@@ -1040,7 +1067,7 @@ export default function SalaryCalculator() {
               {/* Take-home income context */}
               {(() => {
                 const grossConservative = results.conservative
-                const takeHome = estimateMonthlyTakeHome(grossConservative)
+                const takeHome = estimateMonthlyTakeHome(grossConservative, userState || null)
                 const vehiclePct = Math.round((results.totalMonthly / takeHome) * 100)
                 return (
                   <div className="rounded-xl border border-[var(--border)] p-4 text-sm"
@@ -1065,7 +1092,7 @@ export default function SalaryCalculator() {
                       </div>
                     </div>
                     <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
-                      Take-home estimate uses federal brackets + FICA + 4% avg state tax — actual varies by state, filing status &amp; deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
+                      Take-home estimate uses federal brackets + FICA{userState ? ` + ${userState} state income tax` : ' + avg state tax'}. Actual varies by filing status and deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
                     </p>
                   </div>
                 )
@@ -1132,7 +1159,7 @@ export default function SalaryCalculator() {
                       </div>
                     ))}
                     <p className="text-[10px] text-[var(--text-muted)] leading-relaxed mt-1">
-                      Assumes {downPct}% down · {loanTerm}-month loan · {rate}% APR · includes estimated insurance, fuel, maintenance &amp; registration.
+                      Assumes {downPct}% down · {loanTerm}-month loan · {rate}% APR · includes sales tax &amp; estimated insurance, fuel, maintenance &amp; registration.
                       {userState ? ` ${userState} rates applied.` : ' National average rates.'}
                     </p>
                   </div>

@@ -1333,6 +1333,33 @@ export default function TCOCalculator() {
     ? totalOwnershipPaid + (financeMode === 'buy' ? safeDown : 0) - futureResaleValue
     : null
 
+  // Negative equity detection: years where remaining loan balance > estimated vehicle value.
+  // Only meaningful in buy mode with a loan, when we can estimate the depreciation curve.
+  const negativeEquityYears = useMemo(() => {
+    if (financeMode !== 'buy' || results.loanAmount <= 0) return []
+    const baseForDepr = origMsrp ?? price
+    const r = rate / 12 / 100
+    const M = results.monthlyPayment
+    const baseAge = carAge  // age at purchase (0 for new cars)
+    const years = []
+    for (let yr = 1; yr <= Math.min(ownershipYears, loanTerm / 12 + 1); yr++) {
+      const months = yr * 12
+      if (months > loanTerm) break  // loan fully paid, no more equity risk
+      let remainBal
+      if (r === 0) {
+        remainBal = Math.max(0, results.loanAmount - M * months)
+      } else {
+        remainBal = Math.max(0, results.loanAmount * Math.pow(1 + r, months)
+          - M * (Math.pow(1 + r, months) - 1) / r)
+      }
+      const vehicleVal = estimateCurrentValue(baseForDepr, selMake || null, selModel || null, baseAge + yr)
+      if (remainBal > vehicleVal) {
+        years.push({ yr, gap: Math.round(remainBal - vehicleVal), remainBal: Math.round(remainBal), vehicleVal: Math.round(vehicleVal) })
+      }
+    }
+    return years
+  }, [financeMode, results.loanAmount, results.monthlyPayment, rate, loanTerm, ownershipYears, origMsrp, price, carAge, selMake, selModel])
+
   // Derived EV flag, charging rate, and premium fuel flag — used across the render
   const catInfoForRender = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
   const effIsEV = modelData ? modelData.is_ev : (catInfoForRender?.isEV ?? false)
@@ -2963,6 +2990,34 @@ export default function TCOCalculator() {
                   </>
                 )}
               </div>
+
+              {/* ── Negative Equity Warning ── */}
+              {financeMode === 'buy' && negativeEquityYears.length > 0 && (
+                <div className="rounded-xl border p-4 flex flex-col gap-2"
+                  style={{ borderColor: 'rgba(248,113,113,0.3)', background: 'rgba(248,113,113,0.05)' }}>
+                  <div className="flex items-center gap-2">
+                    <span style={{ color: '#f87171' }}>⚠</span>
+                    <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#f87171' }}>
+                      Negative Equity Risk
+                    </p>
+                  </div>
+                  <p className="text-sm text-white leading-relaxed">
+                    In year{negativeEquityYears.length > 1 ? 's' : ''}{' '}
+                    {negativeEquityYears.map(y => y.yr).join(', ')}, your estimated loan balance{' '}
+                    exceeds the vehicle&apos;s depreciated value.
+                    {negativeEquityYears[0] && (
+                      <> At year {negativeEquityYears[0].yr}: you&apos;ll owe{' '}
+                      <span className="font-semibold text-red-400">{formatCurrency(negativeEquityYears[0].remainBal)}</span>{' '}
+                      but the car is worth ~<span className="font-semibold text-red-400">{formatCurrency(negativeEquityYears[0].vehicleVal)}</span>{' '}
+                      — a <span className="font-bold">{formatCurrency(negativeEquityYears[0].gap)} gap</span>.</>
+                    )}
+                  </p>
+                  <p className="text-xs leading-relaxed" style={{ color: '#f87171' }}>
+                    If you sell or total the car during this period, you&apos;ll still owe the difference out-of-pocket.
+                    Consider gap insurance (~$20–30/mo) or a larger down payment to protect against this.
+                  </p>
+                </div>
+              )}
 
               {/* ── Net Cost of Ownership — detailed mode only ── */}
               {!simpleMode && (financeMode === 'buy' || financeMode === 'current') && futureResaleValue != null && netCostOfOwnership != null && (

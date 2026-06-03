@@ -104,6 +104,7 @@ export default function CarBuyingChecklist() {
   const [step, setStep] = useState('input') // input | checklist
   const [vehicleInfo, setVehicleInfo] = useState({ year: '', make: '', model: '', trim: '', mileage: 80000, price: '', state: '' })
   const [priceSource, setPriceSource] = useState('auto') // 'auto' | 'user'
+  const [batteryHealth, setBatteryHealth] = useState(null) // % for EVs only
   const [statuses, setStatuses] = useState({})
   const [notes, setNotes] = useState({})
   const [activeTab, setActiveTab] = useState('maintenance')
@@ -154,17 +155,34 @@ export default function CarBuyingChecklist() {
     return [...sellerQuestions, ...contextual]
   }, [vehicleData, climateFlags])
 
+  // Battery health multiplier for EVs: degraded packs meaningfully reduce market value.
+  // Thresholds based on market data and range-impact studies.
+  function batteryHealthMultiplier(healthPct) {
+    if (healthPct == null || healthPct >= 95) return 1.0
+    if (healthPct >= 90) return 0.95
+    if (healthPct >= 85) return 0.88
+    if (healthPct >= 80) return 0.80
+    return 0.70  // < 80% is near end-of-usable-life for most EVs
+  }
+
   const priceRange = useMemo(() => {
     const trims = getTrims(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year)
     const msrp = vehicleInfo.trim ? trims[vehicleInfo.trim] : null
     if (!msrp || !vehicleInfo.year) return null
     const age = new Date().getFullYear() - parseInt(vehicleInfo.year)
     if (age < 0) return null
-    // Use shared estimateCurrentValue for consistent depreciation + mileage adjustment (~$150/1k mi vs 12k/yr avg)
+    // Use shared estimateCurrentValue for consistent depreciation + mileage adjustment
     let value = Math.max(1500, estimateCurrentValue(msrp, vehicleInfo.make, vehicleInfo.model, age, vehicleInfo.mileage))
     const avgMiles = age * 12000
     const regionMultiplier = getRegionalMultiplier(vehicleData?.type, vehicleInfo.state)
     value = Math.max(1500, value * regionMultiplier)
+
+    // Apply battery health discount for EVs
+    const isEV = vehicleData?.is_ev ?? false
+    const battMult = isEV ? batteryHealthMultiplier(batteryHealth) : 1.0
+    const battDiscount = isEV && battMult < 1.0 ? Math.round(value * (1 - battMult)) : 0
+    value = Math.max(1500, value * battMult)
+
     return {
       low: Math.round(value * 0.88 / 100) * 100,
       fair: Math.round(value / 100) * 100,
@@ -174,8 +192,10 @@ export default function CarBuyingChecklist() {
       avgMiles,
       regionMultiplier,
       regionNote: regionalLabel(vehicleData?.type, regionMultiplier),
+      battDiscount,
+      batteryHealth: isEV ? batteryHealth : null,
     }
-  }, [vehicleInfo.make, vehicleInfo.model, vehicleInfo.year, vehicleInfo.trim, vehicleInfo.mileage, vehicleInfo.state, vehicleData])
+  }, [vehicleInfo.make, vehicleInfo.model, vehicleInfo.year, vehicleInfo.trim, vehicleInfo.mileage, vehicleInfo.state, vehicleData, batteryHealth])
 
   // Auto-fill asking price with fair estimate whenever it changes, unless user manually set it
   useEffect(() => {
@@ -359,6 +379,40 @@ export default function CarBuyingChecklist() {
                 </div>
               )}
 
+              {/* Battery health — only for EVs */}
+              {vehicleData?.is_ev && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="input-label" style={{ margin: 0 }}>
+                      Battery Health{' '}
+                      <span className="text-[var(--text-muted)] font-normal">(EV — check Settings menu on the car)</span>
+                    </label>
+                    {batteryHealth != null && (
+                      <span className={`text-sm font-bold tabular-nums ${
+                        batteryHealth >= 90 ? 'text-green-400' :
+                        batteryHealth >= 80 ? 'text-yellow-400' : 'text-red-400'
+                      }`}>{batteryHealth}%</span>
+                    )}
+                  </div>
+                  <input
+                    type="range" min={60} max={100} step={1}
+                    value={batteryHealth ?? 95}
+                    onChange={e => setBatteryHealth(Number(e.target.value))}
+                    style={{ background: `linear-gradient(to right, var(--accent) ${((( batteryHealth ?? 95) - 60) / 40) * 100}%, var(--border) ${(((batteryHealth ?? 95) - 60) / 40) * 100}%)` }}
+                  />
+                  <div className="flex justify-between text-[10px] text-[var(--text-muted)] mt-1">
+                    <span>60% (poor)</span><span>80% (fair)</span><span>100% (new)</span>
+                  </div>
+                  {batteryHealth != null && batteryHealth < 90 && (
+                    <p className="text-xs mt-2" style={{ color: batteryHealth < 80 ? '#f87171' : '#FFB800' }}>
+                      {batteryHealth < 80
+                        ? `⚠ Battery below 80% — significant range loss and replacement risk. Fair value reduced ~${Math.round((1 - 0.70) * 100)}% from baseline.`
+                        : `Battery at ${batteryHealth}% — moderate degradation. Fair value reduced ~${Math.round((1 - (batteryHealth >= 90 ? 0.95 : batteryHealth >= 85 ? 0.88 : 0.80)) * 100)}% from baseline.`}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div>
                 <label className="input-label">Your State <span className="text-[var(--text-muted)] font-normal">(for tailored inspection tips)</span></label>
                 <select
@@ -461,6 +515,11 @@ export default function CarBuyingChecklist() {
               {priceRange.regionNote && (
                 <p className="text-xs font-semibold text-[var(--accent)] mt-2">{priceRange.regionNote}</p>
               )}
+              {priceRange.battDiscount > 0 && (
+                <p className="text-xs font-semibold mt-1" style={{ color: priceRange.batteryHealth < 80 ? '#f87171' : '#FFB800' }}>
+                  Battery at {priceRange.batteryHealth}% — value reduced ~{fmt(priceRange.battDiscount)} vs. full-health baseline
+                </p>
+              )}
               <p className="text-[10px] text-[var(--text-muted)] mt-1">
                 MSRP {fmt(priceRange.msrp)} → {priceRange.age}-year depreciation + mileage vs. {priceRange.avgMiles.toLocaleString()}-mile avg (12k/yr). Actual values vary by condition and local market.
               </p>
@@ -556,8 +615,8 @@ export default function CarBuyingChecklist() {
           {/* Tabs */}
           <div className="flex gap-1 mb-6 overflow-x-auto pb-1">
             {[
-              { key: 'maintenance', label: `Maintenance Due (${dueItems.length})` },
-              { key: 'upcoming', label: `Coming Up (${upcomingItems.length})` },
+              { key: 'maintenance', label: `Past Due (${dueItems.length})` },
+              { key: 'upcoming', label: `Next 12k Miles (${upcomingItems.length})` },
               { key: 'questions', label: `Seller Questions (${allSellerQuestions.length})` },
             ].map(({ key, label }) => (
               <button
@@ -638,7 +697,7 @@ export default function CarBuyingChecklist() {
               ) : (
                 <div className="card">
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-4">
-                    Services due in the next 12,000 miles
+                    Plan ahead — services due in your first 12,000 miles of ownership
                   </p>
                   <div className="flex flex-col gap-4">
                     {upcomingItems.map(item => {

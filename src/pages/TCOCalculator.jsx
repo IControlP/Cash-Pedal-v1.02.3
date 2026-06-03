@@ -16,7 +16,7 @@ import {
   INSURANCE_BASE_RATE, INSURANCE_VALUE_BRACKETS, INSURANCE_BRAND_MULT, STATE_INS_BASE,
   estimateInsurance,
   MAINT_BRAND_MULT, MAINT_LUXURY_MAKES, MAINT_PREMIUM_MAKES, MAINT_ECONOMY_MAKES,
-  determineMaintTier, MAINT_TIER_COSTS, LABOR_RATE, STATE_LABOR_RATES, STATE_ROAD_WEAR_FACTOR,
+  determineMaintTier, MAINT_TIER_COSTS, LABOR_RATE, STATE_LABOR_RATES, STATE_ROAD_WEAR_FACTOR, getLocalLaborRate,
   generateMaintenanceServices, generateMaintenanceByYear, generateDetailedMaintenanceByYear,
   STATE_FUEL_PRICES, STATE_ELEC_RATES,
   getPublicChargingRate, getEffectiveElecRate, computeAnnualFuel,
@@ -966,7 +966,8 @@ export default function TCOCalculator() {
 
   // Location
   const [locationInput,  setLocationInput]  = useState('')
-  const [resolvedState,  setResolvedState]  = useState(null)   // 2-letter state code
+  const [resolvedState,     setResolvedState]     = useState(null)   // 2-letter state code
+  const [resolvedLaborRate, setResolvedLaborRate] = useState(null)   // $/hr from ZIP or state
   const [locationLabel,  setLocationLabel]  = useState('')
   const [locationError,  setLocationError]  = useState('')
   // Operating costs mode
@@ -1043,13 +1044,13 @@ export default function TCOCalculator() {
     const sm = effectiveStartMileage
     if (modelData) {
       const seg = classifySegment(selMake || '', selModel || '')
-      return generateDetailedMaintenanceByYear(modelData.is_ev, annualMileage, seg, selMake, 5, sm, resolvedState, vehicleAge)
+      return generateDetailedMaintenanceByYear(modelData.is_ev, annualMileage, seg, selMake, 5, sm, resolvedState, vehicleAge, resolvedLaborRate)
     }
     const catInfo = VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)
     const catIsEV = catInfo?.isEV ?? false
     const catSeg  = catInfo?.segment ?? 'sedan'
-    return generateDetailedMaintenanceByYear(catIsEV, annualMileage, catSeg, '', 5, sm, resolvedState, 0)
-  }, [detailedMode, modelData, annualMileage, selMake, selModel, vehicleCategory, effectiveStartMileage, selYear, currentMileage, resolvedState, vehicleAge])
+    return generateDetailedMaintenanceByYear(catIsEV, annualMileage, catSeg, '', 5, sm, resolvedState, 0, resolvedLaborRate)
+  }, [detailedMode, modelData, annualMileage, selMake, selModel, vehicleCategory, effectiveStartMileage, selYear, currentMileage, resolvedState, vehicleAge, resolvedLaborRate])
 
   const maintenanceByYear = useMemo(() => maintenanceDetail?.map(yr => yr.total) ?? null, [maintenanceDetail])
 
@@ -1072,7 +1073,7 @@ export default function TCOCalculator() {
       setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel)))
       if (detailedMode) {
         const seg = classifySegment(selMake||'', selModel||'')
-        const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake, resolvedState, vehicleAge)
+        const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake, resolvedState, vehicleAge, resolvedLaborRate)
         setAnnualMaintenance(services.reduce((s, x) => s + x.annual, 0))
       } else {
         setAnnualMaintenance(modelData.is_ev ? 700 : 1200)
@@ -1088,7 +1089,7 @@ export default function TCOCalculator() {
       setAnnualFuel(computeAnnualFuel(catIsEV, catMpg, catMpge, resolvedState, annualMileage, fuelOverride))
       if (detailedMode) {
         const catSeg = catInfo?.segment ?? 'sedan'
-        const services = generateMaintenanceServices(catIsEV, annualMileage, catSeg, '', resolvedState, 0)
+        const services = generateMaintenanceServices(catIsEV, annualMileage, catSeg, '', resolvedState, 0, resolvedLaborRate)
         setAnnualMaintenance(services.reduce((s, x) => s + x.annual, 0))
       } else {
         setAnnualMaintenance(catIsEV ? 700 : 1200)
@@ -1106,9 +1107,11 @@ export default function TCOCalculator() {
     const resolved = resolveLocation(val)
     if (resolved) {
       setResolvedState(resolved.state)
+      setResolvedLaborRate(resolved.laborRate ?? null)
       setLocationLabel(resolved.label)
     } else {
       setResolvedState(null)
+      setResolvedLaborRate(null)
       setLocationLabel('')
       if (val.trim().length >= 2 && !resolved) {
         setLocationError('Enter a 5-digit ZIP code or 2-letter state (e.g., 90210 or CA)')

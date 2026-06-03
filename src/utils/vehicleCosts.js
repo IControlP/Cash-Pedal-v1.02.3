@@ -297,6 +297,367 @@ export const STATE_LABOR_RATES = {
   WI: 108, WY: 95,
 }
 
+// ZIP-code-level labor rate zones for intra-state metro variation.
+// Each entry: [zipLo, zipHi, laborRate ($/hr)].
+// getLocalLaborRate() checks these before falling back to STATE_LABOR_RATES.
+// Ranges are non-overlapping within each state; sorted loosely by state.
+export const ZIP_LABOR_RATE_ZONES = [
+  // ── California (largest spread: $112 rural → $198 SF core) ──
+  [94102, 94188, 198], // San Francisco proper
+  [94501, 94578, 190], // Oakland / Alameda
+  [94601, 94699, 188], // East Oakland
+  [94701, 94710, 195], // Berkeley
+  [94901, 94960, 192], // Marin County
+  [94002, 94066, 188], // Peninsula (Burlingame, San Mateo)
+  [95002, 95099, 192], // San Jose / Silicon Valley south
+  [95100, 95199, 192], // San Jose core
+  [95300, 95399, 172], // Hayward / Fremont
+  [90210, 90299, 178], // Beverly Hills / West LA
+  [90401, 90499, 172], // Santa Monica
+  [90001, 90209, 168], // South / Central LA
+  [90500, 90899, 168], // LA Basin east
+  [91001, 91199, 162], // Pasadena / Arcadia
+  [91200, 91599, 160], // San Fernando Valley west
+  [91600, 91999, 158], // Burbank / Glendale
+  [92001, 92120, 162], // San Diego core
+  [92121, 92173, 158], // San Diego (La Jolla, Mission Valley)
+  [92174, 92299, 148], // San Diego east / Chula Vista
+  [92600, 92699, 162], // Orange County (Irvine, Newport Beach)
+  [92700, 92899, 155], // Orange County (Anaheim, Fullerton)
+  [92300, 92599, 138], // Inland Empire (Riverside, San Bernardino)
+  [93001, 93099, 128], // Ventura County
+  [93100, 93199, 125], // Santa Barbara
+  [93200, 93599, 118], // Central Valley (Fresno, Bakersfield south)
+  [93600, 93999, 115], // Bakersfield / Southern Central Valley
+  [95400, 95699, 142], // Sacramento core
+  [95700, 95999, 135], // Sacramento suburbs / Placer County
+  [96001, 96199, 112], // Far Northern CA (Redding, Chico)
+
+  // ── New York ──────────────────────────────────────────────
+  [10001, 10119, 192], // Manhattan core
+  [10120, 10299, 185], // Midtown / Upper Manhattan
+  [10301, 10399, 175], // Staten Island
+  [10400, 10499, 168], // Bronx
+  [10500, 10599, 165], // Westchester (Yonkers, White Plains)
+  [10600, 10999, 160], // Outer Westchester
+  [11001, 11099, 170], // Nassau County west
+  [11100, 11299, 168], // Nassau County
+  [11300, 11799, 162], // Nassau / Suffolk west
+  [11800, 11999, 155], // Eastern Suffolk (Hamptons area)
+  [11201, 11239, 178], // Brooklyn (brownstone)
+  [11370, 11415, 172], // Queens (Flushing, Astoria)
+  [12001, 12999, 130], // Hudson Valley / Albany metro
+  [13001, 13999, 125], // Central NY (Syracuse, Utica)
+  [14001, 14999, 122], // Western NY (Buffalo, Rochester)
+
+  // ── Texas ─────────────────────────────────────────────────
+  [78701, 78749, 135], // Austin core (downtown)
+  [78750, 78799, 130], // Austin (Round Rock, Cedar Park)
+  [78600, 78699, 125], // Austin suburbs
+  [75201, 75299, 128], // Dallas core
+  [75001, 75200, 122], // Dallas suburbs
+  [75400, 75599, 112], // East TX / DFW outer
+  [76001, 76199, 120], // Fort Worth
+  [76200, 76299, 115], // Fort Worth suburbs
+  [77001, 77099, 125], // Houston core
+  [77100, 77299, 120], // Houston suburbs (Sugar Land, Katy)
+  [77300, 77599, 115], // Houston outer suburbs
+  [78201, 78299, 112], // San Antonio
+  [79901, 79999, 105], // El Paso
+  [75600, 75999, 100], // Rural / East TX
+  [78800, 78999, 100], // South TX / Rio Grande Valley
+
+  // ── Florida ───────────────────────────────────────────────
+  [33101, 33189, 140], // Miami city
+  [33190, 33299, 135], // Miami-Dade suburbs
+  [33300, 33499, 132], // Fort Lauderdale / Broward
+  [33500, 33599, 125], // Tampa core
+  [33600, 33699, 122], // St. Pete / Clearwater
+  [32700, 32799, 120], // Orlando core
+  [32800, 32899, 118], // Orlando suburbs (Kissimmee)
+  [32001, 32099, 115], // Jacksonville core
+  [32100, 32299, 112], // Jacksonville suburbs
+  [34201, 34299, 120], // Sarasota / Bradenton
+  [32900, 33099, 112], // Melbourne / Space Coast
+  [32400, 32599, 108], // Tallahassee
+  [32600, 32699, 105], // Gainesville / Panhandle
+
+  // ── Washington ────────────────────────────────────────────
+  [98101, 98119, 175], // Seattle core (Cap Hill, Belltown)
+  [98001, 98100, 162], // South King County / SeaTac
+  [98200, 98299, 170], // Bellevue / Eastside (Redmond, Kirkland)
+  [98300, 98399, 148], // Tacoma / Pierce County north
+  [98400, 98499, 142], // Tacoma south
+  [98500, 98599, 135], // Olympia / Thurston County
+  [98600, 98699, 130], // SW Washington (Vancouver)
+  [98700, 98799, 145], // Snohomish County (Everett)
+  [98800, 98899, 122], // Wenatchee / Central WA
+  [99201, 99299, 118], // Spokane
+
+  // ── Illinois ──────────────────────────────────────────────
+  [60601, 60699, 158], // Chicago downtown / Loop
+  [60700, 60799, 152], // Chicago north / Evanston
+  [60001, 60600, 148], // Chicago metro / close suburbs
+  [60800, 61099, 138], // Chicago outer suburbs (Naperville, Aurora)
+  [61100, 62999, 112], // Downstate IL (Peoria, Springfield, Champaign)
+
+  // ── Massachusetts ─────────────────────────────────────────
+  [2100, 2139, 182], // Boston / Back Bay / South End
+  [2140, 2199, 178], // Cambridge / Somerville
+  [2200, 2299, 168], // South Boston / Quincy
+  [2300, 2399, 158], // South Shore
+  [1700, 1799, 155], // MetroWest (Framingham, Natick)
+  [1800, 1999, 150], // North Shore / Lowell
+  [1001, 1699, 140], // Worcester / Western MA
+  [2600, 2799, 148], // Cape Cod
+
+  // ── New Jersey ────────────────────────────────────────────
+  [7600, 7699, 172], // Bergen County (Hackensack — NYC commuter)
+  [7000, 7099, 165], // Essex / Hudson (Newark, Jersey City)
+  [7100, 7299, 160], // Passaic / Union
+  [7300, 7499, 155], // Morris County
+  [7500, 7799, 150], // Somerset / Middlesex
+  [8001, 8099, 140], // Camden / Burlington
+  [8100, 8399, 138], // South Jersey shore / Cherry Hill
+  [8400, 8999, 135], // Atlantic City region
+
+  // ── Colorado ──────────────────────────────────────────────
+  [80301, 80309, 162], // Boulder
+  [80201, 80299, 152], // Denver core
+  [80001, 80200, 148], // Denver suburbs (Aurora, Lakewood)
+  [80400, 80499, 155], // Jefferson County (Golden, Evergreen)
+  [80501, 80599, 148], // Fort Collins / Loveland
+  [80901, 80999, 128], // Colorado Springs
+  [81001, 81699, 115], // Pueblo / Western CO / Grand Junction
+
+  // ── Virginia ──────────────────────────────────────────────
+  [22001, 22099, 158], // Loudoun County (Tysons, Reston)
+  [22100, 22299, 155], // Fairfax County
+  [22300, 22399, 155], // Arlington / Alexandria
+  [20100, 20199, 158], // Loudoun / Prince William
+  [23200, 23299, 125], // Richmond
+  [23600, 23699, 122], // Norfolk / Virginia Beach
+  [24001, 24299, 112], // Roanoke
+  [24300, 24699, 105], // Southwest VA (rural)
+
+  // ── Maryland ──────────────────────────────────────────────
+  [20600, 20799, 158], // Bethesda / Silver Spring / Montgomery Co.
+  [20800, 20999, 152], // Prince George's County
+  [21201, 21299, 142], // Baltimore city
+  [21100, 21200, 138], // Baltimore suburbs (Towson, Columbia)
+  [21001, 21099, 135], // Baltimore outer (Harford, Carroll)
+  [21500, 21999, 118], // Western / Eastern Shore MD
+
+  // ── Oregon ────────────────────────────────────────────────
+  [97201, 97299, 155], // Portland core (NW, Pearl District)
+  [97100, 97200, 148], // Portland inner eastside / suburbs
+  [97001, 97099, 142], // Portland metro outer (Beaverton, Hillsboro)
+  [97300, 97399, 132], // Salem
+  [97400, 97499, 130], // Eugene / Corvallis
+  [97500, 97999, 112], // Southern / Eastern OR
+
+  // ── Arizona ───────────────────────────────────────────────
+  [85250, 85266, 142], // Scottsdale
+  [85200, 85249, 132], // Tempe / Mesa
+  [85001, 85099, 128], // Phoenix core
+  [85100, 85199, 125], // Phoenix west / Glendale
+  [85400, 85699, 118], // Chandler / Gilbert / East Valley
+  [85700, 85799, 112], // Tucson core
+  [85800, 85899, 108], // Tucson suburbs
+  [86001, 86599, 100], // Flagstaff / Northern AZ
+
+  // ── Georgia ───────────────────────────────────────────────
+  [30301, 30399, 130], // Atlanta core (Buckhead, Midtown)
+  [30200, 30300, 125], // Atlanta metro (Smyrna, Marietta)
+  [30001, 30199, 120], // Atlanta suburbs (Alpharetta, Roswell)
+  [30400, 30999, 102], // North/Central GA
+  [31001, 31599, 98],  // South GA
+  [31600, 31999, 95],  // Deep South GA
+  [39800, 39999, 100], // Southeast GA / Savannah area
+
+  // ── Michigan ──────────────────────────────────────────────
+  [48201, 48299, 125], // Detroit proper
+  [48100, 48200, 120], // Detroit inner suburbs (Dearborn, Warren)
+  [48001, 48099, 118], // Metro Detroit outer (Troy, Sterling Heights)
+  [48300, 48499, 110], // Ann Arbor / Flint
+  [48500, 48999, 105], // SE Michigan rural / Lansing
+  [49001, 49499, 105], // Grand Rapids / West MI
+  [49500, 49999, 98],  // Northern / Rural MI
+
+  // ── Pennsylvania ──────────────────────────────────────────
+  [19101, 19199, 140], // Philadelphia core
+  [19000, 19100, 135], // Philadelphia suburbs (Main Line)
+  [15200, 15299, 128], // Pittsburgh core
+  [15001, 15199, 122], // Pittsburgh suburbs
+  [17001, 17099, 112], // Harrisburg
+  [18001, 18999, 110], // Lehigh Valley / Scranton / Pocono
+  [16001, 16999, 108], // Western PA (rural)
+
+  // ── Ohio ──────────────────────────────────────────────────
+  [43201, 43299, 122], // Columbus core (Short North, German Village)
+  [43001, 43200, 118], // Columbus suburbs
+  [44101, 44199, 120], // Cleveland core
+  [44001, 44100, 112], // Cleveland suburbs (Akron, Parma)
+  [45201, 45299, 122], // Cincinnati core (OTR, Hyde Park)
+  [45001, 45200, 115], // Cincinnati suburbs
+  [44200, 45899, 105], // Dayton / other OH metros
+  [45900, 45999, 98],  // Rural OH
+
+  // ── Minnesota ─────────────────────────────────────────────
+  [55401, 55415, 140], // Minneapolis core (downtown, Uptown)
+  [55001, 55400, 132], // Minneapolis / Saint Paul metro
+  [55416, 55499, 135], // Minneapolis suburbs (Bloomington, Eden Prairie)
+  [55500, 55899, 118], // Rochester / Duluth area
+  [55900, 56799, 108], // Greater MN
+
+  // ── Nevada ────────────────────────────────────────────────
+  [89101, 89139, 132], // Las Vegas Strip / downtown
+  [89140, 89199, 128], // Las Vegas suburbs (Henderson, Summerlin)
+  [89001, 89100, 125], // Outer Clark County
+  [89401, 89599, 120], // Reno core
+  [89600, 89799, 112], // Reno suburbs / Carson City
+  [89700, 89999, 105], // Rural NV
+
+  // ── Tennessee ─────────────────────────────────────────────
+  [37201, 37249, 122], // Nashville core (Gulch, East Nashville)
+  [37001, 37200, 115], // Nashville suburbs (Franklin, Brentwood)
+  [38101, 38199, 112], // Memphis core
+  [38200, 38399, 105], // Memphis suburbs
+  [37300, 37599, 100], // Knoxville / Chattanooga
+  [37600, 37999, 98],  // East TN rural
+  [38400, 38599, 95],  // West TN rural
+
+  // ── North Carolina ────────────────────────────────────────
+  [27601, 27613, 122], // Raleigh core
+  [27700, 27799, 120], // Durham / Chapel Hill
+  [27001, 27600, 115], // Triangle metro suburbs / Cary
+  [28201, 28262, 118], // Charlotte core
+  [28001, 28200, 112], // Charlotte suburbs (Huntersville, Matthews)
+  [28263, 28999, 102], // Outer NC / Asheville area
+  [27614, 27699, 110], // Raleigh outer
+
+  // ── Connecticut ───────────────────────────────────────────
+  [6600, 6699, 162], // Stamford / Greenwich (NYC financial suburb)
+  [6800, 6899, 158], // Fairfield County east (Norwalk, Westport)
+  [6101, 6199, 148], // Hartford metro
+  [6200, 6599, 140], // New Haven / Waterbury
+  [6001, 6099, 138], // Litchfield / Northeast CT
+
+  // ── South Carolina ────────────────────────────────────────
+  [29401, 29499, 110], // Charleston
+  [29200, 29299, 108], // Columbia
+  [29601, 29699, 105], // Greenville
+  [29700, 29999, 100], // Other SC
+  [29001, 29199, 98],  // Rural SC
+
+  // ── Wisconsin ─────────────────────────────────────────────
+  [53201, 53299, 118], // Milwaukee core
+  [53001, 53200, 112], // Milwaukee suburbs / Waukesha
+  [53700, 53799, 118], // Madison
+  [53400, 53699, 108], // Racine / Kenosha / Sheboygan
+  [54000, 54999, 102], // Green Bay / Fox Valley / Rural WI
+
+  // ── Missouri ──────────────────────────────────────────────
+  [63101, 63199, 110], // St. Louis core
+  [63001, 63100, 108], // St. Louis suburbs (Clayton, Chesterfield)
+  [64101, 64199, 108], // Kansas City core
+  [64000, 64100, 105], // KC suburbs (Overland Park side)
+  [63200, 64999, 98],  // Springfield / outstate MO
+  [65001, 65899, 95],  // Rural MO
+
+  // ── Indiana ───────────────────────────────────────────────
+  [46201, 46299, 115], // Indianapolis core (Broad Ripple, Fountain Sq)
+  [46001, 46200, 110], // Indianapolis suburbs (Carmel, Fishers)
+  [46300, 46399, 108], // Gary / NW Indiana (Chicago influence)
+  [46400, 47999, 100], // Other IN
+
+  // ── Utah ──────────────────────────────────────────────────
+  [84101, 84149, 125], // Salt Lake City core
+  [84001, 84100, 120], // SLC suburbs (Sandy, Murray, Provo)
+  [84150, 84199, 118], // West Valley / Taylorsville
+  [84200, 84799, 108], // Provo / Orem / Other UT
+
+  // ── Oregon ── (already above, catching any gaps)
+
+  // ── Louisiana ─────────────────────────────────────────────
+  [70101, 70199, 102], // New Orleans core
+  [70000, 70100, 98],  // New Orleans suburbs (Metairie)
+  [70800, 70899, 98],  // Baton Rouge
+  [70300, 70799, 95],  // Lafayette / Lake Charles
+  [71001, 71499, 92],  // Shreveport / North LA
+
+  // ── Alabama ───────────────────────────────────────────────
+  [35201, 35299, 100], // Birmingham core
+  [35001, 35200, 98],  // Birmingham suburbs (Hoover, Vestavia)
+  [36101, 36199, 95],  // Montgomery
+  [35300, 35999, 93],  // Huntsville / Tuscaloosa
+  [36200, 36999, 90],  // Mobile / Rural AL
+
+  // ── Kentucky ──────────────────────────────────────────────
+  [40201, 40299, 108], // Louisville core
+  [40001, 40200, 105], // Louisville suburbs (Jeffersontown, St. Matthews)
+  [40500, 40599, 105], // Lexington
+  [40300, 42799, 95],  // Other KY / Rural
+
+  // ── Iowa ──────────────────────────────────────────────────
+  [50301, 50399, 100], // Des Moines core
+  [50001, 50300, 95],  // Des Moines suburbs / Cedar Rapids
+  [51001, 52999, 90],  // Other IA (Iowa City, Davenport, Sioux City)
+
+  // ── Kansas ────────────────────────────────────────────────
+  [66101, 66219, 102], // Kansas City metro KS side (Overland Park, Lenexa)
+  [67201, 67299, 98],  // Wichita
+  [66220, 67999, 92],  // Other KS
+
+  // ── Nebraska ──────────────────────────────────────────────
+  [68101, 68199, 102], // Omaha core
+  [68001, 68100, 98],  // Omaha suburbs / Lincoln
+  [68500, 68599, 98],  // Lincoln
+  [68200, 68499, 92],  // Other NE
+
+  // ── New Mexico ────────────────────────────────────────────
+  [87101, 87199, 102], // Albuquerque
+  [87500, 87599, 102], // Santa Fe
+  [87000, 88499, 92],  // Other NM
+
+  // ── Idaho ─────────────────────────────────────────────────
+  [83701, 83799, 108], // Boise core
+  [83200, 83700, 98],  // Other ID
+
+  // ── Mississippi ───────────────────────────────────────────
+  [39201, 39299, 92],  // Jackson
+  [38600, 39999, 88],  // Other MS
+
+  // ── Arkansas ──────────────────────────────────────────────
+  [72201, 72299, 95],  // Little Rock / Fayetteville
+  [71600, 72999, 88],  // Other AR
+
+  // ── West Virginia ─────────────────────────────────────────
+  [25301, 25399, 95],  // Charleston WV
+  [24700, 26999, 88],  // Other WV
+
+  // ── Hawaii ────────────────────────────────────────────────
+  [96801, 96813, 168], // Honolulu core
+  [96814, 96849, 160], // Honolulu suburbs / other Oahu
+  [96700, 96800, 145], // Neighbor islands (Maui, Big Island, Kauai)
+
+  // ── Alaska ────────────────────────────────────────────────
+  [99501, 99524, 148], // Anchorage core
+  [99525, 99599, 138], // Anchorage suburbs
+  [99600, 99999, 128], // Fairbanks / rural AK
+]
+
+// Returns the most specific labor rate available: ZIP zone → state avg → national fallback.
+export function getLocalLaborRate(zip, state) {
+  if (zip && /^\d{5}$/.test(String(zip))) {
+    const z = parseInt(zip)
+    for (const [lo, hi, rate] of ZIP_LABOR_RATE_ZONES) {
+      if (z >= lo && z <= hi) return rate
+    }
+  }
+  return STATE_LABOR_RATES[state] ?? LABOR_RATE
+}
+
 // Road harshness multiplier — >1.0 means parts wear faster (shorter effective service
 // intervals) due to freeze-thaw, road salt, potholes, hills, or extreme heat.
 // Applied to: tires, brakes, shocks/struts, wheel alignment, brake fluid.
@@ -322,11 +683,11 @@ export const STATE_ROAD_WEAR_FACTOR = {
   CA: 0.92, HI: 0.88, ID: 0.98,
 }
 
-export function generateMaintenanceServices(isEV, annualMileage, segment, make = '', state = null, vehicleAgeYears = 0) {
+export function generateMaintenanceServices(isEV, annualMileage, segment, make = '', state = null, vehicleAgeYears = 0, laborRateOverride = null) {
   const tier      = determineMaintTier(make)
   const c         = MAINT_TIER_COSTS[tier]
   const brand     = MAINT_BRAND_MULT[make] ?? 1.0
-  const laborRate = STATE_LABOR_RATES[state] ?? LABOR_RATE
+  const laborRate = laborRateOverride ?? STATE_LABOR_RATES[state] ?? LABOR_RATE
   const wearFactor = STATE_ROAD_WEAR_FACTOR[state] ?? 1.0
   const isTruck   = segment === 'truck'
   const isSports  = segment === 'sports'
@@ -440,11 +801,11 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
 // startMileage offsets the odometer so year 1 begins at the vehicle's current mileage.
 // state adjusts labor rates and road-condition wear factors.
 // vehicleAgeAtStart is the vehicle's age (in years) when ownership begins.
-export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5, startMileage = 0, state = null, vehicleAgeAtStart = 0) {
+export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5, startMileage = 0, state = null, vehicleAgeAtStart = 0, laborRateOverride = null) {
   const tier      = determineMaintTier(make)
   const c         = MAINT_TIER_COSTS[tier]
   const brand     = MAINT_BRAND_MULT[make] ?? 1.0
-  const laborRate = STATE_LABOR_RATES[state] ?? LABOR_RATE
+  const laborRate = laborRateOverride ?? STATE_LABOR_RATES[state] ?? LABOR_RATE
   const wearFactor = STATE_ROAD_WEAR_FACTOR[state] ?? 1.0
   const isTruck   = segment === 'truck'
   const isSports  = segment === 'sports'
@@ -578,8 +939,8 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
 }
 
 // Convenience wrapper — returns just the per-year totals array.
-export function generateMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5, startMileage = 0, state = null, vehicleAgeAtStart = 0) {
-  return generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make, years, startMileage, state, vehicleAgeAtStart).map(yr => yr.total)
+export function generateMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5, startMileage = 0, state = null, vehicleAgeAtStart = 0, laborRateOverride = null) {
+  return generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make, years, startMileage, state, vehicleAgeAtStart, laborRateOverride).map(yr => yr.total)
 }
 
 // ── Fuel ─────────────────────────────────────────────────
@@ -789,8 +1150,12 @@ export function resolveLocation(input) {
   const t = input.trim().toUpperCase()
   if (/^\d{5}$/.test(t)) {
     const state = zipToState(t)
-    return state ? { state, label: `${t} (${state})` } : null
+    if (!state) return null
+    const laborRate = getLocalLaborRate(t, state)
+    return { state, label: `${t} (${state})`, zip: t, laborRate }
   }
-  if (/^[A-Z]{2}$/.test(t) && STATE_FUEL_PRICES[t]) return { state: t, label: t }
+  if (/^[A-Z]{2}$/.test(t) && STATE_FUEL_PRICES[t]) {
+    return { state: t, label: t, zip: null, laborRate: STATE_LABOR_RATES[t] ?? LABOR_RATE }
+  }
   return null
 }

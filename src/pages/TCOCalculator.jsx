@@ -16,7 +16,8 @@ import {
   INSURANCE_BASE_RATE, INSURANCE_VALUE_BRACKETS, INSURANCE_BRAND_MULT, STATE_INS_BASE,
   estimateInsurance,
   MAINT_BRAND_MULT, MAINT_LUXURY_MAKES, MAINT_PREMIUM_MAKES, MAINT_ECONOMY_MAKES,
-  determineMaintTier, MAINT_TIER_COSTS, LABOR_RATE, generateMaintenanceServices, generateMaintenanceByYear, generateDetailedMaintenanceByYear,
+  determineMaintTier, MAINT_TIER_COSTS, LABOR_RATE, STATE_LABOR_RATES, STATE_ROAD_WEAR_FACTOR,
+  generateMaintenanceServices, generateMaintenanceByYear, generateDetailedMaintenanceByYear,
   STATE_FUEL_PRICES, STATE_ELEC_RATES,
   getPublicChargingRate, getEffectiveElecRate, computeAnnualFuel,
   PREMIUM_PRICE_DELTA, requiresPremiumFuel,
@@ -156,7 +157,7 @@ function SpecsPanel({ specs, mpg, isEV }) {
 
 // ── Maintenance breakdown panel ───────────────────────
 function MaintenanceBreakdown({ isEV, annualMileage, segment, make, startMileage = 0 }) {
-  const yr1 = generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make, 1, startMileage)[0]
+  const yr1 = generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make, 1, startMileage, null, 0)[0]
   const services = yr1?.services ?? []
   return (
     <div className="px-4 pb-3 pt-2 border-t border-[var(--border)]"
@@ -1042,13 +1043,13 @@ export default function TCOCalculator() {
     const sm = effectiveStartMileage
     if (modelData) {
       const seg = classifySegment(selMake || '', selModel || '')
-      return generateDetailedMaintenanceByYear(modelData.is_ev, annualMileage, seg, selMake, 5, sm)
+      return generateDetailedMaintenanceByYear(modelData.is_ev, annualMileage, seg, selMake, 5, sm, resolvedState, vehicleAge)
     }
     const catInfo = VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)
     const catIsEV = catInfo?.isEV ?? false
     const catSeg  = catInfo?.segment ?? 'sedan'
-    return generateDetailedMaintenanceByYear(catIsEV, annualMileage, catSeg, '', 5, sm)
-  }, [detailedMode, modelData, annualMileage, selMake, selModel, vehicleCategory, effectiveStartMileage, selYear, currentMileage])
+    return generateDetailedMaintenanceByYear(catIsEV, annualMileage, catSeg, '', 5, sm, resolvedState, 0)
+  }, [detailedMode, modelData, annualMileage, selMake, selModel, vehicleCategory, effectiveStartMileage, selYear, currentMileage, resolvedState, vehicleAge])
 
   const maintenanceByYear = useMemo(() => maintenanceDetail?.map(yr => yr.total) ?? null, [maintenanceDetail])
 
@@ -1071,7 +1072,7 @@ export default function TCOCalculator() {
       setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel)))
       if (detailedMode) {
         const seg = classifySegment(selMake||'', selModel||'')
-        const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake)
+        const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake, resolvedState, vehicleAge)
         setAnnualMaintenance(services.reduce((s, x) => s + x.annual, 0))
       } else {
         setAnnualMaintenance(modelData.is_ev ? 700 : 1200)
@@ -1087,7 +1088,7 @@ export default function TCOCalculator() {
       setAnnualFuel(computeAnnualFuel(catIsEV, catMpg, catMpge, resolvedState, annualMileage, fuelOverride))
       if (detailedMode) {
         const catSeg = catInfo?.segment ?? 'sedan'
-        const services = generateMaintenanceServices(catIsEV, annualMileage, catSeg, '')
+        const services = generateMaintenanceServices(catIsEV, annualMileage, catSeg, '', resolvedState, 0)
         setAnnualMaintenance(services.reduce((s, x) => s + x.annual, 0))
       } else {
         setAnnualMaintenance(catIsEV ? 700 : 1200)

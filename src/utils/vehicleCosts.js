@@ -9,7 +9,7 @@ export const BRAND_DEPRECIATION_MULT = {
   Toyota: 0.75, Lexus: 0.78, Porsche: 0.79, Honda: 0.80, Subaru: 0.82,
   Jeep: 0.84, Mazda: 0.86, Acura: 0.87,
   Hyundai: 0.88, Kia: 0.90, GMC: 0.96, Ford: 0.98, Buick: 1.02,
-  Chevrolet: 1.00, Ram: 1.02, Nissan: 1.05, Genesis: 0.96, Volvo: 1.05, Infiniti: 1.05,
+  Chevrolet: 1.00, Ram: 1.02, Nissan: 1.02, Genesis: 0.96, Volvo: 1.05, Infiniti: 1.05,
   Cadillac: 1.08, Volkswagen: 1.08, Audi: 1.05, Mini: 1.10, BMW: 1.05, Lincoln: 1.05,
   'Mercedes-Benz': 1.06, 'Land Rover': 1.10, Dodge: 1.15, Jaguar: 1.12,
   Chrysler: 1.12, 'Alfa Romeo': 1.18, Fiat: 1.20, Mitsubishi: 1.10,
@@ -24,7 +24,7 @@ export const SEGMENT_CURVES = {
   luxury_suv: {1:.13,2:.21,3:.29,4:.36,5:.42,6:.46,7:.50,8:.54,9:.57,10:.60,11:.62,12:.64,13:.65,14:.66,15:.67},
   hybrid:     {1:.12,2:.21,3:.29,4:.36,5:.43,6:.48,7:.51,8:.55,9:.58,10:.60,11:.62,12:.64,13:.65,14:.66,15:.67},
   compact:    {1:.14,2:.23,3:.32,4:.40,5:.47,6:.51,7:.55,8:.59,9:.61,10:.64,11:.66,12:.68,13:.68,14:.69,15:.70},
-  sedan:      {1:.14,2:.25,3:.34,4:.41,5:.49,6:.53,7:.57,8:.60,9:.63,10:.66,11:.68,12:.69,13:.70,14:.71,15:.72},
+  sedan:      {1:.14,2:.25,3:.34,4:.41,5:.49,6:.51,7:.56,8:.60,9:.63,10:.66,11:.68,12:.69,13:.70,14:.71,15:.72},
   luxury:     {1:.16,2:.26,3:.34,4:.41,5:.47,6:.51,7:.54,8:.57,9:.59,10:.62,11:.64,12:.65,13:.66,14:.67,15:.68},
   economy:    {1:.17,2:.28,3:.38,4:.45,5:.51,6:.55,7:.59,8:.63,9:.65,10:.67,11:.69,12:.71,13:.72,14:.73,15:.74},
   electric:   {1:.20,2:.34,3:.45,4:.52,5:.59,6:.63,7:.67,8:.69,9:.71,10:.73,11:.75,12:.76,13:.77,14:.77,15:.78},
@@ -37,9 +37,9 @@ export const SEGMENT_MAX_DEPR = {
 
 // Elite-demand models: strong supply/demand retention (×0.72 on brand mult)
 export const ELITE_RETENTION = {
-  Toyota:    ['RAV4', 'Highlander'],
+  Toyota:    ['RAV4', 'Highlander', 'Sienna'],
   Honda:     ['Accord', 'Civic'],
-  Ford:      ['Bronco', 'Mustang'],
+  Ford:      ['Mustang'],
   Jeep:      ['Gladiator'],
   Mazda:     ['MX-5', 'Miata'],
 }
@@ -50,6 +50,7 @@ export const ULTRA_RETENTION = {
   Toyota:  ['4Runner', 'Tacoma', 'Land Cruiser', 'RAV4 Hybrid'],
   Jeep:    ['Wrangler'],
   Kia:     ['Telluride'],
+  Ford:    ['Bronco'],
 }
 
 // Near-zero depreciation models — often sell at or above MSRP used.

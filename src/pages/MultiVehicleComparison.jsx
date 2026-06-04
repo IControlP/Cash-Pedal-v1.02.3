@@ -43,16 +43,17 @@ const defaultVehicle = {
   isLease: false, leaseMonthlyPayment: 0, leaseTerm: 36,
   // Extended fields (null = not available for this entry)
   totalAnnualCost: null, totalOwnershipCost: null,
-  mpgCombined: null, cargoSqFt: null, valueRetentionPct: null,
+  mpgCombined: null, cargoSqFt: null, valueRetentionPct: null, costPerMile: null,
   isFromTCO: false,
 }
 
 // ── Ranking parameters available to the user ──────────
 const RANK_PARAMS = [
   { key: 'totalOutOfPocket', label: 'Most Affordable (Total Out-of-Pocket)', lowerIsBetter: true },
-  { key: 'mpgCombined',      label: 'Best MPG',                               lowerIsBetter: false },
-  { key: 'cargoSqFt',        label: 'Most Cargo Space',                       lowerIsBetter: false },
-  { key: 'valueRetentionPct',label: 'Best Value Retention',                   lowerIsBetter: false },
+  { key: 'costPerMile',      label: 'Lowest Cost Per Mile',                  lowerIsBetter: true },
+  { key: 'mpgCombined',      label: 'Best MPG',                              lowerIsBetter: false },
+  { key: 'cargoSqFt',        label: 'Most Cargo Space',                      lowerIsBetter: false },
+  { key: 'valueRetentionPct',label: 'Best Value Retention',                  lowerIsBetter: false },
 ]
 
 // ── VehicleCard ────────────────────────────────────────
@@ -242,7 +243,7 @@ export default function MultiVehicleComparison() {
   const [showPaywall, setShowPaywall] = useState(false)
 
   // Ranking parameter toggles
-  const [activeRankParams, setActiveRankParams] = useState({ totalOutOfPocket: true, mpgCombined: false, cargoSqFt: false, valueRetentionPct: false })
+  const [activeRankParams, setActiveRankParams] = useState({ totalOutOfPocket: true, costPerMile: false, mpgCombined: false, cargoSqFt: false, valueRetentionPct: false })
 
   const [vehicles, setVehicles] = useState(() => {
     try {
@@ -291,6 +292,7 @@ export default function MultiVehicleComparison() {
             mpgCombined:         imp.mpgCombined ?? null,
             cargoSqFt:           imp.cargoSqFt ?? null,
             valueRetentionPct:   imp.valueRetentionPct ?? null,
+            costPerMile:         imp.costPerMile ?? null,
             isFromTCO:           true,
           }
           if (existing >= 0) {
@@ -411,6 +413,15 @@ export default function MultiVehicleComparison() {
           isBest:   i === best,
           hasValue: v != null,
         })),
+      })
+    }
+
+    if (activeRankParams.costPerMile) {
+      const vals = vehicles.map(v => v.costPerMile)
+      const best = bestIdx(vals, true)
+      rows.push({
+        label: 'Cost Per Mile',
+        scores: vals.map((v, i) => ({ display: v != null ? `$${v.toFixed(2)}/mi` : '—', isBest: i === best, hasValue: v != null })),
       })
     }
 

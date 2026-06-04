@@ -798,7 +798,7 @@ function RepairRiskScore({ isPro, make, model, isEV, maintBrandMult, determineTi
 
 // ── Cost Alerts ───────────────────────────────────────
 function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenance,
-  maintBrandMult, classifySegment, formatCurrency, loanAmount, price, rate, financeMode }) {
+  maintBrandMult, classifySegment, formatCurrency, loanAmount, price, rate, financeMode, carAge }) {
 
   const ProBadge = () => (
     <span className="text-[10px] font-bold px-2 py-0.5 rounded"
@@ -835,6 +835,12 @@ function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenan
   if (!make) {
     alerts.push({ type: 'info', text: 'Select a make and model above to see vehicle-specific cost alerts.' })
   } else {
+    if (carAge != null && carAge <= 1 && financeMode === 'buy') {
+      alerts.push({
+        type: 'warning',
+        text: `New vehicles typically lose 15–20% of their value in year one alone — that's ${formatCurrency(Math.round(price * 0.175))} in depreciation before your first oil change. Consider a 1–2 year old model to let someone else absorb that hit.`,
+      })
+    }
     if (mult > 1.2) {
       alerts.push({
         type: 'warning',
@@ -864,6 +870,12 @@ function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenan
         type: 'good',
         text: 'EVs eliminate oil changes and reduce brake wear — typical maintenance savings of $500–$900/yr vs. a comparable gas vehicle.',
       })
+      if (financeMode === 'buy') {
+        alerts.push({
+          type: 'info',
+          text: 'New EV may qualify for the federal Clean Vehicle Credit (up to $7,500). Check MSRP cap ($55k cars / $80k SUVs/trucks) and income limits at fueleconomy.gov.',
+        })
+      }
     }
     if (alerts.length === 0) {
       alerts.push({ type: 'good', text: `${make}'s costs are in line with segment averages. No major red flags detected for this vehicle.` })
@@ -2304,6 +2316,72 @@ export default function TCOCalculator() {
                 </div>
               )}
 
+              {/* EV Incentives callout — shown when an EV is selected */}
+              {effIsEV && financeMode !== 'current' && (() => {
+                const isNewVehicle = !selYear || carAge <= 1
+                const isUsedEV = carAge >= 1 && price <= 25000
+                // Segment-based MSRP cap: trucks/SUVs/vans get $80k cap; all others $55k
+                const seg = selMake ? classifySegment(selMake, selModel||'') : (catInfoForRender?.segment ?? 'sedan')
+                const highCapSegments = new Set(['truck','suv','luxury_suv'])
+                const msrpCap = highCapSegments.has(seg) ? 80000 : 55000
+                const msrpOk = origMsrp ? origMsrp <= msrpCap : price <= msrpCap
+                return (
+                  <div className="rounded-xl border p-4 flex flex-col gap-3"
+                    style={{ borderColor: 'rgba(96,200,255,0.3)', background: 'rgba(96,200,255,0.04)' }}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">⚡</span>
+                      <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#60c8ff' }}>
+                        EV Tax Incentives
+                      </p>
+                    </div>
+                    {isNewVehicle ? (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-white">Federal Clean Vehicle Credit</p>
+                            <p className="text-[11px] text-[var(--text-muted)] mt-0.5 leading-relaxed">
+                              Up to <span className="text-white font-semibold">$7,500</span> for qualifying new EVs.
+                              {msrpOk
+                                ? <span className="text-green-400"> MSRP under ${(msrpCap / 1000).toFixed(0)}k cap — may qualify.</span>
+                                : <span className="text-amber-400"> MSRP exceeds ${(msrpCap / 1000).toFixed(0)}k cap for this segment — ineligible.</span>
+                              }
+                            </p>
+                          </div>
+                          {msrpOk && (
+                            <div className="shrink-0 rounded-lg px-3 py-1.5 text-center"
+                              style={{ background: 'rgba(96,200,255,0.12)', border: '1px solid rgba(96,200,255,0.25)' }}>
+                              <p className="text-[10px] text-[var(--text-muted)]">up to</p>
+                              <p className="font-display font-bold text-lg" style={{ color: '#60c8ff' }}>$7,500</p>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                          Income limits: $150k single · $225k head of household · $300k married.
+                          Vehicle must be assembled in North America. Credit reduces your federal tax liability — not a rebate.
+                        </p>
+                      </div>
+                    ) : isUsedEV ? (
+                      <div>
+                        <p className="text-sm font-semibold text-white">Used Clean Vehicle Credit</p>
+                        <p className="text-[11px] text-[var(--text-muted)] mt-0.5 leading-relaxed">
+                          Used EVs priced at or below $25,000 may qualify for up to{' '}
+                          <span className="text-white font-semibold">$4,000</span> (30% of purchase price).
+                          Income limits apply ($75k single / $150k married).
+                        </p>
+                      </div>
+                    ) : carAge >= 2 ? (
+                      <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+                        This is a used EV priced above the $25k cap for used EV credits.
+                        <span className="text-white"> State incentives may still apply</span> — check your state's clean vehicle rebate program.
+                      </p>
+                    ) : null}
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      Many states offer additional rebates ($500–$5,000) — check your state's clean vehicle program.
+                    </p>
+                  </div>
+                )
+              })()}
+
               {/* Detailed inputs panel — detailed mode only */}
               {!simpleMode && resolvedState && detailedMode && !customCosts && (
                 <div className="rounded-xl border p-4 flex flex-col gap-5"
@@ -2378,6 +2456,13 @@ export default function TCOCalculator() {
                   ? `$${activeElecRate.toFixed(3)}/kWh · ${customFuelPrice ? 'custom' : chargingStyleLabel}`
                   : `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${STATE_FUEL_PRICES[resolvedState] ?? 3.50}`}/gal`
                 const insNote = `${resolvedState} · ${selMake || 'avg'}${detailedMode && multiCarPolicy ? ' · multi-car' : ''}`
+                const warrantyBasic = ['Hyundai','Kia'].includes(selMake) ? 5 : 3
+                const warrantyPowertrain = ['Hyundai','Kia'].includes(selMake) ? 10 : 5
+                const warrantyNote = selYear && carAge < warrantyBasic
+                  ? `likely under ${selMake ? selMake + ' ' : ''}${warrantyBasic}yr basic warranty`
+                  : selYear && carAge < warrantyPowertrain
+                  ? `may be under ${warrantyPowertrain}yr powertrain warranty`
+                  : null
                 const maintNote = detailedMode
                   ? (effIsEV ? 'EV · itemized' : 'gas · itemized')
                   : (effIsEV ? 'EV avg' : 'gas avg')
@@ -2402,6 +2487,30 @@ export default function TCOCalculator() {
                           </div>
                           <span className="font-display font-semibold text-white text-sm">{formatCurrency(value)}/yr</span>
                         </div>
+                        {key === 'fuel' && effIsEV && resolvedState && (() => {
+                          const gasCost = computeAnnualFuel(false, 28, null, resolvedState, annualMileage)
+                          const savings = gasCost - value
+                          if (savings <= 0) return null
+                          return (
+                            <div className="px-4 pb-3 pt-1 flex items-center justify-between"
+                              style={{ background: 'rgba(74,222,128,0.04)' }}>
+                              <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                                vs. gas equivalent (~28 MPG){' '}
+                                <span style={{ color: '#9ca3af' }}>{formatCurrency(gasCost)}/yr</span>
+                              </p>
+                              <p className="text-[11px] font-semibold ml-2 shrink-0" style={{ color: '#4ade80' }}>
+                                −{formatCurrency(savings)}/yr saved
+                              </p>
+                            </div>
+                          )
+                        })()}
+                        {key === 'maint' && warrantyNote && (
+                          <div className="px-4 pb-3 pt-1">
+                            <p className="text-[10px] leading-relaxed" style={{ color: '#4ade80' }}>
+                              ✓ {warrantyNote} — most repair costs covered by manufacturer
+                            </p>
+                          </div>
+                        )}
                         {key === 'maint' && detailedMode && (
                           <MaintenanceBreakdown
                             isEV={effIsEV}
@@ -2914,6 +3023,20 @@ export default function TCOCalculator() {
                       Based on your Year 1 all-in cost of <span className="text-white">{formatCurrency(year1Total)}</span>.
                       The 10% band is the safest; above 20% strains most budgets.
                     </p>
+                    <div className="h-px bg-[var(--border)]" />
+                    {(() => {
+                      const medianIncome = 77500
+                      const pctOfMedian = Math.round((year1Total / medianIncome) * 100)
+                      const color = pctOfMedian > 20 ? '#f87171' : pctOfMedian > 15 ? '#FFB800' : '#4ade80'
+                      return (
+                        <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                          US median household income is ~$77,500/yr. This vehicle costs{' '}
+                          <span className="font-semibold" style={{ color }}>{pctOfMedian}% of median income</span>.
+                          {pctOfMedian > 20 && ' This is above the 20% threshold that typically strains household budgets.'}
+                          {pctOfMedian <= 10 && ' This is well within the conservative 10% guideline.'}
+                        </p>
+                      )
+                    })()}
                   </div>
                 )
               })()}
@@ -3068,6 +3191,7 @@ export default function TCOCalculator() {
                 price={price}
                 rate={rate}
                 financeMode={financeMode}
+                carAge={carAge}
               />
 
               {/* ── PDF Export (Pro) ── */}

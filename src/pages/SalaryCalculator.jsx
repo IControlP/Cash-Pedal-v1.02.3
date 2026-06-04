@@ -683,6 +683,32 @@ export default function SalaryCalculator() {
                           MSRP auto-filled: <span className="text-white font-semibold">{fmt(selectedVehicleInfo.price)}</span>
                         </p>
                       )}
+                      {/* EV federal tax credit notice */}
+                      {selectedVehicleInfo.is_ev && mode === 'buy' && (() => {
+                        const price = selectedVehicleInfo.price ?? vehiclePrice
+                        const seg = selectedVehicleInfo.type ?? ''
+                        const cap = ['suv','truck','suv_large','van'].includes(seg) ? 80000 : 55000
+                        const eligible = price <= cap
+                        return eligible ? (
+                          <div className="mt-1 flex items-start gap-2 rounded-lg px-3 py-2"
+                            style={{ background: 'rgba(96,200,255,0.08)', border: '1px solid rgba(96,200,255,0.2)' }}>
+                            <span className="text-sm shrink-0 mt-0.5">⚡</span>
+                            <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+                              New EV — may qualify for the{' '}
+                              <span className="text-white font-semibold">federal $7,500 Clean Vehicle Credit</span>.
+                              Income &amp; assembly requirements apply.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="mt-1 flex items-start gap-2 rounded-lg px-3 py-2"
+                            style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.2)' }}>
+                            <span className="text-sm shrink-0 mt-0.5">⚠</span>
+                            <p className="text-[11px] text-amber-400/80 leading-relaxed">
+                              MSRP exceeds ${(cap / 1000).toFixed(0)}k cap — likely ineligible for the $7,500 federal EV tax credit.
+                            </p>
+                          </div>
+                        )
+                      })()}
                     </div>
                   )}
                 </div>
@@ -959,6 +985,12 @@ export default function SalaryCalculator() {
                     ? <>{US_STATES.find(([c]) => c === userState)?.[1]} insurance, fuel & registration rates applied.</>
                     : 'National average rates. Select your state above for tailored estimates.'}
                 </p>
+                {/* EV maintenance savings note */}
+                {(proMode ? selectedVehicleInfo?.is_ev : false) && (
+                  <p className="text-[10px] mt-2 leading-relaxed" style={{ color: '#4ade80' }}>
+                    ✓ EV maintenance savings applied: no oil changes, extended brake life (~$500–$900/yr less vs. gas).
+                  </p>
+                )}
               </div>
             </div>
 

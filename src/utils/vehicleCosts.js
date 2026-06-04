@@ -37,11 +37,18 @@ export const SEGMENT_MAX_DEPR = {
 
 // Elite-demand models: exceptional supply/demand retention (×0.82 on brand mult)
 export const ELITE_RETENTION = {
-  Toyota:    ['4Runner','Tacoma','Land Cruiser'],
-  Jeep:      ['Wrangler','Gladiator'],
+  Jeep:      ['Gladiator'],
   Ford:      ['Bronco'],
   Chevrolet: ['Corvette'],
-  Porsche:   ['911'],
+}
+
+// Legendary value-retention models — empirically lose only 8–15% over 7 years.
+// These are in a different class from ordinary "elite" vehicles and require a
+// substantially lower multiplier (×0.45) to reproduce real market data.
+export const ULTRA_RETENTION = {
+  Toyota:  ['4Runner', 'Tacoma', 'Land Cruiser'],
+  Jeep:    ['Wrangler'],
+  Porsche: ['911'],
 }
 
 export const HIGH_RETENTION = {
@@ -89,7 +96,7 @@ export function classifySegment(make, model) {
   if (mk === 'tesla' || ['rivian','lucid','polestar','fisker'].includes(mk)) return 'electric'
   const evKw = ['leaf','ariya','bolt ev','bolt euv','equinox ev','blazer ev','lyriq','ioniq 5','ioniq 6','ioniq electric','kona electric','niro ev','ev6','ev9','gv60','i3','i4','i5','i7','ix','e-tron','taycan','id.4','id.3','mach-e','lightning','eqb','eqc','eqe','eqs','bz4x','rz','solterra','mx-30','i-pace','prologue','zdx']
   if (evKw.some(k => m.includes(k))) return 'electric'
-  if (['prius','insight','sienna','maverick'].some(k => m.includes(k))) return 'hybrid'
+  if (['prius','insight','sienna'].some(k => m.includes(k))) return 'hybrid'
   if (m.includes('hybrid') || m.includes('phev') || m.includes('4xe') || m.includes('plug-in')) return 'hybrid'
   const sportsKw = ['corvette','mustang','camaro','challenger','charger','911','cayman','boxster','z4','supra','miata','mx-5','gt-r','370z','400z','brz','gr86','nsx']
   if (sportsKw.some(k => m.includes(k))) return 'sports'
@@ -98,9 +105,9 @@ export function classifySegment(make, model) {
     const luxSuvKw = ['escalade','xt4','xt5','xt6','x1','x2','x3','x4','x5','x6','x7','gla','glb','glc','gle','gls','g-class','q3','q4','q5','q7','q8','ux','nx','rx','gx','lx','rdx','mdx','qx50','qx55','qx60','qx80','navigator','nautilus','aviator','corsair','cayenne','macan','e-pace','f-pace','range rover','discovery','defender','evoque','gv60','gv70','gv80','levante','grecale']
     return luxSuvKw.some(k => m.includes(k)) ? 'luxury_suv' : 'luxury'
   }
-  const truckKw = ['f-150','f-250','f-350','silverado','sierra','ram 1500','ram 2500','tundra','tacoma','frontier','ridgeline','gladiator','ranger','colorado','canyon','titan']
+  const truckKw = ['f-150','f-250','f-350','silverado','sierra','ram 1500','ram 2500','tundra','tacoma','frontier','ridgeline','gladiator','ranger','colorado','canyon','titan','maverick','santa cruz']
   if (truckKw.some(k => m.includes(k))) return 'truck'
-  const suvKw = ['suburban','tahoe','yukon','pilot','highlander','rav4','cr-v','explorer','expedition','escape','equinox','traverse','pathfinder','armada','palisade','telluride','sorento','santa fe','tucson','cx-5','cx-9','outback','forester','ascent','wrangler','grand cherokee','durango','atlas','tiguan','4runner','sequoia','land cruiser']
+  const suvKw = ['suburban','tahoe','yukon','pilot','highlander','rav4','cr-v','explorer','expedition','escape','equinox','traverse','pathfinder','armada','palisade','telluride','sorento','santa fe','tucson','cx-5','cx-9','outback','forester','ascent','wrangler','grand cherokee','durango','atlas','tiguan','4runner','sequoia','land cruiser','bronco','blazer','trailblazer','compass','renegade','edge','bronco sport','passport','envoy']
   if (suvKw.some(k => m.includes(k))) return 'suv'
   if (['civic','corolla','elantra','sentra','forte','jetta','golf','mazda3','impreza','crosstrek'].some(k => m.includes(k))) return 'compact'
   if (['spark','mirage','rio','versa','accent','yaris','fit'].some(k => m.includes(k))) return 'economy'
@@ -109,7 +116,9 @@ export function classifySegment(make, model) {
 
 export function applyModelAdjustments(make, model, brandMult) {
   const ml = (model ?? '').toLowerCase()
-  if (ELITE_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 0.82
+  // Check tightest tier first — ULTRA overrides ELITE for the same make
+  if (ULTRA_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 0.45
+  if (ELITE_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 0.72
   if (HIGH_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 0.90
   if (POOR_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 1.10
   return brandMult

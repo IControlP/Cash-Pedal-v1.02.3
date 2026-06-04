@@ -9,11 +9,11 @@ export const BRAND_DEPRECIATION_MULT = {
   Toyota: 0.75, Lexus: 0.78, Porsche: 0.79, Honda: 0.80, Subaru: 0.82,
   Jeep: 0.84, Mazda: 0.86, Acura: 0.87,
   Hyundai: 0.88, Kia: 0.90, GMC: 0.96, Ford: 0.98, Buick: 1.02,
-  Chevrolet: 1.00, Ram: 1.02, Nissan: 1.05, Genesis: 0.96, Volvo: 1.05, Infiniti: 1.05,
+  Chevrolet: 1.00, Ram: 1.02, Nissan: 1.02, Genesis: 0.96, Volvo: 1.05, Infiniti: 1.05,
   Cadillac: 1.08, Volkswagen: 1.08, Audi: 1.05, Mini: 1.10, BMW: 1.05, Lincoln: 1.05,
-  'Mercedes-Benz': 1.06, 'Land Rover': 1.10, Dodge: 1.22, Jaguar: 1.12,
-  Chrysler: 1.28, 'Alfa Romeo': 1.30, Fiat: 1.35, Mitsubishi: 1.25,
-  Tesla: 0.90, Rivian: 1.15, Lucid: 1.22, Polestar: 1.15,
+  'Mercedes-Benz': 1.06, 'Land Rover': 1.10, Dodge: 1.15, Jaguar: 1.12,
+  Chrysler: 1.12, 'Alfa Romeo': 1.18, Fiat: 1.20, Mitsubishi: 1.10,
+  Tesla: 0.90, Rivian: 0.95, Lucid: 1.22, Polestar: 1.15,
   Maserati: 1.38,
 }
 
@@ -21,63 +21,86 @@ export const SEGMENT_CURVES = {
   truck:      {1:.09,2:.16,3:.23,4:.30,5:.36,6:.41,7:.44,8:.48,9:.50,10:.53,11:.55,12:.57,13:.59,14:.59,15:.61},
   sports:     {1:.13,2:.23,3:.32,4:.40,5:.47,6:.52,7:.57,8:.60,9:.63,10:.66,11:.68,12:.69,13:.70,14:.71,15:.72},
   suv:        {1:.12,2:.21,3:.29,4:.35,5:.41,6:.46,7:.50,8:.53,9:.56,10:.59,11:.60,12:.62,13:.63,14:.64,15:.65},
-  luxury_suv: {1:.14,2:.23,3:.32,4:.40,5:.47,6:.51,7:.55,8:.59,9:.61,10:.64,11:.66,12:.68,13:.68,14:.69,15:.70},
+  luxury_suv: {1:.13,2:.21,3:.29,4:.36,5:.42,6:.46,7:.50,8:.54,9:.57,10:.60,11:.62,12:.64,13:.65,14:.66,15:.67},
   hybrid:     {1:.12,2:.21,3:.29,4:.36,5:.43,6:.48,7:.51,8:.55,9:.58,10:.60,11:.62,12:.64,13:.65,14:.66,15:.67},
   compact:    {1:.14,2:.23,3:.32,4:.40,5:.47,6:.51,7:.55,8:.59,9:.61,10:.64,11:.66,12:.68,13:.68,14:.69,15:.70},
-  sedan:      {1:.14,2:.25,3:.34,4:.41,5:.49,6:.53,7:.57,8:.60,9:.63,10:.66,11:.68,12:.69,13:.70,14:.71,15:.72},
-  luxury:     {1:.18,2:.31,3:.41,4:.49,5:.56,6:.60,7:.64,8:.67,9:.69,10:.71,11:.73,12:.74,13:.75,14:.76,15:.77},
-  economy:    {1:.18,2:.31,3:.41,4:.49,5:.56,6:.60,7:.64,8:.68,9:.70,10:.72,11:.74,12:.76,13:.77,14:.77,15:.78},
+  sedan:      {1:.14,2:.25,3:.34,4:.41,5:.49,6:.51,7:.56,8:.60,9:.63,10:.66,11:.68,12:.69,13:.70,14:.71,15:.72},
+  luxury:     {1:.16,2:.26,3:.34,4:.41,5:.47,6:.51,7:.54,8:.57,9:.59,10:.62,11:.64,12:.65,13:.66,14:.67,15:.68},
+  economy:    {1:.17,2:.28,3:.38,4:.45,5:.51,6:.55,7:.59,8:.63,9:.65,10:.67,11:.69,12:.71,13:.72,14:.73,15:.74},
   electric:   {1:.20,2:.34,3:.45,4:.52,5:.59,6:.63,7:.67,8:.69,9:.71,10:.73,11:.75,12:.76,13:.77,14:.77,15:.78},
 }
 
 export const SEGMENT_MAX_DEPR = {
-  truck:.61, suv:.65, hybrid:.67, luxury_suv:.70, compact:.70,
-  sports:.72, sedan:.72, luxury:.77, economy:.78, electric:.78,
+  truck:.61, suv:.65, hybrid:.67, luxury_suv:.68, compact:.70,
+  sports:.72, sedan:.72, luxury:.72, economy:.74, electric:.78,
 }
 
-// Elite-demand models: exceptional supply/demand retention (×0.82 on brand mult)
+// Elite-demand models: strong supply/demand retention (×0.72 on brand mult)
 export const ELITE_RETENTION = {
-  Toyota:    ['4Runner','Tacoma','Land Cruiser'],
-  Jeep:      ['Wrangler','Gladiator'],
-  Ford:      ['Bronco'],
-  Chevrolet: ['Corvette'],
+  Toyota:    ['RAV4', 'Highlander', 'Sienna', 'Tundra'],
+  Honda:     ['Accord', 'Civic'],
+  Ford:      ['Mustang', 'Maverick'],
+  Jeep:      ['Gladiator'],
+  Mazda:     ['MX-5', 'Miata'],
+  BMW:       ['M2', 'M3', 'M4', 'M5', 'M8', 'X3 M', 'X5 M', 'X6 M'],
+  Audi:      ['RS3', 'RS4', 'RS5', 'RS6', 'RS7', 'R8', 'S4', 'S5', 'S6'],
+  'Mercedes-Benz': ['AMG GT', 'AMG C63', 'AMG E63', 'AMG GLC63', 'AMG GLE63', 'AMG G63'],
+  Rivian:    ['R1T', 'R1S'],
+  Chevrolet: ['Tahoe', 'Suburban'],
+  GMC:       ['Yukon', 'Yukon XL'],
+  Cadillac:  ['Escalade'],
+  Dodge:     ['Charger', 'Challenger'],
+  Kia:       ['EV9'],
+}
+
+// Legendary value-retention models — empirically lose only 8–20% over 7 years.
+// Substantially lower multiplier (×0.45) to reproduce real market data.
+export const ULTRA_RETENTION = {
+  Toyota:  ['4Runner', 'Tacoma', 'Land Cruiser', 'RAV4 Hybrid'],
+  Jeep:    ['Wrangler'],
+  Kia:     ['Telluride'],
+  Ford:    ['Bronco'],
+}
+
+// Near-zero depreciation models — often sell at or above MSRP used.
+// Requires ×0.28 multiplier. Porsche 911, C8 Corvette.
+export const LEGENDARY_RETENTION = {
   Porsche:   ['911'],
+  Chevrolet: ['Corvette'],
 }
 
 export const HIGH_RETENTION = {
-  Toyota:    ['Tundra','Sequoia','RAV4','Highlander','Sienna','Camry','Corolla','Venza','GR86','GR Corolla','GR Supra'],
+  Toyota:    ['Sequoia','RAV4','Highlander','Sienna','Camry','Corolla','Venza','GR86','GR Corolla','GR Supra'],
   Honda:     ['Pilot','Ridgeline','Odyssey','CR-V','HR-V','Passport','Accord','Civic'],
   Subaru:    ['Outback','Forester','Crosstrek','Ascent','WRX','Solterra'],
-  Jeep:      ['Grand Cherokee'],
-  Ford:      ['F-150','F-250','F-350','Bronco Sport','Mustang','Maverick'],
-  Chevrolet: ['Silverado','Tahoe','Suburban','Colorado','TrailBlazer'],
-  GMC:       ['Yukon','Yukon XL','Sierra','Canyon'],
+  Ford:      ['F-150','F-250','F-350','Bronco Sport'],
+  Chevrolet: ['Silverado','Colorado','TrailBlazer','Camaro'],
+  GMC:       ['Sierra','Canyon'],
   Ram:       ['1500','2500','3500'],
   Lexus:     ['GX','LX','RX','NX','TX','ES','IS'],
   Porsche:   ['Cayenne','Macan','Boxster','Cayman','Panamera'],
-  Cadillac:  ['Escalade','XT5','XT6'],
+  Cadillac:  ['XT5','XT6'],
   Lincoln:   ['Navigator','Aviator'],
-  Mazda:     ['CX-5','CX-50','CX-70','CX-90','CX-9','Mazda3'],
+  Mazda:     ['CX-3','CX-5','CX-30','CX-50','CX-70','CX-90','CX-9','Mazda3','MX-5','Miata'],
   Hyundai:   ['Palisade','Santa Fe','Tucson','Ioniq 5','Ioniq 6','Ioniq 9'],
-  Kia:       ['Telluride','Sorento','Sportage','EV6','EV9'],
+  Volkswagen: ['ID.4', 'ID.3', 'ID.6'],
+  Kia:       ['Telluride','Sorento','Sportage','EV6'],
   Acura:     ['MDX','RDX','Integra'],
   Genesis:   ['GV80','GV70','GV60'],
-  Tesla:     ['Model Y','Model 3','Cybertruck'],
+  Tesla:     ['Model Y','Model 3','Cybertruck','Model S','Model X'],
 }
 
 export const POOR_RETENTION = {
   BMW:              ['7 Series','X7','i3','8 Series','iX','i7'],
   'Mercedes-Benz':  ['S-Class','E-Class','CLS','AMG GT','EQS','EQE','EQB','EQC'],
   Audi:             ['A8','A7','A6','Q8','e-tron','e-tron GT','Q8 e-tron'],
-  Cadillac:         ['CT4','CT5','CT6','Lyriq'],
-  Nissan:           ['Altima','Maxima','Sentra','Leaf','Kicks','Versa','Murano'],
+  Cadillac:         ['CT4','CT6'],
+  Nissan:           ['Maxima','Sentra'],
   Jaguar:           ['XJ','XF','F-Type','I-PACE','F-PACE','E-PACE'],
-  'Land Rover':     ['Range Rover','Discovery','Defender'],
-  Dodge:            ['Durango','Journey','Charger','Challenger'],
-  Volkswagen:       ['Passat','Arteon','ID.4','Taos'],
+  Dodge:            ['Durango','Journey'],
+  Volkswagen:       ['Passat','Arteon'],
   Maserati:         ['Ghibli','Quattroporte','Levante','Grecale'],
   Mitsubishi:       ['Mirage','Eclipse Cross','Outlander Sport'],
-  Chrysler:         ['Pacifica','Voyager'],
   Fiat:             ['500','500X','500L','500e'],
   Lincoln:          ['Nautilus','Corsair'],
   Volvo:            ['S90','V90','XC90'],
@@ -89,18 +112,18 @@ export function classifySegment(make, model) {
   if (mk === 'tesla' || ['rivian','lucid','polestar','fisker'].includes(mk)) return 'electric'
   const evKw = ['leaf','ariya','bolt ev','bolt euv','equinox ev','blazer ev','lyriq','ioniq 5','ioniq 6','ioniq electric','kona electric','niro ev','ev6','ev9','gv60','i3','i4','i5','i7','ix','e-tron','taycan','id.4','id.3','mach-e','lightning','eqb','eqc','eqe','eqs','bz4x','rz','solterra','mx-30','i-pace','prologue','zdx']
   if (evKw.some(k => m.includes(k))) return 'electric'
-  if (['prius','insight','sienna','maverick'].some(k => m.includes(k))) return 'hybrid'
+  if (['prius','insight','sienna'].some(k => m.includes(k))) return 'hybrid'
   if (m.includes('hybrid') || m.includes('phev') || m.includes('4xe') || m.includes('plug-in')) return 'hybrid'
   const sportsKw = ['corvette','mustang','camaro','challenger','charger','911','cayman','boxster','z4','supra','miata','mx-5','gt-r','370z','400z','brz','gr86','nsx']
   if (sportsKw.some(k => m.includes(k))) return 'sports'
-  const luxBrands = ['bmw','mercedes-benz','audi','lexus','acura','infiniti','cadillac','lincoln','jaguar','land rover','porsche','maserati','alfa romeo','genesis']
+  const luxBrands = ['bmw','mercedes-benz','audi','lexus','acura','infiniti','cadillac','lincoln','jaguar','land rover','porsche','maserati','alfa romeo','genesis','volvo']
   if (luxBrands.includes(mk)) {
-    const luxSuvKw = ['escalade','xt4','xt5','xt6','x1','x2','x3','x4','x5','x6','x7','gla','glb','glc','gle','gls','g-class','q3','q4','q5','q7','q8','ux','nx','rx','gx','lx','rdx','mdx','qx50','qx55','qx60','qx80','navigator','nautilus','aviator','corsair','cayenne','macan','e-pace','f-pace','range rover','discovery','defender','evoque','gv60','gv70','gv80','levante','grecale']
+    const luxSuvKw = ['escalade','xt4','xt5','xt6','x1','x2','x3','x4','x5','x6','x7','gla','glb','glc','gle','gls','g-class','q3','q4','q5','q7','q8','ux','nx','rx','gx','lx','rdx','mdx','qx50','qx55','qx60','qx80','navigator','nautilus','aviator','corsair','cayenne','macan','e-pace','f-pace','range rover','discovery','defender','evoque','gv60','gv70','gv80','levante','grecale','xc40','xc60','xc90','v90 cross country']
     return luxSuvKw.some(k => m.includes(k)) ? 'luxury_suv' : 'luxury'
   }
-  const truckKw = ['f-150','f-250','f-350','silverado','sierra','ram 1500','ram 2500','tundra','tacoma','frontier','ridgeline','gladiator','ranger','colorado','canyon','titan']
+  const truckKw = ['f-150','f-250','f-350','silverado','sierra','ram 1500','ram 2500','tundra','tacoma','frontier','ridgeline','gladiator','ranger','colorado','canyon','titan','maverick','santa cruz']
   if (truckKw.some(k => m.includes(k))) return 'truck'
-  const suvKw = ['suburban','tahoe','yukon','pilot','highlander','rav4','cr-v','explorer','expedition','escape','equinox','traverse','pathfinder','armada','palisade','telluride','sorento','santa fe','tucson','cx-5','cx-9','outback','forester','ascent','wrangler','grand cherokee','durango','atlas','tiguan','4runner','sequoia','land cruiser']
+  const suvKw = ['suburban','tahoe','yukon','pilot','highlander','rav4','cr-v','hr-v','explorer','expedition','escape','equinox','traverse','pathfinder','armada','palisade','telluride','sorento','santa fe','tucson','cx-5','cx-9','outback','forester','ascent','wrangler','grand cherokee','durango','atlas','tiguan','4runner','sequoia','land cruiser','bronco','blazer','trailblazer','compass','renegade','edge','bronco sport','passport','envoy','pacifica','odyssey','caravan','voyager','carnival','sedona','murano','rogue','kicks','kona','venue','sportage','cx-3','cx-30','cx-50','cx-70','cx-90','enclave','encore','envision','acadia','cherokee','taos','trax','ev9']
   if (suvKw.some(k => m.includes(k))) return 'suv'
   if (['civic','corolla','elantra','sentra','forte','jetta','golf','mazda3','impreza','crosstrek'].some(k => m.includes(k))) return 'compact'
   if (['spark','mirage','rio','versa','accent','yaris','fit'].some(k => m.includes(k))) return 'economy'
@@ -109,7 +132,12 @@ export function classifySegment(make, model) {
 
 export function applyModelAdjustments(make, model, brandMult) {
   const ml = (model ?? '').toLowerCase()
-  if (ELITE_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 0.82
+  // Mach-E is an EV and must not inherit the Mustang retention bonus
+  if (ml.includes('mach-e')) return brandMult
+  // Check tightest tier first
+  if (LEGENDARY_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 0.28
+  if (ULTRA_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 0.45
+  if (ELITE_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 0.72
   if (HIGH_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 0.90
   if (POOR_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 1.10
   return brandMult

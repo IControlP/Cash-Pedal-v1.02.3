@@ -35,27 +35,34 @@ export const SEGMENT_MAX_DEPR = {
   sports:.72, sedan:.72, luxury:.72, economy:.74, electric:.78,
 }
 
-// Elite-demand models: exceptional supply/demand retention (×0.82 on brand mult)
+// Elite-demand models: strong supply/demand retention (×0.72 on brand mult)
 export const ELITE_RETENTION = {
+  Toyota:    ['RAV4', 'Highlander'],
+  Honda:     ['Accord', 'Civic'],
+  Ford:      ['Bronco', 'Mustang'],
   Jeep:      ['Gladiator'],
-  Ford:      ['Bronco'],
-  Chevrolet: ['Corvette'],
+  Mazda:     ['MX-5', 'Miata'],
 }
 
-// Legendary value-retention models — empirically lose only 8–15% over 7 years.
-// These are in a different class from ordinary "elite" vehicles and require a
-// substantially lower multiplier (×0.45) to reproduce real market data.
+// Legendary value-retention models — empirically lose only 8–20% over 7 years.
+// Substantially lower multiplier (×0.45) to reproduce real market data.
 export const ULTRA_RETENTION = {
   Toyota:  ['4Runner', 'Tacoma', 'Land Cruiser', 'RAV4 Hybrid'],
   Jeep:    ['Wrangler'],
-  Porsche: ['911'],
+  Kia:     ['Telluride'],
+}
+
+// Near-zero depreciation models — often sell at or above MSRP used.
+// Requires ×0.28 multiplier. Porsche 911, C8 Corvette.
+export const LEGENDARY_RETENTION = {
+  Porsche:   ['911'],
+  Chevrolet: ['Corvette'],
 }
 
 export const HIGH_RETENTION = {
   Toyota:    ['Tundra','Sequoia','RAV4','Highlander','Sienna','Camry','Corolla','Venza','GR86','GR Corolla','GR Supra'],
   Honda:     ['Pilot','Ridgeline','Odyssey','CR-V','HR-V','Passport','Accord','Civic'],
   Subaru:    ['Outback','Forester','Crosstrek','Ascent','WRX','Solterra'],
-  Jeep:      ['Grand Cherokee'],
   Ford:      ['F-150','F-250','F-350','Bronco Sport','Mustang','Maverick'],
   Chevrolet: ['Silverado','Tahoe','Suburban','Colorado','TrailBlazer'],
   GMC:       ['Yukon','Yukon XL','Sierra','Canyon'],
@@ -64,7 +71,7 @@ export const HIGH_RETENTION = {
   Porsche:   ['Cayenne','Macan','Boxster','Cayman','Panamera'],
   Cadillac:  ['Escalade','XT5','XT6'],
   Lincoln:   ['Navigator','Aviator'],
-  Mazda:     ['CX-5','CX-50','CX-70','CX-90','CX-9','Mazda3'],
+  Mazda:     ['CX-5','CX-50','CX-70','CX-90','CX-9','Mazda3','MX-5','Miata'],
   Hyundai:   ['Palisade','Santa Fe','Tucson','Ioniq 5','Ioniq 6','Ioniq 9'],
   Kia:       ['Telluride','Sorento','Sportage','EV6','EV9'],
   Acura:     ['MDX','RDX','Integra'],
@@ -77,7 +84,7 @@ export const POOR_RETENTION = {
   'Mercedes-Benz':  ['S-Class','E-Class','CLS','AMG GT','EQS','EQE','EQB','EQC'],
   Audi:             ['A8','A7','A6','Q8','e-tron','e-tron GT','Q8 e-tron'],
   Cadillac:         ['CT4','CT5','CT6','Lyriq'],
-  Nissan:           ['Altima','Maxima','Sentra','Versa'],
+  Nissan:           ['Maxima','Sentra'],
   Jaguar:           ['XJ','XF','F-Type','I-PACE','F-PACE','E-PACE'],
   Dodge:            ['Durango','Journey','Charger','Challenger'],
   Volkswagen:       ['Passat','Arteon','ID.4','Taos'],
@@ -114,7 +121,8 @@ export function classifySegment(make, model) {
 
 export function applyModelAdjustments(make, model, brandMult) {
   const ml = (model ?? '').toLowerCase()
-  // Check tightest tier first — ULTRA overrides ELITE for the same make
+  // Check tightest tier first
+  if (LEGENDARY_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 0.28
   if (ULTRA_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 0.45
   if (ELITE_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 0.72
   if (HIGH_RETENTION[make]?.some(n => ml.includes(n.toLowerCase()))) return brandMult * 0.90

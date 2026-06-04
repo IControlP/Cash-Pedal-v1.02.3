@@ -46,6 +46,11 @@ export const ELITE_RETENTION = {
   Audi:      ['RS3', 'RS4', 'RS5', 'RS6', 'RS7', 'R8', 'S4', 'S5', 'S6'],
   'Mercedes-Benz': ['AMG GT', 'AMG C63', 'AMG E63', 'AMG GLC63', 'AMG GLE63', 'AMG G63'],
   Rivian:    ['R1T', 'R1S'],
+  Chevrolet: ['Tahoe', 'Suburban'],
+  GMC:       ['Yukon', 'Yukon XL'],
+  Cadillac:  ['Escalade'],
+  Dodge:     ['Charger', 'Challenger'],
+  Kia:       ['EV9'],
 }
 
 // Legendary value-retention models — empirically lose only 8–20% over 7 years.
@@ -69,17 +74,17 @@ export const HIGH_RETENTION = {
   Honda:     ['Pilot','Ridgeline','Odyssey','CR-V','HR-V','Passport','Accord','Civic'],
   Subaru:    ['Outback','Forester','Crosstrek','Ascent','WRX','Solterra'],
   Ford:      ['F-150','F-250','F-350','Bronco Sport'],
-  Chevrolet: ['Silverado','Tahoe','Suburban','Colorado','TrailBlazer'],
-  GMC:       ['Yukon','Yukon XL','Sierra','Canyon'],
+  Chevrolet: ['Silverado','Colorado','TrailBlazer','Camaro'],
+  GMC:       ['Sierra','Canyon'],
   Ram:       ['1500','2500','3500'],
   Lexus:     ['GX','LX','RX','NX','TX','ES','IS'],
   Porsche:   ['Cayenne','Macan','Boxster','Cayman','Panamera'],
-  Cadillac:  ['Escalade','XT5','XT6'],
+  Cadillac:  ['XT5','XT6'],
   Lincoln:   ['Navigator','Aviator'],
-  Mazda:     ['CX-5','CX-50','CX-70','CX-90','CX-9','Mazda3','MX-5','Miata'],
+  Mazda:     ['CX-3','CX-5','CX-30','CX-50','CX-70','CX-90','CX-9','Mazda3','MX-5','Miata'],
   Hyundai:   ['Palisade','Santa Fe','Tucson','Ioniq 5','Ioniq 6','Ioniq 9'],
   Volkswagen: ['ID.4', 'ID.3', 'ID.6'],
-  Kia:       ['Telluride','Sorento','Sportage','EV6','EV9'],
+  Kia:       ['Telluride','Sorento','Sportage','EV6'],
   Acura:     ['MDX','RDX','Integra'],
   Genesis:   ['GV80','GV70','GV60'],
   Tesla:     ['Model Y','Model 3','Cybertruck','Model S','Model X'],
@@ -89,10 +94,10 @@ export const POOR_RETENTION = {
   BMW:              ['7 Series','X7','i3','8 Series','iX','i7'],
   'Mercedes-Benz':  ['S-Class','E-Class','CLS','AMG GT','EQS','EQE','EQB','EQC'],
   Audi:             ['A8','A7','A6','Q8','e-tron','e-tron GT','Q8 e-tron'],
-  Cadillac:         ['CT4','CT5','CT6','Lyriq'],
+  Cadillac:         ['CT4','CT6'],
   Nissan:           ['Maxima','Sentra'],
   Jaguar:           ['XJ','XF','F-Type','I-PACE','F-PACE','E-PACE'],
-  Dodge:            ['Durango','Journey','Charger','Challenger'],
+  Dodge:            ['Durango','Journey'],
   Volkswagen:       ['Passat','Arteon'],
   Maserati:         ['Ghibli','Quattroporte','Levante','Grecale'],
   Mitsubishi:       ['Mirage','Eclipse Cross','Outlander Sport'],
@@ -118,7 +123,7 @@ export function classifySegment(make, model) {
   }
   const truckKw = ['f-150','f-250','f-350','silverado','sierra','ram 1500','ram 2500','tundra','tacoma','frontier','ridgeline','gladiator','ranger','colorado','canyon','titan','maverick','santa cruz']
   if (truckKw.some(k => m.includes(k))) return 'truck'
-  const suvKw = ['suburban','tahoe','yukon','pilot','highlander','rav4','cr-v','explorer','expedition','escape','equinox','traverse','pathfinder','armada','palisade','telluride','sorento','santa fe','tucson','cx-5','cx-9','outback','forester','ascent','wrangler','grand cherokee','durango','atlas','tiguan','4runner','sequoia','land cruiser','bronco','blazer','trailblazer','compass','renegade','edge','bronco sport','passport','envoy','pacifica','odyssey','caravan','voyager','carnival','sedona','murano','rogue','kicks','kona','venue','sportage','cx-3','cx-30','cx-50','cx-70','cx-90','enclave','encore','envision','acadia','cherokee','taos','trax']
+  const suvKw = ['suburban','tahoe','yukon','pilot','highlander','rav4','cr-v','hr-v','explorer','expedition','escape','equinox','traverse','pathfinder','armada','palisade','telluride','sorento','santa fe','tucson','cx-5','cx-9','outback','forester','ascent','wrangler','grand cherokee','durango','atlas','tiguan','4runner','sequoia','land cruiser','bronco','blazer','trailblazer','compass','renegade','edge','bronco sport','passport','envoy','pacifica','odyssey','caravan','voyager','carnival','sedona','murano','rogue','kicks','kona','venue','sportage','cx-3','cx-30','cx-50','cx-70','cx-90','enclave','encore','envision','acadia','cherokee','taos','trax','ev9']
   if (suvKw.some(k => m.includes(k))) return 'suv'
   if (['civic','corolla','elantra','sentra','forte','jetta','golf','mazda3','impreza','crosstrek'].some(k => m.includes(k))) return 'compact'
   if (['spark','mirage','rio','versa','accent','yaris','fit'].some(k => m.includes(k))) return 'economy'

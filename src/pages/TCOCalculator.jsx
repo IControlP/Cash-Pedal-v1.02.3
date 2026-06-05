@@ -949,6 +949,9 @@ export default function TCOCalculator() {
 
   const [price, setPrice]           = useState(30000)
   const [downPayment, setDownPayment] = useState(5000)
+  const [tradeInValue,  setTradeInValue]  = useState(0)
+  const [tradeInOwed,   setTradeInOwed]   = useState(0)
+  const [showTradeIn,   setShowTradeIn]   = useState(false)
   const [loanTerm, setLoanTerm]     = useState(60)
   const [rate, setRate]             = useState(6.5)
   const [ownershipYears, setOwnershipYears] = useState(5)
@@ -1196,6 +1199,15 @@ export default function TCOCalculator() {
   const effectivePrice = financeMode === 'buy' ? price + totalPurchaseExtras : price
   const regionalDemand = resolvedState ? getRegionalDemandPremium(resolvedState) : 0
 
+  // Trade-in equity: positive = reduces loan; negative = rolls into loan
+  const netTradeIn = (financeMode === 'buy' && showTradeIn) ? tradeInValue - tradeInOwed : 0
+  const priceForLoan       = netTradeIn < 0 ? effectivePrice + Math.abs(netTradeIn) : effectivePrice
+  const downPaymentForLoan = (() => {
+    const base = Math.min(downPayment, effectivePrice)
+    if (netTradeIn > 0) return Math.min(base + netTradeIn, priceForLoan)
+    return base
+  })()
+
   const leasePeriodYears = Math.ceil(leaseTerm / 12)
 
   // "I Own It" — how long the user has owned the vehicle
@@ -1233,10 +1245,23 @@ export default function TCOCalculator() {
       })
     }
     return calculateLoan({
-      price: effectivePrice, downPayment: Math.min(downPayment, effectivePrice),
+      price: priceForLoan, downPayment: downPaymentForLoan,
       loanTermMonths: loanTerm, annualRatePercent: rate, ownershipYears,
     })
-  }, [financeMode, currentVehicleType, currentRemainingBalance, currentRemainingTerm, effectivePrice, downPayment, loanTerm, rate, ownershipYears])
+  }, [financeMode, currentVehicleType, currentRemainingBalance, currentRemainingTerm, priceForLoan, downPaymentForLoan, loanTerm, rate, ownershipYears])
+
+  // Rate comparison: show potential savings at 2% lower rate (credit union benchmark)
+  const rateComparison = useMemo(() => {
+    if (financeMode !== 'buy' || rate <= 5.5 || results.loanAmount <= 0) return null
+    const altRate = Math.max(2.0, rate - 2.0)
+    const alt = calculateLoan({ price: priceForLoan, downPayment: downPaymentForLoan, loanTermMonths: loanTerm, annualRatePercent: altRate, ownershipYears })
+    return {
+      altRate,
+      monthlyPayment: alt.monthlyPayment,
+      monthlySavings: results.monthlyPayment - alt.monthlyPayment,
+      totalSavings: results.totalInterestPaid - alt.totalInterestPaid,
+    }
+  }, [financeMode, rate, priceForLoan, downPaymentForLoan, loanTerm, ownershipYears, results.loanAmount, results.monthlyPayment, results.totalInterestPaid])
 
   const leaseResults = useMemo(() => calculateLease({
     msrp: price,
@@ -1836,12 +1861,112 @@ export default function TCOCalculator() {
 
                   <SelectInput label="Loan Term" value={loanTerm} onChange={setLoanTerm} options={loanTermOptions} />
 
+                  {/* Trade-in section */}
+                  <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowTradeIn(v => !v)}
+                      className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors hover:bg-white/5"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-white">Trade-in vehicle</span>
+                        {showTradeIn && netTradeIn !== 0 && (
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded ${netTradeIn > 0 ? 'text-green-400 bg-green-400/10' : 'text-red-400 bg-red-400/10'}`}>
+                            {netTradeIn > 0 ? `+${formatCurrency(netTradeIn)} equity` : `${formatCurrency(netTradeIn)} owed`}
+                          </span>
+                        )}
+                        {!showTradeIn && (
+                          <span className="text-xs text-[var(--text-muted)]">optional</span>
+                        )}
+                      </div>
+                      <span className="text-[var(--text-muted)] text-sm">{showTradeIn ? '▲' : '▼'}</span>
+                    </button>
+                    {showTradeIn && (
+                      <div className="px-4 pb-4 flex flex-col gap-4 border-t border-[var(--border)] pt-4">
+                        <p className="text-xs text-[var(--text-muted)]">
+                          Trade-in equity reduces your loan. Negative equity (owed &gt; value) rolls into the new loan.
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="input-label">Trade-in value</label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                              <input type="number" min={0} max={150000} step={500}
+                                value={tradeInValue || ''}
+                                onChange={e => setTradeInValue(Math.max(0, parseInt(e.target.value) || 0))}
+                                placeholder="0"
+                                className="input-field pl-7" />
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <label className="input-label">Amount owed</label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                              <input type="number" min={0} max={150000} step={500}
+                                value={tradeInOwed || ''}
+                                onChange={e => setTradeInOwed(Math.max(0, parseInt(e.target.value) || 0))}
+                                placeholder="0"
+                                className="input-field pl-7" />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg px-4 py-2.5"
+                          style={{ background: netTradeIn >= 0 ? 'rgba(74,222,128,0.07)' : 'rgba(248,113,113,0.07)',
+                                   border: `1px solid ${netTradeIn >= 0 ? 'rgba(74,222,128,0.25)' : 'rgba(248,113,113,0.25)'}` }}>
+                          <span className="text-sm text-[var(--text-muted)]">Net equity</span>
+                          <span className={`font-display font-bold text-lg ${netTradeIn >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {netTradeIn >= 0 ? '+' : ''}{formatCurrency(netTradeIn)}
+                          </span>
+                        </div>
+                        {netTradeIn < 0 && (
+                          <p className="text-[11px] text-amber-400 leading-relaxed">
+                            You're <span className="font-semibold">{formatCurrency(Math.abs(netTradeIn))}</span> underwater.
+                            This negative equity rolls into your new loan, increasing it by that amount.
+                          </p>
+                        )}
+                        {netTradeIn > 0 && (
+                          <p className="text-[11px] text-green-400 leading-relaxed">
+                            Your equity reduces the loan by <span className="font-semibold">{formatCurrency(netTradeIn)}</span>,
+                            saving you {formatCurrency(Math.round(netTradeIn * (rate / 100) * (loanTerm / 12) / 2 / 50) * 50)} in estimated interest.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   <SliderInput label="Annual Interest Rate" value={rate} onChange={setRate}
                     min={0} max={25} step={0.1} suffix="%" inputMin={0} inputMax={25} />
                   {!simpleMode && (
                     <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
                       Typical rates (new car): excellent credit 740+ ≈ 5–7% · good 680+ ≈ 7–9% · fair 620+ ≈ 10–13%
                     </p>
+                  )}
+
+                  {/* Rate comparison strip */}
+                  {rateComparison && (
+                    <div className="rounded-lg p-3.5 border"
+                      style={{ borderColor: 'rgba(96,165,250,0.3)', background: 'rgba(96,165,250,0.05)' }}>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide mb-2.5" style={{ color: '#93c5fd' }}>
+                        Credit union rates are typically 1–3% lower
+                      </p>
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div className="rounded-lg px-3 py-2 text-center" style={{ background: 'rgba(0,0,0,0.2)' }}>
+                          <p className="text-[var(--text-muted)] mb-1">Your rate {rate}%</p>
+                          <p className="text-white font-bold text-sm">{formatCurrency(results.monthlyPayment)}/mo</p>
+                        </div>
+                        <div className="rounded-lg px-3 py-2 text-center" style={{ background: 'rgba(74,222,128,0.07)', border: '1px solid rgba(74,222,128,0.2)' }}>
+                          <p className="text-green-300 mb-1">At {rateComparison.altRate.toFixed(1)}%</p>
+                          <p className="text-green-400 font-bold text-sm">{formatCurrency(rateComparison.monthlyPayment)}/mo</p>
+                        </div>
+                      </div>
+                      <p className="text-[11px] mt-2.5 text-center" style={{ color: '#86efac' }}>
+                        Save <span className="font-bold">{formatCurrency(rateComparison.monthlySavings)}/mo</span>{' '}
+                        · <span className="font-bold">{formatCurrency(rateComparison.totalSavings)}</span> total interest
+                      </p>
+                      <p className="text-[10px] text-[var(--text-muted)] mt-1.5 text-center">
+                        Check credit unions like Navy Federal, USAA, or local CUs before accepting dealer financing.
+                      </p>
+                    </div>
                   )}
 
                   <SelectInput label="Ownership Duration" value={ownershipYears}

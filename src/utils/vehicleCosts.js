@@ -171,17 +171,20 @@ export function estimateCurrentValue(originalPrice, make, model, ageYears, curre
   const cap = SEGMENT_MAX_DEPR[segment] ?? 0.80
 
   // Mileage adjustment: compare actual miles vs. FHWA 2024 average of 13,500 mi/yr.
-  // Each 10 % deviation from average shifts depreciation by ~2.5 %.
-  // Capped at +10 % extra depreciation (very high mileage) / -8 % (very low).
+  // Sensitivity increased to 0.35 (was 0.25) and range widened to [−12%, +22%] to
+  // better reflect real market discounts on high-odometer vehicles.
   let mileageFactor = 1.0
   if (currentMileage != null && ageYears > 0) {
     const expectedMiles = ageYears * 13500
     const mileageRatio  = currentMileage / expectedMiles
-    mileageFactor = Math.max(0.92, Math.min(1.10, 1 + (mileageRatio - 1) * 0.25))
+    mileageFactor = Math.max(0.88, Math.min(1.22, 1 + (mileageRatio - 1) * 0.35))
   }
 
-  const finalRate = Math.min(baseRate * adjBrand * mileageFactor, cap)
-  return Math.max(originalPrice * (1 - finalRate), originalPrice * 0.10)
+  // Apply segment cap to the age/brand rate, then let mileage push past it —
+  // high-odometer vehicles genuinely trade below the typical segment floor.
+  const baseCapped = Math.min(baseRate * adjBrand, cap)
+  const finalRate  = Math.min(baseCapped * mileageFactor, 0.95)
+  return Math.max(originalPrice * (1 - finalRate), originalPrice * 0.05)
 }
 
 // ── Insurance ────────────────────────────────────────────

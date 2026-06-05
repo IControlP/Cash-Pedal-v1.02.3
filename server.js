@@ -34,6 +34,15 @@ const PRO_USERS_SERVER = new Set(
     .filter(Boolean)
 )
 
+// Promo codes that grant pro access — configure via env var
+// PROMO_CODES=Sumo2026!,AnotherCode
+const PROMO_CODES = new Set(
+  (process.env.PROMO_CODES || '')
+    .split(',')
+    .map(c => c.trim())
+    .filter(Boolean)
+)
+
 // ── Stripe ────────────────────────────────────────────
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
@@ -817,6 +826,20 @@ app.post('/api/delete-my-data', sensitiveLimiter, async (req, res) => {
     console.error('[delete-my-data] error:', err.message)
     res.status(500).json({ error: 'Internal server error' })
   }
+})
+
+// ── API: Verify promo code ────────────────────────────
+app.post('/api/verify-promo-code', sensitiveLimiter, (req, res) => {
+  const { code } = req.body
+  if (typeof code !== 'string' || !code.trim()) {
+    return res.status(400).json({ valid: false, error: 'Code required' })
+  }
+  if (PROMO_CODES.size === 0) {
+    return res.json({ valid: false, error: 'No promo codes configured' })
+  }
+  const valid = PROMO_CODES.has(code.trim())
+  if (!valid) console.log(`[promo] invalid attempt — IP: ${anonymizeIp(req.ip)}`)
+  res.json({ valid })
 })
 
 // ── Serve Vite build ──────────────────────────────────

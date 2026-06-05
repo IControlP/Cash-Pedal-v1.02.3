@@ -15,12 +15,15 @@ const FEATURES = [
 export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocked }) {
   const [email,       setEmail]       = useState('')
   const [restoreMode, setRestoreMode] = useState(false)
+  const [promoMode,   setPromoMode]   = useState(false)
+  const [promoCode,   setPromoCode]   = useState('')
+  const [promoErr,    setPromoErr]    = useState('')
   const [loading,     setLoading]     = useState(false)
   const [restoreErr,  setRestoreErr]  = useState('')
   const [checkoutErr, setCheckoutErr] = useState('')
   const [deviceLimit, setDeviceLimit] = useState(false)
 
-  const { verifySubscription } = useSubscription()
+  const { verifySubscription, verifyPromoCode } = useSubscription()
 
   async function handleCheckout() {
     setCheckoutErr('')
@@ -63,6 +66,22 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
     }
   }
 
+  async function handlePromo(e) {
+    e.preventDefault()
+    setPromoErr('')
+    if (!promoCode.trim()) { setPromoErr('Please enter your promo code.'); return }
+    setLoading(true)
+    const result = await verifyPromoCode(promoCode)
+    setLoading(false)
+    if (result.valid) {
+      onUnlocked()
+    } else if (result.error === 'network') {
+      setPromoErr('Could not reach server. Please check your connection.')
+    } else {
+      setPromoErr('Invalid promo code.')
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm px-4">
       <div className="card w-full max-w-md">
@@ -97,7 +116,34 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
           </ul>
         </div>
 
-        {restoreMode ? (
+        {promoMode ? (
+          <form onSubmit={handlePromo} className="flex flex-col gap-3 mb-4">
+            <p className="text-sm text-white font-semibold">Enter your promo code</p>
+            <input
+              type="text"
+              className="input-field"
+              placeholder="Promo code"
+              value={promoCode}
+              onChange={e => setPromoCode(e.target.value)}
+              autoFocus
+            />
+            {promoErr && <p className="text-xs text-red-400">{promoErr}</p>}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => { setPromoMode(false); setPromoErr(''); setPromoCode('') }}
+                className="flex-1 py-2 rounded-xl border border-[var(--border)] text-[var(--text-muted)] text-sm hover:border-[var(--accent)] transition-colors">
+                Back
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 btn-primary disabled:opacity-40 text-sm">
+                {loading ? 'Checking…' : 'Apply Code'}
+              </button>
+            </div>
+          </form>
+        ) : restoreMode ? (
           deviceLimit ? (
             <div className="flex flex-col gap-3 mb-4">
               <div className="rounded-xl border p-4 text-sm"
@@ -171,6 +217,11 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
               onClick={() => { setRestoreMode(true); setRestoreErr('') }}
               className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors text-center">
               Already have a pass? Restore access →
+            </button>
+            <button
+              onClick={() => { setPromoMode(true); setPromoErr(''); setPromoCode('') }}
+              className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors text-center">
+              Have a promo code? →
             </button>
           </div>
         )}

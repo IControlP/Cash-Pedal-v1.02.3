@@ -5,10 +5,12 @@ const SUB_CHANGED = 'cashpedal_sub_changed'
 export const LS_SUB_EMAIL       = 'cashpedal_subscriber_email'
 export const LS_SUB_EXPIRES     = 'cashpedal_sub_expires'
 export const LS_SUB_VERIFIED_AT = 'cashpedal_sub_verified_at'
+export const LS_PROMO_ACCESS    = 'cashpedal_promo_access'
 
 const VERIFY_INTERVAL_MS = 24 * 60 * 60 * 1000 // re-verify once per day
 
 function isActiveFromStorage() {
+  if (localStorage.getItem(LS_PROMO_ACCESS) === 'true') return true
   const email   = localStorage.getItem(LS_SUB_EMAIL)
   const expires = localStorage.getItem(LS_SUB_EXPIRES)
   if (!email) return false
@@ -98,9 +100,31 @@ export function useSubscription() {
     localStorage.removeItem(LS_SUB_EMAIL)
     localStorage.removeItem(LS_SUB_EXPIRES)
     localStorage.removeItem(LS_SUB_VERIFIED_AT)
+    localStorage.removeItem(LS_PROMO_ACCESS)
     setIsSubscribed(false)
     setSubscriberEmail('')
     window.dispatchEvent(new Event(SUB_CHANGED))
+  }
+
+  async function verifyPromoCode(code) {
+    if (!code || !code.trim()) return { valid: false }
+    try {
+      const res  = await fetch('/api/verify-promo-code', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ code: code.trim() }),
+      })
+      const data = await res.json()
+      if (data.valid) {
+        localStorage.setItem(LS_PROMO_ACCESS, 'true')
+        setIsSubscribed(true)
+        window.dispatchEvent(new Event(SUB_CHANGED))
+        return { valid: true }
+      }
+      return { valid: false }
+    } catch {
+      return { valid: false, error: 'network' }
+    }
   }
 
   async function resetDevices(email) {
@@ -119,5 +143,5 @@ export function useSubscription() {
     }
   }
 
-  return { isSubscribed, subscriberEmail, verifySubscription, activateFromSession, clearSubscription, resetDevices }
+  return { isSubscribed, subscriberEmail, verifySubscription, activateFromSession, clearSubscription, resetDevices, verifyPromoCode }
 }

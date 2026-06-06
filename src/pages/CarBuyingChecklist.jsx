@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PaywallModal from '../components/PaywallModal'
 import { useSubscription } from '../hooks/useSubscription'
 import { maintenanceItems, sellerQuestions, US_STATES, getClimateFlags, getContextualQuestions } from '../data/checklistData'
-import { estimateCurrentValue } from '../utils/vehicleCosts'
+import { estimateCurrentValue, STATE_LABOR_RATES, LABOR_RATE } from '../utils/vehicleCosts'
 import VEHICLES from '../data/vehicles.json'
 
 const MAKES = Object.keys(VEHICLES).sort()
@@ -117,27 +117,48 @@ export default function CarBuyingChecklist() {
     return cats
   }, [])
 
-  // Items that should have been done by this mileage
+  // Scale maintenance costs by local labor rate vs national average ($110/hr)
+  const laborMult = useMemo(() => {
+    const localRate = STATE_LABOR_RATES[vehicleInfo.state] ?? LABOR_RATE
+    return localRate / LABOR_RATE
+  }, [vehicleInfo.state])
+
+  const vehicleAge = useMemo(() => {
+    if (!vehicleInfo.year) return 0
+    return new Date().getFullYear() - parseInt(vehicleInfo.year)
+  }, [vehicleInfo.year])
+
+  // An item is "due" if mileage-based interval passed OR age-based yearInterval reached
+  const isItemDue = useCallback((item) => {
+    const mileDue = vehicleInfo.mileage >= item.interval
+    const ageDue = item.yearInterval != null && vehicleAge >= item.yearInterval
+    return mileDue || ageDue
+  }, [vehicleInfo.mileage, vehicleAge])
+
+  // Items that should have been done by this mileage or vehicle age
   const dueItems = useMemo(() =>
-    maintenanceItems.filter(item => vehicleInfo.mileage >= item.interval),
-    [vehicleInfo.mileage]
+    maintenanceItems.filter(isItemDue),
+    [isItemDue]
   )
 
-  // Items due in the next year (~12,000 miles)
+  // Items due in the next year (~12,000 miles) — mileage-based only for upcoming
   const upcomingItems = useMemo(() =>
     maintenanceItems.filter(item => {
+      if (isItemDue(item)) return false
       const milesTilDue = item.interval - (vehicleInfo.mileage % item.interval)
-      return milesTilDue <= 12000 && !dueItems.includes(item)
+      return milesTilDue <= 12000
     }),
-    [vehicleInfo.mileage, dueItems]
+    [vehicleInfo.mileage, isItemDue]
   )
 
   const confirmed = dueItems.filter(i => statuses[i.id] === 'confirmed')
   const notDone = dueItems.filter(i => statuses[i.id] === 'not_done')
   const unknown = dueItems.filter(i => !statuses[i.id] || statuses[i.id] === 'unknown')
 
-  const negotiationSavings = notDone.reduce((s, i) => s + i.cost, 0) +
-    unknown.reduce((s, i) => s + i.cost * 0.5, 0)
+  const scaledCost = useCallback((item) => Math.round(item.cost * laborMult), [laborMult])
+
+  const negotiationSavings = notDone.reduce((s, i) => s + scaledCost(i), 0) +
+    unknown.reduce((s, i) => s + scaledCost(i) * 0.5, 0)
 
   const vehicleData = useMemo(() =>
     vehicleInfo.make && vehicleInfo.model ? VEHICLES[vehicleInfo.make]?.[vehicleInfo.model] : null,
@@ -493,6 +514,11 @@ export default function CarBuyingChecklist() {
             </div>
             <p className="text-xs text-[var(--text-muted)] mt-3">
               Reduction = all "not done" costs + 50% of "unknown" costs. Use this as your negotiation floor.
+              {vehicleInfo.state && laborMult !== 1 && (
+                <span className="ml-1 text-[var(--accent)]">
+                  Costs adjusted {laborMult > 1 ? '+' : ''}{Math.round((laborMult - 1) * 100)}% for {vehicleInfo.state} labor rates.
+                </span>
+              )}
             </p>
 
             {/* Critical item call-outs */}
@@ -502,8 +528,8 @@ export default function CarBuyingChecklist() {
               )
               if (criticalFlags.length === 0) return null
               const criticalTotal = criticalFlags.reduce((s, i) => {
-                if (statuses[i.id] === 'not_done') return s + i.cost
-                return s + i.cost * 0.5
+                if (statuses[i.id] === 'not_done') return s + scaledCost(i)
+                return s + scaledCost(i) * 0.5
               }, 0)
               return (
                 <div className="mt-4 pt-4 border-t border-[rgba(255,184,0,0.15)]">
@@ -523,7 +549,7 @@ export default function CarBuyingChecklist() {
                           </span>
                         </div>
                         <span className="text-red-400 font-semibold tabular-nums shrink-0 ml-2">
-                          {statuses[item.id] === 'not_done' ? fmt(item.cost) : `~${fmt(item.cost * 0.5)}`}
+                          {statuses[item.id] === 'not_done' ? fmt(scaledCost(item)) : `~${fmt(scaledCost(item) * 0.5)}`}
                         </span>
                       </div>
                     ))}
@@ -606,7 +632,10 @@ export default function CarBuyingChecklist() {
                               )}
                             </div>
                             <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                              Due every {item.interval.toLocaleString()} mi · Est. {fmt(item.cost)}
+                              {item.yearInterval != null && vehicleAge >= item.yearInterval && vehicleInfo.mileage < item.interval
+                                ? `Age-triggered (${vehicleAge}yr ≥ ${item.yearInterval}yr interval)`
+                                : `Due every ${item.interval.toLocaleString()} mi`
+                              } · Est. {fmt(scaledCost(item))}
                             </p>
                           </div>
                           <select
@@ -648,7 +677,7 @@ export default function CarBuyingChecklist() {
                           <div>
                             <p className="text-sm font-semibold text-white">{item.name}</p>
                             <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                              Due in ~{milesTilDue.toLocaleString()} miles · Est. {fmt(item.cost)}
+                              Due in ~{milesTilDue.toLocaleString()} miles · Est. {fmt(scaledCost(item))}
                             </p>
                           </div>
                           <div className="text-right shrink-0">

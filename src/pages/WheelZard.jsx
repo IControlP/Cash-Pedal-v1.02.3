@@ -142,8 +142,10 @@ function buildWizardSummary(answers) {
     ? `<strong class='text-white'>Key tips for your situation:</strong><ul class='mt-1 space-y-0.5 pl-1'>${tips.map(t => `<li>• ${t}</li>`).join('')}</ul>`
     : ''
 
+  const ctaLinks = `\n\n<div class='flex flex-col gap-1.5 mt-3 text-xs'><span class='text-[var(--text-muted)] font-semibold uppercase tracking-wider'>Run the numbers:</span><a href='/tco' class='text-[var(--accent)] hover:underline font-semibold'>→ TCO Calculator — full cost over ${condition === 'New only' ? '5' : '3–5'} years</a><a href='/salary' class='text-[var(--accent)] hover:underline font-semibold'>→ Salary Calculator — can you actually afford it?</a>${condition !== 'New only' && condition !== 'Used only' ? `<a href='/checklist' class='text-[var(--accent)] hover:underline font-semibold'>→ Used Car Checklist — before you buy</a>` : ''}</div>`
+
   return {
-    text: `Based on your answers — <em>${use_case}, ${budget}, ${condition}, ${fuel}, ${mileage}/yr</em> — here's what I'd recommend:\n\n${recList}${tipList ? '\n' + tipList : ''}\n\nWant me to dig into any of these models, compare costs, or talk negotiation strategy?`,
+    text: `Based on your answers — <em>${use_case}, ${budget}, ${condition}, ${fuel}, ${mileage}/yr</em> — here's what I'd recommend:\n\n${recList}${tipList ? '\n' + tipList : ''}${ctaLinks}\n\nWant me to dig into any of these models, compare costs, or talk negotiation strategy?`,
     followUps: ['How do I negotiate the price?', 'What should I check on a used car?', 'How much will insurance cost?', 'Run me through total cost of ownership'],
   }
 }

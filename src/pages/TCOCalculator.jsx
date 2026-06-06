@@ -2964,6 +2964,29 @@ export default function TCOCalculator() {
                 )}
               </div>
 
+              {/* ── Gap insurance callout ── */}
+              {financeMode === 'buy' && results.loanAmount > 0 && (() => {
+                const ltv = results.loanAmount / price
+                if (ltv < 0.80) return null
+                return (
+                  <div className="rounded-xl border p-4 flex items-start gap-3"
+                    style={{ borderColor: 'rgba(251,191,36,0.3)', background: 'rgba(251,191,36,0.04)' }}>
+                    <span className="text-lg shrink-0">⚠️</span>
+                    <div>
+                      <p className="text-sm font-semibold text-white mb-1">
+                        Consider gap insurance — you&apos;re financing {Math.round(ltv * 100)}% of the vehicle
+                      </p>
+                      <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                        In the first {loanTerm >= 60 ? '1–3' : '1–2'} years you may owe more than the car is worth.
+                        If totaled or stolen, your regular insurance pays market value — gap insurance covers the
+                        remaining loan balance. Cost is typically <span className="text-white font-semibold">$200–$400/yr</span> from
+                        an insurer (avoid dealer-sold gap, which marks up 200–400%).
+                      </p>
+                    </div>
+                  </div>
+                )
+              })()}
+
               {/* ── Net Cost of Ownership — detailed mode only ── */}
               {!simpleMode && (financeMode === 'buy' || financeMode === 'current') && futureResaleValue != null && netCostOfOwnership != null && (
                 <div className="rounded-xl border p-4 flex flex-col gap-3"

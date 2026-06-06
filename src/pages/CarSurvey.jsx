@@ -268,12 +268,27 @@ export default function CarSurvey() {
 
             <div className="mt-6 pt-6 border-t border-[var(--border)]">
               <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">Top model picks</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 mb-4">
                 {topMatch?.profile.topPicks.map(pick => (
                   <span key={pick} className="px-3 py-1.5 rounded-full bg-[var(--bg)] border border-[var(--border)] text-sm text-white font-medium">
                     {pick}
                   </span>
                 ))}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  to="/tco"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                  style={{ background: 'rgba(200,255,0,0.1)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.25)' }}
+                >
+                  Calculate TCO for these models →
+                </Link>
+                <Link
+                  to="/salary"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border border-[var(--border)] text-[var(--text-muted)] hover:text-white"
+                >
+                  Check affordability →
+                </Link>
               </div>
             </div>
           </div>

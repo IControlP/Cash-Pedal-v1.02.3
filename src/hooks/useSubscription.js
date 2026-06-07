@@ -53,6 +53,7 @@ export function useSubscription() {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ email: clean }),
+        signal:  AbortSignal.timeout(8000),
       })
       const data = await res.json()
 
@@ -113,6 +114,7 @@ export function useSubscription() {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ code: code.trim() }),
+        signal:  AbortSignal.timeout(8000),
       })
       const data = await res.json()
       if (data.valid) {
@@ -135,6 +137,7 @@ export function useSubscription() {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ email: clean }),
+        signal:  AbortSignal.timeout(8000),
       })
       const data = await res.json()
       return data.success ? { success: true } : { success: false, error: data.error }

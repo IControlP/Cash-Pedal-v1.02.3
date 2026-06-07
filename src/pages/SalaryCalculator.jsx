@@ -373,18 +373,28 @@ export default function SalaryCalculator() {
 
     function solve(thresholdPct) {
       const maxMonthly = (s * thresholdPct) / 12
-      let estPrice = 30000
-      for (let i = 0; i < 4; i++) {
+      // Seed estimate based on salary scale so low-income results converge correctly
+      // instead of immediately failing when starting from a $30k price point.
+      let estPrice = Math.max(2000, Math.min(60000, s * 0.35))
+      const r = rate / 12 / 100
+      const n = loanTerm
+      const factor = r > 0
+        ? (Math.pow(1 + r, n) - 1) / (r * Math.pow(1 + r, n))
+        : n
+      for (let i = 0; i < 6; i++) {
         const ops = estimateBasicMonthlyCosts(estPrice, userState || null, annualMiles)
         const loanBudget = maxMonthly - ops.total
-        if (loanBudget <= 0) return 0
-        const r = rate / 12 / 100
-        const n = loanTerm
-        const factor = r > 0
-          ? (Math.pow(1 + r, n) - 1) / (r * Math.pow(1 + r, n))
-          : n
+        if (loanBudget <= 0) {
+          // No budget left for a loan at this price — step down and retry
+          estPrice = Math.max(500, estPrice * 0.6)
+          continue
+        }
         estPrice = Math.max(500, (loanBudget * factor) / (1 - downPct / 100))
       }
+      // Final check: verify the solved price actually fits the budget
+      const finalOps = estimateBasicMonthlyCosts(estPrice, userState || null, annualMiles)
+      const finalLoanBudget = maxMonthly - finalOps.total
+      if (finalLoanBudget <= 0) return 0
       return Math.round(estPrice / 500) * 500
     }
 
@@ -1135,6 +1145,12 @@ export default function SalaryCalculator() {
                       Assumes {downPct}% down · {loanTerm}-month loan · {rate}% APR · includes estimated insurance, fuel, maintenance &amp; registration.
                       {userState ? ` ${userState} rates applied.` : ' National average rates.'}
                     </p>
+                    <Link
+                      to="/tco"
+                      className="mt-2 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-[var(--border)] text-xs font-semibold text-[var(--text-muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+                    >
+                      Calculate full 5-year TCO for a specific vehicle →
+                    </Link>
                   </div>
                 ) : (
                   <p className="text-xs text-[var(--text-muted)] italic">
@@ -1246,6 +1262,7 @@ export default function SalaryCalculator() {
                         comfortable:  { color: 'text-[var(--accent)]', label: 'Comfortable' },
                         aggressive:   { color: 'text-amber-400', label: '⚠ Stretched' },
                       }[v.tier]
+                      const tcoUrl = `/tco?make=${encodeURIComponent(v.make)}&model=${encodeURIComponent(v.model)}`
                       return (
                         <div
                           key={`${v.make}-${v.model}`}
@@ -1283,6 +1300,12 @@ export default function SalaryCalculator() {
                               <span className="text-[10px] font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(v.annualTotal)}</span>
                             </div>
                           </div>
+                          <Link
+                            to={tcoUrl}
+                            className="mt-2 text-center text-[10px] font-semibold text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
+                          >
+                            Full TCO →
+                          </Link>
                         </div>
                       )
                     })}

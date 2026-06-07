@@ -553,6 +553,55 @@ export default function CarBuyingChecklist() {
             </div>
           </div>
 
+          {/* Age-based warnings — items that degrade by calendar time, not just mileage */}
+          {(() => {
+            if (!vehicleInfo.year) return null
+            const age = new Date().getFullYear() - parseInt(vehicleInfo.year)
+            if (age < 5) return null
+
+            const AGE_SENSITIVE = [
+              { id: 'brake_fluid',  name: 'Brake Fluid Flush',   yearsThreshold: 3,  reason: 'Brake fluid absorbs moisture over time, lowering its boiling point regardless of mileage.' },
+              { id: 'coolant',      name: 'Coolant Flush',        yearsThreshold: 5,  reason: 'Coolant degrades chemically over time and can become corrosive to the cooling system.' },
+              { id: 'battery',      name: 'Battery',              yearsThreshold: 5,  reason: 'Most batteries last 3–5 years. Even a low-mileage battery should be tested if it\'s this old.' },
+              { id: 'timing_belt',  name: 'Timing Belt',          yearsThreshold: 7,  reason: 'Timing belts have a time limit (typically 7 years / 90k miles, whichever comes first). Failure destroys the engine.' },
+              { id: 'trans_fluid',  name: 'Transmission Fluid',   yearsThreshold: 5,  reason: 'Transmission fluid degrades with heat cycling over time, even in low-mileage vehicles.' },
+              { id: 'tires',        name: 'Tire Age',              yearsThreshold: 6,  reason: 'Tire rubber hardens and cracks after 6–10 years regardless of tread depth. Check the DOT date code on the sidewall.' },
+            ]
+
+            const flagged = AGE_SENSITIVE.filter(item => {
+              if (age < item.yearsThreshold) return false
+              // Only flag if the status isn't confirmed
+              return statuses[item.id] !== 'confirmed'
+            })
+
+            if (flagged.length === 0) return null
+
+            return (
+              <div className="rounded-xl p-5 mb-6 border" style={{ borderColor: 'rgba(255,150,50,0.3)', background: 'rgba(255,150,50,0.05)' }}>
+                <p className="text-xs font-bold uppercase tracking-widest text-orange-400 mb-1">
+                  Age-Based Concerns — {age}-Year-Old Vehicle
+                </p>
+                <p className="text-xs text-[var(--text-muted)] mb-4">
+                  These items degrade by calendar time, not just mileage. Low-mileage vehicles are not immune.
+                </p>
+                <div className="flex flex-col gap-3">
+                  {flagged.map(item => (
+                    <div key={item.id} className="flex items-start gap-3">
+                      <span className="text-orange-400 shrink-0 mt-0.5 text-sm font-bold">!</span>
+                      <div>
+                        <p className="text-sm font-semibold text-white">{item.name}</p>
+                        <p className="text-xs text-[var(--text-muted)] leading-relaxed">{item.reason}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-orange-400 font-semibold mt-4">
+                  Ask the seller for records confirming these were serviced, or factor the costs into your negotiation.
+                </p>
+              </div>
+            )
+          })()}
+
           {/* Tabs */}
           <div className="flex gap-1 mb-6 overflow-x-auto pb-1">
             {[

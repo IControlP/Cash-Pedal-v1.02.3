@@ -269,12 +269,28 @@ export default function CarSurvey() {
             <div className="mt-6 pt-6 border-t border-[var(--border)]">
               <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">Top model picks</p>
               <div className="flex flex-wrap gap-2">
-                {topMatch?.profile.topPicks.map(pick => (
-                  <span key={pick} className="px-3 py-1.5 rounded-full bg-[var(--bg)] border border-[var(--border)] text-sm text-white font-medium">
-                    {pick}
-                  </span>
-                ))}
+                {topMatch?.profile.topPicks.map(pick => {
+                  const label = pick.label ?? pick
+                  const tcoUrl = pick.make
+                    ? `/tco?make=${encodeURIComponent(pick.make)}&model=${encodeURIComponent(pick.model)}`
+                    : null
+                  return tcoUrl ? (
+                    <Link
+                      key={label}
+                      to={tcoUrl}
+                      className="px-3 py-1.5 rounded-full bg-[var(--bg)] border border-[var(--border)] text-sm text-white font-medium hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+                      title={`Calculate TCO for ${label}`}
+                    >
+                      {label} →
+                    </Link>
+                  ) : (
+                    <span key={label} className="px-3 py-1.5 rounded-full bg-[var(--bg)] border border-[var(--border)] text-sm text-white font-medium">
+                      {label}
+                    </span>
+                  )
+                })}
               </div>
+              <p className="text-[10px] text-[var(--text-muted)] mt-2">Click any pick to open it in the TCO Calculator</p>
             </div>
           </div>
 
@@ -293,11 +309,14 @@ export default function CarSurvey() {
                     </div>
                     <p className="text-xs text-[var(--text-muted)] italic mb-3">"{profile.tagline}"</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {profile.topPicks.map(pick => (
-                        <span key={pick} className="px-2 py-1 rounded text-xs text-[var(--text-muted)] bg-[var(--bg)] border border-[var(--border)]">
-                          {pick}
-                        </span>
-                      ))}
+                      {profile.topPicks.map(pick => {
+                        const label = pick.label ?? pick
+                        return (
+                          <span key={label} className="px-2 py-1 rounded text-xs text-[var(--text-muted)] bg-[var(--bg)] border border-[var(--border)]">
+                            {label}
+                          </span>
+                        )
+                      })}
                     </div>
                   </div>
                 ))}
@@ -364,9 +383,19 @@ export default function CarSurvey() {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 anim-5">
-            <Link to="/tco" className="btn-primary flex-1 justify-center py-4">
-              Calculate TCO for this vehicle →
-            </Link>
+            {(() => {
+              const firstPick = topMatch?.profile.topPicks?.[0]
+              const tcoUrl = firstPick?.make
+                ? `/tco?make=${encodeURIComponent(firstPick.make)}&model=${encodeURIComponent(firstPick.model)}`
+                : '/tco'
+              return (
+                <Link to={tcoUrl} className="btn-primary flex-1 justify-center py-4">
+                  {firstPick?.make
+                    ? `Calculate TCO for ${firstPick.label} →`
+                    : 'Calculate TCO for this vehicle →'}
+                </Link>
+              )
+            })()}
             <button onClick={handleRestart} className="btn-ghost flex-1 justify-center py-4">
               Retake the survey
             </button>

@@ -207,7 +207,11 @@ export const vehicleProfiles = {
       'You like being prepared for anything — road trips, Costco runs, and unexpected adventures. You want space, but you also want to not feel like you\'re driving a bus.',
     perfectFor: ['Families or soon-to-be families', 'People who like the option of AWD', 'Road-trippers and weekend warriors', 'Those who can\'t say no to cargo space'],
     considerations: ['Higher fuel costs than sedans', 'Parking can be trickier in cities', 'Higher sticker price than equivalent sedan'],
-    topPicks: ['Toyota RAV4', 'Honda CR-V', 'Mazda CX-5'],
+    topPicks: [
+      { label: 'Toyota RAV4',  make: 'Toyota', model: 'RAV4'   },
+      { label: 'Honda CR-V',   make: 'Honda',  model: 'CR-V'   },
+      { label: 'Mazda CX-5',   make: 'Mazda',  model: 'CX-5'   },
+    ],
   },
   sedan: {
     name: 'Sedan',
@@ -217,7 +221,11 @@ export const vehicleProfiles = {
       'Efficient, comfortable, and dependable. You know what you need and you\'re not paying for what you don\'t. The sedan is the unsung hero of the road.',
     perfectFor: ['Daily commuters', 'People who value fuel economy', 'Anyone parking in cities regularly', 'Those who want reliability over flash'],
     considerations: ['Less cargo space than SUVs', 'Doesn\'t feel as "premium" to some', 'Back seat headroom can be tight'],
-    topPicks: ['Honda Accord', 'Toyota Camry', 'Mazda3'],
+    topPicks: [
+      { label: 'Honda Accord',  make: 'Honda',  model: 'Accord' },
+      { label: 'Toyota Camry',  make: 'Toyota', model: 'Camry'  },
+      { label: 'Mazda3',        make: 'Mazda',  model: 'Mazda3' },
+    ],
   },
   pickup: {
     name: 'Pickup Truck',
@@ -227,7 +235,11 @@ export const vehicleProfiles = {
       'You need a truck. Or you really, really want one. Either way, you\'ve never regretted having a bed when half the neighborhood needed help moving.',
     perfectFor: ['People who actually tow or haul things', 'Outdoor and off-road enthusiasts', 'Contractors and tradespeople', 'Anyone who gets asked to help move furniture constantly'],
     considerations: ['High fuel costs', 'Expensive to own vs. smaller vehicles', 'Can be a pain to park', 'Overkill for pure city driving'],
-    topPicks: ['Ford F-150', 'Toyota Tacoma', 'Ram 1500'],
+    topPicks: [
+      { label: 'Ford F-150',    make: 'Ford',   model: 'F-150'    },
+      { label: 'Toyota Tacoma', make: 'Toyota', model: 'Tacoma'   },
+      { label: 'Ram 1500',      make: 'Ram',    model: '1500'     },
+    ],
   },
   sports: {
     name: 'Sports Car',
@@ -237,7 +249,11 @@ export const vehicleProfiles = {
       'You\'ve already done the math and decided driving should be fun. The twisty road is the destination. Groceries can wait.',
     perfectFor: ['Solo drivers or couples without kids', 'People who genuinely enjoy driving', 'Weekend/second-car owners', 'Those willing to sacrifice practicality for a smile'],
     considerations: ['Not great for families or cargo', 'Can be expensive to insure', 'Ride quality often stiffer', 'Impractical in snow/ice'],
-    topPicks: ['Mazda MX-5 Miata', 'Ford Mustang', 'Toyota GR86'],
+    topPicks: [
+      { label: 'Mazda MX-5 Miata', make: 'Mazda',  model: 'MX-5 Miata' },
+      { label: 'Ford Mustang',     make: 'Ford',   model: 'Mustang'     },
+      { label: 'Toyota GR86',      make: 'Toyota', model: 'GR86'        },
+    ],
   },
   luxury: {
     name: 'Luxury Vehicle',
@@ -247,7 +263,11 @@ export const vehicleProfiles = {
       'You believe the daily commute should feel like something. Heated seats, smooth ride, premium everything — because you earned it.',
     perfectFor: ['People for whom comfort and refinement matter', 'Those who spend significant time in their car', 'Business professionals', 'Anyone who\'s upgraded and can\'t go back'],
     considerations: ['Significantly higher cost of ownership', 'More expensive maintenance and repairs', 'Faster depreciation than mainstream brands', 'Flashier = higher insurance rates'],
-    topPicks: ['Lexus ES', 'BMW 3 Series', 'Mercedes-Benz C-Class'],
+    topPicks: [
+      { label: 'Lexus ES',            make: 'Lexus',         model: 'ES'      },
+      { label: 'BMW 3 Series',         make: 'BMW',           model: '3 Series'},
+      { label: 'Mercedes-Benz C-Class',make: 'Mercedes-Benz', model: 'C-Class' },
+    ],
   },
   economy: {
     name: 'Economy Car',
@@ -257,7 +277,11 @@ export const vehicleProfiles = {
       'You\'re not cheap — you\'re smart. A car is not an identity, and you\'d rather put that money somewhere it grows. The economy car wins on total cost of ownership, every time.',
     perfectFor: ['First-time car buyers', 'City dwellers with limited parking budgets', 'People who drive < 10K miles/year', 'Those who want low insurance and maintenance costs'],
     considerations: ['Fewer features at base trim', 'Less road presence', 'Can feel underpowered on highways'],
-    topPicks: ['Honda Civic', 'Toyota Corolla', 'Hyundai Elantra'],
+    topPicks: [
+      { label: 'Honda Civic',      make: 'Honda',  model: 'Civic'   },
+      { label: 'Toyota Corolla',   make: 'Toyota', model: 'Corolla' },
+      { label: 'Hyundai Elantra',  make: 'Hyundai',model: 'Elantra' },
+    ],
   },
   electric: {
     name: 'Electric Vehicle',
@@ -267,7 +291,11 @@ export const vehicleProfiles = {
       'You\'re done with gas stations. You want tech, torque off the line, and the knowledge that your carbon footprint just shrank. Welcome to the future.',
     perfectFor: ['People with home charging capability', 'City and suburban drivers', 'Tech-forward buyers', 'Anyone who hates gas station trips'],
     considerations: ['Range anxiety on long trips', 'Charging infrastructure still building out', 'Higher upfront cost', 'Apartment charging can be complicated'],
-    topPicks: ['Tesla Model 3', 'Hyundai Ioniq 6', 'Chevrolet Equinox EV'],
+    topPicks: [
+      { label: 'Tesla Model 3',       make: 'Tesla',     model: 'Model 3'     },
+      { label: 'Hyundai Ioniq 6',     make: 'Hyundai',   model: 'Ioniq 6'     },
+      { label: 'Chevrolet Equinox EV',make: 'Chevrolet', model: 'Equinox EV'  },
+    ],
   },
   hybrid: {
     name: 'Hybrid',
@@ -277,7 +305,11 @@ export const vehicleProfiles = {
       'You want to save money on fuel without committing to a full EV. Smart, practical, and increasingly available in every class. The hybrid is a no-brainer for high-mileage drivers.',
     perfectFor: ['High-mileage commuters', 'People unsure about going full EV', 'Families who want fuel savings + practicality', 'City + highway mixed drivers'],
     considerations: ['Less exciting to drive than pure EV', 'Can be more expensive to service if battery issues arise', 'Still requires gas stations'],
-    topPicks: ['Toyota Prius', 'Honda Accord Hybrid', 'Toyota RAV4 Hybrid'],
+    topPicks: [
+      { label: 'Toyota Prius',        make: 'Toyota', model: 'Prius'   },
+      { label: 'Honda Accord Hybrid', make: 'Honda',  model: 'Accord'  },
+      { label: 'Toyota RAV4 Hybrid',  make: 'Toyota', model: 'RAV4'    },
+    ],
   },
   minivan: {
     name: 'Minivan',
@@ -287,6 +319,10 @@ export const vehicleProfiles = {
       'You\'ve accepted the highest calling of automotive purpose: maximum people, maximum cargo, maximum sliding door satisfaction. This is not a compromise — this is a choice made by someone who knows exactly what they need.',
     perfectFor: ['Families with 3+ kids', 'Carpoolers and sports team parents', 'Anyone who values interior space above all else', 'People who need a mobile base camp'],
     considerations: ['Not exactly a head-turner', 'Higher fuel costs', 'Limited parking in tight spots', 'That sliding door sound is now your life'],
-    topPicks: ['Honda Odyssey', 'Toyota Sienna', 'Kia Carnival'],
+    topPicks: [
+      { label: 'Honda Odyssey',  make: 'Honda',  model: 'Odyssey' },
+      { label: 'Toyota Sienna',  make: 'Toyota', model: 'Sienna'  },
+      { label: 'Kia Carnival',   make: null,     model: null       },
+    ],
   },
 }

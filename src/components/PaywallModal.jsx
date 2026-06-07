@@ -149,9 +149,11 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
               <div className="rounded-xl border p-4 text-sm"
                 style={{ borderColor: 'rgba(255,100,100,0.3)', background: 'rgba(255,100,100,0.06)' }}>
                 <p className="text-red-400 font-semibold mb-1">Device limit reached</p>
-                <p className="text-[var(--text-muted)] leading-relaxed">
-                  This pass is already active on 2 devices. To use it here,
-                  go to your subscription page to reset your registered devices.
+                <p className="text-[var(--text-muted)] leading-relaxed mb-2">
+                  This pass is already active on 2 devices. To use it here, reset your registered devices from the subscription page.
+                </p>
+                <p className="text-[var(--text-muted)] leading-relaxed text-xs">
+                  Devices that haven't been used in 30 days are automatically removed, freeing a slot for this device.
                 </p>
               </div>
               <div className="flex gap-2">

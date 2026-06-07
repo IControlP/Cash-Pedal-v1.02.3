@@ -1031,6 +1031,22 @@ export default function TCOCalculator() {
     } catch { /* ignore corrupt data */ }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Pre-populate make/model when arriving from survey or other deep-links via ?make=&model=
+  useEffect(() => {
+    const paramMake  = searchParams.get('make')
+    const paramModel = searchParams.get('model')
+    if (!paramMake || !paramModel) return
+    if (!VEHICLES[paramMake]?.[paramModel]) return
+    setSelMake(paramMake)
+    setSelModel(paramModel)
+    // Auto-select the most recent available year for this model
+    const years = Object.keys(VEHICLES[paramMake][paramModel].trims_by_year || {})
+    if (years.length > 0) {
+      const latestYear = years.sort((a, b) => Number(b) - Number(a))[0]
+      setSelYear(latestYear)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Derived model data (type, specs, mpg, isEV)
   const modelData = useMemo(() => getModelData(selMake, selModel), [selMake, selModel])
 
@@ -1271,7 +1287,12 @@ export default function TCOCalculator() {
           : results.monthlyPayment * loanMonths
       const insurance    = Math.round(annualInsurance    * Math.pow(1.02, i))
       const fuel         = annualFuel
-      const maintenance  = maintenanceByYear?.[i] ?? Math.round(annualMaintenance * Math.pow(1.08, i))
+      // Stepped multiplier: maintenance grows modestly in early years, more in later years
+      // as major services (30k, 60k, 90k) and aging components accumulate.
+      // Replaces a blunt 8%/yr compound that overstates costs for newer vehicles.
+      const MAINT_STEP = [1.0, 1.03, 1.07, 1.14, 1.20]
+      const maintMult = i < MAINT_STEP.length ? MAINT_STEP[i] : MAINT_STEP[MAINT_STEP.length - 1]
+      const maintenance  = maintenanceByYear?.[i] ?? Math.round(annualMaintenance * maintMult)
       const registration = Math.round(annualRegistration * Math.pow(0.95, i))
       const total = loanCost + insurance + fuel + maintenance + registration
       return { yr, loanCost, insurance, fuel, maintenance, registration, total }

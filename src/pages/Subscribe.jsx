@@ -36,6 +36,9 @@ export default function Subscribe() {
   const [showEmailEntry, setShowEmailEntry] = useState(false)
   const [emailInput, setEmailInput] = useState('')
   const [verifyStatus, setVerifyStatus] = useState(null) // null | 'loading' | 'success' | 'not_found' | 'device_limit' | 'error'
+  const [showPromoEntry, setShowPromoEntry] = useState(false)
+  const [promoInput, setPromoInput] = useState('')
+  const [promoStatus, setPromoStatus] = useState(null) // null | 'loading' | 'success' | 'invalid' | 'error'
   const sub = useSubscription() || {}
   const isActive = !!sub.isSubscribed
   const expiresAt = sub.expiresAt || sub.pass_expires_at || sub.passExpiresAt
@@ -44,6 +47,20 @@ export default function Subscribe() {
     : (expiresAt
         ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86400000))
         : null)
+
+  async function handlePromoCode(e) {
+    e.preventDefault()
+    if (!promoInput.trim()) return
+    setPromoStatus('loading')
+    const result = await sub.verifyPromoCode(promoInput)
+    if (result.valid) {
+      setPromoStatus('success')
+    } else if (result.error === 'network') {
+      setPromoStatus('error')
+    } else {
+      setPromoStatus('invalid')
+    }
+  }
 
   async function handleVerifyEmail(e) {
     e.preventDefault()
@@ -251,6 +268,50 @@ export default function Subscribe() {
                             <p className="mt-2 text-xs text-yellow-400">Device limit reached. <a href="mailto:hello@cashpedal.io" className="underline">Contact support</a> to reset.</p>
                           )}
                           {verifyStatus === 'error' && (
+                            <p className="mt-2 text-xs text-red-400">Network error — please try again.</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-[var(--border)]/60 text-left">
+                      {!showPromoEntry ? (
+                        <button
+                          className="text-xs text-[var(--text-muted)] hover:text-white transition-colors"
+                          onClick={() => setShowPromoEntry(true)}
+                        >
+                          Have a promo code? →
+                        </button>
+                      ) : (
+                        <div>
+                          <div className="text-[11px] uppercase tracking-widest text-[var(--text-muted)] mb-2">
+                            Promo code
+                          </div>
+                          <form onSubmit={handlePromoCode} className="flex gap-2">
+                            <input
+                              type="text"
+                              required
+                              placeholder="Enter code"
+                              value={promoInput}
+                              onChange={e => { setPromoInput(e.target.value); setPromoStatus(null) }}
+                              className="flex-1 min-w-0 rounded-lg px-3 py-2 text-sm text-white placeholder-[var(--text-dim)] border border-[var(--border)] focus:outline-none focus:border-[var(--accent)]/60"
+                              style={{ background: 'rgba(255,255,255,0.04)' }}
+                              disabled={promoStatus === 'loading' || promoStatus === 'success'}
+                              autoFocus
+                            />
+                            <button
+                              type="submit"
+                              disabled={promoStatus === 'loading' || promoStatus === 'success'}
+                              className="flex-shrink-0 rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
+                              style={{ background: 'var(--accent)', color: '#07251e' }}
+                            >
+                              {promoStatus === 'loading' ? '…' : promoStatus === 'success' ? '✓' : 'Apply'}
+                            </button>
+                          </form>
+                          {promoStatus === 'invalid' && (
+                            <p className="mt-2 text-xs text-red-400">Invalid promo code.</p>
+                          )}
+                          {promoStatus === 'error' && (
                             <p className="mt-2 text-xs text-red-400">Network error — please try again.</p>
                           )}
                         </div>

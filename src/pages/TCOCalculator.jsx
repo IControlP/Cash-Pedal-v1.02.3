@@ -2785,10 +2785,20 @@ export default function TCOCalculator() {
                 <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
                   Your results
                 </p>
-                <ResultCard
-                  label={financeMode === 'lease' ? 'Monthly Lease Payment' : 'Monthly Payment'}
-                  value={financeMode === 'lease' ? leaseResults.monthlyPayment : results.monthlyPayment}
-                  highlight delay={0} />
+                {(() => {
+                  const basePayment = financeMode === 'lease' ? leaseResults.monthlyPayment : results.monthlyPayment
+                  const monthlyFuel = Math.round(annualFuel / 12)
+                  const monthlyIns  = Math.round(annualInsurance / 12)
+                  const allInMonthly = Math.round(basePayment) + monthlyFuel + monthlyIns
+                  return (
+                    <ResultCard
+                      label={financeMode === 'lease' ? 'Monthly Lease Payment' : 'Monthly Payment'}
+                      value={basePayment}
+                      highlight delay={0}
+                      note={`Minimum monthly spend: ${formatCurrency(allInMonthly)}/mo (payment + ${formatCurrency(monthlyIns)} insurance + ${formatCurrency(monthlyFuel)} fuel)`}
+                    />
+                  )
+                })()}
               </div>
               )}
 

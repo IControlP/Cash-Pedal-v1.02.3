@@ -224,20 +224,23 @@ export const INSURANCE_BRAND_MULT = {
 }
 
 // Segment-specific risk multipliers verified against Insurify / Bankrate 2025-2026 data.
-// EV multiplier reflects price-controlled comparison (vehicle value already captured by
-// brackets above): non-Tesla EVs run ~10-15% higher for repair complexity, battery costs,
-// and limited independent shop availability. Sports cars 25-34% above average (risk
-// profile, theft). Trucks 10-20% below average (rural use, lower theft/accident rates).
-// NOTE: Tesla brand mult (0.82) is set below 1.0 to reflect Tesla Insurance program and
-// better-than-average repair outcomes — calibrated to Tesla Model 3 national avg $2,818.
+// EV: non-Tesla EVs ~10% above average (repair complexity, battery costs, limited
+//   independent shop availability). Value brackets handle the price-tier exposure.
+// Sports: ~8% above average for pony/sports cars (accident frequency, theft);
+//   exotics/high-value cars already get extra exposure through value brackets.
+// Hybrid: 3% below average — hybrid drivers are statistically low-risk and
+//   Bankrate/Insurify data puts Prius-class vehicles below the sedan baseline.
+// Trucks: 10% below average (rural use patterns, lower theft/accident frequency).
+// NOTE: Tesla brand mult (0.82) reflects Tesla Insurance program and mature repair
+//   network — calibrated to Tesla Model 3 national avg for a good-driver profile.
 export const INSURANCE_SEGMENT_MULT = {
   electric:   1.10,
-  sports:     1.15,  // pony/sports cars; exotics covered by value brackets
+  sports:     1.08,  // pony/sports cars; exotics covered by value brackets
   truck:      0.90,
   luxury_suv: 1.04,
   suv:        0.97,
   luxury:     1.04,
-  hybrid:     1.04,
+  hybrid:     0.97,  // below-average risk profile; Prius-class benchmarks ~$1,850-2,000
   compact:    0.97,
   sedan:      1.00,
   economy:    0.95,

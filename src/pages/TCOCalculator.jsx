@@ -16,6 +16,7 @@ import {
   INSURANCE_BASE_RATE, INSURANCE_VALUE_BRACKETS, INSURANCE_BRAND_MULT, STATE_INS_BASE,
   estimateInsurance,
   MAINT_BRAND_MULT, MAINT_LUXURY_MAKES, MAINT_PREMIUM_MAKES, MAINT_ECONOMY_MAKES,
+  SEGMENT_MAINT_AVG,
   determineMaintTier, MAINT_TIER_COSTS, LABOR_RATE, STATE_LABOR_RATES, STATE_ROAD_WEAR_FACTOR, getLocalLaborRate,
   generateMaintenanceServices, generateMaintenanceByYear, generateDetailedMaintenanceByYear,
   STATE_FUEL_PRICES, STATE_ELEC_RATES,
@@ -1076,7 +1077,10 @@ export default function TCOCalculator() {
         const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake, resolvedState, vehicleAge, resolvedLaborRate)
         setAnnualMaintenance(services.reduce((s, x) => s + x.annual, 0))
       } else {
-        setAnnualMaintenance(modelData.is_ev ? 700 : 1200)
+        const seg = classifySegment(selMake||'', selModel||'')
+        const segAvg = modelData.is_ev ? SEGMENT_MAINT_AVG.electric : (SEGMENT_MAINT_AVG[seg] ?? 1100)
+        const brandMult = modelData.is_ev ? 1.0 : (MAINT_BRAND_MULT[selMake] ?? 1.0)
+        setAnnualMaintenance(Math.round(segAvg * brandMult / 50) * 50)
       }
     } else {
       const catInfo = VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)
@@ -1092,7 +1096,8 @@ export default function TCOCalculator() {
         const services = generateMaintenanceServices(catIsEV, annualMileage, catSeg, '', resolvedState, 0, resolvedLaborRate)
         setAnnualMaintenance(services.reduce((s, x) => s + x.annual, 0))
       } else {
-        setAnnualMaintenance(catIsEV ? 700 : 1200)
+        const catSeg2 = catInfo?.segment ?? 'sedan'
+        setAnnualMaintenance(catIsEV ? SEGMENT_MAINT_AVG.electric : (SEGMENT_MAINT_AVG[catSeg2] ?? 1100))
       }
     }
     const currentVal = (selYear && (selMake || selModel))
@@ -2770,17 +2775,54 @@ export default function TCOCalculator() {
               })()}
 
               {/* ── Non-current mode results ── */}
-              {financeMode !== 'current' && (
-              <div className="anim-4">
-                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
-                  Your results
-                </p>
-                <ResultCard
-                  label={financeMode === 'lease' ? 'Monthly Lease Payment' : 'Monthly Payment'}
-                  value={financeMode === 'lease' ? leaseResults.monthlyPayment : results.monthlyPayment}
-                  highlight delay={0} />
-              </div>
-              )}
+              {financeMode !== 'current' && (() => {
+                const basePayment   = financeMode === 'lease' ? leaseResults.monthlyPayment : results.monthlyPayment
+                const monthlyIns    = Math.round(annualInsurance    / 12)
+                const monthlyFuel   = Math.round(annualFuel         / 12)
+                const monthlyMaint  = Math.round(annualMaintenance  / 12)
+                const monthlyReg    = Math.round(annualRegistration / 12)
+                const allInMonthly  = Math.round(basePayment) + monthlyIns + monthlyFuel + monthlyMaint + monthlyReg
+                const paymentLabel  = financeMode === 'lease' ? 'Lease payment' : 'Loan payment'
+                const fuelLabel     = effIsEV ? 'Charging' : 'Fuel'
+                return (
+                  <div className="anim-4">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
+                      Your results
+                    </p>
+                    {/* All-in monthly hero */}
+                    <div className="rounded-xl p-5 flex flex-col gap-3 mb-3"
+                      style={{ background: 'linear-gradient(135deg,rgba(200,255,0,0.08) 0%,rgba(200,255,0,0.03) 100%)', border: '1px solid rgba(200,255,0,0.25)' }}>
+                      <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>
+                        Est. Monthly All-In
+                      </p>
+                      <p className="font-display font-extrabold text-4xl leading-none" style={{ color: 'var(--accent)' }}>
+                        {formatCurrency(allInMonthly)}<span className="text-lg font-normal text-[var(--text-muted)] ml-1">/mo</span>
+                      </p>
+                      <div className="flex flex-col gap-1 pt-1 border-t border-[rgba(200,255,0,0.15)]">
+                        {[
+                          { label: paymentLabel, value: Math.round(basePayment) },
+                          { label: 'Insurance',  value: monthlyIns  },
+                          { label: fuelLabel,    value: monthlyFuel },
+                          { label: 'Maintenance',value: monthlyMaint},
+                          { label: 'Reg. & fees',value: monthlyReg  },
+                        ].map(({ label, value }) => (
+                          <div key={label} className="flex justify-between items-center text-xs">
+                            <span className="text-[var(--text-muted)]">{label}</span>
+                            <span className="text-white font-medium tabular-nums">{formatCurrency(value)}/mo</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Financing-only card — what the dealer quotes */}
+                    <ResultCard
+                      label={financeMode === 'lease' ? 'Monthly Lease Payment' : 'Monthly Loan Payment'}
+                      value={basePayment}
+                      delay={0}
+                      note="Financing only — does not include insurance, fuel, or maintenance"
+                    />
+                  </div>
+                )
+              })()}
 
               {!simpleMode && financeMode !== 'current' && (
                 <div className="grid grid-cols-1 gap-4 anim-5">

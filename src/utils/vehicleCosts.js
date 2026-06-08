@@ -193,7 +193,9 @@ export function estimateCurrentValue(originalPrice, make, model, ageYears, curre
 // Other makes and segments adjust multiplicatively from that anchor.
 
 // National fallback (no state provided) — calibrated the same way.
-export const INSURANCE_BASE_RATE = 2870
+// Lowered from 2870 to 2300 to match Bankrate/Insurify 2025 national avg for a
+// 40-year-old good-driver profile (~$2,050 for a Toyota Camry nationally).
+export const INSURANCE_BASE_RATE = 2300
 
 // Vehicle current-value brackets — comp/collision exposure scales with value,
 // but only modestly: a $60k car is ~18% more expensive to insure than a $30k car
@@ -230,7 +232,7 @@ export const INSURANCE_BRAND_MULT = {
 // better-than-average repair outcomes — calibrated to Tesla Model 3 national avg $2,818.
 export const INSURANCE_SEGMENT_MULT = {
   electric:   1.10,
-  sports:     1.28,
+  sports:     1.15,  // pony/sports cars; exotics covered by value brackets
   truck:      0.90,
   luxury_suv: 1.04,
   suv:        0.97,

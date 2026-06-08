@@ -2411,6 +2411,22 @@ export default function TCOCalculator() {
                             startMileage={effectiveStartMileage}
                           />
                         )}
+                        {key === 'maint' && !detailedMode && !simpleMode && resolvedState && (
+                          <div className="px-4 pb-3 text-[11px] text-[var(--text-muted)] leading-relaxed"
+                            style={{ borderTop: '1px solid var(--border)', paddingTop: '0.5rem' }}>
+                            Segment average — costs vary by vehicle age, mileage, and brand.{' '}
+                            {detailedCalcCount < FREE_DETAILED_LIMIT || isSubscribed
+                              ? <button
+                                  onClick={() => { if (!checkDetailedLimit()) return; setDetailedMode(true) }}
+                                  className="underline hover:text-[var(--accent)] transition-colors">
+                                  Use Detailed for itemized estimates.
+                                </button>
+                              : <a href="/subscribe" className="underline hover:text-[var(--accent)] transition-colors">
+                                  Unlock Detailed for itemized estimates.
+                                </a>
+                            }
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

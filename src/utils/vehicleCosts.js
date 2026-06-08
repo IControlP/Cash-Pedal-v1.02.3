@@ -114,6 +114,9 @@ export function classifySegment(make, model) {
   if (evKw.some(k => m.includes(k))) return 'electric'
   if (['prius','insight','sienna'].some(k => m.includes(k))) return 'hybrid'
   if (m.includes('hybrid') || m.includes('phev') || m.includes('4xe') || m.includes('plug-in')) return 'hybrid'
+  // Named PHEVs that don't carry 'hybrid'/'phev' in their model name
+  const phevKw = ['volt','clarity','pacifica hybrid','escape phev','escape plug','fusion energi','c-max','prime','rav4 prime','venza']
+  if (phevKw.some(k => m.includes(k))) return 'hybrid'
   const sportsKw = ['corvette','mustang','camaro','challenger','charger','911','cayman','boxster','z4','supra','miata','mx-5','gt-r','370z','400z','brz','gr86','nsx']
   if (sportsKw.some(k => m.includes(k))) return 'sports'
   const luxBrands = ['bmw','mercedes-benz','audi','lexus','acura','infiniti','cadillac','lincoln','jaguar','land rover','porsche','maserati','alfa romeo','genesis','volvo']

@@ -255,8 +255,48 @@ export const STATE_INS_BASE = {
   WI:2075,WY:1925,
 }
 
+// Driver age multipliers — calibrated to Insurify/Bankrate 2025-2026 data.
+// Teen/young-adult surcharges are among the largest single factors in insurance pricing.
+// Benchmark: 40-year-old (index 1.00). Multipliers are applied on top of all other factors.
+export const INSURANCE_AGE_MULT = [
+  [16, 20, 2.10],  // Teen: highest-risk cohort
+  [21, 24, 1.55],  // Young adults: significant surcharge
+  [25, 29, 1.20],  // Maturing — steep drop after 25
+  [30, 39, 1.00],  // Benchmark (40-year-old profile)
+  [40, 49, 0.97],  // Prime: slight discount
+  [50, 64, 0.93],  // Most experienced drivers
+  [65, 74, 0.98],  // Slight uptick begins
+  [75, 120, 1.15], // Older drivers: elevated risk
+]
+
+// Credit tier multipliers — sourced from Bankrate/LendingTree 2025.
+// Most states allow credit to affect insurance pricing; CA, HI, MA prohibit it.
+export const INSURANCE_CREDIT_MULT = {
+  excellent: 0.87,  // 750+ credit score
+  good:      1.00,  // 670–749 (benchmark)
+  fair:      1.22,  // 580–669
+  poor:      1.45,  // <580
+}
+
+// States that prohibit insurers from using credit scores in pricing.
+// Applying credit multiplier in these states would overstate/understate premiums.
+export const INSURANCE_NO_CREDIT_STATES = new Set(['CA', 'HI', 'MA', 'MI'])
+
+export function getInsuranceAgeMult(age) {
+  if (!age || age <= 0) return 1.0
+  const entry = INSURANCE_AGE_MULT.find(([lo, hi]) => age >= lo && age <= hi)
+  return entry ? entry[2] : 1.0
+}
+
+export function getInsuranceCreditMult(tier, state) {
+  if (INSURANCE_NO_CREDIT_STATES.has(state)) return 1.0
+  return INSURANCE_CREDIT_MULT[tier] ?? 1.0
+}
+
 // state=null → national average fallback
-export function estimateInsurance(purchasePrice, make, model, modelYear, state, multiCarDiscount = false) {
+// driverAge: optional integer (16–99). When omitted, uses the benchmark 40-year-old profile.
+// creditTier: optional 'excellent' | 'good' | 'fair' | 'poor'. Default: 'good' (benchmark).
+export function estimateInsurance(purchasePrice, make, model, modelYear, state, multiCarDiscount = false, driverAge = null, creditTier = null) {
   const ageYears   = modelYear ? Math.max(0, new Date().getFullYear() - parseInt(modelYear)) : 0
   const currentVal = estimateCurrentValue(purchasePrice, make || null, model || null, ageYears)
   const [,,valueMult] = INSURANCE_VALUE_BRACKETS.find(([mn, mx]) => currentVal >= mn && currentVal < mx) ?? [0,0,1.0]
@@ -270,8 +310,10 @@ export function estimateInsurance(purchasePrice, make, model, modelYear, state, 
   // Value brackets capture comp/collision reduction as the car depreciates.
   // ageMult captures the additional liability/frequency discount on older vehicles:
   // ~1.5%/yr reduction, floored at 0.85 for vehicles 10+ years old.
-  const ageMult  = ageYears > 0 ? Math.max(0.85, 1 - ageYears * 0.015) : 1.0
-  return Math.round((stateBase * valueMult * brandMult * segMult * ageMult * multiCarMult) / 50) * 50
+  const ageMult    = ageYears > 0 ? Math.max(0.85, 1 - ageYears * 0.015) : 1.0
+  const driverMult = getInsuranceAgeMult(driverAge)
+  const creditMult = getInsuranceCreditMult(creditTier, state)
+  return Math.round((stateBase * valueMult * brandMult * segMult * ageMult * multiCarMult * driverMult * creditMult) / 50) * 50
 }
 
 // ── Maintenance ──────────────────────────────────────────

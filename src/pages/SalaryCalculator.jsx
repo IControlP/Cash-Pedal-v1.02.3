@@ -23,14 +23,16 @@ function monthlyPayment(principal, annualRate, months) {
   return (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1)
 }
 
-// Estimated monthly lease payment using standard dealer math
-// residual ≈ 55% (36mo), 60% (24mo), 50% (48mo); money factor ≈ 0.00250 (~6% APR)
-function estimateLeaseMonthly(msrp, capReduction, termMonths) {
+// Estimated monthly lease payment using standard dealer math.
+// moneyFactor = APR / 2400 (industry-standard conversion — same as TCOCalculator).
+// residual ≈ 55% (36mo), 60% (24mo), 50% (48mo)
+function estimateLeaseMonthly(msrp, capReduction, termMonths, aprPercent = 6.0) {
   const residualPct = termMonths <= 24 ? 0.60 : termMonths <= 36 ? 0.55 : 0.50
   const residual = msrp * residualPct
   const capCost = msrp - capReduction
+  const moneyFactor = aprPercent / 2400
   const depreciation = (capCost - residual) / termMonths
-  const financeCharge = (capCost + residual) * 0.00250
+  const financeCharge = (capCost + residual) * moneyFactor
   return Math.max(0, Math.round(depreciation + financeCharge))
 }
 
@@ -277,11 +279,11 @@ export default function SalaryCalculator() {
     else setVehiclePrice(p)
   }, [proMode, selectedVehicleInfo?.price, mode])
 
-  // Pro + lease mode: auto-calculate monthly payment whenever MSRP, down, or term changes
+  // Pro + lease mode: auto-calculate monthly payment whenever MSRP, down, term, or APR changes
   useEffect(() => {
     if (!proMode || mode !== 'lease' || !leaseMsrp) return
-    setLeaseMonthly(estimateLeaseMonthly(leaseMsrp, leaseDown, leaseTerm))
-  }, [proMode, mode, leaseMsrp, leaseDown, leaseTerm])
+    setLeaseMonthly(estimateLeaseMonthly(leaseMsrp, leaseDown, leaseTerm, rate))
+  }, [proMode, mode, leaseMsrp, leaseDown, leaseTerm, rate])
 
   // In lease mode: auto-select current year once model is set, clear if unavailable
   useEffect(() => {
@@ -788,6 +790,39 @@ export default function SalaryCalculator() {
                     <p className="text-[10px] text-[var(--text-muted)]">
                       Total out-of-pocket: {fmt(leaseMonthly * leaseTerm + leaseDown)}
                       {leaseDown > 0 ? ` (${fmt(leaseDown)} due at signing + ${fmt(leaseMonthly * leaseTerm)} payments)` : ''} · No equity at lease end
+                    </p>
+                  </div>
+
+                  {/* Lease APR — used to estimate money factor in Pro mode */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <label className="input-label">Lease APR</label>
+                      {proMode && (
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                          style={{ background: 'rgba(200,255,0,0.12)', color: 'var(--accent)' }}>
+                          updates payment estimate
+                        </span>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={rate}
+                        min={0} max={25} step={0.1}
+                        onChange={e => setRate(Number(e.target.value))}
+                        className="input-field"
+                        style={{ paddingRight: '2.5rem' }}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">%</span>
+                    </div>
+                    <input
+                      type="range" min={0} max={15} step={0.1}
+                      value={rate}
+                      onChange={e => setRate(Number(e.target.value))}
+                      style={{ background: `linear-gradient(to right, var(--accent) ${(rate / 15) * 100}%, var(--border) ${(rate / 15) * 100}%)` }}
+                    />
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      Money factor: {(rate / 2400).toFixed(5)} · Check your dealer quote for the exact rate.
                     </p>
                   </div>
                 </>

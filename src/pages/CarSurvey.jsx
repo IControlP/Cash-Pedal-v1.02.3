@@ -80,6 +80,24 @@ export default function CarSurvey() {
 
   const topMatch = rankedProfiles[0]
 
+  // Compute top scoring drivers for the top match category.
+  // For each question, contribution = impact * (answer - 3). We show top positive contributors.
+  const topMatchDrivers = useMemo(() => {
+    if (!scores || !topMatch) return []
+    const category = topMatch.key
+    return answers
+      .map((answer, qi) => {
+        const multiplier = answer - 3
+        const impact = questionImpacts[qi].find(e => e.category === category)
+        if (!impact) return null
+        const contribution = impact.impact * multiplier
+        return contribution > 0 ? { qi, contribution, question: questions[qi] } : null
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.contribution - a.contribution)
+      .slice(0, 3)
+  }, [scores, topMatch, answers])
+
   function handleAnswer(value) {
     setSelectedAnswer(value)
     const newAnswers = [...answers]
@@ -239,6 +257,33 @@ export default function CarSurvey() {
 
           {/* Top match card */}
           <div className="card border-[var(--accent)] mb-6 anim-3" style={{ background: 'rgba(255,184,0,0.04)' }}>
+
+            {/* Why this match */}
+            {topMatchDrivers.length > 0 && (
+              <div className="mb-5 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg)]">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)] mb-3">
+                  Why this match
+                </p>
+                <div className="flex flex-col gap-2">
+                  {topMatchDrivers.map(({ qi, contribution, question }) => (
+                    <div key={qi} className="flex items-start gap-2 text-sm">
+                      <span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold mt-0.5"
+                        style={{ background: 'rgba(200,255,0,0.15)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.3)' }}>
+                        +
+                      </span>
+                      <span className="text-[var(--text-muted)] leading-snug">
+                        Q{qi + 1}: "{question.text.length > 70 ? question.text.slice(0, 67) + '…' : question.text}"
+                        <span className="ml-2 text-[var(--accent)] font-semibold tabular-nums">+{Math.round(contribution)}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-[var(--text-muted)] mt-2 leading-relaxed">
+                  These answers had the biggest positive impact on your {topMatch?.profile.name} score.
+                </p>
+              </div>
+            )}
+
             <p className="text-[var(--text-muted)] text-sm leading-relaxed mb-6">{topMatch?.profile.description}</p>
 
             <div className="grid sm:grid-cols-2 gap-6">

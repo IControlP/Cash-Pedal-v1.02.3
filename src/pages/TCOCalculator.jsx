@@ -14,7 +14,7 @@ import {
   HIGH_RETENTION, POOR_RETENTION,
   classifySegment, applyModelAdjustments, estimateCurrentValue,
   INSURANCE_BASE_RATE, INSURANCE_VALUE_BRACKETS, INSURANCE_BRAND_MULT, STATE_INS_BASE,
-  estimateInsurance,
+  estimateInsurance, INSURANCE_AGE_MULT, INSURANCE_CREDIT_MULT, INSURANCE_NO_CREDIT_STATES,
   MAINT_BRAND_MULT, MAINT_LUXURY_MAKES, MAINT_PREMIUM_MAKES, MAINT_ECONOMY_MAKES,
   determineMaintTier, MAINT_TIER_COSTS, LABOR_RATE, STATE_LABOR_RATES, STATE_ROAD_WEAR_FACTOR, getLocalLaborRate,
   generateMaintenanceServices, generateMaintenanceByYear, generateDetailedMaintenanceByYear,
@@ -47,17 +47,20 @@ function calculateLoan({ price, downPayment, loanTermMonths, annualRatePercent, 
   // When selling before the loan ends, the remaining balance is retired at sale —
   // so actual interest paid = (payments made) − (principal repaid), not full-term interest.
   let interestThroughOwnership
+  let remainingBalanceAtSale = 0
   if (effectiveMonths >= n || r === 0) {
     interestThroughOwnership = totalInterestPaid
+    remainingBalanceAtSale = 0
   } else {
     const remainingBal = loanAmount * Math.pow(1 + r, effectiveMonths)
       - monthlyPayment * (Math.pow(1 + r, effectiveMonths) - 1) / r
-    const principalRepaid = loanAmount - Math.max(0, remainingBal)
+    remainingBalanceAtSale = Math.max(0, remainingBal)
+    const principalRepaid = loanAmount - remainingBalanceAtSale
     interestThroughOwnership = Math.max(0, monthlyPayment * effectiveMonths - principalRepaid)
   }
   const ownershipShorterThanLoan = ownershipYears * 12 < n
 
-  return { loanAmount, monthlyPayment, totalInterestPaid, totalCostOfLoan: totalPaid, trueAnnualCost, interestThroughOwnership, ownershipShorterThanLoan }
+  return { loanAmount, monthlyPayment, totalInterestPaid, totalCostOfLoan: totalPaid, trueAnnualCost, interestThroughOwnership, ownershipShorterThanLoan, remainingBalanceAtSale }
 }
 
 // ── Lease math ────────────────────────────────────────
@@ -979,6 +982,8 @@ export default function TCOCalculator() {
   const [chargingStyle,  setChargingStyle]  = useState('home')  // 'home' | 'mixed' | 'public'
   const [customFuelPrice,setCustomFuelPrice]= useState('')      // empty = use state avg
   const [multiCarPolicy, setMultiCarPolicy] = useState(false)
+  const [driverAge,      setDriverAge]      = useState('')    // '' = use benchmark (40-yr profile)
+  const [creditTier,     setCreditTier]     = useState('')    // '' = use benchmark (good)
   // Track original MSRP separately from price (which may be depreciation-adjusted)
   const [origMsrp,       setOrigMsrp]       = useState(null)
 
@@ -1063,7 +1068,7 @@ export default function TCOCalculator() {
 
   useEffect(() => {
     if (customCosts) return
-    setAnnualInsurance(estimateInsurance(price, selMake||null, selModel||null, selYear||null, resolvedState||null, detailedMode && multiCarPolicy))
+    setAnnualInsurance(estimateInsurance(price, selMake||null, selModel||null, selYear||null, resolvedState||null, detailedMode && multiCarPolicy, driverAge ? Number(driverAge) : null, creditTier || null))
     const customOverride = customFuelPrice !== '' ? parseFloat(customFuelPrice) : null
     if (modelData) {
       // For EVs: use charging-style blended rate unless user has manually overridden it
@@ -1099,7 +1104,7 @@ export default function TCOCalculator() {
       ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)), currentMileage)
       : price
     setAnnualRegistration(computeAnnualRegistration(resolvedState, currentVal))
-  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage, driverAge, creditTier]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLocationInput = useCallback((val) => {
     setLocationInput(val)
@@ -2365,6 +2370,67 @@ export default function TCOCalculator() {
                     </button>
                   </div>
 
+                  {/* Driver profile — optional, but dramatically affects young-driver estimates */}
+                  <div className="pt-1">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
+                      Driver Profile <span className="normal-case font-normal">(optional — affects insurance estimate)</span>
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="input-label text-[10px]">Driver Age</label>
+                        <input
+                          type="number"
+                          value={driverAge}
+                          onChange={e => setDriverAge(e.target.value)}
+                          placeholder="e.g. 25"
+                          min={16} max={99}
+                          className="input-field text-sm"
+                        />
+                        <p className="text-[10px] text-[var(--text-muted)]">
+                          {driverAge && Number(driverAge) >= 16
+                            ? (() => {
+                                const entry = INSURANCE_AGE_MULT.find(([lo, hi]) => Number(driverAge) >= lo && Number(driverAge) <= hi)
+                                const mult = entry ? entry[2] : 1.0
+                                return mult > 1.05
+                                  ? `+${Math.round((mult - 1) * 100)}% surcharge`
+                                  : mult < 0.99
+                                    ? `${Math.round((mult - 1) * 100)}% discount`
+                                    : 'Near benchmark rate'
+                              })()
+                            : 'Blank = 40-yr benchmark'}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="input-label text-[10px]">Credit Tier</label>
+                        <select
+                          value={creditTier}
+                          onChange={e => setCreditTier(e.target.value)}
+                          className="input-field text-sm"
+                        >
+                          <option value="">Avg / unknown</option>
+                          <option value="excellent">Excellent (750+)</option>
+                          <option value="good">Good (670–749)</option>
+                          <option value="fair">Fair (580–669)</option>
+                          <option value="poor">Poor (&lt;580)</option>
+                        </select>
+                        <p className="text-[10px] text-[var(--text-muted)]">
+                          {creditTier
+                            ? (() => {
+                                const mult = INSURANCE_CREDIT_MULT[creditTier] ?? 1.0
+                                const noCredit = INSURANCE_NO_CREDIT_STATES.has(resolvedState)
+                                if (noCredit) return `${resolvedState} prohibits credit-based pricing`
+                                return mult > 1.05
+                                  ? `+${Math.round((mult - 1) * 100)}% vs. good credit`
+                                  : mult < 0.99
+                                    ? `${Math.round((mult - 1) * 100)}% vs. good credit`
+                                    : 'Benchmark rate'
+                              })()
+                            : 'Blank = good (benchmark)'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               )}
 
@@ -2377,7 +2443,13 @@ export default function TCOCalculator() {
                 const fuelNote = effIsEV
                   ? `$${activeElecRate.toFixed(3)}/kWh · ${customFuelPrice ? 'custom' : chargingStyleLabel}`
                   : `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${STATE_FUEL_PRICES[resolvedState] ?? 3.50}`}/gal`
-                const insNote = `${resolvedState} · ${selMake || 'avg'}${detailedMode && multiCarPolicy ? ' · multi-car' : ''}`
+                const insNote = [
+                  resolvedState,
+                  selMake || 'avg',
+                  detailedMode && multiCarPolicy ? 'multi-car' : null,
+                  driverAge && Number(driverAge) >= 16 ? `age ${driverAge}` : null,
+                  creditTier ? creditTier : null,
+                ].filter(Boolean).join(' · ')
                 const maintNote = detailedMode
                   ? (effIsEV ? 'EV · itemized' : 'gas · itemized')
                   : (effIsEV ? 'EV avg' : 'gas avg')
@@ -2963,6 +3035,49 @@ export default function TCOCalculator() {
                   </>
                 )}
               </div>
+
+              {/* ── Early sale equity panel — shown when selling before loan ends ── */}
+              {!simpleMode && financeMode === 'buy' && results.ownershipShorterThanLoan && results.remainingBalanceAtSale > 0 && (
+                <div className="rounded-xl border p-4 flex flex-col gap-3"
+                  style={{ borderColor: 'rgba(251,191,36,0.4)', background: 'rgba(251,191,36,0.04)' }}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-400 text-base leading-none">⚠</span>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-amber-400">
+                      Selling Before Loan Ends
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--text-muted)]">Remaining loan balance at sale</span>
+                      <span className="text-amber-400 font-semibold tabular-nums">{formatCurrency(results.remainingBalanceAtSale)}</span>
+                    </div>
+                    {futureResaleValue != null && (
+                      <>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[var(--text-muted)]">Projected resale value</span>
+                          <span className="text-white font-semibold tabular-nums">{formatCurrency(futureResaleValue)}</span>
+                        </div>
+                        <div className="h-px bg-[var(--border)] my-0.5" />
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-white">
+                            {futureResaleValue >= results.remainingBalanceAtSale ? 'Estimated equity' : 'Estimated shortfall'}
+                          </span>
+                          <span className={`font-display font-bold text-lg tabular-nums ${futureResaleValue >= results.remainingBalanceAtSale ? 'text-green-400' : 'text-red-400'}`}>
+                            {formatCurrency(Math.abs(futureResaleValue - results.remainingBalanceAtSale))}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                    {futureResaleValue != null
+                      ? futureResaleValue >= results.remainingBalanceAtSale
+                        ? `You'd net roughly ${formatCurrency(futureResaleValue - results.remainingBalanceAtSale)} after paying off the remaining loan balance — positive equity you can put toward your next vehicle.`
+                        : `You'd be underwater by roughly ${formatCurrency(results.remainingBalanceAtSale - futureResaleValue)}. Rolling this into a new loan increases your total cost significantly.`
+                      : 'The remaining balance must be paid off at sale — either from sale proceeds or out-of-pocket. Select a make/model/year above for resale estimate.'}
+                  </p>
+                </div>
+              )}
 
               {/* ── Net Cost of Ownership — detailed mode only ── */}
               {!simpleMode && (financeMode === 'buy' || financeMode === 'current') && futureResaleValue != null && netCostOfOwnership != null && (

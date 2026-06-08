@@ -286,6 +286,21 @@ export const MAINT_BRAND_MULT = {
   Tesla: 0.70, Rivian: 0.75, Lucid: 0.75,
 }
 
+// Segment-level maintenance averages (national, 13k mi/yr, standard brand).
+// Based on AAA/Consumer Reports benchmarks. Apply MAINT_BRAND_MULT on top for make-specific estimates.
+export const SEGMENT_MAINT_AVG = {
+  economy:    800,
+  compact:    950,
+  sedan:      1100,
+  suv:        1350,
+  luxury_suv: 2200,
+  truck:      1450,
+  sports:     1600,
+  luxury:     2000,
+  electric:   700,
+  hybrid:     900,
+}
+
 export const MAINT_LUXURY_MAKES = new Set(['BMW','Mercedes-Benz','Audi','Porsche','Lexus','Land Rover',
   'Jaguar','Maserati','Alfa Romeo','Genesis','Lucid','Rivian'])
 export const MAINT_PREMIUM_MAKES = new Set(['Acura','Infiniti','Volvo','Lincoln','Cadillac','Tesla','Buick','Mini','Polestar'])

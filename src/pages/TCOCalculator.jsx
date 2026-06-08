@@ -16,6 +16,7 @@ import {
   INSURANCE_BASE_RATE, INSURANCE_VALUE_BRACKETS, INSURANCE_BRAND_MULT, STATE_INS_BASE,
   estimateInsurance,
   MAINT_BRAND_MULT, MAINT_LUXURY_MAKES, MAINT_PREMIUM_MAKES, MAINT_ECONOMY_MAKES,
+  SEGMENT_MAINT_AVG,
   determineMaintTier, MAINT_TIER_COSTS, LABOR_RATE, STATE_LABOR_RATES, STATE_ROAD_WEAR_FACTOR, getLocalLaborRate,
   generateMaintenanceServices, generateMaintenanceByYear, generateDetailedMaintenanceByYear,
   STATE_FUEL_PRICES, STATE_ELEC_RATES,
@@ -1076,7 +1077,10 @@ export default function TCOCalculator() {
         const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake, resolvedState, vehicleAge, resolvedLaborRate)
         setAnnualMaintenance(services.reduce((s, x) => s + x.annual, 0))
       } else {
-        setAnnualMaintenance(modelData.is_ev ? 700 : 1200)
+        const seg = classifySegment(selMake||'', selModel||'')
+        const segAvg = modelData.is_ev ? SEGMENT_MAINT_AVG.electric : (SEGMENT_MAINT_AVG[seg] ?? 1100)
+        const brandMult = modelData.is_ev ? 1.0 : (MAINT_BRAND_MULT[selMake] ?? 1.0)
+        setAnnualMaintenance(Math.round(segAvg * brandMult / 50) * 50)
       }
     } else {
       const catInfo = VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)
@@ -1092,7 +1096,8 @@ export default function TCOCalculator() {
         const services = generateMaintenanceServices(catIsEV, annualMileage, catSeg, '', resolvedState, 0, resolvedLaborRate)
         setAnnualMaintenance(services.reduce((s, x) => s + x.annual, 0))
       } else {
-        setAnnualMaintenance(catIsEV ? 700 : 1200)
+        const catSeg = catInfo?.segment ?? 'sedan'
+        setAnnualMaintenance(catIsEV ? SEGMENT_MAINT_AVG.electric : (SEGMENT_MAINT_AVG[catSeg] ?? 1100))
       }
     }
     const currentVal = (selYear && (selMake || selModel))
@@ -2380,7 +2385,12 @@ export default function TCOCalculator() {
                 const insNote = `${resolvedState} · ${selMake || 'avg'}${detailedMode && multiCarPolicy ? ' · multi-car' : ''}`
                 const maintNote = detailedMode
                   ? (effIsEV ? 'EV · itemized' : 'gas · itemized')
-                  : (effIsEV ? 'EV avg' : 'gas avg')
+                  : (() => {
+                      if (effIsEV) return 'EV segment avg'
+                      const seg = selMake ? classifySegment(selMake, selModel||'') : (catInfoForRender?.segment ?? 'sedan')
+                      const segLabel = { economy:'economy', compact:'compact', sedan:'sedan', suv:'SUV', luxury_suv:'luxury SUV', truck:'truck', sports:'sports', luxury:'luxury' }[seg] ?? seg
+                      return selMake ? `${segLabel} avg · ${selMake}` : `${segLabel} avg`
+                    })()
                 const maintenanceSegment = selMake
                   ? classifySegment(selMake, selModel||'')
                   : (catInfoForRender?.segment ?? 'sedan')
@@ -2414,7 +2424,7 @@ export default function TCOCalculator() {
                         {key === 'maint' && !detailedMode && !simpleMode && resolvedState && (
                           <div className="px-4 pb-3 text-[11px] text-[var(--text-muted)] leading-relaxed"
                             style={{ borderTop: '1px solid var(--border)', paddingTop: '0.5rem' }}>
-                            Segment average — costs vary by vehicle age, mileage, and brand.{' '}
+                            {selMake ? `${selMake} segment average` : 'Segment average'} — costs vary by vehicle age, mileage, and condition.{' '}
                             {detailedCalcCount < FREE_DETAILED_LIMIT || isSubscribed
                               ? <button
                                   onClick={() => { if (!checkDetailedLimit()) return; setDetailedMode(true) }}

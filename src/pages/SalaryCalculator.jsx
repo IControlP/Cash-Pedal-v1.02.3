@@ -456,7 +456,8 @@ export default function SalaryCalculator() {
         if (basePrice <= (affordableResults.conservative || 0)) tier = 'conservative'
         else if (basePrice <= (affordableResults.comfortable || 0)) tier = 'comfortable'
         const ops = estimateBasicMonthlyCosts(basePrice, userState || null, annualMiles)
-        const annualFinancing = Math.round(monthlyPayment(basePrice * 0.80, rate, 60) * 12)
+        const loanAmt = basePrice * (1 - downPct / 100)
+        const annualFinancing = Math.round(monthlyPayment(loanAmt, rate, loanTerm) * 12)
         const annualOperating = ops.total * 12
         entries.push({
           make, model, type: data.type, is_ev: data.is_ev,
@@ -472,7 +473,7 @@ export default function SalaryCalculator() {
       })
     })
     return entries.sort((a, b) => b.basePrice - a.basePrice)
-  }, [affordableResults, userState, annualMiles, rate])
+  }, [affordableResults, userState, annualMiles, rate, downPct, loanTerm])
 
   const filteredVehicles = useMemo(() => {
     if (carFilterCategory === 'all') return matchedVehicles
@@ -1033,28 +1034,34 @@ export default function SalaryCalculator() {
                   highlight: false,
                   badge: '⚠ Stretched',
                 },
-              ].map(({ label, sublabel, value, highlight, badge }) => (
-                <div
-                  key={label}
-                  className={`card transition-all ${highlight ? 'border-[var(--accent)]' : 'hover:border-[#3a3a3e]'}`}
-                  style={highlight ? { background: 'rgba(255,184,0,0.04)' } : {}}
-                >
-                  <div className="flex items-start justify-between mb-1">
-                    <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: highlight ? 'var(--accent)' : 'var(--text-muted)' }}>
-                      {label}
+              ].map(({ label, sublabel, value, highlight, badge }) => {
+                const tierTakeHome = estimateMonthlyTakeHome(value, userState || null)
+                return (
+                  <div
+                    key={label}
+                    className={`card transition-all ${highlight ? 'border-[var(--accent)]' : 'hover:border-[#3a3a3e]'}`}
+                    style={highlight ? { background: 'rgba(255,184,0,0.04)' } : {}}
+                  >
+                    <div className="flex items-start justify-between mb-1">
+                      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: highlight ? 'var(--accent)' : 'var(--text-muted)' }}>
+                        {label}
+                      </p>
+                      {badge && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--bg)] border border-[var(--border)] text-[var(--text-muted)]">
+                          {badge}
+                        </span>
+                      )}
+                    </div>
+                    <p className={`font-display font-bold ${highlight ? 'text-[var(--accent)] text-3xl' : 'text-white text-2xl'} tabular-nums`}>
+                      {fmt(value)}
                     </p>
-                    {badge && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--bg)] border border-[var(--border)] text-[var(--text-muted)]">
-                        {badge}
-                      </span>
-                    )}
+                    <p className="text-[var(--text-muted)] text-xs mt-0.5">{sublabel}</p>
+                    <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                      ≈ {fmt(tierTakeHome)}/mo take-home
+                    </p>
                   </div>
-                  <p className={`font-display font-bold ${highlight ? 'text-[var(--accent)] text-3xl' : 'text-white text-2xl'} tabular-nums`}>
-                    {fmt(value)}
-                  </p>
-                  <p className="text-[var(--text-muted)] text-xs mt-1">{sublabel}</p>
-                </div>
-              ))}
+                )
+              })}
 
               {/* Loan cost summary — buy mode only */}
               {mode === 'buy' && results.loanAmount > 0 && (
@@ -1324,7 +1331,7 @@ export default function SalaryCalculator() {
                           <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1">
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Est. annual costs</p>
                             {[
-                              { label: `Financing (80% · 5yr · ${rate}%)`, val: v.annualFinancing },
+                              { label: `Financing (${100-downPct}% · ${loanTerm}mo · ${rate}%)`, val: v.annualFinancing },
                               { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.annualFuel },
                               { label: 'Insurance', val: v.annualInsurance },
                               { label: 'Maintenance', val: v.annualMaintenance },

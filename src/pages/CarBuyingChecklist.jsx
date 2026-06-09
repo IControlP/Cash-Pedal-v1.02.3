@@ -421,9 +421,22 @@ export default function CarBuyingChecklist() {
                 )}
               </div>
             </div>
-            <button onClick={() => setStep('input')} className="btn-ghost text-sm shrink-0">
-              ← Start Over
-            </button>
+            <div className="flex gap-2 shrink-0">
+              <button
+                onClick={() => window.print()}
+                className="btn-ghost text-sm flex items-center gap-1.5"
+                title="Print or save as PDF"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="1" y="5" width="12" height="7" rx="1"/>
+                  <path d="M3 5V2h8v3M3 9h2m2 0h2"/>
+                </svg>
+                Print
+              </button>
+              <button onClick={() => setStep('input')} className="btn-ghost text-sm">
+                ← Start Over
+              </button>
+            </div>
           </div>
 
           {/* Price range card */}

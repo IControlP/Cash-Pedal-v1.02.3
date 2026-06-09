@@ -2975,13 +2975,34 @@ export default function TCOCalculator() {
                 </div>
               </div>}
 
-              {/* Affordability check — 20/4/10 rule income bands — detailed mode only */}
-              {!simpleMode && (() => {
+              {/* Affordability check — 20/4/10 rule income bands */}
+              {(() => {
                 const year1Total = forecastRows[0]?.total ?? totalAnnualCost
                 const req10 = year1Total / 0.10
                 const req15 = year1Total / 0.15
                 const req20 = year1Total / 0.20
-                // Determine which band the user is likely in (no income input, so show all 3)
+                if (simpleMode) {
+                  return (
+                    <div className="rounded-xl border p-4 flex flex-col gap-2"
+                      style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+                          Income needed for this car
+                        </p>
+                        <a href="/salary" className="text-[10px] font-semibold" style={{ color: 'var(--accent)' }}>
+                          Full breakdown →
+                        </a>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-display font-bold text-white text-xl tabular-nums">{formatCurrency(req15)}</span>
+                        <span className="text-xs text-[var(--text-muted)]">/yr gross to be comfortable</span>
+                      </div>
+                      <p className="text-[10px] text-[var(--text-muted)]">
+                        Safe at {formatCurrency(req10)}/yr · stretched at {formatCurrency(req20)}/yr · based on Year 1 all-in cost
+                      </p>
+                    </div>
+                  )
+                }
                 return (
                   <div className="rounded-xl border p-4 flex flex-col gap-3"
                     style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>

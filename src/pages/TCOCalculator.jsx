@@ -1863,6 +1863,18 @@ export default function TCOCalculator() {
 
                   <SelectInput label="Loan Term" value={loanTerm} onChange={setLoanTerm} options={loanTermOptions} />
 
+                  {loanTerm >= 72 && (
+                    <div className="rounded-lg px-3 py-2.5 flex items-start gap-2.5 border -mt-2"
+                      style={{ borderColor: 'rgba(251,191,36,0.35)', background: 'rgba(251,191,36,0.05)' }}>
+                      <span className="text-sm shrink-0 mt-0.5">⚠</span>
+                      <p className="text-[11px] leading-relaxed" style={{ color: '#fbbf24' }}>
+                        <span className="font-semibold">{loanTerm}-month loans carry negative equity risk.</span>{' '}
+                        Most cars lose 15–20% of value in year one. With a {loanTerm}-month term you may owe more than the car is worth for 3+ years,
+                        making it hard to sell or trade in without bringing cash to the table.
+                      </p>
+                    </div>
+                  )}
+
                   <SliderInput label="Annual Interest Rate" value={rate} onChange={setRate}
                     min={0} max={25} step={0.1} suffix="%" inputMin={0} inputMax={25} />
                   {!simpleMode && (
@@ -2205,12 +2217,19 @@ export default function TCOCalculator() {
 
               {/* Annual miles slider — always visible unless user is in custom-costs mode */}
               {!customCosts && (
-                <SliderInput
-                  label="Annual Miles Driven"
-                  value={annualMileage}
-                  onChange={setAnnualMileage}
-                  min={3000} max={30000} step={500} suffix=" mi"
-                />
+                <>
+                  <SliderInput
+                    label="Annual Miles Driven"
+                    value={annualMileage}
+                    onChange={setAnnualMileage}
+                    min={3000} max={30000} step={500} suffix=" mi"
+                  />
+                  {!simpleMode && (
+                    <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                      13,500 mi = FHWA national average · typical range: 10,000–18,000 · affects fuel, maintenance &amp; depreciation
+                    </p>
+                  )}
+                </>
               )}
 
               {/* Current odometer — detailed mode only (defaults to auto: vehicleAge × annualMileage) */}

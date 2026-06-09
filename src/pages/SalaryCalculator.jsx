@@ -23,10 +23,26 @@ function monthlyPayment(principal, annualRate, months) {
   return (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1)
 }
 
-// Estimated monthly lease payment using standard dealer math
-// residual ≈ 55% (36mo), 60% (24mo), 50% (48mo); money factor ≈ 0.00250 (~6% APR)
-function estimateLeaseMonthly(msrp, capReduction, termMonths) {
-  const residualPct = termMonths <= 24 ? 0.60 : termMonths <= 36 ? 0.55 : 0.50
+// Per-make residual adjustments vs. the segment baseline.
+// Higher = better resale → lower depreciation fee → lower payment.
+// Source: historic residual value auction data patterns by brand.
+const LEASE_RESIDUAL_ADJ = {
+  Toyota: 0.04, Honda: 0.03, Mazda: 0.03, Subaru: 0.03, Kia: 0.01,
+  Hyundai: 0.01, Ford: 0.00, Chevrolet: 0.00, Ram: 0.01, GMC: 0.00,
+  Dodge: -0.02, Chrysler: -0.04, Mitsubishi: -0.04, Fiat: -0.05,
+  BMW: -0.02, 'Mercedes-Benz': -0.02, Audi: -0.03, Lexus: 0.02,
+  Acura: 0.01, Infiniti: -0.02, Cadillac: -0.04, Lincoln: -0.04,
+  Genesis: -0.01, Volvo: -0.03, 'Land Rover': -0.05, Jaguar: -0.05,
+  Maserati: -0.08, Tesla: 0.00, Rivian: -0.03, Lucid: -0.04,
+  Porsche: 0.06,
+}
+
+// Estimated monthly lease payment using standard dealer math.
+// Residuals vary by term and brand (high-retention makes ≈ +3–6%; luxury/niche ≈ -3–8%).
+function estimateLeaseMonthly(msrp, capReduction, termMonths, make = null) {
+  const baseResidual = termMonths <= 24 ? 0.60 : termMonths <= 36 ? 0.55 : 0.50
+  const adj = (make && LEASE_RESIDUAL_ADJ[make] != null) ? LEASE_RESIDUAL_ADJ[make] : 0
+  const residualPct = Math.max(0.35, Math.min(0.72, baseResidual + adj))
   const residual = msrp * residualPct
   const capCost = msrp - capReduction
   const depreciation = (capCost - residual) / termMonths
@@ -93,19 +109,46 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
   }
 }
 
-// Rough effective take-home estimate for a given gross annual salary.
-// Uses simplified federal brackets + FICA + 4% avg state income tax.
-// Intended for ballpark context only, not tax advice.
-function estimateMonthlyTakeHome(grossAnnual) {
-  let federalEff
-  if (grossAnnual <= 30000)       federalEff = 0.08
-  else if (grossAnnual <= 55000)  federalEff = 0.12
-  else if (grossAnnual <= 90000)  federalEff = 0.17
-  else if (grossAnnual <= 140000) federalEff = 0.21
-  else if (grossAnnual <= 200000) federalEff = 0.24
-  else                            federalEff = 0.28
-  const totalRate = federalEff + 0.0765 + 0.04  // federal + FICA + avg state
-  return Math.round((grossAnnual * (1 - totalRate)) / 12)
+// 2025 federal income tax — marginal brackets applied to taxable income after
+// the $15,000 single-filer standard deduction. Source: IRS Rev. Proc. 2024-40.
+function estimateFederalTax(grossAnnual) {
+  const taxable = Math.max(0, grossAnnual - 15000)
+  const brackets = [
+    [11925, 0.10], [48475, 0.12], [103350, 0.22],
+    [197300, 0.24], [250525, 0.32], [626350, 0.35], [Infinity, 0.37],
+  ]
+  let tax = 0, prev = 0
+  for (const [cap, rate] of brackets) {
+    if (taxable <= prev) break
+    tax += (Math.min(taxable, cap) - prev) * rate
+    prev = cap
+  }
+  return tax
+}
+
+// Approximate effective state income tax rate for a single filer earning ~$50–80k (2025).
+// No-income-tax states set to 0. All others reflect estimated effective (not marginal) rates.
+const STATE_INCOME_TAX_RATE = {
+  AL:0.045, AK:0.000, AZ:0.025, AR:0.043, CA:0.060, CO:0.044,
+  CT:0.050, DE:0.052, DC:0.065, FL:0.000, GA:0.054, HI:0.072,
+  ID:0.055, IL:0.049, IN:0.030, IA:0.055, KS:0.050, KY:0.040,
+  LA:0.034, ME:0.065, MD:0.050, MA:0.050, MI:0.043, MN:0.065,
+  MS:0.047, MO:0.050, MT:0.065, NE:0.060, NV:0.000, NH:0.000,
+  NJ:0.055, NM:0.052, NY:0.060, NC:0.045, ND:0.020, OH:0.035,
+  OK:0.043, OR:0.085, PA:0.031, RI:0.055, SC:0.062, SD:0.000,
+  TN:0.000, TX:0.000, UT:0.046, VT:0.065, VA:0.055, WA:0.000,
+  WV:0.055, WI:0.055, WY:0.000,
+}
+
+// Take-home estimate using 2025 federal brackets + standard deduction + FICA + state tax.
+// Intended for ballpark context only — not tax advice.
+function estimateMonthlyTakeHome(grossAnnual, state = null) {
+  const federalTax = estimateFederalTax(grossAnnual)
+  const stateTaxRate = (state && STATE_INCOME_TAX_RATE[state] != null)
+    ? STATE_INCOME_TAX_RATE[state]
+    : 0.04
+  const fica = grossAnnual * 0.0765
+  return Math.round((grossAnnual - federalTax - fica - grossAnnual * stateTaxRate) / 12)
 }
 
 // US state list for the selector (derived from STATE_INS_BASE keys for coverage)
@@ -280,7 +323,7 @@ export default function SalaryCalculator() {
   // Pro + lease mode: auto-calculate monthly payment whenever MSRP, down, or term changes
   useEffect(() => {
     if (!proMode || mode !== 'lease' || !leaseMsrp) return
-    setLeaseMonthly(estimateLeaseMonthly(leaseMsrp, leaseDown, leaseTerm))
+    setLeaseMonthly(estimateLeaseMonthly(leaseMsrp, leaseDown, leaseTerm, selMake || null))
   }, [proMode, mode, leaseMsrp, leaseDown, leaseTerm])
 
   // In lease mode: auto-select current year once model is set, clear if unavailable
@@ -1040,7 +1083,7 @@ export default function SalaryCalculator() {
               {/* Take-home income context */}
               {(() => {
                 const grossConservative = results.conservative
-                const takeHome = estimateMonthlyTakeHome(grossConservative)
+                const takeHome = estimateMonthlyTakeHome(grossConservative, userState || null)
                 const vehiclePct = Math.round((results.totalMonthly / takeHome) * 100)
                 return (
                   <div className="rounded-xl border border-[var(--border)] p-4 text-sm"
@@ -1065,7 +1108,11 @@ export default function SalaryCalculator() {
                       </div>
                     </div>
                     <p className="text-[10px] text-[var(--text-muted)] mt-3 leading-relaxed">
-                      Take-home estimate uses federal brackets + FICA + 4% avg state tax — actual varies by state, filing status &amp; deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
+                      Take-home estimate uses 2025 federal brackets (incl. standard deduction) + FICA
+                      {userState && STATE_INCOME_TAX_RATE[userState] != null
+                        ? ` + ${(STATE_INCOME_TAX_RATE[userState] * 100).toFixed(1)}% ${userState} state tax`
+                        : ' + 4% avg state tax'
+                      } — actual varies by filing status &amp; deductions. The 20/4/10 rule targets 10% of <em>gross</em> income, which is typically 13–16% of take-home.
                     </p>
                   </div>
                 )
@@ -1102,41 +1149,51 @@ export default function SalaryCalculator() {
                     />
                   )}
                 </div>
-                {affordableResults ? (
-                  <div className="flex flex-col gap-2">
-                    {[
-                      { label: 'Conservative', pct: '10%', badge: '✓ Safest', value: affordableResults.conservative, accent: true },
-                      { label: 'Comfortable',  pct: '15%', badge: null,        value: affordableResults.comfortable,  accent: false },
-                      { label: 'Aggressive',   pct: '20%', badge: '⚠ Stretched', value: affordableResults.aggressive, accent: false },
-                    ].map(({ label, pct, badge, value, accent }) => (
-                      <div key={label}
-                        className="flex items-center justify-between px-3 py-2.5 rounded-lg border"
-                        style={{
-                          borderColor: accent ? 'var(--accent)' : 'var(--border)',
-                          background: accent ? 'rgba(200,255,0,0.04)' : 'var(--bg)',
-                        }}>
-                        <div>
-                          <span className="text-xs font-semibold" style={{ color: accent ? 'var(--accent)' : 'var(--text-muted)' }}>
-                            {label} <span className="font-normal opacity-70">({pct})</span>
-                          </span>
-                          {badge && (
-                            <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded"
-                              style={{ background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
-                              {badge}
-                            </span>
-                          )}
-                        </div>
-                        <span className={`font-display font-bold tabular-nums ${accent ? 'text-[var(--accent)] text-lg' : 'text-white'}`}>
-                          {value > 0 ? fmt(value) : 'N/A'}
-                        </span>
+                {affordableResults ? (() => {
+                  const salary = Number(knownSalary)
+                  const takeHomeFromSalary = estimateMonthlyTakeHome(salary, userState || null)
+                  return (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between px-3 py-2 rounded-lg text-xs"
+                        style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                        <span className="text-[var(--text-muted)]">Est. monthly take-home</span>
+                        <span className="font-semibold text-white">{fmt(takeHomeFromSalary)}/mo</span>
                       </div>
-                    ))}
-                    <p className="text-[10px] text-[var(--text-muted)] leading-relaxed mt-1">
-                      Assumes {downPct}% down · {loanTerm}-month loan · {rate}% APR · includes estimated insurance, fuel, maintenance &amp; registration.
-                      {userState ? ` ${userState} rates applied.` : ' National average rates.'}
-                    </p>
-                  </div>
-                ) : (
+                      {[
+                        { label: 'Conservative', pct: '10%', badge: '✓ Safest', value: affordableResults.conservative, accent: true },
+                        { label: 'Comfortable',  pct: '15%', badge: null,        value: affordableResults.comfortable,  accent: false },
+                        { label: 'Aggressive',   pct: '20%', badge: '⚠ Stretched', value: affordableResults.aggressive, accent: false },
+                      ].map(({ label, pct, badge, value, accent }) => (
+                        <div key={label}
+                          className="flex items-center justify-between px-3 py-2.5 rounded-lg border"
+                          style={{
+                            borderColor: accent ? 'var(--accent)' : 'var(--border)',
+                            background: accent ? 'rgba(200,255,0,0.04)' : 'var(--bg)',
+                          }}>
+                          <div>
+                            <span className="text-xs font-semibold" style={{ color: accent ? 'var(--accent)' : 'var(--text-muted)' }}>
+                              {label} <span className="font-normal opacity-70">({pct})</span>
+                            </span>
+                            {badge && (
+                              <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded"
+                                style={{ background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
+                                {badge}
+                              </span>
+                            )}
+                          </div>
+                          <span className={`font-display font-bold tabular-nums ${accent ? 'text-[var(--accent)] text-lg' : 'text-white'}`}>
+                            {value > 0 ? fmt(value) : 'N/A'}
+                          </span>
+                        </div>
+                      ))}
+                      <p className="text-[10px] text-[var(--text-muted)] leading-relaxed mt-1">
+                        Assumes {downPct}% down · {loanTerm}-month loan · {rate}% APR · includes estimated insurance, fuel, maintenance &amp; registration.
+                        {userState ? ` ${userState} rates applied.` : ' National average rates.'}
+                      </p>
+                    </div>
+                  )
+                })()
+                : (
                   <p className="text-xs text-[var(--text-muted)] italic">
                     Enter a salary above to see your affordable vehicle range.
                   </p>

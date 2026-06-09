@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { posts } from '../data/posts'
+import { trackArticleToCalculator } from '../utils/analytics'
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -93,6 +94,10 @@ export default function BlogPost() {
           <div
             className="prose-cashpedal"
             dangerouslySetInnerHTML={{ __html: post.content }}
+            onClick={e => {
+              const link = e.target.closest('a[href*="/tco"],a[href*="/compare"],a[href*="/salary"],a[href*="/checklist"]')
+              if (link) trackArticleToCalculator(slug)
+            }}
           />
         </div>
       </main>

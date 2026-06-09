@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { trackPageView } from './utils/analytics'
 import Landing from './pages/Landing'
 import TCOCalculator from './pages/TCOCalculator'
 import CarSurvey from './pages/CarSurvey'
@@ -15,6 +16,14 @@ import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
 import TermsGate, { TERMS_VERSION, LS_TERMS_ACCEPTED, LS_TERMS_VERSION } from './components/TermsGate'
 
+function PageViewTracker() {
+  const location = useLocation()
+  useEffect(() => {
+    trackPageView(location.pathname + location.search)
+  }, [location])
+  return null
+}
+
 function ToolRoute({ element }) {
   const [accepted, setAccepted] = useState(
     () => localStorage.getItem(LS_TERMS_ACCEPTED) === 'true' &&
@@ -27,6 +36,7 @@ function ToolRoute({ element }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <PageViewTracker />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/tco"       element={<ToolRoute element={<TCOCalculator />} />} />

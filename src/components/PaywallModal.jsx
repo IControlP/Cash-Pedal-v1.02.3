@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useSubscription } from '../hooks/useSubscription'
+import { trackUpgradePromptSeen, trackUpgradeClicked } from '../utils/analytics'
 
 const FEATURES = [
   "See if that car costs $8k more than it looks over 5 years",
@@ -13,6 +14,10 @@ const FEATURES = [
 ]
 
 export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocked }) {
+  useEffect(() => {
+    trackUpgradePromptSeen(feature, cancelPath)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const [email,       setEmail]       = useState('')
   const [restoreMode, setRestoreMode] = useState(false)
   const [promoMode,   setPromoMode]   = useState(false)
@@ -26,6 +31,7 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
   const { verifySubscription, verifyPromoCode } = useSubscription()
 
   async function handleCheckout() {
+    trackUpgradeClicked(feature, '$19')
     setCheckoutErr('')
     setLoading(true)
     try {

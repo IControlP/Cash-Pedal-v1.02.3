@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getSessionId } from '../components/TermsGate'
+import { trackCalculatorStarted, trackCalculatorCompleted } from '../utils/analytics'
 import Navbar from '../components/Navbar'
 import { CarVisual } from '../components/CarSVGs'
 import Footer from '../components/Footer'
@@ -910,6 +911,8 @@ export default function TCOCalculator() {
   )
   const [showUserDataModal, setShowUserDataModal] = useState(false)
   const countIncrementedRef = useRef(false)
+  const hasTrackedStartRef  = useRef(false)
+  const hasTrackedDoneRef   = useRef(false)
 
   // ── Detailed-calc paywall ──
   const [detailedCalcCount, setDetailedCalcCount] = useState(() =>
@@ -1161,6 +1164,7 @@ export default function TCOCalculator() {
   }, [checkDetailedLimit, applyTrim])
 
   const handlePickerChange = useCallback((level, value) => {
+    trackFirstInteraction('vehicle_picker')
     if (level === 'make') {
       setSelMake(value); setSelModel(''); setSelYear(''); setSelTrim(''); setOrigMsrp(null); setVehicleCategory('')
     }
@@ -1432,6 +1436,24 @@ export default function TCOCalculator() {
     setComparisonCount(updated.length)
   }
 
+  // Fire calculator_completed once per distinct vehicle selection
+  useEffect(() => {
+    if (!selTrim || hasTrackedDoneRef.current) return
+    hasTrackedDoneRef.current = true
+    trackCalculatorCompleted({
+      vehicleCount:   1,
+      hasEV:          modelData?.is_ev ?? false,
+      ownershipYears,
+    })
+  }, [selTrim]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Analytics helpers ─────────────────────────────────
+  function trackFirstInteraction(entryPoint = 'input') {
+    if (hasTrackedStartRef.current) return
+    hasTrackedStartRef.current = true
+    trackCalculatorStarted({ source_page: '/tco', entry_point: entryPoint })
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">
       {showUserDataModal && (
@@ -1677,7 +1699,7 @@ export default function TCOCalculator() {
               <SliderInput
                 label={financeMode === 'current' ? 'Current Market Value' : financeMode === 'lease' ? 'Vehicle MSRP' : 'Vehicle Purchase Price (Out-the-Door)'}
                 value={price}
-                onChange={setPrice}
+                onChange={v => { trackFirstInteraction('price_slider'); setPrice(v) }}
                 displayValue={financeMode === 'buy' ? effectivePrice : undefined}
                 onDisplayChange={financeMode === 'buy' ? (otd) => {
                   const taxRate = taxRateOverride !== null

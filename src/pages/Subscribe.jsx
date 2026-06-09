@@ -1,8 +1,9 @@
-import { Link } from 'react-router-dom'
-import { useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import { useSubscription } from '../hooks/useSubscription'
 import { SUVSVG, SedanSVG, getPal } from '../components/CarSVGs'
+import { trackProPurchaseComplete } from '../utils/analytics'
 
 const INCLUDED = [
   {
@@ -32,6 +33,7 @@ const INCLUDED = [
 ]
 
 export default function Subscribe() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [showEmailEntry, setShowEmailEntry] = useState(false)
   const [emailInput, setEmailInput] = useState('')
@@ -40,6 +42,23 @@ export default function Subscribe() {
   const [promoInput, setPromoInput] = useState('')
   const [promoStatus, setPromoStatus] = useState(null) // null | 'loading' | 'success' | 'invalid' | 'error'
   const sub = useSubscription() || {}
+
+  // Verify Stripe session and activate subscription after checkout redirect
+  useEffect(() => {
+    const sessionId = searchParams.get('session_id')
+    if (!sessionId || searchParams.get('success') !== 'true') return
+    // Clear URL params immediately to avoid re-verifying on refresh
+    setSearchParams({}, { replace: true })
+    fetch(`/api/verify-session?session_id=${encodeURIComponent(sessionId)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.valid) {
+          sub.activateFromSession?.(data.email, data.expires)
+          trackProPurchaseComplete(data.purchaseType || 'one_time', 19)
+        }
+      })
+      .catch(() => {})
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const isActive = !!sub.isSubscribed
   const expiresAt = sub.expiresAt || sub.pass_expires_at || sub.passExpiresAt
   const daysLeft = typeof sub.daysRemaining === 'number'

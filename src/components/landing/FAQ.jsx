@@ -3,7 +3,7 @@ import { useState } from 'react'
 const QS = [
   {
     q: 'How accurate are the forecasts?',
-    a: 'Cash Pedal uses the same model your in-app calculator does — 12,000 mi/yr default, 6.5% loan rate, 5-year hold, plus state-level fuel, electricity, insurance, registration, and sales-tax data refreshed on a rolling cadence. Every assumption is visible and adjustable so you can tune the model to your actual situation. Results are estimates, not guarantees.',
+    a: 'Cash Pedal uses the same model your in-app calculator does — 13,500 mi/yr default (FHWA national average), 6.5% loan rate, 5-year hold, plus state-level fuel, electricity, insurance, registration, and sales-tax data refreshed on a rolling cadence. Every assumption is visible and adjustable so you can tune the model to your actual situation. Results are estimates, not guarantees.',
   },
   {
     q: 'Is the offer actually one-time?',
@@ -23,7 +23,7 @@ const QS = [
   },
   {
     q: 'Can I run more than two cars?',
-    a: 'Yes — the 60-day pass is fully unlimited. Compare two at a time, stack up to six in a grid, or rerun the same pair with different financing scenarios. Whatever helps you decide.',
+    a: 'Yes — the 60-day pass is fully unlimited. Compare two at a time, stack up to five in a grid, or rerun the same pair with different financing scenarios. Whatever helps you decide.',
   },
 ]
 

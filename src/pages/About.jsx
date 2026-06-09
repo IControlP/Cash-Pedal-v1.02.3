@@ -17,7 +17,7 @@ const faqs = [
   },
   {
     q: 'Do I need to create an account?',
-    a: 'No. All basic tools are free and require no sign-up. Cash Pedal Pro ($10/month) unlocks unlimited detailed TCO analyses, unlimited used-car checklists, and multi-vehicle comparison exports — no account required for the free tier.',
+    a: 'No. All basic tools are free and require no sign-up. A $19 one-time 60-day pass unlocks unlimited detailed TCO analyses, unlimited used-car checklists, and the full multi-vehicle comparison experience — no account required for the free tier.',
   },
   {
     q: 'How does the Car Survey work?',
@@ -25,7 +25,7 @@ const faqs = [
   },
   {
     q: 'What is the 20/4/10 rule?',
-    a: 'It\'s a widely used personal finance guideline: put at least 20% down, finance for no more than 4 years, and keep total vehicle costs (payment + insurance + fuel) under 10% of your gross income. The Salary Calculator uses this to show the income you\'d need.',
+    a: "It's a widely used personal finance guideline: put at least 20% down, finance for no more than 4 years, and keep total vehicle costs (payment + insurance + fuel + maintenance + registration) under 10% of your gross income. The Salary Calculator uses this rule to show the income you'd need and the vehicle price you can target.",
   },
   {
     q: 'Is this financial advice?',

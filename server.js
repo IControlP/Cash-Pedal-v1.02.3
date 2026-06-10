@@ -329,6 +329,11 @@ async function initTables() {
       CREATE INDEX IF NOT EXISTS idx_user_data_email
         ON user_data_collection(email)
     `)
+    // Lead source: 'tips_optin' (calc-count email prompt) or 'email_unlock' (5 free Pro calcs funnel)
+    await client.query(`
+      ALTER TABLE user_data_collection
+        ADD COLUMN IF NOT EXISTS source VARCHAR(30) DEFAULT 'tips_optin'
+    `)
 
     // ── Subscribers table (Stripe) ────────────────────
     await client.query(`
@@ -448,8 +453,10 @@ app.post('/api/consent', async (req, res) => {
 })
 
 // ── API: Save user data ───────────────────────────────
+const VALID_LEAD_SOURCES = ['tips_optin', 'email_unlock']
+
 app.post('/api/user-data', async (req, res) => {
-  const { record_id, session_id, first_name, last_name, email, calculation_count } = req.body
+  const { record_id, session_id, first_name, last_name, email, calculation_count, source } = req.body
 
   if (!isValidUUID(record_id) || !isValidUUID(session_id)) {
     return res.status(400).json({ success: false, error: 'Invalid record_id or session_id format' })
@@ -468,6 +475,7 @@ app.post('/api/user-data', async (req, res) => {
   const storedIp      = anonymizeIp(req.ip || 'unknown')
   const user_agent    = clamp(req.headers['user-agent'] || 'unknown', 512)
   const timestamp_utc = new Date().toISOString()
+  const leadSource    = VALID_LEAD_SOURCES.includes(source) ? source : 'tips_optin'
 
   if (!pool) {
     console.log('[user-data] No DB configured — skipping save')
@@ -478,8 +486,8 @@ app.post('/api/user-data', async (req, res) => {
     await pool.query(
       `INSERT INTO user_data_collection
          (record_id, session_id, timestamp_utc, first_name, last_name,
-          email, calculation_count, ip_address, user_agent)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+          email, calculation_count, ip_address, user_agent, source)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
        ON CONFLICT (record_id) DO NOTHING`,
       [
         record_id, session_id, timestamp_utc,
@@ -487,6 +495,7 @@ app.post('/api/user-data', async (req, res) => {
         normalizeEmail(email),
         count,
         storedIp, user_agent,
+        leadSource,
       ]
     )
     res.json({ success: true, record_id })

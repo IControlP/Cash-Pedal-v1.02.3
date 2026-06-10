@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useSubscription } from '../hooks/useSubscription'
-import { trackUpgradePromptSeen, trackUpgradeClicked } from '../utils/analytics'
+import { useBonusCredits, BONUS_CREDITS } from '../hooks/useBonusCredits'
+import { trackUpgradePromptSeen, trackUpgradeClicked, trackEmailUnlockClaimed } from '../utils/analytics'
 
 const FEATURES = [
   "See if that car costs $8k more than it looks over 5 years",
@@ -27,8 +28,14 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
   const [restoreErr,  setRestoreErr]  = useState('')
   const [checkoutErr, setCheckoutErr] = useState('')
   const [deviceLimit, setDeviceLimit] = useState(false)
+  const [bonusMode,   setBonusMode]   = useState(false)
+  const [firstName,   setFirstName]   = useState('')
+  const [lastName,    setLastName]    = useState('')
+  const [bonusErr,    setBonusErr]    = useState('')
+  const [bonusDone,   setBonusDone]   = useState(false)
 
   const { verifySubscription, verifyPromoCode } = useSubscription()
+  const { claimed, creditsLeft, claimBonus } = useBonusCredits()
 
   async function handleCheckout() {
     trackUpgradeClicked(feature, '$19')
@@ -69,6 +76,27 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
     } else {
       setRestoreErr('No active pass found for that email. Get access below.')
       setRestoreMode(false)
+    }
+  }
+
+  async function handleBonusClaim(e) {
+    e.preventDefault()
+    setBonusErr('')
+    if (!firstName.trim() || !lastName.trim()) { setBonusErr('Please enter your first and last name.'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setBonusErr('Please enter a valid email address.'); return }
+    setLoading(true)
+    const result = await claimBonus({ firstName, lastName, email })
+    setLoading(false)
+    if (result.success) {
+      trackEmailUnlockClaimed(feature)
+      setBonusDone(true)
+      setTimeout(() => onUnlocked('bonus'), 1600)
+    } else if (result.error === 'network') {
+      setBonusErr('Could not reach server. Please check your connection.')
+    } else if (result.error === 'already_claimed') {
+      setBonusErr('Free calculations were already claimed on this device.')
+    } else {
+      setBonusErr('Something went wrong. Please try again.')
     }
   }
 
@@ -122,7 +150,66 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
           </ul>
         </div>
 
-        {promoMode ? (
+        {bonusMode ? (
+          bonusDone ? (
+            <div className="text-center py-6 mb-4">
+              <div className="text-3xl mb-3">🎉</div>
+              <p className="text-white font-bold text-lg font-display">You've got {BONUS_CREDITS} free Pro calculations!</p>
+              <p className="text-[var(--text-muted)] text-sm mt-2">Unlocking now — we'll send car-buying tips to {email.trim().toLowerCase()}.</p>
+            </div>
+          ) : (
+            <form onSubmit={handleBonusClaim} className="flex flex-col gap-3 mb-4">
+              <p className="text-sm text-white font-semibold">Get {BONUS_CREDITS} free Pro calculations</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  className="input-field flex-1 min-w-0"
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={e => setFirstName(e.target.value)}
+                  maxLength={100}
+                  autoFocus
+                />
+                <input
+                  type="text"
+                  className="input-field flex-1 min-w-0"
+                  placeholder="Last name"
+                  value={lastName}
+                  onChange={e => setLastName(e.target.value)}
+                  maxLength={100}
+                />
+              </div>
+              <input
+                type="email"
+                className="input-field"
+                placeholder="your@email.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                maxLength={255}
+              />
+              {bonusErr && <p className="text-xs text-red-400">{bonusErr}</p>}
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                By claiming, you agree to receive occasional car-buying tips and Cash Pedal updates by email.
+                Unsubscribe any time. We never sell your data — see our{' '}
+                <a href="/privacy" className="text-[var(--accent)] underline hover:brightness-110">Privacy Policy</a>.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setBonusMode(false); setBonusErr('') }}
+                  className="flex-1 py-2 rounded-xl border border-[var(--border)] text-[var(--text-muted)] text-sm hover:border-[var(--accent)] transition-colors">
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 btn-primary disabled:opacity-40 text-sm">
+                  {loading ? 'Claiming…' : `Claim ${BONUS_CREDITS} Free Calculations`}
+                </button>
+              </div>
+            </form>
+          )
+        ) : promoMode ? (
           <form onSubmit={handlePromo} className="flex flex-col gap-3 mb-4">
             <p className="text-sm text-white font-semibold">Enter your promo code</p>
             <input
@@ -219,6 +306,25 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
             <p className="text-center text-xs text-[var(--text-muted)]">
               One payment. Access lasts 60 days. No subscription, no surprises.
             </p>
+            {!claimed ? (
+              <button
+                onClick={() => { setBonusMode(true); setBonusErr('') }}
+                className="w-full py-2.5 rounded-xl border text-sm font-semibold transition-colors hover:brightness-110"
+                style={{ borderColor: 'rgba(255,184,0,0.35)', color: 'var(--accent)', background: 'rgba(255,184,0,0.05)' }}>
+                🎁 Not ready to buy? Get {BONUS_CREDITS} free Pro calculations →
+              </button>
+            ) : creditsLeft > 0 ? (
+              <button
+                onClick={() => onUnlocked('bonus')}
+                className="w-full py-2.5 rounded-xl border text-sm font-semibold transition-colors hover:brightness-110"
+                style={{ borderColor: 'rgba(255,184,0,0.35)', color: 'var(--accent)', background: 'rgba(255,184,0,0.05)' }}>
+                Use 1 of your {creditsLeft} free Pro calculation{creditsLeft !== 1 ? 's' : ''} →
+              </button>
+            ) : (
+              <p className="text-center text-xs text-[var(--text-muted)]">
+                You've used all {BONUS_CREDITS} free Pro calculations from your email unlock.
+              </p>
+            )}
             <button
               onClick={() => { setRestoreMode(true); setRestoreErr('') }}
               className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors text-center">

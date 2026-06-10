@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PaywallModal from '../components/PaywallModal'
 import { useSubscription } from '../hooks/useSubscription'
+import { useBonusCredits } from '../hooks/useBonusCredits'
 
 function fmt(n) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
@@ -239,7 +240,11 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
 // ── Main page ─────────────────────────────────────────
 export default function MultiVehicleComparison() {
   const { isSubscribed } = useSubscription()
+  const { creditsLeft: bonusCreditsLeft, spendCredit } = useBonusCredits()
   const [showPaywall, setShowPaywall] = useState(false)
+  // Comparison unlocked for this session via an email-unlock bonus credit
+  const [bonusUnlocked, setBonusUnlocked] = useState(false)
+  const hasAccess = isSubscribed || bonusUnlocked
 
   // Ranking parameter toggles
   const [activeRankParams, setActiveRankParams] = useState({ totalOutOfPocket: true, mpgCombined: false, cargoSqFt: false, valueRetentionPct: false })
@@ -451,7 +456,10 @@ export default function MultiVehicleComparison() {
           feature="compare"
           usedCount={0}
           cancelPath="/compare"
-          onUnlocked={() => setShowPaywall(false)}
+          onUnlocked={(method) => {
+            setShowPaywall(false)
+            if (method === 'bonus' && spendCredit()) setBonusUnlocked(true)
+          }}
         />
       )}
       <Navbar />
@@ -472,7 +480,7 @@ export default function MultiVehicleComparison() {
         </div>
 
         {/* ── Pro gate banner ── */}
-        {!isSubscribed && (
+        {!hasAccess && (
           <div className="max-w-6xl mx-auto px-4 sm:px-6 mb-6">
             <div className="rounded-xl border p-6 text-center"
               style={{ borderColor: 'rgba(255,184,0,0.25)', background: 'rgba(255,184,0,0.04)' }}>
@@ -490,6 +498,15 @@ export default function MultiVehicleComparison() {
                 >
                   Unlock Multi-Vehicle Comparison →
                 </button>
+                {bonusCreditsLeft > 0 && (
+                  <button
+                    onClick={() => { if (spendCredit()) setBonusUnlocked(true) }}
+                    className="text-sm px-6 py-3 rounded-xl border font-semibold transition-colors hover:brightness-110"
+                    style={{ borderColor: 'rgba(255,184,0,0.35)', color: 'var(--accent)', background: 'rgba(255,184,0,0.05)' }}
+                  >
+                    Use 1 free Pro calculation ({bonusCreditsLeft} left)
+                  </button>
+                )}
                 <Link to="/tco" className="btn-ghost text-sm px-6 py-3 justify-center">
                   Back to TCO Calculator
                 </Link>
@@ -498,7 +515,7 @@ export default function MultiVehicleComparison() {
           </div>
         )}
 
-        {isSubscribed && <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        {hasAccess && <div className="max-w-6xl mx-auto px-4 sm:px-6">
 
           {/* Import banner */}
           {importBanner && (

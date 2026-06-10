@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PaywallModal from '../components/PaywallModal'
 import { useSubscription } from '../hooks/useSubscription'
+import { useBonusCredits } from '../hooks/useBonusCredits'
 import VEHICLES from '../data/vehicles.json'
 import {
   classifySegment, determineMaintTier,
@@ -162,7 +163,10 @@ function classifyCarCategory(make, type, basePrice) {
 
 export default function SalaryCalculator() {
   const { isSubscribed } = useSubscription()
+  const { spendCredit } = useBonusCredits()
   const [showPaywall, setShowPaywall] = useState(false)
+  // Pro mode unlocked for this session via an email-unlock bonus credit
+  const [bonusUnlocked, setBonusUnlocked] = useState(false)
 
   // Finance mode
   const [mode, setMode] = useState('buy')
@@ -445,7 +449,14 @@ export default function SalaryCalculator() {
           feature="salary"
           usedCount={0}
           cancelPath="/salary"
-          onUnlocked={() => { setShowPaywall(false); setProMode(true) }}
+          onUnlocked={(method) => {
+            setShowPaywall(false)
+            if (method === 'bonus') {
+              if (spendCredit()) { setBonusUnlocked(true); setProMode(true) }
+            } else {
+              setProMode(true)
+            }
+          }}
         />
       )}
       <Navbar />
@@ -476,7 +487,15 @@ export default function SalaryCalculator() {
                 {/* Pro toggle */}
                 <button
                   onClick={() => {
-                    if (!isSubscribed && !proMode) { setShowPaywall(true); return }
+                    if (!isSubscribed && !proMode && !bonusUnlocked) {
+                      // One bonus credit unlocks Pro mode for the rest of the session
+                      if (spendCredit()) {
+                        setBonusUnlocked(true)
+                      } else {
+                        setShowPaywall(true)
+                        return
+                      }
+                    }
                     setProMode(p => !p)
                   }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border"

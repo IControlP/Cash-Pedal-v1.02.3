@@ -49,6 +49,11 @@ export function trackUpgradeClicked(featureName = '', priceShown = '') {
   trackEvent('upgrade_clicked', { feature_name: featureName, price_shown: priceShown })
 }
 
+// Email funnel — lead traded name + email for free Pro calculations
+export function trackEmailUnlockClaimed(featureName = '') {
+  trackEvent('email_unlock_claimed', { feature_name: featureName })
+}
+
 // Revenue event — Stripe purchase confirmed
 export function trackProPurchaseComplete(planType = 'one_time', pricePaid = 19) {
   trackEvent('pro_purchase_complete', { plan_type: planType, price_paid: pricePaid })

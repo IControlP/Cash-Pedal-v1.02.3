@@ -726,9 +726,9 @@ function RepairRiskScore({ isPro, make, model, isEV, maintBrandMult, determineTi
             🔒
           </div>
           <div>
-            <p className="font-display font-bold text-white text-sm mb-1">Repair & Reliability Risk Score</p>
+            <p className="font-display font-bold text-white text-sm mb-1">Maintenance Cost Index</p>
             <p className="text-[var(--text-muted)] text-xs max-w-xs leading-relaxed mx-auto">
-              Brand-specific reliability rating with repair cost multiplier and ownership risk notes.
+              Brand-specific maintenance cost rating — how expensive this make is to service relative to the industry average.
             </p>
           </div>
           <a href="/subscribe" className="text-xs font-bold px-4 py-2 rounded-lg"
@@ -746,18 +746,18 @@ function RepairRiskScore({ isPro, make, model, isEV, maintBrandMult, determineTi
   const tier  = determineTier(make)
   const raw   = Math.round(100 - ((mult - 0.65) / (1.85 - 0.65)) * 75)
   const score = Math.max(20, Math.min(100, isEV ? Math.min(raw + 8, 100) : raw))
-  const label = score >= 80 ? 'Low Risk' : score >= 60 ? 'Average Risk' : 'Higher Risk'
+  const label = score >= 80 ? 'Low Cost' : score >= 60 ? 'Average Cost' : 'High Cost'
   const color = score >= 80 ? '#4ade80' : score >= 60 ? '#FFB800' : '#f87171'
 
   const notes = [
     isEV
-      ? 'Electric drivetrain: no oil changes, fewer brake services — but battery replacement is a major future cost risk.'
+      ? 'Electric drivetrain: no oil changes, fewer brake services (regen braking). Budget for battery replacement after the 8-year/100k-mile warranty expires.'
       : tier === 'luxury'
-        ? `Luxury-brand parts and labor run ${Math.round((mult - 1) * 100)}% above industry average. Budget for higher repair bills.`
+        ? `Luxury-brand parts and labor run ${Math.round((mult - 1) * 100)}% above average — oil changes, filters, and scheduled services cost significantly more.`
         : tier === 'premium'
-          ? `Premium-brand maintenance runs ~${Math.round((mult - 1) * 100)}% above average rates.`
-          : `${make} maintenance costs are ${mult <= 0.95 ? 'below' : mult <= 1.05 ? 'near' : 'above'}-average for its segment.`,
-    `Repair cost multiplier: ${mult.toFixed(2)}× industry baseline.`,
+          ? `Premium-brand service runs ~${Math.round((mult - 1) * 100)}% above average. OEM parts and specialized labor add up over time.`
+          : `${make} maintenance costs are ${mult <= 0.95 ? 'below' : mult <= 1.05 ? 'near' : 'above'}-average. ${mult <= 0.95 ? 'Parts and labor tend to be affordable.' : mult <= 1.05 ? 'Parts and labor costs are typical for its class.' : 'Factor in above-average service costs.'}`,
+    `Maintenance cost multiplier: ${mult.toFixed(2)}× industry baseline. This reflects service cost, not breakdown frequency.`,
   ]
 
   return (
@@ -765,7 +765,7 @@ function RepairRiskScore({ isPro, make, model, isEV, maintBrandMult, determineTi
       style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
-          Repair & Reliability Risk
+          Maintenance Cost Index
         </p>
         <ProBadge />
       </div>
@@ -786,7 +786,7 @@ function RepairRiskScore({ isPro, make, model, isEV, maintBrandMult, determineTi
             <div className="h-full rounded-full transition-all duration-700"
               style={{ width: `${score}%`, background: color }} />
           </div>
-          <p className="text-[10px] text-[var(--text-muted)]">0–100 scale · higher = lower repair risk</p>
+          <p className="text-[10px] text-[var(--text-muted)]">0–100 · higher = lower service cost vs. average</p>
         </div>
       </div>
       <div className="flex flex-col gap-1.5 pt-1">
@@ -800,7 +800,8 @@ function RepairRiskScore({ isPro, make, model, isEV, maintBrandMult, determineTi
 
 // ── Cost Alerts ───────────────────────────────────────
 function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenance,
-  maintBrandMult, classifySegment, formatCurrency, loanAmount, price, rate, financeMode }) {
+  maintBrandMult, classifySegment, formatCurrency, loanAmount, price, rate, financeMode,
+  vehicleYear, ownershipYears }) {
 
   const ProBadge = () => (
     <span className="text-[10px] font-bold px-2 py-0.5 rounded"
@@ -866,6 +867,16 @@ function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenan
         type: 'good',
         text: 'EVs eliminate oil changes and reduce brake wear — typical maintenance savings of $500–$900/yr vs. a comparable gas vehicle.',
       })
+      // Warn when ownership period extends past the 8-year battery warranty
+      const currentYear = new Date().getFullYear()
+      const vehicleAge  = vehicleYear ? Math.max(0, currentYear - parseInt(vehicleYear)) : 0
+      const ageAtEnd    = vehicleAge + (ownershipYears ?? 0)
+      if (ageAtEnd > 8) {
+        alerts.push({
+          type: 'warning',
+          text: `Battery warranty (8 yr / 100k mi) expires during or before this ownership period. A battery replacement can cost $8,000–$15,000 and is not included in the maintenance estimate above.`,
+        })
+      }
     }
     if (alerts.length === 0) {
       alerts.push({ type: 'good', text: `${make}'s costs are in line with segment averages. No major red flags detected for this vehicle.` })
@@ -2441,6 +2452,12 @@ export default function TCOCalculator() {
                           </div>
                           <span className="font-display font-semibold text-white text-sm">{formatCurrency(value)}/yr</span>
                         </div>
+                        {key === 'ins' && (
+                          <div className="px-4 pb-3 text-[11px] text-[var(--text-muted)] leading-relaxed"
+                            style={{ borderTop: '1px solid var(--border)', paddingTop: '0.5rem' }}>
+                            Estimate based on 2025 Bankrate/Insurify benchmark rates. Actual premiums vary by driving history, coverage level, and market conditions — get a quote for your exact rate.
+                          </div>
+                        )}
                         {key === 'maint' && detailedMode && (
                           <MaintenanceBreakdown
                             isEV={effIsEV}
@@ -3160,6 +3177,8 @@ export default function TCOCalculator() {
                 price={price}
                 rate={rate}
                 financeMode={financeMode}
+                vehicleYear={selYear}
+                ownershipYears={ownershipYears}
               />
 
               {/* ── PDF Export (Pro) ── */}

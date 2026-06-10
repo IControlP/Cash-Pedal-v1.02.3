@@ -1002,7 +1002,12 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
   const unscheduledBase = isEV
     ? Math.max(0, (ageForReserve - 1) * 110)
     : Math.max(0, (ageForReserve - 2) * 170)
-  const unscheduledCap = isEV ? 900 : tier === 'luxury' ? 2600 : tier === 'premium' ? 2000 : 1500
+  // EV battery warranty is typically 8 years / 100k miles. Post-warranty, battery
+  // degradation and replacement risk (~$10k cost, rising probability) require a larger
+  // reserve. Pre-warranty: $900 cap. Years 8–11: $2,200. Year 12+: $3,500.
+  const evPostWarrantyYrs = isEV ? Math.max(0, ageForReserve - 8) : 0
+  const evCap = evPostWarrantyYrs > 3 ? 3500 : evPostWarrantyYrs > 0 ? 2200 : 900
+  const unscheduledCap = isEV ? evCap : tier === 'luxury' ? 2600 : tier === 'premium' ? 2000 : 1500
   const unscheduled = Math.round(Math.min(unscheduledCap, unscheduledBase * brand) * segMult / 50) * 50
   if (unscheduled > 0) {
     svc.push({ name: 'Unscheduled repair reserve', detail: 'age-based estimate', annual: unscheduled })
@@ -1157,7 +1162,11 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
     const unscheduledBase = isEV
       ? Math.max(0, (vehicleAgeThisYear - 1) * 110)
       : Math.max(0, (vehicleAgeThisYear - 2) * 170)
-    const unscheduledCap = isEV ? 900 : tier === 'luxury' ? 2600 : tier === 'premium' ? 2000 : 1500
+    // EV battery warranty expires at ~8 years. Post-warranty, battery degradation
+    // and replacement risk require a higher reserve ceiling.
+    const evPostWarrantyYrsThisYear = isEV ? Math.max(0, vehicleAgeThisYear - 8) : 0
+    const evCapThisYear = evPostWarrantyYrsThisYear > 3 ? 3500 : evPostWarrantyYrsThisYear > 0 ? 2200 : 900
+    const unscheduledCap = isEV ? evCapThisYear : tier === 'luxury' ? 2600 : tier === 'premium' ? 2000 : 1500
     const unscheduled = Math.round(Math.min(unscheduledCap, unscheduledBase * brand) * segMult / 50) * 50
     if (unscheduled > 0) {
       services.push({ name: 'Unscheduled repair reserve', occurrences: 1, costPerOcc: unscheduled, total: unscheduled })

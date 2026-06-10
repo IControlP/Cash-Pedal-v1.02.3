@@ -25,10 +25,12 @@ function monthlyPayment(principal, annualRate, months) {
 
 // Estimated monthly lease payment using standard dealer math
 // residual ≈ 55% (36mo), 60% (24mo), 50% (48mo); money factor ≈ 0.00250 (~6% APR)
+// Acquisition fee (~$895 typical) is rolled into cap cost per standard dealer practice.
 function estimateLeaseMonthly(msrp, capReduction, termMonths) {
   const residualPct = termMonths <= 24 ? 0.60 : termMonths <= 36 ? 0.55 : 0.50
   const residual = msrp * residualPct
-  const capCost = msrp - capReduction
+  const acquisitionFee = 895
+  const capCost = msrp - capReduction + acquisitionFee
   const depreciation = (capCost - residual) / termMonths
   const financeCharge = (capCost + residual) * 0.00250
   return Math.max(0, Math.round(depreciation + financeCharge))
@@ -775,6 +777,11 @@ export default function SalaryCalculator() {
                     <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
                       <span>$0</span><span>$3,000/mo</span>
                     </div>
+                    {proMode && (
+                      <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                        Estimate assumes ~6% APR money factor, typical residual, and $895 acquisition fee rolled in. Enter your actual quote to override.
+                      </p>
+                    )}
                   </div>
 
                   {/* Lease term */}
@@ -1135,6 +1142,13 @@ export default function SalaryCalculator() {
                       Assumes {downPct}% down · {loanTerm}-month loan · {rate}% APR · includes estimated insurance, fuel, maintenance &amp; registration.
                       {userState ? ` ${userState} rates applied.` : ' National average rates.'}
                     </p>
+                    {affordableResults && Number(knownSalary) > 0 && (
+                      <div className="mt-2 p-2.5 rounded-lg border border-yellow-500/30 bg-yellow-500/5">
+                        <p className="text-[10px] text-yellow-400 leading-relaxed">
+                          <span className="font-bold">Safety buffer:</span> The Conservative price assumes your vehicle takes exactly 10% of gross income — no cushion for repairs, insurance hikes, or income changes. Aim below the Conservative line for a real margin of safety.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <p className="text-xs text-[var(--text-muted)] italic">

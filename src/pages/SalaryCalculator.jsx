@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PaywallModal from '../components/PaywallModal'
+import ProUpsell from '../components/ProUpsell'
 import { useSubscription } from '../hooks/useSubscription'
 import { useBonusCredits } from '../hooks/useBonusCredits'
 import { trackUsage } from '../utils/usage'
@@ -476,8 +477,8 @@ export default function SalaryCalculator() {
           </h1>
           <p className="anim-2 text-[var(--text-muted)] mt-2 text-base max-w-xl">
             {mode === 'lease'
-              ? 'Enter your lease payment and see the gross income needed to keep vehicle costs under 10–20% of your salary.'
-              : 'The 20/4/10 rule: 20% down, max 4-year loan, total vehicle costs ≤ 10% of gross income. See the salary you need.'}
+              ? 'A lease that fits on paper can still squeeze your budget. Enter your payment and see the gross income that keeps total vehicle costs under 10–20% of your salary — before you commit.'
+              : "Don't let a car payment quietly eat your future. Using the 20/4/10 rule — 20% down, max 4-year loan, total vehicle costs ≤ 10% of gross income — see the salary that makes this car comfortable, not crushing."}
           </p>
         </div>
 
@@ -1329,6 +1330,13 @@ export default function SalaryCalculator() {
               </div>
             </div>
           )}
+
+          <ProUpsell
+            headline="Know your number. Now find the car that fits it."
+            body="Pro mode localizes every estimate to your state and exact vehicle — then your $19 pass
+              covers the rest of the journey: detailed cost breakdowns, side-by-side comparisons, and
+              used-car checklists, unlimited for 60 days."
+          />
         </div>
       </main>
       <Footer />

@@ -476,10 +476,12 @@ export default function MultiVehicleComparison() {
             Multi-Vehicle Comparison
           </div>
           <h1 className="anim-1 font-display font-extrabold text-white text-3xl sm:text-4xl leading-tight mt-1">
-            Compare up to 5 vehicles
+            Which car is actually the best deal?
           </h1>
           <p className="anim-2 text-[var(--text-muted)] mt-2 text-base max-w-xl">
-            Enter details manually or import results directly from the TCO Calculator — updates live.
+            Stack up to 5 vehicles side by side — payments, interest, fuel, insurance, maintenance —
+            and see which one leaves the most money in your pocket. Import straight from the
+            TCO Calculator; everything updates live.
           </p>
         </div>
 
@@ -490,10 +492,12 @@ export default function MultiVehicleComparison() {
               style={{ borderColor: 'rgba(255,184,0,0.25)', background: 'rgba(255,184,0,0.04)' }}>
               <div className="text-3xl mb-3">⚖️</div>
               <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)] mb-2">Pro Feature</p>
-              <h2 className="font-display font-bold text-white text-xl mb-2">Multi-vehicle comparison is a Pro feature</h2>
+              <h2 className="font-display font-bold text-white text-xl mb-2">Put your finalists head to head</h2>
               <p className="text-[var(--text-muted)] text-sm mb-5 max-w-md mx-auto leading-relaxed">
-                Compare up to 5 vehicles side by side — payments, interest, insurance, fuel, maintenance, and total ownership cost.
-                Free users get a single-vehicle TCO estimate.
+                Two similar cars can be thousands of dollars apart over five years. Pro compares up to
+                5 vehicles side by side — payments, interest, insurance, fuel, maintenance, and total
+                ownership cost — so you know the real winner before you negotiate. The single-vehicle
+                TCO calculator is always free.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <button

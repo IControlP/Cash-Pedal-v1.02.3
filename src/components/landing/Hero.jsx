@@ -36,6 +36,14 @@ export default function Hero() {
               <span>·</span>
               <span>Pays for itself in minutes</span>
             </div>
+            <p className="anim-3 mt-4 text-sm">
+              <Link
+                to="/tco"
+                className="text-[var(--text-muted)] underline underline-offset-4 hover:text-[var(--accent)] transition-colors"
+              >
+                Not ready to buy? Run a free cost estimate first →
+              </Link>
+            </p>
           </div>
 
           {/* Annotated hero car — hidden below lg where grid collapses */}

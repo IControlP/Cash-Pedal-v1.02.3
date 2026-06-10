@@ -504,7 +504,8 @@ export default function WheelZard() {
                     Wheel-Zard 🤖
                   </h1>
                   <p className="anim-2 text-[var(--text-muted)] mt-1 text-base">
-                    Ask anything about cars, costs, or buying decisions.
+                    Your co-pilot for the car search — ask anything about cars, costs, negotiation,
+                    or whether a deal is actually good.
                   </p>
                 </div>
                 {messages.length > 1 && (
@@ -684,11 +685,11 @@ export default function WheelZard() {
                     Cash Pedal Pro
                   </p>
                   <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-3">
-                    Unlock unlimited detailed TCO analyses with make/model/trim-level breakdowns, unlimited used-car
-                    checklists, and multi-vehicle comparisons.
+                    One $19 payment covers your whole car search — 60 days of unlimited Pro access.
+                    No subscription, no card on file after checkout.
                   </p>
                   <ul className="text-xs text-[var(--text-muted)] space-y-1 mb-4">
-                    {['Unlimited detailed TCO analyses', 'Unlimited checklists', 'Multi-vehicle comparison export'].map(f => (
+                    {['Unlimited detailed cost breakdowns', 'Compare up to 5 vehicles side by side', 'Unlimited used-car checklists'].map(f => (
                       <li key={f} className="flex items-start gap-1.5">
                         <span style={{ color: 'var(--accent)' }}>✓</span>
                         {f}
@@ -696,7 +697,7 @@ export default function WheelZard() {
                     ))}
                   </ul>
                   <Link to="/subscribe" className="btn-primary text-xs py-2 block text-center">
-                    Try Pro — $10/month →
+                    Get the 60-day pass — $19 →
                   </Link>
                 </div>
               )}

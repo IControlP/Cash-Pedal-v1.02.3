@@ -314,16 +314,16 @@ export const SEGMENT_MAINT_AVG = {
 // with the SEGMENT_MAINT_AVG table above. Luxury/luxury_suv are calibrated on the
 // luxury TIER (their real-world brands) to avoid stacking brand premium twice.
 export const SEGMENT_MAINT_MULT = {
-  economy:    0.55,
-  compact:    0.63,
-  sedan:      0.73,
-  suv:        0.80,
-  truck:      0.82,
-  sports:     0.88,
-  luxury:     0.46,
-  luxury_suv: 0.50,
-  electric:   0.62,
-  hybrid:     0.62,
+  economy:    0.50,
+  compact:    0.54,
+  sedan:      0.63,
+  suv:        0.72,
+  truck:      0.73,
+  sports:     0.79,
+  luxury:     0.39,
+  luxury_suv: 0.42,
+  electric:   0.55,
+  hybrid:     0.54,
 }
 
 export const MAINT_LUXURY_MAKES = new Set(['BMW','Mercedes-Benz','Audi','Porsche','Lexus','Land Rover',
@@ -880,6 +880,56 @@ export function resolveCategoryWear(wearProfile, state) {
   return { tire: cat('tire'), brake: cat('brake'), susp: cat('susp'), climate: cat('climate'), battery: cat('battery'), severity, profile }
 }
 
+// ── High-mileage wear & failure catalog ───────────────────────────────────
+// The recurring services above (oil, tires, brakes, fluids, plugs) dominate a
+// car's first ~100k miles. Past that — and these forecasts run up to 10 years,
+// so a vehicle bought at 150k is projected to 280k — the cost is increasingly
+// driven by major component wear: cooling system, charging/starting, fuel
+// delivery, emissions, suspension/steering joints, and drivetrain mounts.
+// Previously these were folded into a single "unscheduled repair reserve"; now
+// they're itemized so a high-mileage forecast shows the real failure cadence.
+//
+// Each entry: [name, partsCost, laborHrs, intervalMiles, wearCategory, powertrain]
+//   wearCategory — terrain factor applied to the interval (null = not terrain-
+//     driven). 'susp' for chassis joints, 'climate' for cooling/AC, 'brake' as
+//     the salt-corrosion proxy for exhaust.
+//   powertrain — 'ice' (gas/hybrid; skipped for EVs), 'all', or 'ev' (EV only).
+// Intervals are population-blended midpoints from RepairPal/CR component-failure
+// data and OEM wear-item guidance; most sit at 100k+ so they barely touch the
+// 0–130k new-car window (preserving segment calibration) but accumulate heavily
+// over a high-mileage forecast. occCost/segMult/brand/tier scaling still apply.
+export const HIGH_MILEAGE_SERVICES = [
+  // Engine cooling, charging, fuel, emissions (gas & hybrid)
+  ['Water pump & thermostat',        180, 3.0, 105000, 'climate', 'ice'],
+  ['Radiator & cooling hoses',       320, 2.0, 135000, 'climate', 'ice'],
+  ['Alternator',                     300, 1.5, 145000, null,      'ice'],
+  ['Starter motor',                  250, 1.5, 150000, null,      'ice'],
+  ['Ignition coils',                 240, 1.2, 120000, null,      'ice'],
+  ['Fuel pump & filter',             400, 2.0, 140000, null,      'ice'],
+  ['Catalytic converter',            900, 1.5, 165000, null,      'ice'],
+  ['Drive belt tensioner & pulleys', 150, 1.2, 100000, null,      'ice'],
+  ['Valve-cover gasket & seals',     140, 2.5, 125000, null,      'ice'],
+  ['Exhaust system & muffler',       300, 1.5, 140000, 'brake',   'ice'],
+  // Chassis, steering, drivetrain (all powertrains)
+  ['Engine/trans mounts',            320, 2.5, 130000, null,      'all'],
+  ['Control arms, ball joints & bushings', 420, 3.5, 115000, 'susp', 'all'],
+  ['Wheel bearings / hubs',          320, 2.0, 110000, 'susp',    'all'],
+  ['CV axles & boots',               360, 2.0, 115000, 'susp',    'all'],
+  ['Steering tie rods & rack service', 240, 1.5, 120000, 'susp',  'all'],
+  ['Sway-bar links & bushings',      130, 1.0,  90000, 'susp',    'all'],
+  ['A/C compressor',                 520, 2.0, 150000, 'climate', 'all'],
+  // EV-specific
+  ['EV coolant pump & lines',        220, 1.5, 130000, 'climate', 'ev'],
+]
+
+// Returns true if a high-mileage item applies to this powertrain.
+// Hybrids run the engine, so 'ice' items apply to them (isEV is false).
+function hmServiceApplies(powertrain, isEV) {
+  if (powertrain === 'all') return true
+  if (powertrain === 'ev')  return isEV
+  return !isEV // 'ice'
+}
+
 export function generateMaintenanceServices(isEV, annualMileage, segment, make = '', state = null, vehicleAgeYears = 0, laborRateOverride = null, wearProfile = null) {
   const tier      = determineMaintTier(make)
   const c         = MAINT_TIER_COSTS[tier]
@@ -996,16 +1046,27 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
     svc.push({ name: 'Transfer case fluid', detail: 'every 45,000 mi', annual: amortize(80, 0.5, 45000) })
   }
 
-  // Unscheduled repair reserve — age-weighted budget for non-scheduled failures.
-  // Scales with vehicle age, brand reliability (via brand mult), and powertrain complexity.
+  // High-mileage major-component wear (cooling, charging, fuel, emissions,
+  // chassis joints, drivetrain mounts). Mostly 100k+ intervals — negligible
+  // early, but the dominant cost driver on a 150k–280k forecast.
+  for (const [name, parts, labor, interval, wcat, pt] of HIGH_MILEAGE_SERVICES) {
+    if (!hmServiceApplies(pt, isEV)) continue
+    const iv = wcat ? Math.round(interval / wear[wcat]) : interval
+    svc.push({ name, detail: `~every ${iv.toLocaleString()} mi`, annual: amortize(parts, labor, iv) })
+  }
+
+  // Unscheduled repair reserve — now a narrower budget for the *random* failures
+  // not itemized above (sensors, electrical gremlins, small leaks, HVAC actuators,
+  // window regulators). Big-ticket wear is captured explicitly, so this is scaled
+  // down from the prior all-in reserve. Still age- and reliability-weighted.
   const ageForReserve = Math.max(0, vehicleAgeYears)
   const unscheduledBase = isEV
-    ? Math.max(0, (ageForReserve - 1) * 110)
-    : Math.max(0, (ageForReserve - 2) * 170)
-  const unscheduledCap = isEV ? 900 : tier === 'luxury' ? 2600 : tier === 'premium' ? 2000 : 1500
+    ? Math.max(0, (ageForReserve - 1) * 70)
+    : Math.max(0, (ageForReserve - 2) * 110)
+  const unscheduledCap = isEV ? 550 : tier === 'luxury' ? 1600 : tier === 'premium' ? 1200 : 900
   const unscheduled = Math.round(Math.min(unscheduledCap, unscheduledBase * brand) * segMult / 50) * 50
   if (unscheduled > 0) {
-    svc.push({ name: 'Unscheduled repair reserve', detail: 'age-based estimate', annual: unscheduled })
+    svc.push({ name: 'Unscheduled repair reserve', detail: 'random non-scheduled failures', annual: unscheduled })
   }
 
   return svc
@@ -1140,6 +1201,14 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
     defs.push({ name: 'Transfer case fluid', costPerOcc: occCost(80, 0.5), intervalMiles: 45000 })
   }
 
+  // High-mileage major-component wear (see HIGH_MILEAGE_SERVICES). Mostly 100k+
+  // intervals — the dominant cost driver once a forecast runs past ~120k miles.
+  for (const [name, parts, labor, interval, wcat, pt] of HIGH_MILEAGE_SERVICES) {
+    if (!hmServiceApplies(pt, isEV)) continue
+    const iv = wcat ? Math.round(interval / wear[wcat]) : interval
+    defs.push({ name, costPerOcc: occCost(parts, labor), intervalMiles: iv })
+  }
+
   return Array.from({ length: years }, (_, i) => {
     const yr = i + 1
 
@@ -1151,13 +1220,14 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
       })
       .filter(s => s.occurrences > 0)
 
-    // Unscheduled repair reserve — grows with vehicle age, weighted by brand reliability.
-    // Added as a separate budget line so it's visible in the forecast breakdown.
+    // Unscheduled repair reserve — narrower budget for *random* failures not
+    // itemized above (sensors, electrical, small leaks). Scaled down now that
+    // big-ticket wear is explicit. Grows with vehicle age and brand reliability.
     const vehicleAgeThisYear = vehicleAgeAtStart + yr
     const unscheduledBase = isEV
-      ? Math.max(0, (vehicleAgeThisYear - 1) * 110)
-      : Math.max(0, (vehicleAgeThisYear - 2) * 170)
-    const unscheduledCap = isEV ? 900 : tier === 'luxury' ? 2600 : tier === 'premium' ? 2000 : 1500
+      ? Math.max(0, (vehicleAgeThisYear - 1) * 70)
+      : Math.max(0, (vehicleAgeThisYear - 2) * 110)
+    const unscheduledCap = isEV ? 550 : tier === 'luxury' ? 1600 : tier === 'premium' ? 1200 : 900
     const unscheduled = Math.round(Math.min(unscheduledCap, unscheduledBase * brand) * segMult / 50) * 50
     if (unscheduled > 0) {
       services.push({ name: 'Unscheduled repair reserve', occurrences: 1, costPerOcc: unscheduled, total: unscheduled })

@@ -114,8 +114,10 @@ export function classifySegment(make, model) {
   if (evKw.some(k => m.includes(k))) return 'electric'
   if (['prius','insight','sienna'].some(k => m.includes(k))) return 'hybrid'
   if (m.includes('hybrid') || m.includes('phev') || m.includes('4xe') || m.includes('plug-in')) return 'hybrid'
-  const sportsKw = ['corvette','mustang','camaro','challenger','charger','911','cayman','boxster','z4','supra','miata','mx-5','gt-r','370z','400z','brz','gr86','nsx']
+  const sportsKw = ['corvette','mustang','camaro','challenger','charger','911','cayman','boxster','z4','supra','miata','mx-5','gt-r','370z','400z','brz','gr86','nsx','emira','gr supra']
   if (sportsKw.some(k => m.includes(k))) return 'sports'
+  // Nissan Z (current gen) is just "Z" — match exactly so it isn't read as a sedan
+  if (mk === 'nissan' && m.trim() === 'z') return 'sports'
   const luxBrands = ['bmw','mercedes-benz','audi','lexus','acura','infiniti','cadillac','lincoln','jaguar','land rover','porsche','maserati','alfa romeo','genesis','volvo']
   if (luxBrands.includes(mk)) {
     const luxSuvKw = ['escalade','xt4','xt5','xt6','x1','x2','x3','x4','x5','x6','x7','gla','glb','glc','gle','gls','g-class','q3','q4','q5','q7','q8','ux','nx','rx','gx','lx','rdx','mdx','qx50','qx55','qx60','qx80','navigator','nautilus','aviator','corsair','cayenne','macan','e-pace','f-pace','range rover','discovery','defender','evoque','gv60','gv70','gv80','levante','grecale','xc40','xc60','xc90','v90 cross country']
@@ -301,6 +303,29 @@ export const SEGMENT_MAINT_AVG = {
   hybrid:     900,
 }
 
+// Per-segment maintenance scalar. The brand-derived tier (parts_mult/labor_mult)
+// captures the *premium* of a make; this scalar captures the *physical* reality
+// that a vehicle's size and complexity drive service cost independently of brand:
+// economy cars use small/cheap tires, brakes, and fluids; trucks/SUVs use large
+// ones plus driveline services; performance cars burn through tires and brakes.
+// Calibrated (with the harness in scripts/verify-tco.mjs) so a representative
+// vehicle in each segment lands within ±10% of AAA/Consumer Reports/RepairPal
+// per-segment annual maintenance benchmarks — and so the line-item engine agrees
+// with the SEGMENT_MAINT_AVG table above. Luxury/luxury_suv are calibrated on the
+// luxury TIER (their real-world brands) to avoid stacking brand premium twice.
+export const SEGMENT_MAINT_MULT = {
+  economy:    0.55,
+  compact:    0.63,
+  sedan:      0.73,
+  suv:        0.80,
+  truck:      0.82,
+  sports:     0.88,
+  luxury:     0.46,
+  luxury_suv: 0.50,
+  electric:   0.62,
+  hybrid:     0.62,
+}
+
 export const MAINT_LUXURY_MAKES = new Set(['BMW','Mercedes-Benz','Audi','Porsche','Lexus','Land Rover',
   'Jaguar','Maserati','Alfa Romeo','Genesis','Lucid','Rivian'])
 export const MAINT_PREMIUM_MAKES = new Set(['Acura','Infiniti','Volvo','Lincoln','Cadillac','Tesla','Buick','Mini','Polestar'])
@@ -318,10 +343,10 @@ export function determineMaintTier(make) {
 // tire_cost: full set of 4 tires typical for segment.
 // fuel_injector_cost: cleaning service parts cost.
 export const MAINT_TIER_COSTS = {
-  luxury:   { oil_type:'Full Synthetic',    oil_change_cost:175, oil_interval:10000, filter_cost:150, tire_rotation_cost:40, brake_inspection_cost:75,  brake_fluid_flush_cost:200, trans_fluid_cost:400, coolant_flush_cost:250, spark_plug_cost:400, wiper_cost:80,  alignment_cost:200, shock_cost:600, tire_cost:1000, fuel_injector_cost:140, parts_mult:1.5, labor_mult:1.4 },
-  premium:  { oil_type:'Full Synthetic',    oil_change_cost:120, oil_interval:7500,  filter_cost:100, tire_rotation_cost:35, brake_inspection_cost:60,  brake_fluid_flush_cost:150, trans_fluid_cost:300, coolant_flush_cost:180, spark_plug_cost:280, wiper_cost:60,  alignment_cost:150, shock_cost:420, tire_cost:780,  fuel_injector_cost:110, parts_mult:1.2, labor_mult:1.2 },
-  standard: { oil_type:'Synthetic Blend',   oil_change_cost:85,  oil_interval:7500,  filter_cost:70,  tire_rotation_cost:25, brake_inspection_cost:50,  brake_fluid_flush_cost:120, trans_fluid_cost:200, coolant_flush_cost:150, spark_plug_cost:200, wiper_cost:45,  alignment_cost:120, shock_cost:350, tire_cost:600,  fuel_injector_cost:80,  parts_mult:1.0, labor_mult:1.0 },
-  economy:  { oil_type:'Conventional',      oil_change_cost:65,  oil_interval:5000,  filter_cost:50,  tire_rotation_cost:20, brake_inspection_cost:40,  brake_fluid_flush_cost:100, trans_fluid_cost:180, coolant_flush_cost:120, spark_plug_cost:150, wiper_cost:35,  alignment_cost:100, shock_cost:270, tire_cost:450,  fuel_injector_cost:60,  parts_mult:0.85,labor_mult:0.9 },
+  luxury:   { oil_type:'Full Synthetic',    oil_change_cost:175, oil_interval:10000, filter_cost:150, tire_rotation_cost:40, brake_inspection_cost:75,  brake_fluid_flush_cost:200, trans_fluid_cost:400, coolant_flush_cost:250, spark_plug_cost:400, wiper_cost:80,  alignment_cost:200, shock_cost:600, tire_cost:1000, fuel_injector_cost:140, timing_belt_cost:600, parts_mult:1.5, labor_mult:1.4 },
+  premium:  { oil_type:'Full Synthetic',    oil_change_cost:120, oil_interval:7500,  filter_cost:100, tire_rotation_cost:35, brake_inspection_cost:60,  brake_fluid_flush_cost:150, trans_fluid_cost:300, coolant_flush_cost:180, spark_plug_cost:280, wiper_cost:60,  alignment_cost:150, shock_cost:420, tire_cost:780,  fuel_injector_cost:110, timing_belt_cost:450, parts_mult:1.2, labor_mult:1.2 },
+  standard: { oil_type:'Synthetic Blend',   oil_change_cost:85,  oil_interval:7500,  filter_cost:70,  tire_rotation_cost:25, brake_inspection_cost:50,  brake_fluid_flush_cost:120, trans_fluid_cost:200, coolant_flush_cost:150, spark_plug_cost:200, wiper_cost:45,  alignment_cost:120, shock_cost:350, tire_cost:600,  fuel_injector_cost:80,  timing_belt_cost:350, parts_mult:1.0, labor_mult:1.0 },
+  economy:  { oil_type:'Conventional',      oil_change_cost:65,  oil_interval:5000,  filter_cost:50,  tire_rotation_cost:20, brake_inspection_cost:40,  brake_fluid_flush_cost:100, trans_fluid_cost:180, coolant_flush_cost:120, spark_plug_cost:150, wiper_cost:35,  alignment_cost:100, shock_cost:270, tire_cost:450,  fuel_injector_cost:60,  timing_belt_cost:280, parts_mult:0.85,labor_mult:0.9 },
 }
 
 // National average shop rate ($/hr) — used as fallback when no state is provided.
@@ -726,38 +751,173 @@ export const STATE_ROAD_WEAR_FACTOR = {
   CA: 0.92, HI: 0.88, ID: 0.98,
 }
 
-export function generateMaintenanceServices(isEV, annualMileage, segment, make = '', state = null, vehicleAgeYears = 0, laborRateOverride = null) {
+// ── Terrain-based wear (ZIP granularity) ──────────────────────────────────
+// STATE_ROAD_WEAR_FACTOR is a coarse statewide scalar. Real degradation varies
+// enormously *within* a state: Colorado's Front Range plains are mild while its
+// mountain passes shred brakes; Phoenix bakes A/C and tires while northern AZ
+// is temperate. These ZIP terrain zones refine the statewide value to a specific
+// region AND tag it with a terrain "profile" so the harshness lands on the
+// service categories it actually affects, rather than uniformly.
+//
+// A profile redistributes a region's overall severity across five wear
+// categories via weights (1.0 = full pass-through, >1 amplifies, <1 damps):
+//   tire    — rotations, tire replacement
+//   brake   — brake fluid, pads & rotors
+//   susp    — shocks/struts, wheel alignment
+//   climate — A/C system (heat/humidity load)
+//   battery — 12V battery (thermal life; heat is the dominant killer)
+// Effective category wear = 1 + (severity − 1) × weight. Severity <1 (mild/dry
+// regions) reduces intervals' wear uniformly under the 'mild' profile, exactly
+// preserving prior statewide behavior when no ZIP zone matches.
+//
+// Weights are calibrated to documented industry degradation, not guesses:
+//   • Severe-service schedules (OEM owner's manuals) class mountainous terrain,
+//     dust, extreme heat/cold and salt as "severe," shortening the affected
+//     fluid/brake/filter intervals by ~25–40% — sets the brake/fluid weights.
+//   • AAA pothole research (2022): $26.5B/yr in repairs; "tires, wheels and
+//     suspension get the brunt," plus alignment — sets pothole tire/susp weights.
+//   • AAA road-salt data: salt drives brake/rotor and suspension corrosion —
+//     sets the salt brake/susp weights.
+//   • Tire-industry thermo-oxidative dry-rot: above ~90°F rubber degrades up to
+//     ~30% faster — caps the desert tire weight so the worst zone nears 1.30×.
+//   • Battery life (Consumer Reports / battery-industry data): hot-climate life
+//     is roughly half of temperate (Phoenix ~2–3 yr vs northern ~4–5 yr; every
+//     ~15°F over 77°F ≈ halves life) — sets the high desert/coastal battery
+//     weights so a desert zone shortens the 12V interval toward ~0.55×.
+export const TERRAIN_PROFILE_WEIGHTS = {
+  // road salt + freeze-thaw: corrodes brakes & suspension; heat-driven items spared
+  salt:     { tire: 0.7, brake: 1.4, susp: 1.2, climate: 0.3, battery: 0.2 },
+  // steep sustained grades: brake heat-fade, suspension load
+  mountain: { tire: 0.9, brake: 1.5, susp: 1.3, climate: 0.4, battery: 0.1 },
+  // rough/broken pavement: tires, alignment, struts; brakes spared
+  pothole:  { tire: 1.4, brake: 0.6, susp: 1.5, climate: 0.3, battery: 0.1 },
+  // extreme heat + UV + dust: battery (thermal), A/C load, tire dry-rot
+  desert:   { tire: 1.5, brake: 0.5, susp: 0.7, climate: 1.5, battery: 4.0 },
+  // salt air + humidity: corrosion + heavy A/C use + warm-climate battery wear
+  coastal:  { tire: 0.8, brake: 1.0, susp: 0.9, climate: 1.3, battery: 1.6 },
+  // temperate, well-paved: uniform (statewide-equivalent)
+  mild:     { tire: 1.0, brake: 1.0, susp: 1.0, climate: 1.0, battery: 1.0 },
+}
+
+// ZIP terrain zones: [zipLo, zipHi, severity, profile, region label].
+// Ordered most-specific first; first match wins (like ZIP_LABOR_RATE_ZONES).
+// Severity is the region's overall harshness vs. national baseline (1.0).
+export const ZIP_TERRAIN_ZONES = [
+  // ── Mountain country (brake/suspension dominant) ──────────────────────────
+  [81600, 81658, 1.28, 'mountain', 'CO Western Slope (Aspen/Glenwood)'],
+  [81200, 81499, 1.30, 'mountain', 'CO San Juan high country'],
+  [80420, 80499, 1.27, 'mountain', 'CO Summit/Park County passes'],
+  [84060, 84098, 1.24, 'mountain', 'UT Wasatch Back (Park City)'],
+  [84770, 84790, 1.16, 'desert',   'UT St. George (Mojave edge)'],
+  [83001, 83014, 1.26, 'mountain', 'WY Teton / Jackson Hole'],
+  [83340, 83353, 1.22, 'mountain', 'ID Sawtooth / Sun Valley'],
+  [59700, 59937, 1.22, 'mountain', 'MT western mountains'],
+  [96140, 96162, 1.26, 'mountain', 'CA Lake Tahoe basin'],
+  [93540, 93549, 1.22, 'mountain', 'CA Eastern Sierra (Mammoth)'],
+  [28700, 28906, 1.18, 'mountain', 'Western NC / Blue Ridge'],
+  [37700, 37899, 1.16, 'mountain', 'East TN / Great Smokies'],
+  [24000, 24699, 1.16, 'mountain', 'SW Virginia / Blue Ridge'],
+  [24700, 26999, 1.20, 'mountain', 'West Virginia Appalachians'],
+  [15200, 15299, 1.18, 'mountain', 'Pittsburgh hills'],
+  [ 3500,  3599, 1.18, 'mountain', 'NH White Mountains'],
+  [ 5600,  5699, 1.18, 'mountain', 'VT Green Mountains'],
+
+  // ── Snow / road-salt belts (corrosion dominant) ──────────────────────────
+  [14000, 14999, 1.26, 'salt', 'Western NY lake-effect snowbelt'],
+  [13000, 13999, 1.24, 'salt', 'Central NY snowbelt (Syracuse)'],
+  [49800, 49999, 1.28, 'salt', 'MI Upper Peninsula'],
+  [55400, 55499, 1.22, 'salt', 'Twin Cities (salt/freeze-thaw)'],
+  [54800, 54999, 1.22, 'salt', 'Northern WI snowbelt'],
+  [99500, 99999, 1.24, 'salt', 'Alaska (freeze + gravel)'],
+
+  // ── Pothole-heavy urban cores (tire/suspension dominant) ─────────────────
+  [48200, 48299, 1.26, 'pothole', 'Detroit (potholes + salt)'],
+  [60600, 60699, 1.24, 'pothole', 'Chicago urban core'],
+  [10000, 10299, 1.22, 'pothole', 'NYC (rough pavement)'],
+  [19100, 19199, 1.20, 'pothole', 'Philadelphia urban core'],
+  [ 2100,  2299, 1.20, 'pothole', 'Boston (potholes + salt)'],
+
+  // ── Desert heat (battery/A/C/tire dry-rot dominant) ──────────────────────
+  // Severity set by ambient-heat severity; battery weight (4.0) turns it into
+  // the documented ~0.55× 12V life in the hottest valleys.
+  [85000, 85399, 1.18, 'desert', 'Phoenix metro (extreme heat)'],
+  [85700, 85799, 1.16, 'desert', 'Tucson'],
+  [89100, 89199, 1.16, 'desert', 'Las Vegas valley'],
+  [92200, 92299, 1.18, 'desert', 'Coachella / low desert'],
+  [93300, 93399, 1.13, 'desert', 'Bakersfield (heat)'],
+  [79900, 79999, 1.13, 'desert', 'El Paso'],
+  [87100, 87199, 1.10, 'desert', 'Albuquerque high desert'],
+
+  // ── Coastal humidity / salt air (corrosion + A/C) ────────────────────────
+  [33000, 33499, 1.12, 'coastal', 'South Florida coast'],
+  [70000, 70199, 1.12, 'coastal', 'New Orleans / Gulf Coast'],
+  [77000, 77099, 1.10, 'coastal', 'Houston (Gulf humidity)'],
+  [29400, 29499, 1.10, 'coastal', 'Charleston coast'],
+  [96700, 96899, 1.14, 'coastal', 'Hawaii (salt air + volcanic)'],
+]
+
+// Returns the most specific terrain wear profile available:
+//   ZIP terrain zone → statewide composite (mild profile) → national baseline.
+// Shape: { severity, profile, region }. The 'mild' fallback makes a state-only
+// lookup behave exactly like the legacy single STATE_ROAD_WEAR_FACTOR scalar.
+export function getLocalWearProfile(zip, state) {
+  if (zip && /^\d{5}$/.test(String(zip))) {
+    const z = parseInt(zip)
+    for (const [lo, hi, severity, profile, region] of ZIP_TERRAIN_ZONES) {
+      if (z >= lo && z <= hi) return { severity, profile, region }
+    }
+  }
+  return { severity: STATE_ROAD_WEAR_FACTOR[state] ?? 1.0, profile: 'mild', region: null }
+}
+
+// Resolves the per-category wear multipliers from a wear profile (or, when none
+// is supplied, the statewide scalar). Used by the maintenance generators so the
+// region's harshness shortens only the intervals it physically affects.
+export function resolveCategoryWear(wearProfile, state) {
+  const { severity, profile } = wearProfile ?? { severity: STATE_ROAD_WEAR_FACTOR[state] ?? 1.0, profile: 'mild' }
+  const w = TERRAIN_PROFILE_WEIGHTS[profile] ?? TERRAIN_PROFILE_WEIGHTS.mild
+  const cat = k => 1 + (severity - 1) * (w[k] ?? 1)
+  return { tire: cat('tire'), brake: cat('brake'), susp: cat('susp'), climate: cat('climate'), battery: cat('battery'), severity, profile }
+}
+
+export function generateMaintenanceServices(isEV, annualMileage, segment, make = '', state = null, vehicleAgeYears = 0, laborRateOverride = null, wearProfile = null) {
   const tier      = determineMaintTier(make)
   const c         = MAINT_TIER_COSTS[tier]
   const brand     = MAINT_BRAND_MULT[make] ?? 1.0
+  const segMult   = SEGMENT_MAINT_MULT[segment] ?? 1.0
   const laborRate = laborRateOverride ?? STATE_LABOR_RATES[state] ?? LABOR_RATE
-  const wearFactor = STATE_ROAD_WEAR_FACTOR[state] ?? 1.0
+  // Per-category terrain wear — shortens only the intervals a region's terrain
+  // physically affects (brakes in mountains, A/C in deserts, struts on potholes).
+  const wear      = resolveCategoryWear(wearProfile, state)
   const isTruck   = segment === 'truck'
   const isSports  = segment === 'sports'
   const isSUV     = segment === 'suv' || segment === 'luxury_suv'
+  const isHybrid  = segment === 'hybrid'
 
   const svc = []
+  // segMult scales every line so the breakdown stays internally consistent and
+  // its sum tracks the segment-calibrated benchmark.
   const amortize = (partsCost, laborHrs, intervalMiles) =>
-    Math.round((annualMileage / intervalMiles) * (partsCost * c.parts_mult * brand + laborHrs * laborRate * c.labor_mult))
+    Math.round(segMult * (annualMileage / intervalMiles) * (partsCost * c.parts_mult * brand + laborHrs * laborRate * c.labor_mult))
 
   // Oil changes — oil type shown in the label
   if (!isEV) {
     const oilQty = Math.max(1, Math.round(annualMileage / c.oil_interval))
-    svc.push({ name: `Oil changes (${c.oil_type})`, detail: `every ${c.oil_interval.toLocaleString()} mi`, annual: Math.round(oilQty * c.oil_change_cost * brand) })
+    svc.push({ name: `Oil changes (${c.oil_type})`, detail: `every ${c.oil_interval.toLocaleString()} mi`, annual: Math.round(oilQty * c.oil_change_cost * brand * segMult) })
   }
 
   const filterInterval = tier === 'luxury' ? annualMileage : 15000
-  svc.push({ name: 'Air & cabin filters', detail: tier === 'luxury' ? 'annual' : 'every ~15,000 mi', annual: Math.round((annualMileage / filterInterval) * c.filter_cost * brand) })
+  svc.push({ name: 'Air & cabin filters', detail: tier === 'luxury' ? 'annual' : 'every ~15,000 mi', annual: Math.round((annualMileage / filterInterval) * c.filter_cost * brand * segMult) })
 
   // Tire rotations — EVs every 5k (torque accelerates wear), gas every 6k
-  const rotationInterval = Math.round((isEV ? 5000 : 6000) / wearFactor)
+  const rotationInterval = Math.round((isEV ? 5000 : 6000) / wear.tire)
   const rotations = Math.max(2, Math.floor(annualMileage / rotationInterval))
-  svc.push({ name: 'Tire rotations', detail: `every ${rotationInterval.toLocaleString()} mi`, annual: Math.round(rotations * c.tire_rotation_cost * brand) })
+  svc.push({ name: 'Tire rotations', detail: `every ${rotationInterval.toLocaleString()} mi`, annual: Math.round(rotations * c.tire_rotation_cost * brand * segMult) })
 
-  svc.push({ name: 'Brake inspection', detail: 'annual', annual: Math.round(c.brake_inspection_cost * brand) })
-  svc.push({ name: 'Wiper blades', detail: 'annual', annual: Math.round(c.wiper_cost * brand) })
+  svc.push({ name: 'Brake inspection', detail: 'annual', annual: Math.round(c.brake_inspection_cost * brand * segMult) })
+  svc.push({ name: 'Wiper blades', detail: 'annual', annual: Math.round(c.wiper_cost * brand * segMult) })
 
-  const bfInterval = Math.round(((tier === 'luxury' || tier === 'premium') ? 24000 : 30000) / wearFactor)
+  const bfInterval = Math.round(((tier === 'luxury' || tier === 'premium') ? 24000 : 30000) / wear.brake)
   svc.push({ name: 'Brake fluid flush', detail: `every ${bfInterval.toLocaleString()} mi`, annual: amortize(c.brake_fluid_flush_cost, 0, bfInterval) })
 
   if (!isEV) {
@@ -779,38 +939,51 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
     svc.push({ name: 'Fuel injector service', detail: `every ${injectorInterval.toLocaleString()} mi`, annual: amortize(c.fuel_injector_cost, 0.5, injectorInterval) })
 
     svc.push({ name: 'Oxygen sensor(s)', detail: 'every 100,000 mi', annual: amortize(220, 1.0, 100000) })
+
+    // Timing belt / chain-tensioner service — population-blended interval (belt
+    // engines need replacement ~90–105k mi; chain engines need tensioner/guide
+    // service later). Major scheduled cost previously omitted entirely.
+    svc.push({ name: 'Timing belt/chain service', detail: 'every ~100,000 mi', annual: amortize(c.timing_belt_cost, 3.0, 100000) })
   }
 
   // AC service applies to all vehicles (refrigerant check + inspection)
-  const acInterval = Math.round(50000 / wearFactor)
+  const acInterval = Math.round(50000 / wear.climate)
   svc.push({ name: 'AC system service', detail: `every ${acInterval.toLocaleString()} mi`, annual: amortize(80, 0.5, acInterval) })
 
-  // EV battery cooling loop service
+  // EV battery cooling loop + single-speed reduction-gear oil
   if (isEV) {
     svc.push({ name: 'Battery coolant service', detail: 'every 50,000 mi', annual: amortize(100, 0.5, 50000) })
+    svc.push({ name: 'Reduction-gear oil', detail: 'every 100,000 mi', annual: amortize(120, 0.8, 100000) })
   }
 
-  const alignInterval = Math.round(2 * annualMileage / wearFactor)
-  svc.push({ name: 'Wheel alignment', detail: 'every 2 years', annual: Math.round(c.alignment_cost * brand / 2) })
+  // Hybrid inverter / power-electronics coolant loop (separate from engine coolant)
+  if (isHybrid) {
+    svc.push({ name: 'Inverter coolant service', detail: 'every 100,000 mi', annual: amortize(90, 0.6, 100000) })
+  }
+
+  const alignInterval = Math.round(2 * annualMileage / wear.susp)
+  svc.push({ name: 'Wheel alignment', detail: 'every 2 years', annual: Math.round(c.alignment_cost * brand * segMult / 2) })
 
   const baseTireInterval = isEV ? 40000 : isSports ? 30000 : isTruck ? 45000 : (tier === 'luxury' || tier === 'premium') ? 40000 : 60000
-  const tireInterval = Math.round(baseTireInterval / wearFactor)
+  const tireInterval = Math.round(baseTireInterval / wear.tire)
   svc.push({ name: 'Tire replacement (set)', detail: `every ${tireInterval.toLocaleString()} mi`, annual: amortize(c.tire_cost, 2.0, tireInterval) })
 
   const brakeMult = isEV ? 1.8 : 1.0
   const brakeAnnual =
-    amortize(150, 1.0, Math.round(60000 * brakeMult / wearFactor)) +
-    amortize(130, 1.0, Math.round(70000 * brakeMult / wearFactor)) +
-    amortize(300, 1.5, Math.round(80000 * brakeMult / wearFactor)) +
-    amortize(250, 1.5, Math.round(90000 * brakeMult / wearFactor))
+    amortize(150, 1.0, Math.round(60000 * brakeMult / wear.brake)) +
+    amortize(130, 1.0, Math.round(70000 * brakeMult / wear.brake)) +
+    amortize(300, 1.5, Math.round(80000 * brakeMult / wear.brake)) +
+    amortize(250, 1.5, Math.round(90000 * brakeMult / wear.brake))
   svc.push({ name: 'Brake pads & rotors (amortized)', detail: isEV ? 'extended — regen braking' : '~60k–90k mi', annual: Math.round(brakeAnnual) })
 
-  const shockInterval = Math.round((isTruck ? 80000 : 90000) / wearFactor)
-  const strutInterval = Math.round((isTruck ? 80000 : 100000) / wearFactor)
+  const shockInterval = Math.round((isTruck ? 80000 : 90000) / wear.susp)
+  const strutInterval = Math.round((isTruck ? 80000 : 100000) / wear.susp)
   const shockAnnual = amortize(c.shock_cost, 1.5, shockInterval) + amortize(c.shock_cost * 0.8, 1.5, strutInterval)
   svc.push({ name: 'Shocks & struts (amortized)', detail: `every ${shockInterval.toLocaleString()}–${strutInterval.toLocaleString()} mi`, annual: Math.round(shockAnnual) })
 
-  svc.push({ name: '12V battery', detail: 'every ~5 years', annual: amortize(180, 0.3, 65000) })
+  // 12V battery — thermal life; hot climates roughly halve replacement interval.
+  const batteryInterval = Math.round(65000 / wear.battery)
+  svc.push({ name: '12V battery', detail: `every ${batteryInterval.toLocaleString()} mi`, annual: amortize(180, 0.3, batteryInterval) })
 
   // Differential fluid — trucks and AWD-likely SUVs
   if (isTruck || isSUV) {
@@ -830,7 +1003,7 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
     ? Math.max(0, (ageForReserve - 1) * 110)
     : Math.max(0, (ageForReserve - 2) * 170)
   const unscheduledCap = isEV ? 900 : tier === 'luxury' ? 2600 : tier === 'premium' ? 2000 : 1500
-  const unscheduled = Math.round(Math.min(unscheduledCap, unscheduledBase * brand) / 50) * 50
+  const unscheduled = Math.round(Math.min(unscheduledCap, unscheduledBase * brand) * segMult / 50) * 50
   if (unscheduled > 0) {
     svc.push({ name: 'Unscheduled repair reserve', detail: 'age-based estimate', annual: unscheduled })
   }
@@ -844,18 +1017,23 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
 // startMileage offsets the odometer so year 1 begins at the vehicle's current mileage.
 // state adjusts labor rates and road-condition wear factors.
 // vehicleAgeAtStart is the vehicle's age (in years) when ownership begins.
-export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5, startMileage = 0, state = null, vehicleAgeAtStart = 0, laborRateOverride = null) {
+export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5, startMileage = 0, state = null, vehicleAgeAtStart = 0, laborRateOverride = null, wearProfile = null) {
   const tier      = determineMaintTier(make)
   const c         = MAINT_TIER_COSTS[tier]
   const brand     = MAINT_BRAND_MULT[make] ?? 1.0
+  const segMult   = SEGMENT_MAINT_MULT[segment] ?? 1.0
   const laborRate = laborRateOverride ?? STATE_LABOR_RATES[state] ?? LABOR_RATE
-  const wearFactor = STATE_ROAD_WEAR_FACTOR[state] ?? 1.0
+  // Per-category terrain wear (see resolveCategoryWear / ZIP_TERRAIN_ZONES).
+  const wear      = resolveCategoryWear(wearProfile, state)
   const isTruck   = segment === 'truck'
   const isSports  = segment === 'sports'
   const isSUV     = segment === 'suv' || segment === 'luxury_suv'
+  const isHybrid  = segment === 'hybrid'
 
+  // segMult scales every per-occurrence cost so the displayed breakdown stays
+  // consistent and its sum tracks the segment-calibrated benchmark.
   const occCost = (partsCost, laborHrs) =>
-    Math.round(partsCost * c.parts_mult * brand + laborHrs * laborRate * c.labor_mult)
+    Math.round((partsCost * c.parts_mult * brand + laborHrs * laborRate * c.labor_mult) * segMult)
 
   const occsInYear = (yr, intervalMiles) => {
     if (!intervalMiles || intervalMiles <= 0) return 0
@@ -868,23 +1046,23 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
 
   // Oil changes — oil type in label
   if (!isEV) {
-    defs.push({ name: `Oil changes (${c.oil_type})`, costPerOcc: Math.round(c.oil_change_cost * brand), intervalMiles: c.oil_interval })
+    defs.push({ name: `Oil changes (${c.oil_type})`, costPerOcc: Math.round(c.oil_change_cost * brand * segMult), intervalMiles: c.oil_interval })
   }
 
   // Filters
   const filterInterval = tier === 'luxury' ? annualMileage : 15000
-  defs.push({ name: 'Air & cabin filters', costPerOcc: Math.round(c.filter_cost * brand), intervalMiles: filterInterval })
+  defs.push({ name: 'Air & cabin filters', costPerOcc: Math.round(c.filter_cost * brand * segMult), intervalMiles: filterInterval })
 
   // Tire rotations — EVs every 5k (high torque = faster wear), road-wear adjusted
-  const rotationInterval = Math.round((isEV ? 5000 : 6000) / wearFactor)
-  defs.push({ name: 'Tire rotations', costPerOcc: Math.round(c.tire_rotation_cost * brand), intervalMiles: rotationInterval })
+  const rotationInterval = Math.round((isEV ? 5000 : 6000) / wear.tire)
+  defs.push({ name: 'Tire rotations', costPerOcc: Math.round(c.tire_rotation_cost * brand * segMult), intervalMiles: rotationInterval })
 
   // Annual services
-  defs.push({ name: 'Brake inspection', costPerOcc: Math.round(c.brake_inspection_cost * brand), intervalMiles: annualMileage })
-  defs.push({ name: 'Wiper blades', costPerOcc: Math.round(c.wiper_cost * brand), intervalMiles: annualMileage })
+  defs.push({ name: 'Brake inspection', costPerOcc: Math.round(c.brake_inspection_cost * brand * segMult), intervalMiles: annualMileage })
+  defs.push({ name: 'Wiper blades', costPerOcc: Math.round(c.wiper_cost * brand * segMult), intervalMiles: annualMileage })
 
   // Brake fluid — road-wear adjusted (salt/moisture contaminate fluid faster)
-  const bfInterval = Math.round(((tier === 'luxury' || tier === 'premium') ? 24000 : 30000) / wearFactor)
+  const bfInterval = Math.round(((tier === 'luxury' || tier === 'premium') ? 24000 : 30000) / wear.brake)
   defs.push({ name: 'Brake fluid flush', costPerOcc: occCost(c.brake_fluid_flush_cost, 0), intervalMiles: bfInterval })
 
   if (!isEV) {
@@ -906,41 +1084,50 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
     defs.push({ name: 'Fuel injector service', costPerOcc: occCost(c.fuel_injector_cost, 0.5), intervalMiles: injectorInterval })
 
     defs.push({ name: 'Oxygen sensor(s)', costPerOcc: occCost(220, 1.0), intervalMiles: 100000 })
+
+    // Timing belt / chain-tensioner service — population-blended ~100k interval
+    defs.push({ name: 'Timing belt/chain service', costPerOcc: occCost(c.timing_belt_cost, 3.0), intervalMiles: 100000 })
   }
 
   // AC service — all vehicles; heat/humidity shorten refrigerant life
-  const acInterval = Math.round(50000 / wearFactor)
+  const acInterval = Math.round(50000 / wear.climate)
   defs.push({ name: 'AC system service', costPerOcc: occCost(80, 0.5), intervalMiles: acInterval })
 
-  // EV battery cooling loop (separate from HVAC refrigerant)
+  // EV battery cooling loop + single-speed reduction-gear oil
   if (isEV) {
     defs.push({ name: 'Battery coolant service', costPerOcc: occCost(100, 0.5), intervalMiles: 50000 })
+    defs.push({ name: 'Reduction-gear oil', costPerOcc: occCost(120, 0.8), intervalMiles: 100000 })
   }
 
-  // Wheel alignment — road-wear adjusted (potholes, salt-eroded curbs)
-  const alignInterval = Math.round(2 * annualMileage / wearFactor)
-  defs.push({ name: 'Wheel alignment', costPerOcc: Math.round(c.alignment_cost * brand), intervalMiles: alignInterval })
+  // Hybrid inverter / power-electronics coolant loop (separate from engine coolant)
+  if (isHybrid) {
+    defs.push({ name: 'Inverter coolant service', costPerOcc: occCost(90, 0.6), intervalMiles: 100000 })
+  }
 
-  // Tires — segment-differentiated cost and road-wear adjusted interval
+  // Wheel alignment — suspension wear (potholes, salt-eroded curbs, steep curbs)
+  const alignInterval = Math.round(2 * annualMileage / wear.susp)
+  defs.push({ name: 'Wheel alignment', costPerOcc: Math.round(c.alignment_cost * brand * segMult), intervalMiles: alignInterval })
+
+  // Tires — segment-differentiated cost and tire-wear adjusted interval
   const baseTireInterval = isEV ? 40000 : isSports ? 30000 : isTruck ? 45000 : (tier === 'luxury' || tier === 'premium') ? 40000 : 60000
-  const tireInterval = Math.round(baseTireInterval / wearFactor)
+  const tireInterval = Math.round(baseTireInterval / wear.tire)
   defs.push({ name: 'Tire replacement (set)', costPerOcc: occCost(c.tire_cost, 2.0), intervalMiles: tireInterval })
 
-  // Brake pads & rotors — road-wear adjusted (hills, salt corrosion)
+  // Brake pads & rotors — brake wear (hills/descents, salt corrosion)
   const brakeMult = isEV ? 1.8 : 1.0
-  defs.push({ name: 'Front brake pads', costPerOcc: occCost(150, 1.0), intervalMiles: Math.round(60000 * brakeMult / wearFactor) })
-  defs.push({ name: 'Rear brake pads',  costPerOcc: occCost(130, 1.0), intervalMiles: Math.round(70000 * brakeMult / wearFactor) })
-  defs.push({ name: 'Front rotors',     costPerOcc: occCost(300, 1.5), intervalMiles: Math.round(80000 * brakeMult / wearFactor) })
-  defs.push({ name: 'Rear rotors',      costPerOcc: occCost(250, 1.5), intervalMiles: Math.round(90000 * brakeMult / wearFactor) })
+  defs.push({ name: 'Front brake pads', costPerOcc: occCost(150, 1.0), intervalMiles: Math.round(60000 * brakeMult / wear.brake) })
+  defs.push({ name: 'Rear brake pads',  costPerOcc: occCost(130, 1.0), intervalMiles: Math.round(70000 * brakeMult / wear.brake) })
+  defs.push({ name: 'Front rotors',     costPerOcc: occCost(300, 1.5), intervalMiles: Math.round(80000 * brakeMult / wear.brake) })
+  defs.push({ name: 'Rear rotors',      costPerOcc: occCost(250, 1.5), intervalMiles: Math.round(90000 * brakeMult / wear.brake) })
 
-  // Shocks & struts — road-wear adjusted (potholes, rough surfaces)
-  const shockInterval = Math.round((isTruck ? 80000 : 90000) / wearFactor)
-  const strutInterval = Math.round((isTruck ? 80000 : 100000) / wearFactor)
+  // Shocks & struts — suspension wear (potholes, rough surfaces)
+  const shockInterval = Math.round((isTruck ? 80000 : 90000) / wear.susp)
+  const strutInterval = Math.round((isTruck ? 80000 : 100000) / wear.susp)
   defs.push({ name: 'Front shocks/struts', costPerOcc: occCost(c.shock_cost, 1.5), intervalMiles: shockInterval })
   defs.push({ name: 'Rear shocks/struts',  costPerOcc: occCost(Math.round(c.shock_cost * 0.8), 1.5), intervalMiles: strutInterval })
 
-  // 12V battery
-  defs.push({ name: '12V battery', costPerOcc: occCost(180, 0.3), intervalMiles: 65000 })
+  // 12V battery — thermal life; hot climates roughly halve replacement interval
+  defs.push({ name: '12V battery', costPerOcc: occCost(180, 0.3), intervalMiles: Math.round(65000 / wear.battery) })
 
   // Differential fluid — trucks always, AWD-likely SUVs included
   if (isTruck || isSUV) {
@@ -971,7 +1158,7 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
       ? Math.max(0, (vehicleAgeThisYear - 1) * 110)
       : Math.max(0, (vehicleAgeThisYear - 2) * 170)
     const unscheduledCap = isEV ? 900 : tier === 'luxury' ? 2600 : tier === 'premium' ? 2000 : 1500
-    const unscheduled = Math.round(Math.min(unscheduledCap, unscheduledBase * brand) / 50) * 50
+    const unscheduled = Math.round(Math.min(unscheduledCap, unscheduledBase * brand) * segMult / 50) * 50
     if (unscheduled > 0) {
       services.push({ name: 'Unscheduled repair reserve', occurrences: 1, costPerOcc: unscheduled, total: unscheduled })
     }
@@ -982,8 +1169,8 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
 }
 
 // Convenience wrapper — returns just the per-year totals array.
-export function generateMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5, startMileage = 0, state = null, vehicleAgeAtStart = 0, laborRateOverride = null) {
-  return generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make, years, startMileage, state, vehicleAgeAtStart, laborRateOverride).map(yr => yr.total)
+export function generateMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5, startMileage = 0, state = null, vehicleAgeAtStart = 0, laborRateOverride = null, wearProfile = null) {
+  return generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make, years, startMileage, state, vehicleAgeAtStart, laborRateOverride, wearProfile).map(yr => yr.total)
 }
 
 // ── Fuel ─────────────────────────────────────────────────
@@ -1195,10 +1382,12 @@ export function resolveLocation(input) {
     const state = zipToState(t)
     if (!state) return null
     const laborRate = getLocalLaborRate(t, state)
-    return { state, label: `${t} (${state})`, zip: t, laborRate }
+    const wear = getLocalWearProfile(t, state)
+    return { state, label: `${t} (${state})`, zip: t, laborRate, wear, region: wear.region }
   }
   if (/^[A-Z]{2}$/.test(t) && STATE_FUEL_PRICES[t]) {
-    return { state: t, label: t, zip: null, laborRate: STATE_LABOR_RATES[t] ?? LABOR_RATE }
+    const wear = getLocalWearProfile(null, t)
+    return { state: t, label: t, zip: null, laborRate: STATE_LABOR_RATES[t] ?? LABOR_RATE, wear, region: null }
   }
   return null
 }

@@ -972,6 +972,8 @@ export default function TCOCalculator() {
   const [locationInput,  setLocationInput]  = useState('')
   const [resolvedState,     setResolvedState]     = useState(null)   // 2-letter state code
   const [resolvedLaborRate, setResolvedLaborRate] = useState(null)   // $/hr from ZIP or state
+  const [resolvedWear,      setResolvedWear]      = useState(null)   // { severity, profile, region } from ZIP terrain
+  const [resolvedRegion,    setResolvedRegion]    = useState(null)   // human-readable terrain region label
   const [locationLabel,  setLocationLabel]  = useState('')
   const [locationError,  setLocationError]  = useState('')
   // Operating costs mode
@@ -1048,13 +1050,13 @@ export default function TCOCalculator() {
     const sm = effectiveStartMileage
     if (modelData) {
       const seg = classifySegment(selMake || '', selModel || '')
-      return generateDetailedMaintenanceByYear(modelData.is_ev, annualMileage, seg, selMake, 5, sm, resolvedState, vehicleAge, resolvedLaborRate)
+      return generateDetailedMaintenanceByYear(modelData.is_ev, annualMileage, seg, selMake, 5, sm, resolvedState, vehicleAge, resolvedLaborRate, resolvedWear)
     }
     const catInfo = VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)
     const catIsEV = catInfo?.isEV ?? false
     const catSeg  = catInfo?.segment ?? 'sedan'
-    return generateDetailedMaintenanceByYear(catIsEV, annualMileage, catSeg, '', 5, sm, resolvedState, 0, resolvedLaborRate)
-  }, [detailedMode, modelData, annualMileage, selMake, selModel, vehicleCategory, effectiveStartMileage, selYear, currentMileage, resolvedState, vehicleAge, resolvedLaborRate])
+    return generateDetailedMaintenanceByYear(catIsEV, annualMileage, catSeg, '', 5, sm, resolvedState, 0, resolvedLaborRate, resolvedWear)
+  }, [detailedMode, modelData, annualMileage, selMake, selModel, vehicleCategory, effectiveStartMileage, selYear, currentMileage, resolvedState, vehicleAge, resolvedLaborRate, resolvedWear])
 
   const maintenanceByYear = useMemo(() => maintenanceDetail?.map(yr => yr.total) ?? null, [maintenanceDetail])
 
@@ -1077,7 +1079,7 @@ export default function TCOCalculator() {
       setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel)))
       if (detailedMode) {
         const seg = classifySegment(selMake||'', selModel||'')
-        const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake, resolvedState, vehicleAge, resolvedLaborRate)
+        const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake, resolvedState, vehicleAge, resolvedLaborRate, resolvedWear)
         setAnnualMaintenance(services.reduce((s, x) => s + x.annual, 0))
       } else {
         const seg = classifySegment(selMake||'', selModel||'')
@@ -1096,7 +1098,7 @@ export default function TCOCalculator() {
       setAnnualFuel(computeAnnualFuel(catIsEV, catMpg, catMpge, resolvedState, annualMileage, fuelOverride))
       if (detailedMode) {
         const catSeg = catInfo?.segment ?? 'sedan'
-        const services = generateMaintenanceServices(catIsEV, annualMileage, catSeg, '', resolvedState, 0, resolvedLaborRate)
+        const services = generateMaintenanceServices(catIsEV, annualMileage, catSeg, '', resolvedState, 0, resolvedLaborRate, resolvedWear)
         setAnnualMaintenance(services.reduce((s, x) => s + x.annual, 0))
       } else {
         const catSeg2 = catInfo?.segment ?? 'sedan'
@@ -1107,7 +1109,7 @@ export default function TCOCalculator() {
       ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)), currentMileage)
       : price
     setAnnualRegistration(computeAnnualRegistration(resolvedState, currentVal))
-  }, [price, selMake, selModel, selYear, resolvedState, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [price, selMake, selModel, selYear, resolvedState, resolvedLaborRate, resolvedWear, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLocationInput = useCallback((val) => {
     setLocationInput(val)
@@ -1116,10 +1118,14 @@ export default function TCOCalculator() {
     if (resolved) {
       setResolvedState(resolved.state)
       setResolvedLaborRate(resolved.laborRate ?? null)
+      setResolvedWear(resolved.wear ?? null)
+      setResolvedRegion(resolved.region ?? null)
       setLocationLabel(resolved.label)
     } else {
       setResolvedState(null)
       setResolvedLaborRate(null)
+      setResolvedWear(null)
+      setResolvedRegion(null)
       setLocationLabel('')
       if (val.trim().length >= 2 && !resolved) {
         setLocationError('Enter a 5-digit ZIP code or 2-letter state (e.g., 90210 or CA)')
@@ -1584,6 +1590,12 @@ export default function TCOCalculator() {
                     )}
                   </div>
                   {locationError && <p className="text-xs text-amber-400">{locationError}</p>}
+                  {resolvedRegion && (
+                    <p className="text-[11px] text-[var(--text-muted)]">
+                      <span className="text-[var(--accent)]">⛰</span> Terrain-adjusted for{' '}
+                      <span className="text-white">{resolvedRegion}</span> — service intervals tuned for local conditions.
+                    </p>
+                  )}
                 </div>
               </div>
 

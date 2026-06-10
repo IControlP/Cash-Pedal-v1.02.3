@@ -25,6 +25,16 @@ const WEBHOOK_SEC      = process.env.STRIPE_WEBHOOK_SECRET || ''
 const MAX_DEVICES        = 2
 const DEVICE_EXPIRY_DAYS = 30
 const ACCESS_DAYS        = 60
+
+// Email-funnel bonus credits — granted once per email in exchange for name + email
+const BONUS_CREDITS = 5
+
+// Allowlists for the first-party usage tracker
+const USAGE_FEATURES = new Set([
+  'visit_tco', 'visit_compare', 'visit_salary', 'visit_checklist',
+  'tco_detailed', 'checklist_generated', 'salary_pro', 'compare_unlock',
+])
+const USAGE_GATES = new Set(['free', 'bonus', 'subscribed'])
 // Emails that bypass all subscription and device checks — configure via env var
 // PRO_USER_EMAILS=pro@cashpedal.io,owner@example.com
 const PRO_USERS_SERVER = new Set(
@@ -335,6 +345,51 @@ async function initTables() {
         ADD COLUMN IF NOT EXISTS source VARCHAR(30) DEFAULT 'tips_optin'
     `)
 
+    // ── Bonus credits (email funnel — server-enforced) ──
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS bonus_credits (
+        id              SERIAL PRIMARY KEY,
+        email           VARCHAR(255) UNIQUE NOT NULL,
+        session_id      VARCHAR(36) NOT NULL,
+        first_name      VARCHAR(100) NOT NULL,
+        last_name       VARCHAR(100) NOT NULL,
+        credits_granted INTEGER NOT NULL DEFAULT 5,
+        credits_used    INTEGER NOT NULL DEFAULT 0,
+        ip_hash         VARCHAR(64),
+        created_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_bonus_credits_session
+        ON bonus_credits(session_id)
+    `)
+
+    // ── Usage events (anonymous + identified visitors) ──
+    // session_id is the same browser-generated UUID used for consent and
+    // lead records, so anonymous usage can be joined to a lead if the
+    // visitor later provides their email.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS usage_events (
+        id          SERIAL PRIMARY KEY,
+        session_id  VARCHAR(36) NOT NULL,
+        email       VARCHAR(255),
+        feature     VARCHAR(40) NOT NULL,
+        gate        VARCHAR(20),
+        ip_address  VARCHAR(45),
+        user_agent  TEXT,
+        created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_usage_events_session
+        ON usage_events(session_id)
+    `)
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_usage_events_feature
+        ON usage_events(feature, created_at)
+    `)
+
     // ── Subscribers table (Stripe) ────────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS subscribers (
@@ -389,6 +444,16 @@ async function initTables() {
     await client.query(`
       DELETE FROM user_data_collection
       WHERE created_at < NOW() - INTERVAL '365 days'
+    `)
+    // usage_events are pseudonymous analytics — same 365-day retention.
+    await client.query(`
+      DELETE FROM usage_events
+      WHERE created_at < NOW() - INTERVAL '365 days'
+    `)
+    // Bonus-credit grants expire 365 days after last activity.
+    await client.query(`
+      DELETE FROM bonus_credits
+      WHERE updated_at < NOW() - INTERVAL '365 days'
     `)
     // Stale device slots (no login in 30 days) are cleaned per-request already,
     // but also sweep on startup to catch orphaned rows from inactive subscribers.
@@ -461,7 +526,8 @@ app.post('/api/user-data', async (req, res) => {
   if (!isValidUUID(record_id) || !isValidUUID(session_id)) {
     return res.status(400).json({ success: false, error: 'Invalid record_id or session_id format' })
   }
-  if (!first_name || !last_name || typeof first_name !== 'string' || typeof last_name !== 'string') {
+  // Names may be empty (the tips opt-in collects email only) but must be strings
+  if (typeof first_name !== 'string' || typeof last_name !== 'string') {
     return res.status(400).json({ success: false, error: 'Missing required fields' })
   }
   if (!isValidEmail(email)) {
@@ -501,6 +567,197 @@ app.post('/api/user-data', async (req, res) => {
     res.json({ success: true, record_id })
   } catch (err) {
     console.error('[user-data] DB error:', err.message)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+// ── API: Track usage event ────────────────────────────
+// First-party usage tracking for ALL visitors, anonymous or identified.
+// Keyed by the browser-generated session UUID; IP is anonymized before storage.
+app.post('/api/track-usage', async (req, res) => {
+  const { session_id, feature, gate, email } = req.body
+
+  if (!isValidUUID(session_id)) {
+    return res.status(400).json({ success: false, error: 'Invalid session_id format' })
+  }
+  if (typeof feature !== 'string' || !USAGE_FEATURES.has(feature)) {
+    return res.status(400).json({ success: false, error: 'Unknown feature' })
+  }
+  const cleanGate  = USAGE_GATES.has(gate) ? gate : null
+  const cleanEmail = isValidEmail(email) ? normalizeEmail(email) : null
+
+  if (!pool) return res.json({ success: true, storage: 'none' })
+
+  try {
+    await pool.query(
+      `INSERT INTO usage_events (session_id, email, feature, gate, ip_address, user_agent)
+       VALUES ($1,$2,$3,$4,$5,$6)`,
+      [
+        session_id, cleanEmail, feature, cleanGate,
+        anonymizeIp(req.ip || 'unknown'),
+        clamp(req.headers['user-agent'] || 'unknown', 512),
+      ]
+    )
+    res.json({ success: true })
+  } catch (err) {
+    console.error('[track-usage] DB error:', err.message)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+// ── API: Claim bonus credits (email funnel) ───────────
+// Trades name + email for BONUS_CREDITS free Pro calculations.
+// One claim per email (re-claiming restores the remaining balance) and
+// one claim per anonymous session, so a device can't farm credits with
+// throwaway emails. Also records the lead in user_data_collection.
+app.post('/api/claim-bonus', sensitiveLimiter, async (req, res) => {
+  const { session_id, first_name, last_name, email } = req.body
+
+  if (!isValidUUID(session_id)) {
+    return res.status(400).json({ success: false, error: 'Invalid session_id format' })
+  }
+  const cleanFirst = sanitizeName(first_name)
+  const cleanLast  = sanitizeName(last_name)
+  if (!cleanFirst || !cleanLast) {
+    return res.status(400).json({ success: false, error: 'First and last name required' })
+  }
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ success: false, error: 'Invalid email address' })
+  }
+  const normEmail = normalizeEmail(email)
+
+  if (!pool) {
+    console.log('[claim-bonus] No DB configured — granting without persistence')
+    return res.json({ success: true, creditsLeft: BONUS_CREDITS, storage: 'none' })
+  }
+
+  try {
+    // Re-claim with a known email → restore the remaining balance (new device, cleared storage)
+    const existing = await pool.query(
+      `SELECT credits_granted, credits_used FROM bonus_credits WHERE email = $1`,
+      [normEmail]
+    )
+    if (existing.rows.length > 0) {
+      const { credits_granted, credits_used } = existing.rows[0]
+      return res.json({
+        success:     true,
+        restored:    true,
+        creditsLeft: Math.max(0, credits_granted - credits_used),
+      })
+    }
+
+    // One claim per anonymous session
+    const sess = await pool.query(
+      `SELECT 1 FROM bonus_credits WHERE session_id = $1 LIMIT 1`,
+      [session_id]
+    )
+    if (sess.rows.length > 0) {
+      return res.json({ success: false, error: 'device_claimed' })
+    }
+
+    await pool.query(
+      `INSERT INTO bonus_credits (email, session_id, first_name, last_name, credits_granted, ip_hash)
+       VALUES ($1,$2,$3,$4,$5,$6)`,
+      [normEmail, session_id, cleanFirst, cleanLast, BONUS_CREDITS, pseudonymizeIp(req.ip || 'unknown')]
+    )
+    // Record the lead alongside the credit grant
+    await pool.query(
+      `INSERT INTO user_data_collection
+         (record_id, session_id, timestamp_utc, first_name, last_name,
+          email, calculation_count, ip_address, user_agent, source)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+       ON CONFLICT (record_id) DO NOTHING`,
+      [
+        crypto.randomUUID(), session_id, new Date().toISOString(),
+        cleanFirst, cleanLast, normEmail, 0,
+        anonymizeIp(req.ip || 'unknown'),
+        clamp(req.headers['user-agent'] || 'unknown', 512),
+        'email_unlock',
+      ]
+    )
+    res.json({ success: true, creditsLeft: BONUS_CREDITS })
+  } catch (err) {
+    console.error('[claim-bonus] DB error:', err.message)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+// ── API: Spend one bonus credit ───────────────────────
+// Atomic decrement — the server is the source of truth for the balance.
+app.post('/api/spend-bonus', sensitiveLimiter, async (req, res) => {
+  const { session_id, email, feature } = req.body
+
+  if (!isValidUUID(session_id)) {
+    return res.status(400).json({ success: false, error: 'Invalid session_id format' })
+  }
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ success: false, error: 'Invalid email address' })
+  }
+  const normEmail = normalizeEmail(email)
+
+  if (!pool) {
+    console.log('[spend-bonus] No DB configured — allowing without persistence')
+    return res.json({ success: true, creditsLeft: BONUS_CREDITS, storage: 'none' })
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE bonus_credits
+         SET credits_used = credits_used + 1, updated_at = NOW()
+       WHERE email = $1 AND credits_used < credits_granted
+       RETURNING credits_granted - credits_used AS credits_left`,
+      [normEmail]
+    )
+    if (result.rows.length > 0) {
+      // Log the spend as a usage event so bonus usage is queryable server-side
+      const cleanFeature = USAGE_FEATURES.has(feature) ? feature : 'bonus_spend'
+      await pool.query(
+        `INSERT INTO usage_events (session_id, email, feature, gate, ip_address, user_agent)
+         VALUES ($1,$2,$3,'bonus',$4,$5)`,
+        [
+          session_id, normEmail, cleanFeature,
+          anonymizeIp(req.ip || 'unknown'),
+          clamp(req.headers['user-agent'] || 'unknown', 512),
+        ]
+      )
+      return res.json({ success: true, creditsLeft: result.rows[0].credits_left })
+    }
+    const claimedRow = await pool.query(`SELECT 1 FROM bonus_credits WHERE email = $1`, [normEmail])
+    res.json({
+      success:     false,
+      reason:      claimedRow.rows.length > 0 ? 'exhausted' : 'not_claimed',
+      creditsLeft: 0,
+    })
+  } catch (err) {
+    console.error('[spend-bonus] DB error:', err.message)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+// ── API: Bonus credit balance ─────────────────────────
+app.post('/api/bonus-status', sensitiveLimiter, async (req, res) => {
+  const { email } = req.body
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ success: false, error: 'Invalid email address' })
+  }
+  if (!pool) return res.json({ success: true, claimed: null, storage: 'none' })
+
+  try {
+    const result = await pool.query(
+      `SELECT credits_granted, credits_used FROM bonus_credits WHERE email = $1`,
+      [normalizeEmail(email)]
+    )
+    if (result.rows.length === 0) {
+      return res.json({ success: true, claimed: false, creditsLeft: 0 })
+    }
+    const { credits_granted, credits_used } = result.rows[0]
+    res.json({
+      success:     true,
+      claimed:     true,
+      creditsLeft: Math.max(0, credits_granted - credits_used),
+    })
+  } catch (err) {
+    console.error('[bonus-status] DB error:', err.message)
     res.status(500).json({ success: false, error: 'Internal server error' })
   }
 })
@@ -815,6 +1072,9 @@ app.post('/api/delete-my-data', sensitiveLimiter, async (req, res) => {
 
     // Remove user-provided profile data
     await pool.query(`DELETE FROM user_data_collection WHERE email = $1`, [normalizedEmail])
+    // Remove bonus-credit grant and any usage events linked to this email
+    await pool.query(`DELETE FROM bonus_credits WHERE email = $1`, [normalizedEmail])
+    await pool.query(`DELETE FROM usage_events WHERE email = $1`, [normalizedEmail])
     // Remove device registrations — no longer needed once subscription is gone
     await pool.query(`DELETE FROM subscriber_devices WHERE email = $1`, [normalizedEmail])
     // Soft-delete the subscriber row so Stripe audit trail is preserved
@@ -864,6 +1124,8 @@ async function runRetentionSweep() {
   if (!pool) return
   try {
     await pool.query(`DELETE FROM user_data_collection WHERE created_at < NOW() - INTERVAL '365 days'`)
+    await pool.query(`DELETE FROM usage_events WHERE created_at < NOW() - INTERVAL '365 days'`)
+    await pool.query(`DELETE FROM bonus_credits WHERE updated_at < NOW() - INTERVAL '365 days'`)
     await pool.query(`DELETE FROM subscriber_devices WHERE last_seen < NOW() - INTERVAL '${DEVICE_EXPIRY_DAYS} days'`)
   } catch (err) {
     console.error('[retention] daily sweep error:', err.message)

@@ -32,7 +32,7 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
   const [firstName,   setFirstName]   = useState('')
   const [lastName,    setLastName]    = useState('')
   const [bonusErr,    setBonusErr]    = useState('')
-  const [bonusDone,   setBonusDone]   = useState(false)
+  const [bonusDone,   setBonusDone]   = useState(null) // { creditsLeft, restored } when claimed
 
   const { verifySubscription, verifyPromoCode } = useSubscription()
   const { claimed, creditsLeft, claimBonus } = useBonusCredits()
@@ -88,13 +88,17 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
     const result = await claimBonus({ firstName, lastName, email })
     setLoading(false)
     if (result.success) {
-      trackEmailUnlockClaimed(feature)
-      setBonusDone(true)
+      if (result.creditsLeft <= 0) {
+        setBonusErr('This email has already used all its free Pro calculations.')
+        return
+      }
+      if (!result.restored) trackEmailUnlockClaimed(feature)
+      setBonusDone({ creditsLeft: result.creditsLeft, restored: !!result.restored })
       setTimeout(() => onUnlocked('bonus'), 1600)
     } else if (result.error === 'network') {
       setBonusErr('Could not reach server. Please check your connection.')
-    } else if (result.error === 'already_claimed') {
-      setBonusErr('Free calculations were already claimed on this device.')
+    } else if (result.error === 'device_claimed') {
+      setBonusErr('Free calculations were already claimed from this browser with a different email.')
     } else {
       setBonusErr('Something went wrong. Please try again.')
     }
@@ -154,8 +158,16 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
           bonusDone ? (
             <div className="text-center py-6 mb-4">
               <div className="text-3xl mb-3">🎉</div>
-              <p className="text-white font-bold text-lg font-display">You've got {BONUS_CREDITS} free Pro calculations!</p>
-              <p className="text-[var(--text-muted)] text-sm mt-2">Unlocking now — we'll send car-buying tips to {email.trim().toLowerCase()}.</p>
+              <p className="text-white font-bold text-lg font-display">
+                {bonusDone.restored
+                  ? `Welcome back — ${bonusDone.creditsLeft} free Pro calculation${bonusDone.creditsLeft !== 1 ? 's' : ''} left!`
+                  : `You've got ${bonusDone.creditsLeft} free Pro calculations!`}
+              </p>
+              <p className="text-[var(--text-muted)] text-sm mt-2">
+                {bonusDone.restored
+                  ? 'Unlocking now — your remaining balance was restored.'
+                  : `Unlocking now — we'll send car-buying tips to ${email.trim().toLowerCase()}.`}
+              </p>
             </div>
           ) : (
             <form onSubmit={handleBonusClaim} className="flex flex-col gap-3 mb-4">

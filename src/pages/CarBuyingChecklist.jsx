@@ -4,6 +4,7 @@ import Footer from '../components/Footer'
 import PaywallModal from '../components/PaywallModal'
 import { useSubscription } from '../hooks/useSubscription'
 import { useBonusCredits } from '../hooks/useBonusCredits'
+import { trackUsage } from '../utils/usage'
 import { maintenanceItems, sellerQuestions, US_STATES, getClimateFlags, getContextualQuestions } from '../data/checklistData'
 import { estimateCurrentValue } from '../utils/vehicleCosts'
 import VEHICLES from '../data/vehicles.json'
@@ -103,6 +104,9 @@ export default function CarBuyingChecklist() {
   )
   const [showPaywall, setShowPaywall] = useState(false)
 
+  // Anonymous first-party usage tracking — once per page load
+  useEffect(() => { trackUsage('visit_checklist') }, [])
+
   const [step, setStep] = useState('input') // input | checklist
   const [vehicleInfo, setVehicleInfo] = useState({ year: '', make: '', model: '', trim: '', mileage: 80000, price: '', state: '' })
   const [priceSource, setPriceSource] = useState('auto') // 'auto' | 'user'
@@ -188,9 +192,14 @@ export default function CarBuyingChecklist() {
 
   // Returns true if allowed (and counted); false when the paywall should show.
   // Past the base free limit, email-unlock bonus credits cover one checklist each.
-  function startChecklist() {
-    if (!isSubscribed && checklistCount >= FREE_CHECKLIST_LIMIT && !spendCredit()) {
-      return false
+  async function startChecklist() {
+    if (isSubscribed) {
+      trackUsage('checklist_generated', 'subscribed')
+    } else if (checklistCount >= FREE_CHECKLIST_LIMIT) {
+      // Bonus spends are logged server-side by /api/spend-bonus
+      if (!(await spendCredit('checklist_generated'))) return false
+    } else {
+      trackUsage('checklist_generated', 'free')
     }
     const next = checklistCount + 1
     setChecklistCount(next)
@@ -199,9 +208,9 @@ export default function CarBuyingChecklist() {
     return true
   }
 
-  function handleStart(e) {
+  async function handleStart(e) {
     e.preventDefault()
-    if (!startChecklist()) setShowPaywall(true)
+    if (!(await startChecklist())) setShowPaywall(true)
   }
 
   if (step === 'input') {

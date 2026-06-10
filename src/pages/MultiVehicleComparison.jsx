@@ -5,6 +5,7 @@ import Footer from '../components/Footer'
 import PaywallModal from '../components/PaywallModal'
 import { useSubscription } from '../hooks/useSubscription'
 import { useBonusCredits } from '../hooks/useBonusCredits'
+import { trackUsage } from '../utils/usage'
 
 function fmt(n) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
@@ -246,6 +247,9 @@ export default function MultiVehicleComparison() {
   const [bonusUnlocked, setBonusUnlocked] = useState(false)
   const hasAccess = isSubscribed || bonusUnlocked
 
+  // Anonymous first-party usage tracking — once per page load
+  useEffect(() => { trackUsage('visit_compare', isSubscribed ? 'subscribed' : 'free') }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Ranking parameter toggles
   const [activeRankParams, setActiveRankParams] = useState({ totalOutOfPocket: true, mpgCombined: false, cargoSqFt: false, valueRetentionPct: false })
 
@@ -456,9 +460,9 @@ export default function MultiVehicleComparison() {
           feature="compare"
           usedCount={0}
           cancelPath="/compare"
-          onUnlocked={(method) => {
+          onUnlocked={async (method) => {
             setShowPaywall(false)
-            if (method === 'bonus' && spendCredit()) setBonusUnlocked(true)
+            if (method === 'bonus' && (await spendCredit('compare_unlock'))) setBonusUnlocked(true)
           }}
         />
       )}
@@ -500,7 +504,7 @@ export default function MultiVehicleComparison() {
                 </button>
                 {bonusCreditsLeft > 0 && (
                   <button
-                    onClick={() => { if (spendCredit()) setBonusUnlocked(true) }}
+                    onClick={async () => { if (await spendCredit('compare_unlock')) setBonusUnlocked(true) }}
                     className="text-sm px-6 py-3 rounded-xl border font-semibold transition-colors hover:brightness-110"
                     style={{ borderColor: 'rgba(255,184,0,0.35)', color: 'var(--accent)', background: 'rgba(255,184,0,0.05)' }}
                   >

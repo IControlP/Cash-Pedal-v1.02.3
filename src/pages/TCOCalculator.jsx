@@ -9,6 +9,7 @@ import ResultCard from '../components/ResultCard'
 import PaywallModal from '../components/PaywallModal'
 import { useSubscription } from '../hooks/useSubscription'
 import { useBonusCredits } from '../hooks/useBonusCredits'
+import { trackUsage } from '../utils/usage'
 import VEHICLES from '../data/vehicles.json'
 import {
   BRAND_DEPRECIATION_MULT,
@@ -929,12 +930,16 @@ export default function TCOCalculator() {
 
   // Returns true if the action is allowed; false if blocked (paywall shown).
   // Each call counts as one calculation — callers must guard against duplicate invocations.
-  const checkDetailedLimit = useCallback(() => {
-    if (isSubscribed) return true
+  const checkDetailedLimit = useCallback(async () => {
+    if (isSubscribed) {
+      trackUsage('tco_detailed', 'subscribed')
+      return true
+    }
     const next = detailedCalcCount + 1
     if (next > FREE_DETAILED_LIMIT) {
-      // Base free limit exhausted — fall back to email-unlock bonus credits
-      if (spendCredit()) {
+      // Base free limit exhausted — fall back to email-unlock bonus credits.
+      // The server logs the spend as a usage event, so no trackUsage here.
+      if (await spendCredit('tco_detailed')) {
         setDetailedCalcCount(next)
         localStorage.setItem(LS_DETAILED_COUNT, String(next))
         return true
@@ -944,6 +949,7 @@ export default function TCOCalculator() {
     }
     setDetailedCalcCount(next)
     localStorage.setItem(LS_DETAILED_COUNT, String(next))
+    trackUsage('tco_detailed', 'free')
     return true
   }, [isSubscribed, detailedCalcCount, spendCredit])
 
@@ -951,6 +957,7 @@ export default function TCOCalculator() {
   useEffect(() => {
     if (countIncrementedRef.current) return
     countIncrementedRef.current = true
+    trackUsage('visit_tco')
     const newCount = calcCount + 1
     setCalcCount(newCount)
     localStorage.setItem(LS_CALC_COUNT, String(newCount))
@@ -1168,16 +1175,16 @@ export default function TCOCalculator() {
   }, [financeMode, dealerPurchase])
 
   // Auto-selects the cheapest trim for a given make/model/year
-  const autoSelectCheapestTrim = useCallback((make, model, year) => {
+  const autoSelectCheapestTrim = useCallback(async (make, model, year) => {
     const t = getTrims(make, model, year)
     const entries = Object.entries(t)
     if (entries.length === 0) return
-    if (!checkDetailedLimit()) return
+    if (!(await checkDetailedLimit())) return
     const [cheapestName] = entries.reduce((a, b) => b[1] < a[1] ? b : a)
     applyTrim(make, model, year, cheapestName)
   }, [checkDetailedLimit, applyTrim])
 
-  const handlePickerChange = useCallback((level, value) => {
+  const handlePickerChange = useCallback(async (level, value) => {
     trackFirstInteraction('vehicle_picker')
     if (level === 'make') {
       setSelMake(value); setSelModel(''); setSelYear(''); setSelTrim(''); setOrigMsrp(null); setVehicleCategory('')
@@ -1196,7 +1203,7 @@ export default function TCOCalculator() {
       if (value) autoSelectCheapestTrim(selMake, selModel, value)
     }
     if (level === 'trim') {
-      if (value !== selTrim && !checkDetailedLimit()) return
+      if (value !== selTrim && !(await checkDetailedLimit())) return
       applyTrim(selMake, selModel, selYear, value)
     }
   }, [financeMode, selMake, selModel, selYear, selTrim, checkDetailedLimit, applyTrim, autoSelectCheapestTrim])
@@ -2175,8 +2182,8 @@ export default function TCOCalculator() {
                   {!simpleMode && resolvedState && (
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => {
-                          if (!detailedMode && !checkDetailedLimit()) return
+                        onClick={async () => {
+                          if (!detailedMode && !(await checkDetailedLimit())) return
                           setDetailedMode(d => !d)
                         }}
                         className="text-xs px-3 py-1 rounded-lg border transition-colors flex items-center gap-1.5"
@@ -2467,7 +2474,7 @@ export default function TCOCalculator() {
                             Segment average — costs vary by vehicle age, mileage, and brand.{' '}
                             {detailedFreeLeft > 0 || isSubscribed
                               ? <button
-                                  onClick={() => { if (!checkDetailedLimit()) return; setDetailedMode(true) }}
+                                  onClick={async () => { if (!(await checkDetailedLimit())) return; setDetailedMode(true) }}
                                   className="underline hover:text-[var(--accent)] transition-colors">
                                   Use Detailed for itemized estimates.
                                 </button>

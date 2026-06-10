@@ -5,6 +5,7 @@ import Footer from '../components/Footer'
 import PaywallModal from '../components/PaywallModal'
 import { useSubscription } from '../hooks/useSubscription'
 import { useBonusCredits } from '../hooks/useBonusCredits'
+import { trackUsage } from '../utils/usage'
 import VEHICLES from '../data/vehicles.json'
 import {
   classifySegment, determineMaintTier,
@@ -167,6 +168,9 @@ export default function SalaryCalculator() {
   const [showPaywall, setShowPaywall] = useState(false)
   // Pro mode unlocked for this session via an email-unlock bonus credit
   const [bonusUnlocked, setBonusUnlocked] = useState(false)
+
+  // Anonymous first-party usage tracking — once per page load
+  useEffect(() => { trackUsage('visit_salary') }, [])
 
   // Finance mode
   const [mode, setMode] = useState('buy')
@@ -449,10 +453,10 @@ export default function SalaryCalculator() {
           feature="salary"
           usedCount={0}
           cancelPath="/salary"
-          onUnlocked={(method) => {
+          onUnlocked={async (method) => {
             setShowPaywall(false)
             if (method === 'bonus') {
-              if (spendCredit()) { setBonusUnlocked(true); setProMode(true) }
+              if (await spendCredit('salary_pro')) { setBonusUnlocked(true); setProMode(true) }
             } else {
               setProMode(true)
             }
@@ -486,15 +490,18 @@ export default function SalaryCalculator() {
                 <h2 className="font-display font-bold text-white text-lg">Vehicle Details</h2>
                 {/* Pro toggle */}
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (!isSubscribed && !proMode && !bonusUnlocked) {
-                      // One bonus credit unlocks Pro mode for the rest of the session
-                      if (spendCredit()) {
+                      // One bonus credit unlocks Pro mode for the rest of the session.
+                      // The server logs the spend as a usage event.
+                      if (await spendCredit('salary_pro')) {
                         setBonusUnlocked(true)
                       } else {
                         setShowPaywall(true)
                         return
                       }
+                    } else if (!proMode && isSubscribed) {
+                      trackUsage('salary_pro', 'subscribed')
                     }
                     setProMode(p => !p)
                   }}

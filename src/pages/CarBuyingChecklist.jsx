@@ -3,6 +3,8 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PaywallModal from '../components/PaywallModal'
 import { useSubscription } from '../hooks/useSubscription'
+import { useBonusCredits } from '../hooks/useBonusCredits'
+import { trackUsage } from '../utils/usage'
 import { maintenanceItems, sellerQuestions, US_STATES, getClimateFlags, getContextualQuestions } from '../data/checklistData'
 import { estimateCurrentValue } from '../utils/vehicleCosts'
 import VEHICLES from '../data/vehicles.json'
@@ -95,11 +97,15 @@ const importanceBadge = {
 
 export default function CarBuyingChecklist() {
   const { isSubscribed } = useSubscription()
+  const { creditsLeft: bonusCreditsLeft, spendCredit } = useBonusCredits()
 
   const [checklistCount, setChecklistCount] = useState(() =>
     parseInt(localStorage.getItem(LS_CHECKLIST_COUNT) || '0', 10)
   )
   const [showPaywall, setShowPaywall] = useState(false)
+
+  // Anonymous first-party usage tracking — once per page load
+  useEffect(() => { trackUsage('visit_checklist') }, [])
 
   const [step, setStep] = useState('input') // input | checklist
   const [vehicleInfo, setVehicleInfo] = useState({ year: '', make: '', model: '', trim: '', mileage: 80000, price: '', state: '' })
@@ -184,16 +190,27 @@ export default function CarBuyingChecklist() {
     }
   }, [priceRange, priceSource])
 
-  function handleStart(e) {
-    e.preventDefault()
-    if (!isSubscribed && checklistCount >= FREE_CHECKLIST_LIMIT) {
-      setShowPaywall(true)
-      return
+  // Returns true if allowed (and counted); false when the paywall should show.
+  // Past the base free limit, email-unlock bonus credits cover one checklist each.
+  async function startChecklist() {
+    if (isSubscribed) {
+      trackUsage('checklist_generated', 'subscribed')
+    } else if (checklistCount >= FREE_CHECKLIST_LIMIT) {
+      // Bonus spends are logged server-side by /api/spend-bonus
+      if (!(await spendCredit('checklist_generated'))) return false
+    } else {
+      trackUsage('checklist_generated', 'free')
     }
     const next = checklistCount + 1
     setChecklistCount(next)
     localStorage.setItem(LS_CHECKLIST_COUNT, String(next))
     setStep('checklist')
+    return true
+  }
+
+  async function handleStart(e) {
+    e.preventDefault()
+    if (!(await startChecklist())) setShowPaywall(true)
   }
 
   if (step === 'input') {
@@ -204,7 +221,10 @@ export default function CarBuyingChecklist() {
             feature="checklist"
             usedCount={FREE_CHECKLIST_LIMIT}
             cancelPath="/checklist"
-            onUnlocked={() => setShowPaywall(false)}
+            onUnlocked={(method) => {
+              setShowPaywall(false)
+              if (method === 'bonus') startChecklist()
+            }}
           />
         )}
         <Navbar />
@@ -377,8 +397,8 @@ export default function CarBuyingChecklist() {
 
               {!isSubscribed && (
                 <p className="text-center text-[var(--text-muted)] text-xs mt-1">
-                  {Math.max(0, FREE_CHECKLIST_LIMIT - checklistCount)} of {FREE_CHECKLIST_LIMIT} free checklists remaining
-                  {checklistCount >= FREE_CHECKLIST_LIMIT && (
+                  {Math.max(0, FREE_CHECKLIST_LIMIT - checklistCount) + bonusCreditsLeft} free checklists remaining
+                  {checklistCount >= FREE_CHECKLIST_LIMIT && bonusCreditsLeft === 0 && (
                     <> · <a href="/subscribe" className="text-[var(--accent)] hover:underline">Subscribe for unlimited</a></>
                   )}
                 </p>

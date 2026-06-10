@@ -8,6 +8,8 @@ import Footer from '../components/Footer'
 import ResultCard from '../components/ResultCard'
 import PaywallModal from '../components/PaywallModal'
 import { useSubscription } from '../hooks/useSubscription'
+import { useBonusCredits } from '../hooks/useBonusCredits'
+import { trackUsage } from '../utils/usage'
 import VEHICLES from '../data/vehicles.json'
 import {
   BRAND_DEPRECIATION_MULT,
@@ -919,6 +921,7 @@ export default function TCOCalculator() {
     parseInt(localStorage.getItem(LS_DETAILED_COUNT) || '0', 10)
   )
   const [showPaywall,  setShowPaywall]  = useState(false)
+  const { creditsLeft: bonusCreditsLeft, spendCredit } = useBonusCredits()
 
   // ── Comparison queue count ──
   const [comparisonCount, setComparisonCount] = useState(() => {
@@ -927,22 +930,34 @@ export default function TCOCalculator() {
 
   // Returns true if the action is allowed; false if blocked (paywall shown).
   // Each call counts as one calculation — callers must guard against duplicate invocations.
-  const checkDetailedLimit = useCallback(() => {
-    if (isSubscribed) return true
+  const checkDetailedLimit = useCallback(async () => {
+    if (isSubscribed) {
+      trackUsage('tco_detailed', 'subscribed')
+      return true
+    }
     const next = detailedCalcCount + 1
     if (next > FREE_DETAILED_LIMIT) {
+      // Base free limit exhausted — fall back to email-unlock bonus credits.
+      // The server logs the spend as a usage event, so no trackUsage here.
+      if (await spendCredit('tco_detailed')) {
+        setDetailedCalcCount(next)
+        localStorage.setItem(LS_DETAILED_COUNT, String(next))
+        return true
+      }
       setShowPaywall(true)
       return false
     }
     setDetailedCalcCount(next)
     localStorage.setItem(LS_DETAILED_COUNT, String(next))
+    trackUsage('tco_detailed', 'free')
     return true
-  }, [isSubscribed, detailedCalcCount])
+  }, [isSubscribed, detailedCalcCount, spendCredit])
 
   // Increment visit count once per page load (terms are always accepted by the time this mounts)
   useEffect(() => {
     if (countIncrementedRef.current) return
     countIncrementedRef.current = true
+    trackUsage('visit_tco')
     const newCount = calcCount + 1
     setCalcCount(newCount)
     localStorage.setItem(LS_CALC_COUNT, String(newCount))
@@ -1160,16 +1175,16 @@ export default function TCOCalculator() {
   }, [financeMode, dealerPurchase])
 
   // Auto-selects the cheapest trim for a given make/model/year
-  const autoSelectCheapestTrim = useCallback((make, model, year) => {
+  const autoSelectCheapestTrim = useCallback(async (make, model, year) => {
     const t = getTrims(make, model, year)
     const entries = Object.entries(t)
     if (entries.length === 0) return
-    if (!checkDetailedLimit()) return
+    if (!(await checkDetailedLimit())) return
     const [cheapestName] = entries.reduce((a, b) => b[1] < a[1] ? b : a)
     applyTrim(make, model, year, cheapestName)
   }, [checkDetailedLimit, applyTrim])
 
-  const handlePickerChange = useCallback((level, value) => {
+  const handlePickerChange = useCallback(async (level, value) => {
     trackFirstInteraction('vehicle_picker')
     if (level === 'make') {
       setSelMake(value); setSelModel(''); setSelYear(''); setSelTrim(''); setOrigMsrp(null); setVehicleCategory('')
@@ -1188,7 +1203,7 @@ export default function TCOCalculator() {
       if (value) autoSelectCheapestTrim(selMake, selModel, value)
     }
     if (level === 'trim') {
-      if (value !== selTrim && !checkDetailedLimit()) return
+      if (value !== selTrim && !(await checkDetailedLimit())) return
       applyTrim(selMake, selModel, selYear, value)
     }
   }, [financeMode, selMake, selModel, selYear, selTrim, checkDetailedLimit, applyTrim, autoSelectCheapestTrim])
@@ -1353,8 +1368,11 @@ export default function TCOCalculator() {
   const effIsEV = modelData ? modelData.is_ev : (catInfoForRender?.isEV ?? false)
   const isPremium = !effIsEV && !!(selMake && requiresPremiumFuel(selMake, selModel))
 
+  // Free detailed calcs remaining (base allowance + email-unlock bonus credits)
+  const detailedFreeLeft = Math.max(0, FREE_DETAILED_LIMIT - detailedCalcCount) + bonusCreditsLeft
+
   // Whether the detailed results are currently blocked by the paywall
-  const isDetailBlocked = !isSubscribed && detailedCalcCount > FREE_DETAILED_LIMIT
+  const isDetailBlocked = !isSubscribed && detailedCalcCount > FREE_DETAILED_LIMIT && bonusCreditsLeft === 0
 
   // Persist a snapshot for returning-user insights on the landing page.
   // Only save when the user has changed at least one input from defaults.
@@ -1540,19 +1558,19 @@ export default function TCOCalculator() {
                     </span>
                   </div>
                   <div className="px-4 py-3 flex items-center gap-3">
-                    {detailedCalcCount >= FREE_DETAILED_LIMIT
+                    {detailedFreeLeft <= 0
                       ? <span className="shrink-0 font-bold uppercase tracking-wider px-2 py-0.5 rounded"
                           style={{ color: '#f87171', background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.3)' }}>
                           🔒 Locked
                         </span>
                       : <span className="shrink-0 font-bold uppercase tracking-wider px-2 py-0.5 rounded"
                           style={{ color: '#FFB800', background: 'rgba(255,184,0,0.12)', border: '1px solid rgba(255,184,0,0.3)' }}>
-                          {FREE_DETAILED_LIMIT - detailedCalcCount} of {FREE_DETAILED_LIMIT} free
+                          {detailedFreeLeft} free left
                         </span>
                     }
                     <span className="text-[var(--text-muted)]">
                       Trim-specific MSRP &amp; depreciation · Detailed itemized cost breakdown
-                      {detailedCalcCount >= FREE_DETAILED_LIMIT && (
+                      {detailedFreeLeft <= 0 && (
                         <> — <a href="/subscribe" className="text-[var(--accent)] hover:underline font-semibold">Subscribe for unlimited</a></>
                       )}
                     </span>
@@ -1650,7 +1668,7 @@ export default function TCOCalculator() {
                 <VehiclePicker
                   make={selMake} model={selModel} year={selYear} trim={selTrim}
                   onChange={handlePickerChange} onClear={handleClear}
-                  freeLeft={Math.max(0, FREE_DETAILED_LIMIT - detailedCalcCount)}
+                  freeLeft={detailedFreeLeft}
                   isSubscribed={isSubscribed}
                   isLease={financeMode === 'lease'}
                 />
@@ -2164,8 +2182,8 @@ export default function TCOCalculator() {
                   {!simpleMode && resolvedState && (
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => {
-                          if (!detailedMode && !checkDetailedLimit()) return
+                        onClick={async () => {
+                          if (!detailedMode && !(await checkDetailedLimit())) return
                           setDetailedMode(d => !d)
                         }}
                         className="text-xs px-3 py-1 rounded-lg border transition-colors flex items-center gap-1.5"
@@ -2176,11 +2194,11 @@ export default function TCOCalculator() {
                         }}>
                         {detailedMode ? 'Detailed ✓' : 'Detailed'}
                         {!isSubscribed && !detailedMode && (
-                          detailedCalcCount >= FREE_DETAILED_LIMIT
+                          detailedFreeLeft <= 0
                             ? <span style={{ color: '#f87171' }}>🔒</span>
                             : <span className="font-bold text-[10px]"
                                 style={{ color: '#FFB800' }}>
-                                {FREE_DETAILED_LIMIT - detailedCalcCount} free
+                                {detailedFreeLeft} free
                               </span>
                         )}
                       </button>
@@ -2454,9 +2472,9 @@ export default function TCOCalculator() {
                           <div className="px-4 pb-3 text-[11px] text-[var(--text-muted)] leading-relaxed"
                             style={{ borderTop: '1px solid var(--border)', paddingTop: '0.5rem' }}>
                             Segment average — costs vary by vehicle age, mileage, and brand.{' '}
-                            {detailedCalcCount < FREE_DETAILED_LIMIT || isSubscribed
+                            {detailedFreeLeft > 0 || isSubscribed
                               ? <button
-                                  onClick={() => { if (!checkDetailedLimit()) return; setDetailedMode(true) }}
+                                  onClick={async () => { if (!(await checkDetailedLimit())) return; setDetailedMode(true) }}
                                   className="underline hover:text-[var(--accent)] transition-colors">
                                   Use Detailed for itemized estimates.
                                 </button>
@@ -3207,7 +3225,13 @@ export default function TCOCalculator() {
               {!isSubscribed && detailedCalcCount >= FREE_DETAILED_LIMIT && (
                 <div className="rounded-xl border px-4 py-3 text-center text-xs"
                   style={{ borderColor: 'rgba(255,184,0,0.2)', background: 'rgba(255,184,0,0.04)' }}>
-                  <span className="text-[var(--text-muted)]">You've used all {FREE_DETAILED_LIMIT} free detailed analyses. </span>
+                  {bonusCreditsLeft > 0 ? (
+                    <span className="text-[var(--text-muted)]">
+                      You have <span className="font-semibold" style={{ color: 'var(--accent)' }}>{bonusCreditsLeft} bonus detailed {bonusCreditsLeft === 1 ? 'analysis' : 'analyses'}</span> left from your email unlock.{' '}
+                    </span>
+                  ) : (
+                    <span className="text-[var(--text-muted)]">You've used all your free detailed analyses. </span>
+                  )}
                   <a href="/subscribe" className="text-[var(--accent)] hover:underline font-semibold">
                     Subscribe for unlimited access →
                   </a>

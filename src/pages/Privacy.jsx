@@ -102,8 +102,22 @@ export default function Privacy() {
               [
                 'User-submitted profile',
                 'First name, last name, email address, calculator usage count',
-                'Optional: sending vehicle-buying tips by email (only if you opted in)',
+                'Optional: sending vehicle-buying tips by email (only if you opted in), and granting free Pro calculations claimed through the email offer',
                 'Consent (Art. 6(1)(a))',
+                '365 days, then auto-deleted',
+              ],
+              [
+                'Free Pro calculation balance',
+                'Email address, name, credits granted and used, session ID, HMAC-pseudonymized IP',
+                'Enforcing the one-time grant of free Pro calculations per email',
+                'Legitimate interests (Art. 6(1)(f)) — preventing abuse of the free offer',
+                '365 days after last update, or on erasure request',
+              ],
+              [
+                'Usage events',
+                'Random session ID, tool/feature used, anonymized IP (last octet masked), browser user-agent; email only if you have identified yourself',
+                'Understanding which tools are used and how often, including by anonymous visitors',
+                'Legitimate interests (Art. 6(1)(f)) — product analytics',
                 '365 days, then auto-deleted',
               ],
             ]} />

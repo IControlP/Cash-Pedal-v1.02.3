@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PaywallModal from '../components/PaywallModal'
+import ProUpsell from '../components/ProUpsell'
 import { useSubscription } from '../hooks/useSubscription'
 import { useBonusCredits } from '../hooks/useBonusCredits'
 import { trackUsage } from '../utils/usage'
@@ -235,8 +236,9 @@ export default function CarBuyingChecklist() {
               Used Car Buying Checklist
             </h1>
             <p className="anim-2 text-[var(--text-muted)] text-base mb-8 leading-relaxed">
-              Enter the vehicle details and we'll generate a maintenance checklist, negotiation leverage calculator,
-              and the critical questions to ask before you buy.
+              Skipped maintenance is your negotiation leverage. Enter the vehicle and we'll generate a
+              mileage-based inspection checklist, a dollar-for-dollar leverage calculator, and the
+              questions that reveal what the seller isn't telling you — before you hand over a deposit.
             </p>
 
             <form onSubmit={handleStart} className="card anim-3 flex flex-col gap-5">
@@ -719,6 +721,13 @@ export default function CarBuyingChecklist() {
               ))}
             </div>
           )}
+
+          <ProUpsell
+            headline="Vetting more than one car? Don't go in blind."
+            body="Most used-car searches take 4–6 test drives. One $19 pass gives you unlimited checklists
+              for every car you look at — plus true cost of ownership and side-by-side comparison, so
+              you negotiate the right car, not just a clean one."
+          />
         </div>
       </main>
       <Footer />

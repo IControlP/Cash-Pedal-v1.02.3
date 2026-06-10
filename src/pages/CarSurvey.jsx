@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import ProGate from '../components/ProGate'
+import ProUpsell from '../components/ProUpsell'
 import { useSubscription } from '../hooks/useSubscription'
 import { questions, questionImpacts, vehicleProfiles } from '../data/surveyData'
 
@@ -115,7 +116,9 @@ export default function CarSurvey() {
               What car is actually right for you?
             </h1>
             <p className="anim-2 text-[var(--text-muted)] text-lg mb-8 leading-relaxed">
-              Answer 13 quick questions and we'll match you to your ideal vehicle type — no BS, just honest results.
+              Buying the wrong <em>type</em> of vehicle is the most expensive car mistake there is.
+              Answer 13 quick questions and we'll match you to the type that actually fits your
+              life — no BS, just honest results.
             </p>
             <div className="anim-3 card text-left mb-8">
               <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-4">How it works</p>
@@ -306,7 +309,7 @@ export default function CarSurvey() {
               <ProGate
                 isPro={false}
                 title="Runner-up Matches"
-                description="See your #2 and #3 vehicle type matches with model recommendations — Pro feature."
+                description="Most buyers cross-shop 2–3 vehicle types. Unlock your #2 and #3 matches with model picks so you don't anchor on the wrong one."
                 preview={
                   <div className="grid sm:grid-cols-2 gap-4 p-2">
                     {rankedProfiles.slice(1, 3).map(({ key, score, profile }) => (
@@ -350,7 +353,7 @@ export default function CarSurvey() {
               <ProGate
                 isPro={false}
                 title="Full Quiz Score Breakdown"
-                description="All vehicle types ranked by match percentage — upgrade to Pro to see your complete results."
+                description="Every vehicle type ranked by how well it fits you — rule whole categories in or out with confidence before you start shopping."
                 preview={
                   <div className="p-4 flex flex-col gap-3">
                     {rankedProfiles.slice(0, 4).map(({ key, score, profile }) => (
@@ -371,6 +374,13 @@ export default function CarSurvey() {
               Retake the survey
             </button>
           </div>
+
+          <ProUpsell
+            headline="You know your type. Now find the exact car."
+            body="The survey narrows the field — Pro finishes the job. Run the true cost of ownership on
+              the model picks above, compare your finalists side by side, and walk into the dealership
+              knowing the numbers better than they do. One $19 pass covers your whole search."
+          />
         </div>
       </main>
       <Footer />

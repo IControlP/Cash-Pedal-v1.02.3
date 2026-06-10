@@ -7,6 +7,7 @@ import { CarVisual } from '../components/CarSVGs'
 import Footer from '../components/Footer'
 import ResultCard from '../components/ResultCard'
 import PaywallModal from '../components/PaywallModal'
+import ProUpsell from '../components/ProUpsell'
 import { useSubscription } from '../hooks/useSubscription'
 import { useBonusCredits } from '../hooks/useBonusCredits'
 import { trackUsage } from '../utils/usage'
@@ -1503,10 +1504,11 @@ export default function TCOCalculator() {
             Vehicle TCO Calculator
           </div>
           <h1 className="anim-1 font-display font-extrabold text-white text-3xl sm:text-4xl leading-tight mt-1">
-            Total Cost of Ownership
+            What will this car <em>really</em> cost you?
           </h1>
           <p className="anim-2 text-[var(--text-muted)] mt-2 text-base max-w-lg">
-            Pick any vehicle from our database of 35 makes &amp; 266 models — or enter your own numbers.
+            The sticker price is only half the story. See the full cost of ownership — depreciation,
+            insurance, fuel, maintenance, and interest — for any of 35 makes &amp; 266 models, before you sign.
           </p>
 
           {/* Simple / Detailed toggle */}
@@ -3233,13 +3235,20 @@ export default function TCOCalculator() {
                     <span className="text-[var(--text-muted)]">You've used all your free detailed analyses. </span>
                   )}
                   <a href="/subscribe" className="text-[var(--accent)] hover:underline font-semibold">
-                    Subscribe for unlimited access →
+                    Get the $19 pass for unlimited access →
                   </a>
                 </div>
               )}
             </div>
 
           </div>
+
+          <ProUpsell
+            headline="Found a candidate? Now stress-test the whole deal."
+            body="One $19 pass covers your entire car search — unlimited detailed breakdowns, lease vs. buy,
+              side-by-side comparison of every car on your shortlist, and money-pit flags before you sign.
+              When you're done, we go away. No subscription."
+          />
         </div>
       </main>
       <Footer />

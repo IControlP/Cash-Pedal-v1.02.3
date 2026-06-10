@@ -187,10 +187,10 @@ const suspKeys  = ['Front shocks/struts', 'Rear shocks/struts', 'Wheel alignment
 const sum = (agg, keys) => keys.reduce((s, k) => s + (agg[k] || 0), 0)
 
 console.log(
-  'Region'.padEnd(26) + 'profile'.padEnd(10) + 'wear(t/b/s/c)'.padEnd(22) +
-  'brakes'.padStart(8) + 'tires'.padStart(8) + 'susp'.padStart(7) + 'A/C'.padStart(6) + 'total/yr'.padStart(10)
+  'Region'.padEnd(26) + 'profile'.padEnd(10) + 'wear(t/b/s/c/bat)'.padEnd(27) +
+  'brakes'.padStart(8) + 'tires'.padStart(7) + 'susp'.padStart(7) + 'A/C'.padStart(6) + 'batt'.padStart(6) + 'total/yr'.padStart(10)
 )
-console.log('─'.repeat(97))
+console.log('─'.repeat(108))
 
 let failTerrain = 0
 for (const [zip, label] of TERRAIN_ZIPS) {
@@ -199,11 +199,12 @@ for (const [zip, label] of TERRAIN_ZIPS) {
   const { agg, total } = serviceCosts(wp, null)
   const brakes = sum(agg, brakeKeys), tires = sum(agg, tireKeys), susp = sum(agg, suspKeys)
   const ac = agg['AC system service'] || 0
+  const batt = agg['12V battery'] || 0
   console.log(
     label.padEnd(26) + (wp.profile).padEnd(10) +
-    `${w.tire.toFixed(2)}/${w.brake.toFixed(2)}/${w.susp.toFixed(2)}/${w.climate.toFixed(2)}`.padEnd(22) +
-    money(brakes).padStart(8) + money(tires).padStart(8) + money(susp).padStart(7) +
-    money(ac).padStart(6) + money(total).padStart(10)
+    `${w.tire.toFixed(2)}/${w.brake.toFixed(2)}/${w.susp.toFixed(2)}/${w.climate.toFixed(2)}/${w.battery.toFixed(2)}`.padEnd(27) +
+    money(brakes).padStart(8) + money(tires).padStart(7) + money(susp).padStart(7) +
+    money(ac).padStart(6) + money(batt).padStart(6) + money(total).padStart(10)
   )
 
   // Directional + realism checks vs the mild baseline.
@@ -216,6 +217,10 @@ for (const [zip, label] of TERRAIN_ZIPS) {
   const checks = []
   if (wp.profile === 'mountain' && !(w.brake > w.tire && w.brake > w.climate)) checks.push('mountain: brake wear should dominate')
   if (wp.profile === 'desert'   && !(w.climate > w.brake && w.tire > w.brake))  checks.push('desert: A/C & tire wear should outrank brakes')
+  // Battery: hot-climate life ~half of temperate (industry data). Desert 12V
+  // interval should shorten toward ~0.55× → wear factor ≳ 1.6.
+  if (wp.profile === 'desert'   && !(w.battery >= 1.6)) checks.push(`desert: battery wear ${w.battery.toFixed(2)} should be ≳1.6 (heat ~halves life)`)
+  if (wp.profile === 'mild'     && w.battery !== 1)     checks.push('mild: battery wear must be 1.0')
   if (wp.profile === 'pothole'  && !(w.susp > w.brake && w.tire > w.brake))     checks.push('pothole: suspension/tire wear should dominate')
   if (wp.profile === 'salt'     && !(w.brake > w.tire && w.brake > w.climate))  checks.push('salt: brake wear should dominate')
   if (wp.profile === 'coastal'  && !(w.climate > w.susp))                       checks.push('coastal: A/C wear should outrank suspension')

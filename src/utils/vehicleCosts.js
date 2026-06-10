@@ -759,28 +759,44 @@ export const STATE_ROAD_WEAR_FACTOR = {
 // region AND tag it with a terrain "profile" so the harshness lands on the
 // service categories it actually affects, rather than uniformly.
 //
-// A profile redistributes a region's overall severity across four wear
+// A profile redistributes a region's overall severity across five wear
 // categories via weights (1.0 = full pass-through, >1 amplifies, <1 damps):
 //   tire    — rotations, tire replacement
 //   brake   — brake fluid, pads & rotors
 //   susp    — shocks/struts, wheel alignment
 //   climate — A/C system (heat/humidity load)
+//   battery — 12V battery (thermal life; heat is the dominant killer)
 // Effective category wear = 1 + (severity − 1) × weight. Severity <1 (mild/dry
 // regions) reduces intervals' wear uniformly under the 'mild' profile, exactly
 // preserving prior statewide behavior when no ZIP zone matches.
+//
+// Weights are calibrated to documented industry degradation, not guesses:
+//   • Severe-service schedules (OEM owner's manuals) class mountainous terrain,
+//     dust, extreme heat/cold and salt as "severe," shortening the affected
+//     fluid/brake/filter intervals by ~25–40% — sets the brake/fluid weights.
+//   • AAA pothole research (2022): $26.5B/yr in repairs; "tires, wheels and
+//     suspension get the brunt," plus alignment — sets pothole tire/susp weights.
+//   • AAA road-salt data: salt drives brake/rotor and suspension corrosion —
+//     sets the salt brake/susp weights.
+//   • Tire-industry thermo-oxidative dry-rot: above ~90°F rubber degrades up to
+//     ~30% faster — caps the desert tire weight so the worst zone nears 1.30×.
+//   • Battery life (Consumer Reports / battery-industry data): hot-climate life
+//     is roughly half of temperate (Phoenix ~2–3 yr vs northern ~4–5 yr; every
+//     ~15°F over 77°F ≈ halves life) — sets the high desert/coastal battery
+//     weights so a desert zone shortens the 12V interval toward ~0.55×.
 export const TERRAIN_PROFILE_WEIGHTS = {
-  // road salt + freeze-thaw: corrodes brakes & suspension; A/C untouched
-  salt:     { tire: 0.7, brake: 1.4, susp: 1.2, climate: 0.3 },
+  // road salt + freeze-thaw: corrodes brakes & suspension; heat-driven items spared
+  salt:     { tire: 0.7, brake: 1.4, susp: 1.2, climate: 0.3, battery: 0.2 },
   // steep sustained grades: brake heat-fade, suspension load
-  mountain: { tire: 0.9, brake: 1.6, susp: 1.3, climate: 0.5 },
+  mountain: { tire: 0.9, brake: 1.5, susp: 1.3, climate: 0.4, battery: 0.1 },
   // rough/broken pavement: tires, alignment, struts; brakes spared
-  pothole:  { tire: 1.4, brake: 0.6, susp: 1.5, climate: 0.3 },
-  // extreme heat + UV + dust: A/C load, tire dry-rot; brakes/susp spared
-  desert:   { tire: 1.3, brake: 0.5, susp: 0.7, climate: 1.6 },
-  // salt air + humidity: corrosion + heavy A/C use
-  coastal:  { tire: 0.8, brake: 1.0, susp: 0.9, climate: 1.3 },
+  pothole:  { tire: 1.4, brake: 0.6, susp: 1.5, climate: 0.3, battery: 0.1 },
+  // extreme heat + UV + dust: battery (thermal), A/C load, tire dry-rot
+  desert:   { tire: 1.5, brake: 0.5, susp: 0.7, climate: 1.5, battery: 4.0 },
+  // salt air + humidity: corrosion + heavy A/C use + warm-climate battery wear
+  coastal:  { tire: 0.8, brake: 1.0, susp: 0.9, climate: 1.3, battery: 1.6 },
   // temperate, well-paved: uniform (statewide-equivalent)
-  mild:     { tire: 1.0, brake: 1.0, susp: 1.0, climate: 1.0 },
+  mild:     { tire: 1.0, brake: 1.0, susp: 1.0, climate: 1.0, battery: 1.0 },
 }
 
 // ZIP terrain zones: [zipLo, zipHi, severity, profile, region label].
@@ -792,7 +808,7 @@ export const ZIP_TERRAIN_ZONES = [
   [81200, 81499, 1.30, 'mountain', 'CO San Juan high country'],
   [80420, 80499, 1.27, 'mountain', 'CO Summit/Park County passes'],
   [84060, 84098, 1.24, 'mountain', 'UT Wasatch Back (Park City)'],
-  [84770, 84790, 1.14, 'desert',   'UT St. George (Mojave edge)'],
+  [84770, 84790, 1.16, 'desert',   'UT St. George (Mojave edge)'],
   [83001, 83014, 1.26, 'mountain', 'WY Teton / Jackson Hole'],
   [83340, 83353, 1.22, 'mountain', 'ID Sawtooth / Sun Valley'],
   [59700, 59937, 1.22, 'mountain', 'MT western mountains'],
@@ -821,13 +837,15 @@ export const ZIP_TERRAIN_ZONES = [
   [19100, 19199, 1.20, 'pothole', 'Philadelphia urban core'],
   [ 2100,  2299, 1.20, 'pothole', 'Boston (potholes + salt)'],
 
-  // ── Desert heat (A/C + tire dry-rot dominant) ────────────────────────────
-  [85000, 85399, 1.16, 'desert', 'Phoenix metro (extreme heat)'],
-  [85700, 85799, 1.14, 'desert', 'Tucson'],
-  [89100, 89199, 1.15, 'desert', 'Las Vegas valley'],
-  [92200, 92299, 1.16, 'desert', 'Coachella / low desert'],
-  [93300, 93399, 1.12, 'desert', 'Bakersfield (heat)'],
-  [79900, 79999, 1.12, 'desert', 'El Paso'],
+  // ── Desert heat (battery/A/C/tire dry-rot dominant) ──────────────────────
+  // Severity set by ambient-heat severity; battery weight (4.0) turns it into
+  // the documented ~0.55× 12V life in the hottest valleys.
+  [85000, 85399, 1.18, 'desert', 'Phoenix metro (extreme heat)'],
+  [85700, 85799, 1.16, 'desert', 'Tucson'],
+  [89100, 89199, 1.16, 'desert', 'Las Vegas valley'],
+  [92200, 92299, 1.18, 'desert', 'Coachella / low desert'],
+  [93300, 93399, 1.13, 'desert', 'Bakersfield (heat)'],
+  [79900, 79999, 1.13, 'desert', 'El Paso'],
   [87100, 87199, 1.10, 'desert', 'Albuquerque high desert'],
 
   // ── Coastal humidity / salt air (corrosion + A/C) ────────────────────────
@@ -859,7 +877,7 @@ export function resolveCategoryWear(wearProfile, state) {
   const { severity, profile } = wearProfile ?? { severity: STATE_ROAD_WEAR_FACTOR[state] ?? 1.0, profile: 'mild' }
   const w = TERRAIN_PROFILE_WEIGHTS[profile] ?? TERRAIN_PROFILE_WEIGHTS.mild
   const cat = k => 1 + (severity - 1) * (w[k] ?? 1)
-  return { tire: cat('tire'), brake: cat('brake'), susp: cat('susp'), climate: cat('climate'), severity, profile }
+  return { tire: cat('tire'), brake: cat('brake'), susp: cat('susp'), climate: cat('climate'), battery: cat('battery'), severity, profile }
 }
 
 export function generateMaintenanceServices(isEV, annualMileage, segment, make = '', state = null, vehicleAgeYears = 0, laborRateOverride = null, wearProfile = null) {
@@ -963,7 +981,9 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
   const shockAnnual = amortize(c.shock_cost, 1.5, shockInterval) + amortize(c.shock_cost * 0.8, 1.5, strutInterval)
   svc.push({ name: 'Shocks & struts (amortized)', detail: `every ${shockInterval.toLocaleString()}–${strutInterval.toLocaleString()} mi`, annual: Math.round(shockAnnual) })
 
-  svc.push({ name: '12V battery', detail: 'every ~5 years', annual: amortize(180, 0.3, 65000) })
+  // 12V battery — thermal life; hot climates roughly halve replacement interval.
+  const batteryInterval = Math.round(65000 / wear.battery)
+  svc.push({ name: '12V battery', detail: `every ${batteryInterval.toLocaleString()} mi`, annual: amortize(180, 0.3, batteryInterval) })
 
   // Differential fluid — trucks and AWD-likely SUVs
   if (isTruck || isSUV) {
@@ -1106,8 +1126,8 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
   defs.push({ name: 'Front shocks/struts', costPerOcc: occCost(c.shock_cost, 1.5), intervalMiles: shockInterval })
   defs.push({ name: 'Rear shocks/struts',  costPerOcc: occCost(Math.round(c.shock_cost * 0.8), 1.5), intervalMiles: strutInterval })
 
-  // 12V battery
-  defs.push({ name: '12V battery', costPerOcc: occCost(180, 0.3), intervalMiles: 65000 })
+  // 12V battery — thermal life; hot climates roughly halve replacement interval
+  defs.push({ name: '12V battery', costPerOcc: occCost(180, 0.3), intervalMiles: Math.round(65000 / wear.battery) })
 
   // Differential fluid — trucks always, AWD-likely SUVs included
   if (isTruck || isSUV) {

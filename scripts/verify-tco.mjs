@@ -231,11 +231,61 @@ for (const [zip, label] of TERRAIN_ZIPS) {
   if (checks.length) { failTerrain += checks.length; console.log('   ⚠ ' + checks.join('; ')) }
 }
 
+// ── Part 5: high-mileage forecast — the wider cast must engage ────────────
+// Forecast 10 years for both a new car (0 mi) and a high-mileage buy (150k mi
+// start, ~11 yr old). The high-mileage window (150k→280k) should surface the
+// major-component catalog and cost materially more per year than the new-car
+// window — that's the whole point of the wider cast.
+console.log('\nPART 5 — High-mileage coverage (10-yr forecast, 13k mi/yr)\n')
+console.log(
+  'Vehicle'.padEnd(22) + 'new 0→130k'.padStart(12) + '150k→280k'.padStart(12) +
+  'ramp'.padStart(8) + '  major items @ high-mi'
+)
+console.log('─'.repeat(82))
+
+// Catalog item names, to detect which major components appear in a forecast.
+const HM_NAMES = new Set([
+  'Water pump & thermostat','Radiator & cooling hoses','Alternator','Starter motor',
+  'Ignition coils','Fuel pump & filter','Catalytic converter','Drive belt tensioner & pulleys',
+  'Valve-cover gasket & seals','Exhaust system & muffler','Engine/trans mounts',
+  'Control arms, ball joints & bushings','Wheel bearings / hubs','CV axles & boots',
+  'Steering tie rods & rack service','Sway-bar links & bushings','A/C compressor','EV coolant pump & lines',
+])
+
+function forecastAvg(make, model, startMi, ageStart) {
+  const seg = classifySegment(make, model)
+  const isEV = seg === 'electric'
+  const yrs = generateDetailedMaintenanceByYear(isEV, ANNUAL_MILEAGE, seg, make, 10, startMi, null, ageStart)
+  const avg = yrs.reduce((a, b) => a + b.total, 0) / yrs.length
+  const majors = new Set(yrs.flatMap(y => y.services.map(s => s.name)).filter(n => HM_NAMES.has(n)))
+  return { avg, majors }
+}
+
+let failHM = 0
+const HM_FLEET = [
+  ['Toyota', 'Camry'], ['Ford', 'F-150'], ['BMW', 'X5'], ['Honda', 'Civic'], ['Tesla', 'Model 3'],
+]
+for (const [make, model] of HM_FLEET) {
+  const lo = forecastAvg(make, model, 0, 0)
+  const hi = forecastAvg(make, model, 150000, 11)
+  const ramp = (hi.avg - lo.avg) / lo.avg
+  console.log(
+    `${make} ${model}`.padEnd(22) + money(lo.avg).padStart(12) + money(hi.avg).padStart(12) +
+    `+${pct(ramp)}`.padStart(8) + `  ${hi.majors.size} of ${HM_NAMES.size}`
+  )
+  // The high-mileage window must surface a broad set of major components and
+  // cost materially more than the new-car window.
+  const expectedMajors = model === 'Model 3' ? 6 : 12   // EVs skip engine items
+  if (hi.majors.size < expectedMajors) { failHM++; console.log(`   ⚠ only ${hi.majors.size} major items engaged (expected ≥${expectedMajors})`) }
+  if (ramp < 0.25) { failHM++; console.log(`   ⚠ high-mileage ramp only +${pct(ramp)} (expected ≥+25%)`) }
+}
+
 console.log('\n' + '═'.repeat(78))
 console.log(`  RESULT: Part1 segment-accuracy fails: ${failSegment}/${segLines.length}`)
 console.log(`          Part2 table-sanity fails:     ${failTable}/${segLines.length}`)
 console.log(`          Part3 classification fails:   ${failClass}`)
 console.log(`          Part4 terrain-logic fails:    ${failTerrain}`)
+console.log(`          Part5 high-mileage fails:     ${failHM}`)
 console.log('═'.repeat(78))
 
-process.exit(failSegment > 0 || failTerrain > 0 ? 1 : 0)
+process.exit(failSegment > 0 || failTerrain > 0 || failHM > 0 ? 1 : 0)

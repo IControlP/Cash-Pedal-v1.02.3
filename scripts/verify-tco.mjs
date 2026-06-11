@@ -14,6 +14,7 @@ import {
   getLocalWearProfile,
   resolveCategoryWear,
   getKnownIssueServices,
+  classifyTrimStress,
   MAINT_BRAND_MULT,
 } from '../src/utils/vehicleCosts.js'
 
@@ -336,6 +337,50 @@ ki(m3.names.has('HV battery reserve (out of warranty)'), 'Tesla Model 3 age 9+ b
 ki(getKnownIssueServices('Tesla', 'Model S', 2014, '', true).length === 1, '2014 Model S matches MCU/door-handle issue')
 ki(getKnownIssueServices('Tesla', 'Model 3', 2019, '', true).length === 0, '2019 Model 3 matches no known issues')
 
+// ── Part 7: trim-level powertrain stress — perf trim vs base sibling ──────
+// Performance/turbo trims must shorten engine + chassis intervals and forecast
+// higher than the base trim of the same model; comfort trims stay unaffected.
+console.log('\nPART 7 — Trim stress: performance trim vs. base sibling (10-yr avg, 13k mi/yr)\n')
+
+function trimAvg(make, model, trim, opts = {}) {
+  const seg = opts.segment ?? classifySegment(make, model)
+  const isEV = opts.isEV ?? (seg === 'electric')
+  const yrs = generateDetailedMaintenanceByYear(isEV, ANNUAL_MILEAGE, seg, make, 10, opts.startMi ?? 0, null, opts.ageStart ?? 0, null, null, model, opts.year ?? 2020, trim)
+  const names = new Set(yrs.flatMap(y => y.services.map(s => s.name)))
+  return { avg: yrs.reduce((a, b) => a + b.total, 0) / yrs.length, names }
+}
+
+let failTS = 0
+const ts = (cond, label) => { console.log(`  ${cond ? '✓' : '✗'} ${label}`); if (!cond) failTS++ }
+
+console.log(
+  'Comparison'.padEnd(40) + 'base/yr'.padStart(9) + 'perf/yr'.padStart(9) + 'delta'.padStart(8)
+)
+console.log('─'.repeat(70))
+const PAIRS = [
+  ['Volkswagen', 'Golf',   'Golf S',        'Golf GTI'],
+  ['Honda',      'Civic',  'Civic LX',      'Civic Type R'],
+  ['BMW',        '3 Series','330i',         'M3 Competition'],
+  ['Ford',       'Mustang','Mustang EcoBoost', 'Shelby GT500'],
+  ['Hyundai',    'Elantra','Elantra SEL',   'Elantra N'],
+]
+for (const [mk, md, baseT, perfT] of PAIRS) {
+  const b = trimAvg(mk, md, baseT), p = trimAvg(mk, md, perfT)
+  const d = (p.avg - b.avg) / b.avg
+  console.log(`${mk} ${md}: ${baseT} → ${perfT}`.padEnd(40) + money(b.avg).padStart(9) + money(p.avg).padStart(9) + `+${pct(d)}`.padStart(8))
+  ts(p.avg > b.avg * 1.04, `${md} ${perfT} forecasts >4% over ${baseT}`)
+}
+
+// Classifier sanity + carbon-cleaning gating
+ts(classifyTrimStress('Honda', 'Civic', 'Type R').perf === 2, 'Civic Type R → perf tier 2')
+ts(classifyTrimStress('Honda', 'Civic', 'LX').perf === 0 && !classifyTrimStress('Honda','Civic','LX').fi, 'Civic LX → no stress')
+ts(classifyTrimStress('Porsche', 'Cayenne', 'Turbo').perf === 2, 'Cayenne Turbo → perf tier 2 (Porsche turbo = top trim)')
+ts(classifyTrimStress('Mazda', 'CX-5', 'Turbo').fi && classifyTrimStress('Mazda','CX-5','Turbo').perf === 0, 'CX-5 Turbo → forced-induction, not performance')
+ts(classifyTrimStress('Tesla', 'Model S', 'Plaid').perf === 2 && !classifyTrimStress('Tesla','Model S','Plaid').fi, 'Model S Plaid → perf tier 2, no forced induction')
+ts(trimAvg('Volkswagen', 'Golf', 'Golf GTI').names.has('Carbon cleaning (GDI intake)'), 'GTI books GDI carbon cleaning')
+ts(!trimAvg('Honda', 'Civic', 'Civic LX').names.has('Carbon cleaning (GDI intake)'), 'Civic LX (NA) does not book carbon cleaning')
+ts(trimAvg('Tesla', 'Model S', 'Plaid').names.has('Tire replacement (set)') && classifyTrimStress('Tesla','Model S','Plaid').chassisStress === 1.5, 'Plaid applies chassis stress (tires/brakes) without engine items')
+
 console.log('\n' + '═'.repeat(78))
 console.log(`  RESULT: Part1 segment-accuracy fails: ${failSegment}/${segLines.length}`)
 console.log(`          Part2 table-sanity fails:     ${failTable}/${segLines.length}`)
@@ -343,6 +388,7 @@ console.log(`          Part3 classification fails:   ${failClass}`)
 console.log(`          Part4 terrain-logic fails:    ${failTerrain}`)
 console.log(`          Part5 high-mileage fails:     ${failHM}`)
 console.log(`          Part6 known-issue fails:      ${failKI}`)
+console.log(`          Part7 trim-stress fails:      ${failTS}`)
 console.log('═'.repeat(78))
 
-process.exit(failSegment > 0 || failTerrain > 0 || failHM > 0 || failKI > 0 ? 1 : 0)
+process.exit(failSegment > 0 || failTerrain > 0 || failHM > 0 || failKI > 0 || failTS > 0 ? 1 : 0)

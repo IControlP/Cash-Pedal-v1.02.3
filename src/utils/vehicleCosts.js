@@ -1025,6 +1025,40 @@ export function hasAirSuspension(make, model) {
   return (AIR_SUSPENSION_MODELS[make] ?? []).some(m => ml.includes(m))
 }
 
+// ── Trim-level powertrain stress ──────────────────────────────────────────
+// Forced-induction and performance trims work the engine and chassis harder,
+// so their wear items fail earlier than the base model's. Two independent
+// outputs drive shorter service intervals:
+//   engineStress (ICE) — turbo, spark plugs, timing chain, oil, injectors;
+//     also gates the turbocharger line and a direct-injection carbon-cleaning
+//     service. Higher boost/output = more heat, knock, and oil shear.
+//   chassisStress (all powertrains, incl. EV) — tires, brakes, brake fluid.
+//     Performance cars (and heavy instant-torque EVs like Plaid) shred tires
+//     and brakes far faster than the comfort trim.
+// Detection keys off the trim/model name (the DB encodes engine/package, e.g.
+// "2.0T", "GTI", "Type R", "M3 Competition", "Plaid", "Raptor").
+export function classifyTrimStress(make, model, trim) {
+  const s  = `${model ?? ''} ${trim ?? ''}`.toLowerCase()
+  const mk = make ?? ''
+
+  const fi = /turbo|supercharg|tfsi|tsi|ecoboost|t-gdi|\d\.\dt\b|\d{2} tfsi|gti|\bgli\b|\bsi\b|\bst\b|\bn line\b|\bn$|wrx|\bsti\b|mazdaspeed|hellcat|redeye|scat|trackhawk|\btrx\b|raptor|amg|\bm[2-8]\b|\bm\d{2,3}i?\b|\/\/\/m|\brs[3-7]\b|\bs[3-8]\b/.test(s)
+
+  // Tier 2 — high-output / track-capable
+  const perf2 = (
+    /amg|\bm[2-8]\b|competition|\/\/\/m|\brs[3-7]\b|type r|\bsti\b|\bwrx\b|srt|hellcat|redeye|scat pack|trackhawk|\btrx\b|raptor|gr supra|gr corolla|gr86|nismo|\bn$|ats-v|cts-v|ct[45]-v|\bv sedan\b|\bv coupe\b|\bgt[2-4]\b|z06|zr1|zl1|shelby|gt350|gt500|mach 1|black series|quadrifoglio|\bs[3-8]\b|plaid/.test(s)
+    || (mk === 'Porsche' && /\bturbo\b|\bgts\b|\bgt[0-9s]/.test(s))
+    || (/\bperformance\b/.test(s) && !/turbo|premium|luxury/.test(s)) // Tesla/EV "Performance"
+  )
+  // Tier 1 — sport / warm
+  const perf1 = !perf2 && /gti|\bgli\b|\bn line\b|\bsi\b|\bst\b|\bm\d{2,3}i?\b|\bgts\b|\bgt\b(?!-?line)|cayman|boxster|\bsupra\b|gr86|brz|\bz\b|\b86\b/.test(s)
+
+  const perf = perf2 ? 2 : perf1 ? 1 : 0
+  // Forced induction adds heat/oil-shear on top of the performance tier; capped.
+  const engineStress  = Math.min(1.35, (perf === 2 ? 1.22 : perf === 1 ? 1.10 : 1.0) * (fi ? 1.08 : 1.0))
+  const chassisStress = perf === 2 ? 1.50 : perf === 1 ? 1.22 : 1.0
+  return { fi, perf, engineStress, chassisStress }
+}
+
 export function generateMaintenanceServices(isEV, annualMileage, segment, make = '', state = null, vehicleAgeYears = 0, laborRateOverride = null, wearProfile = null, model = '', modelYear = null, trim = '') {
   const tier      = determineMaintTier(make)
   const c         = MAINT_TIER_COSTS[tier]
@@ -1034,6 +1068,11 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
   // Per-category terrain wear — shortens only the intervals a region's terrain
   // physically affects (brakes in mountains, A/C in deserts, struts on potholes).
   const wear      = resolveCategoryWear(wearProfile, state)
+  // Trim-level powertrain stress — performance/turbo trims shorten engine and
+  // chassis intervals (see classifyTrimStress).
+  const stress    = classifyTrimStress(make, model, trim)
+  const eStress   = stress.engineStress
+  const chStress  = stress.chassisStress
   const isTruck   = segment === 'truck'
   const isSports  = segment === 'sports'
   const isSUV     = segment === 'suv' || segment === 'luxury_suv'
@@ -1045,24 +1084,25 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
   const amortize = (partsCost, laborHrs, intervalMiles) =>
     Math.round(segMult * (annualMileage / intervalMiles) * (partsCost * c.parts_mult * brand + laborHrs * laborRate * c.labor_mult))
 
-  // Oil changes — oil type shown in the label
+  // Oil changes — oil type shown in the label; high-output trims need it sooner
   if (!isEV) {
-    const oilQty = Math.max(1, Math.round(annualMileage / c.oil_interval))
-    svc.push({ name: `Oil changes (${c.oil_type})`, detail: `every ${c.oil_interval.toLocaleString()} mi`, annual: Math.round(oilQty * c.oil_change_cost * brand * segMult) })
+    const oilInterval = Math.round(c.oil_interval / eStress)
+    const oilQty = Math.max(1, Math.round(annualMileage / oilInterval))
+    svc.push({ name: `Oil changes (${c.oil_type})`, detail: `every ${oilInterval.toLocaleString()} mi`, annual: Math.round(oilQty * c.oil_change_cost * brand * segMult) })
   }
 
   const filterInterval = tier === 'luxury' ? annualMileage : 15000
   svc.push({ name: 'Air & cabin filters', detail: tier === 'luxury' ? 'annual' : 'every ~15,000 mi', annual: Math.round((annualMileage / filterInterval) * c.filter_cost * brand * segMult) })
 
   // Tire rotations — EVs every 5k (torque accelerates wear), gas every 6k
-  const rotationInterval = Math.round((isEV ? 5000 : 6000) / wear.tire)
+  const rotationInterval = Math.round((isEV ? 5000 : 6000) / (wear.tire * chStress))
   const rotations = Math.max(2, Math.floor(annualMileage / rotationInterval))
   svc.push({ name: 'Tire rotations', detail: `every ${rotationInterval.toLocaleString()} mi`, annual: Math.round(rotations * c.tire_rotation_cost * brand * segMult) })
 
   svc.push({ name: 'Brake inspection', detail: 'annual', annual: Math.round(c.brake_inspection_cost * brand * segMult) })
   svc.push({ name: 'Wiper blades', detail: 'annual', annual: Math.round(c.wiper_cost * brand * segMult) })
 
-  const bfInterval = Math.round(((tier === 'luxury' || tier === 'premium') ? 24000 : 30000) / wear.brake)
+  const bfInterval = Math.round(((tier === 'luxury' || tier === 'premium') ? 24000 : 30000) / (wear.brake * chStress))
   svc.push({ name: 'Brake fluid flush', detail: `every ${bfInterval.toLocaleString()} mi`, annual: amortize(c.brake_fluid_flush_cost, 0, bfInterval) })
 
   if (!isEV) {
@@ -1072,7 +1112,7 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
     const coolantInterval = tier === 'luxury' ? 60000 : 80000
     svc.push({ name: 'Coolant flush', detail: `every ${coolantInterval.toLocaleString()} mi`, annual: amortize(c.coolant_flush_cost, 0, coolantInterval) })
 
-    const sparkInterval = (tier === 'luxury' || tier === 'premium') ? 60000 : 90000
+    const sparkInterval = Math.round(((tier === 'luxury' || tier === 'premium') ? 60000 : 90000) / eStress)
     svc.push({ name: 'Spark plugs', detail: `every ${sparkInterval.toLocaleString()} mi`, annual: amortize(c.spark_plug_cost, 0, sparkInterval) })
 
     const beltInterval = (tier === 'luxury' || tier === 'premium') ? 60000 : 80000
@@ -1080,15 +1120,21 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
 
     svc.push({ name: 'PCV valve', detail: 'every 60,000 mi', annual: amortize(30, 0.3, 60000) })
 
-    const injectorInterval = (tier === 'luxury' || tier === 'premium') ? 45000 : 60000
+    const injectorInterval = Math.round(((tier === 'luxury' || tier === 'premium') ? 45000 : 60000) / eStress)
     svc.push({ name: 'Fuel injector service', detail: `every ${injectorInterval.toLocaleString()} mi`, annual: amortize(c.fuel_injector_cost, 0.5, injectorInterval) })
 
     svc.push({ name: 'Oxygen sensor(s)', detail: 'every 100,000 mi', annual: amortize(220, 1.0, 100000) })
 
-    // Timing belt / chain-tensioner service — population-blended interval (belt
-    // engines need replacement ~90–105k mi; chain engines need tensioner/guide
-    // service later). Major scheduled cost previously omitted entirely.
-    svc.push({ name: 'Timing belt/chain service', detail: 'every ~100,000 mi', annual: amortize(c.timing_belt_cost, 3.0, 100000) })
+    // Timing belt / chain-tensioner service — population-blended; high-output
+    // engines (boost/rpm) wear chains and guides sooner.
+    svc.push({ name: 'Timing belt/chain service', detail: `every ~${Math.round(100000 / eStress).toLocaleString()} mi`, annual: amortize(c.timing_belt_cost, 3.0, Math.round(100000 / eStress)) })
+
+    // Direct-injection carbon cleaning (walnut blast) — turbo-GDI intake valves
+    // coke up; high-output forced-induction trims especially. Not on port-injection.
+    if (stress.fi) {
+      const carbonInterval = Math.round(45000 / eStress)
+      svc.push({ name: 'Carbon cleaning (GDI intake)', detail: `every ~${carbonInterval.toLocaleString()} mi`, annual: amortize(280, 3.0, carbonInterval) })
+    }
   }
 
   // AC service applies to all vehicles (refrigerant check + inspection)
@@ -1110,15 +1156,16 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
   svc.push({ name: 'Wheel alignment', detail: 'every 2 years', annual: Math.round(c.alignment_cost * brand * segMult / 2) })
 
   const baseTireInterval = isEV ? 40000 : isSports ? 30000 : isTruck ? 45000 : (tier === 'luxury' || tier === 'premium') ? 40000 : 60000
-  const tireInterval = Math.round(baseTireInterval / wear.tire)
+  const tireInterval = Math.round(baseTireInterval / (wear.tire * chStress))
   svc.push({ name: 'Tire replacement (set)', detail: `every ${tireInterval.toLocaleString()} mi`, annual: amortize(c.tire_cost, 2.0, tireInterval) })
 
   const brakeMult = isEV ? 1.8 : 1.0
+  const brakeDiv = wear.brake * chStress
   const brakeAnnual =
-    amortize(150, 1.0, Math.round(60000 * brakeMult / wear.brake)) +
-    amortize(130, 1.0, Math.round(70000 * brakeMult / wear.brake)) +
-    amortize(300, 1.5, Math.round(80000 * brakeMult / wear.brake)) +
-    amortize(250, 1.5, Math.round(90000 * brakeMult / wear.brake))
+    amortize(150, 1.0, Math.round(60000 * brakeMult / brakeDiv)) +
+    amortize(130, 1.0, Math.round(70000 * brakeMult / brakeDiv)) +
+    amortize(300, 1.5, Math.round(80000 * brakeMult / brakeDiv)) +
+    amortize(250, 1.5, Math.round(90000 * brakeMult / brakeDiv))
   svc.push({ name: 'Brake pads & rotors (amortized)', detail: isEV ? 'extended — regen braking' : '~60k–90k mi', annual: Math.round(brakeAnnual) })
 
   const shockInterval = Math.round((isTruck ? 80000 : 90000) / wear.susp)
@@ -1150,11 +1197,11 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
     svc.push({ name, detail: `~every ${iv.toLocaleString()} mi`, annual: amortize(parts, labor, iv) })
   }
 
-  // Turbocharger — luxury/premium ICE fleets are effectively all turbocharged;
-  // blended replacement at ~160k. Standard-tier turbo platforms with documented
-  // failures are handled by the known-issue registry instead.
-  if (!isEV && !isHybrid && (tier === 'luxury' || tier === 'premium')) {
-    svc.push({ name: 'Turbocharger (blended)', detail: '~every 160,000 mi', annual: Math.round((annualMileage / 160000) * (1100 + 4.0 * laborRate)) })
+  // Turbocharger — present on forced-induction trims and on luxury/premium ICE
+  // fleets (effectively all turbo). High-output trims spin hotter and fail sooner.
+  if (!isEV && !isHybrid && (stress.fi || tier === 'luxury' || tier === 'premium')) {
+    const turboInterval = Math.round(160000 / eStress)
+    svc.push({ name: 'Turbocharger (blended)', detail: `~every ${turboInterval.toLocaleString()} mi`, annual: Math.round((annualMileage / turboInterval) * (1100 + 4.0 * laborRate)) })
   }
 
   // Air suspension — compressor + spring failures at ~130k on air-sprung models.
@@ -1230,6 +1277,10 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
   const laborRate = laborRateOverride ?? STATE_LABOR_RATES[state] ?? LABOR_RATE
   // Per-category terrain wear (see resolveCategoryWear / ZIP_TERRAIN_ZONES).
   const wear      = resolveCategoryWear(wearProfile, state)
+  // Trim-level powertrain stress (see classifyTrimStress).
+  const stress    = classifyTrimStress(make, model, trim)
+  const eStress   = stress.engineStress
+  const chStress  = stress.chassisStress
   const isTruck   = segment === 'truck'
   const isSports  = segment === 'sports'
   const isSUV     = segment === 'suv' || segment === 'luxury_suv'
@@ -1249,25 +1300,25 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
 
   const defs = []
 
-  // Oil changes — oil type in label
+  // Oil changes — high-output trims need it sooner
   if (!isEV) {
-    defs.push({ name: `Oil changes (${c.oil_type})`, costPerOcc: Math.round(c.oil_change_cost * brand * segMult), intervalMiles: c.oil_interval })
+    defs.push({ name: `Oil changes (${c.oil_type})`, costPerOcc: Math.round(c.oil_change_cost * brand * segMult), intervalMiles: Math.round(c.oil_interval / eStress) })
   }
 
   // Filters
   const filterInterval = tier === 'luxury' ? annualMileage : 15000
   defs.push({ name: 'Air & cabin filters', costPerOcc: Math.round(c.filter_cost * brand * segMult), intervalMiles: filterInterval })
 
-  // Tire rotations — EVs every 5k (high torque = faster wear), road-wear adjusted
-  const rotationInterval = Math.round((isEV ? 5000 : 6000) / wear.tire)
+  // Tire rotations — EVs every 5k (high torque = faster wear); chassis stress on perf trims
+  const rotationInterval = Math.round((isEV ? 5000 : 6000) / (wear.tire * chStress))
   defs.push({ name: 'Tire rotations', costPerOcc: Math.round(c.tire_rotation_cost * brand * segMult), intervalMiles: rotationInterval })
 
   // Annual services
   defs.push({ name: 'Brake inspection', costPerOcc: Math.round(c.brake_inspection_cost * brand * segMult), intervalMiles: annualMileage })
   defs.push({ name: 'Wiper blades', costPerOcc: Math.round(c.wiper_cost * brand * segMult), intervalMiles: annualMileage })
 
-  // Brake fluid — road-wear adjusted (salt/moisture contaminate fluid faster)
-  const bfInterval = Math.round(((tier === 'luxury' || tier === 'premium') ? 24000 : 30000) / wear.brake)
+  // Brake fluid — terrain + performance (track) use contaminate/boil fluid faster
+  const bfInterval = Math.round(((tier === 'luxury' || tier === 'premium') ? 24000 : 30000) / (wear.brake * chStress))
   defs.push({ name: 'Brake fluid flush', costPerOcc: occCost(c.brake_fluid_flush_cost, 0), intervalMiles: bfInterval })
 
   if (!isEV) {
@@ -1277,7 +1328,7 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
     const coolantInterval = tier === 'luxury' ? 60000 : 80000
     defs.push({ name: 'Coolant flush', costPerOcc: occCost(c.coolant_flush_cost, 0), intervalMiles: coolantInterval })
 
-    const sparkInterval = (tier === 'luxury' || tier === 'premium') ? 60000 : 90000
+    const sparkInterval = Math.round(((tier === 'luxury' || tier === 'premium') ? 60000 : 90000) / eStress)
     defs.push({ name: 'Spark plugs', costPerOcc: occCost(c.spark_plug_cost, 0), intervalMiles: sparkInterval })
 
     const beltInterval = (tier === 'luxury' || tier === 'premium') ? 60000 : 80000
@@ -1285,13 +1336,18 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
 
     defs.push({ name: 'PCV valve', costPerOcc: occCost(30, 0.3), intervalMiles: 60000 })
 
-    const injectorInterval = (tier === 'luxury' || tier === 'premium') ? 45000 : 60000
+    const injectorInterval = Math.round(((tier === 'luxury' || tier === 'premium') ? 45000 : 60000) / eStress)
     defs.push({ name: 'Fuel injector service', costPerOcc: occCost(c.fuel_injector_cost, 0.5), intervalMiles: injectorInterval })
 
     defs.push({ name: 'Oxygen sensor(s)', costPerOcc: occCost(220, 1.0), intervalMiles: 100000 })
 
-    // Timing belt / chain-tensioner service — population-blended ~100k interval
-    defs.push({ name: 'Timing belt/chain service', costPerOcc: occCost(c.timing_belt_cost, 3.0), intervalMiles: 100000 })
+    // Timing belt/chain — high-output engines wear chains/guides sooner
+    defs.push({ name: 'Timing belt/chain service', costPerOcc: occCost(c.timing_belt_cost, 3.0), intervalMiles: Math.round(100000 / eStress) })
+
+    // Direct-injection carbon cleaning (walnut blast) on forced-induction trims
+    if (stress.fi) {
+      defs.push({ name: 'Carbon cleaning (GDI intake)', costPerOcc: occCost(280, 3.0), intervalMiles: Math.round(45000 / eStress) })
+    }
   }
 
   // AC service — all vehicles; heat/humidity shorten refrigerant life
@@ -1313,17 +1369,18 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
   const alignInterval = Math.round(2 * annualMileage / wear.susp)
   defs.push({ name: 'Wheel alignment', costPerOcc: Math.round(c.alignment_cost * brand * segMult), intervalMiles: alignInterval })
 
-  // Tires — segment-differentiated cost and tire-wear adjusted interval
+  // Tires — segment cost + tire-wear & performance-trim adjusted interval
   const baseTireInterval = isEV ? 40000 : isSports ? 30000 : isTruck ? 45000 : (tier === 'luxury' || tier === 'premium') ? 40000 : 60000
-  const tireInterval = Math.round(baseTireInterval / wear.tire)
+  const tireInterval = Math.round(baseTireInterval / (wear.tire * chStress))
   defs.push({ name: 'Tire replacement (set)', costPerOcc: occCost(c.tire_cost, 2.0), intervalMiles: tireInterval })
 
-  // Brake pads & rotors — brake wear (hills/descents, salt corrosion)
+  // Brake pads & rotors — terrain + performance (track) braking
   const brakeMult = isEV ? 1.8 : 1.0
-  defs.push({ name: 'Front brake pads', costPerOcc: occCost(150, 1.0), intervalMiles: Math.round(60000 * brakeMult / wear.brake) })
-  defs.push({ name: 'Rear brake pads',  costPerOcc: occCost(130, 1.0), intervalMiles: Math.round(70000 * brakeMult / wear.brake) })
-  defs.push({ name: 'Front rotors',     costPerOcc: occCost(300, 1.5), intervalMiles: Math.round(80000 * brakeMult / wear.brake) })
-  defs.push({ name: 'Rear rotors',      costPerOcc: occCost(250, 1.5), intervalMiles: Math.round(90000 * brakeMult / wear.brake) })
+  const brakeDiv  = wear.brake * chStress
+  defs.push({ name: 'Front brake pads', costPerOcc: occCost(150, 1.0), intervalMiles: Math.round(60000 * brakeMult / brakeDiv) })
+  defs.push({ name: 'Rear brake pads',  costPerOcc: occCost(130, 1.0), intervalMiles: Math.round(70000 * brakeMult / brakeDiv) })
+  defs.push({ name: 'Front rotors',     costPerOcc: occCost(300, 1.5), intervalMiles: Math.round(80000 * brakeMult / brakeDiv) })
+  defs.push({ name: 'Rear rotors',      costPerOcc: occCost(250, 1.5), intervalMiles: Math.round(90000 * brakeMult / brakeDiv) })
 
   // Shocks & struts — suspension wear (potholes, rough surfaces)
   const shockInterval = Math.round((isTruck ? 80000 : 90000) / wear.susp)
@@ -1358,9 +1415,10 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
   // platform-specific costs (e.g., the luxury segMult would halve a BMW chain job).
   const rawCost = (parts, laborHrs) => Math.round(parts + laborHrs * laborRate)
 
-  // Turbocharger — luxury/premium ICE fleets are effectively all turbocharged.
-  if (!isEV && !isHybrid && (tier === 'luxury' || tier === 'premium')) {
-    defs.push({ name: 'Turbocharger (blended)', costPerOcc: rawCost(1100, 4.0), intervalMiles: 160000 })
+  // Turbocharger — forced-induction trims + luxury/premium ICE (effectively all
+  // turbo). High-output trims spin hotter and fail sooner.
+  if (!isEV && !isHybrid && (stress.fi || tier === 'luxury' || tier === 'premium')) {
+    defs.push({ name: 'Turbocharger (blended)', costPerOcc: rawCost(1100, 4.0), intervalMiles: Math.round(160000 / eStress) })
   }
 
   // Air suspension — compressor + springs on air-sprung models, terrain-adjusted.

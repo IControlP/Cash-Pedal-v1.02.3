@@ -158,8 +158,8 @@ function SpecsPanel({ specs, mpg, isEV }) {
 }
 
 // ── Maintenance breakdown panel ───────────────────────
-function MaintenanceBreakdown({ isEV, annualMileage, segment, make, startMileage = 0 }) {
-  const yr1 = generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make, 1, startMileage, null, 0)[0]
+function MaintenanceBreakdown({ isEV, annualMileage, segment, make, startMileage = 0, model = '', modelYear = null, trim = '' }) {
+  const yr1 = generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make, 1, startMileage, null, 0, null, null, model, modelYear, trim)[0]
   const services = yr1?.services ?? []
   return (
     <div className="px-4 pb-3 pt-2 border-t border-[var(--border)]"
@@ -1050,13 +1050,13 @@ export default function TCOCalculator() {
     const sm = effectiveStartMileage
     if (modelData) {
       const seg = classifySegment(selMake || '', selModel || '')
-      return generateDetailedMaintenanceByYear(modelData.is_ev, annualMileage, seg, selMake, 5, sm, resolvedState, vehicleAge, resolvedLaborRate, resolvedWear)
+      return generateDetailedMaintenanceByYear(modelData.is_ev, annualMileage, seg, selMake, 5, sm, resolvedState, vehicleAge, resolvedLaborRate, resolvedWear, selModel, selYear, selTrim)
     }
     const catInfo = VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)
     const catIsEV = catInfo?.isEV ?? false
     const catSeg  = catInfo?.segment ?? 'sedan'
     return generateDetailedMaintenanceByYear(catIsEV, annualMileage, catSeg, '', 5, sm, resolvedState, 0, resolvedLaborRate, resolvedWear)
-  }, [detailedMode, modelData, annualMileage, selMake, selModel, vehicleCategory, effectiveStartMileage, selYear, currentMileage, resolvedState, vehicleAge, resolvedLaborRate, resolvedWear])
+  }, [detailedMode, modelData, annualMileage, selMake, selModel, selTrim, vehicleCategory, effectiveStartMileage, selYear, currentMileage, resolvedState, vehicleAge, resolvedLaborRate, resolvedWear])
 
   const maintenanceByYear = useMemo(() => maintenanceDetail?.map(yr => yr.total) ?? null, [maintenanceDetail])
 
@@ -1079,7 +1079,7 @@ export default function TCOCalculator() {
       setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel)))
       if (detailedMode) {
         const seg = classifySegment(selMake||'', selModel||'')
-        const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake, resolvedState, vehicleAge, resolvedLaborRate, resolvedWear)
+        const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake, resolvedState, vehicleAge, resolvedLaborRate, resolvedWear, selModel, selYear, selTrim)
         setAnnualMaintenance(services.reduce((s, x) => s + x.annual, 0))
       } else {
         const seg = classifySegment(selMake||'', selModel||'')
@@ -1109,7 +1109,7 @@ export default function TCOCalculator() {
       ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)), currentMileage)
       : price
     setAnnualRegistration(computeAnnualRegistration(resolvedState, currentVal))
-  }, [price, selMake, selModel, selYear, resolvedState, resolvedLaborRate, resolvedWear, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [price, selMake, selModel, selYear, selTrim, resolvedState, resolvedLaborRate, resolvedWear, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLocationInput = useCallback((val) => {
     setLocationInput(val)
@@ -2448,6 +2448,9 @@ export default function TCOCalculator() {
                             segment={maintenanceSegment}
                             make={selMake}
                             startMileage={effectiveStartMileage}
+                            model={selModel}
+                            modelYear={selYear}
+                            trim={selTrim}
                           />
                         )}
                         {key === 'maint' && !detailedMode && !simpleMode && resolvedState && (
@@ -2561,6 +2564,9 @@ export default function TCOCalculator() {
                           segment={classifySegment(selMake||'', selModel||'')}
                           make={selMake}
                           startMileage={effectiveStartMileage}
+                          model={selModel}
+                          modelYear={selYear}
+                          trim={selTrim}
                         />
                       </div>
                     )}

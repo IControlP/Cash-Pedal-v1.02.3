@@ -80,7 +80,7 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
 
   const insurance = Math.round(estimateInsurance(price, make, model, year, state || null) / 12)
 
-  const maintServices = generateMaintenanceServices(isEv, annualMiles, segment, make, state || null, 0)
+  const maintServices = generateMaintenanceServices(isEv, annualMiles, segment, make, state || null, 0, null, null, model, year)
   const maintenance = Math.round(maintServices.reduce((s, x) => s + x.annual, 0) / 12)
 
   const registration = Math.round(computeAnnualRegistration(state || null, price) / 12)

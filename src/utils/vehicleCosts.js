@@ -930,7 +930,102 @@ function hmServiceApplies(powertrain, isEV) {
   return !isEV // 'ice'
 }
 
-export function generateMaintenanceServices(isEV, annualMileage, segment, make = '', state = null, vehicleAgeYears = 0, laborRateOverride = null, wearProfile = null) {
+// ── Known-issue registry (make/model/year/trim) ───────────────────────────
+// Widely documented failure patterns tied to specific platforms — the repairs
+// owners of these exact vehicles actually budget for, beyond population-blended
+// wear. Sources: NHTSA complaint clusters, class-action/warranty extensions,
+// RepairPal/CR model reliability data.
+//
+// Entry: { make, models[], trims?[], yearLo, yearHi, category, name, parts,
+//          laborHrs, intervalMiles, pt }
+//   models — lowercase substrings matched against the selected model.
+//   trims  — optional lowercase substrings; when present the issue only applies
+//            if the selected trim matches (used where trim names encode the
+//            affected engine/package). Most issues are model+year scoped since
+//            US trim names rarely encode the engine.
+//   category — 'transmission' suppresses the generic transmission reserve to
+//            avoid double-counting; 'engine'/'electronics' are informational.
+//   parts/laborHrs — realistic out-the-door repair priced as parts + laborHrs ×
+//            regional labor rate. NOT scaled by tier/brand/segment multipliers:
+//            these are documented absolute repair costs, and costs already
+//            reflect warranty-extension coverage where one exists (Theta II).
+//   intervalMiles — population-blended failure midpoint (occurrence-based, so
+//            a forecast crossing it books the repair once).
+//   pt — 'ice' | 'ev' (EVs never match 'ice' issues, so a Focus Electric
+//            doesn't inherit the PowerShift clutch).
+export const KNOWN_ISSUE_SERVICES = [
+  // Jatco CVT failures — among the most documented transmission issues in the fleet
+  { make: 'Nissan',     models: ['altima','sentra','versa','rogue','murano','pathfinder','juke','note'], yearLo: 2012, yearHi: 2021, category: 'transmission', name: 'CVT replacement (known issue)',                parts: 3200, laborHrs: 9.0, intervalMiles: 110000, pt: 'ice' },
+  { make: 'Mitsubishi', models: ['outlander','eclipse cross','mirage','lancer'],                          yearLo: 2014, yearHi: 2022, category: 'transmission', name: 'CVT replacement (known issue)',                parts: 3000, laborHrs: 9.0, intervalMiles: 115000, pt: 'ice' },
+  // Ford DPS6 PowerShift dual-clutch (class action)
+  { make: 'Ford',       models: ['focus','fiesta'],                                                       yearLo: 2012, yearHi: 2016, category: 'transmission', name: 'PowerShift clutch & TCM (known issue)',        parts: 1100, laborHrs: 5.0, intervalMiles: 70000,  pt: 'ice' },
+  // Hyundai/Kia Theta II rod-bearing failures (cost blended down for the lifetime warranty extension)
+  { make: 'Hyundai',    models: ['sonata','santa fe','tucson'],                                           yearLo: 2011, yearHi: 2019, category: 'engine',       name: 'Theta II engine reserve (known issue)',        parts: 1500, laborHrs: 6.0, intervalMiles: 140000, pt: 'ice' },
+  { make: 'Kia',        models: ['optima','sorento','sportage','k5'],                                     yearLo: 2011, yearHi: 2019, category: 'engine',       name: 'Theta II engine reserve (known issue)',        parts: 1500, laborHrs: 6.0, intervalMiles: 140000, pt: 'ice' },
+  // GM 5.3/6.2 V8 AFM/DFM lifter collapse
+  { make: 'Chevrolet',  models: ['silverado','tahoe','suburban'],                                         yearLo: 2007, yearHi: 2021, category: 'engine',       name: 'AFM/DFM lifter & cam service (known issue)',   parts: 1100, laborHrs: 8.0, intervalMiles: 130000, pt: 'ice' },
+  { make: 'GMC',        models: ['sierra','yukon'],                                                       yearLo: 2007, yearHi: 2021, category: 'engine',       name: 'AFM/DFM lifter & cam service (known issue)',   parts: 1100, laborHrs: 8.0, intervalMiles: 130000, pt: 'ice' },
+  // BMW N20/N26 timing chain guide wear
+  { make: 'BMW',        models: ['3 series','5 series','x1','x3','z4'],                                   yearLo: 2012, yearHi: 2015, category: 'engine',       name: 'Timing chain guide service (known issue)',     parts: 900,  laborHrs: 9.0, intervalMiles: 95000,  pt: 'ice' },
+  // VW/Audi EA888 Gen1/2 chain tensioner + oil consumption
+  { make: 'Volkswagen', models: ['gti','golf','jetta','passat','tiguan','beetle','cc'],                   yearLo: 2008, yearHi: 2014, category: 'engine',       name: 'Chain tensioner & oil consumption (known issue)', parts: 700, laborHrs: 5.0, intervalMiles: 100000, pt: 'ice' },
+  { make: 'Audi',       models: ['a4','a5','q5','a3','tt'],                                               yearLo: 2009, yearHi: 2016, category: 'engine',       name: 'Chain tensioner & oil consumption (known issue)', parts: 800, laborHrs: 5.5, intervalMiles: 100000, pt: 'ice' },
+  // Subaru EJ25 head gaskets (older) and FB oil consumption
+  { make: 'Subaru',     models: ['outback','forester','impreza','legacy'],                                yearLo: 2000, yearHi: 2011, category: 'engine',       name: 'Head gasket replacement (known issue)',        parts: 900,  laborHrs: 11.0, intervalMiles: 120000, pt: 'ice' },
+  { make: 'Subaru',     models: ['outback','forester','impreza','crosstrek','legacy'],                    yearLo: 2012, yearHi: 2014, category: 'engine',       name: 'FB engine oil-consumption service (known issue)', parts: 500, laborHrs: 4.0, intervalMiles: 90000, pt: 'ice' },
+  // Ford 3.5L EcoBoost cam phaser rattle
+  { make: 'Ford',       models: ['f-150','expedition'],                                                   yearLo: 2017, yearHi: 2020, category: 'engine',       name: 'EcoBoost cam phaser service (known issue)',    parts: 700,  laborHrs: 7.0, intervalMiles: 110000, pt: 'ice' },
+  // Honda 1.5T fuel/oil dilution — frequent oil changes + injector attention
+  { make: 'Honda',      models: ['civic','cr-v','accord'],                                                yearLo: 2016, yearHi: 2019, category: 'engine',       name: '1.5T oil-dilution service (known issue)',      parts: 200,  laborHrs: 1.5, intervalMiles: 50000,  pt: 'ice' },
+  // Jeep ZF 9HP harsh shifting / TCU
+  { make: 'Jeep',       models: ['cherokee','renegade','compass'],                                        yearLo: 2014, yearHi: 2019, category: 'transmission', name: '9-speed transmission service (known issue)',   parts: 1400, laborHrs: 6.0, intervalMiles: 100000, pt: 'ice' },
+  // Land Rover timing & cooling failures
+  { make: 'Land Rover', models: ['range rover','discovery','evoque','velar','defender'],                  yearLo: 2012, yearHi: 2020, category: 'engine',       name: 'Timing & cooling system service (known issue)', parts: 1200, laborHrs: 8.0, intervalMiles: 90000, pt: 'ice' },
+  // Tesla early MCU/eMMC + door handles
+  { make: 'Tesla',      models: ['model s','model x'],                                                    yearLo: 2012, yearHi: 2018, category: 'electronics',  name: 'MCU & door-handle service (known issue)',      parts: 900,  laborHrs: 2.5, intervalMiles: 90000,  pt: 'ev' },
+]
+
+// Returns the known-issue services matching this exact vehicle (or [] when the
+// model/year is unknown — population items are never silently applied).
+export function getKnownIssueServices(make, model, modelYear, trim = '', isEV = false) {
+  if (!make || !model || !modelYear) return []
+  const yr = parseInt(modelYear)
+  if (!yr) return []
+  const ml = String(model).toLowerCase()
+  const tl = String(trim ?? '').toLowerCase()
+  return KNOWN_ISSUE_SERVICES.filter(e =>
+    e.make === make &&
+    yr >= e.yearLo && yr <= e.yearHi &&
+    e.models.some(m => ml.includes(m)) &&
+    (!e.trims || (tl && e.trims.some(t => tl.includes(t)))) &&
+    hmServiceApplies(e.pt, isEV)
+  )
+}
+
+// ── Air suspension models ─────────────────────────────────────────────────
+// Models that commonly ship with air springs — compressor + spring failures
+// cluster at 100–150k and are not covered by the conventional shock/strut line.
+export const AIR_SUSPENSION_MODELS = {
+  Cadillac:        ['escalade'],
+  Lincoln:         ['navigator', 'aviator'],
+  'Land Rover':    ['range rover', 'discovery', 'defender', 'velar'],
+  'Mercedes-Benz': ['gle', 'gls', 's-class', 'eqs'],
+  BMW:             ['x5', 'x6', 'x7', '7 series'],
+  Audi:            ['q7', 'q8', 'a8', 'e-tron'],
+  Lexus:           ['lx', 'gx'],
+  Porsche:         ['cayenne', 'panamera', 'taycan'],
+  Tesla:           ['model s', 'model x'],
+  Ram:             ['1500'],
+  Jeep:            ['grand cherokee', 'wagoneer'],
+}
+
+export function hasAirSuspension(make, model) {
+  if (!make || !model) return false
+  const ml = String(model).toLowerCase()
+  return (AIR_SUSPENSION_MODELS[make] ?? []).some(m => ml.includes(m))
+}
+
+export function generateMaintenanceServices(isEV, annualMileage, segment, make = '', state = null, vehicleAgeYears = 0, laborRateOverride = null, wearProfile = null, model = '', modelYear = null, trim = '') {
   const tier      = determineMaintTier(make)
   const c         = MAINT_TIER_COSTS[tier]
   const brand     = MAINT_BRAND_MULT[make] ?? 1.0
@@ -1055,15 +1150,64 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
     svc.push({ name, detail: `~every ${iv.toLocaleString()} mi`, annual: amortize(parts, labor, iv) })
   }
 
+  // Turbocharger — luxury/premium ICE fleets are effectively all turbocharged;
+  // blended replacement at ~160k. Standard-tier turbo platforms with documented
+  // failures are handled by the known-issue registry instead.
+  if (!isEV && !isHybrid && (tier === 'luxury' || tier === 'premium')) {
+    svc.push({ name: 'Turbocharger (blended)', detail: '~every 160,000 mi', annual: Math.round((annualMileage / 160000) * (1100 + 4.0 * laborRate)) })
+  }
+
+  // Air suspension — compressor + spring failures at ~130k on air-sprung models.
+  // Priced as documented absolute repair (parts + regional labor), not tier-scaled.
+  if (hasAirSuspension(make, model)) {
+    svc.push({ name: 'Air suspension service', detail: '~every 130,000 mi', annual: Math.round((annualMileage / Math.round(130000 / wear.susp)) * (1400 + 3.0 * laborRate)) })
+  }
+
+  // Hybrid HV battery pack — population-blended ~180k replacement (brand-scaled:
+  // Toyota's pack volume keeps costs low; the interval encodes the probability
+  // that many packs outlive the car).
+  if (isHybrid) {
+    svc.push({ name: 'Hybrid battery pack (blended)', detail: '~every 180,000 mi', annual: Math.round((annualMileage / 180000) * (2200 * brand + 3.0 * laborRate)) })
+  }
+
+  // Known-issue services — platform-specific documented failures (CVTs, lifters,
+  // timing chains…). Absolute repair costs; see KNOWN_ISSUE_SERVICES.
+  const knownIssues = getKnownIssueServices(make, model, modelYear, trim, isEV)
+  for (const ki of knownIssues) {
+    svc.push({ name: ki.name, detail: `~every ${ki.intervalMiles.toLocaleString()} mi`, annual: Math.round((annualMileage / ki.intervalMiles) * (ki.parts + ki.laborHrs * laborRate)) })
+  }
+
+  // Estimated odometer for mileage-gated reserves (this generator has no
+  // explicit start mileage; age × annual mileage is the population estimate).
+  const estOdometer = Math.max(0, vehicleAgeYears) * annualMileage
+
+  // Transmission major-repair reserve — rebuild/replacement risk past ~110k for
+  // conventional ICE (hybrid eCVTs excluded: no clutches/bands to wear). Skipped
+  // when a known transmission issue is already booked above.
+  const hasTransIssue = knownIssues.some(e => e.category === 'transmission')
+  if (!isEV && !isHybrid && !hasTransIssue && estOdometer >= 110000) {
+    const transReserve = Math.round(200 * brand / 50) * 50
+    if (transReserve > 0) svc.push({ name: 'Transmission repair reserve', detail: 'high-mileage risk', annual: transReserve })
+  }
+
+  // EV HV battery reserve — out-of-warranty (8 yr / 100k) pack risk. Probability-
+  // weighted reserve, not a scheduled replacement: ramps with age, brand-scaled
+  // (Tesla pack costs/reliability run below EV average).
+  if (isEV && vehicleAgeYears >= 9) {
+    const hvReserve = Math.round(Math.min(400, (vehicleAgeYears - 8) * 80) * brand / 50) * 50
+    if (hvReserve > 0) svc.push({ name: 'HV battery reserve (out of warranty)', detail: 'age-based risk estimate', annual: hvReserve })
+  }
+
   // Unscheduled repair reserve — now a narrower budget for the *random* failures
   // not itemized above (sensors, electrical gremlins, small leaks, HVAC actuators,
   // window regulators). Big-ticket wear is captured explicitly, so this is scaled
   // down from the prior all-in reserve. Still age- and reliability-weighted.
+  // EV cap covers onboard-charger / charge-port electronics (~$800–1,800 rare).
   const ageForReserve = Math.max(0, vehicleAgeYears)
   const unscheduledBase = isEV
     ? Math.max(0, (ageForReserve - 1) * 70)
     : Math.max(0, (ageForReserve - 2) * 110)
-  const unscheduledCap = isEV ? 550 : tier === 'luxury' ? 1600 : tier === 'premium' ? 1200 : 900
+  const unscheduledCap = isEV ? 700 : tier === 'luxury' ? 1600 : tier === 'premium' ? 1200 : 900
   const unscheduled = Math.round(Math.min(unscheduledCap, unscheduledBase * brand) * segMult / 50) * 50
   if (unscheduled > 0) {
     svc.push({ name: 'Unscheduled repair reserve', detail: 'random non-scheduled failures', annual: unscheduled })
@@ -1078,7 +1222,7 @@ export function generateMaintenanceServices(isEV, annualMileage, segment, make =
 // startMileage offsets the odometer so year 1 begins at the vehicle's current mileage.
 // state adjusts labor rates and road-condition wear factors.
 // vehicleAgeAtStart is the vehicle's age (in years) when ownership begins.
-export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5, startMileage = 0, state = null, vehicleAgeAtStart = 0, laborRateOverride = null, wearProfile = null) {
+export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5, startMileage = 0, state = null, vehicleAgeAtStart = 0, laborRateOverride = null, wearProfile = null, model = '', modelYear = null, trim = '') {
   const tier      = determineMaintTier(make)
   const c         = MAINT_TIER_COSTS[tier]
   const brand     = MAINT_BRAND_MULT[make] ?? 1.0
@@ -1209,6 +1353,33 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
     defs.push({ name, costPerOcc: occCost(parts, labor), intervalMiles: iv })
   }
 
+  // The items below are priced as documented absolute repairs (parts + regional
+  // labor) — NOT run through tier/segment multipliers, which would distort real
+  // platform-specific costs (e.g., the luxury segMult would halve a BMW chain job).
+  const rawCost = (parts, laborHrs) => Math.round(parts + laborHrs * laborRate)
+
+  // Turbocharger — luxury/premium ICE fleets are effectively all turbocharged.
+  if (!isEV && !isHybrid && (tier === 'luxury' || tier === 'premium')) {
+    defs.push({ name: 'Turbocharger (blended)', costPerOcc: rawCost(1100, 4.0), intervalMiles: 160000 })
+  }
+
+  // Air suspension — compressor + springs on air-sprung models, terrain-adjusted.
+  if (hasAirSuspension(make, model)) {
+    defs.push({ name: 'Air suspension service', costPerOcc: rawCost(1400, 3.0), intervalMiles: Math.round(130000 / wear.susp) })
+  }
+
+  // Hybrid HV battery pack — population-blended ~180k replacement, brand-scaled.
+  if (isHybrid) {
+    defs.push({ name: 'Hybrid battery pack (blended)', costPerOcc: Math.round(2200 * brand + 3.0 * laborRate), intervalMiles: 180000 })
+  }
+
+  // Known-issue services — platform-specific documented failures.
+  const knownIssues = getKnownIssueServices(make, model, modelYear, trim, isEV)
+  for (const ki of knownIssues) {
+    defs.push({ name: ki.name, costPerOcc: rawCost(ki.parts, ki.laborHrs), intervalMiles: ki.intervalMiles })
+  }
+  const hasTransIssue = knownIssues.some(e => e.category === 'transmission')
+
   return Array.from({ length: years }, (_, i) => {
     const yr = i + 1
 
@@ -1220,14 +1391,32 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
       })
       .filter(s => s.occurrences > 0)
 
+    const vehicleAgeThisYear = vehicleAgeAtStart + yr
+    const yearStartOdometer  = startMileage + (yr - 1) * annualMileage
+
+    // Transmission major-repair reserve — conventional ICE rebuild risk past
+    // ~110k mi (hybrid eCVTs excluded; suppressed when a known transmission
+    // issue is already booked as an explicit line).
+    if (!isEV && !isHybrid && !hasTransIssue && yearStartOdometer >= 110000) {
+      const transReserve = Math.round(200 * brand / 50) * 50
+      if (transReserve > 0) services.push({ name: 'Transmission repair reserve', occurrences: 1, costPerOcc: transReserve, total: transReserve })
+    }
+
+    // EV HV battery reserve — out-of-warranty (8 yr / 100k) pack risk, ramping
+    // with age. Probability-weighted reserve, not a scheduled replacement.
+    if (isEV && vehicleAgeThisYear >= 9) {
+      const hvReserve = Math.round(Math.min(400, (vehicleAgeThisYear - 8) * 80) * brand / 50) * 50
+      if (hvReserve > 0) services.push({ name: 'HV battery reserve (out of warranty)', occurrences: 1, costPerOcc: hvReserve, total: hvReserve })
+    }
+
     // Unscheduled repair reserve — narrower budget for *random* failures not
     // itemized above (sensors, electrical, small leaks). Scaled down now that
     // big-ticket wear is explicit. Grows with vehicle age and brand reliability.
-    const vehicleAgeThisYear = vehicleAgeAtStart + yr
+    // EV cap covers onboard-charger / charge-port electronics (~$800–1,800 rare).
     const unscheduledBase = isEV
       ? Math.max(0, (vehicleAgeThisYear - 1) * 70)
       : Math.max(0, (vehicleAgeThisYear - 2) * 110)
-    const unscheduledCap = isEV ? 550 : tier === 'luxury' ? 1600 : tier === 'premium' ? 1200 : 900
+    const unscheduledCap = isEV ? 700 : tier === 'luxury' ? 1600 : tier === 'premium' ? 1200 : 900
     const unscheduled = Math.round(Math.min(unscheduledCap, unscheduledBase * brand) * segMult / 50) * 50
     if (unscheduled > 0) {
       services.push({ name: 'Unscheduled repair reserve', occurrences: 1, costPerOcc: unscheduled, total: unscheduled })
@@ -1239,8 +1428,8 @@ export function generateDetailedMaintenanceByYear(isEV, annualMileage, segment, 
 }
 
 // Convenience wrapper — returns just the per-year totals array.
-export function generateMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5, startMileage = 0, state = null, vehicleAgeAtStart = 0, laborRateOverride = null, wearProfile = null) {
-  return generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make, years, startMileage, state, vehicleAgeAtStart, laborRateOverride, wearProfile).map(yr => yr.total)
+export function generateMaintenanceByYear(isEV, annualMileage, segment, make = '', years = 5, startMileage = 0, state = null, vehicleAgeAtStart = 0, laborRateOverride = null, wearProfile = null, model = '', modelYear = null, trim = '') {
+  return generateDetailedMaintenanceByYear(isEV, annualMileage, segment, make, years, startMileage, state, vehicleAgeAtStart, laborRateOverride, wearProfile, model, modelYear, trim).map(yr => yr.total)
 }
 
 // ── Fuel ─────────────────────────────────────────────────

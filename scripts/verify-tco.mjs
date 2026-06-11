@@ -13,6 +13,7 @@ import {
   generateDetailedMaintenanceByYear,
   getLocalWearProfile,
   resolveCategoryWear,
+  getKnownIssueServices,
   MAINT_BRAND_MULT,
 } from '../src/utils/vehicleCosts.js'
 
@@ -280,12 +281,68 @@ for (const [make, model] of HM_FLEET) {
   if (ramp < 0.25) { failHM++; console.log(`   ⚠ high-mileage ramp only +${pct(ramp)} (expected ≥+25%)`) }
 }
 
+// ── Part 6: known-issue registry + model-gated services ───────────────────
+// Specific make/model/year platforms with documented failures must forecast
+// their known repairs; clean siblings must not inherit them.
+console.log('\nPART 6 — Known-issue & model-gated services (150k-start, 10-yr, 13k mi/yr)\n')
+
+function namesAndAvg(make, model, modelYear, opts = {}) {
+  const seg = opts.segment ?? classifySegment(make, model)
+  const isEV = opts.isEV ?? (seg === 'electric')
+  const start = opts.startMi ?? 150000
+  const age = opts.ageStart ?? 11
+  const yrs = generateDetailedMaintenanceByYear(isEV, ANNUAL_MILEAGE, seg, make, 10, start, null, age, null, null, model, modelYear)
+  const names = new Set(yrs.flatMap(y => y.services.map(s => s.name)))
+  const avg = yrs.reduce((a, b) => a + b.total, 0) / yrs.length
+  return { names, avg }
+}
+
+let failKI = 0
+const ki = (cond, label) => {
+  console.log(`  ${cond ? '✓' : '✗'} ${label}`)
+  if (!cond) failKI++
+}
+
+// CVT-era Nissan Altima books the CVT and costs more than a post-era one
+const altima16 = namesAndAvg('Nissan', 'Altima', 2016)
+const altima23 = namesAndAvg('Nissan', 'Altima', 2023)
+ki(altima16.names.has('CVT replacement (known issue)'), `2016 Altima books CVT replacement (avg ${money(altima16.avg)}/yr)`)
+ki(!altima23.names.has('CVT replacement (known issue)'), `2023 Altima does not (avg ${money(altima23.avg)}/yr)`)
+ki(altima16.avg > altima23.avg, `CVT-era Altima costs more than post-era (+${money(altima16.avg - altima23.avg)}/yr)`)
+// Known transmission issue suppresses the generic transmission reserve
+ki(!altima16.names.has('Transmission repair reserve'), '2016 Altima: generic trans reserve suppressed (no double-count)')
+ki(altima23.names.has('Transmission repair reserve'), '2023 Altima at 150k: generic trans reserve active')
+
+// GM AFM lifters; clean same-segment sibling stays clean
+const silv = namesAndAvg('Chevrolet', 'Silverado', 2018)
+const tundra = namesAndAvg('Toyota', 'Tundra', 2018)
+ki(silv.names.has('AFM/DFM lifter & cam service (known issue)'), `2018 Silverado books AFM lifter service (avg ${money(silv.avg)}/yr)`)
+ki(![...tundra.names].some(n => n.includes('known issue')), `2018 Tundra carries no known-issue lines (avg ${money(tundra.avg)}/yr)`)
+
+// Air suspension: X5 books it; coil-sprung RAV4 doesn't
+const x5 = namesAndAvg('BMW', 'X5', 2020)
+ki(x5.names.has('Air suspension service'), '2020 BMW X5 books air suspension service')
+ki(x5.names.has('Turbocharger (blended)'), '2020 BMW X5 books blended turbocharger')
+ki(!namesAndAvg('Toyota', 'RAV4', 2020).names.has('Air suspension service'), '2020 RAV4 has no air suspension line')
+
+// Hybrid pack appears when the window crosses 180k; eCVT exempt from trans reserve
+const prius = namesAndAvg('Toyota', 'Prius', 2018, { segment: 'hybrid' })
+ki(prius.names.has('Hybrid battery pack (blended)'), '150k-start Prius books hybrid battery pack crossing 180k')
+ki(!prius.names.has('Transmission repair reserve'), 'Prius (eCVT) exempt from transmission reserve')
+
+// EV HV reserve out of warranty; Tesla early-MCU issue scoped to S/X years
+const m3 = namesAndAvg('Tesla', 'Model 3', 2019, { startMi: 110000, ageStart: 7 })
+ki(m3.names.has('HV battery reserve (out of warranty)'), 'Tesla Model 3 age 9+ books HV battery reserve')
+ki(getKnownIssueServices('Tesla', 'Model S', 2014, '', true).length === 1, '2014 Model S matches MCU/door-handle issue')
+ki(getKnownIssueServices('Tesla', 'Model 3', 2019, '', true).length === 0, '2019 Model 3 matches no known issues')
+
 console.log('\n' + '═'.repeat(78))
 console.log(`  RESULT: Part1 segment-accuracy fails: ${failSegment}/${segLines.length}`)
 console.log(`          Part2 table-sanity fails:     ${failTable}/${segLines.length}`)
 console.log(`          Part3 classification fails:   ${failClass}`)
 console.log(`          Part4 terrain-logic fails:    ${failTerrain}`)
 console.log(`          Part5 high-mileage fails:     ${failHM}`)
+console.log(`          Part6 known-issue fails:      ${failKI}`)
 console.log('═'.repeat(78))
 
-process.exit(failSegment > 0 || failTerrain > 0 || failHM > 0 ? 1 : 0)
+process.exit(failSegment > 0 || failTerrain > 0 || failHM > 0 || failKI > 0 ? 1 : 0)

@@ -30,6 +30,7 @@ import {
   STATE_REG_FEE, STATE_VLF, computeAnnualRegistration,
   computeSalesTax, STATE_VEHICLE_SALES_TAX, STATE_DOC_FEE_AVG, getRegionalDemandPremium,
   ZIP_RANGES, zipToState, resolveLocation,
+  getKnownIssueServices,
 } from '../utils/vehicleCosts'
 
 
@@ -900,6 +901,188 @@ function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenan
   )
 }
 
+// ── Known Issues Card ─────────────────────────────────
+// Shows free-tier reliability warnings for the selected vehicle.
+function KnownIssuesCard({ make, model, year, trim, isEV, formatCurrency }) {
+  if (!make || !model || !year) return null
+  const issues = getKnownIssueServices(make, model, year, trim, isEV)
+  if (issues.length === 0) return null
+
+  const totalRiskCost = issues.reduce((sum, i) => sum + i.parts + Math.round(i.laborHrs * 120), 0)
+
+  const categoryColors = {
+    transmission: { bg: 'rgba(248,113,113,0.06)', border: 'rgba(248,113,113,0.3)', text: '#f87171', icon: '⚙' },
+    engine:       { bg: 'rgba(251,146,60,0.06)',  border: 'rgba(251,146,60,0.3)',  text: '#fb923c', icon: '🔧' },
+    electronics:  { bg: 'rgba(96,165,250,0.06)',  border: 'rgba(96,165,250,0.3)',  text: '#60a5fa', icon: '⚡' },
+    suspension:   { bg: 'rgba(167,139,250,0.06)', border: 'rgba(167,139,250,0.3)', text: '#a78bfa', icon: '🔩' },
+  }
+
+  return (
+    <div className="rounded-xl border p-4 flex flex-col gap-3"
+      style={{ borderColor: 'rgba(248,113,113,0.35)', background: 'rgba(248,113,113,0.04)' }}>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#f87171' }}>
+            Known Reliability Issues
+          </p>
+          <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+            {make} {model} {year} — documented problems to budget for
+          </p>
+        </div>
+        <span className="text-[10px] font-bold shrink-0 px-2 py-0.5 rounded"
+          style={{ background: 'rgba(248,113,113,0.12)', color: '#f87171', border: '1px solid rgba(248,113,113,0.3)' }}>
+          {issues.length} issue{issues.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        {issues.map((issue, i) => {
+          const style = categoryColors[issue.category] ?? categoryColors.engine
+          const fixCost = issue.parts + Math.round(issue.laborHrs * 120)
+          return (
+            <div key={i} className="rounded-lg p-3 flex flex-col gap-1.5"
+              style={{ background: style.bg, border: `1px solid ${style.border}` }}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-sm shrink-0">{style.icon}</span>
+                  <p className="text-xs font-semibold text-white leading-tight">{issue.name}</p>
+                </div>
+                <span className="text-xs font-bold shrink-0 tabular-nums" style={{ color: style.text }}>
+                  ~{formatCurrency(fixCost)}
+                </span>
+              </div>
+              <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                Typically surfaces around{' '}
+                <span className="text-white font-semibold">{issue.intervalMiles.toLocaleString()} miles</span>
+                {' '}· Parts ~{formatCurrency(issue.parts)} + {issue.laborHrs}hr labor
+              </p>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="rounded-lg px-3 py-2 flex items-center justify-between"
+        style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(248,113,113,0.2)' }}>
+        <span className="text-xs text-[var(--text-muted)]">Total potential repair exposure</span>
+        <span className="text-sm font-bold tabular-nums" style={{ color: '#f87171' }}>
+          ~{formatCurrency(totalRiskCost)}
+        </span>
+      </div>
+      <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+        Ask the seller about service history for these items. A pre-purchase inspection (~$150) can
+        reveal whether issues have already occurred. Consider factoring this into your offer price.
+      </p>
+    </div>
+  )
+}
+
+// ── Affordability Score ───────────────────────────────
+function AffordabilityScore({ annualCost, formatCurrency }) {
+  const [income, setIncome] = useState('')
+  const parsed = income === '' ? null : parseFloat(income.replace(/[^0-9.]/g, ''))
+  const isValid = parsed !== null && parsed > 0
+
+  let pct = null
+  let label = null
+  let color = null
+  let barColor = null
+  if (isValid) {
+    pct = (annualCost / parsed) * 100
+    if (pct <= 10) {
+      label = 'Affordable'; color = '#4ade80'; barColor = '#4ade80'
+    } else if (pct <= 15) {
+      label = 'Manageable'; color = '#FFB800'; barColor = '#FFB800'
+    } else if (pct <= 20) {
+      label = 'Stretching'; color = '#fb923c'; barColor = '#fb923c'
+    } else {
+      label = 'High strain'; color = '#f87171'; barColor = '#f87171'
+    }
+  }
+
+  return (
+    <div className="rounded-xl border p-4 flex flex-col gap-3"
+      style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+          Affordability Check
+        </p>
+        <a href="/salary" className="text-[10px] font-semibold" style={{ color: 'var(--accent)' }}>
+          Full analysis →
+        </a>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="text-xs text-[var(--text-muted)]">Your gross annual income</label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+          <input
+            type="number"
+            className="input-field pl-7"
+            placeholder="e.g. 75000"
+            value={income}
+            onChange={e => setIncome(e.target.value)}
+            min={0}
+            step={1000}
+          />
+        </div>
+      </div>
+
+      {isValid ? (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-white">
+              {pct.toFixed(1)}% of your income
+            </span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded"
+              style={{ color, background: `${color}1a`, border: `1px solid ${color}40` }}>
+              {label}
+            </span>
+          </div>
+          <div className="h-2.5 rounded-full overflow-hidden" style={{ background: 'var(--bg)' }}>
+            <div className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(pct, 100)}%`, background: barColor }} />
+          </div>
+          <div className="grid grid-cols-3 gap-1 text-[10px] text-[var(--text-muted)] text-center mt-0.5">
+            <span style={{ color: pct <= 10 ? '#4ade80' : undefined }}>≤10% safe</span>
+            <span style={{ color: pct > 10 && pct <= 15 ? '#FFB800' : undefined }}>10–15% ok</span>
+            <span style={{ color: pct > 15 ? '#f87171' : undefined }}>{'>'} 15% risky</span>
+          </div>
+          <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+            This car costs <span className="text-white font-semibold">{formatCurrency(annualCost)}/yr all-in</span>
+            {' '}on a <span className="text-white font-semibold">{formatCurrency(parsed)}</span> income.
+            {pct > 15 && (
+              <span style={{ color: '#fb923c' }}>
+                {' '}Consider a vehicle under {formatCurrency(parsed * 0.15)}/yr to stay in the safe zone.
+              </span>
+            )}
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+            Enter your income to see what percentage of your gross pay this car consumes.
+            Financial advisors recommend keeping total car costs under 10–15% of gross income.
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: 'Conservative', sub: '≤10% income', color: '#4ade80' },
+              { label: 'Comfortable',  sub: '≤15% income', color: '#FFB800' },
+              { label: 'Aggressive',   sub: '≤20% income', color: '#fb923c' },
+            ].map(({ label, sub, color }) => (
+              <div key={label} className="rounded-lg px-2 py-2 text-center"
+                style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                <p className="text-[10px] font-semibold" style={{ color }}>{label}</p>
+                <p className="text-[10px] text-[var(--text-muted)]">{sub}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-[var(--text-muted)]">Enter income above to see your personal score</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main page ─────────────────────────────────────────
 export default function TCOCalculator() {
   const navigate = useNavigate()
@@ -1052,6 +1235,23 @@ export default function TCOCalculator() {
       if (i.selTrim)  setSelTrim(i.selTrim)
       if (i.financeMode) setFinanceMode(i.financeMode)
     } catch { /* ignore corrupt data */ }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Pre-fill make/model from ?make=...&model=... query params (e.g., from Salary Calculator links)
+  useEffect(() => {
+    const qMake  = searchParams.get('make')
+    const qModel = searchParams.get('model')
+    if (!qMake) return
+    if (VEHICLES[qMake]) {
+      setSelMake(qMake)
+      setSelModel('')
+      setSelYear('')
+      setSelTrim('')
+      setOrigMsrp(null)
+      if (qModel && VEHICLES[qMake]?.[qModel]) {
+        setSelModel(qModel)
+      }
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Derived model data (type, specs, mpg, isEV)
@@ -2955,8 +3155,8 @@ export default function TCOCalculator() {
                       </span>
                     </div>
                   )}
-                  {/* Segment operating cost context — detailed mode only */}
-                  {!simpleMode && (() => {
+                  {/* Segment operating cost context — always shown when segment is known */}
+                  {(() => {
                     const seg = selMake
                       ? classifySegment(selMake || '', selModel || '')
                       : (VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.segment ?? null)
@@ -2980,18 +3180,28 @@ export default function TCOCalculator() {
                       </div>
                     )
                   })()}
-                  {!simpleMode && forecastRows.length > 1 && (() => {
+                  {forecastRows.length > 1 && (() => {
                     const totals = forecastRows.map(r => r.total)
                     const lo = Math.min(...totals)
                     const hi = Math.max(...totals)
-                    return lo !== hi ? (
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-[var(--text-muted)]">Annual range (yr 1–{forecastRows.length})</span>
-                        <span className="text-[var(--text-muted)] font-medium tabular-nums">
-                          {formatCurrency(lo)} – {formatCurrency(hi)}
-                        </span>
+                    if (lo === hi) return null
+                    const rise = Math.round(((hi - lo) / lo) * 100)
+                    return (
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-[var(--text-muted)]">Annual range (yr 1–{forecastRows.length})</span>
+                          <span className="text-[var(--text-muted)] font-medium tabular-nums">
+                            {formatCurrency(lo)} – {formatCurrency(hi)}
+                          </span>
+                        </div>
+                        {rise >= 15 && (
+                          <p className="text-[10px] leading-relaxed" style={{ color: '#fb923c' }}>
+                            Costs rise ~{rise}% by year {forecastRows.length} as insurance, maintenance, and registration compound.
+                            {forecastRows[0]?.maintenance < (forecastRows[forecastRows.length - 1]?.maintenance ?? 0) && ' Plan for higher maintenance bills after 60k miles.'}
+                          </p>
+                        )}
                       </div>
-                    ) : null
+                    )
                   })()}
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-[var(--text-muted)]">
@@ -3008,47 +3218,11 @@ export default function TCOCalculator() {
                 </div>
               </div>}
 
-              {/* Affordability check — 20/4/10 rule income bands — detailed mode only */}
-              {!simpleMode && (() => {
-                const year1Total = forecastRows[0]?.total ?? totalAnnualCost
-                const req10 = year1Total / 0.10
-                const req15 = year1Total / 0.15
-                const req20 = year1Total / 0.20
-                // Determine which band the user is likely in (no income input, so show all 3)
-                return (
-                  <div className="rounded-xl border p-4 flex flex-col gap-3"
-                    style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
-                        Income Required (20/4/10 rule)
-                      </p>
-                      <a href="/salary" className="text-[10px] font-semibold"
-                        style={{ color: 'var(--accent)' }}>
-                        Full analysis →
-                      </a>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { label: 'Conservative', sub: '10% of income', value: req10, color: '#f87171' },
-                        { label: 'Comfortable',  sub: '15% of income', value: req15, color: '#FFB800' },
-                        { label: 'Aggressive',   sub: '20% of income', value: req20, color: '#4ade80' },
-                      ].map(({ label, sub, value, color }) => (
-                        <div key={label} className="rounded-lg px-2 py-2.5 text-center"
-                          style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-                          <p className="text-[10px] font-semibold" style={{ color }}>{label}</p>
-                          <p className="text-[10px] text-[var(--text-muted)] mb-1">{sub}</p>
-                          <p className="text-white font-bold text-xs tabular-nums">{formatCurrency(value)}</p>
-                          <p className="text-[10px] text-[var(--text-muted)]">/yr gross</p>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
-                      Based on your Year 1 all-in cost of <span className="text-white">{formatCurrency(year1Total)}</span>.
-                      The 10% band is the safest; above 20% strains most budgets.
-                    </p>
-                  </div>
-                )
-              })()}
+              {/* Affordability check — personal income input with color score */}
+              <AffordabilityScore
+                annualCost={forecastRows[0]?.total ?? totalAnnualCost}
+                formatCurrency={formatCurrency}
+              />
 
               {/* Summary */}
               <div className="rounded-xl p-4 border text-sm leading-relaxed"
@@ -3127,6 +3301,16 @@ export default function TCOCalculator() {
                   </p>
                 </div>
               )}
+
+              {/* ── Known Issues (free) ── */}
+              <KnownIssuesCard
+                make={selMake}
+                model={selModel}
+                year={selYear}
+                trim={selTrim}
+                isEV={modelData?.is_ev ?? false}
+                formatCurrency={formatCurrency}
+              />
 
               {/* ── 5-Year Ownership Forecast (Pro) ── */}
               <FiveYearForecast

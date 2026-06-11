@@ -1310,6 +1310,13 @@ export default function SalaryCalculator() {
                               <span className="text-[10px] font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(v.annualTotal)}</span>
                             </div>
                           </div>
+                          <Link
+                            to={`/tco?make=${encodeURIComponent(v.make)}&model=${encodeURIComponent(v.model)}`}
+                            className="mt-1 text-[10px] font-semibold text-center py-1 rounded-lg border transition-colors block"
+                            style={{ borderColor: 'rgba(200,255,0,0.3)', color: 'var(--accent)', background: 'rgba(200,255,0,0.04)' }}
+                          >
+                            Full cost breakdown →
+                          </Link>
                         </div>
                       )
                     })}

@@ -123,6 +123,17 @@ Subscribers are stored in PostgreSQL. Device access is limited to 2 devices per 
 - `APP_URL` — Production URL (default: `https://cashpedal.io`)
 - `PORT` — Injected by Railway automatically
 - `INSIGHTS_API_KEY` — (optional) unlocks the `/api/insights/market` sellable export
+- `RESEND_API_KEY` — (optional) Resend API key; enables transactional thank-you emails
+- `EMAIL_FROM` — (optional) From address for transactional email (default: `Cash Pedal <hello@cashpedal.io>`; the domain must be verified in Resend)
+
+### Transactional email automations
+
+Two thank-you emails are sent via the Resend HTTPS API (no SDK dependency):
+
+1. **Welcome** — fired when a visitor first shares their email, from either funnel (`/api/user-data` tips opt-in or `/api/claim-bonus` credit unlock). Sent at most once per email address, ever.
+2. **Purchase confirmation** — fired on `checkout.session.completed` (webhook) and from `/api/verify-session` as a fallback, for both subscriptions and one-time passes. Deduplicated per Stripe checkout session.
+
+Idempotency is enforced by the `email_log` table (`UNIQUE (email, email_type, reference)`): a row is claimed before sending and released if the provider call fails, so a later trigger can retry. Without `RESEND_API_KEY`, sends are logged no-ops.
 
 ---
 

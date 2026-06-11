@@ -125,6 +125,7 @@ Subscribers are stored in PostgreSQL. Device access is limited to 2 devices per 
 - `INSIGHTS_API_KEY` — (optional) unlocks the `/api/insights/market` sellable export
 - `RESEND_API_KEY` — (optional) Resend API key; enables transactional thank-you emails
 - `EMAIL_FROM` — (optional) From address for transactional email (default: `Cash Pedal <hello@cashpedal.io>`; the domain must be verified in Resend)
+- `HUBSPOT_ACCESS_TOKEN` — (optional) HubSpot private-app token; enables CRM sync of leads and purchases (needs `crm.objects.contacts` and `crm.objects.deals` read/write scopes)
 
 ### Transactional email automations
 
@@ -133,7 +134,14 @@ Two thank-you emails are sent via the Resend HTTPS API (no SDK dependency):
 1. **Welcome** — fired when a visitor first shares their email, from either funnel (`/api/user-data` tips opt-in or `/api/claim-bonus` credit unlock). Sent at most once per email address, ever.
 2. **Purchase confirmation** — fired on `checkout.session.completed` (webhook) and from `/api/verify-session` as a fallback, for both subscriptions and one-time passes. Deduplicated per Stripe checkout session.
 
-Idempotency is enforced by the `email_log` table (`UNIQUE (email, email_type, reference)`): a row is claimed before sending and released if the provider call fails, so a later trigger can retry. Without `RESEND_API_KEY`, sends are logged no-ops.
+### HubSpot CRM sync
+
+Leads and purchases are mirrored into HubSpot's free CRM via its HTTPS API (no SDK dependency):
+
+1. **Lead capture** — both email funnels upsert a contact (keyed by email) with name and `lifecyclestage: lead`. Backwards lifecycle moves are retried without the stage so returning customers don't break the sync.
+2. **Purchase** — the contact is upgraded to `lifecyclestage: customer` and a closed-won deal (default pipeline, real Stripe amount) is created and associated with the contact. Deduplicated per Stripe checkout session.
+
+Idempotency for both automations is enforced by the `automation_log` table (`UNIQUE (email, event_type, reference)`): a row is claimed before the side effect runs and released if the provider call fails, so a later trigger can retry. Without the relevant API key, each automation is a logged no-op.
 
 ---
 

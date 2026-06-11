@@ -120,6 +120,7 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
             [email, session.customer, session.subscription, sub.current_period_end]
           )
           queuePurchaseEmail(email, session.id, 'subscription', null)
+          queueCrmPurchase(email, session.id, 'subscription', session.amount_total)
         } else if (session.mode === 'payment') {
           const accessUntil = new Date(Date.now() + ACCESS_DAYS * 24 * 60 * 60 * 1000)
           await pool.query(
@@ -136,6 +137,7 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
             [email, session.customer, accessUntil]
           )
           queuePurchaseEmail(email, session.id, 'one_time', accessUntil)
+          queueCrmPurchase(email, session.id, 'one_time', session.amount_total)
         }
         break
       }
@@ -397,37 +399,44 @@ async function deliverEmail(to, { subject, text, html }) {
   }
 }
 
-// Idempotent send. The email_log unique constraint is the gate: the row is
-// claimed before sending so concurrent triggers (e.g. the Stripe webhook and
-// /api/verify-session racing on the same checkout) can't double-send. If the
-// provider call fails the claim is released so a later trigger can retry.
-// Never throws — callers fire-and-forget without awaiting.
+// Idempotency gate shared by the email and CRM automations. The automation_log
+// unique constraint is the gate: the row is claimed before the side effect runs
+// so concurrent triggers (e.g. the Stripe webhook and /api/verify-session racing
+// on the same checkout) can't double-fire. If the provider call fails the claim
+// is released so a later trigger can retry.
+async function claimAutomation(eventType, email, reference) {
+  if (!pool) return true
+  const claim = await pool.query(
+    `INSERT INTO automation_log (email, event_type, reference)
+     VALUES ($1,$2,$3)
+     ON CONFLICT (email, event_type, reference) DO NOTHING
+     RETURNING id`,
+    [email, eventType, reference]
+  )
+  return claim.rows.length > 0
+}
+
+async function releaseAutomation(eventType, email, reference) {
+  if (!pool) return
+  await pool.query(
+    `DELETE FROM automation_log WHERE email = $1 AND event_type = $2 AND reference = $3`,
+    [email, eventType, reference]
+  ).catch(() => {})
+}
+
+// Idempotent send. Never throws — callers fire-and-forget without awaiting.
 async function sendTransactionalEmail(emailType, email, reference, content) {
   if (!RESEND_API_KEY) {
     console.log(`[email] RESEND_API_KEY not set — skipping ${emailType} for ${redactEmail(email)}`)
     return
   }
   try {
-    if (pool) {
-      const claim = await pool.query(
-        `INSERT INTO email_log (email, email_type, reference)
-         VALUES ($1,$2,$3)
-         ON CONFLICT (email, email_type, reference) DO NOTHING
-         RETURNING id`,
-        [email, emailType, reference]
-      )
-      if (claim.rows.length === 0) return // already sent (or in flight)
-    }
+    if (!(await claimAutomation(emailType, email, reference))) return // already sent (or in flight)
     try {
       await deliverEmail(email, content)
       console.log(`[email] sent ${emailType} to ${redactEmail(email)}`)
     } catch (err) {
-      if (pool) {
-        await pool.query(
-          `DELETE FROM email_log WHERE email = $1 AND email_type = $2 AND reference = $3`,
-          [email, emailType, reference]
-        ).catch(() => {})
-      }
+      await releaseAutomation(emailType, email, reference)
       throw err
     }
   } catch (err) {
@@ -445,6 +454,89 @@ function queueWelcomeEmail(email, firstName) {
 // the Stripe session ID so a repeat one-time purchase still gets its own email.
 function queuePurchaseEmail(email, checkoutSessionId, purchaseType, accessUntil) {
   sendTransactionalEmail('purchase_thanks', email, checkoutSessionId, purchaseEmailContent(purchaseType, accessUntil))
+}
+
+// ── HubSpot CRM sync ──────────────────────────────────
+// Mirrors leads and purchases into HubSpot's free CRM so engagement and
+// opportunities can be worked from a real pipeline. Same conventions as the
+// email module: plain HTTPS API (no SDK), fire-and-forget, logged no-op when
+// HUBSPOT_ACCESS_TOKEN isn't configured. The token is a HubSpot private-app
+// token with crm.objects.contacts and crm.objects.deals read/write scopes.
+const HUBSPOT_TOKEN = (process.env.HUBSPOT_ACCESS_TOKEN || '').trim()
+
+async function hubspotRequest(path, body) {
+  const resp = await fetch(`https://api.hubapi.com${path}`, {
+    method: 'POST',
+    headers: {
+      Authorization:  `Bearer ${HUBSPOT_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
+  const data = await resp.json().catch(() => ({}))
+  if (!resp.ok) throw new Error(`HubSpot ${resp.status}: ${String(data.message || '').slice(0, 200)}`)
+  return data
+}
+
+// Create-or-update a contact keyed by email. Returns the HubSpot contact id.
+async function upsertHubSpotContact(email, properties) {
+  const res = await hubspotRequest('/crm/v3/objects/contacts/batch/upsert', {
+    inputs: [{ idProperty: 'email', id: email, properties }],
+  })
+  return res.results?.[0]?.id
+}
+
+// CRM automation 1: a shared email becomes (or refreshes) a HubSpot contact.
+// Upserts are idempotent so no automation_log claim is needed here.
+function queueCrmLead(email, firstName, lastName, source) {
+  if (!HUBSPOT_TOKEN) return
+  ;(async () => {
+    const props = { lifecyclestage: 'lead' }
+    if (firstName) props.firstname = firstName
+    if (lastName)  props.lastname  = lastName
+    try {
+      await upsertHubSpotContact(email, props)
+    } catch (err) {
+      // HubSpot rejects backwards lifecycle moves (an existing customer coming
+      // back through a lead funnel) — retry without the stage so name updates land.
+      if (!/lifecycle/i.test(err.message)) throw err
+      delete props.lifecyclestage
+      await upsertHubSpotContact(email, props)
+    }
+    console.log(`[crm] lead synced — ${redactEmail(email)} (${source})`)
+  })().catch(err => console.error(`[crm] lead sync failed for ${redactEmail(email)}:`, err.message))
+}
+
+// CRM automation 2: a completed checkout marks the contact as a customer and
+// logs a closed-won deal in the default pipeline. Keyed on the Stripe checkout
+// session ID so the webhook and /api/verify-session can't create duplicates.
+function queueCrmPurchase(email, checkoutSessionId, purchaseType, amountCents) {
+  if (!HUBSPOT_TOKEN) return
+  ;(async () => {
+    if (!(await claimAutomation('crm_deal', email, checkoutSessionId))) return
+    try {
+      const contactId = await upsertHubSpotContact(email, { lifecyclestage: 'customer' })
+      const properties = {
+        dealname:  purchaseType === 'subscription'
+          ? `Cash Pedal Pro subscription — ${email}`
+          : `Cash Pedal Pro ${ACCESS_DAYS}-day pass — ${email}`,
+        pipeline:  'default',
+        dealstage: 'closedwon',
+        closedate: new Date().toISOString(),
+      }
+      if (Number.isFinite(amountCents)) properties.amount = (amountCents / 100).toFixed(2)
+      await hubspotRequest('/crm/v3/objects/deals', {
+        properties,
+        associations: contactId
+          ? [{ to: { id: contactId }, types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 3 }] }]
+          : [],
+      })
+      console.log(`[crm] deal logged — ${redactEmail(email)} (${purchaseType})`)
+    } catch (err) {
+      await releaseAutomation('crm_deal', email, checkoutSessionId)
+      throw err
+    }
+  })().catch(err => console.error(`[crm] purchase sync failed for ${redactEmail(email)}:`, err.message))
 }
 
 // ── JSON body for all other routes ────────────────────
@@ -594,17 +686,18 @@ async function initTables() {
         ON vehicle_searches(created_at)
     `)
 
-    // ── Email log (transactional send dedupe) ─────────
-    // One row per email actually sent. The unique constraint is what makes
-    // sends idempotent across funnels and across webhook/verify-session races.
+    // ── Automation log (email + CRM dedupe) ───────────
+    // One row per automation actually executed (transactional email sent,
+    // CRM deal created). The unique constraint is what makes automations
+    // idempotent across funnels and across webhook/verify-session races.
     await client.query(`
-      CREATE TABLE IF NOT EXISTS email_log (
+      CREATE TABLE IF NOT EXISTS automation_log (
         id          SERIAL PRIMARY KEY,
         email       VARCHAR(255) NOT NULL,
-        email_type  VARCHAR(30)  NOT NULL,
+        event_type  VARCHAR(30)  NOT NULL,
         reference   VARCHAR(255) NOT NULL,
-        sent_at     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE (email, email_type, reference)
+        created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (email, event_type, reference)
       )
     `)
 
@@ -788,6 +881,7 @@ app.post('/api/user-data', async (req, res) => {
       ]
     )
     queueWelcomeEmail(normalizeEmail(email), sanitizeName(first_name))
+    queueCrmLead(normalizeEmail(email), sanitizeName(first_name), sanitizeName(last_name), leadSource)
     res.json({ success: true, record_id })
   } catch (err) {
     console.error('[user-data] DB error:', err.message)
@@ -1103,6 +1197,7 @@ app.post('/api/claim-bonus', sensitiveLimiter, async (req, res) => {
       ]
     )
     queueWelcomeEmail(normEmail, cleanFirst)
+    queueCrmLead(normEmail, cleanFirst, cleanLast, 'email_unlock')
     res.json({ success: true, creditsLeft: BONUS_CREDITS })
   } catch (err) {
     console.error('[claim-bonus] DB error:', err.message)
@@ -1256,6 +1351,7 @@ app.get('/api/verify-session', async (req, res) => {
           [email, session.customer, accessUntil]
         )
         queuePurchaseEmail(email, session.id, 'one_time', accessUntil)
+        queueCrmPurchase(email, session.id, 'one_time', session.amount_total)
       }
       return res.json({ valid: true, email, expires: accessUntil.toISOString(), purchaseType: 'one_time' })
     }
@@ -1280,6 +1376,7 @@ app.get('/api/verify-session', async (req, res) => {
           : [email, session.customer, typeof sub === 'object' ? sub.id : sub]
       )
       queuePurchaseEmail(email, session.id, 'subscription', null)
+      queueCrmPurchase(email, session.id, 'subscription', session.amount_total)
     }
 
     const expiresAt = (typeof sub === 'object' && sub.current_period_end)
@@ -1578,6 +1675,7 @@ app.listen(PORT, '0.0.0.0', async () => {
   }
   if (!stripe) console.log('No STRIPE_SECRET_KEY configured — payments disabled')
   if (!RESEND_API_KEY) console.log('No RESEND_API_KEY configured — thank-you emails disabled')
+  if (!HUBSPOT_TOKEN) console.log('No HUBSPOT_ACCESS_TOKEN configured — CRM sync disabled')
   if (!process.env.IP_HMAC_SECRET) console.warn('[privacy] IP_HMAC_SECRET not set — device tracking disabled; set this env var on Railway')
 })
 

@@ -1,6 +1,7 @@
 import express from 'express'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
+import { readFileSync } from 'fs'
 import pg from 'pg'
 import crypto from 'crypto'
 import Stripe from 'stripe'
@@ -10,6 +11,15 @@ import rateLimit from 'express-rate-limit'
 const { Pool } = pg
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
+
+// Vehicle database — loaded once at boot. Used to validate search-tracking input
+// so the market-analytics tables only ever store real make/model combinations.
+let VEHICLES = {}
+try {
+  VEHICLES = JSON.parse(readFileSync(join(__dirname, 'src', 'data', 'vehicles.json'), 'utf8'))
+} catch (err) {
+  console.warn('[market] could not load vehicles.json — search validation will reject all input:', err.message)
+}
 
 // Trust Railway's single load-balancer hop so req.ip reflects the real client IP
 // rather than the proxy's IP. This also prevents X-Forwarded-For spoofing at the
@@ -35,6 +45,21 @@ const USAGE_FEATURES = new Set([
   'tco_detailed', 'checklist_generated', 'salary_pro', 'compare_unlock',
 ])
 const USAGE_GATES = new Set(['free', 'bonus', 'subscribed'])
+
+// Valid US state / territory codes for the market-analytics search tracker.
+const US_STATES = new Set([
+  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
+  'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
+  'VA','WA','WV','WI','WY','DC',
+])
+
+// Rolling window (days) used for all public market-analytics aggregations.
+const MARKET_WINDOW_DAYS = 90
+// Retention window for raw search rows (pseudonymous — keyed only by session UUID).
+const MARKET_RETENTION_DAYS = 365
+// Admin key that unlocks the full, sellable per-state insights export.
+const INSIGHTS_API_KEY = (process.env.INSIGHTS_API_KEY || '').trim()
 // Emails that bypass all subscription and device checks — configure via env var
 // PRO_USER_EMAILS=pro@cashpedal.io,owner@example.com
 const PRO_USERS_SERVER = new Set(
@@ -390,6 +415,36 @@ async function initTables() {
         ON usage_events(feature, created_at)
     `)
 
+    // ── Vehicle searches (market analytics) ───────────
+    // One row per make/model a visitor inspects in a tool, tagged with the
+    // resolved US state when the visitor has entered a ZIP/state. Keyed only by
+    // the browser-generated session UUID — no email, no IP. Powers the public
+    // /market page and the sellable per-state insights export.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS vehicle_searches (
+        id          SERIAL PRIMARY KEY,
+        session_id  VARCHAR(36) NOT NULL,
+        state       VARCHAR(2),
+        make        VARCHAR(50)  NOT NULL,
+        model       VARCHAR(100) NOT NULL,
+        year        SMALLINT,
+        segment     VARCHAR(20),
+        created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_vehicle_searches_state
+        ON vehicle_searches(state, created_at)
+    `)
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_vehicle_searches_make_model
+        ON vehicle_searches(make, model, created_at)
+    `)
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_vehicle_searches_created
+        ON vehicle_searches(created_at)
+    `)
+
     // ── Subscribers table (Stripe) ────────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS subscribers (
@@ -454,6 +509,11 @@ async function initTables() {
     await client.query(`
       DELETE FROM bonus_credits
       WHERE updated_at < NOW() - INTERVAL '365 days'
+    `)
+    // Vehicle searches are pseudonymous analytics — same 365-day retention.
+    await client.query(`
+      DELETE FROM vehicle_searches
+      WHERE created_at < NOW() - INTERVAL '${MARKET_RETENTION_DAYS} days'
     `)
     // Stale device slots (no login in 30 days) are cleaned per-request already,
     // but also sweep on startup to catch orphaned rows from inactive subscribers.
@@ -602,6 +662,209 @@ app.post('/api/track-usage', async (req, res) => {
   } catch (err) {
     console.error('[track-usage] DB error:', err.message)
     res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+// ── API: Track a vehicle search (market analytics) ────
+// Fired when a visitor selects a make/model in a tool. State is optional —
+// it's recorded only when the visitor has entered a ZIP/state. make/model are
+// validated against the vehicle database so the analytics tables stay clean.
+app.post('/api/track-search', async (req, res) => {
+  const { session_id, state, make, model, year } = req.body
+
+  if (!isValidUUID(session_id)) {
+    return res.status(400).json({ success: false, error: 'Invalid session_id format' })
+  }
+  if (typeof make !== 'string' || typeof model !== 'string') {
+    return res.status(400).json({ success: false, error: 'make and model required' })
+  }
+  // Only accept real make/model pairs that exist in the vehicle database.
+  const modelData = VEHICLES[make]?.[model]
+  if (!modelData) {
+    return res.status(400).json({ success: false, error: 'Unknown make/model' })
+  }
+
+  const cleanState = typeof state === 'string' && US_STATES.has(state.toUpperCase())
+    ? state.toUpperCase()
+    : null
+
+  // Trust the database for the year range and segment, not the client.
+  let cleanYear = null
+  const parsedYear = parseInt(year, 10)
+  if (!isNaN(parsedYear) && parsedYear >= 1990 && parsedYear <= 2035) cleanYear = parsedYear
+  const segment = typeof modelData.type === 'string' ? modelData.type.slice(0, 20) : null
+
+  if (!pool) return res.json({ success: true, storage: 'none' })
+
+  try {
+    await pool.query(
+      `INSERT INTO vehicle_searches (session_id, state, make, model, year, segment)
+       VALUES ($1,$2,$3,$4,$5,$6)`,
+      [session_id, cleanState, make, model, cleanYear, segment]
+    )
+    res.json({ success: true })
+  } catch (err) {
+    console.error('[track-search] DB error:', err.message)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+// ── API: Public market analytics ──────────────────────
+// Aggregate-only, no PII. Powers the /market page. Counts DISTINCT sessions
+// (not raw hits) so a single visitor can't skew the rankings. Optionally
+// scoped to a state via ?state=CA.
+app.get('/api/market-analytics', async (req, res) => {
+  if (!pool) return res.json({ available: false, reason: 'db_not_configured' })
+
+  const stateParam = typeof req.query.state === 'string' ? req.query.state.toUpperCase() : ''
+  const state = US_STATES.has(stateParam) ? stateParam : null
+  const win = `NOW() - INTERVAL '${MARKET_WINDOW_DAYS} days'`
+
+  try {
+    const [totals, topModels, topMakes, statesWithData] = await Promise.all([
+      pool.query(
+        `SELECT COUNT(*)                       AS searches,
+                COUNT(DISTINCT state)          AS states_covered,
+                COUNT(DISTINCT (make||model))  AS unique_models
+         FROM vehicle_searches WHERE created_at > ${win}`
+      ),
+      pool.query(
+        `SELECT make, model, COUNT(DISTINCT session_id)::int AS searches
+         FROM vehicle_searches WHERE created_at > ${win}
+         GROUP BY make, model ORDER BY searches DESC, make, model LIMIT 10`
+      ),
+      pool.query(
+        `SELECT make, COUNT(DISTINCT session_id)::int AS searches
+         FROM vehicle_searches WHERE created_at > ${win}
+         GROUP BY make ORDER BY searches DESC, make LIMIT 10`
+      ),
+      pool.query(
+        `SELECT DISTINCT state FROM vehicle_searches
+         WHERE state IS NOT NULL AND created_at > ${win} ORDER BY state`
+      ),
+    ])
+
+    const payload = {
+      available:  true,
+      generatedAt: new Date().toISOString(),
+      windowDays: MARKET_WINDOW_DAYS,
+      totals: {
+        searches:      parseInt(totals.rows[0].searches, 10),
+        statesCovered: parseInt(totals.rows[0].states_covered, 10),
+        uniqueModels:  parseInt(totals.rows[0].unique_models, 10),
+      },
+      topModels:      topModels.rows,
+      topMakes:       topMakes.rows,
+      statesWithData: statesWithData.rows.map(r => r.state),
+    }
+
+    if (state) {
+      const stateModels = await pool.query(
+        `SELECT make, model, COUNT(DISTINCT session_id)::int AS searches
+         FROM vehicle_searches
+         WHERE state = $1 AND created_at > ${win}
+         GROUP BY make, model ORDER BY searches DESC, make, model LIMIT 10`,
+        [state]
+      )
+      payload.state = state
+      payload.stateTopModels = stateModels.rows
+    }
+
+    res.json(payload)
+  } catch (err) {
+    console.error('[market-analytics] DB error:', err.message)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// ── API: Full market insights export (sellable) ───────
+// Protected by the INSIGHTS_API_KEY header. Returns the complete per-state
+// ranking breakdown — the dataset that can be licensed to dealers, lenders,
+// and market researchers. Not exposed to the public /market page.
+app.get('/api/insights/market', async (req, res) => {
+  if (!INSIGHTS_API_KEY) {
+    return res.status(503).json({ error: 'Insights export not configured' })
+  }
+  const provided = req.get('x-api-key') || ''
+  // Constant-time comparison to avoid leaking the key via timing.
+  const ok = provided.length === INSIGHTS_API_KEY.length &&
+    crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(INSIGHTS_API_KEY))
+  if (!ok) {
+    console.warn(`[insights] unauthorized attempt — IP: ${anonymizeIp(req.ip)}`)
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+  if (!pool) return res.status(503).json({ error: 'DB not configured' })
+
+  const windowDays = Math.min(Math.max(parseInt(req.query.windowDays, 10) || MARKET_WINDOW_DAYS, 1), MARKET_RETENTION_DAYS)
+  const perState   = Math.min(Math.max(parseInt(req.query.perState, 10) || 25, 1), 100)
+  const win = `NOW() - INTERVAL '${windowDays} days'`
+
+  try {
+    const [byStateRows, makeRows, nationalRows] = await Promise.all([
+      pool.query(
+        `SELECT state, make, model, segment,
+                COUNT(DISTINCT session_id)::int AS searchers,
+                COUNT(*)::int                   AS hits
+         FROM vehicle_searches
+         WHERE state IS NOT NULL AND created_at > ${win}
+         GROUP BY state, make, model, segment
+         ORDER BY state, searchers DESC, hits DESC`
+      ),
+      pool.query(
+        `SELECT state, make,
+                COUNT(DISTINCT session_id)::int AS searchers
+         FROM vehicle_searches
+         WHERE state IS NOT NULL AND created_at > ${win}
+         GROUP BY state, make ORDER BY state, searchers DESC`
+      ),
+      pool.query(
+        `SELECT make, model, segment,
+                COUNT(DISTINCT session_id)::int AS searchers,
+                COUNT(*)::int                   AS hits
+         FROM vehicle_searches WHERE created_at > ${win}
+         GROUP BY make, model, segment
+         ORDER BY searchers DESC, hits DESC LIMIT 100`
+      ),
+    ])
+
+    // Assemble per-state breakdown, capping each state's model list at perState.
+    const byState = {}
+    for (const row of byStateRows.rows) {
+      const s = (byState[row.state] ||= { totalSearchers: 0, topModels: [], topMakes: [] })
+      if (s.topModels.length < perState) {
+        s.topModels.push({
+          make: row.make, model: row.model, segment: row.segment,
+          searchers: row.searchers, hits: row.hits,
+        })
+      }
+    }
+    for (const row of makeRows.rows) {
+      const s = byState[row.state]
+      if (s && s.topMakes.length < perState) {
+        s.topMakes.push({ make: row.make, searchers: row.searchers })
+      }
+    }
+    // totalSearchers per state = distinct sessions in that state
+    const stateTotals = await pool.query(
+      `SELECT state, COUNT(DISTINCT session_id)::int AS searchers
+       FROM vehicle_searches
+       WHERE state IS NOT NULL AND created_at > ${win}
+       GROUP BY state`
+    )
+    for (const row of stateTotals.rows) {
+      if (byState[row.state]) byState[row.state].totalSearchers = row.searchers
+    }
+
+    res.json({
+      generatedAt: new Date().toISOString(),
+      windowDays,
+      perState,
+      national: nationalRows.rows,
+      byState,
+    })
+  } catch (err) {
+    console.error('[insights] DB error:', err.message)
+    res.status(500).json({ error: 'Internal server error' })
   }
 })
 
@@ -1126,6 +1389,7 @@ async function runRetentionSweep() {
     await pool.query(`DELETE FROM user_data_collection WHERE created_at < NOW() - INTERVAL '365 days'`)
     await pool.query(`DELETE FROM usage_events WHERE created_at < NOW() - INTERVAL '365 days'`)
     await pool.query(`DELETE FROM bonus_credits WHERE updated_at < NOW() - INTERVAL '365 days'`)
+    await pool.query(`DELETE FROM vehicle_searches WHERE created_at < NOW() - INTERVAL '${MARKET_RETENTION_DAYS} days'`)
     await pool.query(`DELETE FROM subscriber_devices WHERE last_seen < NOW() - INTERVAL '${DEVICE_EXPIRY_DAYS} days'`)
   } catch (err) {
     console.error('[retention] daily sweep error:', err.message)

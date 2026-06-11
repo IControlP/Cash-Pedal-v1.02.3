@@ -85,6 +85,7 @@ src/
 | `/checklist` | `CarBuyingChecklist` | Used car maintenance audit |
 | `/wheelzard` | `WheelZard` | Wheel-Zard AI chatbot |
 | `/resources` | `Resources` | Affiliate resource links |
+| `/market` | `MarketAnalytics` | Most-searched vehicles, nationally and by state |
 | `/about` | `About` | FAQ and methodology |
 | `/subscribe` | `Subscribe` | Stripe subscription checkout and management |
 
@@ -103,9 +104,16 @@ The Express server (`server.js`) handles payments and subscription state. It ser
 | `POST /api/reset-devices` | Reset device count for subscriber |
 | `POST /api/consent` | Save user consent record |
 | `POST /api/user-data` | Save user data |
+| `POST /api/track-search` | Record a vehicle search (make/model + optional state) for market analytics |
+| `GET /api/market-analytics` | Public aggregate rankings — top vehicles nationally and by state (`?state=CA`) |
+| `GET /api/insights/market` | **Protected** full per-state insights export (requires `x-api-key`) — the sellable dataset |
 | `POST /api/stripe-webhook` | Stripe webhook (raw body required) |
 
 Subscribers are stored in PostgreSQL. Device access is limited to 2 devices per subscriber, expiring after 30 days.
+
+### Market analytics
+
+`POST /api/track-search` is fired from the TCO calculator whenever a visitor selects a real make/model. Rows are stored in the `vehicle_searches` table, keyed only by the browser session UUID (no email/IP), tagged with the resolved US state when available, and validated against `src/data/vehicles.json`. Public rankings count **distinct sessions** (not raw hits) over a rolling 90-day window so a single visitor can't skew results. The `/api/insights/market` export returns the full per-state breakdown for licensing and is gated behind the `INSIGHTS_API_KEY` header.
 
 **Required environment variables:**
 - `DATABASE_URL` — PostgreSQL connection string
@@ -114,6 +122,7 @@ Subscribers are stored in PostgreSQL. Device access is limited to 2 devices per 
 - `STRIPE_WEBHOOK_SECRET` — Stripe webhook signing secret
 - `APP_URL` — Production URL (default: `https://cashpedal.io`)
 - `PORT` — Injected by Railway automatically
+- `INSIGHTS_API_KEY` — (optional) unlocks the `/api/insights/market` sellable export
 
 ---
 

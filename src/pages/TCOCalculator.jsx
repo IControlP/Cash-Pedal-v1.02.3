@@ -11,6 +11,7 @@ import ProUpsell from '../components/ProUpsell'
 import { useSubscription } from '../hooks/useSubscription'
 import { useBonusCredits } from '../hooks/useBonusCredits'
 import { trackUsage } from '../utils/usage'
+import { trackSearch } from '../utils/marketSearch'
 import VEHICLES from '../data/vehicles.json'
 import {
   BRAND_DEPRECIATION_MULT,
@@ -1126,6 +1127,19 @@ export default function TCOCalculator() {
       : price
     setAnnualRegistration(computeAnnualRegistration(resolvedState, currentVal))
   }, [price, selMake, selModel, selYear, resolvedState, resolvedLaborRate, resolvedWear, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Market-analytics search tracking ──
+  // Record each make/model the visitor inspects, tagged with their resolved
+  // state when available. De-duped per unique make/model/year/state combo so a
+  // single session doesn't repeatedly log the same vehicle as sliders move.
+  const lastSearchKeyRef = useRef('')
+  useEffect(() => {
+    if (!selMake || !selModel) return
+    const key = `${selMake}|${selModel}|${selYear}|${resolvedState || ''}`
+    if (lastSearchKeyRef.current === key) return
+    lastSearchKeyRef.current = key
+    trackSearch({ make: selMake, model: selModel, year: selYear || null, state: resolvedState })
+  }, [selMake, selModel, selYear, resolvedState])
 
   const handleLocationInput = useCallback((val) => {
     setLocationInput(val)

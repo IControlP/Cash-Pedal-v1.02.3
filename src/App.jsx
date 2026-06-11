@@ -9,6 +9,7 @@ import MultiVehicleComparison from './pages/MultiVehicleComparison'
 import CarBuyingChecklist from './pages/CarBuyingChecklist'
 import WheelZard from './pages/WheelZard'
 import Resources from './pages/Resources'
+import MarketAnalytics from './pages/MarketAnalytics'
 import About from './pages/About'
 import Subscribe from './pages/Subscribe'
 import Privacy from './pages/Privacy'
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="/checklist" element={<ToolRoute element={<CarBuyingChecklist />} />} />
         <Route path="/wheelzard" element={<ToolRoute element={<WheelZard />} />} />
         <Route path="/resources" element={<Resources />} />
+        <Route path="/market"    element={<MarketAnalytics />} />
         <Route path="/about"     element={<About />} />
         <Route path="/privacy"   element={<Privacy />} />
         <Route path="/subscribe" element={<Subscribe />} />

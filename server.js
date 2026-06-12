@@ -546,14 +546,23 @@ app.use(express.json())
 const dbUrl = (process.env.DATABASE_PRIVATE_URL || process.env.DATABASE_URL || '').trim()
 
 const isInternalDb = dbUrl.includes('.railway.internal') || dbUrl.includes('localhost') || dbUrl.includes('127.0.0.1')
+// Railway's public proxy endpoints (xxxx.proxy.rlwy.net, legacy *.railway.app)
+// present a self-signed certificate, so strict verification can never succeed
+// against them — encrypt without identity verification for those hosts only.
+// The private-network URL (postgres.railway.internal) remains preferable:
+// faster, no egress fees, and traffic never leaves the project.
+const isRailwayProxy = dbUrl.includes('rlwy.net') || dbUrl.includes('railway.app')
 const pool = dbUrl
   ? new Pool({
       connectionString: dbUrl,
       ssl: isInternalDb
         ? false
-        : { rejectUnauthorized: true },
+        : { rejectUnauthorized: !isRailwayProxy },
     })
   : null
+if (isRailwayProxy) {
+  console.warn('[db] connecting via Railway public proxy — consider switching DATABASE_URL to the private-network URL (postgres.railway.internal)')
+}
 
 async function initTables() {
   if (!pool) return

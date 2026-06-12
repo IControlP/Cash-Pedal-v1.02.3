@@ -135,6 +135,15 @@ const loanTermOptions = [
   { value: 72, label: '72 months' },
 ]
 
+// Credit score bands → typical new/used car APR ranges (Experian/CFPB 2025 data)
+const CREDIT_BANDS = [
+  { value: 'excellent', label: 'Excellent (750+)',     rateMin: 5.5,  rateMax: 6.5,  midpoint: 6.0,  color: 'text-green-400' },
+  { value: 'good',      label: 'Good (700–749)',       rateMin: 6.5,  rateMax: 8.0,  midpoint: 7.2,  color: 'text-green-300' },
+  { value: 'fair',      label: 'Fair (660–699)',       rateMin: 9.0,  rateMax: 11.0, midpoint: 10.0, color: 'text-yellow-400' },
+  { value: 'below_avg', label: 'Below Average (620–659)', rateMin: 12.0, rateMax: 14.5, midpoint: 13.2, color: 'text-amber-400' },
+  { value: 'poor',      label: 'Poor (under 620)',     rateMin: 15.0, rateMax: 20.0, midpoint: 17.5, color: 'text-red-400' },
+]
+
 const TYPE_LABELS = {
   electric: 'Electric', hybrid: 'Hybrid', truck: 'Truck', suv: 'SUV',
   luxury_suv: 'Luxury SUV', sports: 'Sports', compact: 'Compact',
@@ -196,9 +205,13 @@ export default function SalaryCalculator() {
   // Car suggestion filter
   const [carFilterCategory, setCarFilterCategory] = useState('all')
 
+  // Credit score → APR guidance
+  const [creditBand, setCreditBand] = useState('')
+
   // Buy inputs
   const [vehiclePrice, setVehiclePrice] = useState(30000)
   const [downPct, setDownPct] = useState(20)
+  const [tradeInValue, setTradeInValue] = useState(0)
   const [loanTerm, setLoanTerm] = useState(48)
   const [rate, setRate] = useState(6.5)
 
@@ -355,13 +368,15 @@ export default function SalaryCalculator() {
       }
     }
     const downPayment = vehiclePrice * (downPct / 100)
-    const loanAmount = vehiclePrice - downPayment
+    const effectiveTradeIn = Math.min(tradeInValue, vehiclePrice - downPayment)
+    const loanAmount = Math.max(0, vehiclePrice - downPayment - effectiveTradeIn)
     const payment = monthlyPayment(loanAmount, rate, loanTerm)
     const totalLoanCost = payment * loanTerm
     const totalInterest = totalLoanCost - loanAmount
     const totalMonthly = payment + extra.total
     return {
       downPayment,
+      effectiveTradeIn,
       loanAmount,
       payment,
       totalLoanCost,
@@ -373,7 +388,7 @@ export default function SalaryCalculator() {
       aggressive: (totalMonthly / 0.20) * 12,
       conservativeMonthly: totalMonthly / 0.10,
     }
-  }, [mode, vehiclePrice, downPct, loanTerm, rate, leaseMsrp, leaseDown, leaseMonthly, leaseTerm, proExtras, userState, annualMiles])
+  }, [mode, vehiclePrice, downPct, tradeInValue, loanTerm, rate, leaseMsrp, leaseDown, leaseMonthly, leaseTerm, proExtras, userState, annualMiles])
 
   // Reverse mode: given a salary, solve for the max affordable vehicle price
   const affordableResults = useMemo(() => {
@@ -392,7 +407,10 @@ export default function SalaryCalculator() {
         const factor = r > 0
           ? (Math.pow(1 + r, n) - 1) / (r * Math.pow(1 + r, n))
           : n
-        estPrice = Math.max(500, (loanBudget * factor) / (1 - downPct / 100))
+        // Trade-in equity expands purchasing power proportionally
+        const downFraction = 1 - downPct / 100
+        const tradeInBonus = tradeInValue > 0 ? tradeInValue / downFraction : 0
+        estPrice = Math.max(500, (loanBudget * factor) / downFraction + tradeInValue)
       }
       return Math.round(estPrice / 500) * 500
     }
@@ -402,7 +420,7 @@ export default function SalaryCalculator() {
       comfortable:  solve(0.15),
       aggressive:   solve(0.20),
     }
-  }, [knownSalary, userState, rate, loanTerm, downPct, annualMiles])
+  }, [knownSalary, userState, rate, loanTerm, downPct, tradeInValue, annualMiles])
 
   const matchedVehicles = useMemo(() => {
     if (!affordableResults) return []
@@ -446,6 +464,7 @@ export default function SalaryCalculator() {
   }, [matchedVehicles, carFilterCategory])
 
   const downAmount = vehiclePrice * (downPct / 100)
+  const activeCreditBand = CREDIT_BANDS.find(b => b.value === creditBand)
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">
@@ -889,6 +908,68 @@ export default function SalaryCalculator() {
                     )}
                   </div>
 
+                  {/* Trade-in / equity */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <label className="input-label">Trade-in or Rebate Value</label>
+                      {tradeInValue > 0 && (
+                        <span className="text-xs font-semibold text-green-400">
+                          −{new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(tradeInValue)} off loan
+                        </span>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                      <input
+                        type="number"
+                        value={tradeInValue}
+                        min={0}
+                        onChange={e => setTradeInValue(Math.max(0, Number(e.target.value)))}
+                        className="input-field"
+                        style={{ paddingLeft: '1.75rem' }}
+                        placeholder="0"
+                      />
+                    </div>
+                    <input
+                      type="range" min={0} max={50000} step={500}
+                      value={tradeInValue}
+                      onChange={e => setTradeInValue(Number(e.target.value))}
+                      style={{ background: `linear-gradient(to right, var(--accent) ${(tradeInValue / 50000) * 100}%, var(--border) ${(tradeInValue / 50000) * 100}%)` }}
+                    />
+                    <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+                      <span>$0</span>
+                      <span>$50,000</span>
+                    </div>
+                    <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                      Trade-in equity and manufacturer rebates reduce your loan amount directly — lowering your monthly payment and required salary.
+                    </p>
+                  </div>
+
+                  {/* Credit score → APR guidance */}
+                  <div className="flex flex-col gap-2">
+                    <label className="input-label">Credit Score Band</label>
+                    <select
+                      value={creditBand}
+                      onChange={e => {
+                        const band = e.target.value
+                        setCreditBand(band)
+                        const found = CREDIT_BANDS.find(b => b.value === band)
+                        if (found) setRate(found.midpoint)
+                      }}
+                      className="input-field text-sm"
+                    >
+                      <option value="">I'll enter my rate manually</option>
+                      {CREDIT_BANDS.map(b => (
+                        <option key={b.value} value={b.value}>{b.label} — typical {b.rateMin}–{b.rateMax}%</option>
+                      ))}
+                    </select>
+                    {activeCreditBand && (
+                      <p className={`text-xs font-semibold ${activeCreditBand.color}`}>
+                        Using {activeCreditBand.midpoint}% APR — typical range {activeCreditBand.rateMin}–{activeCreditBand.rateMax}% for this score band. Adjust below if you know your exact rate.
+                      </p>
+                    )}
+                  </div>
+
                   {/* Interest rate */}
                   <div className="flex flex-col gap-2">
                     <label className="input-label">Annual Interest Rate</label>
@@ -897,7 +978,7 @@ export default function SalaryCalculator() {
                         type="number"
                         value={rate}
                         min={0} max={25} step={0.1}
-                        onChange={e => setRate(Number(e.target.value))}
+                        onChange={e => { setRate(Number(e.target.value)); setCreditBand('') }}
                         className="input-field"
                         style={{ paddingRight: '2.5rem' }}
                       />
@@ -906,7 +987,7 @@ export default function SalaryCalculator() {
                     <input
                       type="range" min={0} max={25} step={0.1}
                       value={rate}
-                      onChange={e => setRate(Number(e.target.value))}
+                      onChange={e => { setRate(Number(e.target.value)); setCreditBand('') }}
                       style={{ background: `linear-gradient(to right, var(--accent) ${(rate / 25) * 100}%, var(--border) ${(rate / 25) * 100}%)` }}
                     />
                   </div>
@@ -1045,6 +1126,12 @@ export default function SalaryCalculator() {
                 <div className="card border-[var(--border)]">
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">Loan Cost Summary</p>
                   <div className="flex flex-col gap-2">
+                    {results.effectiveTradeIn > 0 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[var(--text-muted)]">Trade-in / rebate applied</span>
+                        <span className="font-semibold tabular-nums text-green-400">−{fmt(results.effectiveTradeIn)}</span>
+                      </div>
+                    )}
                     {[
                       { label: 'Amount financed', val: results.loanAmount },
                       { label: `Interest paid (${loanTerm / 12} yr @ ${rate}%)`, val: results.totalInterest },
@@ -1159,7 +1246,7 @@ export default function SalaryCalculator() {
                       </div>
                     ))}
                     <p className="text-[10px] text-[var(--text-muted)] leading-relaxed mt-1">
-                      Assumes {downPct}% down · {loanTerm}-month loan · {rate}% APR · includes estimated insurance, fuel, maintenance &amp; registration.
+                      Assumes {downPct}% down{tradeInValue > 0 ? ` + ${fmt(tradeInValue)} trade-in` : ''} · {loanTerm}-month loan · {rate}% APR · includes estimated insurance, fuel, maintenance &amp; registration.
                       {userState ? ` ${userState} rates applied.` : ' National average rates.'}
                     </p>
                   </div>

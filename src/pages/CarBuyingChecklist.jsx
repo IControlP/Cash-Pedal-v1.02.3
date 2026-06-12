@@ -110,6 +110,7 @@ export default function CarBuyingChecklist() {
 
   const [step, setStep] = useState('input') // input | checklist
   const [vehicleInfo, setVehicleInfo] = useState({ year: '', make: '', model: '', trim: '', mileage: 80000, price: '', state: '' })
+  const [mileageManuallySet, setMileageManuallySet] = useState(false)
   const [priceSource, setPriceSource] = useState('auto') // 'auto' | 'user'
   const [statuses, setStatuses] = useState({})
   const [notes, setNotes] = useState({})
@@ -282,7 +283,16 @@ export default function CarBuyingChecklist() {
                   <select
                     className="input-field"
                     value={vehicleInfo.year}
-                    onChange={e => { setPriceSource('auto'); setVehicleInfo(v => ({ ...v, year: e.target.value, trim: '' })) }}
+                    onChange={e => {
+                      const yr = e.target.value
+                      setPriceSource('auto')
+                      setVehicleInfo(v => ({ ...v, year: yr, trim: '' }))
+                      if (yr && !mileageManuallySet) {
+                        const age = new Date().getFullYear() - parseInt(yr)
+                        const suggested = Math.max(0, Math.min(300000, age * 12000))
+                        setVehicleInfo(v => ({ ...v, year: yr, trim: '', mileage: suggested }))
+                      }
+                    }}
                     required
                   >
                     <option value="">Select year…</option>
@@ -311,21 +321,47 @@ export default function CarBuyingChecklist() {
                 </div>
               )}
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="input-label" style={{ margin: 0 }}>Current Mileage</label>
-                  <span className="text-sm font-bold text-white">{vehicleInfo.mileage.toLocaleString()} mi</span>
-                </div>
-                <input
-                  type="range" min={0} max={300000} step={1000}
-                  value={vehicleInfo.mileage}
-                  onChange={e => setVehicleInfo(v => ({ ...v, mileage: Number(e.target.value) }))}
-                  style={{ background: `linear-gradient(to right, var(--accent) ${(vehicleInfo.mileage / 300000) * 100}%, var(--border) ${(vehicleInfo.mileage / 300000) * 100}%)` }}
-                />
-                <div className="flex justify-between text-[10px] text-[var(--text-muted)] mt-1">
-                  <span>0</span><span>300,000</span>
-                </div>
-              </div>
+              {(() => {
+                const expectedMiles = vehicleInfo.year
+                  ? Math.max(0, (new Date().getFullYear() - parseInt(vehicleInfo.year)) * 12000)
+                  : null
+                const mileagePct = expectedMiles && expectedMiles > 0
+                  ? Math.round((vehicleInfo.mileage / expectedMiles) * 100)
+                  : null
+                const mileageLabel = mileagePct == null ? null
+                  : mileagePct <= 75 ? { text: 'Low mileage for its age', color: 'text-green-400' }
+                  : mileagePct <= 110 ? { text: 'Average mileage for its age', color: 'text-[var(--accent)]' }
+                  : mileagePct <= 150 ? { text: 'Higher than average for its age', color: 'text-yellow-400' }
+                  : { text: 'High mileage — inspect drivetrain carefully', color: 'text-red-400' }
+                return (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="input-label" style={{ margin: 0 }}>Current Mileage</label>
+                      <span className="text-sm font-bold text-white">{vehicleInfo.mileage.toLocaleString()} mi</span>
+                    </div>
+                    <input
+                      type="range" min={0} max={300000} step={1000}
+                      value={vehicleInfo.mileage}
+                      onChange={e => {
+                        setMileageManuallySet(true)
+                        setVehicleInfo(v => ({ ...v, mileage: Number(e.target.value) }))
+                      }}
+                      style={{ background: `linear-gradient(to right, var(--accent) ${(vehicleInfo.mileage / 300000) * 100}%, var(--border) ${(vehicleInfo.mileage / 300000) * 100}%)` }}
+                    />
+                    <div className="flex justify-between text-[10px] text-[var(--text-muted)] mt-1">
+                      <span>0</span><span>300,000</span>
+                    </div>
+                    {mileageLabel && expectedMiles > 0 && (
+                      <div className="flex items-center justify-between mt-1.5">
+                        <span className={`text-xs font-semibold ${mileageLabel.color}`}>{mileageLabel.text}</span>
+                        <span className="text-[10px] text-[var(--text-muted)]">
+                          Avg for {vehicleInfo.year}: ~{expectedMiles.toLocaleString()} mi
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
 
               <div>
                 <label className="input-label">Asking Price</label>
@@ -427,6 +463,23 @@ export default function CarBuyingChecklist() {
               <h1 className="font-display font-extrabold text-white text-2xl sm:text-3xl">{vehicleLabel}</h1>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <p className="text-[var(--text-muted)] text-sm">{vehicleInfo.mileage.toLocaleString()} miles</p>
+                {vehicleInfo.year && (() => {
+                  const expectedMiles = Math.max(0, (new Date().getFullYear() - parseInt(vehicleInfo.year)) * 12000)
+                  if (expectedMiles <= 0) return null
+                  const pct = Math.round((vehicleInfo.mileage / expectedMiles) * 100)
+                  const badge = pct <= 75
+                    ? { text: 'Low Mileage', cls: 'bg-green-500/10 border-green-500/30 text-green-400' }
+                    : pct <= 110
+                    ? { text: 'Average Mileage', cls: 'bg-[var(--accent-muted)] border-[var(--accent)]/30 text-[var(--accent)]' }
+                    : pct <= 150
+                    ? { text: 'Higher Than Average', cls: 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400' }
+                    : { text: 'High Mileage', cls: 'bg-red-500/10 border-red-500/30 text-red-400' }
+                  return (
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${badge.cls}`}>
+                      {badge.text}
+                    </span>
+                  )
+                })()}
                 {vehicleData?.type && (
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)] uppercase tracking-wider">
                     {vehicleData.type.replace('_', ' ')}
@@ -614,35 +667,46 @@ export default function CarBuyingChecklist() {
                   <div key={cat} className="card">
                     <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-4">{cat}</p>
                     <div className="flex flex-col gap-3">
-                      {items.map(item => (
-                        <div key={item.id} className="flex items-center gap-4 flex-wrap">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className={`text-sm font-semibold ${item.critical ? 'text-white' : 'text-[var(--text-muted)]'}`}>
-                                {item.name}
-                              </span>
-                              {item.critical && (
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/30">
-                                  Critical
-                                </span>
-                              )}
+                      {items.map(item => {
+                        const itemStatus = statuses[item.id] || 'unknown'
+                        return (
+                          <div key={item.id} className="flex flex-col gap-2 pb-3 last:pb-0 border-b last:border-b-0 border-[var(--border)]">
+                            <div className="flex items-start gap-4 flex-wrap">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className={`text-sm font-semibold ${item.critical ? 'text-white' : 'text-[var(--text-muted)]'}`}>
+                                    {item.name}
+                                  </span>
+                                  {item.critical && (
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/30">
+                                      Critical
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                                  Due every {item.interval.toLocaleString()} mi · Est. {fmt(item.cost)}
+                                </p>
+                              </div>
+                              <select
+                                value={itemStatus}
+                                onChange={e => setStatuses(s => ({ ...s, [item.id]: e.target.value }))}
+                                className="input-field text-xs py-1.5 w-auto shrink-0"
+                                style={{ width: 'auto', minWidth: '140px' }}
+                              >
+                                {statusOptions.map(o => (
+                                  <option key={o.value} value={o.value}>{o.label}</option>
+                                ))}
+                              </select>
                             </div>
-                            <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                              Due every {item.interval.toLocaleString()} mi · Est. {fmt(item.cost)}
-                            </p>
+                            {item.costContext && itemStatus !== 'confirmed' && (
+                              <p className="text-[11px] leading-relaxed pl-0"
+                                style={{ color: itemStatus === 'not_done' ? 'rgb(252,165,165)' : 'var(--text-muted)' }}>
+                                {item.costContext}
+                              </p>
+                            )}
                           </div>
-                          <select
-                            value={statuses[item.id] || 'unknown'}
-                            onChange={e => setStatuses(s => ({ ...s, [item.id]: e.target.value }))}
-                            className="input-field text-xs py-1.5 w-auto shrink-0"
-                            style={{ width: 'auto', minWidth: '140px' }}
-                          >
-                            {statusOptions.map(o => (
-                              <option key={o.value} value={o.value}>{o.label}</option>
-                            ))}
-                          </select>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 ))

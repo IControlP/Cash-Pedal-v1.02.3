@@ -160,32 +160,53 @@ export function getContextualQuestions(vehicleType, isEV, climateFlags) {
 
 // Maintenance service intervals (miles) with costs and categories.
 // Intervals reflect modern vehicles with synthetic oil and iridium/platinum plugs.
+// costContext: plain-English repair cost range + why it matters for negotiation.
 export const maintenanceItems = [
   // Engine / Powertrain
-  { id: 'oil_change', name: 'Oil & Filter Change', interval: 7500, category: 'Powertrain', cost: 80, critical: false },
-  { id: 'air_filter', name: 'Engine Air Filter', interval: 20000, category: 'Powertrain', cost: 30, critical: false },
-  { id: 'cabin_filter', name: 'Cabin Air Filter', interval: 15000, category: 'Interior', cost: 30, critical: false },
-  { id: 'spark_plugs', name: 'Spark Plugs (iridium/platinum)', interval: 60000, category: 'Powertrain', cost: 200, critical: false },
-  { id: 'transmission_fluid', name: 'Transmission Fluid', interval: 60000, category: 'Powertrain', cost: 150, critical: true },
-  { id: 'coolant_flush', name: 'Coolant Flush', interval: 50000, category: 'Powertrain', cost: 100, critical: false },
-  { id: 'timing_belt', name: 'Timing Belt / Chain Inspection', interval: 60000, category: 'Powertrain', cost: 600, critical: true },
-  { id: 'fuel_filter', name: 'Fuel Filter', interval: 60000, category: 'Powertrain', cost: 80, critical: false },
+  { id: 'oil_change', name: 'Oil & Filter Change', interval: 7500, category: 'Powertrain', cost: 80, critical: false,
+    costContext: '$60–$120 at a shop. Skipped oil changes accelerate engine wear — the most revealing indicator of how a seller cared for the car.' },
+  { id: 'air_filter', name: 'Engine Air Filter', interval: 20000, category: 'Powertrain', cost: 30, critical: false,
+    costContext: '$20–$50 DIY. Cheap to fix, but dirty filters reduce fuel economy and signal generally deferred maintenance.' },
+  { id: 'cabin_filter', name: 'Cabin Air Filter', interval: 15000, category: 'Interior', cost: 30, critical: false,
+    costContext: '$20–$45 DIY. Low cost but tells you whether basic upkeep was done. A clogged filter suggests other deferred items.' },
+  { id: 'spark_plugs', name: 'Spark Plugs (iridium/platinum)', interval: 60000, category: 'Powertrain', cost: 200, critical: false,
+    costContext: '$150–$400 at a shop (more for V8 or turbocharged engines). Worn plugs cause misfires, reduced power, and poor fuel economy.' },
+  { id: 'transmission_fluid', name: 'Transmission Fluid', interval: 60000, category: 'Powertrain', cost: 150, critical: true,
+    costContext: '$100–$250 for a flush. Skipping this shortens transmission life. A transmission rebuild or replacement costs $2,000–$5,000 — your single biggest leverage item.' },
+  { id: 'coolant_flush', name: 'Coolant Flush', interval: 50000, category: 'Powertrain', cost: 100, critical: false,
+    costContext: '$80–$150. Degraded coolant causes corrosion inside the cooling system. Overheating from a clogged system can destroy an engine.' },
+  { id: 'timing_belt', name: 'Timing Belt / Chain Inspection', interval: 60000, category: 'Powertrain', cost: 600, critical: true,
+    costContext: '$400–$1,000 for belt replacement (interference engines). A snapped timing belt destroys the engine — a $4,000–$10,000 failure. Always verify this service was done.' },
+  { id: 'fuel_filter', name: 'Fuel Filter', interval: 60000, category: 'Powertrain', cost: 80, critical: false,
+    costContext: '$50–$150. Clogged filters cause hesitation and stress the fuel pump. Fuel pump replacement is $350–$800+.' },
   // Suspension & Steering
-  { id: 'tires_rotate', name: 'Tire Rotation & Balance', interval: 7500, category: 'Tires & Suspension', cost: 50, critical: false },
-  { id: 'tires_replace', name: 'Tire Replacement', interval: 50000, category: 'Tires & Suspension', cost: 700, critical: true },
-  { id: 'alignment', name: 'Wheel Alignment', interval: 30000, category: 'Tires & Suspension', cost: 100, critical: false },
-  { id: 'shocks_struts', name: 'Shocks / Struts', interval: 60000, category: 'Tires & Suspension', cost: 900, critical: true },
+  { id: 'tires_rotate', name: 'Tire Rotation & Balance', interval: 7500, category: 'Tires & Suspension', cost: 50, critical: false,
+    costContext: '$25–$60 per rotation. Skipping this causes uneven tire wear that shortens tire life by 20–30% — costing you $150–$350 in early tire replacement.' },
+  { id: 'tires_replace', name: 'Tire Replacement', interval: 50000, category: 'Tires & Suspension', cost: 700, critical: true,
+    costContext: '$500–$1,200 for a full set of 4 (more for performance/SUV tires). Worn or cracked tires are a safety risk and an immediate out-of-pocket expense after purchase.' },
+  { id: 'alignment', name: 'Wheel Alignment', interval: 30000, category: 'Tires & Suspension', cost: 100, critical: false,
+    costContext: '$80–$150. Misalignment causes tire cupping and uneven wear. If ignored, the cost shows up as premature tire replacement.' },
+  { id: 'shocks_struts', name: 'Shocks / Struts', interval: 60000, category: 'Tires & Suspension', cost: 900, critical: true,
+    costContext: '$600–$1,400 for all four corners. Worn shocks reduce braking ability and handling. At high mileage this is often deferred — use it as negotiation leverage.' },
   // Brakes
-  { id: 'brake_pads', name: 'Brake Pads', interval: 40000, category: 'Brakes', cost: 250, critical: true },
-  { id: 'brake_fluid', name: 'Brake Fluid Flush', interval: 30000, category: 'Brakes', cost: 80, critical: false },
-  { id: 'brake_rotors', name: 'Brake Rotors', interval: 70000, category: 'Brakes', cost: 400, critical: true },
+  { id: 'brake_pads', name: 'Brake Pads', interval: 40000, category: 'Brakes', cost: 250, critical: true,
+    costContext: '$150–$350 for all four corners. Worn-to-metal pads damage rotors (see below) — doubling the cost. A safety-critical item that sellers sometimes delay disclosing.' },
+  { id: 'brake_fluid', name: 'Brake Fluid Flush', interval: 30000, category: 'Brakes', cost: 80, critical: false,
+    costContext: '$70–$120. Moisture-contaminated fluid lowers boiling point and can cause brake fade in hard stops. Cheap to fix but often skipped.' },
+  { id: 'brake_rotors', name: 'Brake Rotors', interval: 70000, category: 'Brakes', cost: 400, critical: true,
+    costContext: '$250–$600 for front and rear. Grooved rotors are caused by metal-on-metal pad wear. Ask to see rotor thickness — a mechanic can measure this during a pre-purchase inspection.' },
   // Electrical / Safety
-  { id: 'battery', name: 'Battery Test / Replacement', interval: 50000, category: 'Electrical', cost: 200, critical: true },
-  { id: 'lights', name: 'Light Bulb Inspection', interval: 15000, category: 'Electrical', cost: 30, critical: false },
+  { id: 'battery', name: 'Battery Test / Replacement', interval: 50000, category: 'Electrical', cost: 200, critical: true,
+    costContext: '$150–$300 installed. Most batteries last 4–5 years. Hot climates shorten life to 2–3 years. A dead battery is an immediate fix — factor it into your offer.' },
+  { id: 'lights', name: 'Light Bulb Inspection', interval: 15000, category: 'Electrical', cost: 30, critical: false,
+    costContext: '$10–$80 (HID/LED headlights can be $100–$400+). Failed safety lights can fail inspection and get you ticketed.' },
   // Fluids
-  { id: 'power_steering', name: 'Power Steering Fluid', interval: 50000, category: 'Fluids', cost: 60, critical: false },
-  { id: 'differential', name: 'Differential Fluid', interval: 50000, category: 'Fluids', cost: 100, critical: false },
-  { id: 'wiper_blades', name: 'Wiper Blades', interval: 12000, category: 'Safety', cost: 40, critical: false },
+  { id: 'power_steering', name: 'Power Steering Fluid', interval: 50000, category: 'Fluids', cost: 60, critical: false,
+    costContext: '$50–$100. Degraded fluid causes pump wear. Power steering pump replacement is $300–$800.' },
+  { id: 'differential', name: 'Differential Fluid', interval: 50000, category: 'Fluids', cost: 100, critical: false,
+    costContext: '$80–$150 for front and rear. Critical on AWD/4WD vehicles. Differential rebuild costs $500–$1,500.' },
+  { id: 'wiper_blades', name: 'Wiper Blades', interval: 12000, category: 'Safety', cost: 40, critical: false,
+    costContext: '$20–$50 for a pair. Low cost, high safety impact. Streaking or skipping blades indicate general neglect.' },
 ]
 
 // Questions to ask the seller, from original app

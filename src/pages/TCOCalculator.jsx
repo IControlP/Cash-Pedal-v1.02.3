@@ -900,6 +900,146 @@ function CostAlerts({ isPro, make, model, isEV, totalAnnualCost, annualMaintenan
   )
 }
 
+// ── Lease vs. Buy head-to-head (Pro) ──────────────────
+function LeaseVsBuy({ isPro, data, formatCurrency }) {
+  const ProBadge = () => (
+    <span className="text-[10px] font-bold px-2 py-0.5 rounded"
+      style={{ background: 'rgba(200,255,0,0.1)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.25)' }}>
+      Pro
+    </span>
+  )
+
+  if (!isPro) {
+    return (
+      <div className="relative rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+        <div className="opacity-[0.12] pointer-events-none select-none p-4 flex flex-col gap-3" aria-hidden>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Lease vs. Buy</p>
+            <ProBadge />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {['Lease', 'Buy'].map(l => (
+              <div key={l} className="rounded-lg border border-[var(--border)] p-3">
+                <p className="text-xs text-[var(--text-muted)] mb-2">{l}</p>
+                <p className="text-white font-bold text-lg">$──,───</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 p-6 text-center"
+          style={{ background: 'rgba(13,13,18,0.82)', backdropFilter: 'blur(6px)' }}>
+          <div className="w-9 h-9 rounded-full flex items-center justify-center text-base"
+            style={{ background: 'rgba(255,184,0,0.1)', border: '1px solid rgba(255,184,0,0.25)' }}>
+            🔒
+          </div>
+          <div>
+            <p className="font-display font-bold text-white text-sm mb-1">Lease vs. Buy Analysis</p>
+            <p className="text-[var(--text-muted)] text-xs max-w-xs leading-relaxed mx-auto">
+              The same car, leased vs. financed over the same term — net of the resale equity buying
+              leaves you with. See which one actually costs less, and by how much.
+            </p>
+          </div>
+          <a href="/subscribe" className="text-xs font-bold px-4 py-2 rounded-lg"
+            style={{ background: 'var(--accent)', color: '#000' }}>
+            Unlock with Pro →
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  if (!data) return null
+
+  const winColor  = '#4ade80'
+  const winnerNet = data.buyWins ? data.netBuy : data.netLease
+
+  const Row = ({ label, value, sign = '', muted = false, strong = false }) => (
+    <div className="flex justify-between items-center text-xs">
+      <span className={muted ? 'text-[var(--text-muted)]' : 'text-white/80'}>{label}</span>
+      <span className={`tabular-nums ${strong ? 'font-bold text-white' : muted ? 'text-[var(--text-muted)]' : 'text-white'}`}>
+        {sign}{formatCurrency(value)}
+      </span>
+    </div>
+  )
+
+  return (
+    <div className="rounded-xl border p-4 flex flex-col gap-4"
+      style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+          Lease vs. Buy · {data.horizonMonths}-month horizon
+        </p>
+        <ProBadge />
+      </div>
+
+      {/* Verdict */}
+      <div className="rounded-lg px-4 py-3 text-center"
+        style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.25)' }}>
+        <p className="font-display font-bold text-white text-base">
+          {data.buyWins ? 'Buying' : 'Leasing'} is cheaper by{' '}
+          <span style={{ color: winColor }}>{formatCurrency(data.diff)}</span>
+        </p>
+        <p className="text-[10px] text-[var(--text-muted)] mt-1">
+          over {data.horizonMonths} months · net cost {formatCurrency(winnerNet)} vs.{' '}
+          {formatCurrency(data.buyWins ? data.netLease : data.netBuy)}
+        </p>
+      </div>
+
+      {/* Two columns */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Lease */}
+        <div className="rounded-lg border p-3 flex flex-col gap-1.5"
+          style={{ borderColor: !data.buyWins ? 'rgba(74,222,128,0.4)' : 'var(--border)', background: 'var(--bg)' }}>
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-xs font-bold text-white">Lease</p>
+            {!data.buyWins && <span className="text-[10px] font-bold" style={{ color: winColor }}>✓ winner</span>}
+          </div>
+          <Row label="Drive-off" value={data.leaseDriveOff} muted />
+          <Row label="Payments + drive-off" value={data.leaseTotal} muted />
+          <Row label="Operating costs" value={data.operating} muted />
+          <Row label="Equity at end" value={0} muted />
+          <div className="h-px bg-[var(--border)] my-1" />
+          <Row label="Net cost" value={data.netLease} strong />
+        </div>
+
+        {/* Buy */}
+        <div className="rounded-lg border p-3 flex flex-col gap-1.5"
+          style={{ borderColor: data.buyWins ? 'rgba(74,222,128,0.4)' : 'var(--border)', background: 'var(--bg)' }}>
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-xs font-bold text-white">Buy / Finance</p>
+            {data.buyWins && <span className="text-[10px] font-bold" style={{ color: winColor }}>✓ winner</span>}
+          </div>
+          <Row label="Price + interest" value={data.buyFinancing} muted />
+          <Row label="Operating costs" value={data.operating} muted />
+          <Row label="− Resale equity" value={data.resaleValue} sign="−" muted />
+          <div className="h-px bg-[var(--border)] my-1" />
+          <Row label="Net cost" value={data.netBuy} strong />
+        </div>
+      </div>
+
+      {/* Notes */}
+      <div className="flex flex-col gap-1.5 pt-1">
+        <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+          • Buy side assumes {formatCurrency(data.buyDown)} down, a {data.loanTerm}-mo loan at {data.rate}%,
+          and credits an estimated {formatCurrency(data.resaleValue)} resale value at the end of the term.
+          Adjust these in <span className="text-white">Buy / Finance</span> mode.
+        </p>
+        {data.excessMileageFee > 0 && (
+          <p className="text-[10px] leading-relaxed" style={{ color: '#fbbf24' }}>
+            • At {data.annualMileage.toLocaleString()} mi/yr you'd exceed a typical {data.leaseMileageCap.toLocaleString()}-mi
+            lease allowance — budget ~{formatCurrency(data.excessMileageFee)} in over-mileage charges (not in the lease total above).
+          </p>
+        )}
+        <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+          • Operating costs are identical on both paths, so the verdict is driven by financing cost minus
+          the equity buying leaves you with. Leasing means lower commitment and always-newer cars; buying
+          builds an asset with no mileage cap.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 // ── Main page ─────────────────────────────────────────
 export default function TCOCalculator() {
   const navigate = useNavigate()
@@ -1032,6 +1172,16 @@ export default function TCOCalculator() {
     const next = !simpleMode
     setSimpleMode(next)
     localStorage.setItem('cashpedal_simple_mode', String(next))
+  }
+
+  // "How to use" guide — collapsible, open by default, choice remembered
+  const [showGuide, setShowGuide] = useState(() => localStorage.getItem('cashpedal_tco_guide_collapsed') !== 'true')
+  const toggleGuide = () => {
+    setShowGuide(prev => {
+      const next = !prev
+      localStorage.setItem('cashpedal_tco_guide_collapsed', String(!next))
+      return next
+    })
   }
 
   // Restore last session when landing via ?resume=1
@@ -1327,9 +1477,10 @@ export default function TCOCalculator() {
       currentLeaseRemainingMonths, currentRemainingTerm])
 
   // Auto-suggest residual % based on the depreciation model for the selected lease term.
-  // Fires whenever the lease term, make, or model changes.
+  // Fires whenever the lease term, make, or model changes. Runs in buy mode too so the
+  // Lease vs. Buy panel uses a vehicle-appropriate residual even before switching modes.
   useEffect(() => {
-    if (financeMode !== 'lease') return
+    if (financeMode === 'current') return
     const leaseYears = leaseTerm / 12
     const suggested = Math.round(
       estimateCurrentValue(100, selMake || null, selModel || null, leaseYears)
@@ -1377,6 +1528,56 @@ export default function TCOCalculator() {
   const netCostOfOwnership = futureResaleValue != null
     ? totalOwnershipPaid + (financeMode === 'buy' ? safeDown : 0) - futureResaleValue
     : null
+
+  // ── Lease vs. Buy head-to-head ──────────────────────────
+  // Compares the same vehicle, on the same clock (the lease term), net of equity.
+  // Leasing ends with $0 equity; buying ends with a depreciated asset you can sell —
+  // crediting that resale value is what makes the comparison honest.
+  const leaseVsBuy = useMemo(() => {
+    if (!(price > 0)) return null
+    const horizonYears  = leasePeriodYears   // common clock = the lease term
+    const horizonMonths = leaseTerm
+
+    // BUY path: finance the same vehicle, evaluated over the lease horizon.
+    const buyLoan = calculateLoan({
+      price, downPayment: Math.min(downPayment, price),
+      loanTermMonths: loanTerm, annualRatePercent: rate, ownershipYears: horizonYears,
+    })
+    // Cash to own + finance through the horizon (remaining balance retired at sale)
+    // = down + principal + interest-through-horizon = price + interest-through-horizon.
+    const buyFinancing = price + buyLoan.interestThroughOwnership
+    // Equity retained at the end of the horizon (you own a depreciated asset).
+    const projectedMiles = Math.round(annualMileage * (carAge + horizonYears))
+    const resaleValue = Math.round(
+      estimateCurrentValue(origMsrp ?? price, selMake || null, selModel || null, carAge + horizonYears, projectedMiles)
+    )
+
+    // Operating costs (insurance + fuel + maintenance + reg) are identical on both
+    // paths over the same horizon, so they don't move the verdict — shown for context.
+    const operating = Math.round(annualOperatingCost * horizonYears)
+
+    const netBuy   = Math.round(buyFinancing + operating - resaleValue)
+    const netLease = Math.round(leaseResults.totalLeaseCost + operating)
+
+    // Lease mileage allowance caveat (standard ~12k/yr; excess typically ~$0.25/mi).
+    const leaseMileageCap  = 12000
+    const excessMiles      = Math.max(0, (annualMileage - leaseMileageCap) * horizonYears)
+    const excessMileageFee = Math.round(excessMiles * 0.25)
+
+    const diff = netLease - netBuy   // > 0 → buying is cheaper
+    return {
+      horizonYears, horizonMonths,
+      leaseDriveOff: Math.round(Math.min(capCostReduction, price)),
+      leaseTotal:    Math.round(leaseResults.totalLeaseCost),
+      buyDown:       Math.round(Math.min(downPayment, price)),
+      buyInterest:   Math.round(buyLoan.interestThroughOwnership),
+      buyFinancing:  Math.round(buyFinancing),
+      resaleValue, operating, netBuy, netLease,
+      loanTerm, rate, annualMileage, leaseMileageCap, excessMileageFee,
+      diff: Math.abs(Math.round(diff)), buyWins: diff > 0,
+    }
+  }, [price, leasePeriodYears, leaseTerm, downPayment, loanTerm, rate, annualMileage, carAge,
+      origMsrp, selMake, selModel, annualOperatingCost, leaseResults.totalLeaseCost, capCostReduction])
 
   // Derived EV flag, charging rate, and premium fuel flag — used across the render
   const catInfoForRender = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
@@ -1550,6 +1751,60 @@ export default function TCOCalculator() {
                 : 'All inputs unlocked. Switch to Simple for a cleaner view.'}
             </p>
           </div>
+
+          {/* How to use this calculator */}
+          <div className="anim-2 mt-5 rounded-xl border overflow-hidden"
+            style={{ borderColor: 'rgba(200,255,0,0.2)', background: 'rgba(200,255,0,0.03)' }}>
+            <button onClick={toggleGuide}
+              className="w-full flex items-center justify-between px-4 py-3 text-left">
+              <span className="flex items-center gap-2 text-sm font-semibold text-white">
+                <span aria-hidden>💡</span> How to use this calculator
+              </span>
+              <span className="text-xs text-[var(--text-muted)]">{showGuide ? 'Hide ▲' : 'Show ▼'}</span>
+            </button>
+            {showGuide && (
+              <div className="px-4 pb-4 pt-1 flex flex-col gap-4">
+                <ol className="flex flex-col gap-3">
+                  {[
+                    { n: '1', t: 'Choose how you’ll pay',
+                      d: 'Pick Buy / Finance, Lease, or Currently Have. Each mode asks only for the numbers that matter for that path.' },
+                    { n: '2', t: 'Add your location & vehicle',
+                      d: 'Your ZIP or state tailors insurance, fuel, and registration. Selecting a make/model/trim pulls in real MSRP and depreciation — or skip it and pick a category.' },
+                    { n: '3', t: 'Set the financing details',
+                      d: 'Enter price/MSRP, down payment, term, and rate (or money factor & residual for a lease). Everything recalculates live as you type.' },
+                    { n: '4', t: 'Read your results',
+                      d: 'See your all-in monthly cost, annual breakdown, and — for buying or leasing — a Lease vs. Buy verdict showing which is cheaper and by how much.' },
+                  ].map(step => (
+                    <li key={step.n} className="flex gap-3">
+                      <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                        style={{ background: 'var(--accent)', color: '#000' }}>{step.n}</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-white">{step.t}</p>
+                        <p className="text-xs text-[var(--text-muted)] leading-relaxed mt-0.5">{step.d}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+                <div className="rounded-lg border p-3 flex flex-col gap-1.5"
+                  style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>
+                    The three modes
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                    <span className="text-white font-semibold">Buy / Finance</span> — purchasing a car, with or without a loan.{' '}
+                    <span className="text-white font-semibold">Lease</span> — a new-car lease priced from MSRP, term, money factor, and residual.{' '}
+                    <span className="text-white font-semibold">Currently Have</span> — a car you already own or lease, to see the cost of keeping it.
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                    Comparing several cars? Run each one here, tap{' '}
+                    <span className="text-white font-semibold">Add to Comparison</span>, then open the{' '}
+                    <Link to="/compare" className="text-[var(--accent)] hover:underline font-semibold">Comparison page</Link>{' '}
+                    to stack them side by side.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Layout */}
@@ -1636,33 +1891,43 @@ export default function TCOCalculator() {
               <div className="h-px bg-[var(--border)]" />
 
               {/* Buy / Lease / Own toggle */}
-              <div className="flex gap-1 p-1 rounded-lg"
-                style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-                {[
-                  { value: 'buy',   label: 'Buy / Finance' },
-                  { value: 'lease', label: 'Lease' },
-                  { value: 'current', label: 'Currently Have' },
-                ].map(opt => (
-                  <button key={opt.value}
-                    onClick={() => {
-                      setFinanceMode(opt.value)
-                      if (opt.value === 'lease' && selMake && selModel) {
-                        if (selYear !== LEASE_YEAR) {
-                          setSelYear(LEASE_YEAR)
-                          setSelTrim('')
-                          setOrigMsrp(null)
-                          autoSelectCheapestTrim(selMake, selModel, LEASE_YEAR)
+              <div className="flex flex-col gap-2">
+                <label className="input-label">How will you pay for it?</label>
+                <div className="flex gap-1 p-1 rounded-lg"
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                  {[
+                    { value: 'buy',   label: 'Buy / Finance' },
+                    { value: 'lease', label: 'Lease' },
+                    { value: 'current', label: 'Currently Have' },
+                  ].map(opt => (
+                    <button key={opt.value}
+                      onClick={() => {
+                        setFinanceMode(opt.value)
+                        if (opt.value === 'lease' && selMake && selModel) {
+                          if (selYear !== LEASE_YEAR) {
+                            setSelYear(LEASE_YEAR)
+                            setSelTrim('')
+                            setOrigMsrp(null)
+                            autoSelectCheapestTrim(selMake, selModel, LEASE_YEAR)
+                          }
                         }
-                      }
-                    }}
-                    className="flex-1 py-1.5 rounded-md text-sm font-semibold transition-all"
-                    style={{
-                      background: financeMode === opt.value ? 'var(--accent)' : 'transparent',
-                      color:      financeMode === opt.value ? '#000' : 'var(--text-muted)',
-                    }}>
-                    {opt.label}
-                  </button>
-                ))}
+                      }}
+                      className="flex-1 py-1.5 rounded-md text-sm font-semibold transition-all"
+                      style={{
+                        background: financeMode === opt.value ? 'var(--accent)' : 'transparent',
+                        color:      financeMode === opt.value ? '#000' : 'var(--text-muted)',
+                      }}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+                  {financeMode === 'buy'
+                    ? 'Buying or financing a vehicle. Enter the price, down payment, loan term, and rate — you’ll also get a Lease vs. Buy verdict.'
+                    : financeMode === 'lease'
+                    ? 'Leasing a new vehicle. Enter MSRP, term, money factor, and residual — we’ll show the full lease cost and whether buying would be cheaper.'
+                    : 'A vehicle you already own or lease. Enter when you got it and your original terms to see what it costs to keep.'}
+                </p>
               </div>
 
               {/* Vehicle selector */}
@@ -3126,6 +3391,15 @@ export default function TCOCalculator() {
                     You can sell the vehicle at the end of ownership. This is your true economic cost — lower than total payments because the car retains value.
                   </p>
                 </div>
+              )}
+
+              {/* ── Lease vs. Buy head-to-head (Pro) — shown in buy & lease modes ── */}
+              {(financeMode === 'buy' || financeMode === 'lease') && (
+                <LeaseVsBuy
+                  isPro={isSubscribed}
+                  data={leaseVsBuy}
+                  formatCurrency={formatCurrency}
+                />
               )}
 
               {/* ── 5-Year Ownership Forecast (Pro) ── */}

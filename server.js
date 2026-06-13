@@ -492,8 +492,10 @@ function queueCrmLead(email, firstName, lastName, source) {
   if (!HUBSPOT_TOKEN) return
   ;(async () => {
     const props = { lifecyclestage: 'lead' }
-    if (firstName) props.firstname = firstName
-    if (lastName)  props.lastname  = lastName
+    if (firstName) props.firstname    = firstName
+    if (lastName)  props.lastname     = lastName
+    if (source)    props.lead_source  = source
+    props.signup_date = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
     try {
       await upsertHubSpotContact(email, props)
     } catch (err) {

@@ -10,6 +10,7 @@ const navLinks = [
   { to: '/checklist', label: 'Checklist' },
   { to: '/wheelzard', label: 'Wheel-Zard' },
   { to: '/market', label: 'Market Data' },
+  { to: '/blog', label: 'Blog' },
 ]
 
 // Compute days remaining defensively — supports whatever shape the hook returns.

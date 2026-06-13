@@ -33,7 +33,19 @@ function StatCard({ label, value }) {
   )
 }
 
-// Horizontal ranking bar chart for a list of { make, model, searches }.
+// Tooltip shows only the vehicle name and its rank — never a search count.
+function RankTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null
+  const p = payload[0].payload
+  return (
+    <div style={{ background: '#15151b', border: '1px solid #2a2a30', borderRadius: 8, fontSize: 12, color: '#fff', padding: '6px 10px' }}>
+      <span style={{ color: ACCENT, fontWeight: 700 }}>#{p.rank}</span>{' '}{p.name}
+    </div>
+  )
+}
+
+// Horizontal ranking bar chart. Bar length encodes RELATIVE popularity (weight,
+// top = 100) — no absolute search quantities are shown to the public.
 function RankingChart({ rows }) {
   if (!rows || rows.length === 0) {
     return (
@@ -42,27 +54,20 @@ function RankingChart({ rows }) {
       </p>
     )
   }
-  const data = rows.map(r => ({ name: `${r.make} ${r.model}`, searches: r.searches }))
+  const data = rows.map((r, i) => ({ name: `${r.make} ${r.model}`, weight: r.weight, rank: i + 1 }))
   const height = Math.max(data.length * 38, 120)
 
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 8 }}>
-        <XAxis type="number" hide />
+        <XAxis type="number" hide domain={[0, 100]} />
         <YAxis
           type="category" dataKey="name" width={150}
           tick={{ fill: '#9ca3af', fontSize: 12 }}
           axisLine={false} tickLine={false}
         />
-        <Tooltip
-          cursor={{ fill: 'rgba(255,255,255,0.04)' }}
-          contentStyle={{
-            background: '#15151b', border: '1px solid #2a2a30',
-            borderRadius: 8, fontSize: 12, color: '#fff',
-          }}
-          formatter={v => [`${v} shoppers`, 'Searches']}
-        />
-        <Bar dataKey="searches" radius={[0, 4, 4, 0]} maxBarSize={22}>
+        <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<RankTooltip />} />
+        <Bar dataKey="weight" radius={[0, 4, 4, 0]} maxBarSize={22}>
           {data.map((_, i) => <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />)}
         </Bar>
       </BarChart>
@@ -139,18 +144,18 @@ export default function MarketAnalytics() {
 
           {!loading && available && (
             <>
-              {/* Headline stats */}
+              {/* Headline stats — no search quantities (those stay backend-only) */}
               <div className="grid grid-cols-3 gap-4 anim-2">
-                <StatCard label="Searches tracked" value={fmt(totals.searches)} />
-                <StatCard label="Models compared" value={fmt(totals.uniqueModels)} />
+                <StatCard label="Vehicles ranked" value={fmt(totals.uniqueModels)} />
                 <StatCard label="States with data" value={fmt(totals.statesCovered)} />
+                <StatCard label="Day window" value={data.windowDays} />
               </div>
 
               {/* National rankings */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="card anim-3">
                   <h2 className="font-display font-bold text-white text-lg mb-1">Top 10 vehicles nationally</h2>
-                  <p className="text-xs text-[var(--text-muted)] mb-4">Ranked by unique shoppers</p>
+                  <p className="text-xs text-[var(--text-muted)] mb-4">Ranked by shopper interest</p>
                   <RankingChart rows={data.topModels} />
                 </div>
                 <div className="card anim-4">
@@ -160,19 +165,15 @@ export default function MarketAnalytics() {
                     {data.topMakes.length === 0 && (
                       <p className="text-sm text-[var(--text-muted)] py-8 text-center">No brand data yet.</p>
                     )}
-                    {data.topMakes.map((m, i) => {
-                      const max = data.topMakes[0]?.searches || 1
-                      return (
-                        <div key={m.make} className="flex items-center gap-3 py-2.5">
-                          <span className="text-xs font-bold text-[var(--text-muted)] w-5 shrink-0">{i + 1}</span>
-                          <span className="text-sm font-semibold text-white w-28 shrink-0 truncate">{m.make}</span>
-                          <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg)' }}>
-                            <div className="h-full rounded-full" style={{ width: `${(m.searches / max) * 100}%`, background: ACCENT }} />
-                          </div>
-                          <span className="text-xs text-[var(--text-muted)] tabular-nums w-10 text-right shrink-0">{m.searches}</span>
+                    {data.topMakes.map((m, i) => (
+                      <div key={m.make} className="flex items-center gap-3 py-2.5">
+                        <span className="text-xs font-bold text-[var(--text-muted)] w-5 shrink-0">{i + 1}</span>
+                        <span className="text-sm font-semibold text-white w-28 shrink-0 truncate">{m.make}</span>
+                        <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg)' }}>
+                          <div className="h-full rounded-full" style={{ width: `${m.weight}%`, background: ACCENT }} />
                         </div>
-                      )
-                    })}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

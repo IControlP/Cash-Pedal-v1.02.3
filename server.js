@@ -992,8 +992,7 @@ app.get('/api/market-analytics', async (req, res) => {
   try {
     const [totals, topModels, topMakes, statesWithData] = await Promise.all([
       pool.query(
-        `SELECT COUNT(*)                       AS searches,
-                COUNT(DISTINCT state)          AS states_covered,
+        `SELECT COUNT(DISTINCT state)          AS states_covered,
                 COUNT(DISTINCT (make||model))  AS unique_models
          FROM vehicle_searches WHERE created_at > ${win}`
       ),
@@ -1013,17 +1012,27 @@ app.get('/api/market-analytics', async (req, res) => {
       ),
     ])
 
+    // Public rankings expose ORDER and a relative weight only — never raw search
+    // counts. The top item in each list is weight 100; everything else is scaled
+    // against it. Absolute quantities remain backend-only (insights export).
+    const toRanked = rows => {
+      const max = rows.reduce((m, r) => Math.max(m, r.searches), 0) || 1
+      return rows.map(({ searches, ...rest }) => ({
+        ...rest,
+        weight: Math.max(1, Math.round((searches / max) * 100)),
+      }))
+    }
+
     const payload = {
       available:  true,
       generatedAt: new Date().toISOString(),
       windowDays: MARKET_WINDOW_DAYS,
       totals: {
-        searches:      parseInt(totals.rows[0].searches, 10),
         statesCovered: parseInt(totals.rows[0].states_covered, 10),
         uniqueModels:  parseInt(totals.rows[0].unique_models, 10),
       },
-      topModels:      topModels.rows,
-      topMakes:       topMakes.rows,
+      topModels:      toRanked(topModels.rows),
+      topMakes:       toRanked(topMakes.rows),
       statesWithData: statesWithData.rows.map(r => r.state),
     }
 
@@ -1036,7 +1045,7 @@ app.get('/api/market-analytics', async (req, res) => {
         [state]
       )
       payload.state = state
-      payload.stateTopModels = stateModels.rows
+      payload.stateTopModels = toRanked(stateModels.rows)
     }
 
     res.json(payload)

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { trackPageView } from './utils/analytics'
 import Landing from './pages/Landing'
@@ -9,13 +9,15 @@ import MultiVehicleComparison from './pages/MultiVehicleComparison'
 import CarBuyingChecklist from './pages/CarBuyingChecklist'
 import WheelZard from './pages/WheelZard'
 import Resources from './pages/Resources'
-import MarketAnalytics from './pages/MarketAnalytics'
 import About from './pages/About'
 import Subscribe from './pages/Subscribe'
 import Privacy from './pages/Privacy'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
 import TermsGate, { TERMS_VERSION, LS_TERMS_ACCEPTED, LS_TERMS_VERSION } from './components/TermsGate'
+
+// Lazy-loaded so Recharts ships in its own chunk and stays out of the main bundle.
+const MarketAnalytics = lazy(() => import('./pages/MarketAnalytics'))
 
 function PageViewTracker() {
   const location = useLocation()
@@ -47,7 +49,11 @@ export default function App() {
         <Route path="/checklist" element={<ToolRoute element={<CarBuyingChecklist />} />} />
         <Route path="/wheelzard" element={<ToolRoute element={<WheelZard />} />} />
         <Route path="/resources" element={<Resources />} />
-        <Route path="/market"    element={<MarketAnalytics />} />
+        <Route path="/market"    element={
+          <Suspense fallback={<div className="min-h-screen bg-[var(--bg)]" />}>
+            <MarketAnalytics />
+          </Suspense>
+        } />
         <Route path="/about"     element={<About />} />
         <Route path="/privacy"   element={<Privacy />} />
         <Route path="/subscribe" element={<Subscribe />} />

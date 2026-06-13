@@ -746,7 +746,7 @@ export default function SalaryCalculator() {
                   {/* Cap cost reduction / down payment */}
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between">
-                      <label className="input-label">Cap Cost Reduction</label>
+                      <label className="input-label">Cap Cost Reduction <span className="text-[var(--text-muted)] font-normal normal-case text-[10px]">(upfront payment — not recovered at lease end)</span></label>
                       <span className="text-sm font-bold text-white">{fmt(leaseDown)}</span>
                     </div>
                     <div className="relative">
@@ -814,7 +814,7 @@ export default function SalaryCalculator() {
                     </select>
                     <p className="text-[10px] text-[var(--text-muted)]">
                       Total out-of-pocket: {fmt(leaseMonthly * leaseTerm + leaseDown)}
-                      {leaseDown > 0 ? ` (${fmt(leaseDown)} due at signing + ${fmt(leaseMonthly * leaseTerm)} payments)` : ''} · No equity at lease end
+                      {leaseDown > 0 ? ` (${fmt(leaseDown)} due at signing + ${fmt(leaseMonthly * leaseTerm)} payments)` : ''} · No equity at lease end · Add ~$0.25/mi for any miles over the annual limit
                     </p>
                   </div>
                 </>

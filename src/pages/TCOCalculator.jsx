@@ -1314,9 +1314,9 @@ export default function TCOCalculator() {
         : financeMode === 'current' && currentVehicleType === 'leased'
           ? currentLeasePayment * loanMonths
           : results.monthlyPayment * loanMonths
-      const insurance    = Math.round(annualInsurance    * Math.pow(1.02, i))
+      const insurance    = Math.round(annualInsurance    * Math.pow(1.035, i))
       const fuel         = annualFuel
-      const maintenance  = maintenanceByYear?.[i] ?? Math.round(annualMaintenance * Math.pow(1.08, i))
+      const maintenance  = maintenanceByYear?.[i] ?? Math.round(annualMaintenance * Math.pow(1.04, i))
       const registration = Math.round(annualRegistration * Math.pow(0.95, i))
       const total = loanCost + insurance + fuel + maintenance + registration
       return { yr, loanCost, insurance, fuel, maintenance, registration, total }
@@ -1743,7 +1743,7 @@ export default function TCOCalculator() {
               </div>
 
               <SliderInput
-                label={financeMode === 'current' ? 'Current Market Value' : financeMode === 'lease' ? 'Vehicle MSRP' : 'Vehicle Purchase Price (Out-the-Door)'}
+                label={financeMode === 'current' ? 'Current Market Value' : financeMode === 'lease' ? 'Vehicle MSRP' : 'Vehicle Price (base, pre-tax)'}
                 value={price}
                 onChange={v => { trackFirstInteraction('price_slider'); setPrice(v) }}
                 displayValue={financeMode === 'buy' ? effectivePrice : undefined}
@@ -1768,9 +1768,9 @@ export default function TCOCalculator() {
 
               {financeMode === 'buy' && (
                 <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                  Estimated vehicle <span className="text-white">{formatCurrency(price)}</span>
+                  Base price <span className="text-white">{formatCurrency(price)}</span>
                   {totalPurchaseExtras > 0 && (
-                    <> · tax + fees <span className="text-white">{formatCurrency(totalPurchaseExtras)}</span></>
+                    <> · tax + fees <span className="text-white">{formatCurrency(totalPurchaseExtras)}</span> · out-the-door shown below</>
                   )}
                   {origMsrp && carAge > 0 && (
                     <>
@@ -1916,6 +1916,16 @@ export default function TCOCalculator() {
                       Typical rates (new car): excellent credit 740+ ≈ 5–7% · good 680+ ≈ 7–9% · fair 620+ ≈ 10–13%
                     </p>
                   )}
+                  {rate === 0 && (
+                    <div className="rounded-lg px-3 py-2.5 flex items-start gap-2.5 border -mt-2"
+                      style={{ borderColor: 'rgba(251,191,36,0.35)', background: 'rgba(251,191,36,0.05)' }}>
+                      <span className="text-sm shrink-0 mt-0.5">⚠</span>
+                      <p className="text-[11px] leading-relaxed" style={{ color: '#fbbf24' }}>
+                        <span className="font-semibold">0% APR is a promotional offer, not a standard rate.</span>{' '}
+                        It's typically offered in exchange for forgoing a cash rebate (often $1,500–$4,000). Compare: take the rebate + a market-rate loan to see which saves more.
+                      </p>
+                    </div>
+                  )}
 
                   <SelectInput label="Ownership Duration" value={ownershipYears}
                     onChange={setOwnershipYears} options={ownershipOptions} />
@@ -1929,7 +1939,7 @@ export default function TCOCalculator() {
 
                   {!simpleMode && (
                     <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                      Lowers your monthly payment but is not recovered at lease end
+                      Reduces your monthly payment — but unlike a purchase down payment, this money is not recovered at lease end. Putting less down ($0–$1,000) is often smarter.
                     </p>
                   )}
 
@@ -2475,6 +2485,12 @@ export default function TCOCalculator() {
                           </div>
                           <span className="font-display font-semibold text-white text-sm">{formatCurrency(value)}/yr</span>
                         </div>
+                        {key === 'ins' && !simpleMode && resolvedState && (
+                          <div className="px-4 pb-3 text-[11px] text-[var(--text-muted)] leading-relaxed"
+                            style={{ borderTop: '1px solid var(--border)', paddingTop: '0.5rem' }}>
+                            Estimated for a 40-yr-old driver with good credit and a clean record. Your actual rate may vary ±40% based on age, driving history, credit score, and coverage level.
+                          </div>
+                        )}
                         {key === 'maint' && detailedMode && (
                           <MaintenanceBreakdown
                             isEV={effIsEV}
@@ -2902,8 +2918,10 @@ export default function TCOCalculator() {
                 <div className="grid grid-cols-1 gap-4 anim-5">
                   {financeMode === 'lease' ? (
                     <>
-                      <ResultCard label="Total Lease Cost"     value={leaseResults.totalLeaseCost}   delay={60}  />
-                      <ResultCard label="Residual Value"       value={leaseResults.residualValue}     delay={120} />
+                      <ResultCard label="Total Lease Cost"     value={leaseResults.totalLeaseCost}   delay={60}
+                        note="Excludes end-of-lease charges: ~$0.25/mi over mileage limit + wear & tear (~$500–$2,500 typical)" />
+                      <ResultCard label="Residual Value"       value={leaseResults.residualValue}     delay={120}
+                        note="Buy the car at this price at lease end, or return it and walk away with no equity" />
                       <ResultCard label="Lease Cost Per Year"  value={leaseResults.annualLeaseCost}  delay={180} />
                     </>
                   ) : (
@@ -3123,7 +3141,7 @@ export default function TCOCalculator() {
                     </div>
                   </div>
                   <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
-                    You can sell the vehicle at the end of ownership. This is your true economic cost — lower than total payments because the car retains value.
+                    You can sell the vehicle at the end of ownership. This is your true economic cost — lower than total payments because the car retains value. Resale estimate uses historical depreciation curves; actual values may vary ±15% with used-car market conditions.
                   </p>
                 </div>
               )}

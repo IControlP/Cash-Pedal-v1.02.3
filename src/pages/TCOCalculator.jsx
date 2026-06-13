@@ -1174,6 +1174,16 @@ export default function TCOCalculator() {
     localStorage.setItem('cashpedal_simple_mode', String(next))
   }
 
+  // "How to use" guide — collapsible, open by default, choice remembered
+  const [showGuide, setShowGuide] = useState(() => localStorage.getItem('cashpedal_tco_guide_collapsed') !== 'true')
+  const toggleGuide = () => {
+    setShowGuide(prev => {
+      const next = !prev
+      localStorage.setItem('cashpedal_tco_guide_collapsed', String(!next))
+      return next
+    })
+  }
+
   // Restore last session when landing via ?resume=1
   useEffect(() => {
     if (searchParams.get('resume') !== '1') return
@@ -1741,6 +1751,60 @@ export default function TCOCalculator() {
                 : 'All inputs unlocked. Switch to Simple for a cleaner view.'}
             </p>
           </div>
+
+          {/* How to use this calculator */}
+          <div className="anim-2 mt-5 rounded-xl border overflow-hidden"
+            style={{ borderColor: 'rgba(200,255,0,0.2)', background: 'rgba(200,255,0,0.03)' }}>
+            <button onClick={toggleGuide}
+              className="w-full flex items-center justify-between px-4 py-3 text-left">
+              <span className="flex items-center gap-2 text-sm font-semibold text-white">
+                <span aria-hidden>💡</span> How to use this calculator
+              </span>
+              <span className="text-xs text-[var(--text-muted)]">{showGuide ? 'Hide ▲' : 'Show ▼'}</span>
+            </button>
+            {showGuide && (
+              <div className="px-4 pb-4 pt-1 flex flex-col gap-4">
+                <ol className="flex flex-col gap-3">
+                  {[
+                    { n: '1', t: 'Choose how you’ll pay',
+                      d: 'Pick Buy / Finance, Lease, or Currently Have. Each mode asks only for the numbers that matter for that path.' },
+                    { n: '2', t: 'Add your location & vehicle',
+                      d: 'Your ZIP or state tailors insurance, fuel, and registration. Selecting a make/model/trim pulls in real MSRP and depreciation — or skip it and pick a category.' },
+                    { n: '3', t: 'Set the financing details',
+                      d: 'Enter price/MSRP, down payment, term, and rate (or money factor & residual for a lease). Everything recalculates live as you type.' },
+                    { n: '4', t: 'Read your results',
+                      d: 'See your all-in monthly cost, annual breakdown, and — for buying or leasing — a Lease vs. Buy verdict showing which is cheaper and by how much.' },
+                  ].map(step => (
+                    <li key={step.n} className="flex gap-3">
+                      <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                        style={{ background: 'var(--accent)', color: '#000' }}>{step.n}</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-white">{step.t}</p>
+                        <p className="text-xs text-[var(--text-muted)] leading-relaxed mt-0.5">{step.d}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+                <div className="rounded-lg border p-3 flex flex-col gap-1.5"
+                  style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>
+                    The three modes
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                    <span className="text-white font-semibold">Buy / Finance</span> — purchasing a car, with or without a loan.{' '}
+                    <span className="text-white font-semibold">Lease</span> — a new-car lease priced from MSRP, term, money factor, and residual.{' '}
+                    <span className="text-white font-semibold">Currently Have</span> — a car you already own or lease, to see the cost of keeping it.
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                    Comparing several cars? Run each one here, tap{' '}
+                    <span className="text-white font-semibold">Add to Comparison</span>, then open the{' '}
+                    <Link to="/compare" className="text-[var(--accent)] hover:underline font-semibold">Comparison page</Link>{' '}
+                    to stack them side by side.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Layout */}
@@ -1827,33 +1891,43 @@ export default function TCOCalculator() {
               <div className="h-px bg-[var(--border)]" />
 
               {/* Buy / Lease / Own toggle */}
-              <div className="flex gap-1 p-1 rounded-lg"
-                style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
-                {[
-                  { value: 'buy',   label: 'Buy / Finance' },
-                  { value: 'lease', label: 'Lease' },
-                  { value: 'current', label: 'Currently Have' },
-                ].map(opt => (
-                  <button key={opt.value}
-                    onClick={() => {
-                      setFinanceMode(opt.value)
-                      if (opt.value === 'lease' && selMake && selModel) {
-                        if (selYear !== LEASE_YEAR) {
-                          setSelYear(LEASE_YEAR)
-                          setSelTrim('')
-                          setOrigMsrp(null)
-                          autoSelectCheapestTrim(selMake, selModel, LEASE_YEAR)
+              <div className="flex flex-col gap-2">
+                <label className="input-label">How will you pay for it?</label>
+                <div className="flex gap-1 p-1 rounded-lg"
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                  {[
+                    { value: 'buy',   label: 'Buy / Finance' },
+                    { value: 'lease', label: 'Lease' },
+                    { value: 'current', label: 'Currently Have' },
+                  ].map(opt => (
+                    <button key={opt.value}
+                      onClick={() => {
+                        setFinanceMode(opt.value)
+                        if (opt.value === 'lease' && selMake && selModel) {
+                          if (selYear !== LEASE_YEAR) {
+                            setSelYear(LEASE_YEAR)
+                            setSelTrim('')
+                            setOrigMsrp(null)
+                            autoSelectCheapestTrim(selMake, selModel, LEASE_YEAR)
+                          }
                         }
-                      }
-                    }}
-                    className="flex-1 py-1.5 rounded-md text-sm font-semibold transition-all"
-                    style={{
-                      background: financeMode === opt.value ? 'var(--accent)' : 'transparent',
-                      color:      financeMode === opt.value ? '#000' : 'var(--text-muted)',
-                    }}>
-                    {opt.label}
-                  </button>
-                ))}
+                      }}
+                      className="flex-1 py-1.5 rounded-md text-sm font-semibold transition-all"
+                      style={{
+                        background: financeMode === opt.value ? 'var(--accent)' : 'transparent',
+                        color:      financeMode === opt.value ? '#000' : 'var(--text-muted)',
+                      }}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+                  {financeMode === 'buy'
+                    ? 'Buying or financing a vehicle. Enter the price, down payment, loan term, and rate — you’ll also get a Lease vs. Buy verdict.'
+                    : financeMode === 'lease'
+                    ? 'Leasing a new vehicle. Enter MSRP, term, money factor, and residual — we’ll show the full lease cost and whether buying would be cheaper.'
+                    : 'A vehicle you already own or lease. Enter when you got it and your original terms to see what it costs to keep.'}
+                </p>
               </div>
 
               {/* Vehicle selector */}

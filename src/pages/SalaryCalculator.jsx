@@ -163,12 +163,20 @@ function classifyCarCategory(make, type, basePrice) {
   return basePrice <= 30000 ? 'economy' : 'other'
 }
 
+// ── Paywall constants ─────────────────────────────────
+const FREE_SALARY_PRO_LIMIT = 5
+const LS_SALARY_PRO_COUNT   = 'cashpedal_salary_pro_count'
+
 export default function SalaryCalculator() {
   const { isSubscribed } = useSubscription()
   const { spendCredit } = useBonusCredits()
   const [showPaywall, setShowPaywall] = useState(false)
   // Pro mode unlocked for this session via an email-unlock bonus credit
   const [bonusUnlocked, setBonusUnlocked] = useState(false)
+
+  const [salaryProCount, setSalaryProCount] = useState(() =>
+    parseInt(localStorage.getItem(LS_SALARY_PRO_COUNT) || '0', 10)
+  )
 
   // Anonymous first-party usage tracking — once per page load
   useEffect(() => { trackUsage('visit_salary') }, [])
@@ -452,7 +460,7 @@ export default function SalaryCalculator() {
       {showPaywall && (
         <PaywallModal
           feature="salary"
-          usedCount={0}
+          usedCount={FREE_SALARY_PRO_LIMIT}
           cancelPath="/salary"
           onUnlocked={async (method) => {
             setShowPaywall(false)
@@ -493,9 +501,12 @@ export default function SalaryCalculator() {
                 <button
                   onClick={async () => {
                     if (!isSubscribed && !proMode && !bonusUnlocked) {
-                      // One bonus credit unlocks Pro mode for the rest of the session.
-                      // The server logs the spend as a usage event.
-                      if (await spendCredit('salary_pro')) {
+                      if (salaryProCount < FREE_SALARY_PRO_LIMIT) {
+                        const next = salaryProCount + 1
+                        setSalaryProCount(next)
+                        localStorage.setItem(LS_SALARY_PRO_COUNT, String(next))
+                        trackUsage('salary_pro', 'free')
+                      } else if (await spendCredit('salary_pro')) {
                         setBonusUnlocked(true)
                       } else {
                         setShowPaywall(true)

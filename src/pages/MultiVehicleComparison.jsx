@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -238,6 +238,10 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
   )
 }
 
+// ── Paywall constants ─────────────────────────────────
+const FREE_COMPARE_LIMIT = 5
+const LS_COMPARE_COUNT   = 'cashpedal_compare_count'
+
 // ── Main page ─────────────────────────────────────────
 export default function MultiVehicleComparison() {
   const { isSubscribed } = useSubscription()
@@ -245,10 +249,25 @@ export default function MultiVehicleComparison() {
   const [showPaywall, setShowPaywall] = useState(false)
   // Comparison unlocked for this session via an email-unlock bonus credit
   const [bonusUnlocked, setBonusUnlocked] = useState(false)
-  const hasAccess = isSubscribed || bonusUnlocked
+
+  const [compareCount, setCompareCount] = useState(() =>
+    parseInt(localStorage.getItem(LS_COMPARE_COUNT) || '0', 10)
+  )
+  // Capture whether this session gets free access before the counter increments
+  const freeAccessGranted = useRef(compareCount < FREE_COMPARE_LIMIT)
+  const hasAccess = isSubscribed || bonusUnlocked || freeAccessGranted.current
 
   // Anonymous first-party usage tracking — once per page load
   useEffect(() => { trackUsage('visit_compare', isSubscribed ? 'subscribed' : 'free') }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Increment the free-use counter once per page load when free access is granted
+  useEffect(() => {
+    if (freeAccessGranted.current && !isSubscribed) {
+      const next = compareCount + 1
+      setCompareCount(next)
+      localStorage.setItem(LS_COMPARE_COUNT, String(next))
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Ranking parameter toggles
   const [activeRankParams, setActiveRankParams] = useState({ totalOutOfPocket: true, mpgCombined: false, cargoSqFt: false, valueRetentionPct: false })
@@ -458,7 +477,7 @@ export default function MultiVehicleComparison() {
       {showPaywall && (
         <PaywallModal
           feature="compare"
-          usedCount={0}
+          usedCount={FREE_COMPARE_LIMIT}
           cancelPath="/compare"
           onUnlocked={async (method) => {
             setShowPaywall(false)

@@ -319,7 +319,7 @@ const LS_USER_SUBMITTED   = 'cashpedal_user_data_submitted'
 const LS_LAST_CALC        = 'cashpedal_last_calc'
 
 // ── Paywall constants ─────────────────────────────────
-const FREE_DETAILED_LIMIT  = 3
+const FREE_DETAILED_LIMIT  = 5
 const LS_DETAILED_COUNT    = 'cashpedal_detailed_calc_count'
 
 // ── User Data Collector Modal ─────────────────────────
@@ -1054,9 +1054,10 @@ export default function TCOCalculator() {
     localStorage.getItem(LS_USER_SUBMITTED) === 'true'
   )
   const [showUserDataModal, setShowUserDataModal] = useState(false)
-  const countIncrementedRef = useRef(false)
-  const hasTrackedStartRef  = useRef(false)
-  const hasTrackedDoneRef   = useRef(false)
+  const countIncrementedRef    = useRef(false)
+  const hasTrackedStartRef     = useRef(false)
+  const hasTrackedDoneRef      = useRef(false)
+  const lastChargedVehicleRef  = useRef(null)
 
   // ── Detailed-calc paywall ──
   const [detailedCalcCount, setDetailedCalcCount] = useState(() =>
@@ -1345,6 +1346,7 @@ export default function TCOCalculator() {
     const entries = Object.entries(t)
     if (entries.length === 0) return
     if (!(await checkDetailedLimit())) return
+    lastChargedVehicleRef.current = `${make}|${model}|${year}`
     const [cheapestName] = entries.reduce((a, b) => b[1] < a[1] ? b : a)
     applyTrim(make, model, year, cheapestName)
   }, [checkDetailedLimit, applyTrim])
@@ -1368,7 +1370,10 @@ export default function TCOCalculator() {
       if (value) autoSelectCheapestTrim(selMake, selModel, value)
     }
     if (level === 'trim') {
-      if (value !== selTrim && !(await checkDetailedLimit())) return
+      const vehicleKey = `${selMake}|${selModel}|${selYear}`
+      const alreadyCharged = lastChargedVehicleRef.current === vehicleKey
+      if (value !== selTrim && !alreadyCharged && !(await checkDetailedLimit())) return
+      if (value !== selTrim && !alreadyCharged) lastChargedVehicleRef.current = vehicleKey
       applyTrim(selMake, selModel, selYear, value)
     }
   }, [financeMode, selMake, selModel, selYear, selTrim, checkDetailedLimit, applyTrim, autoSelectCheapestTrim])

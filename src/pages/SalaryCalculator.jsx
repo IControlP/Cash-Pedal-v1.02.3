@@ -1135,7 +1135,12 @@ export default function SalaryCalculator() {
                       { label: 'Conservative', pct: '10%', badge: '✓ Safest', value: affordableResults.conservative, accent: true },
                       { label: 'Comfortable',  pct: '15%', badge: null,        value: affordableResults.comfortable,  accent: false },
                       { label: 'Aggressive',   pct: '20%', badge: '⚠ Stretched', value: affordableResults.aggressive, accent: false },
-                    ].map(({ label, pct, badge, value, accent }) => (
+                    ].map(({ label, pct, badge, value, accent }) => {
+                      const loanAmt = value > 0 ? value * (1 - downPct / 100) : 0
+                      const monthlyLoan = loanAmt > 0 ? monthlyPayment(loanAmt, rate, loanTerm) : 0
+                      const ops = value > 0 ? estimateBasicMonthlyCosts(value, userState || null, annualMiles).total : 0
+                      const allInMonthly = Math.round(monthlyLoan + ops)
+                      return (
                       <div key={label}
                         className="flex items-center justify-between px-3 py-2.5 rounded-lg border"
                         style={{
@@ -1153,11 +1158,17 @@ export default function SalaryCalculator() {
                             </span>
                           )}
                         </div>
-                        <span className={`font-display font-bold tabular-nums ${accent ? 'text-[var(--accent)] text-lg' : 'text-white'}`}>
-                          {value > 0 ? fmt(value) : 'N/A'}
-                        </span>
+                        <div className="text-right">
+                          <div className={`font-display font-bold tabular-nums ${accent ? 'text-[var(--accent)] text-lg' : 'text-white'}`}>
+                            {value > 0 ? fmt(value) : 'N/A'}
+                          </div>
+                          {value > 0 && allInMonthly > 0 && (
+                            <div className="text-[10px] text-[var(--text-muted)]">~{fmt(allInMonthly)}/mo all-in</div>
+                          )}
+                        </div>
                       </div>
-                    ))}
+                      )
+                    })}
                     <p className="text-[10px] text-[var(--text-muted)] leading-relaxed mt-1">
                       Assumes {downPct}% down · {loanTerm}-month loan · {rate}% APR · includes estimated insurance, fuel, maintenance &amp; registration.
                       {userState ? ` ${userState} rates applied.` : ' National average rates.'}

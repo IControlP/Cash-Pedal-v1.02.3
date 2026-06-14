@@ -1142,6 +1142,7 @@ export default function TCOCalculator() {
   const [chargingStyle,  setChargingStyle]  = useState('home')  // 'home' | 'mixed' | 'public'
   const [customFuelPrice,setCustomFuelPrice]= useState('')      // empty = use state avg
   const [multiCarPolicy, setMultiCarPolicy] = useState(false)
+  const [tradeInValue, setTradeInValue] = useState(0)
   // Track original MSRP separately from price (which may be depreciation-adjusted)
   const [origMsrp,       setOrigMsrp]       = useState(null)
 
@@ -1193,6 +1194,7 @@ export default function TCOCalculator() {
       const i = saved.inputs
       if (i.price        != null) setPrice(i.price)
       if (i.downPayment  != null) setDownPayment(i.downPayment)
+      if (i.tradeInValue != null) setTradeInValue(i.tradeInValue)
       if (i.loanTerm     != null) setLoanTerm(i.loanTerm)
       if (i.rate         != null) setRate(i.rate)
       if (i.ownershipYears != null) setOwnershipYears(i.ownershipYears)
@@ -1389,6 +1391,8 @@ export default function TCOCalculator() {
     : 0
   const totalPurchaseExtras = salesTaxAmt + effectiveDocFee
   const effectivePrice = financeMode === 'buy' ? price + totalPurchaseExtras : price
+  // Trade-in equity reduces the loan amount in buy mode only
+  const effectiveTradeIn = financeMode === 'buy' ? Math.min(tradeInValue, Math.max(0, effectivePrice)) : 0
   const regionalDemand = resolvedState ? getRegionalDemandPremium(resolvedState) : 0
 
   const leasePeriodYears = Math.ceil(leaseTerm / 12)
@@ -1428,10 +1432,10 @@ export default function TCOCalculator() {
       })
     }
     return calculateLoan({
-      price: effectivePrice, downPayment: Math.min(downPayment, effectivePrice),
+      price: effectivePrice, downPayment: Math.min(downPayment + effectiveTradeIn, effectivePrice),
       loanTermMonths: loanTerm, annualRatePercent: rate, ownershipYears,
     })
-  }, [financeMode, currentVehicleType, currentRemainingBalance, currentRemainingTerm, effectivePrice, downPayment, loanTerm, rate, ownershipYears])
+  }, [financeMode, currentVehicleType, currentRemainingBalance, currentRemainingTerm, effectivePrice, downPayment, effectiveTradeIn, loanTerm, rate, ownershipYears])
 
   const leaseResults = useMemo(() => calculateLease({
     msrp: price,
@@ -1526,7 +1530,7 @@ export default function TCOCalculator() {
   // For buy mode: include down payment (paid upfront, only partially recovered via resale).
   // For own mode: no purchase occurred — just the ongoing costs.
   const netCostOfOwnership = futureResaleValue != null
-    ? totalOwnershipPaid + (financeMode === 'buy' ? safeDown : 0) - futureResaleValue
+    ? totalOwnershipPaid + (financeMode === 'buy' ? safeDown + effectiveTradeIn : 0) - futureResaleValue
     : null
 
   // ── Lease vs. Buy head-to-head ──────────────────────────
@@ -1540,7 +1544,7 @@ export default function TCOCalculator() {
 
     // BUY path: finance the same vehicle, evaluated over the lease horizon.
     const buyLoan = calculateLoan({
-      price, downPayment: Math.min(downPayment, price),
+      price, downPayment: Math.min(downPayment + effectiveTradeIn, price),
       loanTermMonths: loanTerm, annualRatePercent: rate, ownershipYears: horizonYears,
     })
     // Cash to own + finance through the horizon (remaining balance retired at sale)
@@ -1569,14 +1573,14 @@ export default function TCOCalculator() {
       horizonYears, horizonMonths,
       leaseDriveOff: Math.round(Math.min(capCostReduction, price)),
       leaseTotal:    Math.round(leaseResults.totalLeaseCost),
-      buyDown:       Math.round(Math.min(downPayment, price)),
+      buyDown:       Math.round(Math.min(downPayment + effectiveTradeIn, price)),
       buyInterest:   Math.round(buyLoan.interestThroughOwnership),
       buyFinancing:  Math.round(buyFinancing),
       resaleValue, operating, netBuy, netLease,
       loanTerm, rate, annualMileage, leaseMileageCap, excessMileageFee,
       diff: Math.abs(Math.round(diff)), buyWins: diff > 0,
     }
-  }, [price, leasePeriodYears, leaseTerm, downPayment, loanTerm, rate, annualMileage, carAge,
+  }, [price, leasePeriodYears, leaseTerm, downPayment, effectiveTradeIn, loanTerm, rate, annualMileage, carAge,
       origMsrp, selMake, selModel, annualOperatingCost, leaseResults.totalLeaseCost, capCostReduction])
 
   // Derived EV flag, charging rate, and premium fuel flag — used across the render
@@ -1604,7 +1608,7 @@ export default function TCOCalculator() {
       monthlyPayment: financeMode === 'lease' ? leaseResults.monthlyPayment : results.monthlyPayment,
       totalAnnualCost,
       savedAt: new Date().toISOString(),
-      inputs: { price, downPayment, loanTerm, rate, ownershipYears, selMake, selModel, selYear, selTrim, financeMode },
+      inputs: { price, downPayment, tradeInValue, loanTerm, rate, ownershipYears, selMake, selModel, selYear, selTrim, financeMode },
     }
     localStorage.setItem(LS_LAST_CALC, JSON.stringify(snapshot))
   }, [price, downPayment, loanTerm, rate, ownershipYears, selMake, selModel, selYear, selTrim, financeMode, results, leaseResults, totalAnnualCost]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -1623,7 +1627,7 @@ export default function TCOCalculator() {
     // plus the down payment (not captured in monthly payments).
     const totalOwnership = financeMode === 'lease'
       ? forecastRows.reduce((s, r) => s + r.total, 0)
-      : forecastRows.reduce((s, r) => s + r.total, 0) + safeDown
+      : forecastRows.reduce((s, r) => s + r.total, 0) + safeDown + effectiveTradeIn
 
     const entry = {
       id:                crypto.randomUUID(),
@@ -1635,7 +1639,7 @@ export default function TCOCalculator() {
       isLease:           financeMode === 'lease',
       // Loan inputs (used when isLease === false)
       price,
-      downPayment:       safeDown,
+      downPayment:       Math.min(safeDown + effectiveTradeIn, price),
       loanTerm,
       rate,
       ownershipYears:    financeMode === 'lease' ? leasePeriodYears : ownershipYears,
@@ -2150,14 +2154,71 @@ export default function TCOCalculator() {
                     </div>
                   </div>
 
+                  {/* Trade-in value */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <label className="input-label">Trade-In Value <span className="text-[var(--text-muted)] font-normal normal-case">(optional)</span></label>
+                      {tradeInValue > 0 && (
+                        <button onClick={() => setTradeInValue(0)}
+                          className="text-[10px] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
+                      <input type="number" className="input-field pl-7"
+                        placeholder="0"
+                        value={tradeInValue || ''}
+                        onChange={e => setTradeInValue(Math.max(0, parseInt(e.target.value) || 0))}
+                        min={0} step={500}
+                      />
+                    </div>
+                    {tradeInValue > 0 && (
+                      <p className="text-[10px] text-[var(--text-muted)]">
+                        Reduces your loan by {formatCurrency(effectiveTradeIn)}. Get trade-in quotes from CarMax, Carvana, or your dealer before negotiating.
+                      </p>
+                    )}
+                  </div>
+
                   <SliderInput label="Down Payment" value={safeDown}
                     onChange={v => setDownPayment(Math.min(v, effectivePrice))}
                     min={0} max={Math.min(effectivePrice, 50000)} step={500} prefix="$" />
 
-                  <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
-                    <span className="text-sm text-[var(--text-muted)]">Loan amount</span>
-                    <span className="font-display font-bold text-white text-lg">{formatCurrency(results.loanAmount)}</span>
-                  </div>
+                  {/* Equity context line */}
+                  {(() => {
+                    const totalEquity = Math.min(safeDown + effectiveTradeIn, effectivePrice)
+                    const equityPct   = effectivePrice > 0 ? Math.round((totalEquity / effectivePrice) * 100) : 0
+                    const color = equityPct >= 20 ? '#4ade80' : equityPct >= 10 ? '#FFB800' : '#f87171'
+                    return (
+                      <p className="text-[10px] -mt-3 pl-1">
+                        <span style={{ color }}>{equityPct}% equity</span>
+                        {effectiveTradeIn > 0 && (
+                          <span className="text-[var(--text-muted)]">
+                            {' '}· {formatCurrency(safeDown)} cash + {formatCurrency(effectiveTradeIn)} trade-in
+                          </span>
+                        )}
+                      </p>
+                    )
+                  })()}
+
+                  {effectiveTradeIn > 0 ? (
+                    <div className="rounded-xl border divide-y" style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}>
+                      <div className="flex items-center justify-between px-4 py-3">
+                        <span className="text-sm text-[var(--text-muted)]">Equity (down + trade-in)</span>
+                        <span className="font-semibold text-white">{formatCurrency(Math.min(safeDown + effectiveTradeIn, effectivePrice))}</span>
+                      </div>
+                      <div className="flex items-center justify-between px-4 py-3">
+                        <span className="text-sm text-[var(--text-muted)]">Loan amount</span>
+                        <span className="font-display font-bold text-white text-lg">{formatCurrency(results.loanAmount)}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
+                      <span className="text-sm text-[var(--text-muted)]">Loan amount</span>
+                      <span className="font-display font-bold text-white text-lg">{formatCurrency(results.loanAmount)}</span>
+                    </div>
+                  )}
 
                   {/* Gap insurance nudge when financing >80% LTV */}
                   {results.loanAmount > price * 0.80 && (

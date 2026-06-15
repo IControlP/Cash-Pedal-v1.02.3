@@ -1,16 +1,13 @@
-// Wraps window.gtag safely — no-ops if GA hasn't loaded or measurement ID isn't set
+const GA_ID = 'G-65PBP0W12S'
+
+// Wraps window.gtag safely — no-ops if the script hasn't loaded yet
 function gtag(...args) {
   if (typeof window.gtag === 'function') {
     window.gtag(...args)
   }
 }
 
-const GA_ID = typeof import.meta !== 'undefined' && import.meta.env
-  ? import.meta.env.VITE_GA_MEASUREMENT_ID
-  : null
-
 export function trackPageView(path) {
-  if (!GA_ID) return
   gtag('config', GA_ID, { page_path: path })
 }
 

@@ -117,13 +117,13 @@ export default function CarSurvey() {
             </h1>
             <p className="anim-2 text-[var(--text-muted)] text-lg mb-8 leading-relaxed">
               Buying the wrong <em>type</em> of vehicle is the most expensive car mistake there is.
-              Answer 13 quick questions and we'll match you to the type that actually fits your
+              Answer 15 quick questions and we'll match you to the type that actually fits your
               life — no BS, just honest results.
             </p>
             <div className="anim-3 card text-left mb-8">
               <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-4">How it works</p>
               <div className="flex flex-col gap-3">
-                {['13 questions, about 90 seconds total', 'No wrong answers — just honest ones', 'You\'ll get your top match with model picks', 'Retake anytime if your situation changes'].map((t, i) => (
+                {['15 questions, about 2 minutes total', 'No wrong answers — just honest ones', 'You\'ll get your top match with model picks', 'Retake anytime if your situation changes'].map((t, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <span className="text-[var(--accent)] font-bold text-sm mt-0.5">{i + 1}.</span>
                     <span className="text-sm text-[var(--text-muted)]">{t}</span>

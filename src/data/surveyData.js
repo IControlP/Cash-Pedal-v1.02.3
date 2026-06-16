@@ -1,81 +1,93 @@
 export const questions = [
   {
     id: 1,
-    text: "When you think about your next car, is it mostly about getting from A to B cheaply — or is the car itself part of the appeal?",
-    lowLabel: "Just transport",
-    highLabel: "It's personal",
+    text: "How much do you actually enjoy driving — is it something you look forward to, or just a way to get somewhere?",
+    lowLabel: "Just getting from A to B",
+    highLabel: "I genuinely love driving",
   },
   {
     id: 2,
-    text: "Be honest: have you ever watched a car review video just for fun?",
-    lowLabel: "Never",
-    highLabel: "It's a regular thing",
+    text: "How many people regularly ride with you on a typical day — not your biggest trip, your normal day?",
+    lowLabel: "Usually just me",
+    highLabel: "Full car — 4 or more people",
   },
   {
     id: 3,
-    text: "How often do you need to haul stuff — gear, groceries, sports equipment, or extra passengers?",
-    lowLabel: "Rarely, just me",
+    text: "How often do you need to move large or bulky items — furniture, bikes, camping gear, sports equipment, or big grocery hauls?",
+    lowLabel: "Rarely — my loads are small",
     highLabel: "Constantly",
   },
   {
     id: 4,
-    text: "Would you genuinely rather put your car budget toward almost anything else?",
-    lowLabel: "No, cars are worth it",
-    highLabel: "Absolutely yes",
+    text: "How important is it to keep your total car costs low — that means purchase price, insurance, fuel, and repairs all together?",
+    lowLabel: "Not a priority at all",
+    highLabel: "It's my top priority",
   },
   {
     id: 5,
-    text: "Does pulling up somewhere in a sharp-looking car give you a little kick?",
-    lowLabel: "Not really",
-    highLabel: "100%, love it",
+    text: "Does the car you drive affect how you see yourself — your image, confidence, or how you come across to others?",
+    lowLabel: "Not at all — a car is a car",
+    highLabel: "Yes, it genuinely matters to me",
   },
   {
     id: 6,
-    text: "On an average day, how chaotic is your back seat?",
-    lowLabel: "Spotless",
-    highLabel: "Don't even ask",
+    text: "How much does performance matter to you — things like acceleration, engine power, and how responsive the car feels to drive?",
+    lowLabel: "Just reliable is fine",
+    highLabel: "Performance matters a lot to me",
   },
   {
     id: 7,
-    text: "When the light turns green, do you like being the first one off the line?",
-    lowLabel: "I take my time",
-    highLabel: "Every single time",
+    text: "How much do you want to reduce your fuel costs and environmental impact with your next car?",
+    lowLabel: "Not really a priority",
+    highLabel: "It's a real priority for me",
   },
   {
     id: 8,
-    text: "Do you feel any guilt when you pull into a gas station to fill up?",
-    lowLabel: "Not at all",
-    highLabel: "Every single time",
+    text: "How often do you deal with tight parking situations — parallel parking on city streets, cramped garages, or narrow lots?",
+    lowLabel: "Almost never",
+    highLabel: "Every single day",
   },
   {
     id: 9,
-    text: "Have you ever had to awkwardly squeeze something way too big into a car way too small?",
-    lowLabel: "Never happened",
-    highLabel: "More times than I'd like",
-  },
-  {
-    id: 10,
-    text: "How comfortable are you parallel parking in a tight urban spot?",
-    lowLabel: "I avoid it at all costs",
-    highLabel: "Easy — bring it on",
-  },
-  {
-    id: 11,
-    text: "How often are you driving more than an hour at a stretch — road trips, long commutes, or highway runs?",
+    text: "How often do you take drives or trips over an hour — long commutes, road trips, or regular highway runs?",
     lowLabel: "Almost never",
     highLabel: "Several times a month",
   },
   {
+    id: 10,
+    text: "How important are modern tech features to you — large touchscreens, wireless CarPlay, advanced driver assist, or automatic software updates?",
+    lowLabel: "I barely care about that stuff",
+    highLabel: "Very important to me",
+  },
+  {
+    id: 11,
+    text: "How often do you drive off paved roads, tow a trailer or boat, haul heavy loads in a truck bed, or need serious ground clearance?",
+    lowLabel: "Never — I'm all pavement",
+    highLabel: "Regularly",
+  },
+  {
     id: 12,
-    text: "How much do you care about in-car tech — big screens, wireless everything, over-the-air updates?",
-    lowLabel: "Could not care less",
-    highLabel: "It matters a lot",
+    text: "Do you have — or could you easily set up — a dedicated spot at home to charge an electric vehicle overnight?",
+    lowLabel: "No — apartment, shared lot, or no option",
+    highLabel: "Yes, absolutely no problem",
   },
   {
     id: 13,
-    text: "How much of your driving involves gravel roads, trails, off-road terrain, or towing a trailer?",
-    lowLabel: "Zero — I'm city or suburb",
-    highLabel: "It's a regular thing",
+    text: "Do you regularly drive in snow, ice, or winter conditions where all-wheel drive or better traction would genuinely help?",
+    lowLabel: "No — mild or warm climate",
+    highLabel: "Yes — winter driving is real for me",
+  },
+  {
+    id: 14,
+    text: "How many miles do you typically drive in a week, adding up all your trips?",
+    lowLabel: "Under 50 miles",
+    highLabel: "Over 300 miles",
+  },
+  {
+    id: 15,
+    text: "How busy and active is life around your car — sports practices, school runs, frequent errands, lots of people and stuff going in and out?",
+    lowLabel: "Pretty calm — mostly just driving",
+    highLabel: "Nonstop activity",
   },
 ]
 
@@ -83,111 +95,88 @@ export const questions = [
 // Each entry: { category, impact } where impact is multiplied by (answer - 3)
 // So answer=1 → -2x, answer=3 → 0x, answer=5 → +2x
 export const questionImpacts = [
-  // Q1: "Car is just transport"
-  // High = minimalist → economy, sedan. Low = loves cars → sports, luxury
-  [
-    { category: 'economy', impact: 8 },
-    { category: 'sedan', impact: 4 },
-    { category: 'sports', impact: -10 },
-    { category: 'luxury', impact: -6 },
-    { category: 'suv', impact: -2 },
-  ],
-  // Q2: "Watches car reviews at 2am"
-  // High = car enthusiast → sports, luxury
+  // Q1: Driving enjoyment — low = practical, high = enthusiast
   [
     { category: 'sports', impact: 12 },
-    { category: 'luxury', impact: 8 },
-    { category: 'economy', impact: -6 },
-    { category: 'sedan', impact: 2 },
-  ],
-  // Q3: "Car is a mobile closet" (carries lots of stuff)
-  // High = needs space → suv, minivan, pickup
-  [
-    { category: 'suv', impact: 10 },
-    { category: 'minivan', impact: 8 },
-    { category: 'pickup', impact: 6 },
-    { category: 'sports', impact: -10 },
-    { category: 'sedan', impact: -4 },
-  ],
-  // Q4: "Spend as little as possible on car"
-  // High = frugal → economy, hybrid
-  [
-    { category: 'economy', impact: 12 },
-    { category: 'hybrid', impact: 6 },
-    { category: 'luxury', impact: -12 },
-    { category: 'sports', impact: -8 },
-  ],
-  // Q5: "Loves the valet moment" — prestige matters
-  // High = prestige → luxury
-  [
-    { category: 'luxury', impact: 14 },
-    { category: 'sports', impact: 6 },
+    { category: 'luxury', impact: 6 },
     { category: 'economy', impact: -8 },
     { category: 'minivan', impact: -6 },
+    { category: 'sedan', impact: 2 },
   ],
-  // Q6: "Backseat chaos" — active life / family hauler
-  // High = needs space → minivan, suv
+  // Q2: Regular passenger count — high = family hauler
   [
-    { category: 'minivan', impact: 10 },
-    { category: 'suv', impact: 8 },
+    { category: 'minivan', impact: 14 },
+    { category: 'suv', impact: 10 },
     { category: 'pickup', impact: 4 },
-    { category: 'sports', impact: -10 },
+    { category: 'sports', impact: -14 },
     { category: 'sedan', impact: -4 },
+    { category: 'economy', impact: -4 },
   ],
-  // Q7: "First off the line" — performance-focused
-  // High = performance → sports, luxury sport
-  [
-    { category: 'sports', impact: 14 },
-    { category: 'luxury', impact: 4 },
-    { category: 'economy', impact: -8 },
-    { category: 'minivan', impact: -8 },
-  ],
-  // Q8: "Guilt at gas pump" — wants EV/eco
-  // High = eco-conscious → electric, hybrid
-  [
-    { category: 'electric', impact: 14 },
-    { category: 'hybrid', impact: 10 },
-    { category: 'pickup', impact: -6 },
-    { category: 'suv', impact: -2 },
-  ],
-  // Q9: "Tried to fit too much" — needs utility
-  // High = hauler → pickup, suv, minivan
+  // Q3: Cargo hauling frequency — high = needs utility
   [
     { category: 'pickup', impact: 12 },
     { category: 'suv', impact: 8 },
-    { category: 'minivan', impact: 6 },
-    { category: 'sports', impact: -10 },
+    { category: 'minivan', impact: 8 },
+    { category: 'sports', impact: -12 },
     { category: 'sedan', impact: -4 },
-  ],
-  // Q10: "Pro parallel parker" — comfortable in tight spaces
-  // High = skilled driver → sports, sedan (smaller car comfort)
-  [
-    { category: 'sports', impact: 8 },
-    { category: 'sedan', impact: 6 },
-    { category: 'economy', impact: 4 },
-    { category: 'pickup', impact: -6 },
-    { category: 'minivan', impact: -4 },
-    { category: 'suv', impact: -2 },
-  ],
-  // Q11: "Long highway drives / road trips"
-  // High = long trips → suv, sedan, hybrid (range/comfort). Low = city → electric, economy
-  [
-    { category: 'suv', impact: 6 },
-    { category: 'sedan', impact: 4 },
-    { category: 'hybrid', impact: 8 },
-    { category: 'electric', impact: -6 },
     { category: 'economy', impact: -4 },
   ],
-  // Q12: "Excited about in-car tech"
-  // High = tech lover → electric, luxury. Low = doesn't care → economy, pickup
+  // Q4: Keep costs low — high = frugal buyer
+  [
+    { category: 'economy', impact: 14 },
+    { category: 'hybrid', impact: 8 },
+    { category: 'luxury', impact: -14 },
+    { category: 'sports', impact: -8 },
+    { category: 'electric', impact: -4 },
+  ],
+  // Q5: Image and prestige matter — high = status-conscious
+  [
+    { category: 'luxury', impact: 14 },
+    { category: 'sports', impact: 8 },
+    { category: 'economy', impact: -10 },
+    { category: 'minivan', impact: -8 },
+  ],
+  // Q6: Performance matters — high = enthusiast driver
+  [
+    { category: 'sports', impact: 14 },
+    { category: 'luxury', impact: 6 },
+    { category: 'economy', impact: -10 },
+    { category: 'minivan', impact: -8 },
+    { category: 'hybrid', impact: -4 },
+  ],
+  // Q7: Eco/fuel savings — high = green-minded
+  [
+    { category: 'electric', impact: 14 },
+    { category: 'hybrid', impact: 10 },
+    { category: 'pickup', impact: -8 },
+    { category: 'sports', impact: -4 },
+    { category: 'suv', impact: -2 },
+  ],
+  // Q8: Tight parking frequency — high = needs a smaller car
+  [
+    { category: 'sedan', impact: 8 },
+    { category: 'economy', impact: 8 },
+    { category: 'sports', impact: 4 },
+    { category: 'pickup', impact: -10 },
+    { category: 'minivan', impact: -8 },
+    { category: 'suv', impact: -4 },
+  ],
+  // Q9: Long drives / road trips — high = needs range and comfort
+  [
+    { category: 'suv', impact: 8 },
+    { category: 'hybrid', impact: 10 },
+    { category: 'sedan', impact: 6 },
+    { category: 'electric', impact: -8 },
+    { category: 'economy', impact: -4 },
+  ],
+  // Q10: Modern tech features — high = tech-forward buyer
   [
     { category: 'electric', impact: 12 },
-    { category: 'luxury', impact: 8 },
+    { category: 'luxury', impact: 10 },
     { category: 'economy', impact: -8 },
     { category: 'pickup', impact: -4 },
   ],
-  // Q13: "Off-road / gravel / towing"
-  // High = rugged use → pickup, suv. Low = city/suburb → economy, sedan, electric, sports
+  // Q11: Off-road / towing — high = rugged use
   [
     { category: 'pickup', impact: 14 },
     { category: 'suv', impact: 10 },
@@ -195,6 +184,36 @@ export const questionImpacts = [
     { category: 'sedan', impact: -8 },
     { category: 'electric', impact: -6 },
     { category: 'sports', impact: -6 },
+  ],
+  // Q12: Home charging capability — yes = EV viable
+  [
+    { category: 'electric', impact: 16 },
+    { category: 'hybrid', impact: -4 },
+  ],
+  // Q13: Winter / AWD needs — high = cold climate
+  [
+    { category: 'suv', impact: 10 },
+    { category: 'pickup', impact: 6 },
+    { category: 'sports', impact: -8 },
+    { category: 'sedan', impact: -4 },
+    { category: 'economy', impact: -4 },
+  ],
+  // Q14: Weekly mileage — high = high-mileage driver
+  [
+    { category: 'hybrid', impact: 10 },
+    { category: 'suv', impact: 4 },
+    { category: 'sedan', impact: 4 },
+    { category: 'electric', impact: -6 },
+    { category: 'economy', impact: -2 },
+  ],
+  // Q15: Busy/active life around the car — high = family/activity hub
+  [
+    { category: 'minivan', impact: 12 },
+    { category: 'suv', impact: 8 },
+    { category: 'pickup', impact: 4 },
+    { category: 'sports', impact: -12 },
+    { category: 'sedan', impact: -4 },
+    { category: 'economy', impact: -4 },
   ],
 ]
 

@@ -7,8 +7,17 @@ function gtag(...args) {
   }
 }
 
+function fbq(...args) {
+  if (typeof window.fbq === 'function') {
+    window.fbq(...args)
+  }
+}
+
 export function trackPageView(path) {
+  // GA4
   gtag('config', GA_ID, { page_path: path })
+  // Meta Pixel — fires on every SPA route change so Meta knows which page was viewed
+  fbq('track', 'PageView', { page_path: path })
 }
 
 export function trackEvent(eventName, params = {}) {

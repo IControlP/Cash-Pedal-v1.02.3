@@ -1020,8 +1020,10 @@ function LeaseVsBuy({ isPro, data, formatCurrency }) {
       {/* Notes */}
       <div className="flex flex-col gap-1.5 pt-1">
         <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
-          • Buy side assumes {formatCurrency(data.buyDown)} down, a {data.loanTerm}-mo loan at {data.rate}%,
-          and credits an estimated {formatCurrency(data.resaleValue)} resale value at the end of the term.
+          {data.isCashPurchase
+            ? <>• Buy side assumes a <span className="text-white">cash purchase</span> of {formatCurrency(data.buyFinancing)} with no financing cost, and credits an estimated {formatCurrency(data.resaleValue)} resale value at the end of the term.</>
+            : <>• Buy side assumes {formatCurrency(data.buyDown)} down, a {data.loanTerm}-mo loan at {data.rate}%, and credits an estimated {formatCurrency(data.resaleValue)} resale value at the end of the term.</>
+          }{' '}
           Adjust these in <span className="text-white">Buy / Finance</span> mode.
         </p>
         {data.excessMileageFee > 0 && (
@@ -1167,6 +1169,7 @@ export default function TCOCalculator() {
   const [dealerPurchase,   setDealerPurchase]   = useState(true)
   const [taxRateOverride,  setTaxRateOverride]  = useState(null) // null = use state rate
   const [docFeeOverride,   setDocFeeOverride]   = useState(null) // null = use state avg
+  const [isCashPurchase,   setIsCashPurchase]   = useState(false)
   const [simpleMode,       setSimpleMode]       = useState(() => localStorage.getItem('cashpedal_simple_mode') !== 'false')
 
   const toggleSimpleMode = () => {
@@ -1422,6 +1425,10 @@ export default function TCOCalculator() {
   const currentLeaseRemainingMonths = Math.max(0, currentLeaseTerm - (monthsOwned ?? 0))
 
   const results = useMemo(() => {
+    if (financeMode === 'buy' && isCashPurchase) {
+      return { loanAmount: 0, monthlyPayment: 0, totalInterestPaid: 0, totalCostOfLoan: 0,
+        trueAnnualCost: 0, interestThroughOwnership: 0, ownershipShorterThanLoan: false }
+    }
     if (financeMode === 'current') {
       if (currentVehicleType === 'paid_off' || currentVehicleType === 'leased' || currentRemainingBalance <= 0) {
         return { loanAmount: 0, monthlyPayment: 0, totalInterestPaid: 0, totalCostOfLoan: 0,
@@ -1436,7 +1443,7 @@ export default function TCOCalculator() {
       price: effectivePrice, downPayment: Math.min(downPayment, effectivePrice),
       loanTermMonths: loanTerm, annualRatePercent: rate, ownershipYears,
     })
-  }, [financeMode, currentVehicleType, currentRemainingBalance, currentRemainingTerm, effectivePrice, downPayment, loanTerm, rate, ownershipYears])
+  }, [financeMode, isCashPurchase, currentVehicleType, currentRemainingBalance, currentRemainingTerm, effectivePrice, downPayment, loanTerm, rate, ownershipYears])
 
   const leaseResults = useMemo(() => calculateLease({
     msrp: price,
@@ -1520,7 +1527,7 @@ export default function TCOCalculator() {
     ? estimateCurrentValue(price, selMake || null, selModel || null, carAge, currentMileage)
     : price
 
-  const safeDown = Math.min(downPayment, effectivePrice)
+  const safeDown = isCashPurchase ? effectivePrice : Math.min(downPayment, effectivePrice)
   const usingMSRP = !!(selMake && selModel && selYear && selTrim)
 
   // Net cost of ownership: total paid minus estimated future resale value
@@ -1544,13 +1551,12 @@ export default function TCOCalculator() {
     const horizonMonths = leaseTerm
 
     // BUY path: finance the same vehicle, evaluated over the lease horizon.
-    const buyLoan = calculateLoan({
+    const buyLoan = isCashPurchase ? null : calculateLoan({
       price, downPayment: Math.min(downPayment, price),
       loanTermMonths: loanTerm, annualRatePercent: rate, ownershipYears: horizonYears,
     })
-    // Cash to own + finance through the horizon (remaining balance retired at sale)
-    // = down + principal + interest-through-horizon = price + interest-through-horizon.
-    const buyFinancing = price + buyLoan.interestThroughOwnership
+    // Cash purchase: no interest. Financed: price + interest through the horizon.
+    const buyFinancing = price + (isCashPurchase ? 0 : buyLoan.interestThroughOwnership)
     // Equity retained at the end of the horizon (you own a depreciated asset).
     const projectedMiles = Math.round(annualMileage * (carAge + horizonYears))
     const resaleValue = Math.round(
@@ -1574,14 +1580,14 @@ export default function TCOCalculator() {
       horizonYears, horizonMonths,
       leaseDriveOff: Math.round(Math.min(capCostReduction, price)),
       leaseTotal:    Math.round(leaseResults.totalLeaseCost),
-      buyDown:       Math.round(Math.min(downPayment, price)),
-      buyInterest:   Math.round(buyLoan.interestThroughOwnership),
+      buyDown:       isCashPurchase ? Math.round(price) : Math.round(Math.min(downPayment, price)),
+      buyInterest:   isCashPurchase ? 0 : Math.round(buyLoan.interestThroughOwnership),
       buyFinancing:  Math.round(buyFinancing),
       resaleValue, operating, netBuy, netLease,
-      loanTerm, rate, annualMileage, leaseMileageCap, excessMileageFee,
+      loanTerm, rate: isCashPurchase ? null : rate, annualMileage, leaseMileageCap, excessMileageFee, isCashPurchase,
       diff: Math.abs(Math.round(diff)), buyWins: diff > 0,
     }
-  }, [price, leasePeriodYears, leaseTerm, downPayment, loanTerm, rate, annualMileage, carAge,
+  }, [price, leasePeriodYears, leaseTerm, downPayment, loanTerm, rate, isCashPurchase, annualMileage, carAge,
       origMsrp, selMake, selModel, annualOperatingCost, leaseResults.totalLeaseCost, capCostReduction])
 
   // Derived EV flag, charging rate, and premium fuel flag — used across the render
@@ -1908,6 +1914,7 @@ export default function TCOCalculator() {
                     <button key={opt.value}
                       onClick={() => {
                         setFinanceMode(opt.value)
+                        if (opt.value !== 'buy') setIsCashPurchase(false)
                         if (opt.value === 'lease' && selMake && selModel) {
                           if (selYear !== LEASE_YEAR) {
                             setSelYear(LEASE_YEAR)
@@ -2067,6 +2074,23 @@ export default function TCOCalculator() {
 
               {financeMode === 'buy' ? (
                 <>
+                  {/* Finance vs. Cash Purchase toggle */}
+                  <div className="flex gap-1 p-1 rounded-lg" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                    {[
+                      { v: false, l: 'Finance / Loan' },
+                      { v: true,  l: 'Cash Purchase' },
+                    ].map(({ v, l }) => (
+                      <button key={String(v)} onClick={() => setIsCashPurchase(v)}
+                        className="flex-1 py-1.5 rounded-md text-sm font-semibold transition-all"
+                        style={{
+                          background: isCashPurchase === v ? 'var(--accent)' : 'transparent',
+                          color:      isCashPurchase === v ? '#000' : 'var(--text-muted)',
+                        }}>
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+
                   {/* Dealer / Private Party toggle — detailed mode only */}
                   {!simpleMode && (
                     <div className="flex gap-1 p-1 rounded-lg" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
@@ -2155,40 +2179,60 @@ export default function TCOCalculator() {
                     </div>
                   </div>
 
-                  <SliderInput label="Down Payment" value={safeDown}
-                    onChange={v => setDownPayment(Math.min(v, effectivePrice))}
-                    min={0} max={Math.min(effectivePrice, 50000)} step={500} prefix="$" />
+                  {isCashPurchase ? (
+                    <>
+                      <div className="rounded-xl border px-4 py-3 flex items-start gap-3"
+                        style={{ borderColor: 'rgba(74,222,128,0.3)', background: 'rgba(74,222,128,0.04)' }}>
+                        <span className="text-green-400 mt-0.5">✓</span>
+                        <div>
+                          <p className="text-sm font-semibold text-white">Paying cash — no financing</p>
+                          <p className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-relaxed">
+                            Full purchase price paid upfront. Your analysis shows operating costs only — no monthly loan payment or interest charges.
+                          </p>
+                        </div>
+                      </div>
 
-                  <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
-                    <span className="text-sm text-[var(--text-muted)]">Loan amount</span>
-                    <span className="font-display font-bold text-white text-lg">{formatCurrency(results.loanAmount)}</span>
-                  </div>
+                      <SelectInput label="Ownership Duration" value={ownershipYears}
+                        onChange={setOwnershipYears} options={ownershipOptions} />
+                    </>
+                  ) : (
+                    <>
+                      <SliderInput label="Down Payment" value={safeDown}
+                        onChange={v => setDownPayment(Math.min(v, effectivePrice))}
+                        min={0} max={Math.min(effectivePrice, 50000)} step={500} prefix="$" />
 
-                  {/* Gap insurance nudge when financing >80% LTV */}
-                  {results.loanAmount > price * 0.80 && (
-                    <div className="rounded-lg px-3 py-2.5 flex items-start gap-2.5 border"
-                      style={{ borderColor: 'rgba(251,191,36,0.35)', background: 'rgba(251,191,36,0.05)' }}>
-                      <span className="text-sm shrink-0 mt-0.5">⚠</span>
-                      <p className="text-[11px] leading-relaxed" style={{ color: '#fbbf24' }}>
-                        <span className="font-semibold">Low down payment — consider gap insurance.</span>{' '}
-                        With less than 20% down, your loan balance may exceed the car's market value for the first 1–2 years.
-                        Gap insurance (~$20–$40/mo or a one-time ~$300) covers the difference if the vehicle is totaled or stolen.
-                      </p>
-                    </div>
+                      <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
+                        <span className="text-sm text-[var(--text-muted)]">Loan amount</span>
+                        <span className="font-display font-bold text-white text-lg">{formatCurrency(results.loanAmount)}</span>
+                      </div>
+
+                      {/* Gap insurance nudge when financing >80% LTV */}
+                      {results.loanAmount > price * 0.80 && (
+                        <div className="rounded-lg px-3 py-2.5 flex items-start gap-2.5 border"
+                          style={{ borderColor: 'rgba(251,191,36,0.35)', background: 'rgba(251,191,36,0.05)' }}>
+                          <span className="text-sm shrink-0 mt-0.5">⚠</span>
+                          <p className="text-[11px] leading-relaxed" style={{ color: '#fbbf24' }}>
+                            <span className="font-semibold">Low down payment — consider gap insurance.</span>{' '}
+                            With less than 20% down, your loan balance may exceed the car's market value for the first 1–2 years.
+                            Gap insurance (~$20–$40/mo or a one-time ~$300) covers the difference if the vehicle is totaled or stolen.
+                          </p>
+                        </div>
+                      )}
+
+                      <SelectInput label="Loan Term" value={loanTerm} onChange={setLoanTerm} options={loanTermOptions} />
+
+                      <SliderInput label="Annual Interest Rate" value={rate} onChange={setRate}
+                        min={0} max={25} step={0.1} suffix="%" inputMin={0} inputMax={25} />
+                      {!simpleMode && (
+                        <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                          Typical rates (new car): excellent credit 740+ ≈ 5–7% · good 680+ ≈ 7–9% · fair 620+ ≈ 10–13%
+                        </p>
+                      )}
+
+                      <SelectInput label="Ownership Duration" value={ownershipYears}
+                        onChange={setOwnershipYears} options={ownershipOptions} />
+                    </>
                   )}
-
-                  <SelectInput label="Loan Term" value={loanTerm} onChange={setLoanTerm} options={loanTermOptions} />
-
-                  <SliderInput label="Annual Interest Rate" value={rate} onChange={setRate}
-                    min={0} max={25} step={0.1} suffix="%" inputMin={0} inputMax={25} />
-                  {!simpleMode && (
-                    <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                      Typical rates (new car): excellent credit 740+ ≈ 5–7% · good 680+ ≈ 7–9% · fair 620+ ≈ 10–13%
-                    </p>
-                  )}
-
-                  <SelectInput label="Ownership Duration" value={ownershipYears}
-                    onChange={setOwnershipYears} options={ownershipOptions} />
                 </>
               ) : (
                 <>
@@ -3126,7 +3170,7 @@ export default function TCOCalculator() {
                 const monthlyMaint  = Math.round(annualMaintenance  / 12)
                 const monthlyReg    = Math.round(annualRegistration / 12)
                 const allInMonthly  = Math.round(basePayment) + monthlyIns + monthlyFuel + monthlyMaint + monthlyReg
-                const paymentLabel  = financeMode === 'lease' ? 'Lease payment' : 'Loan payment'
+                const paymentLabel  = financeMode === 'lease' ? 'Lease payment' : isCashPurchase ? null : 'Loan payment'
                 const fuelLabel     = effIsEV ? 'Charging' : 'Fuel'
                 return (
                   <div className="anim-4">
@@ -3137,33 +3181,40 @@ export default function TCOCalculator() {
                     <div className="rounded-xl p-5 flex flex-col gap-3 mb-3"
                       style={{ background: 'linear-gradient(135deg,rgba(200,255,0,0.08) 0%,rgba(200,255,0,0.03) 100%)', border: '1px solid rgba(200,255,0,0.25)' }}>
                       <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>
-                        Est. Monthly All-In
+                        {isCashPurchase ? 'Est. Monthly Operating Cost' : 'Est. Monthly All-In'}
                       </p>
                       <p className="font-display font-extrabold text-4xl leading-none" style={{ color: 'var(--accent)' }}>
                         {formatCurrency(allInMonthly)}<span className="text-lg font-normal text-[var(--text-muted)] ml-1">/mo</span>
                       </p>
                       <div className="flex flex-col gap-1 pt-1 border-t border-[rgba(200,255,0,0.15)]">
                         {[
-                          { label: paymentLabel, value: Math.round(basePayment) },
+                          paymentLabel ? { label: paymentLabel, value: Math.round(basePayment) } : null,
                           { label: 'Insurance',  value: monthlyIns  },
                           { label: fuelLabel,    value: monthlyFuel },
                           { label: 'Maintenance',value: monthlyMaint},
                           { label: 'Reg. & fees',value: monthlyReg  },
-                        ].map(({ label, value }) => (
+                        ].filter(Boolean).map(({ label, value }) => (
                           <div key={label} className="flex justify-between items-center text-xs">
                             <span className="text-[var(--text-muted)]">{label}</span>
                             <span className="text-white font-medium tabular-nums">{formatCurrency(value)}/mo</span>
                           </div>
                         ))}
                       </div>
+                      {isCashPurchase && (
+                        <p className="text-[10px] text-[var(--text-muted)] pt-1 border-t border-[rgba(200,255,0,0.15)]">
+                          Cash purchase of <span className="text-white font-semibold">{formatCurrency(effectivePrice)}</span> paid upfront — no monthly loan payment.
+                        </p>
+                      )}
                     </div>
-                    {/* Financing-only card — what the dealer quotes */}
-                    <ResultCard
-                      label={financeMode === 'lease' ? 'Monthly Lease Payment' : 'Monthly Loan Payment'}
-                      value={basePayment}
-                      delay={0}
-                      note="Financing only — does not include insurance, fuel, or maintenance"
-                    />
+                    {/* Financing-only card — what the dealer quotes (not shown for cash) */}
+                    {!isCashPurchase && (
+                      <ResultCard
+                        label={financeMode === 'lease' ? 'Monthly Lease Payment' : 'Monthly Loan Payment'}
+                        value={basePayment}
+                        delay={0}
+                        note="Financing only — does not include insurance, fuel, or maintenance"
+                      />
+                    )}
                   </div>
                 )
               })()}
@@ -3176,7 +3227,7 @@ export default function TCOCalculator() {
                       <ResultCard label="Residual Value"       value={leaseResults.residualValue}     delay={120} />
                       <ResultCard label="Lease Cost Per Year"  value={leaseResults.annualLeaseCost}  delay={180} />
                     </>
-                  ) : (
+                  ) : isCashPurchase ? null : (
                     <>
                       <ResultCard
                         label={results.ownershipShorterThanLoan ? `Interest (${ownershipYears}-yr ownership)` : 'Total Interest Paid'}
@@ -3199,7 +3250,7 @@ export default function TCOCalculator() {
                 </p>
                 <div className="flex flex-col gap-2 text-sm">
                   {[
-                    { label: financeMode === 'lease' ? 'Lease payments' : 'Loan payments', value: forecastRows[0]?.loanCost ?? (financeMode === 'lease' ? leaseResults.annualLeaseCost : results.trueAnnualCost) },
+                    isCashPurchase ? null : { label: financeMode === 'lease' ? 'Lease payments' : 'Loan payments', value: forecastRows[0]?.loanCost ?? (financeMode === 'lease' ? leaseResults.annualLeaseCost : results.trueAnnualCost) },
                     { label: 'Insurance',              value: forecastRows[0]?.insurance    ?? annualInsurance },
                     { label: (modelData?.is_ev || VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.isEV) ? 'Charging' : 'Fuel', value: annualFuel },
                     { label: 'Maintenance & repairs',  value: forecastRows[0]?.maintenance  ?? annualMaintenance },
@@ -3350,6 +3401,13 @@ export default function TCOCalculator() {
                     insurance, fuel, maintenance, and fees and your{' '}
                     <span className="text-white font-semibold">all-in Year 1 cost is {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}</span>{' '}
                     — or {formatCurrency(forecastRows.reduce((s, r) => s + r.total, 0))} to keep it for {ownershipYears} more year{ownershipYears !== 1 ? 's' : ''}.
+                  </>
+                ) : isCashPurchase ? (
+                  <>
+                    You're paying <span className="text-white font-semibold">{formatCurrency(effectivePrice)} cash</span> upfront — no loan, no interest.
+                    Add insurance, fuel, maintenance, and fees and your{' '}
+                    <span className="text-white font-semibold">all-in Year 1 cost is {formatCurrency(forecastRows[0]?.total ?? totalAnnualCost)}</span>{' '}
+                    — or {formatCurrency(forecastRows.reduce((s, r) => s + r.total, 0))} over {ownershipYears} year{ownershipYears !== 1 ? 's' : ''}.
                   </>
                 ) : (
                   <>

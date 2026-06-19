@@ -3255,7 +3255,7 @@ export default function TCOCalculator() {
                     { label: (modelData?.is_ev || VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.isEV) ? 'Charging' : 'Fuel', value: annualFuel },
                     { label: 'Maintenance & repairs',  value: forecastRows[0]?.maintenance  ?? annualMaintenance },
                     { label: 'Registration & fees',    value: forecastRows[0]?.registration ?? annualRegistration },
-                  ].filter(({ label }) => label !== null).map(({ label, value }) => (
+                  ].filter(row => row && row.label !== null).map(({ label, value }) => (
                     <div key={label} className="flex justify-between items-center">
                       <span className="text-[var(--text-muted)]">{label}</span>
                       <span className="text-white font-medium">{formatCurrency(value)}</span>

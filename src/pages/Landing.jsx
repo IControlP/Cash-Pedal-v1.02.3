@@ -1,6 +1,7 @@
 import Navbar from '../components/Navbar'
 import Hero from '../components/landing/Hero'
 import Problem from '../components/landing/Problem'
+import Journey from '../components/landing/Journey'
 import HowItWorks from '../components/landing/HowItWorks'
 import TCOPreview from '../components/landing/TCOPreview'
 import Coverage from '../components/landing/Coverage'
@@ -20,6 +21,7 @@ export default function Landing() {
       <main className="relative z-10 pt-14">
         <Hero />
         <Problem />
+        <Journey />
         <HowItWorks />
         <TCOPreview />
         <Coverage />

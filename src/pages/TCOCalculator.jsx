@@ -5,6 +5,7 @@ import { trackCalculatorStarted, trackCalculatorCompleted } from '../utils/analy
 import Navbar from '../components/Navbar'
 import { CarVisual } from '../components/CarSVGs'
 import Footer from '../components/Footer'
+import NextStep from '../components/NextStep'
 import ResultCard from '../components/ResultCard'
 import PaywallModal from '../components/PaywallModal'
 import ProUpsell from '../components/ProUpsell'
@@ -3608,6 +3609,13 @@ export default function TCOCalculator() {
           />
         </div>
       </main>
+      <NextStep
+        tag="Next step · pick a winner"
+        title="Weighing a few cars? Put them head to head."
+        body="Stack up to 5 vehicles side by side and get one clear financial winner — category by category — so your shortlist comes down to facts, not gut feel."
+        to="/compare"
+        cta="Compare your finalists"
+      />
       <Footer />
     </div>
   )

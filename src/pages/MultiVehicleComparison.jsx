@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import NextStep from '../components/NextStep'
 import PaywallModal from '../components/PaywallModal'
 import { useSubscription } from '../hooks/useSubscription'
 import { useBonusCredits } from '../hooks/useBonusCredits'
@@ -799,6 +800,13 @@ export default function MultiVehicleComparison() {
           </div>
         </div>}
       </main>
+      <NextStep
+        tag="Next step · before you sign"
+        title="Got a winner? Make sure it's not a money pit."
+        body="Run the mileage-aware buying checklist on the actual car you're about to inspect — exactly what to check, what to ask, and what should send you walking."
+        to="/checklist"
+        cta="Open the checklist"
+      />
       <Footer />
     </div>
   )

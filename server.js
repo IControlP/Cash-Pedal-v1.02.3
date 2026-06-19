@@ -183,11 +183,39 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc:              ["'self'"],
-      scriptSrc:               ["'self'"],
+      // Analytics: Microsoft Clarity, Google Analytics (gtag), Meta Pixel.
+      // The three inline bootstrap snippets in index.html are pinned by their
+      // SHA-256 hashes (regenerate these if those snippets are ever edited).
+      // Each provider's loader injects a further <script> from its own origin,
+      // so those origins are allowlisted here too.
+      scriptSrc:               [
+        "'self'",
+        "'sha256-VIXIVMTLdCz6TviHvNWyf45Q9138C/47GZTs0fP77JQ='", // Clarity bootstrap
+        "'sha256-oz2xh8YLXn81ZM73Eaw3s5E4PZb/rBg4LDYQpzWrDXw='", // gtag config
+        "'sha256-LZOS//SFkej0haIM3ZySrhd8sSKC8aHoCbbKsNBrgrk='", // Meta Pixel
+        "https://www.clarity.ms",
+        "https://www.googletagmanager.com",
+        "https://connect.facebook.net",
+      ],
       styleSrc:                ["'self'", "'unsafe-inline'"],
-      imgSrc:                  ["'self'", "data:"],
+      imgSrc:                  [
+        "'self'",
+        "data:",
+        "https://*.clarity.ms",
+        "https://c.bing.com",
+        "https://www.google-analytics.com",
+        "https://www.facebook.com",
+      ],
       fontSrc:                 ["'self'"],
-      connectSrc:              ["'self'"],
+      connectSrc:              [
+        "'self'",
+        "https://*.clarity.ms",
+        "https://c.bing.com",
+        "https://*.google-analytics.com",
+        "https://*.analytics.google.com",
+        "https://www.googletagmanager.com",
+        "https://*.facebook.com",
+      ],
       frameSrc:                ["'none'"],
       objectSrc:               ["'none'"],
       baseUri:                 ["'self'"],

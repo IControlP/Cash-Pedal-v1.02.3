@@ -603,6 +603,35 @@ select.input-field {
 .journey-companion:hover { transform: translateY(-2px); border-color: rgba(255,184,0,0.45); }
 .journey-companion-tool { font-size: 15px; font-weight: 700; color: var(--accent); margin: 0 0 6px; }
 
+/* ── Next-step journey nudge (in-tool) ────────────── */
+.next-step {
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  flex-wrap: wrap;
+  background: linear-gradient(160deg, rgba(255,184,0,0.08), var(--surface));
+  border: 1px solid rgba(255,184,0,0.35);
+  border-radius: 16px;
+  padding: 22px 26px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.next-step:hover { transform: translateY(-2px); border-color: rgba(255,184,0,0.6); }
+.next-step-body { flex: 1 1 320px; }
+.next-step-tag {
+  font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent);
+}
+.next-step-title { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; margin: 6px 0 6px; }
+.next-step-text { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin: 0; }
+.next-step-cta {
+  flex-shrink: 0;
+  font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+  color: #080809; background: var(--accent);
+  padding: 12px 20px; border-radius: 8px;
+  transition: background 0.15s ease;
+}
+.next-step:hover .next-step-cta { background: var(--accent-dim); }
+
 /* ── TCO Preview ──────────────────────────────────── */
 .tco-preview {
   background: linear-gradient(160deg, var(--surface-2), var(--bg-2));

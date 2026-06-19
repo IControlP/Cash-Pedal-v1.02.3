@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import NextStep from '../components/NextStep'
 import PaywallModal from '../components/PaywallModal'
 import ProUpsell from '../components/ProUpsell'
 import { useSubscription } from '../hooks/useSubscription'
@@ -730,6 +731,13 @@ export default function CarBuyingChecklist() {
           />
         </div>
       </main>
+      <NextStep
+        tag="Last step · still unsure?"
+        title="Questions before you sign? Ask Wheel-Zard."
+        body="Our AI car-buying advisor can talk you through financing, negotiation, or any red flag the checklist surfaced — in plain English, anytime."
+        to="/wheelzard"
+        cta="Ask Wheel-Zard"
+      />
       <Footer />
     </div>
   )

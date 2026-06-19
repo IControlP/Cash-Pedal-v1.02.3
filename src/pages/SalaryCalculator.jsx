@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import NextStep from '../components/NextStep'
 import PaywallModal from '../components/PaywallModal'
 import ProUpsell from '../components/ProUpsell'
 import { useSubscription } from '../hooks/useSubscription'
@@ -1350,6 +1351,13 @@ export default function SalaryCalculator() {
           />
         </div>
       </main>
+      <NextStep
+        tag="Next step · price the real cost"
+        title="Know your budget? See what a car actually costs."
+        body="Your affordable price is the ceiling. The TCO Calculator shows the true 5-year cost of any car under it — fuel, insurance, maintenance, depreciation, and interest."
+        to="/tco"
+        cta="Run the TCO Calculator"
+      />
       <Footer />
     </div>
   )

@@ -730,6 +730,21 @@ async function initTables() {
         ON vehicle_searches(created_at)
     `)
 
+    // ── NHTSA reliability cache ───────────────────────
+    // Caches recall + complaint summaries from NHTSA's public API for 7 days.
+    // Keyed by "make|model|year"; stale rows are pruned in the daily sweep.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS nhtsa_cache (
+        id         SERIAL PRIMARY KEY,
+        cache_key  VARCHAR(200) UNIQUE NOT NULL,
+        data       JSONB NOT NULL,
+        fetched_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_nhtsa_cache_key ON nhtsa_cache(cache_key)
+    `)
+
     // ── Automation log (email + CRM dedupe) ───────────
     // One row per automation actually executed (transactional email sent,
     // CRM deal created). The unique constraint is what makes automations
@@ -821,6 +836,9 @@ async function initTables() {
       DELETE FROM subscriber_devices
       WHERE last_seen < NOW() - INTERVAL '${DEVICE_EXPIRY_DAYS} days'
     `)
+    // NHTSA cache — expire rows older than 30 days (TTL check in queries is 7 days,
+    // this keeps the table from growing unbounded on dormant make/model combos).
+    await client.query(`DELETE FROM nhtsa_cache WHERE fetched_at < NOW() - INTERVAL '30 days'`)
   } finally {
     client.release()
   }
@@ -1691,6 +1709,102 @@ app.post('/api/verify-promo-code', sensitiveLimiter, (req, res) => {
   res.json({ valid })
 })
 
+// ── API: Reliability data (NHTSA proxy + 7-day cache) ─
+// Fetches recall counts and complaint summaries from NHTSA's free public API.
+// Results are cached in nhtsa_cache so repeated page loads don't hammer NHTSA.
+// Returns a degraded response (cached:false, error) on NHTSA timeout rather
+// than a 502 so the UI can show a partial state without breaking the checklist.
+app.get('/api/reliability/:make/:model/:year', async (req, res) => {
+  const { make, model, year } = req.params
+
+  const yearNum = parseInt(year, 10)
+  if (!make || !model || isNaN(yearNum) || yearNum < 1990 || yearNum > 2030) {
+    return res.status(400).json({ error: 'Invalid make, model, or year' })
+  }
+
+  const cleanMake  = clamp(String(make),  50)
+  const cleanModel = clamp(String(model), 100)
+  const cacheKey   = `${cleanMake}|${cleanModel}|${yearNum}`
+  const CACHE_TTL  = 7 // days
+
+  // Serve from cache when fresh
+  if (pool) {
+    try {
+      const hit = await pool.query(
+        `SELECT data FROM nhtsa_cache
+         WHERE cache_key = $1 AND fetched_at > NOW() - INTERVAL '${CACHE_TTL} days'`,
+        [cacheKey]
+      )
+      if (hit.rows.length > 0) return res.json({ ...hit.rows[0].data, cached: true })
+    } catch (err) {
+      console.warn('[reliability] cache read error:', err.message)
+    }
+  }
+
+  // Fetch from NHTSA (both endpoints in parallel, 8 s timeout each)
+  try {
+    const enc  = s => encodeURIComponent(s)
+    const base = `https://api.nhtsa.dot.gov`
+    const sig  = AbortSignal.timeout(8000)
+
+    const [recallsRes, complaintsRes] = await Promise.allSettled([
+      fetch(`${base}/recalls/recallsByVehicle?make=${enc(cleanMake)}&model=${enc(cleanModel)}&modelYear=${yearNum}`,    { signal: sig }),
+      fetch(`${base}/complaints/complaintsByVehicle?make=${enc(cleanMake)}&model=${enc(cleanModel)}&modelYear=${yearNum}`, { signal: sig }),
+    ])
+
+    let recalls = []
+    let complaintCount = 0
+    let topComponents = []
+
+    if (recallsRes.status === 'fulfilled' && recallsRes.value.ok) {
+      const d = await recallsRes.value.json().catch(() => ({}))
+      recalls = (d.results || []).map(r => ({
+        id:          r.NHTSAActionNumber || '',
+        component:   r.Component         || '',
+        summary:    (r.Summary           || '').slice(0, 220),
+        consequence:(r.Consequence       || '').slice(0, 160),
+      }))
+    }
+
+    if (complaintsRes.status === 'fulfilled' && complaintsRes.value.ok) {
+      const d = await complaintsRes.value.json().catch(() => ({}))
+      complaintCount = d.Count || 0
+      const tally = {}
+      for (const c of (d.results || [])) {
+        const comp = (c.components || '').split(',')[0].trim()
+        if (comp) tally[comp] = (tally[comp] || 0) + 1
+      }
+      topComponents = Object.entries(tally)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 4)
+        .map(([name, count]) => ({ name, count }))
+    }
+
+    const payload = {
+      make: cleanMake, model: cleanModel, year: yearNum,
+      recallCount: recalls.length,
+      recalls: recalls.slice(0, 5),
+      complaintCount,
+      topComponents,
+      source: 'NHTSA',
+      asOf: new Date().toISOString(),
+    }
+
+    if (pool) {
+      pool.query(
+        `INSERT INTO nhtsa_cache (cache_key, data) VALUES ($1, $2)
+         ON CONFLICT (cache_key) DO UPDATE SET data = $2, fetched_at = NOW()`,
+        [cacheKey, JSON.stringify(payload)]
+      ).catch(err => console.warn('[reliability] cache write error:', err.message))
+    }
+
+    res.json({ ...payload, cached: false })
+  } catch (err) {
+    console.error('[reliability] NHTSA fetch error:', err.message)
+    res.status(502).json({ error: 'Could not fetch reliability data', detail: err.message })
+  }
+})
+
 // ── Serve Vite build ──────────────────────────────────
 app.use(express.static(join(__dirname, 'dist')))
 app.get('*', (_req, res) => {
@@ -1708,6 +1822,7 @@ async function runRetentionSweep() {
     await pool.query(`DELETE FROM bonus_credits WHERE updated_at < NOW() - INTERVAL '365 days'`)
     await pool.query(`DELETE FROM vehicle_searches WHERE created_at < NOW() - INTERVAL '${MARKET_RETENTION_DAYS} days'`)
     await pool.query(`DELETE FROM subscriber_devices WHERE last_seen < NOW() - INTERVAL '${DEVICE_EXPIRY_DAYS} days'`)
+    await pool.query(`DELETE FROM nhtsa_cache WHERE fetched_at < NOW() - INTERVAL '30 days'`)
   } catch (err) {
     console.error('[retention] daily sweep error:', err.message)
   }

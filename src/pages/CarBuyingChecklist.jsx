@@ -8,7 +8,7 @@ import { useSubscription } from '../hooks/useSubscription'
 import { useBonusCredits } from '../hooks/useBonusCredits'
 import { trackUsage } from '../utils/usage'
 import { maintenanceItems, sellerQuestions, US_STATES, getClimateFlags, getContextualQuestions } from '../data/checklistData'
-import { estimateCurrentValue } from '../utils/vehicleCosts'
+import { estimateCurrentValue, getKnownIssueServices } from '../utils/vehicleCosts'
 import VEHICLES from '../data/vehicles.json'
 
 const MAKES = Object.keys(VEHICLES).sort()
@@ -109,12 +109,27 @@ export default function CarBuyingChecklist() {
   // Anonymous first-party usage tracking — once per page load
   useEffect(() => { trackUsage('visit_checklist') }, [])
 
+  // Fetch NHTSA recall + complaint data when the checklist step is shown
+  useEffect(() => {
+    if (step !== 'checklist' || !vehicleInfo.make || !vehicleInfo.model || !vehicleInfo.year) return
+    let cancelled = false
+    setReliabilityData(null)
+    setReliabilityLoading(true)
+    fetch(`/api/reliability/${encodeURIComponent(vehicleInfo.make)}/${encodeURIComponent(vehicleInfo.model)}/${vehicleInfo.year}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (!cancelled) { setReliabilityData(data); setReliabilityLoading(false) } })
+      .catch(() => { if (!cancelled) setReliabilityLoading(false) })
+    return () => { cancelled = true }
+  }, [step, vehicleInfo.make, vehicleInfo.model, vehicleInfo.year])
+
   const [step, setStep] = useState('input') // input | checklist
   const [vehicleInfo, setVehicleInfo] = useState({ year: '', make: '', model: '', trim: '', mileage: 80000, price: '', state: '' })
   const [priceSource, setPriceSource] = useState('auto') // 'auto' | 'user'
   const [statuses, setStatuses] = useState({})
   const [notes, setNotes] = useState({})
   const [activeTab, setActiveTab] = useState('maintenance')
+  const [reliabilityData, setReliabilityData] = useState(null)
+  const [reliabilityLoading, setReliabilityLoading] = useState(false)
 
   const categories = useMemo(() => {
     const cats = {}
@@ -155,6 +170,11 @@ export default function CarBuyingChecklist() {
   const climateFlags = useMemo(() =>
     vehicleInfo.state ? getClimateFlags(vehicleInfo.state) : [],
     [vehicleInfo.state]
+  )
+
+  const knownIssues = useMemo(() =>
+    getKnownIssueServices(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year, vehicleInfo.trim, vehicleData?.is_ev ?? false),
+    [vehicleInfo.make, vehicleInfo.model, vehicleInfo.year, vehicleInfo.trim, vehicleData]
   )
 
   const allSellerQuestions = useMemo(() => {
@@ -575,6 +595,105 @@ export default function CarBuyingChecklist() {
               </p>
             </div>
           </div>
+
+          {/* Recall & Known Issues panel */}
+          {(knownIssues.length > 0 || reliabilityData || reliabilityLoading) && (
+            <div className="rounded-xl p-5 mb-6 border" style={{ borderColor: 'rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.04)' }}>
+              <p className="text-xs font-semibold uppercase tracking-widest text-red-400 mb-3">Recalls & Known Issues</p>
+
+              {reliabilityLoading && (
+                <p className="text-xs text-[var(--text-muted)] mb-3">Checking NHTSA recall database…</p>
+              )}
+
+              {reliabilityData && (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <p className="text-[var(--text-muted)] text-xs mb-1">NHTSA Recalls</p>
+                      <p className={`font-display font-bold text-xl ${reliabilityData.recallCount > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                        {reliabilityData.recallCount}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[var(--text-muted)] text-xs mb-1">Complaints Filed</p>
+                      <p className={`font-display font-bold text-xl ${reliabilityData.complaintCount > 100 ? 'text-red-400' : reliabilityData.complaintCount > 30 ? 'text-yellow-400' : 'text-white'}`}>
+                        {reliabilityData.complaintCount.toLocaleString()}
+                      </p>
+                    </div>
+                    {reliabilityData.topComponents?.length > 0 && (
+                      <div>
+                        <p className="text-[var(--text-muted)] text-xs mb-1">Top Complaint</p>
+                        <p className="font-semibold text-yellow-400 text-sm leading-tight">
+                          {reliabilityData.topComponents[0].name.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {reliabilityData.recalls?.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-red-400 mb-2">Active Recalls</p>
+                      <div className="flex flex-col gap-3">
+                        {reliabilityData.recalls.slice(0, 3).map((r, i) => (
+                          <div key={i} className="border-l-2 border-red-500/40 pl-3">
+                            <p className="text-xs font-semibold text-white">{r.component}</p>
+                            {r.summary && <p className="text-xs text-[var(--text-muted)] mt-0.5 leading-relaxed">{r.summary}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {reliabilityData.topComponents?.length > 1 && (
+                    <div className="mb-4">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-400 mb-2">Top Complaint Areas</p>
+                      <div className="flex flex-wrap gap-2">
+                        {reliabilityData.topComponents.map((c, i) => (
+                          <span key={i} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400">
+                            {c.name.toLowerCase().replace(/\b\w/g, ch => ch.toUpperCase())} ({c.count})
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="text-[10px] text-[var(--text-muted)]">
+                    Source: NHTSA public database · {new Date(reliabilityData.asOf).toLocaleDateString('en-US', { year:'numeric', month:'short' })}
+                  </p>
+                </>
+              )}
+
+              {knownIssues.length > 0 && (
+                <div className={reliabilityData ? 'mt-4 pt-4 border-t border-red-500/20' : ''}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-orange-400 mb-2">
+                    Documented Platform Issues ({knownIssues.length})
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {knownIssues.map((ki, i) => (
+                      <div key={i} className="flex items-start justify-between gap-3 flex-wrap">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-white">{ki.name}</p>
+                          <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                            Typically surfaces ~{ki.intervalMiles.toLocaleString()} mi · Est. repair {fmt(ki.parts + ki.laborHrs * 110)}
+                          </p>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
+                          ki.category === 'transmission' ? 'bg-red-500/10 border-red-500/30 text-red-400' :
+                          ki.category === 'engine'       ? 'bg-orange-500/10 border-orange-500/30 text-orange-400' :
+                          'bg-yellow-500/10 border-yellow-500/30 text-yellow-400'
+                        }`}>
+                          {ki.category}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-[var(--text-muted)] mt-3">
+                    Platform issues are already factored into the TCO maintenance cost estimates. Use this as a negotiation data point — ask the seller for service records proving the issue was addressed.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Tabs */}
           <div className="flex gap-1 mb-6 overflow-x-auto pb-1">

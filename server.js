@@ -193,7 +193,7 @@ app.use(helmet({
         "'sha256-VIXIVMTLdCz6TviHvNWyf45Q9138C/47GZTs0fP77JQ='", // Clarity bootstrap
         "'sha256-oz2xh8YLXn81ZM73Eaw3s5E4PZb/rBg4LDYQpzWrDXw='", // gtag config
         "'sha256-LZOS//SFkej0haIM3ZySrhd8sSKC8aHoCbbKsNBrgrk='", // Meta Pixel
-        "https://www.clarity.ms",
+        "https://*.clarity.ms", // tag host + the collector script it injects (scripts.clarity.ms)
         "https://www.googletagmanager.com",
         "https://connect.facebook.net",
       ],

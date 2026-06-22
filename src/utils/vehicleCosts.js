@@ -962,9 +962,9 @@ export const KNOWN_ISSUE_SERVICES = [
   // Hyundai/Kia Theta II rod-bearing failures (cost blended down for the lifetime warranty extension)
   { make: 'Hyundai',    models: ['sonata','santa fe','tucson'],                                           yearLo: 2011, yearHi: 2019, category: 'engine',       name: 'Theta II engine reserve (known issue)',        parts: 1500, laborHrs: 6.0, intervalMiles: 140000, pt: 'ice' },
   { make: 'Kia',        models: ['optima','sorento','sportage','k5'],                                     yearLo: 2011, yearHi: 2019, category: 'engine',       name: 'Theta II engine reserve (known issue)',        parts: 1500, laborHrs: 6.0, intervalMiles: 140000, pt: 'ice' },
-  // GM 5.3/6.2 V8 AFM/DFM lifter collapse
-  { make: 'Chevrolet',  models: ['silverado','tahoe','suburban'],                                         yearLo: 2007, yearHi: 2021, category: 'engine',       name: 'AFM/DFM lifter & cam service (known issue)',   parts: 1100, laborHrs: 8.0, intervalMiles: 130000, pt: 'ice' },
-  { make: 'GMC',        models: ['sierra','yukon'],                                                       yearLo: 2007, yearHi: 2021, category: 'engine',       name: 'AFM/DFM lifter & cam service (known issue)',   parts: 1100, laborHrs: 8.0, intervalMiles: 130000, pt: 'ice' },
+  // GM 5.3/6.2 V8 AFM/DFM lifter collapse — DFM (cylinder deactivation v2) continues same failure pattern through 2023
+  { make: 'Chevrolet',  models: ['silverado','tahoe','suburban'],                                         yearLo: 2007, yearHi: 2023, category: 'engine',       name: 'AFM/DFM lifter & cam service (known issue)',   parts: 1100, laborHrs: 8.0, intervalMiles: 130000, pt: 'ice' },
+  { make: 'GMC',        models: ['sierra','yukon'],                                                       yearLo: 2007, yearHi: 2023, category: 'engine',       name: 'AFM/DFM lifter & cam service (known issue)',   parts: 1100, laborHrs: 8.0, intervalMiles: 130000, pt: 'ice' },
   // BMW N20/N26 timing chain guide wear
   { make: 'BMW',        models: ['3 series','5 series','x1','x3','z4'],                                   yearLo: 2012, yearHi: 2015, category: 'engine',       name: 'Timing chain guide service (known issue)',     parts: 900,  laborHrs: 9.0, intervalMiles: 95000,  pt: 'ice' },
   // VW/Audi EA888 Gen1/2 chain tensioner + oil consumption
@@ -974,7 +974,7 @@ export const KNOWN_ISSUE_SERVICES = [
   { make: 'Subaru',     models: ['outback','forester','impreza','legacy'],                                yearLo: 2000, yearHi: 2011, category: 'engine',       name: 'Head gasket replacement (known issue)',        parts: 900,  laborHrs: 11.0, intervalMiles: 120000, pt: 'ice' },
   { make: 'Subaru',     models: ['outback','forester','impreza','crosstrek','legacy'],                    yearLo: 2012, yearHi: 2014, category: 'engine',       name: 'FB engine oil-consumption service (known issue)', parts: 500, laborHrs: 4.0, intervalMiles: 90000, pt: 'ice' },
   // Ford 3.5L EcoBoost cam phaser rattle
-  { make: 'Ford',       models: ['f-150','expedition'],                                                   yearLo: 2017, yearHi: 2020, category: 'engine',       name: 'EcoBoost cam phaser service (known issue)',    parts: 700,  laborHrs: 7.0, intervalMiles: 110000, pt: 'ice' },
+  { make: 'Ford',       models: ['f-150','expedition'],                                                   yearLo: 2017, yearHi: 2022, category: 'engine',       name: 'EcoBoost cam phaser service (known issue)',    parts: 700,  laborHrs: 7.0, intervalMiles: 110000, pt: 'ice' },
   // Honda 1.5T fuel/oil dilution — frequent oil changes + injector attention
   { make: 'Honda',      models: ['civic','cr-v','accord'],                                                yearLo: 2016, yearHi: 2019, category: 'engine',       name: '1.5T oil-dilution service (known issue)',      parts: 200,  laborHrs: 1.5, intervalMiles: 50000,  pt: 'ice' },
   // Jeep ZF 9HP harsh shifting / TCU
@@ -1043,6 +1043,47 @@ export const KNOWN_ISSUE_SERVICES = [
 
   // Tesla Model 3/Y heat-pump refrigerant loop failures (cold-weather documented)
   { make: 'Tesla',      models: ['model 3','model y'],                                                     yearLo: 2021, yearHi: 2023, category: 'electronics',  name: 'Heat pump & refrigerant loop service (known issue)',    parts: 700, laborHrs: 3.0, intervalMiles: 50000, pt: 'ev' },
+
+  // Infiniti Jatco CVT — same hardware as Nissan; QX60 documented for warranty extensions
+  { make: 'Infiniti',  models: ['qx60','qx50','q50','q60','qx80'],                                        yearLo: 2014, yearHi: 2022, category: 'transmission', name: 'CVT replacement (known issue)',                         parts: 3400, laborHrs: 9.0, intervalMiles: 110000, pt: 'ice' },
+
+  // Honda ZF 9-speed — harsh/erratic shifts, torque-converter shudder (TSB 18-095)
+  { make: 'Honda',     models: ['pilot','odyssey','passport','ridgeline'],                                 yearLo: 2016, yearHi: 2022, category: 'transmission', name: '9-speed transmission fluid & torque converter service (known issue)', parts: 650, laborHrs: 3.5, intervalMiles: 75000, pt: 'ice' },
+
+  // GM 9-speed (9T50/9T65) harsh shifts, random neutrals — TSB cluster
+  { make: 'Chevrolet', models: ['malibu','blazer','equinox','traverse'],                                  yearLo: 2016, yearHi: 2023, category: 'transmission', name: '9-speed transmission fluid & valve body service (known issue)', parts: 550, laborHrs: 3.0, intervalMiles: 75000, pt: 'ice' },
+  { make: 'GMC',       models: ['terrain','acadia'],                                                      yearLo: 2016, yearHi: 2023, category: 'transmission', name: '9-speed transmission fluid & valve body service (known issue)', parts: 550, laborHrs: 3.0, intervalMiles: 75000, pt: 'ice' },
+  { make: 'Cadillac',  models: ['xt5','xt6'],                                                             yearLo: 2016, yearHi: 2023, category: 'transmission', name: '9-speed transmission fluid & valve body service (known issue)', parts: 600, laborHrs: 3.0, intervalMiles: 75000, pt: 'ice' },
+
+  // GM 2.7T L3B timing chain — high-pressure oil-pump & chain elongation (NHTSA PE21-002)
+  { make: 'Chevrolet', models: ['silverado','colorado'],                                                  yearLo: 2019, yearHi: 2024, category: 'engine',       name: '2.7T timing chain & oil-pump service (known issue)',    parts: 950, laborHrs: 7.0, intervalMiles: 90000, pt: 'ice' },
+  { make: 'GMC',       models: ['sierra','canyon'],                                                       yearLo: 2019, yearHi: 2024, category: 'engine',       name: '2.7T timing chain & oil-pump service (known issue)',    parts: 950, laborHrs: 7.0, intervalMiles: 90000, pt: 'ice' },
+
+  // Subaru FB20/FB25 oil consumption — 2015-2018 generation (continued from earlier FB entry)
+  { make: 'Subaru',    models: ['outback','forester','impreza','crosstrek','legacy'],                     yearLo: 2015, yearHi: 2018, category: 'engine',       name: 'FB engine oil-consumption service (known issue)',       parts: 500, laborHrs: 4.0, intervalMiles: 90000, pt: 'ice' },
+
+  // Subaru FA20 DIT (WRX) connecting-rod bearing spun at higher mileage
+  { make: 'Subaru',    models: ['wrx'],                                                                   yearLo: 2015, yearHi: 2021, category: 'engine',       name: 'FA20 DIT rod-bearing inspection & oil service (known issue)', parts: 400, laborHrs: 3.0, intervalMiles: 60000, pt: 'ice' },
+  { make: 'Toyota',    models: ['86'],                                                                    yearLo: 2017, yearHi: 2021, category: 'engine',       name: 'FA20 rod-bearing inspection & oil service (known issue)', parts: 400, laborHrs: 3.0, intervalMiles: 60000, pt: 'ice' },
+
+  // Ford 1.5T EcoBoost coolant intrusion — cracked head / no external symptoms (NHTSA recall)
+  { make: 'Ford',      models: ['escape','fusion','bronco sport'],                                        yearLo: 2017, yearHi: 2019, category: 'engine',       name: '1.5T coolant intrusion head-gasket service (known issue)', parts: 1100, laborHrs: 8.0, intervalMiles: 75000, pt: 'ice' },
+
+  // Volvo Drive-E (B4/B5/T5/T6) thermostat housing & coolant hose failures
+  { make: 'Volvo',     models: ['xc60','xc90','xc40','s60','v60','s90','v90'],                           yearLo: 2015, yearHi: 2023, category: 'engine',       name: 'Drive-E thermostat housing & coolant hose service (known issue)', parts: 550, laborHrs: 4.0, intervalMiles: 80000, pt: 'ice' },
+
+  // Kia Lambda II 3.3T timing chain & CVVT (Stinger & GT-Line trims)
+  { make: 'Kia',       models: ['stinger','k900'],                                                       yearLo: 2018, yearHi: 2023, category: 'engine',       name: 'Lambda 3.3T timing chain & CVVT service (known issue)', parts: 1100, laborHrs: 8.0, intervalMiles: 100000, pt: 'ice' },
+
+  // Genesis Lambda II 3.3T (shared with Kia Stinger platform)
+  { make: 'Genesis',   models: ['g70','g80','gv70','g90'],                                               yearLo: 2019, yearHi: 2023, category: 'engine',       name: 'Lambda 3.3T timing chain & CVVT service (known issue)', parts: 1100, laborHrs: 8.0, intervalMiles: 100000, pt: 'ice' },
+
+  // Nissan VQ35DE/HR oil burning — blue smoke at cold start, documented TSB
+  { make: 'Nissan',    models: ['maxima','370z','murano'],                                               yearLo: 2009, yearHi: 2021, category: 'engine',       name: 'VQ35 oil consumption & piston-ring service (known issue)', parts: 600, laborHrs: 5.0, intervalMiles: 80000, pt: 'ice' },
+  { make: 'Infiniti',  models: ['q50','q60','qx60','fx35','fx37'],                                      yearLo: 2009, yearHi: 2021, category: 'engine',       name: 'VQ35/VQ37 oil consumption service (known issue)',        parts: 600, laborHrs: 5.0, intervalMiles: 80000, pt: 'ice' },
+
+  // Porsche coolant pipe (intermediate pipe) brittleness — Cayenne, Macan, Panamera
+  { make: 'Porsche',   models: ['cayenne','macan','panamera'],                                           yearLo: 2015, yearHi: 2022, category: 'engine',       name: 'Coolant pipe replacement (known brittle-failure issue)', parts: 750, laborHrs: 5.0, intervalMiles: 90000, pt: 'ice' },
 ]
 
 // Returns the known-issue services matching this exact vehicle (or [] when the

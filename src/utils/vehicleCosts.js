@@ -983,6 +983,66 @@ export const KNOWN_ISSUE_SERVICES = [
   { make: 'Land Rover', models: ['range rover','discovery','evoque','velar','defender'],                  yearLo: 2012, yearHi: 2020, category: 'engine',       name: 'Timing & cooling system service (known issue)', parts: 1200, laborHrs: 8.0, intervalMiles: 90000, pt: 'ice' },
   // Tesla early MCU/eMMC + door handles
   { make: 'Tesla',      models: ['model s','model x'],                                                    yearLo: 2012, yearHi: 2018, category: 'electronics',  name: 'MCU & door-handle service (known issue)',      parts: 900,  laborHrs: 2.5, intervalMiles: 90000,  pt: 'ev' },
+
+  // ── 2015-2026 additions ──────────────────────────────────────────────────
+
+  // GM 10-speed (10L90/10R80) shudder, slip, delayed engagement — TSB-documented
+  { make: 'Chevrolet',  models: ['camaro','silverado','tahoe','suburban','colorado','blazer','trailblazer'],  yearLo: 2017, yearHi: 2023, category: 'transmission', name: '10-speed transmission fluid & TCM update (known issue)', parts: 350, laborHrs: 3.0, intervalMiles: 80000, pt: 'ice' },
+  { make: 'GMC',        models: ['sierra','yukon','canyon','acadia'],                                        yearLo: 2017, yearHi: 2023, category: 'transmission', name: '10-speed transmission fluid & TCM update (known issue)', parts: 350, laborHrs: 3.0, intervalMiles: 80000, pt: 'ice' },
+  { make: 'Ford',       models: ['f-150','mustang','expedition','ranger'],                                   yearLo: 2017, yearHi: 2022, category: 'transmission', name: '10R80 10-speed transmission service (shudder known issue)', parts: 350, laborHrs: 3.0, intervalMiles: 80000, pt: 'ice' },
+
+  // GM 3.6L V6 (LFX/LGX) timing chain & PCV oil-separator — TSB across non-V8 GM platforms
+  { make: 'Chevrolet',  models: ['camaro','traverse','colorado','malibu','impala','equinox'],                yearLo: 2012, yearHi: 2017, category: 'engine',       name: '3.6L V6 timing chain & PCV service (known issue)',     parts: 850, laborHrs: 8.5, intervalMiles: 100000, pt: 'ice' },
+  { make: 'GMC',        models: ['acadia','terrain','canyon'],                                               yearLo: 2012, yearHi: 2017, category: 'engine',       name: '3.6L V6 timing chain & PCV service (known issue)',     parts: 850, laborHrs: 8.5, intervalMiles: 100000, pt: 'ice' },
+  { make: 'Cadillac',   models: ['ats','cts','srx','xt5','xt6'],                                             yearLo: 2012, yearHi: 2018, category: 'engine',       name: '3.6L V6 timing chain & PCV service (known issue)',     parts: 850, laborHrs: 8.5, intervalMiles: 100000, pt: 'ice' },
+  { make: 'Buick',      models: ['enclave','lacrosse','verano','envision'],                                  yearLo: 2012, yearHi: 2017, category: 'engine',       name: '3.6L V6 timing chain & PCV service (known issue)',     parts: 850, laborHrs: 8.5, intervalMiles: 100000, pt: 'ice' },
+
+  // Chrysler/Dodge/Jeep/Ram Pentastar 3.6L timing chain & VVT sludge (oil-change-sensitive)
+  { make: 'Dodge',      models: ['charger','challenger','durango','grand caravan','journey'],                yearLo: 2011, yearHi: 2019, category: 'engine',       name: 'Pentastar 3.6L timing chain & VVT service (known issue)', parts: 900, laborHrs: 7.0, intervalMiles: 115000, pt: 'ice' },
+  { make: 'Jeep',       models: ['grand cherokee','wrangler','cherokee','gladiator'],                       yearLo: 2011, yearHi: 2020, category: 'engine',       name: 'Pentastar 3.6L timing chain & VVT service (known issue)', parts: 900, laborHrs: 7.0, intervalMiles: 115000, pt: 'ice' },
+  { make: 'Chrysler',   models: ['300','pacifica','town & country'],                                        yearLo: 2011, yearHi: 2020, category: 'engine',       name: 'Pentastar 3.6L timing chain & VVT service (known issue)', parts: 900, laborHrs: 7.0, intervalMiles: 115000, pt: 'ice' },
+  { make: 'Ram',        models: ['1500','promaster'],                                                       yearLo: 2011, yearHi: 2020, category: 'engine',       name: 'Pentastar 3.6L timing chain & VVT service (known issue)', parts: 900, laborHrs: 7.0, intervalMiles: 115000, pt: 'ice' },
+
+  // Ram 1500 HEMI 5.7L MDS lifter & cam collapse (same pattern as GM AFM)
+  { make: 'Ram',        models: ['1500'],                                                                    yearLo: 2013, yearHi: 2022, category: 'engine',       name: 'HEMI 5.7L MDS lifter & cam service (known issue)',     parts: 1600, laborHrs: 10.0, intervalMiles: 130000, pt: 'ice' },
+
+  // ZF 8HP torque-converter shudder & delayed engagement (Stellantis platforms)
+  { make: 'Dodge',      models: ['charger','challenger','durango'],                                         yearLo: 2015, yearHi: 2022, category: 'transmission', name: 'ZF 8HP torque converter & fluid service (known issue)', parts: 600, laborHrs: 3.0, intervalMiles: 80000, pt: 'ice' },
+  { make: 'Ram',        models: ['1500'],                                                                    yearLo: 2019, yearHi: 2024, category: 'transmission', name: 'ZF 8HP torque converter & fluid service (known issue)', parts: 600, laborHrs: 3.0, intervalMiles: 80000, pt: 'ice' },
+  { make: 'Jeep',       models: ['grand cherokee','wagoneer'],                                              yearLo: 2015, yearHi: 2023, category: 'transmission', name: 'ZF 8HP torque converter & fluid service (known issue)', parts: 600, laborHrs: 3.0, intervalMiles: 80000, pt: 'ice' },
+
+  // BMW N63 V8 "Customer Care Package" — oil consumption, cooling, injector spray pattern
+  { make: 'BMW',        models: ['5 series','6 series','7 series','x5','x6','m5','m6'],                     yearLo: 2012, yearHi: 2018, category: 'engine',       name: 'N63 V8 oil consumption & cooling service (known issue)', parts: 1300, laborHrs: 8.0, intervalMiles: 80000, pt: 'ice' },
+
+  // BMW B58 electric water pump & thermostat premature failure (~80k)
+  { make: 'BMW',        models: ['3 series','4 series','5 series','7 series','x3','x4','x5','x6','z4','m2','m3','m4','m5','m8'], yearLo: 2016, yearHi: 2024, category: 'engine', name: 'B58 electric water pump & thermostat (known issue)', parts: 550, laborHrs: 3.5, intervalMiles: 80000, pt: 'ice' },
+
+  // VW DQ381/DSG 7-speed clutch pack & mechatronic service (post-EA888 Gen1/2 gap)
+  { make: 'Volkswagen', models: ['golf','gti','gli','jetta','tiguan','atlas','passat','arteon'],             yearLo: 2015, yearHi: 2022, category: 'transmission', name: 'DSG 7-speed clutch & mechatronic service (known issue)', parts: 950, laborHrs: 4.0, intervalMiles: 80000, pt: 'ice' },
+  { make: 'Audi',       models: ['a3','a4','a5','q3','q5','sq5','tt'],                                      yearLo: 2015, yearHi: 2022, category: 'transmission', name: 'DSG 7-speed clutch & mechatronic service (known issue)', parts: 1050, laborHrs: 4.0, intervalMiles: 80000, pt: 'ice' },
+
+  // Audi EA888 Gen3 (B9) 2.0 TFSI piston-ring oil consumption
+  { make: 'Audi',       models: ['a4','a5','q5','a6','sq5'],                                                yearLo: 2017, yearHi: 2022, category: 'engine',       name: '2.0 TFSI oil consumption & ring service (known issue)', parts: 900, laborHrs: 6.0, intervalMiles: 80000, pt: 'ice' },
+
+  // Mercedes-Benz M276/M278 V6/V8 timing chain tensioner & valve-cover seals
+  { make: 'Mercedes-Benz', models: ['c-class','e-class','glc','gle','gls','s-class','glk','ml'],           yearLo: 2012, yearHi: 2020, category: 'engine',       name: 'Timing chain tensioner & oil seal service (known issue)', parts: 800, laborHrs: 7.0, intervalMiles: 100000, pt: 'ice' },
+
+  // Ford 5.0 Coyote V8 timing chain tensioner (phase 1 Gen, widely documented)
+  { make: 'Ford',       models: ['mustang','f-150'],                                                        yearLo: 2011, yearHi: 2017, category: 'engine',       name: 'Coyote 5.0 timing chain tensioner service (known issue)', parts: 600, laborHrs: 6.0, intervalMiles: 100000, pt: 'ice' },
+
+  // Chevrolet Equinox / GMC Terrain 1.5T turbo piston-ring oil consumption
+  { make: 'Chevrolet',  models: ['equinox'],                                                                yearLo: 2018, yearHi: 2022, category: 'engine',       name: '1.5T oil consumption & piston ring service (known issue)', parts: 600, laborHrs: 4.0, intervalMiles: 60000, pt: 'ice' },
+  { make: 'GMC',        models: ['terrain'],                                                                yearLo: 2018, yearHi: 2022, category: 'engine',       name: '1.5T oil consumption & piston ring service (known issue)', parts: 600, laborHrs: 4.0, intervalMiles: 60000, pt: 'ice' },
+
+  // Nissan Rogue 2.5L QR25 / KR20 oil burning — class-action / NHTSA complaint cluster
+  { make: 'Nissan',     models: ['rogue'],                                                                  yearLo: 2014, yearHi: 2020, category: 'engine',       name: 'Engine oil consumption service (known issue)',         parts: 350, laborHrs: 2.0, intervalMiles: 50000, pt: 'ice' },
+
+  // Hyundai/Kia GDI intake carbon buildup (2.5L & 2.0T Theta III / Smartstream)
+  { make: 'Hyundai',   models: ['santa fe','palisade','tucson','sonata'],                                  yearLo: 2019, yearHi: 2025, category: 'engine',       name: 'GDI intake carbon cleaning (known service requirement)', parts: 350, laborHrs: 3.0, intervalMiles: 60000, pt: 'ice' },
+  { make: 'Kia',       models: ['telluride','sorento','sportage','k5','stinger'],                          yearLo: 2019, yearHi: 2025, category: 'engine',       name: 'GDI intake carbon cleaning (known service requirement)', parts: 350, laborHrs: 3.0, intervalMiles: 60000, pt: 'ice' },
+
+  // Tesla Model 3/Y heat-pump refrigerant loop failures (cold-weather documented)
+  { make: 'Tesla',      models: ['model 3','model y'],                                                     yearLo: 2021, yearHi: 2023, category: 'electronics',  name: 'Heat pump & refrigerant loop service (known issue)',    parts: 700, laborHrs: 3.0, intervalMiles: 50000, pt: 'ev' },
 ]
 
 // Returns the known-issue services matching this exact vehicle (or [] when the

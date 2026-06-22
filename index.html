@@ -41,7 +41,9 @@
       s.parentNode.insertBefore(t,s)}(window, document,'script',
       'https://connect.facebook.net/en_US/fbevents.js');
       fbq('init', '1771464733854543');
-      fbq('track', 'PageView');
+      // PageView is fired by the SPA router (src/utils/analytics.js) on every
+      // route change, including initial load — firing it here too would
+      // double-count the first PageView.
     </script>
   </head>
   <body>

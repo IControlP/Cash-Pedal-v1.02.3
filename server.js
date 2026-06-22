@@ -192,7 +192,7 @@ app.use(helmet({
         "'self'",
         "'sha256-VIXIVMTLdCz6TviHvNWyf45Q9138C/47GZTs0fP77JQ='", // Clarity bootstrap
         "'sha256-oz2xh8YLXn81ZM73Eaw3s5E4PZb/rBg4LDYQpzWrDXw='", // gtag config
-        "'sha256-LZOS//SFkej0haIM3ZySrhd8sSKC8aHoCbbKsNBrgrk='", // Meta Pixel
+        "'sha256-irTpNMUQ0ne6m1/a5pIj3szjcqIgskBNLca5j2XaBxk='", // Meta Pixel
         "https://*.clarity.ms", // tag host + the collector script it injects (scripts.clarity.ms)
         "https://www.googletagmanager.com",
         "https://connect.facebook.net",
@@ -204,6 +204,7 @@ app.use(helmet({
         "https://*.clarity.ms",
         "https://c.bing.com",
         "https://www.google-analytics.com",
+        "https://stats.g.doubleclick.net", // GA4 Google Signals / Ads beacons
         "https://www.facebook.com",
       ],
       fontSrc:                 ["'self'"],
@@ -214,8 +215,12 @@ app.use(helmet({
         "https://*.google-analytics.com",
         "https://*.analytics.google.com",
         "https://www.googletagmanager.com",
+        "https://stats.g.doubleclick.net", // GA4 Google Signals / Ads beacons
         "https://*.facebook.com",
       ],
+      // Clarity's session-replay processing runs in a blob: web worker; without
+      // this it falls back to script-src (no blob:) and recordings are dropped.
+      workerSrc:               ["'self'", "blob:"],
       frameSrc:                ["'none'"],
       objectSrc:               ["'none'"],
       baseUri:                 ["'self'"],

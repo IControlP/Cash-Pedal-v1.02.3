@@ -247,7 +247,7 @@ export const INSURANCE_SEGMENT_MULT = {
 // Each value = published Bankrate state average ÷ 0.92 (Toyota brand mult),
 // so Toyota Camry output = Bankrate published figure for that state.
 export const STATE_INS_BASE = {
-  AL:2350,AK:2575,AZ:2875,AR:2650,CA:3400,CO:3425,CT:2925,
+  AL:2350,AK:2575,AZ:2875,AR:2650,CA:2600,CO:3425,CT:2925,
   DC:3075,DE:3150,FL:4525,GA:3150,HI:1825,ID:1600,IL:2575,
   IN:1850,IA:2075,KS:2625,KY:2825,LA:4325,ME:1825,MD:3300,
   MA:2225,MI:3400,MN:2800,MS:1950,MO:2800,MT:2600,NE:2600,

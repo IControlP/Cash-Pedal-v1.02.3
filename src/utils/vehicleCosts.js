@@ -1666,7 +1666,8 @@ export function getEffectiveElecRate(state, style) {
 
 // state=null → national average defaults ($3.50/gal gas, $0.16/kWh electricity)
 // isPremium: adds PREMIUM_PRICE_DELTA to the state average when no override is set
-export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 15000, fuelPriceOverride = null, isPremium = false) {
+// stateFuelPrices: optional live prices map (defaults to static STATE_FUEL_PRICES)
+export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 15000, fuelPriceOverride = null, isPremium = false, stateFuelPrices = STATE_FUEL_PRICES) {
   const KWH_PER_GAL = 33.7
   if (isEV) {
     const mpge = mpgeCombined ?? 100
@@ -1675,7 +1676,7 @@ export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles 
     return Math.round(annualKwh * rate / 50) * 50
   }
   const mpg = mpgCombined ?? 28
-  const base = STATE_FUEL_PRICES[state] ?? 3.50
+  const base = stateFuelPrices[state] ?? 3.50
   const price = fuelPriceOverride !== null
     ? fuelPriceOverride
     : base + (isPremium ? PREMIUM_PRICE_DELTA : 0)

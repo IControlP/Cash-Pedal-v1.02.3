@@ -1805,6 +1805,83 @@ app.get('/api/reliability/:make/:model/:year', async (req, res) => {
   }
 })
 
+// ── EIA Fuel Price Cache ──────────────────────────────
+// Fetches weekly retail regular-unleaded prices by state from the EIA v2 API.
+// Cached in-memory for 24 h; falls back to static defaults if no API key or
+// the fetch fails.
+const EIA_API_KEY = (process.env.EIA_API_KEY || '').trim()
+const FUEL_CACHE_TTL = 24 * 60 * 60 * 1000
+let fuelPriceCache = { prices: null, fetchedAt: 0 }
+
+const FALLBACK_FUEL_PRICES = {
+  AL:3.05,AK:3.95,AZ:3.70,AR:2.95,CA:4.80,CO:3.30,CT:3.55,
+  DE:3.20,FL:3.25,GA:3.05,HI:4.90,ID:3.50,IL:3.55,IN:3.25,
+  IA:3.10,KS:2.95,KY:3.05,LA:2.90,ME:3.45,MD:3.35,MA:3.60,
+  MI:3.40,MN:3.30,MS:2.90,MO:2.95,MT:3.40,NE:3.10,NV:3.90,
+  NH:3.35,NJ:3.45,NM:3.10,NY:3.75,NC:3.10,ND:3.05,OH:3.15,
+  OK:2.95,OR:3.95,PA:3.55,RI:3.50,SC:3.05,SD:3.15,TN:3.05,
+  TX:3.00,UT:3.55,VT:3.50,VA:3.20,WA:4.10,WV:3.25,WI:3.30,
+  WY:3.25,DC:3.75,
+}
+
+async function fetchEIAFuelPrices() {
+  // EIA v2 — weekly retail regular unleaded (product EPM0), all state duoareas
+  // Duoarea format: "S" + 2-letter state code (e.g., SCA, STX, SDC)
+  const url = new URL('https://api.eia.gov/v2/petroleum/pri/gnd/data/')
+  url.searchParams.set('api_key', EIA_API_KEY)
+  url.searchParams.set('frequency', 'weekly')
+  url.searchParams.append('data[0]', 'value')
+  url.searchParams.append('facets[product][0]', 'EPM0')
+  url.searchParams.set('sort[0][column]', 'period')
+  url.searchParams.set('sort[0][direction]', 'desc')
+  url.searchParams.set('length', '100')
+
+  const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) })
+  if (!res.ok) throw new Error(`EIA API responded ${res.status}`)
+  const json = await res.json()
+
+  const prices = { ...FALLBACK_FUEL_PRICES }
+  const seen = new Set()
+  for (const row of json.response?.data ?? []) {
+    const duoarea = row.duoarea // e.g. "SCA"
+    if (!duoarea || duoarea === 'NUS') continue
+    if (!duoarea.startsWith('S') || duoarea.length !== 3) continue
+    const state = duoarea.slice(1) // "CA"
+    if (seen.has(state) || row.value == null) continue
+    if (Object.prototype.hasOwnProperty.call(FALLBACK_FUEL_PRICES, state)) {
+      prices[state] = Math.round(parseFloat(row.value) * 100) / 100
+      seen.add(state)
+    }
+  }
+  console.log(`[fuel-prices] EIA refresh — ${seen.size} states updated`)
+  return prices
+}
+
+app.get('/api/fuel-prices', async (req, res) => {
+  const now = Date.now()
+
+  if (fuelPriceCache.prices && now - fuelPriceCache.fetchedAt < FUEL_CACHE_TTL) {
+    return res.json({ prices: fuelPriceCache.prices, source: 'cache', fetchedAt: fuelPriceCache.fetchedAt })
+  }
+
+  if (!EIA_API_KEY) {
+    return res.json({ prices: FALLBACK_FUEL_PRICES, source: 'fallback' })
+  }
+
+  try {
+    const prices = await fetchEIAFuelPrices()
+    fuelPriceCache = { prices, fetchedAt: now }
+    return res.json({ prices, source: 'eia', fetchedAt: now })
+  } catch (err) {
+    console.error('[fuel-prices] EIA fetch error:', err.message)
+  }
+
+  if (fuelPriceCache.prices) {
+    return res.json({ prices: fuelPriceCache.prices, source: 'stale-cache', fetchedAt: fuelPriceCache.fetchedAt })
+  }
+  return res.json({ prices: FALLBACK_FUEL_PRICES, source: 'fallback' })
+})
+
 // ── Serve Vite build ──────────────────────────────────
 app.use(express.static(join(__dirname, 'dist')))
 app.get('*', (_req, res) => {

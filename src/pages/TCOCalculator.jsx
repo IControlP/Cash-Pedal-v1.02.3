@@ -2773,7 +2773,7 @@ export default function TCOCalculator() {
                 const effectiveGasPrice = (liveFuelPrices[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)
                 const fuelNote = effIsEV
                   ? `$${activeElecRate.toFixed(3)}/kWh · ${customFuelPrice ? 'custom' : chargingStyleLabel}`
-                  : `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${liveFuelPrices[resolvedState] ?? 3.50}`}/gal`
+                  : `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${effectiveGasPrice.toFixed(2)}`}/gal`
                 const insNote = `${resolvedState} · ${selMake || 'avg'}${detailedMode && multiCarPolicy ? ' · multi-car' : ''}`
                 const maintNote = detailedMode
                   ? (effIsEV ? 'EV · itemized' : 'gas · itemized')
@@ -2865,7 +2865,7 @@ export default function TCOCalculator() {
                               resolvedState,
                               annualMileage,
                               defaultRate,
-                              false,
+                              isPremium,
                               liveFuelPrices
                             ))
                           }}

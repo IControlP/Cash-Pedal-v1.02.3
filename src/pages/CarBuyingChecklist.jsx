@@ -109,6 +109,15 @@ export default function CarBuyingChecklist() {
   // Anonymous first-party usage tracking — once per page load
   useEffect(() => { trackUsage('visit_checklist') }, [])
 
+  const [step, setStep] = useState('input') // input | checklist
+  const [vehicleInfo, setVehicleInfo] = useState({ year: '', make: '', model: '', trim: '', mileage: 80000, price: '', state: '' })
+  const [priceSource, setPriceSource] = useState('auto') // 'auto' | 'user'
+  const [statuses, setStatuses] = useState({})
+  const [notes, setNotes] = useState({})
+  const [activeTab, setActiveTab] = useState('maintenance')
+  const [reliabilityData, setReliabilityData] = useState(null)
+  const [reliabilityLoading, setReliabilityLoading] = useState(false)
+
   // Fetch NHTSA recall + complaint data when the checklist step is shown
   useEffect(() => {
     if (step !== 'checklist' || !vehicleInfo.make || !vehicleInfo.model || !vehicleInfo.year) return
@@ -121,15 +130,6 @@ export default function CarBuyingChecklist() {
       .catch(() => { if (!cancelled) setReliabilityLoading(false) })
     return () => { cancelled = true }
   }, [step, vehicleInfo.make, vehicleInfo.model, vehicleInfo.year])
-
-  const [step, setStep] = useState('input') // input | checklist
-  const [vehicleInfo, setVehicleInfo] = useState({ year: '', make: '', model: '', trim: '', mileage: 80000, price: '', state: '' })
-  const [priceSource, setPriceSource] = useState('auto') // 'auto' | 'user'
-  const [statuses, setStatuses] = useState({})
-  const [notes, setNotes] = useState({})
-  const [activeTab, setActiveTab] = useState('maintenance')
-  const [reliabilityData, setReliabilityData] = useState(null)
-  const [reliabilityLoading, setReliabilityLoading] = useState(false)
 
   const categories = useMemo(() => {
     const cats = {}

@@ -1118,6 +1118,15 @@ export default function TCOCalculator() {
   const [rate, setRate]             = useState(6.5)
   const [ownershipYears, setOwnershipYears] = useState(5)
 
+  // Live fuel prices — seeded with static fallback, replaced by /api/fuel-prices on mount
+  const [liveFuelPrices, setLiveFuelPrices] = useState(STATE_FUEL_PRICES)
+  useEffect(() => {
+    fetch('/api/fuel-prices')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.prices) setLiveFuelPrices(data.prices) })
+      .catch(() => {})
+  }, [])
+
   // Annual operating costs (pre-filled with national averages)
   const [annualInsurance,    setAnnualInsurance]    = useState(2000)
   const [annualFuel,         setAnnualFuel]         = useState(2000)
@@ -1248,7 +1257,7 @@ export default function TCOCalculator() {
       const fuelOverride = (modelData.is_ev && customOverride === null)
         ? getEffectiveElecRate(resolvedState, chargingStyle)
         : customOverride
-      setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel)))
+      setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel), liveFuelPrices))
       if (detailedMode) {
         const seg = classifySegment(selMake||'', selModel||'')
         const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake, resolvedState, vehicleAge, resolvedLaborRate, resolvedWear, selModel, selYear, selTrim)
@@ -1267,7 +1276,7 @@ export default function TCOCalculator() {
       const fuelOverride = (catIsEV && customOverride === null)
         ? getEffectiveElecRate(resolvedState, chargingStyle)
         : customOverride
-      setAnnualFuel(computeAnnualFuel(catIsEV, catMpg, catMpge, resolvedState, annualMileage, fuelOverride))
+      setAnnualFuel(computeAnnualFuel(catIsEV, catMpg, catMpge, resolvedState, annualMileage, fuelOverride, false, liveFuelPrices))
       if (detailedMode) {
         const catSeg = catInfo?.segment ?? 'sedan'
         const services = generateMaintenanceServices(catIsEV, annualMileage, catSeg, '', resolvedState, 0, resolvedLaborRate, resolvedWear)
@@ -1281,7 +1290,7 @@ export default function TCOCalculator() {
       ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)), currentMileage)
       : price
     setAnnualRegistration(computeAnnualRegistration(resolvedState, currentVal))
-  }, [price, selMake, selModel, selYear, selTrim, resolvedState, resolvedLaborRate, resolvedWear, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [price, selMake, selModel, selYear, selTrim, resolvedState, resolvedLaborRate, resolvedWear, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage, liveFuelPrices]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Market-analytics search tracking ──
   // Record each make/model the visitor inspects, tagged with their resolved
@@ -2713,7 +2722,7 @@ export default function TCOCalculator() {
                           className="input-field pl-7"
                           placeholder={effIsEV
                             ? `${getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)} (${{ home: 'home', mixed: 'blended', public: 'public DCFC' }[chargingStyle]})`
-                            : `${((STATE_FUEL_PRICES[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)} (${resolvedState} ${isPremium ? 'premium' : 'regular'} avg)`}
+                            : `${((liveFuelPrices[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)} (${resolvedState} ${isPremium ? 'premium' : 'regular'} avg)`}
                           value={customFuelPrice}
                           onChange={e => setCustomFuelPrice(e.target.value)}
                           step={effIsEV ? 0.001 : 0.05}
@@ -2730,7 +2739,7 @@ export default function TCOCalculator() {
                     <p className="text-[10px] text-[var(--text-muted)]">
                       {effIsEV
                         ? `Leave blank to use charging-style rate ($${getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)}/kWh)`
-                        : `Leave blank to use ${resolvedState} ${isPremium ? 'premium' : 'regular'} avg ($${((STATE_FUEL_PRICES[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)}/gal)`}
+                        : `Leave blank to use ${resolvedState} ${isPremium ? 'premium' : 'regular'} avg ($${((liveFuelPrices[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)}/gal)`}
                     </p>
                   </div>
 
@@ -2761,10 +2770,10 @@ export default function TCOCalculator() {
                   ? parseFloat(customFuelPrice)
                   : getEffectiveElecRate(resolvedState, chargingStyle)
                 const chargingStyleLabel = { home: 'home', mixed: 'home+public', public: 'public DCFC' }[chargingStyle]
-                const effectiveGasPrice = (STATE_FUEL_PRICES[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)
+                const effectiveGasPrice = (liveFuelPrices[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)
                 const fuelNote = effIsEV
                   ? `$${activeElecRate.toFixed(3)}/kWh · ${customFuelPrice ? 'custom' : chargingStyleLabel}`
-                  : `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${STATE_FUEL_PRICES[resolvedState] ?? 3.50}`}/gal`
+                  : `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${liveFuelPrices[resolvedState] ?? 3.50}`}/gal`
                 const insNote = `${resolvedState} · ${selMake || 'avg'}${detailedMode && multiCarPolicy ? ' · multi-car' : ''}`
                 const maintNote = detailedMode
                   ? (effIsEV ? 'EV · itemized' : 'gas · itemized')
@@ -2855,7 +2864,9 @@ export default function TCOCalculator() {
                               modelData?.mpg?.mpge_combined ?? (catInfoForRender?.mpge ?? null),
                               resolvedState,
                               annualMileage,
-                              defaultRate
+                              defaultRate,
+                              false,
+                              liveFuelPrices
                             ))
                           }}
                           className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
@@ -2870,7 +2881,7 @@ export default function TCOCalculator() {
                         className="input-field pl-7"
                         placeholder={effIsEV
                           ? `${getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)} (${resolvedState} avg)`
-                          : `${((STATE_FUEL_PRICES[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)} (${resolvedState}${isPremium ? ' premium' : ''} avg)`}
+                          : `${((liveFuelPrices[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)} (${resolvedState}${isPremium ? ' premium' : ''} avg)`}
                         value={customFuelPrice}
                         onChange={e => {
                           const val = e.target.value
@@ -2896,7 +2907,7 @@ export default function TCOCalculator() {
                     <p className="text-[10px] text-[var(--text-muted)]">
                       {effIsEV
                         ? `Leave blank to use ${resolvedState} avg ($${getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)}/kWh)`
-                        : `Leave blank to use ${resolvedState} ${isPremium ? 'premium' : ''} avg ($${((STATE_FUEL_PRICES[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)}/gal)`}
+                        : `Leave blank to use ${resolvedState} ${isPremium ? 'premium' : ''} avg ($${((liveFuelPrices[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)}/gal)`}
                     </p>
                   </div>
                   <SliderInput label={effIsEV ? 'Annual Charging Cost' : 'Annual Fuel Cost'} value={annualFuel} onChange={setAnnualFuel}

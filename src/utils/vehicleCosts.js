@@ -114,7 +114,7 @@ export function classifySegment(make, model) {
   if (evKw.some(k => m.includes(k))) return 'electric'
   if (['prius','insight','sienna'].some(k => m.includes(k))) return 'hybrid'
   if (m.includes('hybrid') || m.includes('phev') || m.includes('4xe') || m.includes('plug-in')) return 'hybrid'
-  const sportsKw = ['corvette','mustang','camaro','challenger','charger','911','cayman','boxster','z4','supra','miata','mx-5','gt-r','370z','400z','brz','gr86','nsx','emira','gr supra']
+  const sportsKw = ['corvette','mustang','camaro','challenger','charger','911','cayman','boxster','z4','supra','miata','mx-5','gt-r','370z','400z','brz','gr86','nsx','emira','gr supra','r8']
   if (sportsKw.some(k => m.includes(k))) return 'sports'
   // Nissan Z (current gen) is just "Z" — match exactly so it isn't read as a sedan
   if (mk === 'nissan' && m.trim() === 'z') return 'sports'
@@ -1023,6 +1023,11 @@ export const KNOWN_ISSUE_SERVICES = [
 
   // Audi EA888 Gen3 (B9) 2.0 TFSI piston-ring oil consumption
   { make: 'Audi',       models: ['a4','a5','q5','a6','sq5'],                                                yearLo: 2017, yearHi: 2022, category: 'engine',       name: '2.0 TFSI oil consumption & ring service (known issue)', parts: 900, laborHrs: 6.0, intervalMiles: 80000, pt: 'ice' },
+
+  // Audi R8 V8/V10 direct-injection carbon buildup on intake valves (walnut blast service)
+  { make: 'Audi',       models: ['r8'],                                                                     yearLo: 2008, yearHi: 2023, category: 'engine',       name: 'Intake valve carbon deposit walnut blast (known issue)', parts: 400, laborHrs: 5.0, intervalMiles: 60000, pt: 'ice' },
+  // Audi R8 R-Tronic single-clutch robotized manual actuator & clutch pack service
+  { make: 'Audi',       models: ['r8'],                                                                     yearLo: 2008, yearHi: 2014, category: 'transmission', name: 'R-Tronic actuator & clutch pack service (known issue)', parts: 1800, laborHrs: 6.0, intervalMiles: 60000, pt: 'ice' },
 
   // Mercedes-Benz M276/M278 V6/V8 timing chain tensioner & valve-cover seals
   { make: 'Mercedes-Benz', models: ['c-class','e-class','glc','gle','gls','s-class','glk','ml'],           yearLo: 2012, yearHi: 2020, category: 'engine',       name: 'Timing chain tensioner & oil seal service (known issue)', parts: 800, laborHrs: 7.0, intervalMiles: 100000, pt: 'ice' },

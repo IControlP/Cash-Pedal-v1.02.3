@@ -3436,34 +3436,43 @@ export default function TCOCalculator() {
                 )}
               </div>
 
-              {/* ── Net Cost of Ownership — detailed mode only ── */}
+              {/* ── Total Cost of Ownership — detailed mode only ── */}
               {!simpleMode && (financeMode === 'buy' || financeMode === 'current') && futureResaleValue != null && netCostOfOwnership != null && (
                 <div className="rounded-xl border p-4 flex flex-col gap-3"
                   style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
-                    Net Cost of Ownership
+                    Total Cost of Ownership
                   </p>
                   <div className="flex flex-col gap-2 text-sm">
                     <div className="flex justify-between items-center">
-                      <span className="text-[var(--text-muted)]">Total paid over {ownershipYears} yr{ownershipYears !== 1 ? 's' : ''}</span>
+                      <span className="text-[var(--text-muted)]">Loan payments over {ownershipYears} yr{ownershipYears !== 1 ? 's' : ''}</span>
                       <span className="text-white font-medium">{formatCurrency(totalOwnershipPaid)}</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-[var(--text-muted)]">
-                        Est. resale value ({carAge + ownershipYears}yr old {selMake})
-                      </span>
-                      <span className="text-white font-medium">− {formatCurrency(futureResaleValue)}</span>
-                    </div>
+                    {financeMode === 'buy' && safeDown > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-[var(--text-muted)]">Down payment</span>
+                        <span className="text-white font-medium">+ {formatCurrency(safeDown)}</span>
+                      </div>
+                    )}
                     <div className="h-px bg-[var(--border)] my-0.5" />
                     <div className="flex justify-between items-center">
-                      <span className="text-white font-bold">Net out-of-pocket</span>
+                      <span className="text-white font-bold">{ownershipYears}-year out-of-pocket</span>
                       <span className="font-display font-bold text-lg" style={{ color: 'var(--accent)' }}>
-                        {formatCurrency(netCostOfOwnership)}
+                        {formatCurrency(totalOwnershipPaid + (financeMode === 'buy' ? safeDown : 0))}
                       </span>
                     </div>
                   </div>
+                  <div className="rounded-lg px-3 py-2.5 flex justify-between items-center text-xs"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)' }}>
+                    <span className="text-[var(--text-muted)]">
+                      Est. resale if sold ({carAge + ownershipYears}yr old {selMake})
+                    </span>
+                    <span className="text-white font-semibold tabular-nums">
+                      − {formatCurrency(futureResaleValue)} → {formatCurrency(netCostOfOwnership)} net
+                    </span>
+                  </div>
                   <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
-                    You can sell the vehicle at the end of ownership. This is your true economic cost — lower than total payments because the car retains value.
+                    This is what you'll spend regardless of how long you keep it. If you do sell, the estimated resale above reduces your net cost.
                   </p>
                 </div>
               )}

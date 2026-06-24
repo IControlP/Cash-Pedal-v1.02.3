@@ -1028,6 +1028,8 @@ export const KNOWN_ISSUE_SERVICES = [
   { make: 'Audi',       models: ['r8'],                                                                     yearLo: 2008, yearHi: 2023, category: 'engine',       name: 'Intake valve carbon deposit walnut blast (known issue)', parts: 400, laborHrs: 5.0, intervalMiles: 60000, pt: 'ice' },
   // Audi R8 R-Tronic single-clutch robotized manual actuator & clutch pack service
   { make: 'Audi',       models: ['r8'],                                                                     yearLo: 2008, yearHi: 2014, category: 'transmission', name: 'R-Tronic actuator & clutch pack service (known issue)', parts: 1800, laborHrs: 6.0, intervalMiles: 60000, pt: 'ice' },
+  // Audi R8 magnetic ride (MRC) damper failure — magnetorheological shocks degrade and leak
+  { make: 'Audi',       models: ['r8'],                                                                     yearLo: 2008, yearHi: 2023, category: 'suspension',   name: 'Magnetic ride damper replacement (known issue)',        parts: 3200, laborHrs: 4.0, intervalMiles: 80000, pt: 'ice' },
 
   // Mercedes-Benz M276/M278 V6/V8 timing chain tensioner & valve-cover seals
   { make: 'Mercedes-Benz', models: ['c-class','e-class','glc','gle','gls','s-class','glk','ml'],           yearLo: 2012, yearHi: 2020, category: 'engine',       name: 'Timing chain tensioner & oil seal service (known issue)', parts: 800, laborHrs: 7.0, intervalMiles: 100000, pt: 'ice' },

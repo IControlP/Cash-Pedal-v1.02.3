@@ -130,6 +130,9 @@ export default function CarBuyingChecklist() {
   const [activeTab, setActiveTab] = useState('maintenance')
   const [reliabilityData, setReliabilityData] = useState(null)
   const [reliabilityLoading, setReliabilityLoading] = useState(false)
+  const [costOverrides, setCostOverrides] = useState({})
+  const [editingCosts, setEditingCosts] = useState(false)
+  const [annualMiles, setAnnualMiles] = useState(12000)
 
   const categories = useMemo(() => {
     const cats = {}
@@ -155,12 +158,15 @@ export default function CarBuyingChecklist() {
     [vehicleInfo.mileage, dueItems]
   )
 
+  const getEffectiveCost = (item) =>
+    costOverrides[item.id] !== undefined ? Number(costOverrides[item.id]) : item.cost
+
   const confirmed = dueItems.filter(i => statuses[i.id] === 'confirmed')
   const notDone = dueItems.filter(i => statuses[i.id] === 'not_done')
   const unknown = dueItems.filter(i => !statuses[i.id] || statuses[i.id] === 'unknown')
 
-  const negotiationSavings = notDone.reduce((s, i) => s + i.cost, 0) +
-    unknown.reduce((s, i) => s + i.cost * 0.5, 0)
+  const negotiationSavings = notDone.reduce((s, i) => s + getEffectiveCost(i), 0) +
+    unknown.reduce((s, i) => s + getEffectiveCost(i) * 0.5, 0)
 
   const vehicleData = useMemo(() =>
     vehicleInfo.make && vehicleInfo.model ? VEHICLES[vehicleInfo.make]?.[vehicleInfo.model] : null,
@@ -204,6 +210,31 @@ export default function CarBuyingChecklist() {
       regionNote: regionalLabel(vehicleData?.type, regionMultiplier),
     }
   }, [vehicleInfo.make, vehicleInfo.model, vehicleInfo.year, vehicleInfo.trim, vehicleInfo.mileage, vehicleInfo.state, vehicleData])
+
+  const reserveData = useMemo(() => {
+    const monthlyMilesRate = annualMiles / 12
+    if (!monthlyMilesRate) return null
+    const buckets = [
+      { label: 'Next 3 months', max: 3, items: [] },
+      { label: '3–12 months', max: 12, items: [] },
+      { label: '1–2 years', max: 24, items: [] },
+    ]
+    maintenanceItems.forEach(item => {
+      const cyclesDone = Math.floor(vehicleInfo.mileage / item.interval)
+      const nextDueMileage = (cyclesDone + 1) * item.interval
+      const milesAway = nextDueMileage - vehicleInfo.mileage
+      const monthsAway = milesAway / monthlyMilesRate
+      const cost = costOverrides[item.id] !== undefined ? Number(costOverrides[item.id]) : item.cost
+      const entry = { item, monthsAway, cost, nextDueMileage, milesAway }
+      if (monthsAway <= 3) buckets[0].items.push(entry)
+      else if (monthsAway <= 12) buckets[1].items.push(entry)
+      else if (monthsAway <= 24) buckets[2].items.push(entry)
+    })
+    buckets.forEach(b => b.items.sort((a, z) => a.monthsAway - z.monthsAway))
+    const total12mo = [...buckets[0].items, ...buckets[1].items].reduce((s, e) => s + e.cost, 0)
+    const monthlyTarget = Math.ceil(total12mo / 12)
+    return { buckets, total12mo, monthlyTarget }
+  }, [vehicleInfo.mileage, annualMiles, costOverrides])
 
   // Auto-fill asking price with fair estimate whenever it changes, unless user manually set it
   useEffect(() => {
@@ -545,8 +576,8 @@ export default function CarBuyingChecklist() {
               )
               if (criticalFlags.length === 0) return null
               const criticalTotal = criticalFlags.reduce((s, i) => {
-                if (statuses[i.id] === 'not_done') return s + i.cost
-                return s + i.cost * 0.5
+                if (statuses[i.id] === 'not_done') return s + getEffectiveCost(i)
+                return s + getEffectiveCost(i) * 0.5
               }, 0)
               return (
                 <div className="mt-4 pt-4 border-t border-[rgba(255,184,0,0.15)]">
@@ -566,7 +597,7 @@ export default function CarBuyingChecklist() {
                           </span>
                         </div>
                         <span className="text-red-400 font-semibold tabular-nums shrink-0 ml-2">
-                          {statuses[item.id] === 'not_done' ? fmt(item.cost) : `~${fmt(item.cost * 0.5)}`}
+                          {statuses[item.id] === 'not_done' ? fmt(getEffectiveCost(item)) : `~${fmt(getEffectiveCost(item) * 0.5)}`}
                         </span>
                       </div>
                     ))}
@@ -700,6 +731,7 @@ export default function CarBuyingChecklist() {
             {[
               { key: 'maintenance', label: `Maintenance Due (${dueItems.length})` },
               { key: 'upcoming', label: `Coming Up (${upcomingItems.length})` },
+              { key: 'reserve', label: 'Reserve Tracker' },
               { key: 'questions', label: `Seller Questions (${allSellerQuestions.length})` },
             ].map(({ key, label }) => (
               <button
@@ -719,6 +751,28 @@ export default function CarBuyingChecklist() {
           {/* Maintenance due tab */}
           {activeTab === 'maintenance' && (
             <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => setEditingCosts(v => !v)}
+                  className="text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                  style={{ color: editingCosts ? 'var(--accent)' : 'var(--text-muted)' }}
+                >
+                  ✏️ {editingCosts ? 'Done editing estimates' : 'Edit cost estimates'}
+                </button>
+                {editingCosts && Object.keys(costOverrides).length > 0 && (
+                  <button
+                    onClick={() => setCostOverrides({})}
+                    className="text-xs text-[var(--text-muted)] hover:text-red-400 transition-colors"
+                  >
+                    Reset to defaults
+                  </button>
+                )}
+              </div>
+              {editingCosts && (
+                <p className="text-xs text-[var(--text-muted)] -mt-1">
+                  Adjust any cost to match local shop quotes. Negotiation savings and reserve targets update instantly.
+                </p>
+              )}
               {dueItems.length === 0 ? (
                 <div className="card text-center py-10">
                   <p className="text-[var(--text-muted)]">No maintenance items appear due at {vehicleInfo.mileage.toLocaleString()} miles.</p>
@@ -747,9 +801,29 @@ export default function CarBuyingChecklist() {
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                              Due every {item.interval.toLocaleString()} mi · Est. {fmt(item.cost)}
-                            </p>
+                            {editingCosts ? (
+                              <div className="flex items-center gap-1.5 mt-1">
+                                <span className="text-xs text-[var(--text-muted)]">Due every {item.interval.toLocaleString()} mi · Est. $</span>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={costOverrides[item.id] !== undefined ? costOverrides[item.id] : item.cost}
+                                  onChange={e => setCostOverrides(o => ({ ...o, [item.id]: e.target.value }))}
+                                  className="input-field text-xs py-0.5 text-right"
+                                  style={{ width: '72px' }}
+                                />
+                                {costOverrides[item.id] !== undefined && (
+                                  <span className="text-[10px] text-[var(--text-muted)]">(default ${item.cost})</span>
+                                )}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                                Due every {item.interval.toLocaleString()} mi · Est. {fmt(getEffectiveCost(item))}
+                                {costOverrides[item.id] !== undefined && (
+                                  <span className="text-[var(--accent)] ml-1">✏️</span>
+                                )}
+                              </p>
+                            )}
                           </div>
                           <select
                             value={statuses[item.id] || 'unknown'}
@@ -790,7 +864,7 @@ export default function CarBuyingChecklist() {
                           <div>
                             <p className="text-sm font-semibold text-white">{item.name}</p>
                             <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                              Due in ~{milesTilDue.toLocaleString()} miles · Est. {fmt(item.cost)}
+                              Due in ~{milesTilDue.toLocaleString()} miles · Est. {fmt(getEffectiveCost(item))}
                             </p>
                           </div>
                           <div className="text-right shrink-0">
@@ -808,6 +882,82 @@ export default function CarBuyingChecklist() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Reserve tracker tab */}
+          {activeTab === 'reserve' && (
+            <div className="flex flex-col gap-4">
+              {/* Mileage rate slider */}
+              <div className="card">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-4">Annual Miles You Drive</p>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-[var(--text-muted)]">Miles per year</span>
+                  <span className="text-sm font-bold text-[var(--accent)]">{annualMiles.toLocaleString()} mi/yr</span>
+                </div>
+                <input
+                  type="range" min={3000} max={25000} step={1000}
+                  value={annualMiles}
+                  onChange={e => setAnnualMiles(Number(e.target.value))}
+                  style={{ background: `linear-gradient(to right, var(--accent) ${((annualMiles - 3000) / 22000) * 100}%, var(--border) ${((annualMiles - 3000) / 22000) * 100}%)` }}
+                />
+                <div className="flex justify-between text-[10px] text-[var(--text-muted)] mt-1">
+                  <span>3,000</span><span>25,000</span>
+                </div>
+                <p className="text-xs text-[var(--text-muted)] mt-3 leading-relaxed">
+                  Slide to see how your driving pace shifts when each service hits — and how much to keep in reserve each month.
+                </p>
+              </div>
+
+              {/* Monthly reserve headline */}
+              <div className="rounded-xl p-5 border" style={{ background: 'rgba(200,255,0,0.03)', borderColor: 'rgba(200,255,0,0.15)' }}>
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)] mb-1">12-Month Reserve Target</p>
+                <p className="font-display font-bold text-[var(--accent)] text-4xl">
+                  {fmt(reserveData?.monthlyTarget ?? 0)}
+                  <span className="text-base font-normal text-[var(--text-muted)] ml-1">/mo</span>
+                </p>
+                <p className="text-xs text-[var(--text-muted)] mt-1">
+                  {fmt(reserveData?.total12mo ?? 0)} in maintenance expected over the next 12 months at {annualMiles.toLocaleString()} mi/yr
+                </p>
+                {Object.keys(costOverrides).length > 0 && (
+                  <p className="text-xs text-[var(--accent)] mt-1">Using your edited cost estimates</p>
+                )}
+              </div>
+
+              {/* Time-bucketed upcoming costs */}
+              {reserveData?.buckets.map(bucket => bucket.items.length > 0 && (
+                <div key={bucket.label} className="card">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">{bucket.label}</p>
+                    <p className="font-bold text-white text-sm">{fmt(bucket.items.reduce((s, e) => s + e.cost, 0))}</p>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {bucket.items.map(({ item, milesAway, cost, nextDueMileage, monthsAway }) => (
+                      <div key={item.id} className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-white">{item.name}</span>
+                            {item.critical && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/30">Critical</span>
+                            )}
+                          </div>
+                          <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                            Due at {nextDueMileage.toLocaleString()} mi · {milesAway.toLocaleString()} mi away · ~{monthsAway < 1 ? '<1' : Math.round(monthsAway)} mo
+                          </p>
+                        </div>
+                        <p className="text-sm font-bold text-white shrink-0">{fmt(cost)}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <p className="text-xs text-[var(--text-muted)] px-1 leading-relaxed">
+                Reserve tracker shows next-occurrence costs from current mileage forward — separate from any deferred maintenance above.
+                {Object.keys(costOverrides).length === 0
+                  ? ' Edit cost estimates in the Maintenance Due tab to use your local shop quotes.'
+                  : ' Cost overrides from the Maintenance Due tab are applied here.'}
+              </p>
             </div>
           )}
 

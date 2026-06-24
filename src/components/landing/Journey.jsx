@@ -46,7 +46,7 @@ const STAGES = [
     tool: 'Buying Checklist',
     to: '/checklist',
     q: '"Is this specific used car a money pit?"',
-    body: 'A mileage-aware inspection list for the car in front of you. Know exactly what to check, what to ask, and what should send you walking — before you hand over a deposit.',
+    body: "Whether you're at a dealership or meeting a private seller, this mileage-aware inspection list tells you exactly what to check, what to ask, and what should send you walking before you hand over a deposit.",
     cta: 'Open the checklist',
   },
 ]

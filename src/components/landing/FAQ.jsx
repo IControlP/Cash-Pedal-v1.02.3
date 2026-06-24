@@ -25,6 +25,10 @@ const QS = [
     q: 'Can I run more than two cars?',
     a: 'Yes — the 60-day pass is fully unlimited. Compare two at a time, stack up to six in a grid, or rerun the same pair with different financing scenarios. Whatever helps you decide.',
   },
+  {
+    q: 'Does this work for private party purchases?',
+    a: "Yes. Cash Pedal calculates the true cost of ownership for any car regardless of where you're buying it — dealer, private party, or auction. The costs that matter (depreciation, insurance, fuel, maintenance) are the same either way. The only difference is the deal itself — and now you'll know if it's a good one.",
+  },
 ]
 
 export default function FAQ() {

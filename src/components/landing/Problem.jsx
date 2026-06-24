@@ -25,11 +25,11 @@ export default function Problem() {
           The wrong car doesn't just cost more. It catches you off guard.
         </h2>
         <p className="section-sub">
-          Most people pick a car the same way they pick a restaurant — what looks good, what's
-          nearby, what fits the budget today. But two $40,000 cars can have a $25,000 swing in real
-          cost over five years. That gap is your emergency fund, your down payment, your breathing
-          room when something breaks. Cash Pedal makes that invisible math visible before you sign —
-          so you choose with confidence, not scramble with regret.
+          Most buyers focus on one number: the price. Dealers count on that. Private party sellers
+          count on it too. But two cars with the same sticker price can have a $25,000 swing in what
+          they actually cost you over five years — and that gap doesn't show up until after you've
+          already signed. Cash Pedal makes that number visible before you commit — whether you're
+          negotiating with a dealer or meeting a stranger in a parking lot.
         </p>
 
         <div className="grid md:grid-cols-3 gap-5">

@@ -13,15 +13,16 @@ export default function Hero() {
               The car-buying decision that funds — or drains — your future
             </span>
             <h1 className="hero-h font-display anim-1">
-              Pick a <span className="text-gold-gradient">car.</span>
-              <br />
-              Not a <span className="hero-strike">money pit.</span>
+              Dealer or private party — know what you're actually agreeing to
             </h1>
             <p className="hero-sub anim-2">
-              Your next vehicle is the <strong>second-largest purchase</strong> of your life — and
-              there's no one-size answer. Cash Pedal shows you whether that car actually fits your
-              situation: your income, your needs, and the costs that won't show up until after you
-              sign. Buy with confidence. Not optimism.
+              See the real cost before you sign anything.
+            </p>
+            <p className="hero-body anim-2">
+              Whether you're at a dealership or buying off a private listing, both sides of that
+              deal know more than you do. Cash Pedal shows you the true 5-year cost of any car —
+              financing, insurance, fuel, depreciation, maintenance — so you walk in knowing the
+              number they don't want you to have.
             </p>
             <div className="hero-cta anim-2">
               <Link to="/subscribe" className="btn-primary btn-lg">
@@ -41,7 +42,7 @@ export default function Hero() {
                 to="/tco"
                 className="text-[var(--text-muted)] underline underline-offset-4 hover:text-[var(--accent)] transition-colors"
               >
-                Not ready to buy? Run a free cost estimate first →
+                Not ready to commit? Run a free estimate on any car in under 2 minutes — no account, no payment, no dealer involved. → Try the free calculator
               </Link>
             </p>
           </div>

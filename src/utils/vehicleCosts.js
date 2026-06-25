@@ -1663,15 +1663,16 @@ export const STATE_ELEC_RATES = {
 
 // Public DC fast-charging rate ≈ 2.2× home residential (floor $0.29, cap $0.65)
 // Cap raised from $0.55 — HI/CA public DCFC stations routinely exceed $0.60/kWh
-export function getPublicChargingRate(state) {
-  const home = STATE_ELEC_RATES[state] ?? 0.16
+export function getPublicChargingRate(state, homeRateOverride = null) {
+  const home = homeRateOverride ?? STATE_ELEC_RATES[state] ?? 0.16
   return Math.round(Math.max(0.29, Math.min(0.65, home * 2.2)) * 100) / 100
 }
 
 // 'home' = 100% residential, 'mixed' = 80/20 home/DCFC, 'public' = 100% DCFC
-export function getEffectiveElecRate(state, style) {
-  const home = STATE_ELEC_RATES[state] ?? 0.16
-  const pub  = getPublicChargingRate(state)
+// homeRateOverride: zip-level $/kWh from OpenEI; falls back to state table when null
+export function getEffectiveElecRate(state, style, homeRateOverride = null) {
+  const home = homeRateOverride ?? STATE_ELEC_RATES[state] ?? 0.16
+  const pub  = getPublicChargingRate(state, home)
   if (style === 'public') return pub
   if (style === 'mixed')  return Math.round((home * 0.80 + pub * 0.20) * 1000) / 1000
   return home

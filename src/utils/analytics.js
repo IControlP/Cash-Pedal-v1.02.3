@@ -63,6 +63,7 @@ export function trackEmailUnlockClaimed(featureName = '') {
 // Revenue event — Stripe purchase confirmed
 export function trackProPurchaseComplete(planType = 'one_time', pricePaid = 19) {
   trackEvent('pro_purchase_complete', { plan_type: planType, price_paid: pricePaid })
+  fbq('track', 'Purchase', { value: pricePaid, currency: 'USD' })
 }
 
 // Pro feature usage

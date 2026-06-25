@@ -1127,6 +1127,18 @@ export default function TCOCalculator() {
       .catch(() => {})
   }, [])
 
+  // Live electricity rate ($/kWh) from OpenEI for the resolved zip code.
+  // null = not yet fetched or unavailable; falls back to state-level table.
+  const [resolvedZip,   setResolvedZip]   = useState(null)
+  const [liveElecRate,  setLiveElecRate]  = useState(null)
+  useEffect(() => {
+    if (!resolvedZip) { setLiveElecRate(null); return }
+    fetch(`/api/electricity-rate?zip=${resolvedZip}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { setLiveElecRate(data?.rate ?? null) })
+      .catch(() => {})
+  }, [resolvedZip])
+
   // Annual operating costs (pre-filled with national averages)
   const [annualInsurance,    setAnnualInsurance]    = useState(2000)
   const [annualFuel,         setAnnualFuel]         = useState(2000)
@@ -1253,9 +1265,9 @@ export default function TCOCalculator() {
     setAnnualInsurance(estimateInsurance(price, selMake||null, selModel||null, selYear||null, resolvedState||null, detailedMode && multiCarPolicy))
     const customOverride = customFuelPrice !== '' ? parseFloat(customFuelPrice) : null
     if (modelData) {
-      // For EVs: use charging-style blended rate unless user has manually overridden it
+      // For EVs: use zip-level rate (OpenEI) when available, else state table
       const fuelOverride = (modelData.is_ev && customOverride === null)
-        ? getEffectiveElecRate(resolvedState, chargingStyle)
+        ? getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate)
         : customOverride
       setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel), liveFuelPrices))
       if (detailedMode) {
@@ -1274,7 +1286,7 @@ export default function TCOCalculator() {
       const catMpg  = catInfo?.mpg  ?? 28
       const catMpge = catInfo?.mpge ?? null
       const fuelOverride = (catIsEV && customOverride === null)
-        ? getEffectiveElecRate(resolvedState, chargingStyle)
+        ? getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate)
         : customOverride
       setAnnualFuel(computeAnnualFuel(catIsEV, catMpg, catMpge, resolvedState, annualMileage, fuelOverride, false, liveFuelPrices))
       if (detailedMode) {
@@ -1290,7 +1302,7 @@ export default function TCOCalculator() {
       ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)), currentMileage)
       : price
     setAnnualRegistration(computeAnnualRegistration(resolvedState, currentVal))
-  }, [price, selMake, selModel, selYear, selTrim, resolvedState, resolvedLaborRate, resolvedWear, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage, liveFuelPrices]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [price, selMake, selModel, selYear, selTrim, resolvedState, resolvedLaborRate, resolvedWear, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage, liveFuelPrices, liveElecRate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Market-analytics search tracking ──
   // Record each make/model the visitor inspects, tagged with their resolved
@@ -1311,12 +1323,14 @@ export default function TCOCalculator() {
     const resolved = resolveLocation(val)
     if (resolved) {
       setResolvedState(resolved.state)
+      setResolvedZip(resolved.zip ?? null)
       setResolvedLaborRate(resolved.laborRate ?? null)
       setResolvedWear(resolved.wear ?? null)
       setResolvedRegion(resolved.region ?? null)
       setLocationLabel(resolved.label)
     } else {
       setResolvedState(null)
+      setResolvedZip(null)
       setResolvedLaborRate(null)
       setResolvedWear(null)
       setResolvedRegion(null)
@@ -2623,16 +2637,16 @@ export default function TCOCalculator() {
                   {/* Rate display — home vs public */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-lg px-3 py-2.5" style={{ background: 'rgba(0,0,0,0.3)' }}>
-                      <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Home rate · {resolvedState}</p>
+                      <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Home rate · {resolvedZip ?? resolvedState}</p>
                       <p className="text-white font-bold text-sm mt-0.5">
-                        ${(STATE_ELEC_RATES[resolvedState] ?? 0.16).toFixed(2)}<span className="text-[var(--text-muted)] font-normal text-xs">/kWh</span>
+                        ${(liveElecRate ?? STATE_ELEC_RATES[resolvedState] ?? 0.16).toFixed(2)}<span className="text-[var(--text-muted)] font-normal text-xs">/kWh</span>
                       </p>
-                      <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Residential avg</p>
+                      <p className="text-[10px] text-[var(--text-muted)] mt-0.5">{liveElecRate ? 'ZIP avg · OpenEI' : 'State avg'}</p>
                     </div>
                     <div className="rounded-lg px-3 py-2.5" style={{ background: 'rgba(0,0,0,0.3)' }}>
                       <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Public DCFC · {resolvedState}</p>
                       <p className="text-white font-bold text-sm mt-0.5">
-                        ${getPublicChargingRate(resolvedState).toFixed(2)}<span className="text-[var(--text-muted)] font-normal text-xs">/kWh</span>
+                        ${getPublicChargingRate(resolvedState, liveElecRate).toFixed(2)}<span className="text-[var(--text-muted)] font-normal text-xs">/kWh</span>
                       </p>
                       <p className="text-[10px] text-[var(--text-muted)] mt-0.5">DC fast-charge est.</p>
                     </div>
@@ -2671,7 +2685,7 @@ export default function TCOCalculator() {
                       <span className="text-xs text-[var(--text-muted)]">Effective kWh rate</span>
                       {!customFuelPrice && chargingStyle === 'mixed' && (
                         <span className="text-[10px] text-[var(--text-muted)]">
-                          (${(STATE_ELEC_RATES[resolvedState] ?? 0.16).toFixed(2)} × 80% + ${getPublicChargingRate(resolvedState).toFixed(2)} × 20%)
+                          (${(liveElecRate ?? STATE_ELEC_RATES[resolvedState] ?? 0.16).toFixed(2)} × 80% + ${getPublicChargingRate(resolvedState, liveElecRate).toFixed(2)} × 20%)
                         </span>
                       )}
                       {customFuelPrice && (
@@ -2691,7 +2705,7 @@ export default function TCOCalculator() {
                         min="0"
                         className="w-20 text-sm font-bold text-right bg-transparent border-b focus:outline-none"
                         style={{ color: '#60c8ff', borderColor: customFuelPrice ? '#60c8ff' : 'rgba(96,200,255,0.3)' }}
-                        placeholder={getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)}
+                        placeholder={getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate).toFixed(3)}
                         value={customFuelPrice}
                         onChange={e => setCustomFuelPrice(e.target.value)}
                       />
@@ -2721,7 +2735,7 @@ export default function TCOCalculator() {
                           type="number"
                           className="input-field pl-7"
                           placeholder={effIsEV
-                            ? `${getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)} (${{ home: 'home', mixed: 'blended', public: 'public DCFC' }[chargingStyle]})`
+                            ? `${getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate).toFixed(3)} (${{ home: 'home', mixed: 'blended', public: 'public DCFC' }[chargingStyle]})`
                             : `${((liveFuelPrices[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)} (${resolvedState} ${isPremium ? 'premium' : 'regular'} avg)`}
                           value={customFuelPrice}
                           onChange={e => setCustomFuelPrice(e.target.value)}
@@ -2738,7 +2752,7 @@ export default function TCOCalculator() {
                     </div>
                     <p className="text-[10px] text-[var(--text-muted)]">
                       {effIsEV
-                        ? `Leave blank to use charging-style rate ($${getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)}/kWh)`
+                        ? `Leave blank to use charging-style rate ($${getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate).toFixed(3)}/kWh)`
                         : `Leave blank to use ${resolvedState} ${isPremium ? 'premium' : 'regular'} avg ($${((liveFuelPrices[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)}/gal)`}
                     </p>
                   </div>
@@ -2768,7 +2782,7 @@ export default function TCOCalculator() {
               {resolvedState && !customCosts && (() => {
                 const activeElecRate = customFuelPrice
                   ? parseFloat(customFuelPrice)
-                  : getEffectiveElecRate(resolvedState, chargingStyle)
+                  : getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate)
                 const chargingStyleLabel = { home: 'home', mixed: 'home+public', public: 'public DCFC' }[chargingStyle]
                 const effectiveGasPrice = (liveFuelPrices[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)
                 const fuelNote = effIsEV
@@ -2857,7 +2871,7 @@ export default function TCOCalculator() {
                         <button
                           onClick={() => {
                             setCustomFuelPrice('')
-                            const defaultRate = effIsEV ? getEffectiveElecRate(resolvedState, chargingStyle) : null
+                            const defaultRate = effIsEV ? getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate) : null
                             setAnnualFuel(computeAnnualFuel(
                               effIsEV,
                               modelData?.mpg?.combined ?? (catInfoForRender?.mpg ?? 28),
@@ -2880,7 +2894,7 @@ export default function TCOCalculator() {
                         type="number"
                         className="input-field pl-7"
                         placeholder={effIsEV
-                          ? `${getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)} (${resolvedState} avg)`
+                          ? `${getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate).toFixed(3)} (${resolvedState} avg)`
                           : `${((liveFuelPrices[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)} (${resolvedState}${isPremium ? ' premium' : ''} avg)`}
                         value={customFuelPrice}
                         onChange={e => {
@@ -2906,7 +2920,7 @@ export default function TCOCalculator() {
                     </div>
                     <p className="text-[10px] text-[var(--text-muted)]">
                       {effIsEV
-                        ? `Leave blank to use ${resolvedState} avg ($${getEffectiveElecRate(resolvedState, chargingStyle).toFixed(3)}/kWh)`
+                        ? `Leave blank to use ${resolvedState} avg ($${getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate).toFixed(3)}/kWh)`
                         : `Leave blank to use ${resolvedState} ${isPremium ? 'premium' : ''} avg ($${((liveFuelPrices[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)}/gal)`}
                     </p>
                   </div>

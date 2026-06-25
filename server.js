@@ -1882,6 +1882,70 @@ app.get('/api/fuel-prices', async (req, res) => {
   return res.json({ prices: FALLBACK_FUEL_PRICES, source: 'fallback' })
 })
 
+// ── OpenEI Electricity Rate (zip-level) ──────────────
+// Queries the OpenEI Utility Rate Database for residential $/kWh by zip code.
+// Cached per zip for 30 days — retail residential rates change infrequently.
+// Falls back gracefully (returns null) when no key, zip not found, or parse fails.
+const OPENEI_API_KEY  = (process.env.OPENEI_API_KEY || '').trim()
+const ELEC_CACHE_TTL  = 30 * 24 * 60 * 60 * 1000
+const elecRateCache   = new Map() // zip → { rate, fetchedAt }
+
+function extractResidentialKwhRate(items) {
+  const rates = []
+  for (const item of items ?? []) {
+    const sector = (item.sector ?? '').toLowerCase()
+    if (!sector.includes('residential')) continue
+    const struct = item.energyratestructure
+    if (!Array.isArray(struct)) continue
+    let sum = 0, count = 0
+    for (const period of struct) {
+      if (!Array.isArray(period)) continue
+      for (const tier of period) {
+        const r = (tier.rate ?? 0) + (tier.adj ?? 0)
+        if (r > 0.01 && r < 2.0) { sum += r; count++ }
+      }
+    }
+    if (count > 0) rates.push(sum / count)
+  }
+  if (rates.length === 0) return null
+  return Math.round(rates.reduce((a, b) => a + b, 0) / rates.length * 1000) / 1000
+}
+
+app.get('/api/electricity-rate', async (req, res) => {
+  const zip = (req.query.zip ?? '').trim()
+  if (!/^\d{5}$/.test(zip)) return res.status(400).json({ error: 'zip must be a 5-digit US zip code' })
+
+  const now = Date.now()
+  const cached = elecRateCache.get(zip)
+  if (cached && now - cached.fetchedAt < ELEC_CACHE_TTL) {
+    return res.json({ rate: cached.rate, source: 'cache', zip })
+  }
+
+  if (!OPENEI_API_KEY) return res.json({ rate: null, source: 'no-key', zip })
+
+  try {
+    const url = new URL('https://api.openei.org/utility_rates')
+    url.searchParams.set('version', '8')
+    url.searchParams.set('format', 'json')
+    url.searchParams.set('api_key', OPENEI_API_KEY)
+    url.searchParams.set('address', zip)
+    url.searchParams.set('sector', 'Residential')
+    url.searchParams.set('limit', '10')
+    url.searchParams.set('detail', 'full')
+
+    const r = await fetch(url.toString(), { signal: AbortSignal.timeout(8000) })
+    if (!r.ok) throw new Error(`OpenEI responded ${r.status}`)
+    const json = await r.json()
+    const rate = extractResidentialKwhRate(json.items)
+    elecRateCache.set(zip, { rate, fetchedAt: now })
+    return res.json({ rate, source: 'openei', zip })
+  } catch (err) {
+    console.error('[electricity-rate] OpenEI fetch error:', err.message)
+    if (cached) return res.json({ rate: cached.rate, source: 'stale-cache', zip })
+    return res.json({ rate: null, source: 'error', zip })
+  }
+})
+
 // ── Serve Vite build ──────────────────────────────────
 app.use(express.static(join(__dirname, 'dist')))
 app.get('*', (_req, res) => {

@@ -107,6 +107,7 @@ The Express server (`server.js`) handles payments and subscription state. It ser
 | `POST /api/track-search` | Record a vehicle search (make/model + optional state) for market analytics |
 | `GET /api/market-analytics` | Public aggregate rankings — top vehicles nationally and by state (`?state=CA`) |
 | `GET /api/insights/market` | **Protected** full per-state insights export (requires `x-api-key`) — the sellable dataset |
+| `GET /api/electricity-rate?zip=XXXXX` | Zip-code-level residential $/kWh from OpenEI URDB; cached 30 days per zip; returns `null` rate when key absent or zip not found |
 | `POST /api/stripe-webhook` | Stripe webhook (raw body required) |
 
 Subscribers are stored in PostgreSQL. Device access is limited to 2 devices per subscriber, expiring after 30 days.
@@ -123,6 +124,7 @@ Subscribers are stored in PostgreSQL. Device access is limited to 2 devices per 
 - `APP_URL` — Production URL (default: `https://cashpedal.io`)
 - `PORT` — Injected by Railway automatically
 - `INSIGHTS_API_KEY` — (optional) unlocks the `/api/insights/market` sellable export
+- `OPENEI_API_KEY` — (optional) OpenEI Utility Rate Database key; enables zip-code-level residential electricity rates via `GET /api/electricity-rate?zip=XXXXX` (falls back to static state-level table without it)
 - `RESEND_API_KEY` — (optional) Resend API key; enables transactional thank-you emails
 - `EMAIL_FROM` — (optional) From address for transactional email (default: `Cash Pedal <hello@cashpedal.io>`; the domain must be verified in Resend)
 - `HUBSPOT_ACCESS_TOKEN` — (optional) HubSpot private-app token; enables CRM sync of leads and purchases (needs `crm.objects.contacts` and `crm.objects.deals` read/write scopes)

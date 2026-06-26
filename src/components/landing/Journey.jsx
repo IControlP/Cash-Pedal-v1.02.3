@@ -76,12 +76,11 @@ export default function Journey() {
       <div className="max-w-[1240px] mx-auto px-7">
         <div className="section-eyebrow">Where to start</div>
         <h2 className="section-h font-display">
-          A whole toolkit — pointed at one smart decision.
+          Five tools. One smart car-buying decision.
         </h2>
         <p className="section-sub">
-          Cash Pedal isn't one calculator, it's the full car-buying journey. Wherever you are
-          right now — just daydreaming, narrowing finalists, or standing in the lot — there's a
-          tool built for this exact step. Here's the path most buyers follow.
+          Cash Pedal walks you through the whole journey — from "what kind of car do I even want?"
+          to standing at the lot. Click any step below to open that tool now.
         </p>
 
         <div className="journey-rail">

@@ -20,8 +20,8 @@ export default function Landing() {
 
       <main className="relative z-10 pt-14">
         <Hero />
-        <Problem />
         <Journey />
+        <Problem />
         <HowItWorks />
         <TCOPreview />
         <Coverage />

@@ -537,12 +537,14 @@ select.input-field {
   padding: 22px 20px;
   text-decoration: none;
   color: inherit;
-  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 .journey-card:hover {
   transform: translateY(-3px);
   border-color: rgba(255, 184, 0, 0.5);
   background: var(--surface-hover);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
 }
 .journey-card--featured {
   border-color: rgba(255, 184, 0, 0.45);
@@ -579,10 +581,12 @@ select.input-field {
 .journey-body { font-size: 13px; color: var(--text-muted); line-height: 1.55; margin: 0; }
 .journey-cta {
   margin-top: auto; padding-top: 14px;
-  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text);
-  transition: color 0.15s ease;
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+  color: var(--accent);
+  display: flex; align-items: center; gap: 4px;
+  transition: gap 0.15s ease, opacity 0.15s ease;
 }
-.journey-card:hover .journey-cta { color: var(--accent); }
+.journey-card:hover .journey-cta { gap: 8px; opacity: 1; }
 
 .journey-companions { margin-top: 36px; }
 .journey-companions-label {
@@ -598,9 +602,10 @@ select.input-field {
   padding: 18px 20px;
   text-decoration: none;
   color: inherit;
-  transition: transform 0.15s ease, border-color 0.15s ease;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.journey-companion:hover { transform: translateY(-2px); border-color: rgba(255,184,0,0.45); }
+.journey-companion:hover { transform: translateY(-2px); border-color: rgba(255,184,0,0.45); box-shadow: 0 6px 18px rgba(0,0,0,0.15); }
 .journey-companion-tool { font-size: 15px; font-weight: 700; color: var(--accent); margin: 0 0 6px; }
 
 /* ── Next-step journey nudge (in-tool) ────────────── */

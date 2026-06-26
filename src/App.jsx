@@ -15,6 +15,7 @@ import Privacy from './pages/Privacy'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
 import TermsGate, { TERMS_VERSION, LS_TERMS_ACCEPTED, LS_TERMS_VERSION } from './components/TermsGate'
+import InAppBrowserBanner from './components/InAppBrowserBanner'
 
 // Lazy-loaded so Recharts ships in its own chunk and stays out of the main bundle.
 const MarketAnalytics = lazy(() => import('./pages/MarketAnalytics'))
@@ -39,6 +40,7 @@ function ToolRoute({ element }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <InAppBrowserBanner />
       <PageViewTracker />
       <Routes>
         <Route path="/" element={<Landing />} />

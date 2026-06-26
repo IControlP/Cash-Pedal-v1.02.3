@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { safeGet, safeSet } from '../utils/safeStorage'
+import { safeUUID } from '../utils/safeId'
 
 export const TERMS_VERSION     = '4.0.0'
 export const LS_TERMS_ACCEPTED = 'cashpedal_terms_accepted'
@@ -6,10 +8,10 @@ export const LS_TERMS_VERSION  = 'cashpedal_terms_version'
 export const LS_SESSION_ID     = 'cashpedal_session_id'
 
 export function getSessionId() {
-  let sid = localStorage.getItem(LS_SESSION_ID)
+  let sid = safeGet(LS_SESSION_ID)
   if (!sid) {
-    sid = crypto.randomUUID()
-    localStorage.setItem(LS_SESSION_ID, sid)
+    sid = safeUUID()
+    safeSet(LS_SESSION_ID, sid)
   }
   return sid
 }
@@ -30,7 +32,7 @@ export default function TermsGate({ onAccepted }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          record_id:                crypto.randomUUID(),
+          record_id:                safeUUID(),
           session_id:               getSessionId(),
           terms_version:            TERMS_VERSION,
           disclaimers_acknowledged: check1,
@@ -41,8 +43,8 @@ export default function TermsGate({ onAccepted }) {
     } catch (e) {
       console.warn('[terms] consent save failed:', e)
     }
-    localStorage.setItem(LS_TERMS_ACCEPTED, 'true')
-    localStorage.setItem(LS_TERMS_VERSION, TERMS_VERSION)
+    safeSet(LS_TERMS_ACCEPTED, 'true')
+    safeSet(LS_TERMS_VERSION, TERMS_VERSION)
     setSaving(false)
     onAccepted()
   }

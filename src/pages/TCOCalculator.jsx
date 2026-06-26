@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getSessionId } from '../components/TermsGate'
+import { safeUUID } from '../utils/safeId'
+import { safeGet, safeSet } from '../utils/safeStorage'
 import { trackCalculatorStarted, trackCalculatorCompleted } from '../utils/analytics'
 import Navbar from '../components/Navbar'
 import { CarVisual } from '../components/CarSVGs'
@@ -332,7 +334,7 @@ function UserDataModal({ calcCount, onClose }) {
   const [done,            setDone]            = useState(false)
 
   function handleSkip() {
-    localStorage.setItem(LS_USER_SUBMITTED, 'true')
+    safeSet(LS_USER_SUBMITTED, 'true')
     onClose()
   }
 
@@ -353,7 +355,7 @@ function UserDataModal({ calcCount, onClose }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          record_id:         crypto.randomUUID(),
+          record_id:         safeUUID(),
           session_id:        getSessionId(),
           first_name:        '',
           last_name:         '',
@@ -364,7 +366,7 @@ function UserDataModal({ calcCount, onClose }) {
     } catch (e) {
       console.warn('[user-data] save failed:', e)
     }
-    localStorage.setItem(LS_USER_SUBMITTED, 'true')
+    safeSet(LS_USER_SUBMITTED, 'true')
     setSaving(false)
     setDone(true)
     setTimeout(onClose, 1500)
@@ -1051,10 +1053,10 @@ export default function TCOCalculator() {
 
   // ── User data collection ──
   const [calcCount, setCalcCount] = useState(() =>
-    parseInt(localStorage.getItem(LS_CALC_COUNT) || '0', 10)
+    parseInt(safeGet(LS_CALC_COUNT) || '0', 10)
   )
   const [userDataSubmitted] = useState(() =>
-    localStorage.getItem(LS_USER_SUBMITTED) === 'true'
+    safeGet(LS_USER_SUBMITTED) === 'true'
   )
   const [showUserDataModal, setShowUserDataModal] = useState(false)
   const countIncrementedRef    = useRef(false)
@@ -1064,14 +1066,14 @@ export default function TCOCalculator() {
 
   // ── Detailed-calc paywall ──
   const [detailedCalcCount, setDetailedCalcCount] = useState(() =>
-    parseInt(localStorage.getItem(LS_DETAILED_COUNT) || '0', 10)
+    parseInt(safeGet(LS_DETAILED_COUNT) || '0', 10)
   )
   const [showPaywall,  setShowPaywall]  = useState(false)
   const { creditsLeft: bonusCreditsLeft, spendCredit } = useBonusCredits()
 
   // ── Comparison queue count ──
   const [comparisonCount, setComparisonCount] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('cashpedal_tco_for_comparison') || '[]').length } catch { return 0 }
+    try { return JSON.parse(safeGet('cashpedal_tco_for_comparison') || '[]').length } catch { return 0 }
   })
 
   // Returns true if the action is allowed; false if blocked (paywall shown).
@@ -1087,14 +1089,14 @@ export default function TCOCalculator() {
       // The server logs the spend as a usage event, so no trackUsage here.
       if (await spendCredit('tco_detailed')) {
         setDetailedCalcCount(next)
-        localStorage.setItem(LS_DETAILED_COUNT, String(next))
+        safeSet(LS_DETAILED_COUNT, String(next))
         return true
       }
       setShowPaywall(true)
       return false
     }
     setDetailedCalcCount(next)
-    localStorage.setItem(LS_DETAILED_COUNT, String(next))
+    safeSet(LS_DETAILED_COUNT, String(next))
     trackUsage('tco_detailed', 'free')
     return true
   }, [isSubscribed, detailedCalcCount, spendCredit])
@@ -1106,7 +1108,7 @@ export default function TCOCalculator() {
     trackUsage('visit_tco')
     const newCount = calcCount + 1
     setCalcCount(newCount)
-    localStorage.setItem(LS_CALC_COUNT, String(newCount))
+    safeSet(LS_CALC_COUNT, String(newCount))
     if (newCount >= CALC_TRIGGER && !userDataSubmitted) {
       setShowUserDataModal(true)
     }
@@ -1192,20 +1194,20 @@ export default function TCOCalculator() {
   const [taxRateOverride,  setTaxRateOverride]  = useState(null) // null = use state rate
   const [docFeeOverride,   setDocFeeOverride]   = useState(null) // null = use state avg
   const [isCashPurchase,   setIsCashPurchase]   = useState(false)
-  const [simpleMode,       setSimpleMode]       = useState(() => localStorage.getItem('cashpedal_simple_mode') !== 'false')
+  const [simpleMode,       setSimpleMode]       = useState(() => safeGet('cashpedal_simple_mode') !== 'false')
 
   const toggleSimpleMode = () => {
     const next = !simpleMode
     setSimpleMode(next)
-    localStorage.setItem('cashpedal_simple_mode', String(next))
+    safeSet('cashpedal_simple_mode', String(next))
   }
 
   // "How to use" guide — collapsible, open by default, choice remembered
-  const [showGuide, setShowGuide] = useState(() => localStorage.getItem('cashpedal_tco_guide_collapsed') !== 'true')
+  const [showGuide, setShowGuide] = useState(() => safeGet('cashpedal_tco_guide_collapsed') !== 'true')
   const toggleGuide = () => {
     setShowGuide(prev => {
       const next = !prev
-      localStorage.setItem('cashpedal_tco_guide_collapsed', String(!next))
+      safeSet('cashpedal_tco_guide_collapsed', String(!next))
       return next
     })
   }
@@ -1214,7 +1216,7 @@ export default function TCOCalculator() {
   useEffect(() => {
     if (searchParams.get('resume') !== '1') return
     try {
-      const saved = JSON.parse(localStorage.getItem(LS_LAST_CALC) || 'null')
+      const saved = JSON.parse(safeGet(LS_LAST_CALC) || 'null')
       if (!saved?.inputs) return
       const i = saved.inputs
       if (i.price        != null) setPrice(i.price)
@@ -1641,7 +1643,7 @@ export default function TCOCalculator() {
       savedAt: new Date().toISOString(),
       inputs: { price, downPayment, loanTerm, rate, ownershipYears, selMake, selModel, selYear, selTrim, financeMode },
     }
-    localStorage.setItem(LS_LAST_CALC, JSON.stringify(snapshot))
+    safeSet(LS_LAST_CALC, JSON.stringify(snapshot))
   }, [price, downPayment, loanTerm, rate, ownershipYears, selMake, selModel, selYear, selTrim, financeMode, results, leaseResults, totalAnnualCost]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save this TCO result to localStorage so the comparison page can import it
@@ -1661,7 +1663,7 @@ export default function TCOCalculator() {
       : forecastRows.reduce((s, r) => s + r.total, 0) + safeDown
 
     const entry = {
-      id:                crypto.randomUUID(),
+      id:                safeUUID(),
       name:              selMake && selModel
         ? [selYear, selMake, selModel, selTrim].filter(Boolean).join(' ')
         : 'Custom Vehicle',
@@ -1704,10 +1706,10 @@ export default function TCOCalculator() {
       costPerMile: annualMileage > 0 ? Math.round((totalAnnualCost / annualMileage) * 100) / 100 : null,
     }
 
-    const existing = JSON.parse(localStorage.getItem('cashpedal_tco_for_comparison') || '[]')
+    const existing = JSON.parse(safeGet('cashpedal_tco_for_comparison') || '[]')
     // Keep at most 5 entries (max comparison slots)
     const updated = [...existing, entry].slice(-5)
-    localStorage.setItem('cashpedal_tco_for_comparison', JSON.stringify(updated))
+    safeSet('cashpedal_tco_for_comparison', JSON.stringify(updated))
     setComparisonCount(updated.length)
   }
 
@@ -1770,7 +1772,7 @@ export default function TCOCalculator() {
                 { value: false, label: 'Detailed',  desc: 'Full control' },
               ].map(opt => (
                 <button key={String(opt.value)}
-                  onClick={() => { setSimpleMode(opt.value); localStorage.setItem('cashpedal_simple_mode', String(opt.value)) }}
+                  onClick={() => { setSimpleMode(opt.value); safeSet('cashpedal_simple_mode', String(opt.value)) }}
                   className="px-4 py-1.5 rounded-md font-semibold transition-all"
                   style={{
                     background: simpleMode === opt.value ? 'var(--accent)' : 'transparent',

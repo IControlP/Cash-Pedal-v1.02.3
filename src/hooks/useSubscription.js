@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { safeGet, safeSet, safeRemove } from '../utils/safeStorage'
 
 const SUB_CHANGED = 'cashpedal_sub_changed'
 
@@ -10,9 +11,9 @@ export const LS_PROMO_ACCESS    = 'cashpedal_promo_access'
 const VERIFY_INTERVAL_MS = 24 * 60 * 60 * 1000 // re-verify once per day
 
 function isActiveFromStorage() {
-  if (localStorage.getItem(LS_PROMO_ACCESS) === 'true') return true
-  const email   = localStorage.getItem(LS_SUB_EMAIL)
-  const expires = localStorage.getItem(LS_SUB_EXPIRES)
+  if (safeGet(LS_PROMO_ACCESS) === 'true') return true
+  const email   = safeGet(LS_SUB_EMAIL)
+  const expires = safeGet(LS_SUB_EXPIRES)
   if (!email) return false
   if (expires && new Date(expires) < new Date()) return false
   return true
@@ -20,13 +21,13 @@ function isActiveFromStorage() {
 
 export function useSubscription() {
   const [isSubscribed,    setIsSubscribed]    = useState(isActiveFromStorage)
-  const [subscriberEmail, setSubscriberEmail] = useState(() => localStorage.getItem(LS_SUB_EMAIL) || '')
+  const [subscriberEmail, setSubscriberEmail] = useState(() => safeGet(LS_SUB_EMAIL) || '')
 
   // Sync state across all hook instances when any one of them changes subscription
   useEffect(() => {
     function onChanged() {
       setIsSubscribed(isActiveFromStorage())
-      setSubscriberEmail(localStorage.getItem(LS_SUB_EMAIL) || '')
+      setSubscriberEmail(safeGet(LS_SUB_EMAIL) || '')
     }
     window.addEventListener(SUB_CHANGED, onChanged)
     return () => window.removeEventListener(SUB_CHANGED, onChanged)
@@ -34,8 +35,8 @@ export function useSubscription() {
 
   // Re-verify against server once per day if we think they're subscribed
   useEffect(() => {
-    const email      = localStorage.getItem(LS_SUB_EMAIL)
-    const verifiedAt = localStorage.getItem(LS_SUB_VERIFIED_AT)
+    const email      = safeGet(LS_SUB_EMAIL)
+    const verifiedAt = safeGet(LS_SUB_VERIFIED_AT)
     if (!email) return
 
     const stale = !verifiedAt || (Date.now() - parseInt(verifiedAt, 10)) > VERIFY_INTERVAL_MS
@@ -57,9 +58,9 @@ export function useSubscription() {
       const data = await res.json()
 
       if (data.active) {
-        localStorage.setItem(LS_SUB_EMAIL,       clean)
-        localStorage.setItem(LS_SUB_VERIFIED_AT, String(Date.now()))
-        if (data.expires) localStorage.setItem(LS_SUB_EXPIRES, data.expires)
+        safeSet(LS_SUB_EMAIL,       clean)
+        safeSet(LS_SUB_VERIFIED_AT, String(Date.now()))
+        if (data.expires) safeSet(LS_SUB_EXPIRES, data.expires)
         setIsSubscribed(true)
         setSubscriberEmail(clean)
         window.dispatchEvent(new Event(SUB_CHANGED))
@@ -71,10 +72,10 @@ export function useSubscription() {
         }
 
         // Only wipe stored credentials if the server explicitly says they're inactive
-        if (localStorage.getItem(LS_SUB_EMAIL) === clean) {
-          localStorage.removeItem(LS_SUB_EMAIL)
-          localStorage.removeItem(LS_SUB_EXPIRES)
-          localStorage.removeItem(LS_SUB_VERIFIED_AT)
+        if (safeGet(LS_SUB_EMAIL) === clean) {
+          safeRemove(LS_SUB_EMAIL)
+          safeRemove(LS_SUB_EXPIRES)
+          safeRemove(LS_SUB_VERIFIED_AT)
           setIsSubscribed(false)
           setSubscriberEmail('')
         }
@@ -88,19 +89,19 @@ export function useSubscription() {
 
   function activateFromSession(email, expires) {
     const clean = (email || '').trim().toLowerCase()
-    localStorage.setItem(LS_SUB_EMAIL,       clean)
-    localStorage.setItem(LS_SUB_VERIFIED_AT, String(Date.now()))
-    if (expires) localStorage.setItem(LS_SUB_EXPIRES, expires)
+    safeSet(LS_SUB_EMAIL,       clean)
+    safeSet(LS_SUB_VERIFIED_AT, String(Date.now()))
+    if (expires) safeSet(LS_SUB_EXPIRES, expires)
     setIsSubscribed(true)
     setSubscriberEmail(clean)
     window.dispatchEvent(new Event(SUB_CHANGED))
   }
 
   function clearSubscription() {
-    localStorage.removeItem(LS_SUB_EMAIL)
-    localStorage.removeItem(LS_SUB_EXPIRES)
-    localStorage.removeItem(LS_SUB_VERIFIED_AT)
-    localStorage.removeItem(LS_PROMO_ACCESS)
+    safeRemove(LS_SUB_EMAIL)
+    safeRemove(LS_SUB_EXPIRES)
+    safeRemove(LS_SUB_VERIFIED_AT)
+    safeRemove(LS_PROMO_ACCESS)
     setIsSubscribed(false)
     setSubscriberEmail('')
     window.dispatchEvent(new Event(SUB_CHANGED))
@@ -116,7 +117,7 @@ export function useSubscription() {
       })
       const data = await res.json()
       if (data.valid) {
-        localStorage.setItem(LS_PROMO_ACCESS, 'true')
+        safeSet(LS_PROMO_ACCESS, 'true')
         setIsSubscribed(true)
         window.dispatchEvent(new Event(SUB_CHANGED))
         return { valid: true }

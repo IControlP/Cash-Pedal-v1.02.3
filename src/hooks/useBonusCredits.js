@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getSessionId } from '../components/TermsGate'
+import { safeGet, safeSet } from '../utils/safeStorage'
 
 const BONUS_CHANGED = 'cashpedal_bonus_changed'
 
@@ -16,19 +17,19 @@ const SYNC_INTERVAL_MS = 60 * 60 * 1000 // re-sync balance at most once per hour
 const LS_BONUS_SYNCED_AT = 'cashpedal_bonus_synced_at'
 
 function readClaimed() {
-  return localStorage.getItem(LS_BONUS_CLAIMED) === 'true'
+  return safeGet(LS_BONUS_CLAIMED) === 'true'
 }
 
 function readCreditsLeft() {
   if (!readClaimed()) return 0
-  const n = parseInt(localStorage.getItem(LS_BONUS_LEFT) || '0', 10)
+  const n = parseInt(safeGet(LS_BONUS_LEFT) || '0', 10)
   return Number.isNaN(n) ? 0 : Math.max(0, n)
 }
 
 function writeState(claimed, left, email) {
-  localStorage.setItem(LS_BONUS_CLAIMED, String(claimed))
-  localStorage.setItem(LS_BONUS_LEFT, String(Math.max(0, left)))
-  if (email) localStorage.setItem(LS_BONUS_EMAIL, email)
+  safeSet(LS_BONUS_CLAIMED, String(claimed))
+  safeSet(LS_BONUS_LEFT, String(Math.max(0, left)))
+  if (email) safeSet(LS_BONUS_EMAIL, email)
   window.dispatchEvent(new Event(BONUS_CHANGED))
 }
 
@@ -49,9 +50,9 @@ export function useBonusCredits() {
   // Re-sync the cached balance against the server periodically, so a stale
   // or tampered local count converges to the server's authoritative one.
   useEffect(() => {
-    const email = localStorage.getItem(LS_BONUS_EMAIL)
+    const email = safeGet(LS_BONUS_EMAIL)
     if (!readClaimed() || !email) return
-    const syncedAt = parseInt(localStorage.getItem(LS_BONUS_SYNCED_AT) || '0', 10)
+    const syncedAt = parseInt(safeGet(LS_BONUS_SYNCED_AT) || '0', 10)
     if (Date.now() - syncedAt < SYNC_INTERVAL_MS) return
 
     fetch('/api/bonus-status', {
@@ -62,7 +63,7 @@ export function useBonusCredits() {
       .then(res => res.json())
       .then(data => {
         if (!data.success || data.claimed === null) return // degraded server — keep cache
-        localStorage.setItem(LS_BONUS_SYNCED_AT, String(Date.now()))
+        safeSet(LS_BONUS_SYNCED_AT, String(Date.now()))
         writeState(data.claimed, data.claimed ? data.creditsLeft : 0, null)
         setClaimed(data.claimed)
         setCreditsLeft(data.claimed ? Math.max(0, data.creditsLeft) : 0)
@@ -94,7 +95,7 @@ export function useBonusCredits() {
       if (!data.success) return { success: false, error: data.error || 'server' }
 
       writeState(true, data.creditsLeft, cleanEmail)
-      localStorage.setItem(LS_BONUS_SYNCED_AT, String(Date.now()))
+      safeSet(LS_BONUS_SYNCED_AT, String(Date.now()))
       setClaimed(true)
       setCreditsLeft(Math.max(0, data.creditsLeft))
       return { success: true, creditsLeft: data.creditsLeft, restored: !!data.restored }
@@ -109,7 +110,7 @@ export function useBonusCredits() {
   async function spendCredit(feature) {
     if (readCreditsLeft() <= 0) return false
 
-    const email = localStorage.getItem(LS_BONUS_EMAIL)
+    const email = safeGet(LS_BONUS_EMAIL)
     if (!email) {
       // Legacy client-only claim (pre-server-enforcement) — honor the cached
       // balance locally since there's no server row to decrement.

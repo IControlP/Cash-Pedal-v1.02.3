@@ -11,7 +11,7 @@ const BARS = [
 
 export default function TCOPreview() {
   return (
-    <section id="preview" className="py-28">
+    <section id="preview" className="py-28" style={{ scrollMarginTop: '72px' }}>
       <div className="max-w-[1240px] mx-auto px-7">
         <div className="section-eyebrow">Sample report</div>
         <h2 className="section-h font-display">

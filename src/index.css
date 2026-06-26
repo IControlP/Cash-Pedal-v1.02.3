@@ -92,6 +92,34 @@ body {
   color: var(--accent);
 }
 
+.btn-ghost--scroll {
+  animation: ghost-pulse 2.4s ease-in-out infinite;
+}
+
+.btn-ghost--scroll:hover {
+  animation: none;
+}
+
+.scroll-chevron {
+  transition: transform 0.2s ease;
+  animation: chevron-bounce 2.4s ease-in-out infinite;
+}
+
+.btn-ghost--scroll:hover .scroll-chevron {
+  animation: none;
+  transform: translateY(3px);
+}
+
+@keyframes ghost-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 0 3px var(--accent-muted); border-color: var(--accent); }
+}
+
+@keyframes chevron-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);

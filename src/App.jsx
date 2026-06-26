@@ -28,12 +28,21 @@ function PageViewTracker() {
   return null
 }
 
+const SS_NAVIGATED = 'cashpedal_navigated'
+
 function ToolRoute({ element }) {
   const [accepted, setAccepted] = useState(
     () => localStorage.getItem(LS_TERMS_ACCEPTED) === 'true' &&
           localStorage.getItem(LS_TERMS_VERSION) === TERMS_VERSION
   )
-  if (!accepted) return <TermsGate onAccepted={() => setAccepted(true)} />
+  // Skip the gate on the user's entry page; enforce it on every subsequent navigation.
+  const [isEntry] = useState(() => {
+    const alreadyVisited = sessionStorage.getItem(SS_NAVIGATED)
+    sessionStorage.setItem(SS_NAVIGATED, '1')
+    return !alreadyVisited
+  })
+
+  if (!accepted && !isEntry) return <TermsGate onAccepted={() => setAccepted(true)} />
   return element
 }
 

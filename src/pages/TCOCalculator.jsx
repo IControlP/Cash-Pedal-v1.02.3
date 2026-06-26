@@ -1064,6 +1064,10 @@ export default function TCOCalculator() {
   const hasTrackedDoneRef      = useRef(false)
   const lastChargedVehicleRef  = useRef(null)
 
+  // Entry-CTA targets — let cold/ad traffic jump straight into the calculator
+  const inputsRef         = useRef(null)
+  const locationInputRef  = useRef(null)
+
   // ── Detailed-calc paywall ──
   const [detailedCalcCount, setDetailedCalcCount] = useState(() =>
     parseInt(safeGet(LS_DETAILED_COUNT) || '0', 10)
@@ -1731,6 +1735,13 @@ export default function TCOCalculator() {
     trackCalculatorStarted({ source_page: '/tco', entry_point: entryPoint })
   }
 
+  // Scroll cold/ad visitors to the first input and focus it — one obvious next step.
+  function scrollToStart() {
+    trackFirstInteraction('hero_cta')
+    inputsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setTimeout(() => locationInputRef.current?.focus({ preventScroll: true }), 450)
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">
       {showUserDataModal && (
@@ -1762,6 +1773,40 @@ export default function TCOCalculator() {
             The sticker price is only half the story. See the full cost of ownership — depreciation,
             insurance, fuel, maintenance, and interest — for any of 35 makes &amp; 266 models, before you sign.
           </p>
+
+          {/* Entry CTA — gives cold / ad traffic one obvious next step */}
+          <div
+            className="anim-2 mt-6 rounded-2xl border p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6"
+            style={{
+              borderColor: 'rgba(200,255,0,0.25)',
+              background: 'linear-gradient(135deg, rgba(200,255,0,0.07), rgba(200,255,0,0.01))',
+            }}
+          >
+            <div className="flex-1 min-w-0">
+              <p className="font-display font-bold text-white text-lg sm:text-xl leading-snug">
+                See the real 5-year cost of any car — in under 2 minutes.
+              </p>
+              <p className="text-sm text-[var(--text-muted)] mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="inline-flex items-center gap-1.5">
+                  <span style={{ color: 'var(--accent)' }}>✓</span> Free
+                </span>
+                <span className="opacity-40">·</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span style={{ color: 'var(--accent)' }}>✓</span> No signup
+                </span>
+                <span className="opacity-40">·</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span style={{ color: 'var(--accent)' }}>✓</span> No dealer involved
+                </span>
+              </p>
+            </div>
+            <button
+              onClick={scrollToStart}
+              className="btn-primary btn-lg shrink-0 w-full sm:w-auto justify-center"
+            >
+              Start my free estimate ↓
+            </button>
+          </div>
 
           {/* Simple / Detailed toggle */}
           <div className="anim-2 mt-5 flex items-center gap-3">
@@ -1849,7 +1894,7 @@ export default function TCOCalculator() {
           <div className="grid lg:grid-cols-[1fr_380px] gap-6 items-start">
 
             {/* ── Inputs ── */}
-            <div className="card anim-3 flex flex-col gap-7">
+            <div ref={inputsRef} className="card anim-3 flex flex-col gap-7 scroll-mt-20">
 
               {/* Free vs Limited feature tier summary */}
               {!isSubscribed && (
@@ -1901,6 +1946,7 @@ export default function TCOCalculator() {
                 <div className="flex flex-col gap-2">
                   <div className="relative">
                     <input
+                      ref={locationInputRef}
                       type="text"
                       className="input-field pr-24"
                       placeholder="ZIP code or state (e.g., 90210 or CA)"

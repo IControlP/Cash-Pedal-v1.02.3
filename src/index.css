@@ -92,6 +92,34 @@ body {
   color: var(--accent);
 }
 
+.btn-ghost--scroll {
+  animation: ghost-pulse 2.4s ease-in-out infinite;
+}
+
+.btn-ghost--scroll:hover {
+  animation: none;
+}
+
+.scroll-chevron {
+  transition: transform 0.2s ease;
+  animation: chevron-bounce 2.4s ease-in-out infinite;
+}
+
+.btn-ghost--scroll:hover .scroll-chevron {
+  animation: none;
+  transform: translateY(3px);
+}
+
+@keyframes ghost-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 0 3px var(--accent-muted); border-color: var(--accent); }
+}
+
+@keyframes chevron-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -638,6 +666,80 @@ select.input-field {
 .next-step:hover .next-step-cta { background: var(--accent-dim); }
 
 /* ── TCO Preview ──────────────────────────────────── */
+/* Preview tab switcher */
+.preview-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.preview-tab {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.preview-tab:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+.preview-tab--active {
+  border-color: var(--accent);
+  background: rgba(255, 184, 0, 0.1);
+  color: var(--accent);
+}
+
+/* Civic solo report layout */
+.civic-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 24px;
+  align-items: start;
+  margin-bottom: 4px;
+}
+@media (max-width: 640px) {
+  .civic-layout { grid-template-columns: 1fr; }
+}
+.civic-car-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.civic-msrp-badge {
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 20px;
+  width: 100%;
+}
+.civic-msrp-label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.civic-msrp-val { font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700; color: var(--text); }
+.civic-breakdown-col { display: flex; flex-direction: column; gap: 2px; }
+.civic-breakdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.civic-total-pill {
+  background: rgba(255,184,0,0.12);
+  color: var(--accent);
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: 0.78rem;
+}
+
 .tco-preview {
   background: linear-gradient(160deg, var(--surface-2), var(--bg-2));
   border: 1px solid var(--border);

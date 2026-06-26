@@ -14,8 +14,11 @@ import Subscribe from './pages/Subscribe'
 import Privacy from './pages/Privacy'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
+import NotFound from './pages/NotFound'
 import TermsGate, { TERMS_VERSION, LS_TERMS_ACCEPTED, LS_TERMS_VERSION } from './components/TermsGate'
 import InAppBrowserBanner from './components/InAppBrowserBanner'
+import ErrorBoundary from './components/ErrorBoundary'
+import { safeGet, safeSessionGet, safeSessionSet } from './utils/safeStorage'
 
 // Lazy-loaded so Recharts ships in its own chunk and stays out of the main bundle.
 const MarketAnalytics = lazy(() => import('./pages/MarketAnalytics'))
@@ -32,13 +35,13 @@ const SS_NAVIGATED = 'cashpedal_navigated'
 
 function ToolRoute({ element }) {
   const [accepted, setAccepted] = useState(
-    () => localStorage.getItem(LS_TERMS_ACCEPTED) === 'true' &&
-          localStorage.getItem(LS_TERMS_VERSION) === TERMS_VERSION
+    () => safeGet(LS_TERMS_ACCEPTED) === 'true' &&
+          safeGet(LS_TERMS_VERSION) === TERMS_VERSION
   )
   // Skip the gate on the user's entry page; enforce it on every subsequent navigation.
   const [isEntry] = useState(() => {
-    const alreadyVisited = sessionStorage.getItem(SS_NAVIGATED)
-    sessionStorage.setItem(SS_NAVIGATED, '1')
+    const alreadyVisited = safeSessionGet(SS_NAVIGATED)
+    safeSessionSet(SS_NAVIGATED, '1')
     return !alreadyVisited
   })
 
@@ -48,10 +51,11 @@ function ToolRoute({ element }) {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <InAppBrowserBanner />
-      <PageViewTracker />
-      <Routes>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <InAppBrowserBanner />
+        <PageViewTracker />
+        <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/tco"       element={<ToolRoute element={<TCOCalculator />} />} />
         <Route path="/survey"    element={<ToolRoute element={<CarSurvey />} />} />
@@ -70,7 +74,9 @@ export default function App() {
         <Route path="/subscribe" element={<Subscribe />} />
         <Route path="/blog"      element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
-      </Routes>
-    </BrowserRouter>
+        <Route path="*"          element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }

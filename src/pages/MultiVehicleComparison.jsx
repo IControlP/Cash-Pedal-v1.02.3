@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
+import { safeGet, safeSet, safeRemove } from '../utils/safeStorage'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -252,7 +253,7 @@ export default function MultiVehicleComparison() {
   const [bonusUnlocked, setBonusUnlocked] = useState(false)
 
   const [compareCount, setCompareCount] = useState(() =>
-    parseInt(localStorage.getItem(LS_COMPARE_COUNT) || '0', 10)
+    parseInt(safeGet(LS_COMPARE_COUNT) || '0', 10)
   )
   // Capture whether this session gets free access before the counter increments
   const freeAccessGranted = useRef(compareCount < FREE_COMPARE_LIMIT)
@@ -266,7 +267,7 @@ export default function MultiVehicleComparison() {
     if (freeAccessGranted.current && !isSubscribed) {
       const next = compareCount + 1
       setCompareCount(next)
-      localStorage.setItem(LS_COMPARE_COUNT, String(next))
+      safeSet(LS_COMPARE_COUNT, String(next))
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -275,7 +276,7 @@ export default function MultiVehicleComparison() {
 
   const [vehicles, setVehicles] = useState(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('cashpedal_comparison_vehicles') || 'null')
+      const saved = JSON.parse(safeGet('cashpedal_comparison_vehicles') || 'null')
       if (saved && Array.isArray(saved) && saved.length >= 1) return saved
     } catch { /* ignore */ }
     return []
@@ -285,12 +286,12 @@ export default function MultiVehicleComparison() {
 
   // Persist vehicles state across navigation
   useEffect(() => {
-    localStorage.setItem('cashpedal_comparison_vehicles', JSON.stringify(vehicles))
+    safeSet('cashpedal_comparison_vehicles', JSON.stringify(vehicles))
   }, [vehicles])
 
   // Pull TCO-imported vehicles from localStorage on mount
   useEffect(() => {
-    const raw = localStorage.getItem('cashpedal_tco_for_comparison')
+    const raw = safeGet('cashpedal_tco_for_comparison')
     if (!raw) return
     try {
       const imports = JSON.parse(raw)
@@ -333,7 +334,7 @@ export default function MultiVehicleComparison() {
 
       setImportBanner({ count: imports.length })
       // Clear after loading so re-visit doesn't re-import
-      localStorage.removeItem('cashpedal_tco_for_comparison')
+      safeRemove('cashpedal_tco_for_comparison')
     } catch { /* ignore malformed data */ }
   }, [])
 
@@ -381,8 +382,8 @@ export default function MultiVehicleComparison() {
   }
 
   function restartComparison() {
-    localStorage.removeItem('cashpedal_comparison_vehicles')
-    localStorage.removeItem('cashpedal_tco_for_comparison')
+    safeRemove('cashpedal_comparison_vehicles')
+    safeRemove('cashpedal_tco_for_comparison')
     setVehicles([])
     setImportBanner(null)
   }

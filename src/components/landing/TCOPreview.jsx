@@ -1,6 +1,7 @@
-import { SUVSVG, getPal } from '../CarSVGs'
+import { useState } from 'react'
+import { SUVSVG, SedanSVG, getPal } from '../CarSVGs'
 
-const BARS = [
+const COMPARISON_BARS = [
   { label: 'Depreciation', a: 82, b: 76, av: '$35,000', bv: '$32,500', color: '#FFB800' },
   { label: 'Fuel / charge', a: 14, b: 80, av: '$4,500',  bv: '$16,500', color: '#5FE0B8' },
   { label: 'Insurance',    a: 68, b: 60, av: '$12,500', bv: '$11,000', color: '#7BC8FF' },
@@ -9,19 +10,50 @@ const BARS = [
   { label: 'Financing',    a: 72, b: 60, av: '$12,300', bv: '$10,300', color: '#FFE066' },
 ]
 
+// 2026 Honda Civic LX — 12,000 mi/yr · ZIP 94110 · 6.5% loan / $5k down
+// Bars expressed as % of largest item (depreciation $10,200 = 100)
+const CIVIC_BARS = [
+  { label: 'Depreciation', pct: 100, val: '$10,200', color: '#FFB800' },
+  { label: 'Fuel',         pct:  57, val: '$5,850',  color: '#5FE0B8' },
+  { label: 'Insurance',    pct:  69, val: '$7,000',  color: '#7BC8FF' },
+  { label: 'Maintenance',  pct:  29, val: '$3,000',  color: '#FF8A7A' },
+  { label: 'Reg. & taxes', pct:  20, val: '$2,000',  color: '#C8A0FF' },
+  { label: 'Financing',    pct:  35, val: '$3,550',  color: '#FFE066' },
+]
+
+const CIVIC_TOTAL = '$31,600'
+const CIVIC_PER_MILE = '$0.53 / mile'
+
 export default function TCOPreview() {
+  const [tab, setTab] = useState('comparison')
+
   return (
-    <section id="preview" className="py-28">
+    <section id="preview" className="py-28" style={{ scrollMarginTop: '72px' }}>
       <div className="max-w-[1240px] mx-auto px-7">
         <div className="section-eyebrow">Sample report</div>
         <h2 className="section-h font-display">
           See exactly which car protects your future.
         </h2>
         <p className="section-sub">
-          A real Cash Pedal comparison. Two cars, five years, every dollar accounted for — with a
-          wealth-impact verdict that shows what picking the cheaper car becomes if you invest the
-          difference instead of spending it.
+          Real Cash Pedal reports. Every dollar accounted for — financing, insurance, fuel,
+          depreciation, maintenance — so you walk in with the number they don't want you to have.
         </p>
+
+        {/* Tab switcher */}
+        <div className="preview-tabs">
+          <button
+            className={`preview-tab ${tab === 'comparison' ? 'preview-tab--active' : ''}`}
+            onClick={() => setTab('comparison')}
+          >
+            Comparison: Rivian R1S vs BMW X5
+          </button>
+          <button
+            className={`preview-tab ${tab === 'civic' ? 'preview-tab--active' : ''}`}
+            onClick={() => setTab('civic')}
+          >
+            Solo report: Honda Civic 2026
+          </button>
+        </div>
 
         <div className="tco-preview">
           <div className="tco-window">
@@ -31,64 +63,145 @@ export default function TCOPreview() {
               </div>
               <div className="tco-url">
                 <span className="lock">🔒</span>
-                cashpedal.io / report / r1s-vs-x5
+                {tab === 'comparison'
+                  ? 'cashpedal.io / report / r1s-vs-x5'
+                  : 'cashpedal.io / report / civic-2026-lx'}
               </div>
               <div style={{ width: 40 }} />
             </div>
 
             <div className="tco-body">
-              <h3 className="tco-title font-display">
-                Rivian R1S Adventure vs BMW X5 xDrive40i
-              </h3>
-              <p className="tco-subtitle">
-                5-year forecast · 12,000 mi/yr · ZIP 94110 · 6.5% loan / $5k down · Refreshed today
-              </p>
-
-              <div className="grid md:grid-cols-2 gap-5">
-                <CarColumn
-                  winner
-                  name="Rivian R1S"
-                  trim="Adventure · Electric · AWD"
-                  total="$76,700"
-                  perMile="$1.28 / mile"
-                  side="a"
-                  svg={<SUVSVG pal={getPal('Rivian')} isEV isLarge />}
-                />
-                <CarColumn
-                  name="BMW X5"
-                  trim="xDrive40i · Gas · AWD"
-                  total="$85,850"
-                  perMile="$1.43 / mile"
-                  side="b"
-                  svg={<SUVSVG pal={getPal('BMW')} isLarge />}
-                />
-              </div>
-
-              <div className="verdict">
-                <div className="verdict-icon">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 17l6-6 4 4 8-8" />
-                    <path d="M14 7h7v7" />
-                  </svg>
-                </div>
-                <div className="verdict-text">
-                  <div className="v-label">Wealth impact</div>
-                  <div className="v-line">
-                    Pick the R1S and invest the <span className="num">$9,150</span> savings — at 7%
-                    real return over 25 years it becomes <span className="gold">$49,700</span> in
-                    long-term savings.
-                  </div>
-                </div>
-                <div className="verdict-cta">
-                  <span>Your future self thanks you</span>
-                  <strong>+$49,700</strong>
-                </div>
-              </div>
+              {tab === 'comparison' ? <ComparisonReport /> : <CivicReport />}
             </div>
           </div>
         </div>
       </div>
     </section>
+  )
+}
+
+function ComparisonReport() {
+  return (
+    <>
+      <h3 className="tco-title font-display">
+        Rivian R1S Adventure vs BMW X5 xDrive40i
+      </h3>
+      <p className="tco-subtitle">
+        5-year forecast · 12,000 mi/yr · ZIP 94110 · 6.5% loan / $5k down · Refreshed today
+      </p>
+
+      <div className="grid md:grid-cols-2 gap-5">
+        <CarColumn
+          winner
+          name="Rivian R1S"
+          trim="Adventure · Electric · AWD"
+          total="$76,700"
+          perMile="$1.28 / mile"
+          side="a"
+          svg={<SUVSVG pal={getPal('Rivian')} isEV isLarge />}
+        />
+        <CarColumn
+          name="BMW X5"
+          trim="xDrive40i · Gas · AWD"
+          total="$85,850"
+          perMile="$1.43 / mile"
+          side="b"
+          svg={<SUVSVG pal={getPal('BMW')} isLarge />}
+        />
+      </div>
+
+      <div className="verdict">
+        <div className="verdict-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 17l6-6 4 4 8-8" />
+            <path d="M14 7h7v7" />
+          </svg>
+        </div>
+        <div className="verdict-text">
+          <div className="v-label">Wealth impact</div>
+          <div className="v-line">
+            Pick the R1S and invest the <span className="num">$9,150</span> savings — at 7%
+            real return over 25 years it becomes <span className="gold">$49,700</span> in
+            long-term savings.
+          </div>
+        </div>
+        <div className="verdict-cta">
+          <span>Your future self thanks you</span>
+          <strong>+$49,700</strong>
+        </div>
+      </div>
+    </>
+  )
+}
+
+function CivicReport() {
+  return (
+    <>
+      <h3 className="tco-title font-display">
+        2026 Honda Civic LX
+      </h3>
+      <p className="tco-subtitle">
+        5-year forecast · 12,000 mi/yr · ZIP 94110 · 6.5% loan / $5k down · 36 MPG combined
+      </p>
+
+      <div className="civic-layout">
+        <div className="civic-car-col">
+          <SedanSVG pal={getPal('Honda')} isLarge />
+          <div className="civic-msrp-badge">
+            <div className="civic-msrp-label">MSRP</div>
+            <div className="civic-msrp-val">$25,210</div>
+          </div>
+        </div>
+
+        <div className="civic-breakdown-col">
+          <div className="civic-breakdown-header">
+            <span>5-Year Cost Breakdown</span>
+            <span className="civic-total-pill">{CIVIC_TOTAL} total</span>
+          </div>
+          {CIVIC_BARS.map(b => (
+            <div key={b.label} className="tco-bar-row">
+              <div className="tco-bar-label">{b.label}</div>
+              <div className="tco-bar-track">
+                <div
+                  className="tco-bar-fill"
+                  style={{ width: b.pct + '%', background: b.color }}
+                />
+              </div>
+              <div className="tco-bar-val">{b.val}</div>
+            </div>
+          ))}
+
+          <div className="tco-total-row" style={{ marginTop: '16px' }}>
+            <div>
+              <div className="tco-total-label">True 5-yr cost</div>
+              <div className="tco-total-sub">{CIVIC_PER_MILE}</div>
+            </div>
+            <div className="tco-total-val">{CIVIC_TOTAL}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="verdict">
+        <div className="verdict-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8v4l3 3" />
+          </svg>
+        </div>
+        <div className="verdict-text">
+          <div className="v-label">Ownership snapshot</div>
+          <div className="v-line">
+            At <span className="num">$0.53/mile</span> the Civic is one of the most affordable
+            sedans to own. Investing the difference vs. the average compact saves{' '}
+            <span className="gold">$18,400</span> over 25 years at 7%.
+          </div>
+        </div>
+        <div className="verdict-cta">
+          <span>Efficient choice</span>
+          <strong>$0.53 / mi</strong>
+        </div>
+      </div>
+    </>
   )
 }
 
@@ -103,7 +216,7 @@ function CarColumn({ winner, name, trim, total, perMile, side, svg }) {
       </div>
       {svg}
       <div className="tco-bars">
-        {BARS.map(b => (
+        {COMPARISON_BARS.map(b => (
           <div key={b.label} className="tco-bar-row">
             <div className="tco-bar-label">{b.label}</div>
             <div className="tco-bar-track">

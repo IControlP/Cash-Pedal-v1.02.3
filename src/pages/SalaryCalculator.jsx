@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { safeGet, safeSet } from '../utils/safeStorage'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -176,7 +177,7 @@ export default function SalaryCalculator() {
   const [bonusUnlocked, setBonusUnlocked] = useState(false)
 
   const [salaryProCount, setSalaryProCount] = useState(() =>
-    parseInt(localStorage.getItem(LS_SALARY_PRO_COUNT) || '0', 10)
+    parseInt(safeGet(LS_SALARY_PRO_COUNT) || '0', 10)
   )
 
   // Anonymous first-party usage tracking — once per page load
@@ -505,7 +506,7 @@ export default function SalaryCalculator() {
                       if (salaryProCount < FREE_SALARY_PRO_LIMIT) {
                         const next = salaryProCount + 1
                         setSalaryProCount(next)
-                        localStorage.setItem(LS_SALARY_PRO_COUNT, String(next))
+                        safeSet(LS_SALARY_PRO_COUNT, String(next))
                         trackUsage('salary_pro', 'free')
                       } else if (await spendCredit('salary_pro')) {
                         setBonusUnlocked(true)

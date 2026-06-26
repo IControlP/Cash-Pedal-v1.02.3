@@ -28,8 +28,22 @@ export default function Hero() {
               <Link to="/subscribe" className="btn-primary btn-lg">
                 Get my 60-day access — $19 →
               </Link>
-              <a href="#preview" className="btn-ghost btn-lg">
+              <a href="#preview" className="btn-ghost btn-lg btn-ghost--scroll">
                 See a sample report first
+                <svg
+                  className="scroll-chevron"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
               </a>
             </div>
             <div className="hero-meta anim-3">

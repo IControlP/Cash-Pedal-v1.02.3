@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { safeGet, safeSet } from '../utils/safeStorage'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import NextStep from '../components/NextStep'
@@ -102,7 +103,7 @@ export default function CarBuyingChecklist() {
   const { creditsLeft: bonusCreditsLeft, spendCredit } = useBonusCredits()
 
   const [checklistCount, setChecklistCount] = useState(() =>
-    parseInt(localStorage.getItem(LS_CHECKLIST_COUNT) || '0', 10)
+    parseInt(safeGet(LS_CHECKLIST_COUNT) || '0', 10)
   )
   const [showPaywall, setShowPaywall] = useState(false)
 
@@ -225,7 +226,7 @@ export default function CarBuyingChecklist() {
     }
     const next = checklistCount + 1
     setChecklistCount(next)
-    localStorage.setItem(LS_CHECKLIST_COUNT, String(next))
+    safeSet(LS_CHECKLIST_COUNT, String(next))
     setStep('checklist')
     return true
   }

@@ -11,7 +11,7 @@ function detectInAppBrowser() {
 
   let instruction
   if (isIOS) {
-    instruction = 'Tap ··· or the Share icon below, then choose "Open in Safari" for the best experience.'
+    instruction = 'Tap ··· or the Share icon below, then choose "Open in Browser" for the best experience.'
   } else {
     instruction = 'Tap ⋮ in the top-right corner, then choose "Open in Chrome" for the best experience.'
   }

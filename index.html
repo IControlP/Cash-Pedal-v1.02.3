@@ -3,10 +3,35 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <!-- viewport-fit=cover lets content extend under notches; safe-area insets are honored in CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="Cash Pedal — Know the true cost of owning any vehicle before you sign." />
+
+    <!-- Mobile browser chrome / rendering -->
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0f0520" />
+    <!-- Stop iOS from turning prices/mileage numbers into tap-to-call links -->
+    <meta name="format-detection" content="telephone=no" />
+    <!-- Standalone / add-to-home-screen behavior on mobile -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="Cash Pedal" />
+
+    <!-- Open Graph (link previews when shared from Instagram / Facebook / Messenger) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Cash Pedal" />
+    <meta property="og:url" content="https://cashpedal.io/" />
     <meta property="og:title" content="Cash Pedal" />
     <meta property="og:description" content="Know the true cost of owning any vehicle before you sign." />
+    <!-- TODO: add a 1200x630 PNG at /og-image.png for rich large-image previews -->
+
+    <!-- Twitter / X card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Cash Pedal" />
+    <meta name="twitter:description" content="Know the true cost of owning any vehicle before you sign." />
+
     <title>Cash Pedal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

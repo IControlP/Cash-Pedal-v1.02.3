@@ -1,10 +1,11 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { safeGet, safeSet } from '../utils/safeStorage'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import NextStep from '../components/NextStep'
 import PaywallModal from '../components/PaywallModal'
+import ToolEntryCTA from '../components/ToolEntryCTA'
 import ProUpsell from '../components/ProUpsell'
 import { useSubscription } from '../hooks/useSubscription'
 import { useBonusCredits } from '../hooks/useBonusCredits'
@@ -173,6 +174,12 @@ export default function SalaryCalculator() {
   const { isSubscribed } = useSubscription()
   const { spendCredit } = useBonusCredits()
   const [showPaywall, setShowPaywall] = useState(false)
+
+  // Entry CTA — scroll cold / ad traffic straight into the inputs.
+  const inputsRef = useRef(null)
+  const scrollToStart = () => {
+    inputsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
   // Pro mode unlocked for this session via an email-unlock bonus credit
   const [bonusUnlocked, setBonusUnlocked] = useState(false)
 
@@ -490,13 +497,21 @@ export default function SalaryCalculator() {
               ? 'A lease that fits on paper can still squeeze your budget. Enter your payment and see the gross income that keeps total vehicle costs under 10–20% of your salary — before you commit.'
               : "Don't let a car payment quietly eat your future. Using the 20/4/10 rule — 20% down, max 4-year loan, total vehicle costs ≤ 10% of gross income — see the salary that makes this car comfortable, not crushing."}
           </p>
+
+          {/* Entry CTA — gives cold / ad traffic one obvious next step */}
+          <ToolEntryCTA
+            headline="Find the salary this car really takes — in under 2 minutes."
+            points={['Free', 'No signup', 'Based on the 20/4/10 rule']}
+            buttonLabel="Check my number ↓"
+            onStart={scrollToStart}
+          />
         </div>
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="grid lg:grid-cols-[1fr_400px] gap-6 items-start">
 
             {/* Inputs */}
-            <div className="card anim-3 flex flex-col gap-6">
+            <div ref={inputsRef} className="card anim-3 flex flex-col gap-6 scroll-mt-20">
               <div className="flex items-center justify-between">
                 <h2 className="font-display font-bold text-white text-lg">Vehicle Details</h2>
                 {/* Pro toggle */}

@@ -1209,7 +1209,7 @@ export default function TCOCalculator() {
   }
 
   // "How to use" guide — collapsible, open by default, choice remembered
-  const [showGuide, setShowGuide] = useState(() => safeGet('cashpedal_tco_guide_collapsed') !== 'true')
+  const [showGuide, setShowGuide] = useState(() => safeGet('cashpedal_tco_guide_collapsed') === 'false')
   const toggleGuide = () => {
     setShowGuide(prev => {
       const next = !prev

@@ -16,7 +16,6 @@ import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
 import NotFound from './pages/NotFound'
 import TermsGate, { TERMS_VERSION, LS_TERMS_ACCEPTED, LS_TERMS_VERSION } from './components/TermsGate'
-import InAppBrowserBanner from './components/InAppBrowserBanner'
 import ErrorBoundary from './components/ErrorBoundary'
 import { safeGet, safeSessionGet, safeSessionSet } from './utils/safeStorage'
 
@@ -53,7 +52,6 @@ export default function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <InAppBrowserBanner />
         <PageViewTracker />
         <Routes>
         <Route path="/" element={<Landing />} />

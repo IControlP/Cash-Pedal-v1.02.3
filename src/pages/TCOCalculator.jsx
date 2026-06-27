@@ -1209,7 +1209,7 @@ export default function TCOCalculator() {
   }
 
   // "How to use" guide — collapsible, open by default, choice remembered
-  const [showGuide, setShowGuide] = useState(() => safeGet('cashpedal_tco_guide_collapsed') !== 'true')
+  const [showGuide, setShowGuide] = useState(() => safeGet('cashpedal_tco_guide_collapsed') === 'false')
   const toggleGuide = () => {
     setShowGuide(prev => {
       const next = !prev
@@ -1749,6 +1749,27 @@ export default function TCOCalculator() {
     inputsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     setTimeout(() => locationInputRef.current?.focus({ preventScroll: true }), 450)
   }
+
+  // Sticky results bar — shows when the results panel has scrolled above the viewport
+  // (i.e., user is adjusting inputs while results are off-screen above them on mobile)
+  const resultsRef = useRef(null)
+  const [stickyBarVisible, setStickyBarVisible] = useState(false)
+  useEffect(() => {
+    const el = resultsRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setStickyBarVisible(!entry.isIntersecting && entry.boundingClientRect.top < 0)
+      },
+      { threshold: 0 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  // Pre-compute bar values from already-derived state so no duplication
+  const stickyMonthly = Math.round(totalAnnualCost / 12)
+  const stickyYear1   = forecastRows[0]?.total ?? totalAnnualCost
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">
@@ -2982,7 +3003,7 @@ export default function TCOCalculator() {
             </div>
 
             {/* ── Results ── */}
-            <div className="flex flex-col gap-4 lg:sticky lg:top-20">
+            <div ref={resultsRef} className="flex flex-col gap-4 lg:sticky lg:top-20">
 
               {/* Car visual + specs */}
               {selModel && modelData ? (
@@ -3672,6 +3693,43 @@ export default function TCOCalculator() {
               When you're done, we go away. No subscription."
           />
         </div>
+
+        {/* ── Sticky results bar — visible on mobile when results have scrolled above viewport ── */}
+        {stickyBarVisible && stickyMonthly > 0 && (
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t"
+            style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: '0 -4px 24px rgba(0,0,0,0.4)' }}>
+            <div className="px-4 py-3 flex items-center justify-between gap-3">
+              <div className="flex gap-5 min-w-0">
+                <div className="shrink-0">
+                  <p className="text-[9px] uppercase tracking-widest font-semibold text-[var(--text-muted)]">Monthly</p>
+                  <p className="font-display font-bold text-base leading-tight" style={{ color: 'var(--accent)' }}>
+                    {formatCurrency(stickyMonthly)}
+                  </p>
+                </div>
+                <div className="shrink-0">
+                  <p className="text-[9px] uppercase tracking-widest font-semibold text-[var(--text-muted)]">Year 1</p>
+                  <p className="font-display font-bold text-base leading-tight text-white">
+                    {formatCurrency(stickyYear1)}
+                  </p>
+                </div>
+                {selMake && (
+                  <div className="min-w-0 hidden sm:block">
+                    <p className="text-[9px] uppercase tracking-widest font-semibold text-[var(--text-muted)]">Vehicle</p>
+                    <p className="text-sm font-semibold text-white truncate">
+                      {[selYear, selMake, selModel].filter(Boolean).join(' ')}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="shrink-0 text-xs font-bold px-4 py-2.5 rounded-xl"
+                style={{ background: 'var(--accent)', color: '#000' }}>
+                See results ↑
+              </button>
+            </div>
+          </div>
+        )}
       </main>
       <NextStep
         tag="Next step · pick a winner"

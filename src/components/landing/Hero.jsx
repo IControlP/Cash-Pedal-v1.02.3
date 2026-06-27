@@ -1,6 +1,13 @@
 import { Link } from 'react-router-dom'
 import { SUVSVG, getPal } from '../CarSVGs'
 
+const QUICK_START = [
+  { emoji: '🧮', label: 'TCO Calculator',  sub: 'True 5-yr cost',      to: '/tco' },
+  { emoji: '🎯', label: 'Car Survey',       sub: 'Find your fit',        to: '/survey' },
+  { emoji: '💰', label: 'Salary Check',     sub: '20/4/10 rule',         to: '/salary' },
+  { emoji: '⚖️', label: 'Compare Cars',     sub: 'Side-by-side',         to: '/compare' },
+]
+
 export default function Hero() {
   return (
     <section className="hero-section">
@@ -13,52 +20,68 @@ export default function Hero() {
               The car-buying decision that funds — or drains — your future
             </span>
             <h1 className="hero-h font-display anim-1">
-              Dealer or private party — know what you're actually agreeing to
+              Know what you're actually agreeing to
             </h1>
             <p className="hero-sub anim-2">
-              See the real cost before you sign anything.
-            </p>
-            <p className="hero-body anim-2">
-              Whether you're at a dealership or buying off a private listing, both sides of that
-              deal know more than you do. Cash Pedal shows you the true 5-year cost of any car —
-              financing, insurance, fuel, depreciation, maintenance — so you walk in knowing the
-              number they don't want you to have.
+              See the true 5-year cost of any car — financing, insurance, fuel, depreciation, maintenance — before you sign anything.
             </p>
             <div className="hero-cta anim-2">
-              <Link to="/subscribe" className="btn-primary btn-lg">
-                Get my 60-day access — $19 →
+              <Link to="/tco" className="btn-primary btn-lg">
+                Try the free calculator →
               </Link>
-              <a href="#preview" className="btn-ghost btn-lg btn-ghost--scroll">
-                See a sample report first
-                <svg
-                  className="scroll-chevron"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
-              </a>
+              <Link to="/subscribe" className="btn-ghost btn-lg">
+                Get full access — $19
+              </Link>
             </div>
             <div className="hero-meta anim-3">
-              <span>One payment, no subscription</span>
+              <span>Free to start</span>
               <span>·</span>
-              <span>Pays for itself in minutes</span>
+              <span>No signup required</span>
+              <span>·</span>
+              <span>Results in under 2 min</span>
             </div>
-            <p className="anim-3 mt-4 text-sm">
-              <Link
-                to="/tco"
-                className="text-[var(--text-muted)] underline underline-offset-4 hover:text-[var(--accent)] transition-colors"
-              >
-                Not ready to commit? Run a free estimate on any car in under 2 minutes — no account, no payment, no dealer involved. → Try the free calculator
-              </Link>
-            </p>
+
+            {/* Mobile-only cost teaser — shows sample data since desktop has the annotated car */}
+            <div className="lg:hidden anim-3 mt-6 grid grid-cols-2 gap-2">
+              {[
+                { label: 'Sticker price',       val: '$34,500', dim: true  },
+                { label: 'Real 5-yr cost',       val: '$61,200', accent: true },
+                { label: 'Hidden costs',         val: '$26,700', warn: true  },
+                { label: 'Right car saves',      val: '$9,150',  green: true  },
+              ].map(({ label, val, dim, accent, warn, green }) => (
+                <div key={label} className="rounded-xl border px-3 py-2.5"
+                  style={{
+                    borderColor: accent ? 'rgba(255,184,0,0.35)' : green ? 'rgba(95,224,184,0.3)' : 'var(--border)',
+                    background:  accent ? 'rgba(255,184,0,0.05)'  : green ? 'rgba(95,224,184,0.05)' : 'rgba(255,255,255,0.02)',
+                  }}>
+                  <p className="text-[9px] uppercase tracking-widest font-semibold text-[var(--text-muted)] mb-0.5">{label}</p>
+                  <p className={`font-display font-bold text-base leading-tight ${
+                    accent ? 'text-[var(--accent)]' : green ? 'text-[var(--success)]' : warn ? 'text-[#f87171]' : 'text-white/50 line-through'
+                  }`}>{val}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Quick-start tool chips */}
+            <div className="anim-3 mt-8">
+              <p className="text-[11px] uppercase tracking-widest font-semibold mb-3" style={{ color: 'var(--text-dim)' }}>
+                Jump straight to a tool
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {QUICK_START.map(({ emoji, label, sub, to }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    className="flex flex-col gap-0.5 px-3 py-3 rounded-xl border transition-all hover:border-[var(--accent)] hover:bg-[var(--accent-muted)] group"
+                    style={{ borderColor: 'var(--border)', background: 'rgba(255,255,255,0.02)' }}
+                  >
+                    <span className="text-base">{emoji}</span>
+                    <span className="text-xs font-semibold text-white group-hover:text-[var(--accent)] transition-colors leading-tight">{label}</span>
+                    <span className="text-[10px] text-[var(--text-muted)] leading-tight">{sub}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Annotated hero car — hidden below lg where grid collapses */}

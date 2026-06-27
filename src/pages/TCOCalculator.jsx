@@ -341,7 +341,8 @@ function UserDataModal({ calcCount, onClose }) {
   async function handleSubmit(e) {
     e.preventDefault()
     if (!marketingConsent) {
-      handleSkip()
+      // Don't silently no-op (reads as a dead click) — point to the next step.
+      setErrors(['Please tick the box above to get tips by email — or choose “No thanks”.'])
       return
     }
     const errs = []
@@ -433,8 +434,8 @@ function UserDataModal({ calcCount, onClose }) {
                   className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-muted)] text-sm hover:border-[var(--accent)] transition-colors">
                   No thanks
                 </button>
-                <button type="submit" disabled={saving || !marketingConsent}
-                  className="flex-1 btn-primary disabled:opacity-40">
+                <button type="submit" disabled={saving}
+                  className="flex-1 btn-primary disabled:opacity-40 disabled:cursor-not-allowed">
                   {saving ? 'Saving…' : 'Subscribe'}
                 </button>
               </div>
@@ -1706,7 +1707,13 @@ export default function TCOCalculator() {
       costPerMile: annualMileage > 0 ? Math.round((totalAnnualCost / annualMileage) * 100) / 100 : null,
     }
 
-    const existing = JSON.parse(safeGet('cashpedal_tco_for_comparison') || '[]')
+    // Tolerate corrupted/legacy storage — a bad parse here would otherwise throw
+    // and make the "Add to comparison" click do nothing (a dead click).
+    let existing = []
+    try {
+      const parsed = JSON.parse(safeGet('cashpedal_tco_for_comparison') || '[]')
+      if (Array.isArray(parsed)) existing = parsed
+    } catch { /* start fresh on malformed data */ }
     // Keep at most 5 entries (max comparison slots)
     const updated = [...existing, entry].slice(-5)
     safeSet('cashpedal_tco_for_comparison', JSON.stringify(updated))

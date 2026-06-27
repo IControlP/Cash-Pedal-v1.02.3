@@ -41,6 +41,27 @@ export default function Hero() {
               <span>Results in under 2 min</span>
             </div>
 
+            {/* Mobile-only cost teaser — shows sample data since desktop has the annotated car */}
+            <div className="lg:hidden anim-3 mt-6 grid grid-cols-2 gap-2">
+              {[
+                { label: 'Sticker price',       val: '$34,500', dim: true  },
+                { label: 'Real 5-yr cost',       val: '$61,200', accent: true },
+                { label: 'Hidden costs',         val: '$26,700', warn: true  },
+                { label: 'Right car saves',      val: '$9,150',  green: true  },
+              ].map(({ label, val, dim, accent, warn, green }) => (
+                <div key={label} className="rounded-xl border px-3 py-2.5"
+                  style={{
+                    borderColor: accent ? 'rgba(255,184,0,0.35)' : green ? 'rgba(95,224,184,0.3)' : 'var(--border)',
+                    background:  accent ? 'rgba(255,184,0,0.05)'  : green ? 'rgba(95,224,184,0.05)' : 'rgba(255,255,255,0.02)',
+                  }}>
+                  <p className="text-[9px] uppercase tracking-widest font-semibold text-[var(--text-muted)] mb-0.5">{label}</p>
+                  <p className={`font-display font-bold text-base leading-tight ${
+                    accent ? 'text-[var(--accent)]' : green ? 'text-[var(--success)]' : warn ? 'text-[#f87171]' : 'text-white/50 line-through'
+                  }`}>{val}</p>
+                </div>
+              ))}
+            </div>
+
             {/* Quick-start tool chips */}
             <div className="anim-3 mt-8">
               <p className="text-[11px] uppercase tracking-widest font-semibold mb-3" style={{ color: 'var(--text-dim)' }}>

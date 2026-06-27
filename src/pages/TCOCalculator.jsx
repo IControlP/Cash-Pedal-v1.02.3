@@ -11,6 +11,7 @@ import NextStep from '../components/NextStep'
 import ResultCard from '../components/ResultCard'
 import PaywallModal from '../components/PaywallModal'
 import ProUpsell from '../components/ProUpsell'
+import ToolEntryCTA from '../components/ToolEntryCTA'
 import { useSubscription } from '../hooks/useSubscription'
 import { useBonusCredits } from '../hooks/useBonusCredits'
 import { trackUsage } from '../utils/usage'
@@ -1775,38 +1776,12 @@ export default function TCOCalculator() {
           </p>
 
           {/* Entry CTA — gives cold / ad traffic one obvious next step */}
-          <div
-            className="anim-2 mt-6 rounded-2xl border p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6"
-            style={{
-              borderColor: 'rgba(200,255,0,0.25)',
-              background: 'linear-gradient(135deg, rgba(200,255,0,0.07), rgba(200,255,0,0.01))',
-            }}
-          >
-            <div className="flex-1 min-w-0">
-              <p className="font-display font-bold text-white text-lg sm:text-xl leading-snug">
-                See the real 5-year cost of any car — in under 2 minutes.
-              </p>
-              <p className="text-sm text-[var(--text-muted)] mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="inline-flex items-center gap-1.5">
-                  <span style={{ color: 'var(--accent)' }}>✓</span> Free
-                </span>
-                <span className="opacity-40">·</span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span style={{ color: 'var(--accent)' }}>✓</span> No signup
-                </span>
-                <span className="opacity-40">·</span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span style={{ color: 'var(--accent)' }}>✓</span> No dealer involved
-                </span>
-              </p>
-            </div>
-            <button
-              onClick={scrollToStart}
-              className="btn-primary btn-lg shrink-0 w-full sm:w-auto justify-center"
-            >
-              Start my free estimate ↓
-            </button>
-          </div>
+          <ToolEntryCTA
+            headline="See the real 5-year cost of any car — in under 2 minutes."
+            points={['Free', 'No signup', 'No dealer involved']}
+            buttonLabel="Start my free estimate ↓"
+            onStart={scrollToStart}
+          />
 
           {/* Simple / Detailed toggle */}
           <div className="anim-2 mt-5 flex items-center gap-3">

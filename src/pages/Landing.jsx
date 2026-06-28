@@ -6,6 +6,7 @@ import TCOPreview from '../components/landing/TCOPreview'
 import FAQ from '../components/landing/FAQ'
 import CTAOffer from '../components/landing/CTAOffer'
 import LandingFooter from '../components/landing/LandingFooter'
+import LandingStickyCTA from '../components/landing/LandingStickyCTA'
 
 export default function Landing() {
   return (
@@ -24,6 +25,8 @@ export default function Landing() {
         <CTAOffer />
         <LandingFooter />
       </main>
+
+      <LandingStickyCTA />
     </div>
   )
 }

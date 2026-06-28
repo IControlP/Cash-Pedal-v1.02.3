@@ -204,6 +204,7 @@ app.use(helmet({
         "https://*.clarity.ms",
         "https://c.bing.com",
         "https://www.google-analytics.com",
+        "https://www.googletagmanager.com", // GA4 (GT- tag) sends measurement hits as pixels to /a and /td
         "https://stats.g.doubleclick.net", // GA4 Google Signals / Ads beacons
         "https://www.facebook.com",
       ],

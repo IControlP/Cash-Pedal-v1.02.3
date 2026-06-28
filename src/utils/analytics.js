@@ -14,8 +14,17 @@ function fbq(...args) {
 }
 
 export function trackPageView(path) {
-  // GA4
-  gtag('config', GA_ID, { page_path: path })
+  // GA4 — send an explicit page_view event on every SPA route change.
+  // Re-calling gtag('config', …) (the old Universal Analytics pattern) does
+  // NOT reliably register page views in GA4, which is why traffic wasn't
+  // showing up. The initial config in index.html sets send_page_view:false,
+  // so this event is the single source of truth for page views. GA4 keys off
+  // page_location / page_title (not the UA-era page_path).
+  gtag('event', 'page_view', {
+    page_location: window.location.href,
+    page_title:    document.title,
+    page_path:     path,
+  })
   // Meta Pixel — fires on every SPA route change so Meta knows which page was viewed
   fbq('track', 'PageView', { page_path: path })
 }

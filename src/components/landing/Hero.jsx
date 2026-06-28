@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { SUVSVG, getPal } from '../CarSVGs'
+import { trackEvent } from '../../utils/analytics'
 
 const QUICK_START = [
   { emoji: '🧮', label: 'TCO Calculator',  sub: 'True 5-yr cost',      to: '/tco' },
@@ -26,10 +27,12 @@ export default function Hero() {
               See the true 5-year cost of any car — financing, insurance, fuel, depreciation, maintenance — before you sign anything.
             </p>
             <div className="hero-cta anim-2">
-              <Link to="/tco" className="btn-primary btn-lg">
+              <Link to="/tco" className="btn-primary btn-lg"
+                onClick={() => trackEvent('landing_cta_click', { location: 'hero_primary' })}>
                 Try the free calculator →
               </Link>
-              <Link to="/subscribe" className="btn-ghost btn-lg">
+              <Link to="/subscribe" className="btn-ghost btn-lg"
+                onClick={() => trackEvent('landing_cta_click', { location: 'hero_subscribe' })}>
                 Get full access — $19
               </Link>
             </div>
@@ -41,26 +44,37 @@ export default function Hero() {
               <span>Results in under 2 min</span>
             </div>
 
-            {/* Mobile-only cost teaser — shows sample data since desktop has the annotated car */}
-            <div className="lg:hidden anim-3 mt-6 grid grid-cols-2 gap-2">
-              {[
-                { label: 'Sticker price',       val: '$34,500', dim: true  },
-                { label: 'Real 5-yr cost',       val: '$61,200', accent: true },
-                { label: 'Hidden costs',         val: '$26,700', warn: true  },
-                { label: 'Right car saves',      val: '$9,150',  green: true  },
-              ].map(({ label, val, dim, accent, warn, green }) => (
-                <div key={label} className="rounded-xl border px-3 py-2.5"
-                  style={{
-                    borderColor: accent ? 'rgba(255,184,0,0.35)' : green ? 'rgba(95,224,184,0.3)' : 'var(--border)',
-                    background:  accent ? 'rgba(255,184,0,0.05)'  : green ? 'rgba(95,224,184,0.05)' : 'rgba(255,255,255,0.02)',
-                  }}>
-                  <p className="text-[9px] uppercase tracking-widest font-semibold text-[var(--text-muted)] mb-0.5">{label}</p>
-                  <p className={`font-display font-bold text-base leading-tight ${
-                    accent ? 'text-[var(--accent)]' : green ? 'text-[var(--success)]' : warn ? 'text-[#f87171]' : 'text-white/50 line-through'
-                  }`}>{val}</p>
-                </div>
-              ))}
-            </div>
+            {/* Mobile-only cost teaser — tappable so a visitor's instinct to poke
+                at these cards leads into the calculator instead of being a dead click. */}
+            <Link
+              to="/tco"
+              onClick={() => trackEvent('landing_cta_click', { location: 'hero_mobile_teaser' })}
+              className="lg:hidden anim-3 mt-6 block active:opacity-80 transition-opacity"
+              aria-label="Open the free TCO calculator"
+            >
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: 'Sticker price',       val: '$34,500', dim: true  },
+                  { label: 'Real 5-yr cost',       val: '$61,200', accent: true },
+                  { label: 'Hidden costs',         val: '$26,700', warn: true  },
+                  { label: 'Right car saves',      val: '$9,150',  green: true  },
+                ].map(({ label, val, dim, accent, warn, green }) => (
+                  <div key={label} className="rounded-xl border px-3 py-2.5"
+                    style={{
+                      borderColor: accent ? 'rgba(255,184,0,0.35)' : green ? 'rgba(95,224,184,0.3)' : 'var(--border)',
+                      background:  accent ? 'rgba(255,184,0,0.05)'  : green ? 'rgba(95,224,184,0.05)' : 'rgba(255,255,255,0.02)',
+                    }}>
+                    <p className="text-[9px] uppercase tracking-widest font-semibold text-[var(--text-muted)] mb-0.5">{label}</p>
+                    <p className={`font-display font-bold text-base leading-tight ${
+                      accent ? 'text-[var(--accent)]' : green ? 'text-[var(--success)]' : warn ? 'text-[#f87171]' : 'text-white/50 line-through'
+                    }`}>{val}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-xs font-semibold text-center" style={{ color: 'var(--accent)' }}>
+                Tap to calculate your car’s real cost →
+              </p>
+            </Link>
 
             {/* Quick-start tool chips */}
             <div className="anim-3 mt-8">
@@ -84,8 +98,15 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Annotated hero car — hidden below lg where grid collapses */}
-          <div className="hero-visual anim-1 hidden lg:block">
+          {/* Annotated hero car — hidden below lg where grid collapses.
+              Wrapped in a link so a click anywhere on the visual (a natural
+              target) opens the calculator rather than going nowhere. */}
+          <Link
+            to="/tco"
+            onClick={() => trackEvent('landing_cta_click', { location: 'hero_visual' })}
+            className="hero-visual anim-1 hidden lg:block cursor-pointer"
+            aria-label="Open the free TCO calculator"
+          >
             <div className="hero-car-wrap">
               <SUVSVG pal={getPal('Rivian')} isEV isLarge />
             </div>
@@ -113,7 +134,7 @@ export default function Hero() {
               <div className="cost-val green">$9,150</div>
               <div className="cost-delta up">= $49,700 in 25 years at 7%</div>
             </div>
-          </div>
+          </Link>
         </div>
       </div>
     </section>

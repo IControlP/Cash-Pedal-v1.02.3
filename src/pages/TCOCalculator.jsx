@@ -1,12 +1,13 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { getSessionId } from '../components/TermsGate'
+import { getSessionId } from '../utils/session'
 import { safeUUID } from '../utils/safeId'
 import { safeGet, safeSet } from '../utils/safeStorage'
 import {
   trackCalculatorStarted, trackCalculatorCompleted,
   trackSimpleMakeSelected, trackSimpleModelSelected, trackSimpleYearSelected,
   trackSimpleEstimateStarted, trackEstimateGenerated, trackDetailedModeOpened,
+  trackTermsGateRemovedTestActive, trackFreeEstimateStarted, trackFreeEstimateGenerated,
 } from '../utils/analytics'
 import Navbar from '../components/Navbar'
 import { CarVisual } from '../components/CarSVGs'
@@ -1116,6 +1117,9 @@ export default function TCOCalculator() {
     if (countIncrementedRef.current) return
     countIncrementedRef.current = true
     trackUsage('visit_tco')
+    // No Terms & Conditions gate stands between the visitor and a free estimate —
+    // mark this session as part of the frictionless flow for funnel segmentation.
+    trackTermsGateRemovedTestActive({ sourcePage: '/tco' })
     const newCount = calcCount + 1
     setCalcCount(newCount)
     safeSet(LS_CALC_COUNT, String(newCount))
@@ -1439,6 +1443,7 @@ export default function TCOCalculator() {
       if (value) {
         trackSimpleYearSelected({ year: value, make: selMake, model: selModel, mode })
         trackSimpleEstimateStarted({ make: selMake, model: selModel, year: value, mode })
+        trackFreeEstimateStarted({ make: selMake, model: selModel, year: value, mode })
       }
       setSelYear(value); setSelTrim(''); setOrigMsrp(null)
       // Auto-default to cheapest trim when year is chosen
@@ -1781,6 +1786,11 @@ export default function TCOCalculator() {
       mode,
       hasEV: modelData?.is_ev ?? false,
     })
+    trackFreeEstimateGenerated({
+      make: selMake, model: selModel, year: selYear,
+      mode,
+      hasEV: modelData?.is_ev ?? false,
+    })
   }, [selTrim]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 8. detailed_mode_opened — fires whenever detailedMode transitions false → true.
@@ -1866,6 +1876,15 @@ export default function TCOCalculator() {
             buttonLabel="Start my free estimate ↓"
             onStart={scrollToStart}
           />
+
+          {/* Passive legal notice — no blocking acceptance step before a free estimate.
+              Replaces the old required Terms & Conditions gate. */}
+          <p className="anim-2 mt-3 text-xs text-[var(--text-muted)] leading-relaxed">
+            By continuing, you agree to the{' '}
+            <Link to="/terms" className="text-[var(--accent)] underline hover:brightness-110">Terms of Service</Link>
+            {' '}and{' '}
+            <Link to="/privacy" className="text-[var(--accent)] underline hover:brightness-110">Privacy Policy</Link>.
+          </p>
 
           {/* Simple / Detailed toggle */}
           <div className="anim-2 mt-5 flex flex-col gap-2">

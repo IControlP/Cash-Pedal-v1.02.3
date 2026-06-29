@@ -1,4 +1,4 @@
-import { getSessionId } from '../components/TermsGate'
+import { getSessionId } from './session'
 import { LS_SUB_EMAIL } from '../hooks/useSubscription'
 import { LS_BONUS_EMAIL } from '../hooks/useBonusCredits'
 

@@ -194,6 +194,36 @@ export function trackProCtaClicked({ featureName = '', priceShown = '' } = {}) {
   })
 }
 
+// ── Terms-gate removal A/B test ───────────────────────────────────────────────
+
+// terms_gate_removed_test_active — fires once when a free-estimate tool mounts,
+// marking the visitor as being in the no-T&C-gate experience. Lets us segment
+// the whole funnel (started → generated → pro) for the frictionless flow.
+export function trackTermsGateRemovedTestActive({ sourcePage = '' } = {}) {
+  trackEvent('terms_gate_removed_test_active', {
+    source_page: sourcePage,
+    device_type: getDeviceType(),
+  })
+}
+
+// free_estimate_started — fires when the user begins generating a free estimate
+// (vehicle selection kicks off the computation), with no acceptance step in the way.
+export function trackFreeEstimateStarted({ make = '', model = '', year = '', mode = 'simple' } = {}) {
+  trackEvent('free_estimate_started', {
+    make, model, year, mode,
+    device_type: getDeviceType(),
+  })
+}
+
+// free_estimate_generated — fires once the free estimate is on screen.
+export function trackFreeEstimateGenerated({ make = '', model = '', year = '', mode = 'simple', hasEV = false } = {}) {
+  trackEvent('free_estimate_generated', {
+    make, model, year, mode,
+    has_ev:      hasEV,
+    device_type: getDeviceType(),
+  })
+}
+
 // 11. checkout_started — fires the moment the Stripe checkout session is
 // requested, from either the paywall modal or the /subscribe page.
 export function trackCheckoutStarted({ planType = 'one_time', price = 19 } = {}) {

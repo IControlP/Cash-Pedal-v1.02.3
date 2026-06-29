@@ -80,8 +80,8 @@ export default function Privacy() {
               ['Category', 'What it includes', 'Purpose', 'Legal basis', 'Kept for'],
               [
                 'Consent records',
-                'Session ID, anonymized IP (last octet masked), browser user-agent, checkbox states, terms version, timestamp',
-                'Proof of legal agreement — required to defend against liability claims',
+                'Session ID, anonymized IP (last octet masked), browser user-agent, terms version, timestamp',
+                'Proof of legal agreement (captured when you provide an email, subscribe, or check out) — required to defend against liability claims',
                 'Legal obligation (GDPR Art. 6(1)(c))',
                 'Indefinitely — exempt from erasure under Art. 17(3)(b)',
               ],
@@ -133,8 +133,7 @@ export default function Privacy() {
               strictly functional purposes — no tracking cookies are used.
             </p>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong className="text-white">Terms acceptance</strong> — to avoid showing the consent gate on every visit</li>
-              <li><strong className="text-white">Session ID</strong> — a random UUID generated in your browser, used only to link your consent record to its session</li>
+              <li><strong className="text-white">Session ID</strong> — a random UUID generated in your browser, used to link anonymous activity (analytics, market rankings, and any consent record) to a session</li>
               <li><strong className="text-white">Subscriber email &amp; expiry</strong> — so you stay logged in without a password</li>
               <li><strong className="text-white">Calculator state</strong> — your last vehicle inputs, saved locally for convenience</li>
               <li><strong className="text-white">Usage counters</strong> — to enforce free-tier limits locally</li>
@@ -289,9 +288,9 @@ export default function Privacy() {
           <Section title="10. Changes to this policy">
             <p>
               We may update this Privacy Policy when our practices change. We will update the
-              "Last updated" date at the top. Material changes affecting your rights will be
-              communicated via the Terms acceptance gate (which requires re-acceptance on version
-              change). Your continued use after the updated policy is posted constitutes acceptance.
+              "Last updated" date at the top, and material changes affecting your rights will be
+              reflected here and in our Terms of Service. Your continued use after the updated
+              policy is posted constitutes acceptance.
             </p>
           </Section>
 

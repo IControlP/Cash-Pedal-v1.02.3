@@ -1,4 +1,4 @@
-import { getSessionId } from '../components/TermsGate'
+import { getSessionId } from './session'
 
 // Fire-and-forget market-analytics search event. Recorded when a visitor
 // selects a real make/model in a tool. State is optional — it's only sent

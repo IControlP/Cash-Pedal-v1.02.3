@@ -10,6 +10,7 @@ const links = [
   { to: '/resources', label: 'Resources' },
   { to: '/about', label: 'About' },
   { to: '/privacy', label: 'Privacy Policy' },
+  { to: '/terms', label: 'Terms of Service' },
 ]
 
 export default function Footer() {
@@ -44,6 +45,7 @@ export default function Footer() {
           <span>© {new Date().getFullYear()} Cash Pedal · cashpedal.io</span>
           <div className="flex items-center gap-4">
             <span>Results are estimates only — not financial advice.</span>
+            <Link to="/terms" className="hover:text-[var(--accent)] transition-colors">Terms</Link>
             <Link to="/privacy" className="hover:text-[var(--accent)] transition-colors">Privacy &amp; Data Rights</Link>
           </div>
         </div>

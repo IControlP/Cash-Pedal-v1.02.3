@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getSessionId } from '../components/TermsGate'
+import { getSessionId } from '../utils/session'
 import { safeGet, safeSet } from '../utils/safeStorage'
 
 const BONUS_CHANGED = 'cashpedal_bonus_changed'

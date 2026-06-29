@@ -9,6 +9,7 @@ import Landing from './pages/Landing'
 
 // Every other page is lazy-loaded into its own chunk. This keeps the initial
 // JS bundle small: TCOCalculator alone is ~3 700 lines + vehicles.json (517 KB).
+const TCOFlow                = lazy(() => import('./pages/TCOFlow'))
 const TCOCalculator          = lazy(() => import('./pages/TCOCalculator'))
 const CarSurvey              = lazy(() => import('./pages/CarSurvey'))
 const SalaryCalculator       = lazy(() => import('./pages/SalaryCalculator'))
@@ -46,7 +47,8 @@ export default function App() {
         <Suspense fallback={<PageFallback />}>
           <Routes>
             <Route path="/"           element={<Landing />} />
-            <Route path="/tco"        element={<TCOCalculator />} />
+            <Route path="/tco"        element={<TCOFlow />} />
+            <Route path="/tco-full"   element={<TCOCalculator />} />
             <Route path="/survey"     element={<CarSurvey />} />
             <Route path="/salary"     element={<SalaryCalculator />} />
             <Route path="/compare"    element={<MultiVehicleComparison />} />

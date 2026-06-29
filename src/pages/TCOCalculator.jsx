@@ -3,7 +3,11 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getSessionId } from '../components/TermsGate'
 import { safeUUID } from '../utils/safeId'
 import { safeGet, safeSet } from '../utils/safeStorage'
-import { trackCalculatorStarted, trackCalculatorCompleted } from '../utils/analytics'
+import {
+  trackCalculatorStarted, trackCalculatorCompleted,
+  trackSimpleMakeSelected, trackSimpleModelSelected, trackSimpleYearSelected,
+  trackSimpleEstimateStarted, trackEstimateGenerated, trackDetailedModeOpened,
+} from '../utils/analytics'
 import Navbar from '../components/Navbar'
 import { CarVisual } from '../components/CarSVGs'
 import Footer from '../components/Footer'
@@ -1201,6 +1205,10 @@ export default function TCOCalculator() {
   const [docFeeOverride,   setDocFeeOverride]   = useState(null) // null = use state avg
   const [isCashPurchase,   setIsCashPurchase]   = useState(false)
   const [simpleMode,       setSimpleMode]       = useState(() => safeGet('cashpedal_simple_mode') !== 'false')
+  // Ref so handlePickerChange (a stable useCallback) can read the latest simpleMode
+  // without needing it in its dependency array.
+  const simpleModeRef = useRef(simpleMode)
+  useEffect(() => { simpleModeRef.current = simpleMode }, [simpleMode])
 
   const toggleSimpleMode = () => {
     const next = !simpleMode
@@ -1409,10 +1417,15 @@ export default function TCOCalculator() {
 
   const handlePickerChange = useCallback(async (level, value) => {
     trackFirstInteraction('vehicle_picker')
+    const mode = simpleModeRef.current ? 'simple' : 'detailed'
     if (level === 'make') {
+      // 4. simple_make_selected — user chose a make; model/year/trim reset.
+      if (value) trackSimpleMakeSelected({ make: value, mode })
       setSelMake(value); setSelModel(''); setSelYear(''); setSelTrim(''); setOrigMsrp(null); setVehicleCategory('')
     }
     if (level === 'model') {
+      // 5. simple_model_selected — user chose a model.
+      if (value) trackSimpleModelSelected({ make: selMake, model: value, mode })
       setSelModel(value); setSelYear(''); setSelTrim(''); setOrigMsrp(null)
       // Lease: auto-select the pinned year and cheapest trim
       if (financeMode === 'lease' && value) {
@@ -1421,6 +1434,12 @@ export default function TCOCalculator() {
       }
     }
     if (level === 'year') {
+      // 3. simple_year_selected — user chose a year.
+      // 6. simple_estimate_started — year selection triggers auto-trim → estimate.
+      if (value) {
+        trackSimpleYearSelected({ year: value, make: selMake, model: selModel, mode })
+        trackSimpleEstimateStarted({ make: selMake, model: selModel, year: value, mode })
+      }
       setSelYear(value); setSelTrim(''); setOrigMsrp(null)
       // Auto-default to cheapest trim when year is chosen
       if (value) autoSelectCheapestTrim(selMake, selModel, value)
@@ -1746,16 +1765,32 @@ export default function TCOCalculator() {
     setComparisonCount(updated.length)
   }
 
-  // Fire calculator_completed once per distinct vehicle selection
+  // Fire calculator_completed + estimate_generated once per distinct vehicle selection.
+  // 7. estimate_generated — trim is set, all cost buckets are live on screen.
   useEffect(() => {
     if (!selTrim || hasTrackedDoneRef.current) return
     hasTrackedDoneRef.current = true
+    const mode = simpleModeRef.current ? 'simple' : 'detailed'
     trackCalculatorCompleted({
       vehicleCount:   1,
       hasEV:          modelData?.is_ev ?? false,
       ownershipYears,
     })
+    trackEstimateGenerated({
+      make: selMake, model: selModel, year: selYear,
+      mode,
+      hasEV: modelData?.is_ev ?? false,
+    })
   }, [selTrim]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 8. detailed_mode_opened — fires whenever detailedMode transitions false → true.
+  const prevDetailedModeRef = useRef(false)
+  useEffect(() => {
+    if (detailedMode && !prevDetailedModeRef.current) {
+      trackDetailedModeOpened({ make: selMake, model: selModel, year: selYear })
+    }
+    prevDetailedModeRef.current = detailedMode
+  }, [detailedMode, selMake, selModel, selYear])
 
   // ── Analytics helpers ─────────────────────────────────
   function trackFirstInteraction(entryPoint = 'input') {

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import Hero from '../components/landing/Hero'
 import Journey from '../components/landing/Journey'
@@ -7,8 +8,13 @@ import FAQ from '../components/landing/FAQ'
 import CTAOffer from '../components/landing/CTAOffer'
 import LandingFooter from '../components/landing/LandingFooter'
 import LandingStickyCTA from '../components/landing/LandingStickyCTA'
+import { trackLandingPageView } from '../utils/analytics'
 
 export default function Landing() {
+  // 1. landing_page_view — fires once per landing-page mount so we can segment
+  // paid vs organic traffic and measure funnel entry by device / source.
+  useEffect(() => { trackLandingPageView() }, [])
+
   return (
     <div className="landing-page">
       <div className="bg-glow" />

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useSubscription } from '../hooks/useSubscription'
 import { useBonusCredits, BONUS_CREDITS } from '../hooks/useBonusCredits'
-import { trackUpgradePromptSeen, trackUpgradeClicked, trackEmailUnlockClaimed } from '../utils/analytics'
+import { trackUpgradePromptSeen, trackUpgradeClicked, trackEmailUnlockClaimed, trackProCtaViewed, trackProCtaClicked, trackCheckoutStarted } from '../utils/analytics'
 
 const FEATURES = [
   "See if that car costs $8k more than it looks over 5 years",
@@ -16,7 +16,9 @@ const FEATURES = [
 
 export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocked }) {
   useEffect(() => {
+    // 9. pro_cta_viewed — fires on modal mount to count how many users hit the paywall.
     trackUpgradePromptSeen(feature, cancelPath)
+    trackProCtaViewed({ featureName: feature, triggerLocation: cancelPath })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [email,       setEmail]       = useState('')
@@ -38,7 +40,11 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
   const { claimed, creditsLeft, claimBonus } = useBonusCredits()
 
   async function handleCheckout() {
+    // 10. pro_cta_clicked — user clicked the upgrade button.
+    // 11. checkout_started — Stripe session is about to be created.
     trackUpgradeClicked(feature, '$19')
+    trackProCtaClicked({ featureName: feature, priceShown: '$19' })
+    trackCheckoutStarted({ planType: 'one_time', price: 19 })
     setCheckoutErr('')
     setLoading(true)
     try {

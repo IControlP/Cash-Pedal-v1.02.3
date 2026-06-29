@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { trackEvent } from '../../utils/analytics'
+import { trackEvent, trackHeroCtaClick } from '../../utils/analytics'
 import HeroEntryCard from './HeroEntryCard'
 import { getHeroVariant } from '../../utils/abTest'
 
@@ -64,12 +64,17 @@ export default function Hero() {
               <HeroEntryCard />
             </div>
 
-            {/* Below-fold fallback CTA for visitors who scroll past the card */}
+            {/* Below-fold fallback CTA for visitors who scroll past the card.
+                2. hero_cta_click — ab_variant is included so CTR can be
+                split by A/B test arm alongside the existing landing_cta_click. */}
             <div className="hidden lg:flex hero-cta anim-3">
               <Link
                 to="/tco"
                 className="btn-primary btn-lg"
-                onClick={() => trackEvent('landing_cta_click', { location: 'hero_primary', ab_variant: variant })}
+                onClick={() => {
+                  trackEvent('landing_cta_click', { location: 'hero_primary', ab_variant: variant })
+                  trackHeroCtaClick({ ctaText: copy.cta, ctaLocation: 'hero_primary', abVariant: variant })
+                }}
               >
                 {copy.cta} →
               </Link>

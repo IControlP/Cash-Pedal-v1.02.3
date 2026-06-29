@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import { useSubscription } from '../hooks/useSubscription'
 import { SUVSVG, SedanSVG, getPal } from '../components/CarSVGs'
-import { trackProPurchaseComplete } from '../utils/analytics'
+import { trackProPurchaseComplete, trackCheckoutStarted, trackPurchaseCompleted } from '../utils/analytics'
 
 const INCLUDED = [
   {
@@ -54,7 +54,9 @@ export default function Subscribe() {
       .then(data => {
         if (data.valid) {
           sub.activateFromSession?.(data.email, data.expires)
+          // 12. purchase_completed — Stripe session verified, access unlocked.
           trackProPurchaseComplete(data.purchaseType || 'one_time', 19)
+          trackPurchaseCompleted({ planType: data.purchaseType || 'one_time', pricePaid: 19 })
         }
       })
       .catch(() => {})
@@ -99,6 +101,8 @@ export default function Subscribe() {
   }
 
   async function handleCheckout() {
+    // 11. checkout_started — Stripe checkout session is about to be created.
+    trackCheckoutStarted({ planType: 'one_time', price: 19 })
     setLoading(true)
     try {
       const res = await fetch('/api/create-checkout-session', { method: 'POST' })

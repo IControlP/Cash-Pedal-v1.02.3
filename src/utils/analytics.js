@@ -73,6 +73,7 @@ export function trackCalculatorCompleted({ vehicleCount = 1, hasEV = false, owne
     ownership_years: ownershipYears,
     ab_variant:      getHeroVariant(),
   })
+  fbq('trackCustom', 'CalculatorCompleted', { vehicle_count: vehicleCount })
 }
 
 // Viral loop indicator — user shares a result link
@@ -167,6 +168,7 @@ export function trackEstimateGenerated({ make = '', model = '', year = '', mode 
     has_ev:      hasEV,
     device_type: getDeviceType(),
   })
+  fbq('track', 'ViewContent', { content_name: `${make} ${model} ${year}`.trim(), content_category: 'vehicle_estimate' })
 }
 
 // 8. detailed_mode_opened — fires when the user switches from Simple to Detailed.

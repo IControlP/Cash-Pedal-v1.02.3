@@ -410,7 +410,15 @@ function ResultsDisplay({
         <Link to="/compare" className="flex-1 btn-ghost text-center text-sm justify-center py-3">
           Compare vehicles
         </Link>
-        <Link to="/salary" className="flex-1 btn-ghost text-center text-sm justify-center py-3">
+        <Link
+          to={`/salary?${new URLSearchParams({
+            ...(selMake  && { make:  selMake  }),
+            ...(selModel && { model: selModel }),
+            ...(selYear  && { year:  selYear  }),
+            ...(price    && { price: String(price) }),
+          }).toString()}`}
+          className="flex-1 btn-ghost text-center text-sm justify-center py-3"
+        >
           Affordability check
         </Link>
       </div>

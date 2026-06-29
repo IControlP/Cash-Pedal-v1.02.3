@@ -1,6 +1,13 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { trackEvent } from '../../utils/analytics'
 import HeroEntryCard from './HeroEntryCard'
+import { getHeroVariant } from '../../utils/abTest'
+
+const VARIANTS = {
+  A: { headline: "Can you actually afford this car?",          cta: "Show my true cost" },
+  B: { headline: "Before you buy, see the real 5-year cost",  cta: "Reveal my 5-year cost" },
+}
 
 const TRUST_ITEMS = ['Free to start', 'No signup required', 'Results in under 60 seconds']
 
@@ -12,6 +19,13 @@ const QUICK_START = [
 ]
 
 export default function Hero() {
+  const [variant] = useState(() => getHeroVariant())
+  const copy = VARIANTS[variant]
+
+  useEffect(() => {
+    trackEvent('ab_hero_impression', { ab_variant: variant })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <section className="hero-section">
       <div className="max-w-[1240px] mx-auto px-5 sm:px-7 py-12 lg:py-20">
@@ -27,7 +41,7 @@ export default function Hero() {
             </span>
 
             <h1 className="hero-h font-display anim-1">
-              Can you actually afford this car?
+              {copy.headline}
             </h1>
 
             <p className="hero-sub anim-2">
@@ -55,9 +69,9 @@ export default function Hero() {
               <Link
                 to="/tco"
                 className="btn-primary btn-lg"
-                onClick={() => trackEvent('landing_cta_click', { location: 'hero_primary' })}
+                onClick={() => trackEvent('landing_cta_click', { location: 'hero_primary', ab_variant: variant })}
               >
-                Try the free calculator →
+                {copy.cta} →
               </Link>
             </div>
 

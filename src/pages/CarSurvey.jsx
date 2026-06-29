@@ -194,7 +194,7 @@ export default function CarSurvey() {
             {currentQ > 0 && (
               <button
                 onClick={() => setCurrentQ(q => q - 1)}
-                className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
+                className="text-sm text-[var(--text-muted)] hover:text-white active:opacity-70 transition-colors min-h-[44px] px-3 rounded-lg hover:bg-white/5 flex items-center gap-1"
               >
                 ← Back
               </button>
@@ -336,7 +336,8 @@ export default function CarSurvey() {
               <div className="card">
                 <button
                   onClick={() => setShowAllScores(s => !s)}
-                  className="w-full flex items-center justify-between text-sm font-semibold text-[var(--text-muted)] hover:text-white transition-colors"
+                  aria-expanded={showAllScores}
+                  className="w-full flex items-center justify-between text-sm font-semibold text-[var(--text-muted)] hover:text-white active:opacity-70 transition-colors py-2 rounded-lg hover:bg-white/5"
                 >
                   <span>Full score breakdown</span>
                   <span>{showAllScores ? '▲' : '▼'}</span>

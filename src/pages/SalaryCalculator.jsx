@@ -561,7 +561,8 @@ export default function SalaryCalculator() {
                 ].map(opt => (
                   <button key={opt.value}
                     onClick={() => setMode(opt.value)}
-                    className="flex-1 py-1.5 rounded-md text-sm font-semibold transition-all"
+                    aria-pressed={mode === opt.value}
+                    className="flex-1 py-2 rounded-md text-sm font-semibold transition-all min-h-[44px] active:opacity-70"
                     style={{
                       background: mode === opt.value ? 'var(--accent)' : 'transparent',
                       color: mode === opt.value ? '#000' : 'var(--text-muted)',
@@ -1269,7 +1270,8 @@ export default function SalaryCalculator() {
                     <button
                       key={opt.value}
                       onClick={() => setCarFilterCategory(opt.value)}
-                      className="px-3 py-1.5 rounded-md text-xs font-semibold transition-all"
+                      aria-pressed={carFilterCategory === opt.value}
+                      className="px-3 py-2.5 min-h-[44px] rounded-md text-xs font-semibold transition-all active:opacity-70"
                       style={{
                         background: carFilterCategory === opt.value ? 'var(--accent)' : 'transparent',
                         color: carFilterCategory === opt.value ? '#000' : 'var(--text-muted)',

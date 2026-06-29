@@ -308,7 +308,7 @@ function VehiclePicker({ make, model, year, trim, onChange, onClear, freeLeft, i
       {/* Clear */}
       {make && (
         <button onClick={onClear}
-          className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors text-left w-fit">
+          className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] active:opacity-70 transition-colors text-left w-fit min-h-[44px] flex items-center px-1">
           ✕ Clear selection
         </button>
       )}
@@ -1812,28 +1812,30 @@ export default function TCOCalculator() {
           />
 
           {/* Simple / Detailed toggle */}
-          <div className="anim-2 mt-5 flex items-center gap-3">
-            <div className="flex gap-1 p-1 rounded-lg text-sm"
+          <div className="anim-2 mt-5 flex flex-col gap-2">
+            <div className="flex gap-1 p-1 rounded-lg"
               style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
               {[
-                { value: true,  label: 'Simple',   desc: 'Just the essentials' },
-                { value: false, label: 'Detailed',  desc: 'Full control' },
+                { value: true,  label: 'Simple',   desc: 'Key numbers only' },
+                { value: false, label: 'Detailed',  desc: 'Full input control' },
               ].map(opt => (
                 <button key={String(opt.value)}
                   onClick={() => { setSimpleMode(opt.value); safeSet('cashpedal_simple_mode', String(opt.value)) }}
-                  className="px-4 py-1.5 rounded-md font-semibold transition-all"
+                  aria-pressed={simpleMode === opt.value}
+                  className="flex-1 flex flex-col items-center px-3 py-2 rounded-md font-semibold transition-all min-h-[44px] justify-center"
                   style={{
                     background: simpleMode === opt.value ? 'var(--accent)' : 'transparent',
                     color:      simpleMode === opt.value ? '#000'          : 'var(--text-muted)',
                   }}>
-                  {opt.label}
+                  <span className="text-sm leading-tight">{opt.label}</span>
+                  <span className="text-[10px] font-normal leading-tight mt-0.5 opacity-70">{opt.desc}</span>
                 </button>
               ))}
             </div>
             <p className="text-xs text-[var(--text-muted)]">
               {simpleMode
-                ? 'Showing the key numbers. Switch to Detailed for full control over every input.'
-                : 'All inputs unlocked. Switch to Simple for a cleaner view.'}
+                ? 'Showing essential inputs. Switch to Detailed to unlock tax rate, doc fee, regional demand, mileage, and per-year maintenance.'
+                : 'All inputs unlocked. Switch to Simple for a quicker estimate with fewer fields.'}
             </p>
           </div>
 
@@ -1841,7 +1843,8 @@ export default function TCOCalculator() {
           <div className="anim-2 mt-5 rounded-xl border overflow-hidden"
             style={{ borderColor: 'rgba(200,255,0,0.2)', background: 'rgba(200,255,0,0.03)' }}>
             <button onClick={toggleGuide}
-              className="w-full flex items-center justify-between px-4 py-3 text-left">
+              aria-expanded={showGuide}
+              className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5 active:bg-white/10 transition-colors rounded-t-xl">
               <span className="flex items-center gap-2 text-sm font-semibold text-white">
                 <span aria-hidden>💡</span> How to use this calculator
               </span>
@@ -1999,7 +2002,8 @@ export default function TCOCalculator() {
                           }
                         }
                       }}
-                      className="flex-1 py-1.5 rounded-md text-sm font-semibold transition-all"
+                      aria-pressed={financeMode === opt.value}
+                      className="flex-1 py-2 rounded-md text-sm font-semibold transition-all min-h-[44px]"
                       style={{
                         background: financeMode === opt.value ? 'var(--accent)' : 'transparent',
                         color:      financeMode === opt.value ? '#000' : 'var(--text-muted)',
@@ -2591,7 +2595,8 @@ export default function TCOCalculator() {
                           if (!detailedMode && !(await checkDetailedLimit())) return
                           setDetailedMode(d => !d)
                         }}
-                        className="text-xs px-3 py-1 rounded-lg border transition-colors flex items-center gap-1.5"
+                        aria-pressed={detailedMode}
+                        className="text-xs px-3 py-2 min-h-[44px] rounded-lg border transition-colors flex items-center gap-1.5 active:opacity-70"
                         style={{
                           borderColor: detailedMode ? 'rgba(255,184,0,0.5)' : 'var(--border)',
                           color: detailedMode ? 'var(--accent)' : 'var(--text-muted)',
@@ -2609,7 +2614,8 @@ export default function TCOCalculator() {
                       </button>
                       <button
                         onClick={() => setCustomCosts(c => !c)}
-                        className="text-xs px-3 py-1 rounded-lg border transition-colors"
+                        aria-pressed={customCosts}
+                        className="text-xs px-3 py-2 min-h-[44px] rounded-lg border transition-colors active:opacity-70"
                         style={{
                           borderColor: customCosts ? 'var(--accent)' : 'var(--border)',
                           color: customCosts ? 'var(--accent)' : 'var(--text-muted)',

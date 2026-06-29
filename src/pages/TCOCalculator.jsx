@@ -1238,6 +1238,27 @@ export default function TCOCalculator() {
     } catch { /* ignore corrupt data */ }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Pre-populate vehicle from landing-page entry card (?make=X&model=Y&year=Z)
+  useEffect(() => {
+    const pMake  = searchParams.get('make')
+    const pModel = searchParams.get('model')
+    const pYear  = searchParams.get('year')
+    if (!pMake) return
+    if (VEHICLES[pMake]) {
+      setSelMake(pMake)
+      if (pModel && VEHICLES[pMake][pModel]) {
+        setSelModel(pModel)
+        if (pYear && VEHICLES[pMake][pModel]?.trims_by_year?.[pYear]) {
+          setSelYear(pYear)
+          // Auto-select cheapest trim; runs async so we kick it after state settles
+          setTimeout(() => autoSelectCheapestTrim(pMake, pModel, pYear), 0)
+        }
+      }
+    }
+    // Scroll into the inputs panel so the user lands right at the calculator
+    setTimeout(() => inputsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Derived model data (type, specs, mpg, isEV)
   const modelData = useMemo(() => getModelData(selMake, selModel), [selMake, selModel])
 
@@ -1791,7 +1812,7 @@ export default function TCOCalculator() {
       <main className="flex-1 pt-20 pb-16">
         {/* Header */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 pb-8">
-          <div className="anim-0 mb-2 inline-flex items-center gap-2 text-xs font-semibold text-[var(--accent)] uppercase tracking-wider">
+          <div className="anim-0 mb-2 hidden sm:inline-flex items-center gap-2 text-xs font-semibold text-[var(--accent)] uppercase tracking-wider">
             <span className="w-4 h-px bg-[var(--accent)]" />
             Vehicle TCO Calculator
           </div>

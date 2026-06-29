@@ -1,3 +1,5 @@
+import { getHeroVariant } from './abTest'
+
 const GA_ID = 'G-65PBP0W12S'
 
 // Wraps window.gtag safely — no-ops if the script hasn't loaded yet
@@ -37,7 +39,7 @@ export function trackEvent(eventName, params = {}) {
 
 // Top of funnel — what % of visitors engage with the calculator?
 export function trackCalculatorStarted({ sourcePage = '', entryPoint = '' } = {}) {
-  trackEvent('calculator_started', { source_page: sourcePage, entry_point: entryPoint })
+  trackEvent('calculator_started', { source_page: sourcePage, entry_point: entryPoint, ab_variant: getHeroVariant() })
 }
 
 // Core conversion — user has a full result on screen
@@ -46,6 +48,7 @@ export function trackCalculatorCompleted({ vehicleCount = 1, hasEV = false, owne
     vehicle_count:   vehicleCount,
     has_ev:          hasEV,
     ownership_years: ownershipYears,
+    ab_variant:      getHeroVariant(),
   })
 }
 
@@ -61,7 +64,7 @@ export function trackUpgradePromptSeen(featureName = '', triggerLocation = '') {
 
 // Pre-purchase intent
 export function trackUpgradeClicked(featureName = '', priceShown = '') {
-  trackEvent('upgrade_clicked', { feature_name: featureName, price_shown: priceShown })
+  trackEvent('upgrade_clicked', { feature_name: featureName, price_shown: priceShown, ab_variant: getHeroVariant() })
 }
 
 // Email funnel — lead traded name + email for free Pro calculations

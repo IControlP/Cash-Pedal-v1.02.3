@@ -1,85 +1,71 @@
 import { Link } from 'react-router-dom'
-import { SUVSVG, getPal } from '../CarSVGs'
 import { trackEvent } from '../../utils/analytics'
+import HeroEntryCard from './HeroEntryCard'
+
+const TRUST_ITEMS = ['Free to start', 'No signup required', 'Results in under 60 seconds']
 
 const QUICK_START = [
-  { emoji: '🧮', label: 'TCO Calculator',  sub: 'True 5-yr cost',      to: '/tco' },
-  { emoji: '🎯', label: 'Car Survey',       sub: 'Find your fit',        to: '/survey' },
-  { emoji: '💰', label: 'Salary Check',     sub: '20/4/10 rule',         to: '/salary' },
-  { emoji: '⚖️', label: 'Compare Cars',     sub: 'Side-by-side',         to: '/compare' },
+  { emoji: '🎯', label: 'Car Survey',   sub: 'Find your fit',   to: '/survey'  },
+  { emoji: '💰', label: 'Salary Check', sub: '20/4/10 rule',    to: '/salary'  },
+  { emoji: '⚖️', label: 'Compare Cars', sub: 'Side-by-side',    to: '/compare' },
+  { emoji: '✅', label: 'Checklist',    sub: 'Used car audit',   to: '/checklist' },
 ]
 
 export default function Hero() {
   return (
     <section className="hero-section">
-      <div className="max-w-[1240px] mx-auto px-7 py-20 lg:py-24">
-        <div className="grid lg:grid-cols-[1.1fr_1fr] gap-14 items-center">
-          {/* Copy */}
+      <div className="max-w-[1240px] mx-auto px-5 sm:px-7 py-12 lg:py-20">
+
+        {/* Desktop: two-column. Mobile: single column stacked */}
+        <div className="grid lg:grid-cols-[1.15fr_1fr] gap-10 lg:gap-16 items-center">
+
+          {/* ── Left: copy ── */}
           <div>
             <span className="eyebrow anim-0">
               <span className="dot" />
               The car-buying decision that funds — or drains — your future
             </span>
+
             <h1 className="hero-h font-display anim-1">
-              Know what you're actually agreeing to
+              Can you actually afford this car?
             </h1>
+
             <p className="hero-sub anim-2">
-              See the true 5-year cost of any car — financing, insurance, fuel, depreciation, maintenance — before you sign anything.
+              Most buyers only compare the monthly payment. Cash Pedal shows the true
+              5-year cost — financing, insurance, fuel, maintenance and depreciation — before you buy.
             </p>
-            <div className="hero-cta anim-2">
-              <Link to="/tco" className="btn-primary btn-lg"
-                onClick={() => trackEvent('landing_cta_click', { location: 'hero_primary' })}>
+
+            {/* Trust line */}
+            <div className="hero-meta anim-2">
+              {TRUST_ITEMS.map((item, i) => (
+                <>
+                  {i > 0 && <span key={`dot-${i}`}>·</span>}
+                  <span key={item}>{item}</span>
+                </>
+              ))}
+            </div>
+
+            {/* Mobile: entry card sits here, right below the trust line */}
+            <div className="lg:hidden anim-3 mt-6">
+              <HeroEntryCard />
+            </div>
+
+            {/* Below-fold fallback CTA for visitors who scroll past the card */}
+            <div className="hidden lg:flex hero-cta anim-3">
+              <Link
+                to="/tco"
+                className="btn-primary btn-lg"
+                onClick={() => trackEvent('landing_cta_click', { location: 'hero_primary' })}
+              >
                 Try the free calculator →
               </Link>
-              <Link to="/subscribe" className="btn-ghost btn-lg"
-                onClick={() => trackEvent('landing_cta_click', { location: 'hero_subscribe' })}>
-                Get full access — $19
-              </Link>
-            </div>
-            <div className="hero-meta anim-3">
-              <span>Free to start</span>
-              <span>·</span>
-              <span>No signup required</span>
-              <span>·</span>
-              <span>Results in under 2 min</span>
             </div>
 
-            {/* Mobile-only cost teaser — tappable so a visitor's instinct to poke
-                at these cards leads into the calculator instead of being a dead click. */}
-            <Link
-              to="/tco"
-              onClick={() => trackEvent('landing_cta_click', { location: 'hero_mobile_teaser' })}
-              className="lg:hidden anim-3 mt-6 block active:opacity-80 transition-opacity"
-              aria-label="Open the free TCO calculator"
-            >
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { label: 'Sticker price',       val: '$34,500', dim: true  },
-                  { label: 'Real 5-yr cost',       val: '$61,200', accent: true },
-                  { label: 'Hidden costs',         val: '$26,700', warn: true  },
-                  { label: 'Right car saves',      val: '$9,150',  green: true  },
-                ].map(({ label, val, dim, accent, warn, green }) => (
-                  <div key={label} className="rounded-xl border px-3 py-2.5"
-                    style={{
-                      borderColor: accent ? 'rgba(255,184,0,0.35)' : green ? 'rgba(95,224,184,0.3)' : 'var(--border)',
-                      background:  accent ? 'rgba(255,184,0,0.05)'  : green ? 'rgba(95,224,184,0.05)' : 'rgba(255,255,255,0.02)',
-                    }}>
-                    <p className="text-[9px] uppercase tracking-widest font-semibold text-[var(--text-muted)] mb-0.5">{label}</p>
-                    <p className={`font-display font-bold text-base leading-tight ${
-                      accent ? 'text-[var(--accent)]' : green ? 'text-[var(--success)]' : warn ? 'text-[#f87171]' : 'text-white/50 line-through'
-                    }`}>{val}</p>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-2 text-xs font-semibold text-center" style={{ color: 'var(--accent)' }}>
-                Tap to calculate your car’s real cost →
-              </p>
-            </Link>
-
-            {/* Quick-start tool chips */}
+            {/* Quick-start tool chips — secondary, below the fold on mobile */}
             <div className="anim-3 mt-8">
-              <p className="text-[11px] uppercase tracking-widest font-semibold mb-3" style={{ color: 'var(--text-dim)' }}>
-                Jump straight to a tool
+              <p className="text-[11px] uppercase tracking-widest font-semibold mb-3"
+                style={{ color: 'var(--text-dim)' }}>
+                More free tools
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {QUICK_START.map(({ emoji, label, sub, to }) => (
@@ -98,43 +84,33 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Annotated hero car — hidden below lg where grid collapses.
-              Wrapped in a link so a click anywhere on the visual (a natural
-              target) opens the calculator rather than going nowhere. */}
-          <Link
-            to="/tco"
-            onClick={() => trackEvent('landing_cta_click', { location: 'hero_visual' })}
-            className="hero-visual anim-1 hidden lg:block cursor-pointer"
-            aria-label="Open the free TCO calculator"
-          >
-            <div className="hero-car-wrap">
-              <SUVSVG pal={getPal('Rivian')} isEV isLarge />
-            </div>
+          {/* ── Right: entry card (desktop only) ── */}
+          <div className="hidden lg:block anim-1">
+            <HeroEntryCard />
 
-            <div className="cost-card" style={{ top: '4%', left: '0%' }}>
-              <div className="cost-label">What the dealer shows</div>
-              <div className="cost-val muted">$48,500</div>
-              <div className="cost-delta">Sticker price</div>
+            {/* Annotated cost teaser below the card on desktop */}
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              {[
+                { label: 'Sticker price',  val: '$34,500', dim: true    },
+                { label: 'Real 5-yr cost', val: '$61,200', accent: true  },
+                { label: 'Hidden costs',   val: '$26,700', warn: true    },
+                { label: 'Right car saves',val: '$9,150',  green: true   },
+              ].map(({ label, val, dim, accent, warn, green }) => (
+                <div key={label}
+                  className="rounded-xl border px-3 py-2.5"
+                  style={{
+                    borderColor: accent ? 'rgba(255,184,0,0.35)'    : green ? 'rgba(95,224,184,0.3)' : 'var(--border)',
+                    background:  accent ? 'rgba(255,184,0,0.05)'    : green ? 'rgba(95,224,184,0.05)' : 'rgba(255,255,255,0.02)',
+                  }}>
+                  <p className="text-[9px] uppercase tracking-widest font-semibold text-[var(--text-muted)] mb-0.5">{label}</p>
+                  <p className={`font-display font-bold text-base leading-tight ${
+                    accent ? 'text-[var(--accent)]' : green ? 'text-[var(--success)]' : warn ? 'text-[#f87171]' : 'text-white/50 line-through'
+                  }`}>{val}</p>
+                </div>
+              ))}
             </div>
+          </div>
 
-            <div className="cost-card" style={{ top: '6%', right: '0%' }}>
-              <div className="cost-label">Hidden 5-yr drain</div>
-              <div className="cost-val">$28,200</div>
-              <div className="cost-delta">Costs they don't mention</div>
-            </div>
-
-            <div className="cost-card cost-card--gold" style={{ bottom: '14%', left: '-4%' }}>
-              <div className="cost-label">Real 5-yr cost of this car</div>
-              <div className="cost-val gold">$76,700</div>
-              <div className="cost-delta up">The honest number</div>
-            </div>
-
-            <div className="cost-card cost-card--green" style={{ bottom: '2%', right: '-2%' }}>
-              <div className="cost-label">Picking the right car saves</div>
-              <div className="cost-val green">$9,150</div>
-              <div className="cost-delta up">= $49,700 in 25 years at 7%</div>
-            </div>
-          </Link>
         </div>
       </div>
     </section>

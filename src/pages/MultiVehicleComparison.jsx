@@ -77,7 +77,8 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
         />
         {canRemove && (
           <button onClick={onRemove}
-            className="text-[var(--text-muted)] hover:text-red-400 transition-colors text-lg leading-none">
+            aria-label="Remove vehicle"
+            className="text-[var(--text-muted)] hover:text-red-400 active:opacity-70 transition-colors text-lg leading-none w-10 h-10 flex items-center justify-center rounded-lg hover:bg-red-500/10">
             ×
           </button>
         )}
@@ -111,7 +112,8 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
           ].map(opt => (
             <button key={String(opt.value)}
               onClick={() => onChange({ ...vehicle, isLease: opt.value })}
-              className="flex-1 py-1 rounded-md text-xs font-semibold transition-all"
+              aria-pressed={vehicle.isLease === opt.value}
+              className="flex-1 py-2 rounded-md text-xs font-semibold transition-all min-h-[40px] active:opacity-70"
               style={{
                 background: vehicle.isLease === opt.value ? color : 'transparent',
                 color:      vehicle.isLease === opt.value ? '#000' : 'var(--text-muted)',
@@ -569,7 +571,8 @@ export default function MultiVehicleComparison() {
               {RANK_PARAMS.map(p => (
                 <button key={p.key}
                   onClick={() => toggleRankParam(p.key)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all"
+                  aria-pressed={activeRankParams[p.key]}
+                  className="flex items-center gap-2 px-3 py-2.5 min-h-[44px] rounded-lg border text-xs font-semibold transition-all active:opacity-70"
                   style={{
                     borderColor: activeRankParams[p.key] ? 'rgba(255,184,0,0.5)' : 'var(--border)',
                     color:       activeRankParams[p.key] ? 'var(--accent)' : 'var(--text-muted)',

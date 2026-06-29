@@ -355,8 +355,17 @@ export default function CarBuyingChecklist() {
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
                   <input
                     type="number"
+                    min={0}
+                    max={500000}
+                    step={100}
                     value={vehicleInfo.price}
-                    onChange={e => { setPriceSource('user'); setVehicleInfo(v => ({ ...v, price: e.target.value })) }}
+                    onChange={e => {
+                      const val = e.target.value
+                      if (val === '' || Number(val) >= 0) {
+                        setPriceSource('user')
+                        setVehicleInfo(v => ({ ...v, price: val }))
+                      }
+                    }}
                     placeholder="18,000"
                     className="input-field"
                     style={{ paddingLeft: '1.75rem' }}
@@ -706,10 +715,11 @@ export default function CarBuyingChecklist() {
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors shrink-0 ${
+                aria-pressed={activeTab === key}
+                className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors shrink-0 min-h-[44px] active:opacity-70 ${
                   activeTab === key
                     ? 'bg-[var(--accent-muted)] text-[var(--accent)]'
-                    : 'text-[var(--text-muted)] hover:text-white'
+                    : 'text-[var(--text-muted)] hover:text-white hover:bg-white/5'
                 }`}
               >
                 {label}

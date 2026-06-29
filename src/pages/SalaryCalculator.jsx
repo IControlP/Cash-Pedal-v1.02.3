@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { safeGet, safeSet } from '../utils/safeStorage'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import NextStep from '../components/NextStep'
@@ -189,6 +189,32 @@ export default function SalaryCalculator() {
 
   // Anonymous first-party usage tracking — once per page load
   useEffect(() => { trackUsage('visit_salary') }, [])
+
+  // Pre-fill from TCOFlow query params (?make=X&model=Y&year=Z&price=N)
+  const [searchParams] = useSearchParams()
+  useEffect(() => {
+    const qMake  = searchParams.get('make')
+    const qModel = searchParams.get('model')
+    const qYear  = searchParams.get('year')
+    const qPrice = searchParams.get('price')
+
+    if (!qMake || !VEHICLES[qMake]) return
+
+    const hasModel = qModel && VEHICLES[qMake]?.[qModel]
+
+    if (hasModel) setSelModel(qModel)
+    if (qYear)    setSelYear(qYear)
+    setSelMake(qMake)
+
+    if (qPrice) {
+      const p = parseInt(qPrice, 10)
+      if (!isNaN(p) && p > 0) setVehiclePrice(p)
+    }
+
+    // Enable pro mode so the vehicle picker is shown and used in cost calculations
+    if (hasModel) setProMode(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // run once on mount
 
   // Finance mode
   const [mode, setMode] = useState('buy')

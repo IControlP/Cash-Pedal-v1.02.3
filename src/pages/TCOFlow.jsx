@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import VEHICLES from '../data/vehicles.json'
@@ -410,7 +410,15 @@ function ResultsDisplay({
         <Link to="/compare" className="flex-1 btn-ghost text-center text-sm justify-center py-3">
           Compare vehicles
         </Link>
-        <Link to="/salary" className="flex-1 btn-ghost text-center text-sm justify-center py-3">
+        <Link
+          to={`/salary?${new URLSearchParams({
+            ...(selMake  && { make:  selMake  }),
+            ...(selModel && { model: selModel }),
+            ...(selYear  && { year:  selYear  }),
+            ...(price    && { price: String(price) }),
+          }).toString()}`}
+          className="flex-1 btn-ghost text-center text-sm justify-center py-3"
+        >
           Affordability check
         </Link>
       </div>
@@ -590,6 +598,7 @@ function ResultsDisplay({
 
 // ── Main component ─────────────────────────────────────────
 export default function TCOFlow() {
+  const [searchParams] = useSearchParams()
   const [step, setStep] = useState('vehicle')
 
   // Step 1 — vehicle
@@ -615,6 +624,48 @@ export default function TCOFlow() {
   const [fuelPriceOverride,setFuelPriceOverride]= useState('')
 
   const hasTrackedStartRef = useRef(false)
+
+  // Pre-fill from landing-page query params (?make=X&model=Y&year=Z)
+  useEffect(() => {
+    const qMake  = searchParams.get('make')
+    const qModel = searchParams.get('model')
+    const qYear  = searchParams.get('year')
+
+    if (!qMake || !VEHICLES[qMake]) return
+
+    const hasModel = qModel && VEHICLES[qMake]?.[qModel]
+    const hasYear  = qYear  && hasModel && VEHICLES[qMake]?.[qModel]?.trims_by_year?.[qYear] !== undefined
+
+    setSelMake(qMake)
+    if (hasModel) setSelModel(qModel)
+    if (qYear)    setSelYear(qYear)
+
+    if (hasModel && qYear) {
+      // Compute price immediately so we can skip straight to loading
+      const avg = getAvgMSRP(qMake, qModel, qYear)
+      if (avg) {
+        const vehicleAge = Math.max(0, new Date().getFullYear() - parseInt(qYear))
+        if (vehicleAge === 0) {
+          setPrice(avg)
+          setIsNew(true)
+        } else {
+          const used = Math.round(estimateCurrentValue(avg, qMake, qModel, vehicleAge) / 500) * 500
+          setPrice(used || avg)
+          setIsNew(false)
+        }
+        setPriceEdited(false)
+        hasTrackedStartRef.current = true
+        trackCalculatorStarted({ source_page: '/tco', entry_point: 'hero_card' })
+        setStep('loading')
+      } else {
+        // No MSRP data — land on purchase step so user can enter price
+        setStep('purchase')
+      }
+    } else if (hasModel) {
+      setStep('purchase')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // intentionally run once on mount
 
   // Derived vehicle data
   const modelData    = VEHICLES[selMake]?.[selModel] ?? null

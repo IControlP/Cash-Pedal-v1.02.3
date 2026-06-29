@@ -360,6 +360,11 @@ function ResultsDisplay({
 
       {/* Hero total */}
       <div className="text-center mb-8 pt-4">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs mb-3"
+          style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)', color: '#4ade80' }}>
+          <span>✓</span>
+          <span>Trusted by car shoppers across the US</span>
+        </div>
         <p className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-widest mb-2">
           Your estimated 5-year ownership cost
         </p>

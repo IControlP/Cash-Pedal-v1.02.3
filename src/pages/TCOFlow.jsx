@@ -14,7 +14,8 @@ import {
   trackSimpleMakeSelected, trackSimpleModelSelected, trackSimpleYearSelected,
   trackSimpleEstimateStarted, trackFreeEstimateStarted,
   trackFreeEstimateGenerated, trackEstimateGenerated, trackCalculatorCompleted,
-  trackCalculatorStarted,
+  trackCalculatorStarted, trackEstimateViewed, trackPersonalizationExpanded,
+  trackPersonalizationCompleted,
 } from '../utils/analytics'
 import { safeGet, safeSet } from '../utils/safeStorage'
 
@@ -239,8 +240,9 @@ function ProgressBar({ step }) {
 // ── Loading animation ──────────────────────────────────────
 const LOADING_STEPS = [
   'Looking up vehicle specifications...',
-  'Estimating depreciation...',
-  'Calculating fuel costs...',
+  'Calculating depreciation...',
+  'Estimating maintenance costs...',
+  'Estimating fuel costs...',
   'Estimating insurance...',
   'Building your ownership report...',
 ]
@@ -250,14 +252,14 @@ function LoadingScreen({ onComplete }) {
 
   useEffect(() => {
     const timers = LOADING_STEPS.map((_, i) =>
-      setTimeout(() => setDoneCount(i + 1), 280 * (i + 1))
+      setTimeout(() => setDoneCount(i + 1), 250 * (i + 1))
     )
-    const done = setTimeout(onComplete, 280 * LOADING_STEPS.length + 400)
+    const done = setTimeout(onComplete, 250 * LOADING_STEPS.length + 400)
     return () => { timers.forEach(clearTimeout); clearTimeout(done) }
   }, [onComplete])
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-16 flex flex-col items-center gap-8">
+    <div className="max-w-xl mx-auto px-4 py-16 flex flex-col items-center gap-8 anim-0">
       <div>
         <div
           className="w-14 h-14 rounded-full mx-auto mb-5 flex items-center justify-center"
@@ -280,8 +282,12 @@ function LoadingScreen({ onComplete }) {
           return (
             <div
               key={label}
-              className="flex items-center gap-3 transition-all duration-300"
-              style={{ opacity: doneCount >= i ? 1 : 0.3 }}
+              className="flex items-center gap-3"
+              style={{
+                opacity: doneCount >= i ? 1 : 0.25,
+                transform: doneCount >= i ? 'translateY(0)' : 'translateY(6px)',
+                transition: 'opacity 0.35s ease, transform 0.35s ease',
+              }}
             >
               <div
                 className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-xs font-bold transition-all duration-300"
@@ -350,14 +356,27 @@ function ResultsDisplay({
   ]
 
   return (
-    <div className="max-w-xl mx-auto px-4 pb-16">
+    <div className="max-w-xl mx-auto px-4 pb-16 anim-0">
 
       {/* Hero total */}
       <div className="text-center mb-8 pt-4">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs mb-3"
+          style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)', color: '#4ade80' }}>
+          <span>✓</span>
+          <span>Trusted by car shoppers across the US</span>
+        </div>
         <p className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-widest mb-2">
-          Estimated 5-Year Ownership Cost
+          Your estimated 5-year ownership cost
         </p>
-        <div className="font-display font-extrabold text-5xl sm:text-6xl text-white mb-1">
+        <div
+          className="font-display font-extrabold text-5xl sm:text-6xl mb-1"
+          style={{
+            background: 'linear-gradient(135deg, #ffffff 20%, #FFE4A0 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
+        >
           {formatCurrency(total)}
         </div>
         <p className="text-[var(--text-muted)] text-sm">
@@ -372,6 +391,15 @@ function ResultsDisplay({
           <span className="text-[var(--text-muted)]">·</span>
           <span className="text-[var(--text-muted)]">Monthly Payment</span>
           <span className="font-bold" style={{ color: 'var(--accent)' }}>{formatCurrency(monthlyPayment)}</span>
+        </div>
+
+        {/* Trust lines */}
+        <p className="text-xs text-[var(--text-muted)] mt-3">
+          Based on national ownership averages for your selected vehicle.
+        </p>
+        <div className="mt-2 px-4 py-2.5 rounded-xl text-sm leading-relaxed text-left"
+          style={{ background: 'rgba(255,184,0,0.05)', border: '1px solid rgba(255,184,0,0.12)' }}>
+          Most buyers only compare the monthly payment. You've now seen what this car is likely to cost over the next five years.
         </div>
       </div>
 
@@ -397,13 +425,32 @@ function ResultsDisplay({
         ))}
       </div>
 
-      {/* Defaults notice */}
-      <p className="text-xs text-[var(--text-muted)] text-center mb-6 leading-relaxed">
-        {isPersonalised
-          ? 'Estimate updated with your details.'
-          : 'This estimate uses national average ownership assumptions.'
-        }
-      </p>
+      {/* Assumptions card */}
+      <div className="rounded-xl border p-4 mb-6" style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'var(--border)' }}>
+        <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--text-muted)' }}>
+          This estimate is based on:
+        </p>
+        <div className="flex flex-col gap-1.5 mb-3">
+          {[
+            'Average financing (6.9% APR, 10% down, 60 months)',
+            'National insurance averages for your vehicle class',
+            'Average annual mileage (12,000 miles/year)',
+            'National average fuel prices',
+            'Factory maintenance schedule',
+          ].map(item => (
+            <div key={item} className="flex items-start gap-2">
+              <span className="shrink-0 text-xs mt-0.5" style={{ color: '#4ade80' }}>✓</span>
+              <span className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>{item}</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs font-semibold border-t pt-3" style={{ borderColor: 'rgba(255,255,255,0.06)', color: 'var(--text)' }}>
+          {isPersonalised
+            ? 'Your customizations have been applied above.'
+            : 'Want a more accurate estimate? Personalize your financing, location, and driving habits below.'
+          }
+        </p>
+      </div>
 
       {/* CTA to full calculator */}
       <div className="flex gap-3 mb-8">
@@ -623,7 +670,8 @@ export default function TCOFlow() {
   const [annualMileage,    setAnnualMileage]    = useState(DEFAULT_ANNUAL_MILEAGE)
   const [fuelPriceOverride,setFuelPriceOverride]= useState('')
 
-  const hasTrackedStartRef = useRef(false)
+  const hasTrackedStartRef           = useRef(false)
+  const hasTrackedPersonalizationRef = useRef(false)
 
   // Pre-fill from landing-page query params (?make=X&model=Y&year=Z)
   useEffect(() => {
@@ -821,12 +869,30 @@ export default function TCOFlow() {
     trackEstimateGenerated({ make: selMake, model: selModel, year: selYear, mode: 'flow', hasEV: isEV })
     trackFreeEstimateGenerated({ make: selMake, model: selModel, year: selYear, mode: 'flow', hasEV: isEV })
     trackCalculatorCompleted({ vehicleCount: 1, hasEV: isEV, ownershipYears: DEFAULT_OWNERSHIP_YRS })
+    trackEstimateViewed({ make: selMake, model: selModel, year: selYear })
   }
 
   const isStep1Complete = !!(selYear && selMake && selModel)
   const isPersonalised  = zipCode !== '' || downPct !== DEFAULT_DOWN_PCT * 100
     || apr !== DEFAULT_APR || loanTerm !== DEFAULT_LOAN_TERM
     || annualMileage !== DEFAULT_ANNUAL_MILEAGE || fuelPriceOverride !== ''
+
+  // Fire personalization_completed once when user first adjusts any setting
+  useEffect(() => {
+    if (isPersonalised && !hasTrackedPersonalizationRef.current) {
+      hasTrackedPersonalizationRef.current = true
+      trackPersonalizationCompleted({ make: selMake, model: selModel, year: selYear })
+    }
+  }, [isPersonalised, selMake, selModel, selYear])
+
+  const handleTogglePersonalize = useCallback(() => {
+    setShowPersonalize(prev => {
+      if (!prev) {
+        trackPersonalizationExpanded({ make: selMake, model: selModel, year: selYear })
+      }
+      return !prev
+    })
+  }, [selMake, selModel, selYear])
 
   // ── Render ──────────────────────────────────────────────
   return (
@@ -857,7 +923,7 @@ export default function TCOFlow() {
 
         {/* ── Step 1: Vehicle ── */}
         {step === 'vehicle' && (
-          <div className="max-w-xl mx-auto px-4 pb-12">
+          <div className="max-w-xl mx-auto px-4 pb-12 anim-0">
             <div className="card flex flex-col gap-5">
               <div>
                 <h2 className="font-display font-bold text-white text-xl mb-0.5">
@@ -948,7 +1014,7 @@ export default function TCOFlow() {
 
         {/* ── Step 2: Purchase info ── */}
         {step === 'purchase' && (
-          <div className="max-w-xl mx-auto px-4 pb-12">
+          <div className="max-w-xl mx-auto px-4 pb-12 anim-0">
             <div className="card flex flex-col gap-5">
               <div>
                 <p className="text-xs text-[var(--text-muted)] mb-1 font-semibold">
@@ -1076,7 +1142,7 @@ export default function TCOFlow() {
             futureValue={costs.futureValue}
             isPersonalised={isPersonalised}
             showPersonalize={showPersonalize}
-            onTogglePersonalize={() => setShowPersonalize(p => !p)}
+            onTogglePersonalize={handleTogglePersonalize}
             zipCode={zipCode} onZipChange={handleZipChange}
             zipLabel={zipLabel} zipError={zipError}
             downPct={downPct} onDownPct={setDownPct}

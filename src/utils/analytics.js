@@ -247,3 +247,21 @@ export function trackPurchaseCompleted({ planType = 'one_time', pricePaid = 19 }
   // Meta Pixel — deduplication handled by Stripe session ID on the server
   fbq('track', 'Purchase', { value: pricePaid, currency: 'USD' })
 }
+
+// 13. estimate_viewed — fires when the results screen first appears.
+// Lets us measure how many visitors who start the flow actually see an estimate.
+export function trackEstimateViewed({ make = '', model = '', year = '' } = {}) {
+  trackEvent('estimate_viewed', { make, model, year, device_type: getDeviceType() })
+}
+
+// 14. personalization_expanded — fires when the user opens the personalize panel.
+// Indicates interest in a more accurate estimate; high-intent signal.
+export function trackPersonalizationExpanded({ make = '', model = '', year = '' } = {}) {
+  trackEvent('personalization_expanded', { make, model, year, device_type: getDeviceType() })
+}
+
+// 15. personalization_completed — fires once when any personalization value is
+// first changed. Separates users who glance at the panel from those who act on it.
+export function trackPersonalizationCompleted({ make = '', model = '', year = '' } = {}) {
+  trackEvent('personalization_completed', { make, model, year, device_type: getDeviceType() })
+}

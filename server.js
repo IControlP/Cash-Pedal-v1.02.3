@@ -7,6 +7,7 @@ import crypto from 'crypto'
 import Stripe from 'stripe'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
+import compression from 'compression'
 
 const { Pool } = pg
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -178,6 +179,11 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
   }
 })
 
+// ── Gzip compression ─────────────────────────────────
+// Applied before all routes so both API JSON and static assets are compressed.
+// Skips already-compressed content types (images, video) automatically.
+app.use(compression())
+
 // ── Security headers ──────────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: {
@@ -197,7 +203,7 @@ app.use(helmet({
         "https://www.googletagmanager.com",
         "https://connect.facebook.net",
       ],
-      styleSrc:                ["'self'", "'unsafe-inline'"],
+      styleSrc:                ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       imgSrc:                  [
         "'self'",
         "data:",
@@ -208,7 +214,7 @@ app.use(helmet({
         "https://stats.g.doubleclick.net", // GA4 Google Signals / Ads beacons
         "https://www.facebook.com",
       ],
-      fontSrc:                 ["'self'"],
+      fontSrc:                 ["'self'", "https://fonts.gstatic.com"],
       connectSrc:              [
         "'self'",
         "https://*.clarity.ms",
@@ -1948,7 +1954,17 @@ app.get('/api/electricity-rate', async (req, res) => {
 })
 
 // ── Serve Vite build ──────────────────────────────────
-app.use(express.static(join(__dirname, 'dist')))
+app.use(express.static(join(__dirname, 'dist'), {
+  // Long-lived cache for hashed assets (JS chunks, CSS). index.html uses
+  // no-cache so browsers always revalidate and pick up new deployments.
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache')
+    } else if (/\.(js|css|woff2?|svg|png|jpg|webp|avif)$/.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+    }
+  },
+}))
 app.get('*', (_req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'))
 })

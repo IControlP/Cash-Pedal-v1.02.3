@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Fallback font faces to reduce CLS on web-font swap ──────────────────
+   These @font-face rules define synthetic fallback fonts that adjust the
+   metrics of the system sans-serif to closely match Syne and Plus Jakarta
+   Sans. When the real fonts arrive and swap in, text reflow is minimal.  */
+@font-face {
+  font-family: 'Syne Fallback';
+  src: local('Arial');
+  size-adjust: 96%;
+  ascent-override: 98%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Jakarta Fallback';
+  src: local('Arial');
+  size-adjust: 97%;
+  ascent-override: 95%;
+  descent-override: 21%;
+  line-gap-override: 0%;
+}
+
 :root {
   --accent: #FFB800;
   --accent-dim: #e0a000;
@@ -34,7 +55,7 @@ html {
 body {
   background-color: var(--bg);
   color: var(--text);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Jakarta Fallback', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
@@ -75,7 +96,7 @@ label {
 /* ── Typography ───────────────────────────────────── */
 
 .font-display {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Syne', 'Syne Fallback', sans-serif;
 }
 
 /* ── Reusable components ──────────────────────────── */

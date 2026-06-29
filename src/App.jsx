@@ -1,26 +1,35 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { trackPageView } from './utils/analytics'
-import Landing from './pages/Landing'
-import TCOCalculator from './pages/TCOCalculator'
-import CarSurvey from './pages/CarSurvey'
-import SalaryCalculator from './pages/SalaryCalculator'
-import MultiVehicleComparison from './pages/MultiVehicleComparison'
-import CarBuyingChecklist from './pages/CarBuyingChecklist'
-import WheelZard from './pages/WheelZard'
-import Resources from './pages/Resources'
-import About from './pages/About'
-import Subscribe from './pages/Subscribe'
-import Privacy from './pages/Privacy'
-import Blog from './pages/Blog'
-import BlogPost from './pages/BlogPost'
-import NotFound from './pages/NotFound'
 import TermsGate, { TERMS_VERSION, LS_TERMS_ACCEPTED, LS_TERMS_VERSION } from './components/TermsGate'
 import ErrorBoundary from './components/ErrorBoundary'
 import { safeGet, safeSessionGet, safeSessionSet } from './utils/safeStorage'
 
-// Lazy-loaded so Recharts ships in its own chunk and stays out of the main bundle.
-const MarketAnalytics = lazy(() => import('./pages/MarketAnalytics'))
+// Landing stays in the main bundle — it's the most-visited route and
+// keeping it eager gives the fastest possible first paint on '/'.
+import Landing from './pages/Landing'
+
+// Every other page is lazy-loaded into its own chunk. This keeps the initial
+// JS bundle small: TCOCalculator alone is ~3 700 lines + vehicles.json (517 KB).
+const TCOCalculator          = lazy(() => import('./pages/TCOCalculator'))
+const CarSurvey              = lazy(() => import('./pages/CarSurvey'))
+const SalaryCalculator       = lazy(() => import('./pages/SalaryCalculator'))
+const MultiVehicleComparison = lazy(() => import('./pages/MultiVehicleComparison'))
+const CarBuyingChecklist     = lazy(() => import('./pages/CarBuyingChecklist'))
+const WheelZard              = lazy(() => import('./pages/WheelZard'))
+const Resources              = lazy(() => import('./pages/Resources'))
+const About                  = lazy(() => import('./pages/About'))
+const Subscribe              = lazy(() => import('./pages/Subscribe'))
+const Privacy                = lazy(() => import('./pages/Privacy'))
+const Blog                   = lazy(() => import('./pages/Blog'))
+const BlogPost               = lazy(() => import('./pages/BlogPost'))
+const NotFound               = lazy(() => import('./pages/NotFound'))
+const MarketAnalytics        = lazy(() => import('./pages/MarketAnalytics'))
+
+// Full-screen blank while a page chunk loads — no spinner avoids CLS.
+const PageFallback = () => (
+  <div style={{ minHeight: '100vh', background: 'var(--bg)' }} />
+)
 
 function PageViewTracker() {
   const location = useLocation()
@@ -53,27 +62,25 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <PageViewTracker />
-        <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/tco"       element={<ToolRoute element={<TCOCalculator />} />} />
-        <Route path="/survey"    element={<ToolRoute element={<CarSurvey />} />} />
-        <Route path="/salary"    element={<ToolRoute element={<SalaryCalculator />} />} />
-        <Route path="/compare"   element={<ToolRoute element={<MultiVehicleComparison />} />} />
-        <Route path="/checklist" element={<ToolRoute element={<CarBuyingChecklist />} />} />
-        <Route path="/wheelzard" element={<ToolRoute element={<WheelZard />} />} />
-        <Route path="/resources" element={<Resources />} />
-        <Route path="/market"    element={
-          <Suspense fallback={<div className="min-h-screen bg-[var(--bg)]" />}>
-            <MarketAnalytics />
-          </Suspense>
-        } />
-        <Route path="/about"     element={<About />} />
-        <Route path="/privacy"   element={<Privacy />} />
-        <Route path="/subscribe" element={<Subscribe />} />
-        <Route path="/blog"      element={<Blog />} />
-        <Route path="/blog/:slug" element={<BlogPost />} />
-        <Route path="*"          element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={<PageFallback />}>
+          <Routes>
+            <Route path="/"           element={<Landing />} />
+            <Route path="/tco"        element={<ToolRoute element={<TCOCalculator />} />} />
+            <Route path="/survey"     element={<ToolRoute element={<CarSurvey />} />} />
+            <Route path="/salary"     element={<ToolRoute element={<SalaryCalculator />} />} />
+            <Route path="/compare"    element={<ToolRoute element={<MultiVehicleComparison />} />} />
+            <Route path="/checklist"  element={<ToolRoute element={<CarBuyingChecklist />} />} />
+            <Route path="/wheelzard"  element={<ToolRoute element={<WheelZard />} />} />
+            <Route path="/resources"  element={<Resources />} />
+            <Route path="/market"     element={<MarketAnalytics />} />
+            <Route path="/about"      element={<About />} />
+            <Route path="/privacy"    element={<Privacy />} />
+            <Route path="/subscribe"  element={<Subscribe />} />
+            <Route path="/blog"       element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="*"           element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </ErrorBoundary>
   )

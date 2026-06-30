@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { trackEvent } from '../../utils/analytics'
+import { trackEvent, trackLandingStickyCTASeen } from '../../utils/analytics'
 
 /**
  * Mobile-only sticky CTA for the landing page.
@@ -30,7 +30,7 @@ export default function LandingStickyCTA() {
   useEffect(() => {
     if (visible && !dismissed && !trackedRef.current) {
       trackedRef.current = true
-      trackEvent('landing_sticky_cta_seen', {})
+      trackLandingStickyCTASeen()
     }
   }, [visible, dismissed])
 

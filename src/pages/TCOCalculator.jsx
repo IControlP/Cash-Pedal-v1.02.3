@@ -4,10 +4,12 @@ import { getSessionId } from '../utils/session'
 import { safeUUID } from '../utils/safeId'
 import { safeGet, safeSet } from '../utils/safeStorage'
 import {
+  trackEvent,
   trackCalculatorStarted, trackCalculatorCompleted,
   trackSimpleMakeSelected, trackSimpleModelSelected, trackSimpleYearSelected,
   trackSimpleEstimateStarted, trackEstimateGenerated, trackDetailedModeOpened,
   trackTermsGateRemovedTestActive, trackFreeEstimateStarted, trackFreeEstimateGenerated,
+  trackHeroEntryCardSubmit,
 } from '../utils/analytics'
 import Navbar from '../components/Navbar'
 import { CarVisual } from '../components/CarSVGs'
@@ -16,7 +18,7 @@ import NextStep from '../components/NextStep'
 import ResultCard from '../components/ResultCard'
 import PaywallModal from '../components/PaywallModal'
 import ProUpsell from '../components/ProUpsell'
-import ToolEntryCTA from '../components/ToolEntryCTA'
+// ToolEntryCTA replaced by inline hero card
 import { useSubscription } from '../hooks/useSubscription'
 import { useBonusCredits } from '../hooks/useBonusCredits'
 import { trackUsage } from '../utils/usage'
@@ -1214,6 +1216,14 @@ export default function TCOCalculator() {
   const simpleModeRef = useRef(simpleMode)
   useEffect(() => { simpleModeRef.current = simpleMode }, [simpleMode])
 
+  // ── Hero entry card (above-the-fold vehicle picker) ────────────────────────
+  const heroCardRef            = useRef(null)
+  const hasTrackedHeroCardSeen = useRef(false)
+  const [heroMake,            setHeroMake]            = useState('')
+  const [heroModel,           setHeroModel]           = useState('')
+  const [heroYear,            setHeroYear]            = useState('')
+  const [heroSubmitAttempted, setHeroSubmitAttempted] = useState(false)
+
   const toggleSimpleMode = () => {
     const next = !simpleMode
     setSimpleMode(next)
@@ -1816,6 +1826,62 @@ export default function TCOCalculator() {
     setTimeout(() => locationInputRef.current?.focus({ preventScroll: true }), 450)
   }
 
+  // Fire hero_entry_card_seen once when the card enters the viewport
+  useEffect(() => {
+    const el = heroCardRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasTrackedHeroCardSeen.current) {
+          hasTrackedHeroCardSeen.current = true
+          trackEvent('hero_entry_card_seen', {})
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.4 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  function handleHeroMakeChange(val) {
+    if (val && !hasTrackedStartRef.current) {
+      trackFirstInteraction('hero_entry_card')
+    }
+    setHeroMake(val)
+    setHeroModel('')
+    setHeroYear('')
+    setHeroSubmitAttempted(false)
+  }
+
+  function handleHeroModelChange(val) {
+    setHeroModel(val)
+    setHeroYear('')
+    // Auto-advance year when only one option exists
+    const ys = getAvailableYears(heroMake, val)
+    if (ys.length === 1) setHeroYear(ys[0])
+  }
+
+  function handleHeroSubmit(e) {
+    e.preventDefault()
+    if (!heroMake) { setHeroSubmitAttempted(true); return }
+    trackFirstInteraction('hero_entry_card')
+    trackHeroEntryCardSubmit({ make: heroMake, model: heroModel, year: heroYear })
+    // Apply selections to the main calculator state
+    setSelMake(heroMake)
+    setSelModel(heroModel || '')
+    setSelYear(heroYear || '')
+    setSelTrim('')
+    setOrigMsrp(null)
+    setVehicleCategory('')
+    // Auto-select cheapest trim to generate the estimate
+    if (heroMake && heroModel && heroYear) {
+      setTimeout(() => autoSelectCheapestTrim(heroMake, heroModel, heroYear), 0)
+    }
+    // Scroll into the detailed calculator
+    setTimeout(() => inputsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
+  }
+
   // Sticky results bar — shows when the results panel has scrolled above the viewport
   // (i.e., user is adjusting inputs while results are off-screen above them on mobile)
   const resultsRef = useRef(null)
@@ -1855,118 +1921,110 @@ export default function TCOCalculator() {
       )}
       <Navbar />
       <main className="flex-1 pt-20 pb-16">
-        {/* Header */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 pb-8">
-          <div className="anim-0 mb-2 hidden sm:inline-flex items-center gap-2 text-xs font-semibold text-[var(--accent)] uppercase tracking-wider">
-            <span className="w-4 h-px bg-[var(--accent)]" />
-            Vehicle TCO Calculator
-          </div>
-          <h1 className="anim-1 font-display font-extrabold text-white text-3xl sm:text-4xl leading-tight mt-1">
-            What will this car <em>really</em> cost you?
+        {/* ── Lean hero — one action, above the fold ──────── */}
+        <div className="max-w-lg mx-auto px-4 sm:px-6 pt-10 pb-4 text-center">
+          <h1 className="anim-1 font-display font-extrabold text-white text-3xl sm:text-4xl leading-tight">
+            Can you actually afford this car?
           </h1>
-          <p className="anim-2 text-[var(--text-muted)] mt-2 text-base max-w-lg">
-            The sticker price is only half the story. See the full cost of ownership — depreciation,
-            insurance, fuel, maintenance, and interest — for any of 35 makes &amp; 266 models, before you sign.
+          <p className="anim-2 text-[var(--text-muted)] mt-2 text-base leading-relaxed">
+            See what this car may really cost over 5 years.
           </p>
+        </div>
 
-          {/* Entry CTA — gives cold / ad traffic one obvious next step */}
-          <ToolEntryCTA
-            headline="See the real 5-year cost of any car — in under 2 minutes."
-            points={['Free', 'No signup', 'No dealer involved']}
-            buttonLabel="Start my free estimate ↓"
-            onStart={scrollToStart}
-          />
-
-          {/* Passive legal notice — no blocking acceptance step before a free estimate.
-              Replaces the old required Terms & Conditions gate. */}
-          <p className="anim-2 mt-3 text-xs text-[var(--text-muted)] leading-relaxed">
-            By continuing, you agree to the{' '}
-            <Link to="/terms" className="text-[var(--accent)] underline hover:brightness-110">Terms of Service</Link>
-            {' '}and{' '}
-            <Link to="/privacy" className="text-[var(--accent)] underline hover:brightness-110">Privacy Policy</Link>.
-          </p>
-
-          {/* Simple / Detailed toggle */}
-          <div className="anim-2 mt-5 flex flex-col gap-2">
-            <div className="flex gap-1 p-1 rounded-lg"
-              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-              {[
-                { value: true,  label: 'Simple',   desc: 'Key numbers only' },
-                { value: false, label: 'Detailed',  desc: 'Full input control' },
-              ].map(opt => (
-                <button key={String(opt.value)}
-                  onClick={() => { setSimpleMode(opt.value); safeSet('cashpedal_simple_mode', String(opt.value)) }}
-                  aria-pressed={simpleMode === opt.value}
-                  className="flex-1 flex flex-col items-center px-3 py-2 rounded-md font-semibold transition-all min-h-[44px] justify-center"
-                  style={{
-                    background: simpleMode === opt.value ? 'var(--accent)' : 'transparent',
-                    color:      simpleMode === opt.value ? '#000'          : 'var(--text-muted)',
-                  }}>
-                  <span className="text-sm leading-tight">{opt.label}</span>
-                  <span className="text-[10px] font-normal leading-tight mt-0.5 opacity-70">{opt.desc}</span>
-                </button>
-              ))}
+        {/* Hero vehicle picker card */}
+        <div className="max-w-md mx-auto px-4 sm:px-6 pb-10">
+          <div
+            ref={heroCardRef}
+            className="anim-3 rounded-2xl border p-5 sm:p-6 flex flex-col gap-4"
+            style={{ background: 'var(--surface)', borderColor: 'rgba(200,255,0,0.3)' }}
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--accent)' }} />
+              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>
+                Free · No signup · No dealer
+              </p>
             </div>
-            <p className="text-xs text-[var(--text-muted)]">
-              {simpleMode
-                ? 'Showing essential inputs. Switch to Detailed to unlock tax rate, doc fee, regional demand, mileage, and per-year maintenance.'
-                : 'All inputs unlocked. Switch to Simple for a quicker estimate with fewer fields.'}
+
+            <form onSubmit={handleHeroSubmit} className="flex flex-col gap-3">
+              {/* Make */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Make</label>
+                <select
+                  value={heroMake}
+                  onChange={e => handleHeroMakeChange(e.target.value)}
+                  className="input-field"
+                  style={{ minHeight: '52px', fontSize: '1rem' }}
+                >
+                  <option value="">Select make…</option>
+                  {MAKES.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+
+              {/* Model — revealed after make */}
+              {heroMake && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Model</label>
+                  <select
+                    value={heroModel}
+                    onChange={e => handleHeroModelChange(e.target.value)}
+                    className="input-field"
+                    style={{ minHeight: '52px', fontSize: '1rem' }}
+                  >
+                    <option value="">Select model…</option>
+                    {getModels(heroMake).map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {/* Year — revealed after model */}
+              {heroModel && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Year</label>
+                  <select
+                    value={heroYear}
+                    onChange={e => setHeroYear(e.target.value)}
+                    className="input-field"
+                    style={{ minHeight: '52px', fontSize: '1rem' }}
+                  >
+                    <option value="">Select year…</option>
+                    {getAvailableYears(heroMake, heroModel).map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {heroSubmitAttempted && !heroMake && (
+                <p className="text-xs text-red-400">Please select a make to continue.</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={!heroMake}
+                className="btn-primary w-full justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ fontSize: '1rem', padding: '0.9rem 1.5rem', minHeight: '52px' }}
+              >
+                Show my true cost
+              </button>
+            </form>
+
+            <p className="text-[11px] text-center text-[var(--text-muted)]">
+              35 makes · 266 models · includes depreciation, insurance, fuel &amp; maintenance
             </p>
           </div>
 
-          {/* How to use this calculator */}
-          <div className="anim-2 mt-5 rounded-xl border overflow-hidden"
-            style={{ borderColor: 'rgba(200,255,0,0.2)', background: 'rgba(200,255,0,0.03)' }}>
-            <button onClick={toggleGuide}
-              aria-expanded={showGuide}
-              className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5 active:bg-white/10 transition-colors rounded-t-xl">
-              <span className="flex items-center gap-2 text-sm font-semibold text-white">
-                <span aria-hidden>💡</span> How to use this calculator
-              </span>
-              <span className="text-xs text-[var(--text-muted)]">{showGuide ? 'Hide ▲' : 'Show ▼'}</span>
-            </button>
-            {showGuide && (
-              <div className="px-4 pb-4 pt-1 flex flex-col gap-4">
-                <ol className="flex flex-col gap-3">
-                  {[
-                    { n: '1', t: 'Choose how you’ll pay',
-                      d: 'Pick Buy / Finance, Lease, or Currently Have. Each mode asks only for the numbers that matter for that path.' },
-                    { n: '2', t: 'Add your location & vehicle',
-                      d: 'Your ZIP or state tailors insurance, fuel, and registration. Selecting a make/model/trim pulls in real MSRP and depreciation — or skip it and pick a category.' },
-                    { n: '3', t: 'Set the financing details',
-                      d: 'Enter price/MSRP, down payment, term, and rate (or money factor & residual for a lease). Everything recalculates live as you type.' },
-                    { n: '4', t: 'Read your results',
-                      d: 'See your all-in monthly cost, annual breakdown, and — for buying or leasing — a Lease vs. Buy verdict showing which is cheaper and by how much.' },
-                  ].map(step => (
-                    <li key={step.n} className="flex gap-3">
-                      <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                        style={{ background: 'var(--accent)', color: '#000' }}>{step.n}</span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-white">{step.t}</p>
-                        <p className="text-xs text-[var(--text-muted)] leading-relaxed mt-0.5">{step.d}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-                <div className="rounded-lg border p-3 flex flex-col gap-1.5"
-                  style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}>
-                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>
-                    The three modes
-                  </p>
-                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                    <span className="text-white font-semibold">Buy / Finance</span> — purchasing a car, with or without a loan.{' '}
-                    <span className="text-white font-semibold">Lease</span> — a new-car lease priced from MSRP, term, money factor, and residual.{' '}
-                    <span className="text-white font-semibold">Currently Have</span> — a car you already own or lease, to see the cost of keeping it.
-                  </p>
-                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                    Comparing several cars? Run each one here, tap{' '}
-                    <span className="text-white font-semibold">Add to Comparison</span>, then open the{' '}
-                    <Link to="/compare" className="text-[var(--accent)] hover:underline font-semibold">Comparison page</Link>{' '}
-                    to stack them side by side.
-                  </p>
-                </div>
-              </div>
-            )}
+          <p className="mt-4 text-xs text-center text-[var(--text-muted)] leading-relaxed">
+            By using this tool you agree to our{' '}
+            <Link to="/terms" className="text-[var(--accent)] underline hover:brightness-110">Terms</Link>
+            {' '}and{' '}
+            <Link to="/privacy" className="text-[var(--accent)] underline hover:brightness-110">Privacy Policy</Link>.
+          </p>
+        </div>
+
+        {/* ── Detailed calculator (below the fold) ───────── */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-[var(--border)]" />
+            <span className="text-xs text-[var(--text-muted)] font-medium">Make this estimate more accurate</span>
+            <div className="h-px flex-1 bg-[var(--border)]" />
           </div>
         </div>
 
@@ -1976,6 +2034,89 @@ export default function TCOCalculator() {
 
             {/* ── Inputs ── */}
             <div ref={inputsRef} className="card anim-3 flex flex-col gap-7 scroll-mt-20">
+
+              {/* Simple / Detailed toggle */}
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-1 p-1 rounded-lg"
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                  {[
+                    { value: true,  label: 'Simple',  desc: 'Key numbers only' },
+                    { value: false, label: 'Detailed', desc: 'Full input control' },
+                  ].map(opt => (
+                    <button key={String(opt.value)}
+                      onClick={() => { setSimpleMode(opt.value); safeSet('cashpedal_simple_mode', String(opt.value)) }}
+                      aria-pressed={simpleMode === opt.value}
+                      className="flex-1 flex flex-col items-center px-3 py-2 rounded-md font-semibold transition-all min-h-[44px] justify-center"
+                      style={{
+                        background: simpleMode === opt.value ? 'var(--accent)' : 'transparent',
+                        color:      simpleMode === opt.value ? '#000'          : 'var(--text-muted)',
+                      }}>
+                      <span className="text-sm leading-tight">{opt.label}</span>
+                      <span className="text-[10px] font-normal leading-tight mt-0.5 opacity-70">{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-[var(--text-muted)]">
+                  {simpleMode
+                    ? 'Showing essential inputs. Switch to Detailed to unlock tax rate, doc fee, regional demand, mileage, and per-year maintenance.'
+                    : 'All inputs unlocked. Switch to Simple for a quicker estimate with fewer fields.'}
+                </p>
+              </div>
+
+              {/* How to use this calculator */}
+              <div className="rounded-xl border overflow-hidden"
+                style={{ borderColor: 'rgba(200,255,0,0.2)', background: 'rgba(200,255,0,0.03)' }}>
+                <button onClick={toggleGuide}
+                  aria-expanded={showGuide}
+                  className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5 active:bg-white/10 transition-colors rounded-t-xl">
+                  <span className="flex items-center gap-2 text-sm font-semibold text-white">
+                    <span aria-hidden>💡</span> How to use this calculator
+                  </span>
+                  <span className="text-xs text-[var(--text-muted)]">{showGuide ? 'Hide ▲' : 'Show ▼'}</span>
+                </button>
+                {showGuide && (
+                  <div className="px-4 pb-4 pt-1 flex flex-col gap-4">
+                    <ol className="flex flex-col gap-3">
+                      {[
+                        { n: '1', t: "Choose how you'll pay",
+                          d: 'Pick Buy / Finance, Lease, or Currently Have. Each mode asks only for the numbers that matter for that path.' },
+                        { n: '2', t: 'Add your location & vehicle',
+                          d: 'Your ZIP or state tailors insurance, fuel, and registration. Selecting a make/model/trim pulls in real MSRP and depreciation — or skip it and pick a category.' },
+                        { n: '3', t: 'Set the financing details',
+                          d: 'Enter price/MSRP, down payment, term, and rate (or money factor & residual for a lease). Everything recalculates live as you type.' },
+                        { n: '4', t: 'Read your results',
+                          d: 'See your all-in monthly cost, annual breakdown, and — for buying or leasing — a Lease vs. Buy verdict showing which is cheaper and by how much.' },
+                      ].map(step => (
+                        <li key={step.n} className="flex gap-3">
+                          <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                            style={{ background: 'var(--accent)', color: '#000' }}>{step.n}</span>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-white">{step.t}</p>
+                            <p className="text-xs text-[var(--text-muted)] leading-relaxed mt-0.5">{step.d}</p>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                    <div className="rounded-lg border p-3 flex flex-col gap-1.5"
+                      style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}>
+                      <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>
+                        The three modes
+                      </p>
+                      <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                        <span className="text-white font-semibold">Buy / Finance</span> — purchasing a car, with or without a loan.{' '}
+                        <span className="text-white font-semibold">Lease</span> — a new-car lease priced from MSRP, term, money factor, and residual.{' '}
+                        <span className="text-white font-semibold">Currently Have</span> — a car you already own or lease, to see the cost of keeping it.
+                      </p>
+                      <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                        Comparing several cars? Run each one here, tap{' '}
+                        <span className="text-white font-semibold">Add to Comparison</span>, then open the{' '}
+                        <Link to="/compare" className="text-[var(--accent)] hover:underline font-semibold">Comparison page</Link>{' '}
+                        to stack them side by side.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Free vs Limited feature tier summary */}
               {!isSubscribed && (

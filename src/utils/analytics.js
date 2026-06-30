@@ -64,6 +64,10 @@ export function trackPageView(path) {
 }
 
 export function trackEvent(eventName, params = {}) {
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.log('[GA4]', eventName, params)
+  }
   gtag('event', eventName, params)
 }
 
@@ -124,18 +128,22 @@ export function trackArticleToCalculator(articleSlug = '') {
 
 // ── Funnel tracking events ────────────────────────────────────────────────────
 
-// 1. landing_page_view — fires on Landing page mount.
-// Captures device type and traffic source (UTM / referrer) so paid vs organic
+// 1. landing_page_view — fires on every paid/organic landing route mount.
+// Must fire once per page load on both '/' and '/tco' (the primary ad destination).
+// Captures page path, device type, and traffic source so paid vs organic
 // drop-off can be segmented in GA4.
 export function trackLandingPageView() {
-  const p = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
+  const p    = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
+  const path = typeof window !== 'undefined' ? window.location.pathname : '/'
   trackEvent('landing_page_view', {
+    page_path:      path,
     device_type:    getDeviceType(),
     traffic_source: getTrafficSource(),
     utm_medium:     p.get('utm_medium') || '',
     utm_campaign:   p.get('utm_campaign') || '',
   })
   fbq('trackCustom', 'LandingPageView', {
+    page_path:      path,
     device_type:    getDeviceType(),
     traffic_source: getTrafficSource(),
   })
@@ -210,9 +218,25 @@ export function trackProCtaClicked({ featureName = '', priceShown = '' } = {}) {
   })
 }
 
+// hero_entry_card_seen — fires once when the initial Year/Make/Model entry card
+// becomes visible in the viewport. Fired via IntersectionObserver so it only
+// counts users who actually see the card, not just page-load bots.
+export function trackHeroEntryCardSeen() {
+  trackEvent('hero_entry_card_seen', {
+    page_path:      typeof window !== 'undefined' ? window.location.pathname : '/',
+    device_type:    getDeviceType(),
+    traffic_source: getTrafficSource(),
+  })
+}
+
 // hero_entry_card_submit — fires when the hero vehicle picker form is submitted.
 export function trackHeroEntryCardSubmit({ make = '', model = '', year = '' } = {}) {
-  trackEvent('hero_entry_card_submit', { make, model, year })
+  trackEvent('hero_entry_card_submit', {
+    make, model, year,
+    page_path:      typeof window !== 'undefined' ? window.location.pathname : '/',
+    device_type:    getDeviceType(),
+    traffic_source: getTrafficSource(),
+  })
   fbq('track', 'Search', { search_string: `${make} ${model} ${year}`.trim() })
 }
 

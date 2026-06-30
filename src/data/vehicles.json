@@ -12225,7 +12225,7 @@
       "is_ev": false,
       "production_years": [
         2018,
-        2025
+        2023
       ],
       "trims_by_year": {
         "2018": {
@@ -12263,16 +12263,6 @@
           "Stinger GT-Line": 35900,
           "Stinger GT1": 43900,
           "Stinger GT2": 47900
-        },
-        "2024": {
-          "Stinger GT-Line": 36200,
-          "Stinger GT1": 44200,
-          "Stinger GT2": 48200
-        },
-        "2025": {
-          "Stinger GT-Line": 36500,
-          "Stinger GT1": 44500,
-          "Stinger GT2": 48500
         }
       },
       "mpg": null,

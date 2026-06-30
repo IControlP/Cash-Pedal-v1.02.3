@@ -284,6 +284,18 @@ export function trackFreeEstimateGenerated({ make = '', model = '', year = '', m
   fbq('track', 'ViewContent', { content_name: `${make} ${model} ${year}`.trim(), content_category: 'free_vehicle_estimate' })
 }
 
+// example_result_card_seen — fires once when the example result card scrolls
+// into view (≥50% visible). Measures how many visitors see the preview.
+export function trackExampleResultCardSeen() {
+  trackEvent('example_result_card_seen', { device_type: getDeviceType() })
+}
+
+// example_result_cta_clicked — fires when the "Check your car" CTA inside
+// the example result card is clicked.
+export function trackExampleResultCtaClicked() {
+  trackEvent('example_result_cta_clicked', { device_type: getDeviceType() })
+}
+
 // 11. checkout_started — fires the moment the Stripe checkout session is
 // requested, from either the paywall modal or the /subscribe page.
 export function trackCheckoutStarted({ planType = 'one_time', price = 19 } = {}) {

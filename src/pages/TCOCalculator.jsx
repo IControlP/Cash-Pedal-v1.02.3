@@ -10,6 +10,7 @@ import {
   trackSimpleEstimateStarted, trackEstimateGenerated, trackDetailedModeOpened,
   trackTermsGateRemovedTestActive, trackFreeEstimateStarted, trackFreeEstimateGenerated,
   trackHeroEntryCardSubmit,
+  trackExampleResultCardSeen, trackExampleResultCtaClicked,
 } from '../utils/analytics'
 import Navbar from '../components/Navbar'
 import { CarVisual } from '../components/CarSVGs'
@@ -1054,6 +1055,80 @@ function LeaseVsBuy({ isPro, data, formatCurrency }) {
   )
 }
 
+// ── Example result preview card ───────────────────────
+function ExampleResultCard({ onCtaClick }) {
+  const cardRef = useRef(null)
+  const seenRef = useRef(false)
+
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !seenRef.current) {
+          seenRef.current = true
+          trackExampleResultCardSeen()
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.5 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  const COST_ITEMS = ['Depreciation', 'Insurance', 'Fuel', 'Maintenance', 'Financing', 'Registration']
+
+  function handleCtaClick() {
+    trackExampleResultCtaClicked()
+    onCtaClick()
+  }
+
+  return (
+    <div ref={cardRef} className="card flex flex-col gap-5">
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
+          Example ownership cost
+        </p>
+        <p className="font-display font-bold text-white text-lg leading-tight">2024 Toyota Camry</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="rounded-xl border p-3.5 flex flex-col gap-1"
+          style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}>
+          <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Sticker price</p>
+          <p className="font-display font-bold text-white text-xl">$31,000</p>
+        </div>
+        <div className="rounded-xl border p-3.5 flex flex-col gap-1"
+          style={{ borderColor: 'rgba(200,255,0,0.3)', background: 'rgba(200,255,0,0.04)' }}>
+          <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">Estimated 5-year cost</p>
+          <p className="font-display font-bold text-2xl" style={{ color: 'var(--accent)' }}>$68,400</p>
+        </div>
+      </div>
+
+      <div>
+        <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide mb-2">Includes</p>
+        <div className="flex flex-wrap gap-1.5">
+          {COST_ITEMS.map(item => (
+            <span key={item} className="text-[10px] px-2 py-0.5 rounded-md border"
+              style={{ borderColor: 'var(--border)', color: 'var(--text-muted)', background: 'var(--bg)' }}>
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <p className="text-xs text-[var(--text-muted)] leading-relaxed border-t border-[var(--border)] pt-4">
+        The monthly payment is only part of the cost. Cash Pedal shows the bigger picture before you buy.
+      </p>
+
+      <button onClick={handleCtaClick} className="btn-primary text-sm">
+        Check your car →
+      </button>
+    </div>
+  )
+}
+
 // ── Main page ─────────────────────────────────────────
 export default function TCOCalculator() {
   const navigate = useNavigate()
@@ -1931,84 +2006,91 @@ export default function TCOCalculator() {
           </p>
         </div>
 
-        {/* Hero vehicle picker card */}
-        <div className="max-w-md mx-auto px-4 sm:px-6 pb-10">
-          <div
-            ref={heroCardRef}
-            className="anim-3 rounded-2xl border p-5 sm:p-6 flex flex-col gap-4"
-            style={{ background: 'var(--surface)', borderColor: 'rgba(200,255,0,0.3)' }}
-          >
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--accent)' }} />
-              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>
-                Free · No signup · No dealer
-              </p>
-            </div>
+        {/* ── Example result + hero picker side by side ── */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-10">
+          <div className="grid lg:grid-cols-2 gap-5 items-stretch">
 
-            <form onSubmit={handleHeroSubmit} className="flex flex-col gap-3">
-              {/* Make */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Make</label>
-                <select
-                  value={heroMake}
-                  onChange={e => handleHeroMakeChange(e.target.value)}
-                  className="input-field"
-                  style={{ minHeight: '52px', fontSize: '1rem' }}
-                >
-                  <option value="">Select make…</option>
-                  {MAKES.map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
+            {/* Left: example result preview */}
+            <ExampleResultCard onCtaClick={scrollToStart} />
+
+            {/* Right: hero vehicle picker */}
+            <div
+              ref={heroCardRef}
+              className="anim-3 rounded-2xl border p-5 sm:p-6 flex flex-col gap-4"
+              style={{ background: 'var(--surface)', borderColor: 'rgba(200,255,0,0.3)' }}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--accent)' }} />
+                <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>
+                  Free · No signup · No dealer
+                </p>
               </div>
 
-              {/* Model — revealed after make */}
-              {heroMake && (
+              <form onSubmit={handleHeroSubmit} className="flex flex-col gap-3">
+                {/* Make */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Model</label>
+                  <label className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Make</label>
                   <select
-                    value={heroModel}
-                    onChange={e => handleHeroModelChange(e.target.value)}
+                    value={heroMake}
+                    onChange={e => handleHeroMakeChange(e.target.value)}
                     className="input-field"
                     style={{ minHeight: '52px', fontSize: '1rem' }}
                   >
-                    <option value="">Select model…</option>
-                    {getModels(heroMake).map(m => <option key={m} value={m}>{m}</option>)}
+                    <option value="">Select make…</option>
+                    {MAKES.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
-              )}
 
-              {/* Year — revealed after model */}
-              {heroModel && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Year</label>
-                  <select
-                    value={heroYear}
-                    onChange={e => setHeroYear(e.target.value)}
-                    className="input-field"
-                    style={{ minHeight: '52px', fontSize: '1rem' }}
-                  >
-                    <option value="">Select year…</option>
-                    {getAvailableYears(heroMake, heroModel).map(y => <option key={y} value={y}>{y}</option>)}
-                  </select>
-                </div>
-              )}
+                {/* Model — revealed after make */}
+                {heroMake && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Model</label>
+                    <select
+                      value={heroModel}
+                      onChange={e => handleHeroModelChange(e.target.value)}
+                      className="input-field"
+                      style={{ minHeight: '52px', fontSize: '1rem' }}
+                    >
+                      <option value="">Select model…</option>
+                      {getModels(heroMake).map(m => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                  </div>
+                )}
 
-              {heroSubmitAttempted && !heroMake && (
-                <p className="text-xs text-red-400">Please select a make to continue.</p>
-              )}
+                {/* Year — revealed after model */}
+                {heroModel && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Year</label>
+                    <select
+                      value={heroYear}
+                      onChange={e => setHeroYear(e.target.value)}
+                      className="input-field"
+                      style={{ minHeight: '52px', fontSize: '1rem' }}
+                    >
+                      <option value="">Select year…</option>
+                      {getAvailableYears(heroMake, heroModel).map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+                )}
 
-              <button
-                type="submit"
-                disabled={!heroMake}
-                className="btn-primary w-full justify-center disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ fontSize: '1rem', padding: '0.9rem 1.5rem', minHeight: '52px' }}
-              >
-                Show my true cost
-              </button>
-            </form>
+                {heroSubmitAttempted && !heroMake && (
+                  <p className="text-xs text-red-400">Please select a make to continue.</p>
+                )}
 
-            <p className="text-[11px] text-center text-[var(--text-muted)]">
-              35 makes · 266 models · includes depreciation, insurance, fuel &amp; maintenance
-            </p>
+                <button
+                  type="submit"
+                  disabled={!heroMake}
+                  className="btn-primary w-full justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ fontSize: '1rem', padding: '0.9rem 1.5rem', minHeight: '52px' }}
+                >
+                  Show my true cost
+                </button>
+              </form>
+
+              <p className="text-[11px] text-center text-[var(--text-muted)]">
+                35 makes · 266 models · includes depreciation, insurance, fuel &amp; maintenance
+              </p>
+            </div>
           </div>
 
           <p className="mt-4 text-xs text-center text-[var(--text-muted)] leading-relaxed">

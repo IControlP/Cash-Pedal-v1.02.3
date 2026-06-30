@@ -6675,7 +6675,7 @@
       "is_ev": false,
       "production_years": [
         2007,
-        2025
+        2024
       ],
       "trims_by_year": {
         "2015": {
@@ -6719,12 +6719,6 @@
           "SEL": 42995,
           "Titanium": 46995,
           "ST": 51995
-        },
-        "2025": {
-          "SE": 39995,
-          "SEL": 43995,
-          "Titanium": 47995,
-          "ST": 52995
         }
       },
       "mpg": null,

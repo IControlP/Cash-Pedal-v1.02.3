@@ -11429,7 +11429,7 @@
       "is_ev": false,
       "production_years": [
         2010,
-        2026
+        2024
       ],
       "trims_by_year": {
         "2015": {
@@ -11494,20 +11494,6 @@
           "Forte EX": 23290,
           "Forte GT-Line": 24790,
           "Forte GT": 26890
-        },
-        "2025": {
-          "Forte LXS": 20690,
-          "Forte S": 21190,
-          "Forte EX": 23690,
-          "Forte GT-Line": 25190,
-          "Forte GT": 27290
-        },
-        "2026": {
-          "Forte LXS": 21205,
-          "Forte S": 21720,
-          "Forte EX": 24280,
-          "Forte GT-Line": 25820,
-          "Forte GT": 27970
         }
       },
       "mpg": null,
@@ -19646,7 +19632,7 @@
       "is_ev": false,
       "production_years": [
         2021,
-        2026
+        2024
       ],
       "trims_by_year": {
         "2015": {
@@ -19674,18 +19660,6 @@
           "LE": 34720,
           "XLE": 37770,
           "Limited": 42050
-        },
-        "2025": {
-          "LE": 35520,
-          "XLE": 38570,
-          "Limited": 42850
-        },
-        "2026": {
-          "Venza LE": 35605,
-          "Venza XLE": 38105,
-          "Venza XSE": 40105,
-          "Venza Limited": 42605,
-          "Venza Nightshade": 40605
         }
       },
       "mpg": null,

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { trackEvent } from '../../utils/analytics'
+import { trackEvent, trackHeroEntryCardSubmit } from '../../utils/analytics'
 
 export default function HeroEntryCard() {
   const navigate = useNavigate()
@@ -35,8 +35,7 @@ export default function HeroEntryCard() {
 
   function handleSubmit(e) {
     e.preventDefault()
-    trackEvent('hero_entry_card_submit', { make, model, year })
-    if (typeof window.fbq === 'function') window.fbq('track', 'Search', { search_string: `${make} ${model} ${year}`.trim() })
+    trackHeroEntryCardSubmit({ make, model, year })
     const params = new URLSearchParams()
     if (make)  params.set('make',  make)
     if (model) params.set('model', model)

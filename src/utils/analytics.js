@@ -2,6 +2,11 @@ import { getHeroVariant } from './abTest'
 
 const GA_ID = 'G-65PBP0W12S'
 
+// When VITE_META_TEST_EVENT_CODE is set (e.g. TEST78081), it is appended to
+// every fbq payload so events appear in the Meta Pixel Test Events panel.
+// Leave the variable unset in production — it has no effect when absent.
+const META_TEST_EVENT_CODE = import.meta.env.VITE_META_TEST_EVENT_CODE || null
+
 // Wraps window.gtag safely — no-ops if the script hasn't loaded yet
 function gtag(...args) {
   if (typeof window.gtag === 'function') {
@@ -9,10 +14,14 @@ function gtag(...args) {
   }
 }
 
-function fbq(...args) {
-  if (typeof window.fbq === 'function') {
-    window.fbq(...args)
-  }
+// Wraps window.fbq; injects test_event_code when the env var is set so
+// events show up in the Meta Pixel → Test Events panel during QA.
+function fbq(method, eventName, data = {}, options = {}) {
+  if (typeof window.fbq !== 'function') return
+  const payload = META_TEST_EVENT_CODE
+    ? { ...data, test_event_code: META_TEST_EVENT_CODE }
+    : data
+  window.fbq(method, eventName, payload, options)
 }
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
@@ -199,6 +208,12 @@ export function trackProCtaClicked({ featureName = '', priceShown = '' } = {}) {
     price_shown:  priceShown,
     device_type:  getDeviceType(),
   })
+}
+
+// hero_entry_card_submit — fires when the hero vehicle picker form is submitted.
+export function trackHeroEntryCardSubmit({ make = '', model = '', year = '' } = {}) {
+  trackEvent('hero_entry_card_submit', { make, model, year })
+  fbq('track', 'Search', { search_string: `${make} ${model} ${year}`.trim() })
 }
 
 // ab_hero_impression — fires once on Hero mount, tagged with the A/B variant.

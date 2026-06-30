@@ -135,9 +135,9 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
             onChange={e => onChange({ ...vehicle, price: Number(e.target.value) })}
             className="input-field text-sm py-2" style={{ paddingLeft: '1.75rem' }} />
         </div>
-        <input type="range" min={5000} max={150000} step={500} value={vehicle.price}
+        <input type="range" min={5000} max={500000} step={500} value={vehicle.price}
           onChange={e => onChange({ ...vehicle, price: Number(e.target.value) })}
-          style={{ background: `linear-gradient(to right, ${color} ${pct(vehicle.price, 5000, 150000)}%, var(--border) ${pct(vehicle.price, 5000, 150000)}%)` }} />
+          style={{ background: `linear-gradient(to right, ${color} ${pct(vehicle.price, 5000, 500000)}%, var(--border) ${pct(vehicle.price, 5000, 500000)}%)` }} />
       </div>
 
       {vehicle.isLease ? (
@@ -178,10 +178,10 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
                 onChange={e => onChange({ ...vehicle, downPayment: Math.min(Number(e.target.value), vehicle.price) })}
                 className="input-field text-sm py-2" style={{ paddingLeft: '1.75rem' }} />
             </div>
-            <input type="range" min={0} max={Math.min(vehicle.price, 50000)} step={500}
+            <input type="range" min={0} max={vehicle.price} step={500}
               value={Math.min(vehicle.downPayment, vehicle.price)}
               onChange={e => onChange({ ...vehicle, downPayment: Number(e.target.value) })}
-              style={{ background: `linear-gradient(to right, ${color} ${pct(Math.min(vehicle.downPayment, vehicle.price), 0, Math.min(vehicle.price, 50000))}%, var(--border) ${pct(Math.min(vehicle.downPayment, vehicle.price), 0, Math.min(vehicle.price, 50000))}%)` }} />
+              style={{ background: `linear-gradient(to right, ${color} ${pct(Math.min(vehicle.downPayment, vehicle.price), 0, vehicle.price)}%, var(--border) ${pct(Math.min(vehicle.downPayment, vehicle.price), 0, vehicle.price)}%)` }} />
           </div>
 
           {/* Loan term + rate */}

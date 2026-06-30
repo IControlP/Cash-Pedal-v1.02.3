@@ -2406,10 +2406,10 @@ export default function TCOCalculator() {
                     ? parseFloat(taxRateOverride) / 100
                     : (STATE_VEHICLE_SALES_TAX[resolvedState] ?? 0.0625)
                   const base = Math.round((otd - effectiveDocFee) / (1 + taxRate) / 500) * 500
-                  setPrice(Math.max(5000, Math.min(150000, base)))
+                  setPrice(Math.max(5000, Math.min(500000, base)))
                 } : undefined}
-                min={5000} max={150000} step={500} prefix="$"
-                inputMax={financeMode === 'buy' ? 175000 : undefined}
+                min={5000} max={500000} step={500} prefix="$"
+                inputMax={financeMode === 'buy' ? 550000 : undefined}
               />
 
               {financeMode === 'current' && (
@@ -2576,7 +2576,7 @@ export default function TCOCalculator() {
                     <>
                       <SliderInput label="Down Payment" value={safeDown}
                         onChange={v => setDownPayment(Math.min(v, effectivePrice))}
-                        min={0} max={Math.min(effectivePrice, 50000)} step={500} prefix="$" />
+                        min={0} max={effectivePrice} step={500} prefix="$" />
 
                       <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
                         <span className="text-sm text-[var(--text-muted)]">Loan amount</span>

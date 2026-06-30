@@ -63,6 +63,7 @@ export function trackEvent(eventName, params = {}) {
 // Top of funnel — what % of visitors engage with the calculator?
 export function trackCalculatorStarted({ sourcePage = '', entryPoint = '' } = {}) {
   trackEvent('calculator_started', { source_page: sourcePage, entry_point: entryPoint, ab_variant: getHeroVariant() })
+  fbq('trackCustom', 'CalculatorStarted', { source_page: sourcePage, entry_point: entryPoint })
 }
 
 // Core conversion — user has a full result on screen
@@ -124,6 +125,10 @@ export function trackLandingPageView() {
     traffic_source: getTrafficSource(),
     utm_medium:     p.get('utm_medium') || '',
     utm_campaign:   p.get('utm_campaign') || '',
+  })
+  fbq('trackCustom', 'LandingPageView', {
+    device_type:    getDeviceType(),
+    traffic_source: getTrafficSource(),
   })
 }
 
@@ -196,6 +201,18 @@ export function trackProCtaClicked({ featureName = '', priceShown = '' } = {}) {
   })
 }
 
+// ab_hero_impression — fires once on Hero mount, tagged with the A/B variant.
+export function trackAbHeroImpression(variant = '') {
+  trackEvent('ab_hero_impression', { ab_variant: variant })
+  fbq('trackCustom', 'HeroImpression', { ab_variant: variant })
+}
+
+// landing_sticky_cta_seen — fires the first time the sticky CTA becomes visible.
+export function trackLandingStickyCTASeen() {
+  trackEvent('landing_sticky_cta_seen', {})
+  fbq('trackCustom', 'LandingStickyCTASeen', {})
+}
+
 // ── Terms-gate removal A/B test ───────────────────────────────────────────────
 
 // terms_gate_removed_test_active — fires once when a free-estimate tool mounts,
@@ -206,6 +223,7 @@ export function trackTermsGateRemovedTestActive({ sourcePage = '' } = {}) {
     source_page: sourcePage,
     device_type: getDeviceType(),
   })
+  fbq('trackCustom', 'TermsGateRemovedTestActive', { source_page: sourcePage })
 }
 
 // free_estimate_started — fires when the user begins generating a free estimate
@@ -224,6 +242,7 @@ export function trackFreeEstimateGenerated({ make = '', model = '', year = '', m
     has_ev:      hasEV,
     device_type: getDeviceType(),
   })
+  fbq('track', 'ViewContent', { content_name: `${make} ${model} ${year}`.trim(), content_category: 'free_vehicle_estimate' })
 }
 
 // 11. checkout_started — fires the moment the Stripe checkout session is

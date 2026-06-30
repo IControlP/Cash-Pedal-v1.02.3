@@ -1,6 +1,6 @@
 import { useState, useEffect, Fragment } from 'react'
 import { Link } from 'react-router-dom'
-import { trackEvent, trackHeroCtaClick } from '../../utils/analytics'
+import { trackEvent, trackHeroCtaClick, trackAbHeroImpression } from '../../utils/analytics'
 import HeroEntryCard from './HeroEntryCard'
 import { getHeroVariant } from '../../utils/abTest'
 
@@ -23,7 +23,7 @@ export default function Hero() {
   const copy = VARIANTS[variant]
 
   useEffect(() => {
-    trackEvent('ab_hero_impression', { ab_variant: variant })
+    trackAbHeroImpression(variant)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (

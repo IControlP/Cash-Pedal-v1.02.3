@@ -3053,7 +3053,7 @@
       "is_ev": true,
       "production_years": [
         2014,
-        2022
+        2021
       ],
       "trims_by_year": {
         "2015": {
@@ -3091,10 +3091,6 @@
           "i3 with Range Extender": 48300,
           "i3s": 47650,
           "i3s with Range Extender": 51500
-        },
-        "2022": {
-          "i3": 44450,
-          "i3s": 47650
         }
       },
       "mpg": null,
@@ -6675,7 +6671,7 @@
       "is_ev": false,
       "production_years": [
         2007,
-        2025
+        2024
       ],
       "trims_by_year": {
         "2015": {
@@ -6719,12 +6715,6 @@
           "SEL": 42995,
           "Titanium": 46995,
           "ST": 51995
-        },
-        "2025": {
-          "SE": 39995,
-          "SEL": 43995,
-          "Titanium": 47995,
-          "ST": 52995
         }
       },
       "mpg": null,
@@ -7242,16 +7232,14 @@
           "EcoBoost": 25995,
           "EcoBoost Premium": 29995,
           "GT": 32995,
-          "GT Premium": 36995,
-          "Shelby GT350": 52995
+          "GT Premium": 36995
         },
         "2018": {
           "EcoBoost": 26995,
           "EcoBoost Premium": 30995,
           "GT": 35995,
           "GT Premium": 39995,
-          "Shelby GT350": 56995,
-          "Shelby GT500": 72995
+          "Shelby GT350": 56995
         },
         "2020": {
           "EcoBoost": 27995,
@@ -7274,25 +7262,21 @@
           "EcoBoost": 31995,
           "EcoBoost Premium": 35995,
           "GT": 40995,
-          "GT Premium": 44995,
-          "Dark Horse": 52995,
-          "Shelby GT500": 78995
+          "GT Premium": 44995
         },
         "2024": {
           "EcoBoost": 33995,
           "EcoBoost Premium": 37995,
           "GT": 42995,
           "GT Premium": 46995,
-          "Dark Horse": 54995,
-          "Shelby GT500": 81995
+          "Dark Horse": 54995
         },
         "2025": {
           "EcoBoost": 35995,
           "EcoBoost Premium": 39995,
           "GT": 44995,
           "GT Premium": 48995,
-          "Dark Horse": 56995,
-          "Shelby GT500": 84995
+          "Dark Horse": 56995
         },
         "2026": {
           "Mustang EcoBoost Fastback": 31995,
@@ -10070,7 +10054,7 @@
       "is_ev": false,
       "production_years": [
         2017,
-        2026
+        2022
       ],
       "trims_by_year": {
         "2017": {
@@ -10108,29 +10092,6 @@
           "2.0t Luxe": 45950,
           "3.0t Sport": 49450,
           "Red Sport 400": 53450
-        },
-        "2023": {
-          "2.0t Pure": 42950,
-          "2.0t Luxe": 46450,
-          "3.0t Sport": 49950,
-          "Red Sport 400": 53950
-        },
-        "2024": {
-          "2.0t Pure": 43450,
-          "2.0t Luxe": 46950,
-          "3.0t Sport": 50450,
-          "Red Sport 400": 54450
-        },
-        "2025": {
-          "2.0t Pure": 43950,
-          "2.0t Luxe": 47450,
-          "3.0t Sport": 50950,
-          "Red Sport 400": 54950
-        },
-        "2026": {
-          "Q60 Pure": 52895,
-          "Q60 Luxe": 55895,
-          "Q60 Red Sport 400": 60895
         }
       },
       "mpg": null,
@@ -10614,7 +10575,7 @@
       "is_ev": false,
       "production_years": [
         2013,
-        2026
+        2024
       ],
       "trims_by_year": {
         "2015": {
@@ -10693,22 +10654,6 @@
           "F-TYPE R": 108500,
           "F-TYPE R Coupe": 103500,
           "F-TYPE SVR": 128000
-        },
-        "2025": {
-          "F-TYPE": 75000,
-          "F-TYPE S": 87000,
-          "F-TYPE V8 S": 98000,
-          "F-TYPE R": 109000,
-          "F-TYPE R Coupe": 104000,
-          "F-TYPE SVR": 128500
-        },
-        "2026": {
-          "F-TYPE": 76875,
-          "F-TYPE S": 89175,
-          "F-TYPE V8 S": 100450,
-          "F-TYPE R": 111725,
-          "F-TYPE R Coupe": 106600,
-          "F-TYPE SVR": 131710
         }
       },
       "mpg": null,
@@ -10781,7 +10726,7 @@
       "is_ev": false,
       "production_years": [
         2015,
-        2022
+        2020
       ],
       "trims_by_year": {
         "2015": {
@@ -10823,18 +10768,6 @@
           "XE S": 45900,
           "XE SE": 42900,
           "XE HSE": 47900
-        },
-        "2021": {
-          "XE": 40400,
-          "XE S": 46400,
-          "XE SE": 43400,
-          "XE HSE": 48400
-        },
-        "2022": {
-          "XE": 40900,
-          "XE S": 46900,
-          "XE SE": 43900,
-          "XE HSE": 48900
         }
       },
       "mpg": null,
@@ -11333,7 +11266,7 @@
       "is_ev": false,
       "production_years": [
         2015,
-        2026
+        2023
       ],
       "trims_by_year": {
         "2015": {
@@ -11389,24 +11322,6 @@
           "Renegade Latitude": 23395,
           "Renegade Limited": 27395,
           "Renegade Trailhawk": 28395
-        },
-        "2024": {
-          "Renegade Sport": 20695,
-          "Renegade Latitude": 23695,
-          "Renegade Limited": 27695,
-          "Renegade Trailhawk": 28695
-        },
-        "2025": {
-          "Renegade Sport": 20995,
-          "Renegade Latitude": 23995,
-          "Renegade Limited": 27995,
-          "Renegade Trailhawk": 28995
-        },
-        "2026": {
-          "Renegade Sport": 21520,
-          "Renegade Latitude": 24595,
-          "Renegade Limited": 28695,
-          "Renegade Trailhawk": 29720
         }
       },
       "mpg": null,
@@ -11514,7 +11429,7 @@
       "is_ev": false,
       "production_years": [
         2010,
-        2026
+        2024
       ],
       "trims_by_year": {
         "2015": {
@@ -11579,20 +11494,6 @@
           "Forte EX": 23290,
           "Forte GT-Line": 24790,
           "Forte GT": 26890
-        },
-        "2025": {
-          "Forte LXS": 20690,
-          "Forte S": 21190,
-          "Forte EX": 23690,
-          "Forte GT-Line": 25190,
-          "Forte GT": 27290
-        },
-        "2026": {
-          "Forte LXS": 21205,
-          "Forte S": 21720,
-          "Forte EX": 24280,
-          "Forte GT-Line": 25820,
-          "Forte GT": 27970
         }
       },
       "mpg": null,
@@ -12231,7 +12132,7 @@
       "is_ev": false,
       "production_years": [
         2018,
-        2025
+        2023
       ],
       "trims_by_year": {
         "2018": {
@@ -12269,16 +12170,6 @@
           "Stinger GT-Line": 35900,
           "Stinger GT1": 43900,
           "Stinger GT2": 47900
-        },
-        "2024": {
-          "Stinger GT-Line": 36200,
-          "Stinger GT1": 44200,
-          "Stinger GT2": 48200
-        },
-        "2025": {
-          "Stinger GT-Line": 36500,
-          "Stinger GT1": 44500,
-          "Stinger GT2": 48500
         }
       },
       "mpg": null,
@@ -15083,7 +14974,7 @@
       "is_ev": false,
       "production_years": [
         2014,
-        2026
+        2024
       ],
       "trims_by_year": {
         "2015": {
@@ -15135,16 +15026,6 @@
           "Mirage ES": 17690,
           "Mirage SE": 19490,
           "Mirage GT": 21090
-        },
-        "2025": {
-          "Mirage ES": 18190,
-          "Mirage SE": 19990,
-          "Mirage GT": 21590
-        },
-        "2026": {
-          "Mirage ES": 18645,
-          "Mirage SE": 20490,
-          "Mirage GT": 22130
         }
       },
       "mpg": null,
@@ -16008,7 +15889,7 @@
           "911 Carrera 4": 93895,
           "911 Carrera 4S": 106995,
           "911 Turbo": 150795,
-          "911 Turbo S": 175695,
+          "911 Turbo S": 182700,
           "911 GT3": 131195
         },
         "2016": {
@@ -16017,7 +15898,7 @@
           "911 Carrera 4": 96500,
           "911 Carrera 4S": 109200,
           "911 Turbo": 159200,
-          "911 Turbo S": 182050,
+          "911 Turbo S": 182700,
           "911 GT3": 143600,
           "911 GT3 RS": 175900
         },
@@ -16027,7 +15908,7 @@
           "911 Carrera 4": 97300,
           "911 Carrera 4S": 110000,
           "911 Turbo": 160000,
-          "911 Turbo S": 182850,
+          "911 Turbo S": 190700,
           "911 GT3": 144400,
           "911 GT3 RS": 176700
         },
@@ -16037,7 +15918,7 @@
           "911 Carrera 4": 98100,
           "911 Carrera 4S": 110800,
           "911 Turbo": 160800,
-          "911 Turbo S": 183650,
+          "911 Turbo S": 190700,
           "911 GT3": 145200,
           "911 GT3 RS": 177500
         },
@@ -16047,7 +15928,7 @@
           "911 Carrera 4": 98900,
           "911 Carrera 4S": 111600,
           "911 Turbo": 161600,
-          "911 Turbo S": 184450,
+          "911 Turbo S": 190700,
           "911 GT3": 146000,
           "911 GT3 RS": 178300,
           "911 Speedster": 274500
@@ -16068,7 +15949,7 @@
           "911 Carrera 4": 106300,
           "911 Carrera 4S": 120400,
           "911 Turbo": 172800,
-          "911 Turbo S": 206850,
+          "911 Turbo S": 203500,
           "911 GT3": 161100,
           "911 GT3 Touring": 161100
         },
@@ -16078,7 +15959,7 @@
           "911 Carrera 4": 108300,
           "911 Carrera 4S": 122400,
           "911 Turbo": 174800,
-          "911 Turbo S": 208850,
+          "911 Turbo S": 207000,
           "911 GT3": 163100,
           "911 GT3 Touring": 163100,
           "911 Carrera GTS": 131300,
@@ -16090,7 +15971,7 @@
           "911 Carrera 4": 113200,
           "911 Carrera 4S": 127300,
           "911 Turbo": 179700,
-          "911 Turbo S": 213700,
+          "911 Turbo S": 216100,
           "911 GT3": 169700,
           "911 GT3 Touring": 169700,
           "911 Carrera GTS": 138600,
@@ -16103,7 +15984,7 @@
           "911 Carrera 4": 115400,
           "911 Carrera 4S": 129500,
           "911 Turbo": 181900,
-          "911 Turbo S": 215900,
+          "911 Turbo S": 230400,
           "911 GT3": 171900,
           "911 GT3 Touring": 171900,
           "911 Carrera GTS": 140800,
@@ -16116,7 +15997,7 @@
           "911 Carrera 4": 117600,
           "911 Carrera 4S": 131700,
           "911 Turbo": 184100,
-          "911 Turbo S": 218100,
+          "911 Turbo S": 230400,
           "911 GT3": 174100,
           "911 GT3 Touring": 174100,
           "911 Carrera GTS": 143000,
@@ -16129,7 +16010,7 @@
           "911 Carrera 4": 120540,
           "911 Carrera 4S": 134990,
           "911 Turbo": 188700,
-          "911 Turbo S": 223550,
+          "911 Turbo S": 270300,
           "911 GT3": 178450,
           "911 GT3 Touring": 178450,
           "911 Carrera GTS": 146575,
@@ -18443,7 +18324,7 @@
       "is_ev": false,
       "production_years": [
         2018,
-        2023
+        2022
       ],
       "trims_by_year": {
         "2018": {
@@ -18472,11 +18353,6 @@
           "LE": 23550,
           "XLE": 25595,
           "Limited": 27595
-        },
-        "2023": {
-          "LE": 24100,
-          "XLE": 26145,
-          "Limited": 28145
         }
       },
       "mpg": null,
@@ -19756,7 +19632,7 @@
       "is_ev": false,
       "production_years": [
         2021,
-        2026
+        2024
       ],
       "trims_by_year": {
         "2015": {
@@ -19784,18 +19660,6 @@
           "LE": 34720,
           "XLE": 37770,
           "Limited": 42050
-        },
-        "2025": {
-          "LE": 35520,
-          "XLE": 38570,
-          "Limited": 42850
-        },
-        "2026": {
-          "Venza LE": 35605,
-          "Venza XLE": 38105,
-          "Venza XSE": 40105,
-          "Venza Limited": 42605,
-          "Venza Nightshade": 40605
         }
       },
       "mpg": null,

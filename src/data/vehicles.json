@@ -7272,25 +7272,21 @@
           "EcoBoost": 31995,
           "EcoBoost Premium": 35995,
           "GT": 40995,
-          "GT Premium": 44995,
-          "Dark Horse": 52995,
-          "Shelby GT500": 78995
+          "GT Premium": 44995
         },
         "2024": {
           "EcoBoost": 33995,
           "EcoBoost Premium": 37995,
           "GT": 42995,
           "GT Premium": 46995,
-          "Dark Horse": 54995,
-          "Shelby GT500": 81995
+          "Dark Horse": 54995
         },
         "2025": {
           "EcoBoost": 35995,
           "EcoBoost Premium": 39995,
           "GT": 44995,
           "GT Premium": 48995,
-          "Dark Horse": 56995,
-          "Shelby GT500": 84995
+          "Dark Horse": 56995
         },
         "2026": {
           "Mustang EcoBoost Fastback": 31995,

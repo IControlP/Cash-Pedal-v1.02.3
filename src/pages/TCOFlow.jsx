@@ -15,7 +15,9 @@ import {
   trackSimpleEstimateStarted, trackFreeEstimateStarted,
   trackFreeEstimateGenerated, trackEstimateGenerated, trackCalculatorCompleted,
   trackCalculatorStarted, trackEstimateViewed, trackPersonalizationExpanded,
-  trackPersonalizationCompleted,
+  trackPersonalizationCompleted, trackLandingPageView,
+  trackHeroEntryCardSeen, trackHeroEntryCardSubmit,
+  trackProCtaViewed, trackProCtaClicked,
 } from '../utils/analytics'
 import { safeGet, safeSet } from '../utils/safeStorage'
 
@@ -337,6 +339,23 @@ function ResultsDisplay({
   annualMileage, onMileage,
   fuelPriceOverride, onFuelPrice,
 }) {
+  const proCtaRef    = useRef(null)
+  const proCtaSeenRef = useRef(false)
+
+  // pro_cta_seen — fires once when the Pro upsell card scrolls into view.
+  useEffect(() => {
+    const el = proCtaRef.current
+    if (!el || proCtaSeenRef.current) return
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !proCtaSeenRef.current) {
+        proCtaSeenRef.current = true
+        trackProCtaViewed({ featureName: 'tco_flow_results', triggerLocation: '/tco' })
+        observer.disconnect()
+      }
+    }, { threshold: 0.3 })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const total = depreciation + financingCost + totalInsurance + totalFuel + totalMaintenance + totalRegistration
   const maxCost = Math.max(depreciation, financingCost, totalInsurance, totalFuel, totalMaintenance, totalRegistration)
 
@@ -605,7 +624,7 @@ function ResultsDisplay({
       </div>
 
       {/* Pro upsell */}
-      <div className="mt-6 rounded-2xl border p-5"
+      <div ref={proCtaRef} className="mt-6 rounded-2xl border p-5"
         style={{ borderColor: 'rgba(255,184,0,0.3)', background: 'rgba(255,184,0,0.04)' }}>
         <p className="font-display font-bold text-white text-base mb-1">
           Want even greater accuracy?
@@ -627,7 +646,11 @@ function ResultsDisplay({
             </li>
           ))}
         </ul>
-        <Link to="/subscribe" className="btn-primary w-full justify-center text-sm py-3">
+        <Link
+          to="/subscribe"
+          onClick={() => trackProCtaClicked({ featureName: 'tco_flow_results', priceShown: 'Pro' })}
+          className="btn-primary w-full justify-center text-sm py-3"
+        >
           Unlock Pro →
         </Link>
       </div>
@@ -672,6 +695,28 @@ export default function TCOFlow() {
 
   const hasTrackedStartRef           = useRef(false)
   const hasTrackedPersonalizationRef = useRef(false)
+  const heroCardSeenRef              = useRef(false)
+  const vehicleCardRef               = useRef(null)
+
+  // landing_page_view — fires once on /tco mount so paid-traffic sessions are
+  // counted the same way as Landing page sessions in GA4 funnel reports.
+  useEffect(() => { trackLandingPageView() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // hero_entry_card_seen — fires once when the vehicle picker card enters the
+  // viewport. Uses IntersectionObserver so scroll-depth matters.
+  useEffect(() => {
+    const el = vehicleCardRef.current
+    if (!el || heroCardSeenRef.current) return
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !heroCardSeenRef.current) {
+        heroCardSeenRef.current = true
+        trackHeroEntryCardSeen()
+        observer.disconnect()
+      }
+    }, { threshold: 0.3 })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Pre-fill from landing-page query params (?make=X&model=Y&year=Z)
   useEffect(() => {
@@ -829,28 +874,51 @@ export default function TCOFlow() {
   ])
 
   // ── Step handlers ───────────────────────────────────────
+
+  // calculator_started fires the moment the user touches any vehicle input —
+  // not when they hit Continue — to match the event definition ("begins the
+  // estimate flow by entering or selecting the first required vehicle input").
+  function trackFirstInteraction() {
+    if (hasTrackedStartRef.current) return
+    hasTrackedStartRef.current = true
+    trackCalculatorStarted({ source_page: '/tco', entry_point: 'flow_step1' })
+  }
+
   function handleYearChange(year) {
     setSelYear(year)
     setSelMake('')
     setSelModel('')
     setPriceEdited(false)
-    if (year) trackSimpleYearSelected({ year, make: '', model: '', mode: 'flow' })
+    if (year) {
+      trackSimpleYearSelected({ year, make: '', model: '', mode: 'flow' })
+      trackFirstInteraction()
+    }
   }
 
   function handleMakeChange(make) {
     setSelMake(make)
     setSelModel('')
     setPriceEdited(false)
-    if (make) trackSimpleMakeSelected({ make, mode: 'flow' })
+    if (make) {
+      trackSimpleMakeSelected({ make, mode: 'flow' })
+      trackFirstInteraction()
+    }
   }
 
   function handleModelChange(model) {
     setSelModel(model)
     setPriceEdited(false)
-    if (model) trackSimpleModelSelected({ make: selMake, model, mode: 'flow' })
+    if (model) {
+      trackSimpleModelSelected({ make: selMake, model, mode: 'flow' })
+      trackFirstInteraction()
+    }
   }
 
   function handleContinueToStep2() {
+    // hero_entry_card_submit — fires when the user completes step 1 and advances.
+    trackHeroEntryCardSubmit({ make: selMake, model: selModel, year: selYear })
+    // Fallback: calculator_started should already be set by a selection handler,
+    // but fire here too if somehow the user reaches Continue without it.
     if (!hasTrackedStartRef.current) {
       hasTrackedStartRef.current = true
       trackCalculatorStarted({ source_page: '/tco', entry_point: 'flow_step1' })
@@ -924,7 +992,7 @@ export default function TCOFlow() {
         {/* ── Step 1: Vehicle ── */}
         {step === 'vehicle' && (
           <div className="max-w-xl mx-auto px-4 pb-12 anim-0">
-            <div className="card flex flex-col gap-5">
+            <div ref={vehicleCardRef} className="card flex flex-col gap-5">
               <div>
                 <h2 className="font-display font-bold text-white text-xl mb-0.5">
                   What car are you looking at?

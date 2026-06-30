@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { trackEvent, trackHeroEntryCardSubmit } from '../../utils/analytics'
+import { trackEvent, trackHeroEntryCardSubmit, trackHeroEntryCardSeen } from '../../utils/analytics'
 
 export default function HeroEntryCard() {
-  const navigate = useNavigate()
+  const navigate  = useNavigate()
+  const cardRef   = useRef(null)
+  const seenRef   = useRef(false)
   const [vehicles, setVehicles] = useState(null)
   const [make, setMake]   = useState('')
   const [model, setModel] = useState('')
@@ -12,6 +14,21 @@ export default function HeroEntryCard() {
   useEffect(() => {
     import('../../data/vehicles.json').then(m => setVehicles(m.default))
   }, [])
+
+  // hero_entry_card_seen — fires once when the card scrolls into view on '/'.
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el || seenRef.current) return
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !seenRef.current) {
+        seenRef.current = true
+        trackHeroEntryCardSeen()
+        observer.disconnect()
+      }
+    }, { threshold: 0.5 })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const makes  = vehicles ? Object.keys(vehicles).sort() : []
   const models = (make && vehicles) ? Object.keys(vehicles[make] ?? {}).sort() : []
@@ -46,7 +63,7 @@ export default function HeroEntryCard() {
   const canSubmit = !!make
 
   return (
-    <div className="rounded-2xl border p-5 flex flex-col gap-4"
+    <div ref={cardRef} className="rounded-2xl border p-5 flex flex-col gap-4"
       style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
 
       <div className="flex items-center gap-2">

@@ -1,27 +1,23 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { trackEvent } from '../../utils/analytics'
-import VEHICLES from '../../data/vehicles.json'
-
-const MAKES = Object.keys(VEHICLES).sort()
-
-function getModels(make) {
-  return make ? Object.keys(VEHICLES[make] ?? {}).sort() : []
-}
-
-function getYears(make, model) {
-  if (!make || !model) return []
-  return Object.keys(VEHICLES[make]?.[model]?.trims_by_year ?? {}).sort((a, b) => b - a)
-}
 
 export default function HeroEntryCard() {
   const navigate = useNavigate()
+  const [vehicles, setVehicles] = useState(null)
   const [make, setMake]   = useState('')
   const [model, setModel] = useState('')
   const [year, setYear]   = useState('')
 
-  const models = getModels(make)
-  const years  = getYears(make, model)
+  useEffect(() => {
+    import('../../data/vehicles.json').then(m => setVehicles(m.default))
+  }, [])
+
+  const makes  = vehicles ? Object.keys(vehicles).sort() : []
+  const models = (make && vehicles) ? Object.keys(vehicles[make] ?? {}).sort() : []
+  const years  = (make && model && vehicles)
+    ? Object.keys(vehicles[make]?.[model]?.trims_by_year ?? {}).sort((a, b) => b - a)
+    : []
 
   function handleMake(val) {
     setMake(val)
@@ -31,7 +27,9 @@ export default function HeroEntryCard() {
   function handleModel(val) {
     setModel(val)
     setYear('')
-    const ys = getYears(make, val)
+    const ys = (make && vehicles)
+      ? Object.keys(vehicles[make]?.[val]?.trims_by_year ?? {}).sort((a, b) => b - a)
+      : []
     if (ys.length === 1) setYear(ys[0])
   }
 
@@ -72,7 +70,7 @@ export default function HeroEntryCard() {
             required
           >
             <option value="">Select make…</option>
-            {MAKES.map(m => <option key={m} value={m}>{m}</option>)}
+            {makes.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
 
@@ -87,9 +85,10 @@ export default function HeroEntryCard() {
             className="input-field"
             disabled={!make}
           >
-            <option value="">{make ? 'Select model…' : '— pick a make first —'}</option>
+            <option value="">{make ? 'Select model…' : 'Select model…'}</option>
             {models.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
+          {!make && <p className="text-[10px] text-[var(--text-muted)]">Select a make first</p>}
         </div>
 
         {/* Year — shown after model */}
@@ -103,9 +102,10 @@ export default function HeroEntryCard() {
             className="input-field"
             disabled={!model}
           >
-            <option value="">{model ? 'Select year…' : '— pick a model first —'}</option>
+            <option value="">{model ? 'Select year…' : 'Select year…'}</option>
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
+          {!model && <p className="text-[10px] text-[var(--text-muted)]">Select a model first</p>}
         </div>
 
         <button

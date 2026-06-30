@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import { Link } from 'react-router-dom'
 import { trackEvent, trackHeroCtaClick } from '../../utils/analytics'
 import HeroEntryCard from './HeroEntryCard'
@@ -52,10 +52,10 @@ export default function Hero() {
             {/* Trust line */}
             <div className="hero-meta anim-2">
               {TRUST_ITEMS.map((item, i) => (
-                <>
-                  {i > 0 && <span key={`dot-${i}`}>·</span>}
-                  <span key={item}>{item}</span>
-                </>
+                <Fragment key={item}>
+                  {i > 0 && <span>·</span>}
+                  <span>{item}</span>
+                </Fragment>
               ))}
             </div>
 

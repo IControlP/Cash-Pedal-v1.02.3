@@ -3053,7 +3053,7 @@
       "is_ev": true,
       "production_years": [
         2014,
-        2022
+        2021
       ],
       "trims_by_year": {
         "2015": {
@@ -3091,10 +3091,6 @@
           "i3 with Range Extender": 48300,
           "i3s": 47650,
           "i3s with Range Extender": 51500
-        },
-        "2022": {
-          "i3": 44450,
-          "i3s": 47650
         }
       },
       "mpg": null,
@@ -10058,7 +10054,7 @@
       "is_ev": false,
       "production_years": [
         2017,
-        2026
+        2022
       ],
       "trims_by_year": {
         "2017": {
@@ -10096,29 +10092,6 @@
           "2.0t Luxe": 45950,
           "3.0t Sport": 49450,
           "Red Sport 400": 53450
-        },
-        "2023": {
-          "2.0t Pure": 42950,
-          "2.0t Luxe": 46450,
-          "3.0t Sport": 49950,
-          "Red Sport 400": 53950
-        },
-        "2024": {
-          "2.0t Pure": 43450,
-          "2.0t Luxe": 46950,
-          "3.0t Sport": 50450,
-          "Red Sport 400": 54450
-        },
-        "2025": {
-          "2.0t Pure": 43950,
-          "2.0t Luxe": 47450,
-          "3.0t Sport": 50950,
-          "Red Sport 400": 54950
-        },
-        "2026": {
-          "Q60 Pure": 52895,
-          "Q60 Luxe": 55895,
-          "Q60 Red Sport 400": 60895
         }
       },
       "mpg": null,
@@ -10602,7 +10575,7 @@
       "is_ev": false,
       "production_years": [
         2013,
-        2026
+        2024
       ],
       "trims_by_year": {
         "2015": {
@@ -10681,22 +10654,6 @@
           "F-TYPE R": 108500,
           "F-TYPE R Coupe": 103500,
           "F-TYPE SVR": 128000
-        },
-        "2025": {
-          "F-TYPE": 75000,
-          "F-TYPE S": 87000,
-          "F-TYPE V8 S": 98000,
-          "F-TYPE R": 109000,
-          "F-TYPE R Coupe": 104000,
-          "F-TYPE SVR": 128500
-        },
-        "2026": {
-          "F-TYPE": 76875,
-          "F-TYPE S": 89175,
-          "F-TYPE V8 S": 100450,
-          "F-TYPE R": 111725,
-          "F-TYPE R Coupe": 106600,
-          "F-TYPE SVR": 131710
         }
       },
       "mpg": null,
@@ -10769,7 +10726,7 @@
       "is_ev": false,
       "production_years": [
         2015,
-        2022
+        2020
       ],
       "trims_by_year": {
         "2015": {
@@ -10811,18 +10768,6 @@
           "XE S": 45900,
           "XE SE": 42900,
           "XE HSE": 47900
-        },
-        "2021": {
-          "XE": 40400,
-          "XE S": 46400,
-          "XE SE": 43400,
-          "XE HSE": 48400
-        },
-        "2022": {
-          "XE": 40900,
-          "XE S": 46900,
-          "XE SE": 43900,
-          "XE HSE": 48900
         }
       },
       "mpg": null,
@@ -11321,7 +11266,7 @@
       "is_ev": false,
       "production_years": [
         2015,
-        2026
+        2023
       ],
       "trims_by_year": {
         "2015": {
@@ -11377,24 +11322,6 @@
           "Renegade Latitude": 23395,
           "Renegade Limited": 27395,
           "Renegade Trailhawk": 28395
-        },
-        "2024": {
-          "Renegade Sport": 20695,
-          "Renegade Latitude": 23695,
-          "Renegade Limited": 27695,
-          "Renegade Trailhawk": 28695
-        },
-        "2025": {
-          "Renegade Sport": 20995,
-          "Renegade Latitude": 23995,
-          "Renegade Limited": 27995,
-          "Renegade Trailhawk": 28995
-        },
-        "2026": {
-          "Renegade Sport": 21520,
-          "Renegade Latitude": 24595,
-          "Renegade Limited": 28695,
-          "Renegade Trailhawk": 29720
         }
       },
       "mpg": null,
@@ -15061,7 +14988,7 @@
       "is_ev": false,
       "production_years": [
         2014,
-        2026
+        2024
       ],
       "trims_by_year": {
         "2015": {
@@ -15113,16 +15040,6 @@
           "Mirage ES": 17690,
           "Mirage SE": 19490,
           "Mirage GT": 21090
-        },
-        "2025": {
-          "Mirage ES": 18190,
-          "Mirage SE": 19990,
-          "Mirage GT": 21590
-        },
-        "2026": {
-          "Mirage ES": 18645,
-          "Mirage SE": 20490,
-          "Mirage GT": 22130
         }
       },
       "mpg": null,
@@ -18421,7 +18338,7 @@
       "is_ev": false,
       "production_years": [
         2018,
-        2023
+        2022
       ],
       "trims_by_year": {
         "2018": {
@@ -18450,11 +18367,6 @@
           "LE": 23550,
           "XLE": 25595,
           "Limited": 27595
-        },
-        "2023": {
-          "LE": 24100,
-          "XLE": 26145,
-          "Limited": 28145
         }
       },
       "mpg": null,

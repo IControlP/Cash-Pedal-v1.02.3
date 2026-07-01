@@ -76,10 +76,10 @@
           "ILX A-SPEC": 32700
         },
         "2022": {
-          "ILX": 26600,
-          "ILX Premium Package": 29100,
-          "ILX Technology Package": 31700,
-          "ILX A-SPEC": 33400
+          "ILX": 27220,
+          "ILX Premium Package": 29720,
+          "ILX Technology Package": 32320,
+          "ILX A-SPEC": 33920
         }
       },
       "mpg": null,
@@ -98,28 +98,28 @@
       ],
       "trims_by_year": {
         "2022": {
-          "Integra": 31895,
-          "Integra A-SPEC": 35295
+          "Integra": 30800,
+          "Integra A-SPEC": 34800
         },
         "2023": {
-          "Integra": 32295,
-          "Integra A-SPEC": 35695,
-          "Integra Type S": 51300
+          "Integra": 31195,
+          "Integra A-SPEC": 35295,
+          "Integra Type S": 51195
         },
         "2024": {
-          "Integra": 32795,
-          "Integra A-SPEC": 36195,
-          "Integra Type S": 52300
+          "Integra": 31895,
+          "Integra A-SPEC": 35995,
+          "Integra Type S": 52295
         },
         "2025": {
-          "Integra": 33295,
-          "Integra A-SPEC": 36695,
-          "Integra Type S": 53300
+          "Integra": 32795,
+          "Integra A-SPEC": 36995,
+          "Integra Type S": 53295
         },
         "2026": {
-          "Integra": 33900,
-          "Integra A-SPEC": 37300,
-          "Integra Type S": 54500
+          "Integra": 33615,
+          "Integra A-SPEC": 37920,
+          "Integra Type S": 54625
         }
       },
       "mpg": null,
@@ -197,18 +197,18 @@
           "MDX Type S": 68850
         },
         "2024": {
-          "MDX": 49900,
-          "MDX Technology Package": 55800,
-          "MDX A-SPEC Package": 59300,
-          "MDX Advance Package": 63300,
-          "MDX Type S": 70200
+          "MDX": 50100,
+          "MDX Technology Package": 55900,
+          "MDX A-SPEC Package": 59500,
+          "MDX Advance Package": 63600,
+          "MDX Type S": 70300
         },
         "2025": {
-          "MDX": 51250,
-          "MDX Technology Package": 57150,
-          "MDX A-SPEC Package": 60650,
-          "MDX Advance Package": 64650,
-          "MDX Type S": 71550
+          "MDX": 51450,
+          "MDX Technology Package": 57250,
+          "MDX A-SPEC Package": 60950,
+          "MDX Advance Package": 65050,
+          "MDX Type S": 71900
         },
         "2026": {
           "MDX": 52530,
@@ -2136,32 +2136,32 @@
           "M3 Competition": 74300
         },
         "2023": {
-          "330i": 44600,
-          "330i xDrive": 46600,
+          "330i": 43900,
+          "330i xDrive": 45900,
           "M340i": 59100,
           "M340i xDrive": 61100,
           "M3": 73600,
           "M3 Competition": 75600
         },
         "2024": {
-          "330i": 45800,
-          "330i xDrive": 47800,
-          "M340i": 60300,
-          "M340i xDrive": 62300,
-          "M3": 74800,
-          "M3 Competition": 76800
+          "330i": 43800,
+          "330i xDrive": 46300,
+          "M340i": 57100,
+          "M340i xDrive": 59100,
+          "M3": 74900,
+          "M3 Competition": 76900
         },
         "2025": {
-          "330i": 47000,
-          "330i xDrive": 49000,
-          "M340i": 61500,
-          "M340i xDrive": 63500,
-          "M3": 76000,
-          "M3 Competition": 78000
+          "330i": 44800,
+          "330i xDrive": 47300,
+          "M340i": 58600,
+          "M340i xDrive": 60600,
+          "M3": 76900,
+          "M3 Competition": 79500
         },
         "2026": {
-          "330i": 48175,
-          "330i xDrive": 50225,
+          "330i": 45920,
+          "330i xDrive": 48480,
           "M340i": 63035,
           "M340i xDrive": 65085,
           "M3": 77900,
@@ -2236,20 +2236,20 @@
           "330i xDrive": 45300
         },
         "2023": {
-          "330i": 44600,
-          "330i xDrive": 46600
+          "330i": 43900,
+          "330i xDrive": 45900
         },
         "2024": {
-          "330i": 45800,
-          "330i xDrive": 47800
+          "330i": 43800,
+          "330i xDrive": 46300
         },
         "2025": {
-          "330i": 47000,
-          "330i xDrive": 49000
+          "330i": 44800,
+          "330i xDrive": 47300
         },
         "2026": {
-          "330i": 48175,
-          "330i xDrive": 50225
+          "330i": 45920,
+          "330i xDrive": 48480
         }
       },
       "mpg": null,
@@ -2851,26 +2851,26 @@
           "X3 M Competition": 75100
         },
         "2023": {
-          "sDrive30i": 47300,
-          "xDrive30i": 49100,
-          "M40i": 59400,
-          "X3 M": 71400,
-          "X3 M Competition": 76400
+          "sDrive30i": 44600,
+          "xDrive30i": 46400,
+          "M40i": 57600,
+          "X3 M": 70400,
+          "X3 M Competition": 74900
         },
         "2024": {
-          "sDrive30i": 48500,
-          "xDrive30i": 50300,
-          "M40i": 60600,
-          "X3 M": 72600,
-          "X3 M Competition": 77600
+          "sDrive30i": 45400,
+          "xDrive30i": 47200,
+          "M40i": 58600,
+          "X3 M": 71400,
+          "X3 M Competition": 76200
         },
         "2025": {
-          "X3 30 xDrive": 50900,
-          "X3 M50 xDrive": 65900
+          "X3 30 xDrive": 48900,
+          "X3 M50 xDrive": 62900
         },
         "2026": {
-          "X3 30 xDrive": 52170,
-          "X3 M50 xDrive": 67550
+          "X3 30 xDrive": 50120,
+          "X3 M50 xDrive": 64475
         }
       },
       "mpg": {
@@ -2948,36 +2948,36 @@
           "X5 M Competition": 114900
         },
         "2023": {
-          "sDrive40i": 65200,
-          "xDrive40i": 67200,
-          "xDrive50i": 80300,
-          "M50i": 87300,
-          "X5 M": 111400,
-          "X5 M Competition": 116400
+          "sDrive40i": 63700,
+          "xDrive40i": 65700,
+          "xDrive50i": 78000,
+          "M50i": 85300,
+          "X5 M": 109400,
+          "X5 M Competition": 114400
         },
         "2024": {
-          "sDrive40i": 66600,
-          "xDrive40i": 68600,
-          "xDrive50i": 81700,
-          "M50i": 88700,
-          "X5 M": 112800,
-          "X5 M Competition": 117800
+          "sDrive40i": 65000,
+          "xDrive40i": 67000,
+          "xDrive50i": 79700,
+          "M50i": 86700,
+          "X5 M": 110800,
+          "X5 M Competition": 115800
         },
         "2025": {
-          "sDrive40i": 68000,
-          "xDrive40i": 70000,
-          "xDrive50i": 83100,
-          "M50i": 90100,
-          "X5 M": 114200,
-          "X5 M Competition": 119200
+          "sDrive40i": 66500,
+          "xDrive40i": 68500,
+          "xDrive50i": 81200,
+          "M50i": 88200,
+          "X5 M": 112200,
+          "X5 M Competition": 117200
         },
         "2026": {
-          "sDrive40i": 69700,
-          "xDrive40i": 71750,
-          "xDrive50i": 85175,
-          "M50i": 92350,
-          "X5 M": 117055,
-          "X5 M Competition": 122180
+          "sDrive40i": 68160,
+          "xDrive40i": 70210,
+          "xDrive50i": 83230,
+          "M50i": 90405,
+          "X5 M": 115005,
+          "X5 M Competition": 120130
         }
       },
       "mpg": null,
@@ -3117,20 +3117,20 @@
           "i4 M50": 68295
         },
         "2023": {
-          "i4 eDrive40": 57700,
-          "i4 M50": 69600
+          "i4 eDrive40": 55400,
+          "i4 M50": 67300
         },
         "2024": {
-          "i4 eDrive40": 58900,
-          "i4 M50": 70800
+          "i4 eDrive40": 52900,
+          "i4 M50": 65900
         },
         "2025": {
-          "i4 eDrive40": 60100,
-          "i4 M50": 72000
+          "i4 eDrive40": 54900,
+          "i4 M50": 67900
         },
         "2026": {
-          "i4 eDrive40": 61600,
-          "i4 M50": 73800
+          "i4 eDrive40": 56300,
+          "i4 M50": 69600
         }
       },
       "mpg": null,
@@ -4912,46 +4912,46 @@
           "Silverado High Country": 56900
         },
         "2021": {
-          "Silverado Regular Cab Work Truck": 28900,
-          "Silverado Double Cab LT": 38700,
-          "Silverado Crew Cab LT": 41200,
-          "Silverado Crew Cab LTZ": 47200,
-          "Silverado High Country": 57200
-        },
-        "2022": {
-          "Silverado Regular Cab Work Truck": 29200,
-          "Silverado Double Cab LT": 39000,
-          "Silverado Crew Cab LT": 41500,
-          "Silverado Crew Cab LTZ": 47500,
-          "Silverado High Country": 57500
-        },
-        "2023": {
-          "Silverado Regular Cab Work Truck": 30400,
+          "Silverado Regular Cab Work Truck": 31700,
           "Silverado Double Cab LT": 40200,
           "Silverado Crew Cab LT": 42700,
-          "Silverado Crew Cab LTZ": 48700,
-          "Silverado High Country": 58700
+          "Silverado Crew Cab LTZ": 49200,
+          "Silverado High Country": 59200
+        },
+        "2022": {
+          "Silverado Regular Cab Work Truck": 32400,
+          "Silverado Double Cab LT": 40700,
+          "Silverado Crew Cab LT": 43200,
+          "Silverado Crew Cab LTZ": 49700,
+          "Silverado High Country": 59700
+        },
+        "2023": {
+          "Silverado Regular Cab Work Truck": 34095,
+          "Silverado Double Cab LT": 42700,
+          "Silverado Crew Cab LT": 45200,
+          "Silverado Crew Cab LTZ": 51700,
+          "Silverado High Country": 61700
         },
         "2024": {
-          "Silverado Regular Cab Work Truck": 31200,
-          "Silverado Double Cab LT": 41000,
-          "Silverado Crew Cab LT": 43500,
-          "Silverado Crew Cab LTZ": 49500,
-          "Silverado High Country": 59500
+          "Silverado Regular Cab Work Truck": 36295,
+          "Silverado Double Cab LT": 44700,
+          "Silverado Crew Cab LT": 47200,
+          "Silverado Crew Cab LTZ": 53700,
+          "Silverado High Country": 63700
         },
         "2025": {
-          "Silverado Regular Cab Work Truck": 32000,
-          "Silverado Double Cab LT": 41800,
-          "Silverado Crew Cab LT": 44300,
-          "Silverado Crew Cab LTZ": 50300,
-          "Silverado High Country": 60300
+          "Silverado Regular Cab Work Truck": 37800,
+          "Silverado Double Cab LT": 46200,
+          "Silverado Crew Cab LT": 48700,
+          "Silverado Crew Cab LTZ": 55200,
+          "Silverado High Country": 65200
         },
         "2026": {
-          "Silverado Regular Cab Work Truck": 32800,
-          "Silverado Double Cab LT": 42845,
-          "Silverado Crew Cab LT": 45405,
-          "Silverado Crew Cab LTZ": 51555,
-          "Silverado High Country": 61805
+          "Silverado Regular Cab Work Truck": 38745,
+          "Silverado Double Cab LT": 47355,
+          "Silverado Crew Cab LT": 49935,
+          "Silverado Crew Cab LTZ": 56580,
+          "Silverado High Country": 66830
         }
       },
       "mpg": null,
@@ -4986,52 +4986,52 @@
           "Silverado 1500 High Country": 56900
         },
         "2021": {
-          "Silverado 1500 Regular Cab Work Truck": 28900,
-          "Silverado 1500 Double Cab LT": 38700,
-          "Silverado 1500 Crew Cab LT": 41200,
-          "Silverado 1500 Crew Cab RST": 43700,
-          "Silverado 1500 Crew Cab LTZ": 47200,
-          "Silverado 1500 High Country": 57200
-        },
-        "2022": {
-          "Silverado 1500 Regular Cab Work Truck": 29200,
-          "Silverado 1500 Double Cab LT": 39000,
-          "Silverado 1500 Crew Cab LT": 41500,
-          "Silverado 1500 Crew Cab RST": 44000,
-          "Silverado 1500 Crew Cab LTZ": 47500,
-          "Silverado 1500 High Country": 57500
-        },
-        "2023": {
-          "Silverado 1500 Regular Cab Work Truck": 30400,
+          "Silverado 1500 Regular Cab Work Truck": 31700,
           "Silverado 1500 Double Cab LT": 40200,
           "Silverado 1500 Crew Cab LT": 42700,
           "Silverado 1500 Crew Cab RST": 45200,
-          "Silverado 1500 Crew Cab LTZ": 48700,
-          "Silverado 1500 High Country": 58700
+          "Silverado 1500 Crew Cab LTZ": 49200,
+          "Silverado 1500 High Country": 59200
+        },
+        "2022": {
+          "Silverado 1500 Regular Cab Work Truck": 32400,
+          "Silverado 1500 Double Cab LT": 40700,
+          "Silverado 1500 Crew Cab LT": 43200,
+          "Silverado 1500 Crew Cab RST": 45700,
+          "Silverado 1500 Crew Cab LTZ": 49700,
+          "Silverado 1500 High Country": 59700
+        },
+        "2023": {
+          "Silverado 1500 Regular Cab Work Truck": 34095,
+          "Silverado 1500 Double Cab LT": 42700,
+          "Silverado 1500 Crew Cab LT": 45200,
+          "Silverado 1500 Crew Cab RST": 47700,
+          "Silverado 1500 Crew Cab LTZ": 51700,
+          "Silverado 1500 High Country": 61700
         },
         "2024": {
-          "Silverado 1500 Regular Cab Work Truck": 31200,
-          "Silverado 1500 Double Cab LT": 41000,
-          "Silverado 1500 Crew Cab LT": 43500,
-          "Silverado 1500 Crew Cab RST": 46000,
-          "Silverado 1500 Crew Cab LTZ": 49500,
-          "Silverado 1500 High Country": 59500
+          "Silverado 1500 Regular Cab Work Truck": 36295,
+          "Silverado 1500 Double Cab LT": 44700,
+          "Silverado 1500 Crew Cab LT": 47200,
+          "Silverado 1500 Crew Cab RST": 49700,
+          "Silverado 1500 Crew Cab LTZ": 53700,
+          "Silverado 1500 High Country": 63700
         },
         "2025": {
-          "Silverado 1500 Regular Cab Work Truck": 32000,
-          "Silverado 1500 Double Cab LT": 41800,
-          "Silverado 1500 Crew Cab LT": 44300,
-          "Silverado 1500 Crew Cab RST": 46800,
-          "Silverado 1500 Crew Cab LTZ": 50300,
-          "Silverado 1500 High Country": 60300
+          "Silverado 1500 Regular Cab Work Truck": 37800,
+          "Silverado 1500 Double Cab LT": 46200,
+          "Silverado 1500 Crew Cab LT": 48700,
+          "Silverado 1500 Crew Cab RST": 51200,
+          "Silverado 1500 Crew Cab LTZ": 55200,
+          "Silverado 1500 High Country": 65200
         },
         "2026": {
-          "Silverado 1500 Regular Cab Work Truck": 32800,
-          "Silverado 1500 Double Cab LT": 42845,
-          "Silverado 1500 Crew Cab LT": 45405,
-          "Silverado 1500 Crew Cab RST": 47970,
-          "Silverado 1500 Crew Cab LTZ": 51555,
-          "Silverado 1500 High Country": 61805
+          "Silverado 1500 Regular Cab Work Truck": 38745,
+          "Silverado 1500 Double Cab LT": 47355,
+          "Silverado 1500 Crew Cab LT": 49935,
+          "Silverado 1500 Crew Cab RST": 52480,
+          "Silverado 1500 Crew Cab LTZ": 56580,
+          "Silverado 1500 High Country": 66830
         }
       },
       "mpg": {
@@ -7659,44 +7659,44 @@
           "Denali": 56995
         },
         "2022": {
-          "Regular Cab Pro": 32995,
-          "Double Cab SLE": 38995,
-          "Double Cab SLT": 43995,
-          "Double Cab AT4": 46995,
-          "Crew Cab SLE": 41995,
-          "Crew Cab SLT": 46995,
-          "Crew Cab AT4": 49995,
-          "Denali": 57995
+          "Regular Cab Pro": 33990,
+          "Double Cab SLE": 40490,
+          "Double Cab SLT": 45490,
+          "Double Cab AT4": 48490,
+          "Crew Cab SLE": 43490,
+          "Crew Cab SLT": 48490,
+          "Crew Cab AT4": 51490,
+          "Denali": 59490
         },
         "2023": {
-          "Regular Cab Pro": 33995,
-          "Double Cab SLE": 39995,
-          "Double Cab SLT": 44995,
-          "Double Cab AT4": 47995,
-          "Crew Cab SLE": 42995,
-          "Crew Cab SLT": 47995,
-          "Crew Cab AT4": 50995,
-          "Denali": 58995
+          "Regular Cab Pro": 35490,
+          "Double Cab SLE": 41990,
+          "Double Cab SLT": 46990,
+          "Double Cab AT4": 49990,
+          "Crew Cab SLE": 44990,
+          "Crew Cab SLT": 49990,
+          "Crew Cab AT4": 52990,
+          "Denali": 61490
         },
         "2024": {
-          "Regular Cab Pro": 34995,
-          "Double Cab SLE": 40995,
-          "Double Cab SLT": 45995,
-          "Double Cab AT4": 48995,
-          "Crew Cab SLE": 43995,
-          "Crew Cab SLT": 48995,
-          "Crew Cab AT4": 51995,
-          "Denali": 59995
+          "Regular Cab Pro": 37290,
+          "Double Cab SLE": 43490,
+          "Double Cab SLT": 48490,
+          "Double Cab AT4": 51490,
+          "Crew Cab SLE": 46490,
+          "Crew Cab SLT": 51490,
+          "Crew Cab AT4": 54490,
+          "Denali": 63490
         },
         "2025": {
-          "Regular Cab Pro": 35995,
-          "Double Cab SLE": 41995,
-          "Double Cab SLT": 46995,
-          "Double Cab AT4": 49995,
-          "Crew Cab SLE": 44995,
-          "Crew Cab SLT": 49995,
-          "Crew Cab AT4": 52995,
-          "Denali": 60995
+          "Regular Cab Pro": 38590,
+          "Double Cab SLE": 44990,
+          "Double Cab SLT": 49990,
+          "Double Cab AT4": 52990,
+          "Crew Cab SLE": 47990,
+          "Crew Cab SLT": 52990,
+          "Crew Cab AT4": 55990,
+          "Denali": 64990
         },
         "2026": {
           "Sierra 1500 Regular Cab Pro": 37995,
@@ -14195,28 +14195,28 @@
           "AMG C 63 S": 85400
         },
         "2023": {
-          "C 300": 48550,
-          "C 300 4MATIC": 50550,
-          "AMG C 43": 67050,
-          "AMG C 63 S E Performance": 89900
+          "C 300": 47100,
+          "C 300 4MATIC": 49100,
+          "AMG C 43": 65000,
+          "AMG C 63 S E Performance": 88500
         },
         "2024": {
-          "C 300": 50200,
-          "C 300 4MATIC": 52200,
-          "AMG C 43": 69200,
-          "AMG C 63 S E Performance": 92400
+          "C 300": 48100,
+          "C 300 4MATIC": 50100,
+          "AMG C 43": 67000,
+          "AMG C 63 S E Performance": 90500
         },
         "2025": {
-          "C 300": 51800,
-          "C 300 4MATIC": 53800,
-          "AMG C 43": 71400,
-          "AMG C 63 S E Performance": 94900
+          "C 300": 49700,
+          "C 300 4MATIC": 51700,
+          "AMG C 43": 69200,
+          "AMG C 63 S E Performance": 92900
         },
         "2026": {
-          "C 300": 53095,
-          "C 300 4MATIC": 55145,
-          "AMG C 43": 73185,
-          "AMG C 63 S E Performance": 97270
+          "C 300": 50940,
+          "C 300 4MATIC": 52990,
+          "AMG C 43": 70930,
+          "AMG C 63 S E Performance": 95220
         }
       },
       "mpg": {
@@ -14503,28 +14503,28 @@
           "AMG GLC 63 S": 86800
         },
         "2023": {
-          "GLC 300": 48600,
-          "GLC 300 4MATIC": 50600,
-          "AMG GLC 43": 68850,
-          "AMG GLC 63 S E Performance": 95400
+          "GLC 300": 47100,
+          "GLC 300 4MATIC": 49100,
+          "AMG GLC 43": 68000,
+          "AMG GLC 63 S E Performance": 97000
         },
         "2024": {
-          "GLC 300": 50600,
-          "GLC 300 4MATIC": 52600,
-          "AMG GLC 43": 71600,
-          "AMG GLC 63 S E Performance": 99200
+          "GLC 300": 48100,
+          "GLC 300 4MATIC": 50100,
+          "AMG GLC 43": 69800,
+          "AMG GLC 63 S E Performance": 98000
         },
         "2025": {
-          "GLC 300": 52600,
-          "GLC 300 4MATIC": 54600,
-          "AMG GLC 43": 74350,
-          "AMG GLC 63 S E Performance": 103000
+          "GLC 300": 49900,
+          "GLC 300 4MATIC": 51900,
+          "AMG GLC 43": 72000,
+          "AMG GLC 63 S E Performance": 101000
         },
         "2026": {
-          "GLC 300": 53915,
-          "GLC 300 4MATIC": 55965,
-          "AMG GLC 43": 76210,
-          "AMG GLC 63 S E Performance": 105575
+          "GLC 300": 51150,
+          "GLC 300 4MATIC": 53200,
+          "AMG GLC 43": 73800,
+          "AMG GLC 63 S E Performance": 103525
         }
       },
       "mpg": null,
@@ -14650,34 +14650,34 @@
           "AMG S 63": 163000
         },
         "2022": {
-          "S 500": 117000,
-          "S 580": 121500,
-          "Maybach S 580": 188450,
-          "AMG S 63": 165500
+          "S 500": 112900,
+          "S 580": 127900,
+          "Maybach S 580": 185000,
+          "AMG S 63": 168000
         },
         "2023": {
-          "S 500": 120500,
-          "S 580": 125000,
-          "Maybach S 580": 192950,
-          "AMG S 63": 170000
+          "S 500": 114900,
+          "S 580": 129500,
+          "Maybach S 580": 196450,
+          "AMG S 63": 172000
         },
         "2024": {
-          "S 500": 124000,
-          "S 580": 128500,
-          "Maybach S 580": 197450,
-          "AMG S 63": 174500
+          "S 500": 115900,
+          "S 580": 131500,
+          "Maybach S 580": 207000,
+          "AMG S 63": 177000
         },
         "2025": {
-          "S 500": 127500,
-          "S 580": 132000,
-          "Maybach S 580": 201950,
-          "AMG S 63": 179000
+          "S 500": 118900,
+          "S 580": 134800,
+          "Maybach S 580": 212000,
+          "AMG S 63": 181500
         },
         "2026": {
-          "S 500": 130685,
-          "S 580": 135300,
-          "Maybach S 580": 207000,
-          "AMG S 63": 183475
+          "S 500": 121870,
+          "S 580": 138170,
+          "Maybach S 580": 217300,
+          "AMG S 63": 186040
         }
       },
       "mpg": null,
@@ -16600,48 +16600,48 @@
           "Crew Cab TRX": 71295
         },
         "2022": {
-          "Regular Cab Tradesman": 32595,
-          "Regular Cab Express": 34595,
-          "Quad Cab Express": 36595,
-          "Crew Cab Express": 38595,
-          "Crew Cab Big Horn": 40595,
-          "Crew Cab Laramie": 43595,
-          "Crew Cab Longhorn": 49595,
-          "Crew Cab Limited": 51595,
-          "Crew Cab TRX": 71595
+          "Regular Cab Tradesman": 33595,
+          "Regular Cab Express": 35595,
+          "Quad Cab Express": 38095,
+          "Crew Cab Express": 40095,
+          "Crew Cab Big Horn": 42095,
+          "Crew Cab Laramie": 46095,
+          "Crew Cab Longhorn": 53095,
+          "Crew Cab Limited": 56595,
+          "Crew Cab TRX": 71690
         },
         "2023": {
-          "Regular Cab Tradesman": 32895,
-          "Regular Cab Express": 34895,
-          "Quad Cab Express": 36895,
-          "Crew Cab Express": 38895,
-          "Crew Cab Big Horn": 40895,
-          "Crew Cab Laramie": 43895,
-          "Crew Cab Longhorn": 49895,
-          "Crew Cab Limited": 51895,
-          "Crew Cab TRX": 71895
+          "Regular Cab Tradesman": 34990,
+          "Regular Cab Express": 36990,
+          "Quad Cab Express": 39490,
+          "Crew Cab Express": 41490,
+          "Crew Cab Big Horn": 43490,
+          "Crew Cab Laramie": 47490,
+          "Crew Cab Longhorn": 54490,
+          "Crew Cab Limited": 57990,
+          "Crew Cab TRX": 76995
         },
         "2024": {
-          "Regular Cab Tradesman": 33195,
-          "Regular Cab Express": 35195,
-          "Quad Cab Express": 37195,
-          "Crew Cab Express": 39195,
-          "Crew Cab Big Horn": 41195,
-          "Crew Cab Laramie": 44195,
-          "Crew Cab Longhorn": 50195,
-          "Crew Cab Limited": 52195,
-          "Crew Cab TRX": 72195
+          "Regular Cab Tradesman": 36490,
+          "Regular Cab Express": 38490,
+          "Quad Cab Express": 40990,
+          "Crew Cab Express": 42990,
+          "Crew Cab Big Horn": 44990,
+          "Crew Cab Laramie": 48990,
+          "Crew Cab Longhorn": 55990,
+          "Crew Cab Limited": 59490,
+          "Crew Cab TRX": 81995
         },
         "2025": {
-          "Regular Cab Tradesman": 33495,
-          "Regular Cab Express": 35495,
-          "Quad Cab Express": 37495,
-          "Crew Cab Express": 39495,
-          "Crew Cab Big Horn": 41495,
-          "Crew Cab Laramie": 44495,
-          "Crew Cab Longhorn": 50495,
-          "Crew Cab Limited": 52495,
-          "Crew Cab TRX": 72495
+          "Regular Cab Tradesman": 37990,
+          "Regular Cab Express": 39990,
+          "Quad Cab Express": 42490,
+          "Crew Cab Express": 44490,
+          "Crew Cab Big Horn": 46490,
+          "Crew Cab Laramie": 50490,
+          "Crew Cab Longhorn": 57490,
+          "Crew Cab Limited": 60990,
+          "Crew Cab TRX": 84995
         },
         "2026": {
           "1500 Tradesman Regular Cab": 37995,
@@ -17824,8 +17824,8 @@
       ],
       "trims_by_year": {
         "2024": {
-          "Cybertruck AWD": 99990,
-          "Cybertruck Cyberbeast": 119990
+          "Cybertruck AWD": 79990,
+          "Cybertruck Cyberbeast": 99990
         },
         "2025": {
           "Cybertruck RWD": 60990,
@@ -17887,14 +17887,14 @@
           "Model 3 Performance": 53240
         },
         "2024": {
-          "Model 3 RWD": 38990,
-          "Model 3 Long Range": 47240,
-          "Model 3 Performance": 50240
+          "Model 3 RWD": 40240,
+          "Model 3 Long Range": 48490,
+          "Model 3 Performance": 50990
         },
         "2025": {
-          "Model 3 Standard RWD": 36990,
+          "Model 3 Standard RWD": 34990,
           "Model 3 Long Range RWD": 42490,
-          "Model 3 Long Range AWD": 47490,
+          "Model 3 Long Range AWD": 45990,
           "Model 3 Performance": 54990
         },
         "2026": {
@@ -18096,7 +18096,7 @@
         "2025": {
           "Model Y Standard RWD": 39990,
           "Model Y Long Range RWD": 44990,
-          "Model Y Long Range AWD": 48990,
+          "Model Y Long Range AWD": 49990,
           "Model Y Performance": 57490
         },
         "2026": {

@@ -11209,7 +11209,7 @@
           "Grand Cherokee Trackhawk": 88790
         },
         "2022": {
-          "Grand Cherokee Laredo": 32890,
+          "Grand Cherokee Laredo": 37995,
           "Grand Cherokee Limited": 37890,
           "Grand Cherokee Overland": 43890,
           "Grand Cherokee SRT": 67490,
@@ -12200,9 +12200,9 @@
           "Telluride SX": 43190
         },
         "2022": {
-          "Telluride LX": 32490,
-          "Telluride S": 35490,
-          "Telluride EX": 38490,
+          "Telluride LX": 35490,
+          "Telluride S": 38490,
+          "Telluride EX": 41490,
           "Telluride SX": 43490
         },
         "2023": {
@@ -19027,8 +19027,8 @@
           "Prius Prime Limited": 34150
         },
         "2023": {
-          "Prius LE": 26000,
-          "Prius XLE": 29000,
+          "Prius LE": 27450,
+          "Prius XLE": 29990,
           "Prius XLE AWD": 30000,
           "Prius Limited": 34000,
           "Prius Prime SE": 28770,
@@ -19036,8 +19036,8 @@
           "Prius Prime Limited": 35270
         },
         "2024": {
-          "Prius LE": 27350,
-          "Prius XLE": 30350,
+          "Prius LE": 28545,
+          "Prius XLE": 30990,
           "Prius XLE AWD": 31350,
           "Prius Limited": 35350,
           "Prius Prime SE": 32350,
@@ -19479,7 +19479,7 @@
           "TRD Pro": 46560
         },
         "2024": {
-          "SR": 28350,
+          "SR": 31550,
           "SR5": 31600,
           "TRD Sport": 35350,
           "TRD Off-Road": 37100,

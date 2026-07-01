@@ -7251,31 +7251,31 @@
           "Shelby GT500": 74995
         },
         "2022": {
-          "EcoBoost": 29995,
-          "EcoBoost Premium": 33995,
-          "GT": 38995,
-          "GT Premium": 42995,
+          "EcoBoost": 28395,
+          "EcoBoost Premium": 32395,
+          "GT": 36595,
+          "GT Premium": 40595,
           "Mach 1": 54995,
           "Shelby GT500": 76995
         },
         "2023": {
-          "EcoBoost": 31995,
-          "EcoBoost Premium": 35995,
-          "GT": 40995,
-          "GT Premium": 44995
+          "EcoBoost": 29920,
+          "EcoBoost Premium": 33920,
+          "GT": 37480,
+          "GT Premium": 41480
         },
         "2024": {
-          "EcoBoost": 33995,
+          "EcoBoost": 32515,
           "EcoBoost Premium": 37995,
-          "GT": 42995,
-          "GT Premium": 46995,
-          "Dark Horse": 54995
+          "GT": 40920,
+          "GT Premium": 45920,
+          "Dark Horse": 57715
         },
         "2025": {
-          "EcoBoost": 35995,
-          "EcoBoost Premium": 39995,
-          "GT": 44995,
-          "GT Premium": 48995,
+          "EcoBoost": 31920,
+          "EcoBoost Premium": 37920,
+          "GT": 41920,
+          "GT Premium": 47920,
           "Dark Horse": 56995
         },
         "2026": {
@@ -11210,38 +11210,38 @@
         },
         "2022": {
           "Grand Cherokee Laredo": 37995,
-          "Grand Cherokee Limited": 37890,
-          "Grand Cherokee Overland": 43890,
+          "Grand Cherokee Limited": 42090,
+          "Grand Cherokee Overland": 49295,
           "Grand Cherokee SRT": 67490,
-          "Grand Cherokee Summit": 49490,
-          "Grand Cherokee Trailhawk": 40890,
+          "Grand Cherokee Summit": 55395,
+          "Grand Cherokee Trailhawk": 47895,
           "Grand Cherokee Trackhawk": 89290
         },
         "2023": {
-          "Grand Cherokee Laredo": 33390,
-          "Grand Cherokee Limited": 38390,
-          "Grand Cherokee Overland": 44390,
+          "Grand Cherokee Laredo": 38990,
+          "Grand Cherokee Limited": 43090,
+          "Grand Cherokee Overland": 50295,
           "Grand Cherokee SRT": 67990,
-          "Grand Cherokee Summit": 49990,
-          "Grand Cherokee Trailhawk": 41390,
+          "Grand Cherokee Summit": 56395,
+          "Grand Cherokee Trailhawk": 48895,
           "Grand Cherokee Trackhawk": 89790
         },
         "2024": {
-          "Grand Cherokee Laredo": 33890,
-          "Grand Cherokee Limited": 38890,
-          "Grand Cherokee Overland": 44890,
+          "Grand Cherokee Laredo": 39990,
+          "Grand Cherokee Limited": 44090,
+          "Grand Cherokee Overland": 51295,
           "Grand Cherokee SRT": 68490,
-          "Grand Cherokee Summit": 50490,
-          "Grand Cherokee Trailhawk": 41890,
+          "Grand Cherokee Summit": 57395,
+          "Grand Cherokee Trailhawk": 49895,
           "Grand Cherokee Trackhawk": 90290
         },
         "2025": {
-          "Grand Cherokee Laredo": 34390,
-          "Grand Cherokee Limited": 39390,
-          "Grand Cherokee Overland": 45390,
+          "Grand Cherokee Laredo": 40990,
+          "Grand Cherokee Limited": 45090,
+          "Grand Cherokee Overland": 52295,
           "Grand Cherokee SRT": 68990,
-          "Grand Cherokee Summit": 50990,
-          "Grand Cherokee Trailhawk": 42390,
+          "Grand Cherokee Summit": 58395,
+          "Grand Cherokee Trailhawk": 50895,
           "Grand Cherokee Trackhawk": 90790
         },
         "2026": {
@@ -12203,25 +12203,25 @@
           "Telluride LX": 35490,
           "Telluride S": 38490,
           "Telluride EX": 41490,
-          "Telluride SX": 43490
+          "Telluride SX": 46490
         },
         "2023": {
-          "Telluride LX": 32790,
-          "Telluride S": 35790,
-          "Telluride EX": 38790,
-          "Telluride SX": 43790
+          "Telluride LX": 37990,
+          "Telluride S": 40990,
+          "Telluride EX": 43990,
+          "Telluride SX": 47990
         },
         "2024": {
-          "Telluride LX": 33090,
-          "Telluride S": 36090,
-          "Telluride EX": 39090,
-          "Telluride SX": 44090
+          "Telluride LX": 38690,
+          "Telluride S": 41690,
+          "Telluride EX": 44690,
+          "Telluride SX": 48690
         },
         "2025": {
-          "Telluride LX": 33390,
-          "Telluride S": 36390,
-          "Telluride EX": 39390,
-          "Telluride SX": 44390
+          "Telluride LX": 39490,
+          "Telluride S": 42490,
+          "Telluride EX": 45490,
+          "Telluride SX": 49490
         },
         "2026": {
           "Telluride LX": 34225,

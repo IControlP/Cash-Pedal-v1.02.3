@@ -18191,7 +18191,7 @@
           "TRD Off-Road": 40605,
           "TRD Off-Road Premium": 43105,
           "Limited": 43605,
-          "TRD Pro": 45605,
+          "TRD Pro": 51055,
           "Venture": 39105
         },
         "2023": {
@@ -18200,7 +18200,7 @@
           "TRD Off-Road": 41405,
           "TRD Off-Road Premium": 43905,
           "Limited": 44405,
-          "TRD Pro": 46405,
+          "TRD Pro": 52455,
           "Venture": 39905
         },
         "2024": {
@@ -18209,25 +18209,25 @@
           "TRD Off-Road": 42305,
           "TRD Off-Road Premium": 44805,
           "Limited": 45305,
-          "TRD Pro": 47305,
+          "TRD Pro": 54255,
           "Venture": 40805
         },
         "2025": {
           "SR5": 40205,
           "SR5 Premium": 42705,
-          "TRD Off-Road": 43205,
-          "TRD Off-Road Premium": 45705,
-          "Limited": 46205,
-          "TRD Pro": 48205,
+          "TRD Off-Road": 45135,
+          "TRD Off-Road Premium": 48235,
+          "Limited": 50035,
+          "TRD Pro": 63135,
           "Venture": 41705
         },
         "2026": {
           "SR5": 41210,
           "SR5 Premium": 43775,
-          "TRD Off-Road": 44285,
-          "TRD Off-Road Premium": 46850,
-          "Limited": 47360,
-          "TRD Pro": 49410,
+          "TRD Off-Road": 46210,
+          "TRD Off-Road Premium": 49285,
+          "Limited": 51810,
+          "TRD Pro": 65135,
           "Venture": 42750
         }
       },

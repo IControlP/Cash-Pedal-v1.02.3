@@ -2146,16 +2146,16 @@
         "2024": {
           "330i": 43800,
           "330i xDrive": 46300,
-          "M340i": 57100,
-          "M340i xDrive": 59100,
+          "M340i": 62285,
+          "M340i xDrive": 64285,
           "M3": 74900,
           "M3 Competition": 76900
         },
         "2025": {
           "330i": 44800,
           "330i xDrive": 47300,
-          "M340i": 58600,
-          "M340i xDrive": 60600,
+          "M340i": 63785,
+          "M340i xDrive": 65785,
           "M3": 76900,
           "M3 Competition": 79500
         },
@@ -8807,25 +8807,25 @@
           "Passport Elite": 46880
         },
         "2023": {
-          "Passport Sport": 34590,
-          "Passport EX-L": 39410,
+          "Passport Sport": 36395,
+          "Passport EX-L": 40395,
           "Passport Touring": 46280,
           "Passport Elite": 47880,
-          "Passport TrailSport": 41880
+          "Passport TrailSport": 43295
         },
         "2024": {
-          "Passport Sport": 35490,
-          "Passport EX-L": 40310,
+          "Passport Sport": 37395,
+          "Passport EX-L": 41395,
           "Passport Touring": 47180,
           "Passport Elite": 48780,
-          "Passport TrailSport": 42780
+          "Passport TrailSport": 44295
         },
         "2025": {
-          "Passport Sport": 36390,
-          "Passport EX-L": 41210,
+          "Passport Sport": 38395,
+          "Passport EX-L": 42395,
           "Passport Touring": 48080,
           "Passport Elite": 49680,
-          "Passport TrailSport": 43680
+          "Passport TrailSport": 45295
         },
         "2026": {
           "Passport Sport": 39995,
@@ -13121,16 +13121,16 @@
           "Corsair Reserve": 47290
         },
         "2023": {
-          "Corsair": 40290,
-          "Corsair Reserve": 48540
+          "Corsair": 36995,
+          "Corsair Reserve": 43495
         },
         "2024": {
-          "Corsair": 41440,
-          "Corsair Reserve": 49690
+          "Corsair": 37995,
+          "Corsair Reserve": 44495
         },
         "2025": {
-          "Corsair": 42590,
-          "Corsair Reserve": 50840
+          "Corsair": 38995,
+          "Corsair Reserve": 45495
         },
         "2026": {
           "Corsair Standard": 39995,
@@ -15228,26 +15228,26 @@
         "2022": {
           "S": 26400,
           "SV": 28400,
-          "SL": 32400,
-          "SR": 34400
+          "SL": 31090,
+          "SR": 29090
         },
         "2023": {
           "S": 26900,
           "SV": 28900,
-          "SL": 32900,
-          "SR": 34900
+          "SL": 31590,
+          "SR": 29590
         },
         "2024": {
           "S": 27400,
           "SV": 29400,
-          "SL": 33400,
-          "SR": 35400
+          "SL": 32090,
+          "SR": 30090
         },
         "2025": {
           "S": 27900,
           "SV": 29900,
-          "SL": 33900,
-          "SR": 35900
+          "SL": 32590,
+          "SR": 30590
         },
         "2026": {
           "Altima S FWD": 28090,
@@ -19755,23 +19755,23 @@
         "2023": {
           "Atlas S": 32250,
           "Atlas SE": 36250,
-          "Atlas SEL": 41250,
+          "Atlas SEL": 41995,
           "Atlas SEL Premium": 49250,
           "Atlas SE R-Line": 37750,
           "Atlas SEL R-Line": 42750
         },
         "2024": {
-          "Atlas S": 32550,
+          "Atlas S": 33195,
           "Atlas SE": 36550,
-          "Atlas SEL": 41550,
+          "Atlas SEL": 42995,
           "Atlas SEL Premium": 49550,
           "Atlas SE R-Line": 38050,
           "Atlas SEL R-Line": 43050
         },
         "2025": {
-          "Atlas S": 32850,
+          "Atlas S": 33995,
           "Atlas SE": 36850,
-          "Atlas SEL": 41850,
+          "Atlas SEL": 43995,
           "Atlas SEL Premium": 49850,
           "Atlas SE R-Line": 38350,
           "Atlas SEL R-Line": 43350
@@ -19963,25 +19963,25 @@
           "Jetta GLI": 30845
         },
         "2023": {
-          "Jetta S": 20145,
-          "Jetta SE": 23145,
-          "Jetta SEL": 27145,
+          "Jetta S": 20795,
+          "Jetta SE": 23795,
+          "Jetta SEL": 27795,
           "Jetta SEL Premium": 29145,
-          "Jetta GLI": 31145
+          "Jetta GLI": 31395
         },
         "2024": {
-          "Jetta S": 20445,
-          "Jetta SE": 23445,
-          "Jetta SEL": 27445,
+          "Jetta S": 21395,
+          "Jetta SE": 24395,
+          "Jetta SEL": 28395,
           "Jetta SEL Premium": 29445,
-          "Jetta GLI": 31445
+          "Jetta GLI": 32195
         },
         "2025": {
-          "Jetta S": 20745,
-          "Jetta SE": 23745,
-          "Jetta SEL": 27745,
+          "Jetta S": 21995,
+          "Jetta SE": 24995,
+          "Jetta SEL": 28995,
           "Jetta SEL Premium": 29745,
-          "Jetta GLI": 31745
+          "Jetta GLI": 32995
         },
         "2026": {
           "Jetta S": 22995,

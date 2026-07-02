@@ -18554,22 +18554,22 @@
           "XSE": 26000
         },
         "2022": {
-          "LE": 23045,
-          "SE": 25300,
-          "XLE": 25450,
-          "XSE": 26300
+          "LE": 21200,
+          "SE": 22975,
+          "XLE": 23975,
+          "XSE": 24900
         },
         "2023": {
-          "LE": 24170,
-          "SE": 26570,
-          "XLE": 26770,
-          "XSE": 27720
+          "LE": 21775,
+          "SE": 23600,
+          "XLE": 24625,
+          "XSE": 25575
         },
         "2024": {
-          "LE": 25000,
-          "SE": 27400,
-          "XLE": 27600,
-          "XSE": 28550
+          "LE": 22350,
+          "SE": 24225,
+          "XLE": 25275,
+          "XSE": 26250
         },
         "2025": {
           "LE": 22925,
@@ -19486,7 +19486,7 @@
           "TRD Pro": 47160
         },
         "2025": {
-          "SR": 28950,
+          "SR": 32150,
           "SR5": 32200,
           "TRD Sport": 35950,
           "TRD Off-Road": 37700,
@@ -19494,7 +19494,7 @@
           "TRD Pro": 47760
         },
         "2026": {
-          "SR": 29675,
+          "SR": 32950,
           "SR5": 33005,
           "TRD Sport": 36850,
           "TRD Off-Road": 38640,
@@ -20208,17 +20208,17 @@
           "S60 T8 Polestar Engineered": 55700
         },
         "2023": {
-          "S60 B5 Momentum": 38000,
+          "S60 B5 Momentum": 40695,
           "S60 B6 R-Design": 44000,
           "S60 B6 Inscription": 48000
         },
         "2024": {
-          "S60 B5 Momentum": 38300,
+          "S60 B5 Momentum": 42095,
           "S60 B6 R-Design": 44300,
           "S60 B6 Inscription": 48300
         },
         "2025": {
-          "S60 B5 Momentum": 38600,
+          "S60 B5 Momentum": 43495,
           "S60 B6 R-Design": 44600,
           "S60 B6 Inscription": 48600
         },
@@ -20421,19 +20421,19 @@
           "XC60 T8 Inscription": 59600
         },
         "2023": {
-          "XC60 B5 Momentum": 42000,
-          "XC60 B6 R-Design": 47000,
-          "XC60 B6 Inscription": 51000
+          "XC60 B5 Momentum": 43395,
+          "XC60 B6 R-Design": 49095,
+          "XC60 B6 Inscription": 53395
         },
         "2024": {
-          "XC60 B5 Momentum": 42300,
-          "XC60 B6 R-Design": 47300,
-          "XC60 B6 Inscription": 51300
+          "XC60 B5 Momentum": 44895,
+          "XC60 B6 R-Design": 50695,
+          "XC60 B6 Inscription": 55895
         },
         "2025": {
-          "XC60 B5 Momentum": 42600,
-          "XC60 B6 R-Design": 47600,
-          "XC60 B6 Inscription": 51600
+          "XC60 B5 Momentum": 46395,
+          "XC60 B6 R-Design": 52295,
+          "XC60 B6 Inscription": 58395
         },
         "2026": {
           "XC60 B5 Core AWD": 47895,

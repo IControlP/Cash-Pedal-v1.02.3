@@ -8595,8 +8595,7 @@
           "Civic EX": 24050,
           "Civic EX-L": 26550,
           "Civic Touring": 29050,
-          "Civic Si": 27300,
-          "Civic Type R": 43000
+          "Civic Si": 27300
         },
         "2023": {
           "Civic LX": 23750,
@@ -9024,9 +9023,9 @@
         "2026": {
           "Ridgeline Sport": 40995,
           "Ridgeline RTL": 43995,
-          "Ridgeline RTL-E": 46995,
+          "Ridgeline RTL-E": 51990,
           "Ridgeline TrailSport": 47995,
-          "Ridgeline Black Edition": 48995
+          "Ridgeline Black Edition": 53990
         }
       },
       "mpg": null,
@@ -12481,10 +12480,10 @@
           "GX 550 Overtrail": 76900
         },
         "2026": {
-          "GX 550 Premium+": 59285,
-          "GX 550 Luxury+": 65285,
-          "GX 550 Overtrail+": 68285,
-          "GX 550 F SPORT Performance+": 70285
+          "GX 550 Premium+": 71300,
+          "GX 550 Luxury+": 74600,
+          "GX 550 Overtrail+": 78300,
+          "GX 550 F SPORT Performance+": 83300
         }
       },
       "mpg": null,
@@ -12742,10 +12741,10 @@
           "LX 600 Ultra Luxury": 136000
         },
         "2026": {
-          "LX 600 Premium": 89285,
-          "LX 600 Luxury": 96285,
-          "LX 600 F SPORT Performance": 99285,
-          "LX 600 Ultra Luxury": 103285
+          "LX 600 Premium": 102700,
+          "LX 600 Luxury": 110200,
+          "LX 600 F SPORT Performance": 119000,
+          "LX 600 Ultra Luxury": 137800
         }
       },
       "mpg": null,
@@ -17420,63 +17419,42 @@
         "2019": {
           "2.0i": 20395,
           "2.0i Premium": 22395,
-          "2.0i Limited": 24395,
-          "WRX": 28195,
-          "STI": 36195
+          "2.0i Limited": 24395
         },
         "2020": {
           "2.0i": 20695,
           "2.0i Premium": 22695,
-          "2.0i Limited": 24695,
-          "WRX": 28495,
-          "STI": 36495
+          "2.0i Limited": 24695
         },
         "2021": {
           "2.0i": 20995,
           "2.0i Premium": 22995,
-          "2.0i Limited": 24995,
-          "WRX": 28795,
-          "STI": 36795
+          "2.0i Limited": 24995
         },
         "2022": {
           "Base": 20295,
           "Premium": 22795,
-          "Limited": 25795,
-          "WRX": 31995,
-          "WRX Premium": 34995,
-          "WRX Limited": 37995
+          "Limited": 25795
         },
         "2023": {
           "Base": 20595,
           "Premium": 23095,
-          "Limited": 26095,
-          "WRX": 32395,
-          "WRX Premium": 35395,
-          "WRX Limited": 38395
+          "Limited": 26095
         },
         "2024": {
           "Base": 20895,
           "Premium": 23395,
-          "Limited": 26395,
-          "WRX": 32795,
-          "WRX Premium": 35795,
-          "WRX Limited": 38795
+          "Limited": 26395
         },
         "2025": {
           "Base": 21195,
           "Premium": 23695,
-          "Limited": 26695,
-          "WRX": 33195,
-          "WRX Premium": 36195,
-          "WRX Limited": 39195
+          "Limited": 26695
         },
         "2026": {
           "Base": 21725,
           "Premium": 24285,
-          "Limited": 27360,
-          "WRX": 34025,
-          "WRX Premium": 37100,
-          "WRX Limited": 40175
+          "Limited": 27360
         }
       },
       "mpg": null,

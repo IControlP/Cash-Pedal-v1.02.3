@@ -11242,12 +11242,12 @@
           "Grand Cherokee Trackhawk": 90790
         },
         "2026": {
-          "Grand Cherokee Laredo": 35250,
-          "Grand Cherokee Limited": 40375,
-          "Grand Cherokee Overland": 46525,
+          "Grand Cherokee Laredo": 41990,
+          "Grand Cherokee Limited": 46090,
+          "Grand Cherokee Overland": 53295,
           "Grand Cherokee SRT": 70715,
-          "Grand Cherokee Summit": 52265,
-          "Grand Cherokee Trailhawk": 43450,
+          "Grand Cherokee Summit": 59395,
+          "Grand Cherokee Trailhawk": 51895,
           "Grand Cherokee Trackhawk": 93060
         }
       },
@@ -12221,10 +12221,10 @@
           "Telluride SX": 49490
         },
         "2026": {
-          "Telluride LX": 34225,
-          "Telluride S": 37300,
-          "Telluride EX": 40375,
-          "Telluride SX": 45500
+          "Telluride LX": 40290,
+          "Telluride S": 43290,
+          "Telluride EX": 46290,
+          "Telluride SX": 50290
         }
       },
       "mpg": null,
@@ -15210,20 +15210,20 @@
         "2019": {
           "S": 24900,
           "SV": 26900,
-          "SL": 30900,
-          "SR": 32900
+          "SL": 29590,
+          "SR": 27590
         },
         "2020": {
           "S": 25400,
           "SV": 27400,
-          "SL": 31400,
-          "SR": 33400
+          "SL": 30090,
+          "SR": 28090
         },
         "2021": {
           "S": 25900,
           "SV": 27900,
-          "SL": 31900,
-          "SR": 33900
+          "SL": 30590,
+          "SR": 28590
         },
         "2022": {
           "S": 26400,
@@ -16009,7 +16009,7 @@
           "911 Carrera 4": 120540,
           "911 Carrera 4S": 134990,
           "911 Turbo": 188700,
-          "911 Turbo S": 270300,
+          "911 Turbo S": 236200,
           "911 GT3": 178450,
           "911 GT3 Touring": 178450,
           "911 Carrera GTS": 146575,
@@ -18547,11 +18547,11 @@
           "XSE": 24450
         },
         "2021": {
-          "L": 21550,
-          "LE": 23100,
-          "SE": 25000,
-          "XLE": 25150,
-          "XSE": 26000
+          "L": 20425,
+          "LE": 20650,
+          "SE": 22400,
+          "XLE": 23400,
+          "XSE": 24325
         },
         "2022": {
           "LE": 21200,
@@ -18623,17 +18623,14 @@
           "3.0 Premium": 57025
         },
         "2024": {
-          "2.0": 45565,
           "3.0": 53565,
           "3.0 Premium": 58025
         },
         "2025": {
-          "2.0": 46565,
           "3.0": 54565,
           "3.0 Premium": 59025
         },
         "2026": {
-          "2.0": 47730,
           "3.0": 55930,
           "3.0 Premium": 60500
         }
@@ -19030,9 +19027,9 @@
           "Prius XLE": 29990,
           "Prius XLE AWD": 30000,
           "Prius Limited": 34000,
-          "Prius Prime SE": 28770,
-          "Prius Prime XSE": 31770,
-          "Prius Prime Limited": 35270
+          "Prius Prime SE": 32350,
+          "Prius Prime XSE": 35350,
+          "Prius Prime Limited": 38850
         },
         "2024": {
           "Prius LE": 28545,

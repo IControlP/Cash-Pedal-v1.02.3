@@ -2896,19 +2896,19 @@
           "sDrive35i": 54395,
           "xDrive35i": 56295,
           "xDrive50i": 67895,
-          "M": 92295
+          "M": 99100
         },
         "2016": {
           "sDrive35i": 54995,
           "xDrive35i": 56895,
           "xDrive50i": 68495,
-          "M": 92895
+          "M": 99700
         },
         "2017": {
           "sDrive35i": 55595,
           "xDrive35i": 57495,
           "xDrive50i": 69095,
-          "M": 93495
+          "M": 100200
         },
         "2018": {
           "xDrive40i": 58900,
@@ -15932,10 +15932,10 @@
           "911 Speedster": 274500
         },
         "2020": {
-          "911 Carrera": 92600,
-          "911 Carrera S": 105300,
-          "911 Carrera 4": 99700,
-          "911 Carrera 4S": 112400,
+          "911 Carrera": 97400,
+          "911 Carrera S": 112100,
+          "911 Carrera 4": 104400,
+          "911 Carrera 4S": 119100,
           "911 Turbo": 170800,
           "911 Turbo S": 204850,
           "911 GT3": 143600,
@@ -16059,27 +16059,27 @@
       ],
       "trims_by_year": {
         "2015": {
-          "Cayenne": 50095,
-          "Cayenne S": 63695,
-          "Cayenne Turbo": 111095,
+          "Cayenne": 57200,
+          "Cayenne S": 73400,
+          "Cayenne Turbo": 118100,
           "Cayenne Turbo S": 123095,
-          "Cayenne GTS": 69295,
+          "Cayenne GTS": 80000,
           "Cayenne S E-Hybrid": 76900
         },
         "2016": {
-          "Cayenne": 50895,
-          "Cayenne S": 64495,
-          "Cayenne Turbo": 111895,
+          "Cayenne": 58000,
+          "Cayenne S": 74200,
+          "Cayenne Turbo": 118900,
           "Cayenne Turbo S": 123895,
-          "Cayenne GTS": 70095,
+          "Cayenne GTS": 80800,
           "Cayenne S E-Hybrid": 77700
         },
         "2017": {
-          "Cayenne": 51695,
-          "Cayenne S": 65295,
-          "Cayenne Turbo": 112695,
+          "Cayenne": 58900,
+          "Cayenne S": 75000,
+          "Cayenne Turbo": 119700,
           "Cayenne Turbo S": 124695,
-          "Cayenne GTS": 70895,
+          "Cayenne GTS": 81600,
           "Cayenne S E-Hybrid": 78500
         },
         "2018": {

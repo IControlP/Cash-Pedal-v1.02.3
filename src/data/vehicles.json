@@ -5824,27 +5824,27 @@
       ],
       "trims_by_year": {
         "2015": {
-          "SXT": 28995,
+          "SXT": 27990,
           "R/T": 32995,
           "SRT 392": 42995,
           "SRT Hellcat": 59995
         },
         "2016": {
-          "SXT": 29995,
+          "SXT": 27995,
           "R/T": 33995,
           "R/T Scat Pack": 39995,
           "SRT 392": 43995,
           "SRT Hellcat": 63995
         },
         "2017": {
-          "SXT": 29995,
+          "SXT": 28095,
           "R/T": 34995,
           "R/T Scat Pack": 40995,
           "SRT 392": 44995,
           "SRT Hellcat": 64995
         },
         "2018": {
-          "SXT": 30995,
+          "SXT": 28245,
           "GT": 32995,
           "R/T": 35995,
           "R/T Scat Pack": 41995,
@@ -5853,7 +5853,7 @@
           "SRT Demon": 84995
         },
         "2019": {
-          "SXT": 31995,
+          "SXT": 29245,
           "GT": 33995,
           "R/T": 36995,
           "R/T Scat Pack": 42995,
@@ -5862,7 +5862,7 @@
           "SRT Hellcat Redeye": 72995
         },
         "2020": {
-          "SXT": 32995,
+          "SXT": 29895,
           "GT": 34995,
           "R/T": 37995,
           "R/T Scat Pack": 43995,
@@ -5871,7 +5871,7 @@
           "SRT Hellcat Redeye": 73995
         },
         "2021": {
-          "SXT": 33995,
+          "SXT": 30745,
           "GT": 35995,
           "R/T": 38995,
           "R/T Scat Pack": 44995,
@@ -5880,7 +5880,7 @@
           "SRT Hellcat Redeye": 74995
         },
         "2022": {
-          "SXT": 34995,
+          "SXT": 31695,
           "GT": 36995,
           "R/T": 39995,
           "R/T Scat Pack": 45995,
@@ -5889,7 +5889,7 @@
           "SRT Hellcat Redeye": 75995
         },
         "2023": {
-          "SXT": 35995,
+          "SXT": 32245,
           "GT": 37995,
           "R/T": 40995,
           "R/T Scat Pack": 46995,
@@ -5915,28 +5915,28 @@
       "trims_by_year": {
         "2015": {
           "SE": 28995,
-          "SXT": 30995,
+          "SXT": 29495,
           "R/T": 32995,
           "SRT 392": 42995,
           "SRT Hellcat": 63995
         },
         "2016": {
           "SE": 29995,
-          "SXT": 31995,
+          "SXT": 29995,
           "R/T": 33995,
           "R/T Scat Pack": 39995,
           "SRT 392": 43995,
           "SRT Hellcat": 66995
         },
         "2017": {
-          "SXT": 30995,
+          "SXT": 30495,
           "R/T": 34995,
           "R/T Scat Pack": 40995,
           "SRT 392": 44995,
           "SRT Hellcat": 67995
         },
         "2018": {
-          "SXT": 31995,
+          "SXT": 30995,
           "GT": 33995,
           "R/T": 35995,
           "R/T Scat Pack": 41995,
@@ -5944,7 +5944,7 @@
           "SRT Hellcat": 68995
         },
         "2019": {
-          "SXT": 32995,
+          "SXT": 31495,
           "GT": 34995,
           "R/T": 36995,
           "R/T Scat Pack": 42995,
@@ -5953,7 +5953,7 @@
           "SRT Hellcat Redeye": 74995
         },
         "2020": {
-          "SXT": 33995,
+          "SXT": 31995,
           "GT": 35995,
           "R/T": 37995,
           "R/T Scat Pack": 43995,
@@ -5962,7 +5962,7 @@
           "SRT Hellcat Redeye": 75995
         },
         "2021": {
-          "SXT": 34995,
+          "SXT": 32495,
           "GT": 36995,
           "R/T": 38995,
           "R/T Scat Pack": 44995,
@@ -5971,7 +5971,7 @@
           "SRT Hellcat Redeye": 76995
         },
         "2022": {
-          "SXT": 35995,
+          "SXT": 32995,
           "GT": 37995,
           "R/T": 39995,
           "R/T Scat Pack": 45995,
@@ -5980,7 +5980,7 @@
           "SRT Hellcat Redeye": 77995
         },
         "2023": {
-          "SXT": 36995,
+          "SXT": 33490,
           "GT": 38995,
           "R/T": 40995,
           "R/T Scat Pack": 46995,
@@ -7548,25 +7548,22 @@
           "Denali": 44995
         },
         "2023": {
-          "Pro": 29995,
-          "SLE": 34995,
-          "SLT": 40995,
-          "AT4": 42995,
-          "Denali": 45995
+          "Canyon Elevation": 34995,
+          "Canyon AT4": 39995,
+          "Canyon Denali": 43995,
+          "Canyon AT4X": 49995
         },
         "2024": {
-          "Pro": 30995,
-          "SLE": 35995,
-          "SLT": 41995,
-          "AT4": 43995,
-          "Denali": 46995
+          "Canyon Elevation": 35995,
+          "Canyon AT4": 40995,
+          "Canyon Denali": 44995,
+          "Canyon AT4X": 50995
         },
         "2025": {
-          "Pro": 31995,
-          "SLE": 36995,
-          "SLT": 42995,
-          "AT4": 44995,
-          "Denali": 47995
+          "Canyon Elevation": 36995,
+          "Canyon AT4": 41995,
+          "Canyon Denali": 45995,
+          "Canyon AT4X": 51995
         },
         "2026": {
           "Canyon Elevation": 37995,
@@ -13308,12 +13305,14 @@
           "Nautilus Reserve": 52045
         },
         "2024": {
-          "Nautilus": 46745,
-          "Nautilus Reserve": 53245
+          "Nautilus Standard": 52345,
+          "Nautilus Reserve": 58345,
+          "Nautilus Black Label": 65345
         },
         "2025": {
-          "Nautilus": 47945,
-          "Nautilus Reserve": 54445
+          "Nautilus Standard": 52745,
+          "Nautilus Reserve": 58745,
+          "Nautilus Black Label": 66345
         },
         "2026": {
           "Nautilus Standard": 52995,

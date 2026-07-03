@@ -2146,16 +2146,16 @@
         "2024": {
           "330i": 43800,
           "330i xDrive": 46300,
-          "M340i": 57100,
-          "M340i xDrive": 59100,
+          "M340i": 62285,
+          "M340i xDrive": 64285,
           "M3": 74900,
           "M3 Competition": 76900
         },
         "2025": {
           "330i": 44800,
           "330i xDrive": 47300,
-          "M340i": 58600,
-          "M340i xDrive": 60600,
+          "M340i": 63785,
+          "M340i xDrive": 65785,
           "M3": 76900,
           "M3 Competition": 79500
         },
@@ -2896,19 +2896,19 @@
           "sDrive35i": 54395,
           "xDrive35i": 56295,
           "xDrive50i": 67895,
-          "M": 92295
+          "M": 99100
         },
         "2016": {
           "sDrive35i": 54995,
           "xDrive35i": 56895,
           "xDrive50i": 68495,
-          "M": 92895
+          "M": 99700
         },
         "2017": {
           "sDrive35i": 55595,
           "xDrive35i": 57495,
           "xDrive50i": 69095,
-          "M": 93495
+          "M": 100200
         },
         "2018": {
           "xDrive40i": 58900,
@@ -5824,27 +5824,27 @@
       ],
       "trims_by_year": {
         "2015": {
-          "SXT": 28995,
+          "SXT": 27990,
           "R/T": 32995,
           "SRT 392": 42995,
           "SRT Hellcat": 59995
         },
         "2016": {
-          "SXT": 29995,
+          "SXT": 27995,
           "R/T": 33995,
           "R/T Scat Pack": 39995,
           "SRT 392": 43995,
           "SRT Hellcat": 63995
         },
         "2017": {
-          "SXT": 29995,
+          "SXT": 28095,
           "R/T": 34995,
           "R/T Scat Pack": 40995,
           "SRT 392": 44995,
           "SRT Hellcat": 64995
         },
         "2018": {
-          "SXT": 30995,
+          "SXT": 28245,
           "GT": 32995,
           "R/T": 35995,
           "R/T Scat Pack": 41995,
@@ -5853,7 +5853,7 @@
           "SRT Demon": 84995
         },
         "2019": {
-          "SXT": 31995,
+          "SXT": 29245,
           "GT": 33995,
           "R/T": 36995,
           "R/T Scat Pack": 42995,
@@ -5862,7 +5862,7 @@
           "SRT Hellcat Redeye": 72995
         },
         "2020": {
-          "SXT": 32995,
+          "SXT": 29895,
           "GT": 34995,
           "R/T": 37995,
           "R/T Scat Pack": 43995,
@@ -5871,7 +5871,7 @@
           "SRT Hellcat Redeye": 73995
         },
         "2021": {
-          "SXT": 33995,
+          "SXT": 30745,
           "GT": 35995,
           "R/T": 38995,
           "R/T Scat Pack": 44995,
@@ -5880,7 +5880,7 @@
           "SRT Hellcat Redeye": 74995
         },
         "2022": {
-          "SXT": 34995,
+          "SXT": 31695,
           "GT": 36995,
           "R/T": 39995,
           "R/T Scat Pack": 45995,
@@ -5889,7 +5889,7 @@
           "SRT Hellcat Redeye": 75995
         },
         "2023": {
-          "SXT": 35995,
+          "SXT": 32245,
           "GT": 37995,
           "R/T": 40995,
           "R/T Scat Pack": 46995,
@@ -5915,28 +5915,28 @@
       "trims_by_year": {
         "2015": {
           "SE": 28995,
-          "SXT": 30995,
+          "SXT": 29495,
           "R/T": 32995,
           "SRT 392": 42995,
           "SRT Hellcat": 63995
         },
         "2016": {
           "SE": 29995,
-          "SXT": 31995,
+          "SXT": 29995,
           "R/T": 33995,
           "R/T Scat Pack": 39995,
           "SRT 392": 43995,
           "SRT Hellcat": 66995
         },
         "2017": {
-          "SXT": 30995,
+          "SXT": 30495,
           "R/T": 34995,
           "R/T Scat Pack": 40995,
           "SRT 392": 44995,
           "SRT Hellcat": 67995
         },
         "2018": {
-          "SXT": 31995,
+          "SXT": 30995,
           "GT": 33995,
           "R/T": 35995,
           "R/T Scat Pack": 41995,
@@ -5944,7 +5944,7 @@
           "SRT Hellcat": 68995
         },
         "2019": {
-          "SXT": 32995,
+          "SXT": 31495,
           "GT": 34995,
           "R/T": 36995,
           "R/T Scat Pack": 42995,
@@ -5953,7 +5953,7 @@
           "SRT Hellcat Redeye": 74995
         },
         "2020": {
-          "SXT": 33995,
+          "SXT": 31995,
           "GT": 35995,
           "R/T": 37995,
           "R/T Scat Pack": 43995,
@@ -5962,7 +5962,7 @@
           "SRT Hellcat Redeye": 75995
         },
         "2021": {
-          "SXT": 34995,
+          "SXT": 32495,
           "GT": 36995,
           "R/T": 38995,
           "R/T Scat Pack": 44995,
@@ -5971,7 +5971,7 @@
           "SRT Hellcat Redeye": 76995
         },
         "2022": {
-          "SXT": 35995,
+          "SXT": 32995,
           "GT": 37995,
           "R/T": 39995,
           "R/T Scat Pack": 45995,
@@ -5980,7 +5980,7 @@
           "SRT Hellcat Redeye": 77995
         },
         "2023": {
-          "SXT": 36995,
+          "SXT": 33490,
           "GT": 38995,
           "R/T": 40995,
           "R/T Scat Pack": 46995,
@@ -6847,22 +6847,22 @@
           "Platinum": 74995
         },
         "2023": {
-          "XL": 58995,
-          "XLT": 62995,
+          "XL": 55995,
+          "XLT": 60995,
           "Limited": 69995,
           "King Ranch": 73995,
           "Platinum": 76995
         },
         "2024": {
-          "XL": 60995,
-          "XLT": 64995,
+          "XL": 56995,
+          "XLT": 61995,
           "Limited": 71995,
           "King Ranch": 75995,
           "Platinum": 78995
         },
         "2025": {
-          "XL": 62995,
-          "XLT": 66995,
+          "XL": 57995,
+          "XLT": 62995,
           "Limited": 73995,
           "King Ranch": 77995,
           "Platinum": 80995
@@ -7251,31 +7251,31 @@
           "Shelby GT500": 74995
         },
         "2022": {
-          "EcoBoost": 29995,
-          "EcoBoost Premium": 33995,
-          "GT": 38995,
-          "GT Premium": 42995,
+          "EcoBoost": 28395,
+          "EcoBoost Premium": 32395,
+          "GT": 36595,
+          "GT Premium": 40595,
           "Mach 1": 54995,
           "Shelby GT500": 76995
         },
         "2023": {
-          "EcoBoost": 31995,
-          "EcoBoost Premium": 35995,
-          "GT": 40995,
-          "GT Premium": 44995
+          "EcoBoost": 29920,
+          "EcoBoost Premium": 33920,
+          "GT": 37480,
+          "GT Premium": 41480
         },
         "2024": {
-          "EcoBoost": 33995,
+          "EcoBoost": 32515,
           "EcoBoost Premium": 37995,
-          "GT": 42995,
-          "GT Premium": 46995,
-          "Dark Horse": 54995
+          "GT": 40920,
+          "GT Premium": 45920,
+          "Dark Horse": 57715
         },
         "2025": {
-          "EcoBoost": 35995,
-          "EcoBoost Premium": 39995,
-          "GT": 44995,
-          "GT Premium": 48995,
+          "EcoBoost": 31920,
+          "EcoBoost Premium": 37920,
+          "GT": 41920,
+          "GT Premium": 47920,
           "Dark Horse": 56995
         },
         "2026": {
@@ -7548,25 +7548,22 @@
           "Denali": 44995
         },
         "2023": {
-          "Pro": 29995,
-          "SLE": 34995,
-          "SLT": 40995,
-          "AT4": 42995,
-          "Denali": 45995
+          "Canyon Elevation": 34995,
+          "Canyon AT4": 39995,
+          "Canyon Denali": 43995,
+          "Canyon AT4X": 49995
         },
         "2024": {
-          "Pro": 30995,
-          "SLE": 35995,
-          "SLT": 41995,
-          "AT4": 43995,
-          "Denali": 46995
+          "Canyon Elevation": 35995,
+          "Canyon AT4": 40995,
+          "Canyon Denali": 44995,
+          "Canyon AT4X": 50995
         },
         "2025": {
-          "Pro": 31995,
-          "SLE": 36995,
-          "SLT": 42995,
-          "AT4": 44995,
-          "Denali": 47995
+          "Canyon Elevation": 36995,
+          "Canyon AT4": 41995,
+          "Canyon Denali": 45995,
+          "Canyon AT4X": 51995
         },
         "2026": {
           "Canyon Elevation": 37995,
@@ -8598,8 +8595,7 @@
           "Civic EX": 24050,
           "Civic EX-L": 26550,
           "Civic Touring": 29050,
-          "Civic Si": 27300,
-          "Civic Type R": 43000
+          "Civic Si": 27300
         },
         "2023": {
           "Civic LX": 23750,
@@ -8810,25 +8806,25 @@
           "Passport Elite": 46880
         },
         "2023": {
-          "Passport Sport": 34590,
-          "Passport EX-L": 39410,
+          "Passport Sport": 36395,
+          "Passport EX-L": 40395,
           "Passport Touring": 46280,
           "Passport Elite": 47880,
-          "Passport TrailSport": 41880
+          "Passport TrailSport": 43295
         },
         "2024": {
-          "Passport Sport": 35490,
-          "Passport EX-L": 40310,
+          "Passport Sport": 37395,
+          "Passport EX-L": 41395,
           "Passport Touring": 47180,
           "Passport Elite": 48780,
-          "Passport TrailSport": 42780
+          "Passport TrailSport": 44295
         },
         "2025": {
-          "Passport Sport": 36390,
-          "Passport EX-L": 41210,
+          "Passport Sport": 38395,
+          "Passport EX-L": 42395,
           "Passport Touring": 48080,
           "Passport Elite": 49680,
-          "Passport TrailSport": 43680
+          "Passport TrailSport": 45295
         },
         "2026": {
           "Passport Sport": 39995,
@@ -9027,9 +9023,9 @@
         "2026": {
           "Ridgeline Sport": 40995,
           "Ridgeline RTL": 43995,
-          "Ridgeline RTL-E": 46995,
+          "Ridgeline RTL-E": 51990,
           "Ridgeline TrailSport": 47995,
-          "Ridgeline Black Edition": 48995
+          "Ridgeline Black Edition": 53990
         }
       },
       "mpg": null,
@@ -11209,48 +11205,48 @@
           "Grand Cherokee Trackhawk": 88790
         },
         "2022": {
-          "Grand Cherokee Laredo": 32890,
-          "Grand Cherokee Limited": 37890,
-          "Grand Cherokee Overland": 43890,
+          "Grand Cherokee Laredo": 37995,
+          "Grand Cherokee Limited": 42090,
+          "Grand Cherokee Overland": 49295,
           "Grand Cherokee SRT": 67490,
-          "Grand Cherokee Summit": 49490,
-          "Grand Cherokee Trailhawk": 40890,
+          "Grand Cherokee Summit": 55395,
+          "Grand Cherokee Trailhawk": 47895,
           "Grand Cherokee Trackhawk": 89290
         },
         "2023": {
-          "Grand Cherokee Laredo": 33390,
-          "Grand Cherokee Limited": 38390,
-          "Grand Cherokee Overland": 44390,
+          "Grand Cherokee Laredo": 38990,
+          "Grand Cherokee Limited": 43090,
+          "Grand Cherokee Overland": 50295,
           "Grand Cherokee SRT": 67990,
-          "Grand Cherokee Summit": 49990,
-          "Grand Cherokee Trailhawk": 41390,
+          "Grand Cherokee Summit": 56395,
+          "Grand Cherokee Trailhawk": 48895,
           "Grand Cherokee Trackhawk": 89790
         },
         "2024": {
-          "Grand Cherokee Laredo": 33890,
-          "Grand Cherokee Limited": 38890,
-          "Grand Cherokee Overland": 44890,
+          "Grand Cherokee Laredo": 39990,
+          "Grand Cherokee Limited": 44090,
+          "Grand Cherokee Overland": 51295,
           "Grand Cherokee SRT": 68490,
-          "Grand Cherokee Summit": 50490,
-          "Grand Cherokee Trailhawk": 41890,
+          "Grand Cherokee Summit": 57395,
+          "Grand Cherokee Trailhawk": 49895,
           "Grand Cherokee Trackhawk": 90290
         },
         "2025": {
-          "Grand Cherokee Laredo": 34390,
-          "Grand Cherokee Limited": 39390,
-          "Grand Cherokee Overland": 45390,
+          "Grand Cherokee Laredo": 40990,
+          "Grand Cherokee Limited": 45090,
+          "Grand Cherokee Overland": 52295,
           "Grand Cherokee SRT": 68990,
-          "Grand Cherokee Summit": 50990,
-          "Grand Cherokee Trailhawk": 42390,
+          "Grand Cherokee Summit": 58395,
+          "Grand Cherokee Trailhawk": 50895,
           "Grand Cherokee Trackhawk": 90790
         },
         "2026": {
-          "Grand Cherokee Laredo": 35250,
-          "Grand Cherokee Limited": 40375,
-          "Grand Cherokee Overland": 46525,
+          "Grand Cherokee Laredo": 41990,
+          "Grand Cherokee Limited": 46090,
+          "Grand Cherokee Overland": 53295,
           "Grand Cherokee SRT": 70715,
-          "Grand Cherokee Summit": 52265,
-          "Grand Cherokee Trailhawk": 43450,
+          "Grand Cherokee Summit": 59395,
+          "Grand Cherokee Trailhawk": 51895,
           "Grand Cherokee Trackhawk": 93060
         }
       },
@@ -12200,34 +12196,34 @@
           "Telluride SX": 43190
         },
         "2022": {
-          "Telluride LX": 32490,
-          "Telluride S": 35490,
-          "Telluride EX": 38490,
-          "Telluride SX": 43490
+          "Telluride LX": 35490,
+          "Telluride S": 38490,
+          "Telluride EX": 41490,
+          "Telluride SX": 46490
         },
         "2023": {
-          "Telluride LX": 32790,
-          "Telluride S": 35790,
-          "Telluride EX": 38790,
-          "Telluride SX": 43790
+          "Telluride LX": 37990,
+          "Telluride S": 40990,
+          "Telluride EX": 43990,
+          "Telluride SX": 47990
         },
         "2024": {
-          "Telluride LX": 33090,
-          "Telluride S": 36090,
-          "Telluride EX": 39090,
-          "Telluride SX": 44090
+          "Telluride LX": 38690,
+          "Telluride S": 41690,
+          "Telluride EX": 44690,
+          "Telluride SX": 48690
         },
         "2025": {
-          "Telluride LX": 33390,
-          "Telluride S": 36390,
-          "Telluride EX": 39390,
-          "Telluride SX": 44390
+          "Telluride LX": 39490,
+          "Telluride S": 42490,
+          "Telluride EX": 45490,
+          "Telluride SX": 49490
         },
         "2026": {
-          "Telluride LX": 34225,
-          "Telluride S": 37300,
-          "Telluride EX": 40375,
-          "Telluride SX": 45500
+          "Telluride LX": 40290,
+          "Telluride S": 43290,
+          "Telluride EX": 46290,
+          "Telluride SX": 50290
         }
       },
       "mpg": null,
@@ -12484,10 +12480,10 @@
           "GX 550 Overtrail": 76900
         },
         "2026": {
-          "GX 550 Premium+": 59285,
-          "GX 550 Luxury+": 65285,
-          "GX 550 Overtrail+": 68285,
-          "GX 550 F SPORT Performance+": 70285
+          "GX 550 Premium+": 71300,
+          "GX 550 Luxury+": 74600,
+          "GX 550 Overtrail+": 78300,
+          "GX 550 F SPORT Performance+": 83300
         }
       },
       "mpg": null,
@@ -12560,28 +12556,28 @@
           "IS 500 F Sport Performance": 57300
         },
         "2023": {
-          "IS 300": 40800,
-          "IS 300 AWD": 42800,
+          "IS 300": 38285,
+          "IS 300 AWD": 40285,
           "IS 300 F Sport": 44100,
           "IS 350": 44700,
           "IS 350 F Sport": 49300,
-          "IS 500 F Sport Performance": 58100
+          "IS 500 F Sport Performance": 57285
         },
         "2024": {
-          "IS 300": 41700,
-          "IS 300 AWD": 43700,
+          "IS 300": 39285,
+          "IS 300 AWD": 40785,
           "IS 300 F Sport": 45000,
           "IS 350": 45600,
           "IS 350 F Sport": 50200,
-          "IS 500 F Sport Performance": 58900
+          "IS 500 F Sport Performance": 57285
         },
         "2025": {
-          "IS 300": 42600,
-          "IS 300 AWD": 44600,
+          "IS 300": 40285,
+          "IS 300 AWD": 41285,
           "IS 300 F Sport": 45900,
           "IS 350": 46500,
           "IS 350 F Sport": 51100,
-          "IS 500 F Sport Performance": 59700
+          "IS 500 F Sport Performance": 57285
         },
         "2026": {
           "IS 300 AWD": 41285,
@@ -12657,25 +12653,25 @@
           "LS 500h AWD": 86500
         },
         "2023": {
-          "LS 500": 80500,
-          "LS 500 AWD": 83000,
+          "LS 500": 76285,
+          "LS 500 AWD": 79285,
           "LS 500 F Sport": 87500,
-          "LS 500h": 85500,
-          "LS 500h AWD": 88000
+          "LS 500h": 81285,
+          "LS 500h AWD": 84285
         },
         "2024": {
-          "LS 500": 82000,
-          "LS 500 AWD": 84500,
+          "LS 500": 77285,
+          "LS 500 AWD": 79785,
           "LS 500 F Sport": 89000,
-          "LS 500h": 87000,
-          "LS 500h AWD": 89500
+          "LS 500h": 82285,
+          "LS 500h AWD": 85285
         },
         "2025": {
-          "LS 500": 83500,
-          "LS 500 AWD": 86000,
+          "LS 500": 78285,
+          "LS 500 AWD": 80285,
           "LS 500 F Sport": 90500,
-          "LS 500h": 88500,
-          "LS 500h AWD": 91000
+          "LS 500h": 83285,
+          "LS 500h AWD": 86285
         },
         "2026": {
           "LS 500 AWD": 80285,
@@ -12745,10 +12741,10 @@
           "LX 600 Ultra Luxury": 136000
         },
         "2026": {
-          "LX 600 Premium": 89285,
-          "LX 600 Luxury": 96285,
-          "LX 600 F SPORT Performance": 99285,
-          "LX 600 Ultra Luxury": 103285
+          "LX 600 Premium": 102700,
+          "LX 600 Luxury": 110200,
+          "LX 600 F SPORT Performance": 119000,
+          "LX 600 Ultra Luxury": 137800
         }
       },
       "mpg": null,
@@ -12810,27 +12806,27 @@
         },
         "2022": {
           "NX 250": 39000,
-          "NX 350": 44900,
-          "NX 350 F Sport": 49650,
-          "NX 450h+": 57500
+          "NX 350": 44285,
+          "NX 350 F Sport": 47025,
+          "NX 450h+": 54285
         },
         "2023": {
           "NX 250": 40000,
-          "NX 350": 45900,
-          "NX 350 F Sport": 50650,
-          "NX 450h+": 58500
+          "NX 350": 44785,
+          "NX 350 F Sport": 47785,
+          "NX 450h+": 55285
         },
         "2024": {
           "NX 250": 40900,
-          "NX 350": 46800,
-          "NX 350 F Sport": 51550,
-          "NX 450h+": 59400
+          "NX 350": 45285,
+          "NX 350 F Sport": 48285,
+          "NX 450h+": 56285
         },
         "2025": {
           "NX 250": 41800,
-          "NX 350": 47700,
-          "NX 350 F Sport": 52450,
-          "NX 450h+": 60300
+          "NX 350": 45285,
+          "NX 350 F Sport": 48785,
+          "NX 450h+": 57285
         },
         "2026": {
           "NX 250 AWD": 41285,
@@ -12904,22 +12900,22 @@
           "RX 450h F Sport": 61100
         },
         "2023": {
-          "RX 350": 48550,
-          "RX 350 F Sport": 53100,
-          "RX 450h+": 63250,
-          "RX 500h F Sport": 68500
+          "RX 350": 46785,
+          "RX 350 F Sport": 51285,
+          "RX 450h+": 56285,
+          "RX 500h F Sport": 64285
         },
         "2024": {
-          "RX 350": 49650,
-          "RX 350 F Sport": 54200,
-          "RX 450h+": 64350,
-          "RX 500h F Sport": 69600
+          "RX 350": 47785,
+          "RX 350 F Sport": 52285,
+          "RX 450h+": 57785,
+          "RX 500h F Sport": 65285
         },
         "2025": {
-          "RX 350": 50750,
-          "RX 350 F Sport": 55300,
-          "RX 450h+": 65450,
-          "RX 500h F Sport": 70700
+          "RX 350": 48785,
+          "RX 350 F Sport": 53285,
+          "RX 450h+": 59285,
+          "RX 500h F Sport": 65785
         },
         "2026": {
           "RX 350 FWD": 48285,
@@ -12977,19 +12973,19 @@
           "UX 250h F Sport": 39500
         },
         "2023": {
-          "UX 200": 35500,
+          "UX 200": 33285,
           "UX 250h": 37500,
           "UX 200 F Sport": 38500,
           "UX 250h F Sport": 40500
         },
         "2024": {
-          "UX 200": 36400,
+          "UX 200": 34285,
           "UX 250h": 38400,
           "UX 200 F Sport": 39400,
           "UX 250h F Sport": 41400
         },
         "2025": {
-          "UX 200": 37300,
+          "UX 200": 35285,
           "UX 250h": 39300,
           "UX 200 F Sport": 40300,
           "UX 250h F Sport": 42300
@@ -13124,16 +13120,16 @@
           "Corsair Reserve": 47290
         },
         "2023": {
-          "Corsair": 40290,
-          "Corsair Reserve": 48540
+          "Corsair": 36995,
+          "Corsair Reserve": 43495
         },
         "2024": {
-          "Corsair": 41440,
-          "Corsair Reserve": 49690
+          "Corsair": 37995,
+          "Corsair Reserve": 44495
         },
         "2025": {
-          "Corsair": 42590,
-          "Corsair Reserve": 50840
+          "Corsair": 38995,
+          "Corsair Reserve": 45495
         },
         "2026": {
           "Corsair Standard": 39995,
@@ -13308,12 +13304,14 @@
           "Nautilus Reserve": 52045
         },
         "2024": {
-          "Nautilus": 46745,
-          "Nautilus Reserve": 53245
+          "Nautilus Standard": 52345,
+          "Nautilus Reserve": 58345,
+          "Nautilus Black Label": 65345
         },
         "2025": {
-          "Nautilus": 47945,
-          "Nautilus Reserve": 54445
+          "Nautilus Standard": 52745,
+          "Nautilus Reserve": 58745,
+          "Nautilus Black Label": 66345
         },
         "2026": {
           "Nautilus Standard": 52995,
@@ -15211,44 +15209,44 @@
         "2019": {
           "S": 24900,
           "SV": 26900,
-          "SL": 30900,
-          "SR": 32900
+          "SL": 29590,
+          "SR": 27590
         },
         "2020": {
           "S": 25400,
           "SV": 27400,
-          "SL": 31400,
-          "SR": 33400
+          "SL": 30090,
+          "SR": 28090
         },
         "2021": {
           "S": 25900,
           "SV": 27900,
-          "SL": 31900,
-          "SR": 33900
+          "SL": 30590,
+          "SR": 28590
         },
         "2022": {
           "S": 26400,
           "SV": 28400,
-          "SL": 32400,
-          "SR": 34400
+          "SL": 31090,
+          "SR": 29090
         },
         "2023": {
           "S": 26900,
           "SV": 28900,
-          "SL": 32900,
-          "SR": 34900
+          "SL": 31590,
+          "SR": 29590
         },
         "2024": {
           "S": 27400,
           "SV": 29400,
-          "SL": 33400,
-          "SR": 35400
+          "SL": 32090,
+          "SR": 30090
         },
         "2025": {
           "S": 27900,
           "SV": 29900,
-          "SL": 33900,
-          "SR": 35900
+          "SL": 32590,
+          "SR": 30590
         },
         "2026": {
           "Altima S FWD": 28090,
@@ -15934,10 +15932,10 @@
           "911 Speedster": 274500
         },
         "2020": {
-          "911 Carrera": 92600,
-          "911 Carrera S": 105300,
-          "911 Carrera 4": 99700,
-          "911 Carrera 4S": 112400,
+          "911 Carrera": 97400,
+          "911 Carrera S": 112100,
+          "911 Carrera 4": 104400,
+          "911 Carrera 4S": 119100,
           "911 Turbo": 170800,
           "911 Turbo S": 204850,
           "911 GT3": 143600,
@@ -16010,7 +16008,7 @@
           "911 Carrera 4": 120540,
           "911 Carrera 4S": 134990,
           "911 Turbo": 188700,
-          "911 Turbo S": 270300,
+          "911 Turbo S": 236200,
           "911 GT3": 178450,
           "911 GT3 Touring": 178450,
           "911 Carrera GTS": 146575,
@@ -16061,27 +16059,27 @@
       ],
       "trims_by_year": {
         "2015": {
-          "Cayenne": 50095,
-          "Cayenne S": 63695,
-          "Cayenne Turbo": 111095,
+          "Cayenne": 57200,
+          "Cayenne S": 73400,
+          "Cayenne Turbo": 118100,
           "Cayenne Turbo S": 123095,
-          "Cayenne GTS": 69295,
+          "Cayenne GTS": 80000,
           "Cayenne S E-Hybrid": 76900
         },
         "2016": {
-          "Cayenne": 50895,
-          "Cayenne S": 64495,
-          "Cayenne Turbo": 111895,
+          "Cayenne": 58000,
+          "Cayenne S": 74200,
+          "Cayenne Turbo": 118900,
           "Cayenne Turbo S": 123895,
-          "Cayenne GTS": 70095,
+          "Cayenne GTS": 80800,
           "Cayenne S E-Hybrid": 77700
         },
         "2017": {
-          "Cayenne": 51695,
-          "Cayenne S": 65295,
-          "Cayenne Turbo": 112695,
+          "Cayenne": 58900,
+          "Cayenne S": 75000,
+          "Cayenne Turbo": 119700,
           "Cayenne Turbo S": 124695,
-          "Cayenne GTS": 70895,
+          "Cayenne GTS": 81600,
           "Cayenne S E-Hybrid": 78500
         },
         "2018": {
@@ -16694,53 +16692,53 @@
           "Crew Cab Laramie": 44270
         },
         "2019": {
-          "Regular Cab Tradesman": 33395,
-          "Crew Cab Tradesman": 35395,
-          "Crew Cab Big Horn": 38395,
-          "Crew Cab Laramie": 45395,
-          "Crew Cab Limited": 52395
+          "Regular Cab Tradesman": 34295,
+          "Crew Cab Tradesman": 38195,
+          "Crew Cab Big Horn": 40995,
+          "Crew Cab Laramie": 47495,
+          "Crew Cab Limited": 54995
         },
         "2020": {
-          "Regular Cab Tradesman": 33695,
-          "Crew Cab Tradesman": 35695,
-          "Crew Cab Big Horn": 38695,
-          "Crew Cab Laramie": 45695,
-          "Crew Cab Limited": 52695
+          "Regular Cab Tradesman": 35395,
+          "Crew Cab Tradesman": 39595,
+          "Crew Cab Big Horn": 42995,
+          "Crew Cab Laramie": 49995,
+          "Crew Cab Limited": 56995
         },
         "2021": {
-          "Regular Cab Tradesman": 33995,
-          "Crew Cab Tradesman": 35995,
-          "Crew Cab Big Horn": 38995,
-          "Crew Cab Laramie": 45995,
-          "Crew Cab Limited": 52995
+          "Regular Cab Tradesman": 36495,
+          "Crew Cab Tradesman": 40995,
+          "Crew Cab Big Horn": 44995,
+          "Crew Cab Laramie": 52995,
+          "Crew Cab Limited": 59995
         },
         "2022": {
-          "Regular Cab Tradesman": 34295,
-          "Crew Cab Tradesman": 36295,
-          "Crew Cab Big Horn": 39295,
-          "Crew Cab Laramie": 46295,
-          "Crew Cab Limited": 53295
+          "Regular Cab Tradesman": 37595,
+          "Crew Cab Tradesman": 42395,
+          "Crew Cab Big Horn": 46995,
+          "Crew Cab Laramie": 55995,
+          "Crew Cab Limited": 63995
         },
         "2023": {
-          "Regular Cab Tradesman": 34595,
-          "Crew Cab Tradesman": 36595,
-          "Crew Cab Big Horn": 39595,
-          "Crew Cab Laramie": 46595,
-          "Crew Cab Limited": 53595
+          "Regular Cab Tradesman": 38695,
+          "Crew Cab Tradesman": 43795,
+          "Crew Cab Big Horn": 48995,
+          "Crew Cab Laramie": 58995,
+          "Crew Cab Limited": 67995
         },
         "2024": {
-          "Regular Cab Tradesman": 34895,
-          "Crew Cab Tradesman": 36895,
-          "Crew Cab Big Horn": 39895,
-          "Crew Cab Laramie": 46895,
-          "Crew Cab Limited": 53895
+          "Regular Cab Tradesman": 39795,
+          "Crew Cab Tradesman": 45195,
+          "Crew Cab Big Horn": 50995,
+          "Crew Cab Laramie": 60995,
+          "Crew Cab Limited": 70995
         },
         "2025": {
-          "Regular Cab Tradesman": 35195,
-          "Crew Cab Tradesman": 37195,
-          "Crew Cab Big Horn": 40195,
-          "Crew Cab Laramie": 47195,
-          "Crew Cab Limited": 54195
+          "Regular Cab Tradesman": 40895,
+          "Crew Cab Tradesman": 46595,
+          "Crew Cab Big Horn": 52995,
+          "Crew Cab Laramie": 61995,
+          "Crew Cab Limited": 72995
         },
         "2026": {
           "2500 Tradesman Regular Cab": 41995,
@@ -16792,53 +16790,53 @@
           "Crew Cab Laramie": 47270
         },
         "2019": {
-          "Regular Cab Tradesman": 35395,
-          "Crew Cab Tradesman": 37395,
-          "Crew Cab Big Horn": 40395,
-          "Crew Cab Laramie": 47395,
-          "Crew Cab Limited": 54395
+          "Regular Cab Tradesman": 37295,
+          "Crew Cab Tradesman": 41195,
+          "Crew Cab Big Horn": 43995,
+          "Crew Cab Laramie": 49495,
+          "Crew Cab Limited": 56995
         },
         "2020": {
-          "Regular Cab Tradesman": 35695,
-          "Crew Cab Tradesman": 37695,
-          "Crew Cab Big Horn": 40695,
-          "Crew Cab Laramie": 47695,
-          "Crew Cab Limited": 54695
+          "Regular Cab Tradesman": 38395,
+          "Crew Cab Tradesman": 42595,
+          "Crew Cab Big Horn": 45995,
+          "Crew Cab Laramie": 51995,
+          "Crew Cab Limited": 59995
         },
         "2021": {
-          "Regular Cab Tradesman": 35995,
-          "Crew Cab Tradesman": 37995,
-          "Crew Cab Big Horn": 40995,
-          "Crew Cab Laramie": 47995,
-          "Crew Cab Limited": 54995
+          "Regular Cab Tradesman": 39495,
+          "Crew Cab Tradesman": 43995,
+          "Crew Cab Big Horn": 47995,
+          "Crew Cab Laramie": 54495,
+          "Crew Cab Limited": 62995
         },
         "2022": {
-          "Regular Cab Tradesman": 36295,
-          "Crew Cab Tradesman": 38295,
-          "Crew Cab Big Horn": 41295,
-          "Crew Cab Laramie": 48295,
-          "Crew Cab Limited": 55295
+          "Regular Cab Tradesman": 40595,
+          "Crew Cab Tradesman": 45395,
+          "Crew Cab Big Horn": 49995,
+          "Crew Cab Laramie": 56995,
+          "Crew Cab Limited": 65995
         },
         "2023": {
-          "Regular Cab Tradesman": 36595,
-          "Crew Cab Tradesman": 38595,
-          "Crew Cab Big Horn": 41595,
-          "Crew Cab Laramie": 48595,
-          "Crew Cab Limited": 55595
+          "Regular Cab Tradesman": 41695,
+          "Crew Cab Tradesman": 46795,
+          "Crew Cab Big Horn": 51995,
+          "Crew Cab Laramie": 59495,
+          "Crew Cab Limited": 69995
         },
         "2024": {
-          "Regular Cab Tradesman": 36895,
-          "Crew Cab Tradesman": 38895,
-          "Crew Cab Big Horn": 41895,
-          "Crew Cab Laramie": 48895,
-          "Crew Cab Limited": 55895
+          "Regular Cab Tradesman": 42795,
+          "Crew Cab Tradesman": 48195,
+          "Crew Cab Big Horn": 53995,
+          "Crew Cab Laramie": 62995,
+          "Crew Cab Limited": 72995
         },
         "2025": {
-          "Regular Cab Tradesman": 37195,
-          "Crew Cab Tradesman": 39195,
-          "Crew Cab Big Horn": 42195,
-          "Crew Cab Laramie": 49195,
-          "Crew Cab Limited": 56195
+          "Regular Cab Tradesman": 43895,
+          "Crew Cab Tradesman": 49595,
+          "Crew Cab Big Horn": 55995,
+          "Crew Cab Laramie": 64995,
+          "Crew Cab Limited": 74995
         },
         "2026": {
           "3500 Tradesman Regular Cab": 44995,
@@ -17421,63 +17419,42 @@
         "2019": {
           "2.0i": 20395,
           "2.0i Premium": 22395,
-          "2.0i Limited": 24395,
-          "WRX": 28195,
-          "STI": 36195
+          "2.0i Limited": 24395
         },
         "2020": {
           "2.0i": 20695,
           "2.0i Premium": 22695,
-          "2.0i Limited": 24695,
-          "WRX": 28495,
-          "STI": 36495
+          "2.0i Limited": 24695
         },
         "2021": {
           "2.0i": 20995,
           "2.0i Premium": 22995,
-          "2.0i Limited": 24995,
-          "WRX": 28795,
-          "STI": 36795
+          "2.0i Limited": 24995
         },
         "2022": {
           "Base": 20295,
           "Premium": 22795,
-          "Limited": 25795,
-          "WRX": 31995,
-          "WRX Premium": 34995,
-          "WRX Limited": 37995
+          "Limited": 25795
         },
         "2023": {
           "Base": 20595,
           "Premium": 23095,
-          "Limited": 26095,
-          "WRX": 32395,
-          "WRX Premium": 35395,
-          "WRX Limited": 38395
+          "Limited": 26095
         },
         "2024": {
           "Base": 20895,
           "Premium": 23395,
-          "Limited": 26395,
-          "WRX": 32795,
-          "WRX Premium": 35795,
-          "WRX Limited": 38795
+          "Limited": 26395
         },
         "2025": {
           "Base": 21195,
           "Premium": 23695,
-          "Limited": 26695,
-          "WRX": 33195,
-          "WRX Premium": 36195,
-          "WRX Limited": 39195
+          "Limited": 26695
         },
         "2026": {
           "Base": 21725,
           "Premium": 24285,
-          "Limited": 27360,
-          "WRX": 34025,
-          "WRX Premium": 37100,
-          "WRX Limited": 40175
+          "Limited": 27360
         }
       },
       "mpg": null,
@@ -18192,7 +18169,7 @@
           "TRD Off-Road": 40605,
           "TRD Off-Road Premium": 43105,
           "Limited": 43605,
-          "TRD Pro": 45605,
+          "TRD Pro": 51055,
           "Venture": 39105
         },
         "2023": {
@@ -18201,7 +18178,7 @@
           "TRD Off-Road": 41405,
           "TRD Off-Road Premium": 43905,
           "Limited": 44405,
-          "TRD Pro": 46405,
+          "TRD Pro": 52455,
           "Venture": 39905
         },
         "2024": {
@@ -18210,25 +18187,25 @@
           "TRD Off-Road": 42305,
           "TRD Off-Road Premium": 44805,
           "Limited": 45305,
-          "TRD Pro": 47305,
+          "TRD Pro": 54255,
           "Venture": 40805
         },
         "2025": {
           "SR5": 40205,
           "SR5 Premium": 42705,
-          "TRD Off-Road": 43205,
-          "TRD Off-Road Premium": 45705,
-          "Limited": 46205,
-          "TRD Pro": 48205,
+          "TRD Off-Road": 45135,
+          "TRD Off-Road Premium": 48235,
+          "Limited": 50035,
+          "TRD Pro": 63135,
           "Venture": 41705
         },
         "2026": {
           "SR5": 41210,
           "SR5 Premium": 43775,
-          "TRD Off-Road": 44285,
-          "TRD Off-Road Premium": 46850,
-          "Limited": 47360,
-          "TRD Pro": 49410,
+          "TRD Off-Road": 46210,
+          "TRD Off-Road Premium": 49285,
+          "Limited": 51810,
+          "TRD Pro": 65135,
           "Venture": 42750
         }
       },
@@ -18548,29 +18525,29 @@
           "XSE": 24450
         },
         "2021": {
-          "L": 21550,
-          "LE": 23100,
-          "SE": 25000,
-          "XLE": 25150,
-          "XSE": 26000
+          "L": 20425,
+          "LE": 20650,
+          "SE": 22400,
+          "XLE": 23400,
+          "XSE": 24325
         },
         "2022": {
-          "LE": 23045,
-          "SE": 25300,
-          "XLE": 25450,
-          "XSE": 26300
+          "LE": 21200,
+          "SE": 22975,
+          "XLE": 23975,
+          "XSE": 24900
         },
         "2023": {
-          "LE": 24170,
-          "SE": 26570,
-          "XLE": 26770,
-          "XSE": 27720
+          "LE": 21775,
+          "SE": 23600,
+          "XLE": 24625,
+          "XSE": 25575
         },
         "2024": {
-          "LE": 25000,
-          "SE": 27400,
-          "XLE": 27600,
-          "XSE": 28550
+          "LE": 22350,
+          "SE": 24225,
+          "XLE": 25275,
+          "XSE": 26250
         },
         "2025": {
           "LE": 22925,
@@ -18624,17 +18601,14 @@
           "3.0 Premium": 57025
         },
         "2024": {
-          "2.0": 45565,
           "3.0": 53565,
           "3.0 Premium": 58025
         },
         "2025": {
-          "2.0": 46565,
           "3.0": 54565,
           "3.0 Premium": 59025
         },
         "2026": {
-          "2.0": 47730,
           "3.0": 55930,
           "3.0 Premium": 60500
         }
@@ -19027,17 +19001,17 @@
           "Prius Prime Limited": 34150
         },
         "2023": {
-          "Prius LE": 26000,
-          "Prius XLE": 29000,
+          "Prius LE": 27450,
+          "Prius XLE": 29990,
           "Prius XLE AWD": 30000,
           "Prius Limited": 34000,
-          "Prius Prime SE": 28770,
-          "Prius Prime XSE": 31770,
-          "Prius Prime Limited": 35270
+          "Prius Prime SE": 32350,
+          "Prius Prime XSE": 35350,
+          "Prius Prime Limited": 38850
         },
         "2024": {
-          "Prius LE": 27350,
-          "Prius XLE": 30350,
+          "Prius LE": 28545,
+          "Prius XLE": 30990,
           "Prius XLE AWD": 31350,
           "Prius Limited": 35350,
           "Prius Prime SE": 32350,
@@ -19479,7 +19453,7 @@
           "TRD Pro": 46560
         },
         "2024": {
-          "SR": 28350,
+          "SR": 31550,
           "SR5": 31600,
           "TRD Sport": 35350,
           "TRD Off-Road": 37100,
@@ -19487,7 +19461,7 @@
           "TRD Pro": 47160
         },
         "2025": {
-          "SR": 28950,
+          "SR": 32150,
           "SR5": 32200,
           "TRD Sport": 35950,
           "TRD Off-Road": 37700,
@@ -19495,7 +19469,7 @@
           "TRD Pro": 47760
         },
         "2026": {
-          "SR": 29675,
+          "SR": 32950,
           "SR5": 33005,
           "TRD Sport": 36850,
           "TRD Off-Road": 38640,
@@ -19756,23 +19730,23 @@
         "2023": {
           "Atlas S": 32250,
           "Atlas SE": 36250,
-          "Atlas SEL": 41250,
+          "Atlas SEL": 41995,
           "Atlas SEL Premium": 49250,
           "Atlas SE R-Line": 37750,
           "Atlas SEL R-Line": 42750
         },
         "2024": {
-          "Atlas S": 32550,
+          "Atlas S": 33195,
           "Atlas SE": 36550,
-          "Atlas SEL": 41550,
+          "Atlas SEL": 42995,
           "Atlas SEL Premium": 49550,
           "Atlas SE R-Line": 38050,
           "Atlas SEL R-Line": 43050
         },
         "2025": {
-          "Atlas S": 32850,
+          "Atlas S": 33995,
           "Atlas SE": 36850,
-          "Atlas SEL": 41850,
+          "Atlas SEL": 43995,
           "Atlas SEL Premium": 49850,
           "Atlas SE R-Line": 38350,
           "Atlas SEL R-Line": 43350
@@ -19867,24 +19841,24 @@
           "Golf R": 40695
         },
         "2022": {
-          "Golf GTI S": 29195,
-          "Golf GTI SE": 33195,
-          "Golf R": 40995
+          "Golf GTI S": 30295,
+          "Golf GTI SE": 34295,
+          "Golf R": 43595
         },
         "2023": {
-          "Golf GTI S": 29495,
-          "Golf GTI SE": 33495,
-          "Golf R": 41295
+          "Golf GTI S": 31295,
+          "Golf GTI SE": 35295,
+          "Golf R": 44595
         },
         "2024": {
-          "Golf GTI S": 29795,
-          "Golf GTI SE": 33795,
-          "Golf R": 41595
+          "Golf GTI S": 32295,
+          "Golf GTI SE": 36295,
+          "Golf R": 45595
         },
         "2025": {
-          "Golf GTI S": 30095,
-          "Golf GTI SE": 34095,
-          "Golf R": 41895
+          "Golf GTI S": 32995,
+          "Golf GTI SE": 36995,
+          "Golf R": 46595
         },
         "2026": {
           "Golf S": 28495,
@@ -19964,25 +19938,25 @@
           "Jetta GLI": 30845
         },
         "2023": {
-          "Jetta S": 20145,
-          "Jetta SE": 23145,
-          "Jetta SEL": 27145,
+          "Jetta S": 20795,
+          "Jetta SE": 23795,
+          "Jetta SEL": 27795,
           "Jetta SEL Premium": 29145,
-          "Jetta GLI": 31145
+          "Jetta GLI": 31395
         },
         "2024": {
-          "Jetta S": 20445,
-          "Jetta SE": 23445,
-          "Jetta SEL": 27445,
+          "Jetta S": 21395,
+          "Jetta SE": 24395,
+          "Jetta SEL": 28395,
           "Jetta SEL Premium": 29445,
-          "Jetta GLI": 31445
+          "Jetta GLI": 32195
         },
         "2025": {
-          "Jetta S": 20745,
-          "Jetta SE": 23745,
-          "Jetta SEL": 27745,
+          "Jetta S": 21995,
+          "Jetta SE": 24995,
+          "Jetta SEL": 28995,
           "Jetta SEL Premium": 29745,
-          "Jetta GLI": 31745
+          "Jetta GLI": 32995
         },
         "2026": {
           "Jetta S": 22995,
@@ -20209,17 +20183,17 @@
           "S60 T8 Polestar Engineered": 55700
         },
         "2023": {
-          "S60 B5 Momentum": 38000,
+          "S60 B5 Momentum": 40695,
           "S60 B6 R-Design": 44000,
           "S60 B6 Inscription": 48000
         },
         "2024": {
-          "S60 B5 Momentum": 38300,
+          "S60 B5 Momentum": 42095,
           "S60 B6 R-Design": 44300,
           "S60 B6 Inscription": 48300
         },
         "2025": {
-          "S60 B5 Momentum": 38600,
+          "S60 B5 Momentum": 43495,
           "S60 B6 R-Design": 44600,
           "S60 B6 Inscription": 48600
         },
@@ -20422,19 +20396,19 @@
           "XC60 T8 Inscription": 59600
         },
         "2023": {
-          "XC60 B5 Momentum": 42000,
-          "XC60 B6 R-Design": 47000,
-          "XC60 B6 Inscription": 51000
+          "XC60 B5 Momentum": 43395,
+          "XC60 B6 R-Design": 49095,
+          "XC60 B6 Inscription": 53395
         },
         "2024": {
-          "XC60 B5 Momentum": 42300,
-          "XC60 B6 R-Design": 47300,
-          "XC60 B6 Inscription": 51300
+          "XC60 B5 Momentum": 44895,
+          "XC60 B6 R-Design": 50695,
+          "XC60 B6 Inscription": 55895
         },
         "2025": {
-          "XC60 B5 Momentum": 42600,
-          "XC60 B6 R-Design": 47600,
-          "XC60 B6 Inscription": 51600
+          "XC60 B5 Momentum": 46395,
+          "XC60 B6 R-Design": 52295,
+          "XC60 B6 Inscription": 58395
         },
         "2026": {
           "XC60 B5 Core AWD": 47895,

@@ -109,6 +109,7 @@ The Express server (`server.js`) handles payments and subscription state. It ser
 | `GET /api/insights/market` | **Protected** full per-state insights export (requires `x-api-key`) — the sellable dataset |
 | `GET /api/electricity-rate?zip=XXXXX` | Zip-code-level residential $/kWh from OpenEI URDB; cached 30 days per zip; returns `null` rate when key absent or zip not found |
 | `POST /api/stripe-webhook` | Stripe webhook (raw body required) |
+| `GET /api/health` | Health check — 200 when the server is up (pings Postgres when configured, 503 if unreachable); used by Railway's deploy healthcheck and the smoke test |
 
 Subscribers are stored in PostgreSQL. Device access is limited to 2 devices per subscriber, expiring after 30 days.
 
@@ -159,11 +160,20 @@ buildCommand = "npm install --include=dev && npm run build"
 [deploy]
 startCommand = "npm run start"
 restartPolicyType = "on_failure"
+healthcheckPath = "/api/health"
 ```
 
 The Express server binds to `$PORT`, serves the compiled React app from `/dist`, and routes `/api/*` to backend handlers. `cashpedal.io` and `www.cashpedal.io` are allowed hosts (configured in `vite.config.js`).
 
 To deploy: push to the connected GitHub branch. Railway auto-rebuilds on every push.
+
+### CI / deploy feedback loop
+
+Three layers keep bad code off the live site:
+
+1. **Build gate** — `.github/workflows/ci.yml` runs `npm ci && npm run build` plus `node scripts/verify-tco.mjs` on every push to every branch. Railway's **"Wait for CI"** setting (enabled in the Railway dashboard, not in this repo) holds the deploy until these checks pass, so a commit that doesn't build never reaches production.
+2. **Deploy health check** — `railway.toml` sets `healthcheckPath = "/api/health"`; Railway only routes traffic to a new deploy after that endpoint returns 200 (it pings Postgres), otherwise the previous deploy keeps serving.
+3. **Hourly smoke test** — `.github/workflows/smoke-test.yml` runs `scripts/smoke-test.mjs` against `https://cashpedal.io`: every route must render real content in headless Chromium (no blank screen, no 404 fallthrough, no uncaught JS errors) and the public API endpoints must return valid JSON. On failure it opens/updates a GitHub issue labeled `smoke-test`; on recovery it closes the issue. Run locally: `npm install --no-save playwright && npx playwright install chromium && node scripts/smoke-test.mjs [base-url]`.
 
 ---
 

@@ -290,6 +290,23 @@ const cancelLimiter = rateLimit({
   },
 })
 
+// ── Health check ──────────────────────────────────────
+// Used by Railway's deploy healthcheck (railway.toml) and the scheduled smoke
+// test. Registered before the rate limiter so infrastructure probes never eat
+// into visitor API quota. Returns 503 when a configured database is
+// unreachable, so Railway keeps the previous deploy serving traffic instead
+// of switching to one that can't reach Postgres.
+app.get('/api/health', async (_req, res) => {
+  if (!pool) return res.json({ status: 'ok', db: 'not_configured' })
+  try {
+    await pool.query('SELECT 1')
+    res.json({ status: 'ok', db: 'ok' })
+  } catch (err) {
+    console.error('[health] database ping failed:', err.message)
+    res.status(503).json({ status: 'degraded', db: 'unreachable' })
+  }
+})
+
 app.use('/api/', apiLimiter)
 
 // ── PII helpers ───────────────────────────────────────

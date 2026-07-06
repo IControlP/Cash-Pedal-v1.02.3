@@ -1,0 +1,23 @@
+name: Vehicle data validation
+
+on:
+  pull_request:
+    paths:
+      - "src/data/vehicles.json"
+      - "scripts/validate_vehicle_data.py"
+      - "scripts/msrp_anomaly_baseline.json"
+  push:
+    branches: [main]
+    paths:
+      - "src/data/vehicles.json"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate vehicles.json
+        run: python3 scripts/validate_vehicle_data.py

@@ -1,0 +1,79 @@
+name: Vehicle data staleness check
+
+on:
+  schedule:
+    # First day of each month at 14:00 UTC
+    - cron: "0 14 1 * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  staleness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run staleness report
+        id: report
+        run: |
+          set +e
+          OUTPUT=$(python3 scripts/validate_vehicle_data.py --staleness)
+          CODE=$?
+          echo "$OUTPUT"
+          {
+            echo "output<<EOF"
+            echo "$OUTPUT"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "stale=$([ $CODE -eq 2 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          # Exit 0 or 2 are expected; anything else is a script failure
+          [ $CODE -eq 0 ] || [ $CODE -eq 2 ]
+      - name: Open or update tracking issue
+        if: steps.report.outputs.stale == 'true'
+        uses: actions/github-script@v7
+        env:
+          REPORT_OUTPUT: ${{ steps.report.outputs.output }}
+        with:
+          script: |
+            const title = "Vehicle database: models missing latest model-year data";
+            const body = [
+              "The monthly staleness check found models missing the expected latest model year.",
+              "",
+              "```",
+              process.env.REPORT_OUTPUT,
+              "```",
+              "",
+              "For each model, either:",
+              "1. Add the new model year's trims and MSRPs to `src/data/vehicles.json`, or",
+              "2. Confirm the model was discontinued (no action needed — it stops being flagged next model year).",
+              "",
+              "See `docs/VEHICLE_DATA_MAINTENANCE.md` for the update process.",
+            ].join("\n");
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: "vehicle-data",
+            });
+            const existing = issues.find(i => i.title === title);
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ["vehicle-data"],
+              });
+            }

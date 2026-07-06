@@ -190,6 +190,7 @@ The root directory still contains the original Streamlit implementation (`.py` f
 
 - Most calculation logic lives **client-side** in React components.
 - Vehicle data is loaded from `src/data/vehicles.json` (static JSON, no external fetch).
+- **Any change to `vehicles.json` must pass `python3 scripts/validate_vehicle_data.py`** (runs in CI). Verified-legitimate pricing anomalies are accepted via `--write-baseline`; a monthly scheduled workflow flags models missing the latest model year. See `docs/VEHICLE_DATA_MAINTENANCE.md` for the full update process and data source options.
 - The WheelZard page embeds an external custom GPT via iframe/link — no server-side AI calls in this repo.
 - Subscription state is managed server-side via PostgreSQL and Stripe; `useSubscription.js` polls `/api/subscription-status`.
 - Pro features are wrapped with `<ProGate>`, which shows `<PaywallModal>` to non-subscribers.

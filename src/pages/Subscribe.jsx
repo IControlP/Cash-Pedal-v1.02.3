@@ -40,7 +40,7 @@ export default function Subscribe() {
   const [verifyStatus, setVerifyStatus] = useState(null) // null | 'loading' | 'success' | 'not_found' | 'device_limit' | 'error'
   const [showPromoEntry, setShowPromoEntry] = useState(false)
   const [promoInput, setPromoInput] = useState('')
-  const [promoStatus, setPromoStatus] = useState(null) // null | 'loading' | 'success' | 'invalid' | 'error'
+  const [promoStatus, setPromoStatus] = useState(null) // null | 'loading' | 'success' | 'invalid' | 'fully_redeemed' | 'expired' | 'error'
   const sub = useSubscription() || {}
 
   // Verify Stripe session and activate subscription after checkout redirect
@@ -78,6 +78,10 @@ export default function Subscribe() {
       setPromoStatus('success')
     } else if (result.error === 'network') {
       setPromoStatus('error')
+    } else if (result.error === 'fully_redeemed') {
+      setPromoStatus('fully_redeemed')
+    } else if (result.error === 'expired') {
+      setPromoStatus('expired')
     } else {
       setPromoStatus('invalid')
     }
@@ -333,6 +337,12 @@ export default function Subscribe() {
                           </form>
                           {promoStatus === 'invalid' && (
                             <p className="mt-2 text-xs text-red-400">Invalid promo code.</p>
+                          )}
+                          {promoStatus === 'fully_redeemed' && (
+                            <p className="mt-2 text-xs text-red-400">This code has reached its redemption limit.</p>
+                          )}
+                          {promoStatus === 'expired' && (
+                            <p className="mt-2 text-xs text-red-400">Your access from this code has expired.</p>
                           )}
                           {promoStatus === 'error' && (
                             <p className="mt-2 text-xs text-red-400">Network error — please try again.</p>

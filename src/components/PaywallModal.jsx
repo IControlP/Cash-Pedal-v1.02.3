@@ -121,6 +121,10 @@ export default function PaywallModal({ feature, usedCount, cancelPath, onUnlocke
       onUnlocked()
     } else if (result.error === 'network') {
       setPromoErr('Could not reach server. Please check your connection.')
+    } else if (result.error === 'fully_redeemed') {
+      setPromoErr('This code has reached its redemption limit.')
+    } else if (result.error === 'expired') {
+      setPromoErr('Your access from this code has expired.')
     } else {
       setPromoErr('Invalid promo code.')
     }

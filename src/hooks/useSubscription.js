@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { safeGet, safeSet, safeRemove } from '../utils/safeStorage'
+import { getSessionId } from '../utils/session'
 
 const SUB_CHANGED = 'cashpedal_sub_changed'
 
@@ -7,11 +8,16 @@ export const LS_SUB_EMAIL       = 'cashpedal_subscriber_email'
 export const LS_SUB_EXPIRES     = 'cashpedal_sub_expires'
 export const LS_SUB_VERIFIED_AT = 'cashpedal_sub_verified_at'
 export const LS_PROMO_ACCESS    = 'cashpedal_promo_access'
+export const LS_PROMO_EXPIRES   = 'cashpedal_promo_expires'
 
 const VERIFY_INTERVAL_MS = 24 * 60 * 60 * 1000 // re-verify once per day
 
 function isActiveFromStorage() {
-  if (safeGet(LS_PROMO_ACCESS) === 'true') return true
+  if (safeGet(LS_PROMO_ACCESS) === 'true') {
+    // Time-boxed grants (beta code) store an expiry; unlimited codes don't.
+    const promoExpires = safeGet(LS_PROMO_EXPIRES)
+    if (!promoExpires || new Date(promoExpires) > new Date()) return true
+  }
   const email   = safeGet(LS_SUB_EMAIL)
   const expires = safeGet(LS_SUB_EXPIRES)
   if (!email) return false
@@ -102,6 +108,7 @@ export function useSubscription() {
     safeRemove(LS_SUB_EXPIRES)
     safeRemove(LS_SUB_VERIFIED_AT)
     safeRemove(LS_PROMO_ACCESS)
+    safeRemove(LS_PROMO_EXPIRES)
     setIsSubscribed(false)
     setSubscriberEmail('')
     window.dispatchEvent(new Event(SUB_CHANGED))
@@ -113,16 +120,19 @@ export function useSubscription() {
       const res  = await fetch('/api/verify-promo-code', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ code: code.trim() }),
+        body:    JSON.stringify({ code: code.trim(), session_id: getSessionId() }),
       })
       const data = await res.json()
       if (data.valid) {
         safeSet(LS_PROMO_ACCESS, 'true')
+        // Capped codes return an expiry; unlimited codes grant permanent access
+        if (data.expiresAt) safeSet(LS_PROMO_EXPIRES, data.expiresAt)
+        else safeRemove(LS_PROMO_EXPIRES)
         setIsSubscribed(true)
         window.dispatchEvent(new Event(SUB_CHANGED))
-        return { valid: true }
+        return { valid: true, expiresAt: data.expiresAt || null }
       }
-      return { valid: false }
+      return { valid: false, error: data.error }
     } catch {
       return { valid: false, error: 'network' }
     }

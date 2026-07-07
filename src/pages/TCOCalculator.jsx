@@ -39,7 +39,7 @@ import {
   STATE_FUEL_PRICES, STATE_ELEC_RATES,
   getPublicChargingRate, getEffectiveElecRate, computeAnnualFuel,
   PREMIUM_PRICE_DELTA, requiresPremiumFuel,
-  STATE_REG_FEE, STATE_VLF, computeAnnualRegistration,
+  computeAnnualRegFees, projectRegistrationByYear,
   computeSalesTax, STATE_VEHICLE_SALES_TAX, STATE_DOC_FEE_AVG, getRegionalDemandPremium,
   zipToState, resolveLocation, escalateAnnualFuel,
 } from '../utils/vehicleCosts'
@@ -949,7 +949,8 @@ function LeaseVsBuy({ isPro, data, formatCurrency }) {
             <p className="font-display font-bold text-white text-sm mb-1">Lease vs. Buy Analysis</p>
             <p className="text-[var(--text-muted)] text-xs max-w-xs leading-relaxed mx-auto">
               The same car, leased vs. financed over the same term — net of the resale equity buying
-              leaves you with. See which one actually costs less, and by how much.
+              leaves you with. See which one actually costs less, by how much, and how the verdict
+              shifts if you keep the car 2–3× longer.
             </p>
           </div>
           <a href="/subscribe" className="text-xs font-bold px-4 py-2 rounded-lg"
@@ -1030,6 +1031,63 @@ function LeaseVsBuy({ isPro, data, formatCurrency }) {
         </div>
       </div>
 
+      {/* Long-term: what happens past the lease term */}
+      {data.longTerm && data.longTerm.rows.length > 1 && (() => {
+        const lt   = data.longTerm
+        const last = lt.rows[lt.rows.length - 1]
+        const lastSavings = last.netLease - last.netBuy   // > 0 → owning saves
+        return (
+          <div className="rounded-lg border p-3 flex flex-col gap-2.5"
+            style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+              What if you keep it longer?
+            </p>
+            <div className="flex flex-col gap-1">
+              <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr] gap-2 text-[10px] text-[var(--text-muted)] pb-1"
+                style={{ borderBottom: '1px solid var(--border)' }}>
+                <span>Horizon</span>
+                <span className="text-right">Buy &amp; keep</span>
+                <span className="text-right">Re-lease</span>
+                <span className="text-right">Difference</span>
+              </div>
+              {lt.rows.map(row => {
+                const saves = row.netLease - row.netBuy
+                return (
+                  <div key={row.years} className="grid grid-cols-[1.2fr_1fr_1fr_1fr] gap-2 text-xs items-center">
+                    <span className="text-white/80">
+                      {row.years} yrs <span className="text-[var(--text-muted)] text-[10px]">· {row.leases} lease{row.leases !== 1 ? 's' : ''}</span>
+                    </span>
+                    <span className="text-right tabular-nums text-white">{formatCurrency(row.netBuy)}</span>
+                    <span className="text-right tabular-nums text-white">{formatCurrency(row.netLease)}</span>
+                    <span className="text-right tabular-nums font-semibold"
+                      style={{ color: saves >= 0 ? '#4ade80' : '#fbbf24' }}>
+                      {saves >= 0 ? `own +${formatCurrency(saves)}` : `lease +${formatCurrency(-saves)}`}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+            <p className="text-[11px] leading-relaxed text-white/80">
+              {lt.breakEvenYear == null
+                ? <>Under these inputs, repeated leasing stays cheaper through year {lt.maxYears}. That's unusual — double-check the buy-side price and interest rate.</>
+                : lt.breakEvenYear <= data.horizonYears
+                ? <>Buying is already cheaper within the first lease term, and the gap grows to{' '}
+                    <span className="font-bold" style={{ color: '#4ade80' }}>{formatCurrency(lastSavings)}</span> by year {last.years} —
+                    loan payments end, while re-leasing means a payment forever.</>
+                : <>Leasing wins short-term, but buying pulls ahead around{' '}
+                    <span className="font-bold text-white">year {lt.breakEvenYear}</span> — once the loan is paid off the payments
+                    stop, while re-leasing means a payment forever. By year {last.years}, owning saves ≈{' '}
+                    <span className="font-bold" style={{ color: '#4ade80' }}>{formatCurrency(lastSavings)}</span>.</>}
+            </p>
+            <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+              Assumes back-to-back leases of a similar car at today's payment (drive-off repeats each term, maintenance
+              resets with each new car), while the owned car's maintenance rises with age and its estimated resale
+              value is credited at every horizon.
+            </p>
+          </div>
+        )
+      })()}
+
       {/* Notes */}
       <div className="flex flex-col gap-1.5 pt-1">
         <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
@@ -1046,9 +1104,9 @@ function LeaseVsBuy({ isPro, data, formatCurrency }) {
           </p>
         )}
         <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
-          • Operating costs are identical on both paths, so the verdict is driven by financing cost minus
-          the equity buying leaves you with. Leasing means lower commitment and always-newer cars; buying
-          builds an asset with no mileage cap.
+          • Operating costs are identical on both paths through the first term, so the verdict above is driven
+          by financing cost minus the equity buying leaves you with. Leasing means lower commitment and
+          always-newer cars; buying builds an asset with no mileage cap.
         </p>
       </div>
     </div>
@@ -1463,7 +1521,13 @@ export default function TCOCalculator() {
     const currentVal = (selYear && (selMake || selModel))
       ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)), currentMileage, resolvedState)
       : price
-    setAnnualRegistration(computeAnnualRegistration(resolvedState, currentVal))
+    const regIsEV = modelData ? modelData.is_ev : (VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.isEV ?? false)
+    const regSeg  = (selMake || selModel)
+      ? classifySegment(selMake||'', selModel||'')
+      : (VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.segment ?? 'sedan')
+    setAnnualRegistration(computeAnnualRegFees(resolvedState, currentVal, {
+      isEV: regIsEV, isHybrid: regSeg === 'hybrid', segment: regSeg, vehicleAge,
+    }))
   }, [price, selMake, selModel, selYear, selTrim, resolvedState, resolvedLaborRate, resolvedWear, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage, liveFuelPrices, liveElecRate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Market-analytics search tracking ──
@@ -1674,6 +1738,25 @@ export default function TCOCalculator() {
   const annualOperatingCost = annualInsurance + annualFuel + annualMaintenance + annualRegistration
   const totalAnnualCost = (financeMode === 'lease' ? leaseResults.annualLeaseCost : results.trueAnnualCost) + annualOperatingCost
 
+  // Per-year registration & compliance: value-based fees decline with the
+  // depreciation curve, flat fees stay flat, age-bracket fees step down, and
+  // inspection costs appear once new-vehicle exemptions lapse. Kept as a raw
+  // projection; forecast rows rescale it to honor manual slider overrides.
+  const registrationByYear = useMemo(() => {
+    const years = Math.min(10, Math.max(1, ownershipYears))
+    const regIsEV = modelData ? modelData.is_ev : (VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.isEV ?? false)
+    const regSeg  = (selMake || selModel)
+      ? classifySegment(selMake||'', selModel||'')
+      : (VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.segment ?? 'sedan')
+    const currentVal = (selYear && (selMake || selModel))
+      ? estimateCurrentValue(price, selMake||null, selModel||null, vehicleAge, currentMileage, resolvedState)
+      : price
+    return projectRegistrationByYear(resolvedState, currentVal, years, {
+      make: selMake || null, model: selModel || null, vehicleAge,
+      isEV: regIsEV, isHybrid: regSeg === 'hybrid', segment: regSeg,
+    })
+  }, [ownershipYears, modelData, vehicleCategory, selMake, selModel, selYear, price, vehicleAge, currentMileage, resolvedState])
+
   // Forecast rows computed at parent level so both the summary panel and FiveYearForecast
   // share identical totals (prevents the visual vs. summary number discrepancy).
   const forecastRows = useMemo(() => {
@@ -1703,14 +1786,18 @@ export default function TCOCalculator() {
       // Fuel escalates at EIA long-run nominal rates (gas 2.5%/yr, elec 2%/yr)
       const fuel         = escalateAnnualFuel(annualFuel, i, fuelIsEV)
       const maintenance  = maintenanceByYear?.[i] ?? Math.round(annualMaintenance * Math.pow(1.08, i))
-      const registration = Math.round(annualRegistration * Math.pow(0.95, i))
+      // Scale the projection so a manual "Registration & Fees" slider override
+      // shifts every year proportionally while keeping the state-accurate shape.
+      const registration = registrationByYear[i] != null
+        ? Math.round(registrationByYear[i] * (annualRegistration / Math.max(1, registrationByYear[0])))
+        : Math.round(annualRegistration * Math.pow(0.95, i))
       const total = loanCost + insurance + fuel + maintenance + registration
       return { yr, loanCost, insurance, fuel, maintenance, registration, total }
     })
   }, [ownershipYears, leaseTerm, financeMode, loanTerm, leaseResults.annualLeaseCost,
       results.monthlyPayment, annualInsurance, annualFuel, maintenanceByYear,
-      annualMaintenance, annualRegistration, currentVehicleType, currentLeasePayment,
-      currentLeaseRemainingMonths, currentRemainingTerm, modelData, vehicleCategory])
+      annualMaintenance, annualRegistration, registrationByYear, currentVehicleType,
+      currentLeasePayment, currentLeaseRemainingMonths, currentRemainingTerm, modelData, vehicleCategory])
 
   // Auto-suggest residual % based on the depreciation model for the selected lease term.
   // Fires whenever the lease term, make, or model changes. Runs in buy mode too so the
@@ -1798,9 +1885,67 @@ export default function TCOCalculator() {
       estimateCurrentValue(origMsrp ?? price, selMake || null, selModel || null, carAge + horizonYears, projectedMiles, resolvedState)
     )
 
-    // Operating costs (insurance + fuel + maintenance + reg) are identical on both
-    // paths over the same horizon, so they don't move the verdict — shown for context.
-    const operating = Math.round(annualOperatingCost * horizonYears)
+    // ── Year-by-year long-term model (extends past the lease term) ──
+    // Buy path: keep the same car — payments stop when the loan ends, but
+    // maintenance and registration age with the vehicle, and the resale equity
+    // is credited at every year mark.
+    // Lease path: back-to-back leases of a similar car at today's payment —
+    // each new term repeats the drive-off and resets the maintenance clock
+    // (you're always in a new car).
+    const fuelIsEV = modelData
+      ? modelData.is_ev
+      : (VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.isEV ?? false)
+    const buyUpfront = isCashPurchase ? price : Math.min(downPayment, price)
+    const loanAmount = price - buyUpfront
+    const monthlyR   = rate / 12 / 100
+    // Balance still owed after m months of payments (retired at sale if you exit early)
+    const remainingBalAt = (m) => {
+      if (isCashPurchase || m >= loanTerm || loanAmount <= 0) return 0
+      if (monthlyR === 0) return loanAmount * (1 - m / loanTerm)
+      return Math.max(0, loanAmount * Math.pow(1 + monthlyR, m)
+        - buyLoan.monthlyPayment * (Math.pow(1 + monthlyR, m) - 1) / monthlyR)
+    }
+    const maxYears = Math.min(10, horizonYears * 3)
+    const yearlyNets = []
+    let buyOpCum = 0, leaseOpCum = 0, operatingAtHorizon = 0
+    for (let i = 0; i < maxYears; i++) {
+      const yr = i + 1
+      const li = i % horizonYears   // year within the current lease term
+      const ins  = Math.round(annualInsurance * Math.pow(1.02, i))
+      const fuel = escalateAnnualFuel(annualFuel, i, fuelIsEV)
+      buyOpCum   += ins + fuel + Math.round(annualMaintenance * Math.pow(1.08, i))
+                  + Math.round(annualRegistration * Math.pow(0.95, i))
+      leaseOpCum += ins + fuel + Math.round(annualMaintenance * Math.pow(1.08, li))
+                  + Math.round(annualRegistration * Math.pow(0.95, li))
+      if (yr === horizonYears) operatingAtHorizon = buyOpCum
+      const monthsPaid = Math.min(yr * 12, loanTerm)
+      const buyPaid    = buyUpfront + (isCashPurchase ? 0 : buyLoan.monthlyPayment * monthsPaid)
+        + remainingBalAt(monthsPaid)   // outstanding balance settled at sale
+      const resaleYr   = Math.round(estimateCurrentValue(
+        origMsrp ?? price, selMake || null, selModel || null,
+        carAge + yr, Math.round(annualMileage * (carAge + yr)), resolvedState
+      ))
+      const leaseStarts = Math.floor(i / horizonYears) + 1
+      const leasePaid   = leaseResults.monthlyPayment * 12 * yr
+        + Math.min(capCostReduction, price) * leaseStarts
+      yearlyNets.push({
+        yr,
+        netBuy:   Math.round(buyPaid + buyOpCum - resaleYr),
+        netLease: Math.round(leasePaid + leaseOpCum),
+      })
+    }
+    const breakEvenYear = yearlyNets.find(y => y.netBuy < y.netLease)?.yr ?? null
+    const longTermRows = [1, 2, 3]
+      .map(k => {
+        const y = yearlyNets[k * horizonYears - 1]
+        return y ? { leases: k, years: k * horizonYears, netBuy: y.netBuy, netLease: y.netLease } : null
+      })
+      .filter(Boolean)
+
+    // Operating costs through the lease term are identical on both paths (the
+    // maintenance clock only diverges once a second lease starts), so they
+    // don't move the first-term verdict — shown for context.
+    const operating = operatingAtHorizon
 
     const netBuy   = Math.round(buyFinancing + operating - resaleValue)
     const netLease = Math.round(leaseResults.totalLeaseCost + operating)
@@ -1821,9 +1966,11 @@ export default function TCOCalculator() {
       resaleValue, operating, netBuy, netLease,
       loanTerm, rate: isCashPurchase ? null : rate, annualMileage, leaseMileageCap, excessMileageFee, isCashPurchase,
       diff: Math.abs(Math.round(diff)), buyWins: diff > 0,
+      longTerm: { rows: longTermRows, breakEvenYear, maxYears },
     }
   }, [price, leasePeriodYears, leaseTerm, downPayment, loanTerm, rate, isCashPurchase, annualMileage, carAge,
-      origMsrp, selMake, selModel, resolvedState, annualOperatingCost, leaseResults.totalLeaseCost, capCostReduction])
+      origMsrp, selMake, selModel, resolvedState, annualInsurance, annualFuel, annualMaintenance, annualRegistration,
+      modelData, vehicleCategory, leaseResults.totalLeaseCost, leaseResults.monthlyPayment, capCostReduction])
 
   // Derived EV flag, charging rate, and premium fuel flag — used across the render
   const catInfoForRender = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
@@ -2213,7 +2360,7 @@ export default function TCOCalculator() {
                 </div>
                 <p className="text-xs text-[var(--text-muted)]">
                   {simpleMode
-                    ? 'Showing essential inputs. Switch to Detailed to unlock tax rate, doc fee, regional demand, mileage, and per-year maintenance.'
+                    ? 'Showing essential inputs. Switch to Detailed to unlock tax rate, doc fee, odometer, EV charging setup, and the Estimates / Itemized / Custom operating-cost modes.'
                     : 'All inputs unlocked. Switch to Simple for a quicker estimate with fewer fields.'}
                 </p>
               </div>
@@ -2299,7 +2446,7 @@ export default function TCOCalculator() {
                         </span>
                     }
                     <span className="text-[var(--text-muted)]">
-                      Trim-specific MSRP &amp; depreciation · Detailed itemized cost breakdown
+                      Trim-specific MSRP &amp; depreciation · Itemized cost breakdown
                       {detailedFreeLeft <= 0 && (
                         <> — <a href="/subscribe" className="text-[var(--accent)] hover:underline font-semibold">Subscribe for unlimited</a></>
                       )}
@@ -2974,61 +3121,74 @@ export default function TCOCalculator() {
 
               {/* Annual Operating Costs */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <h2 className="font-display font-bold text-white text-lg">Annual Operating Costs</h2>
-                  {!simpleMode && resolvedState && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={async () => {
-                          if (!detailedMode && !(await checkDetailedLimit())) return
-                          setDetailedMode(d => !d)
-                        }}
-                        aria-pressed={detailedMode}
-                        className="text-xs px-3 py-2 min-h-[44px] rounded-lg border transition-colors flex items-center gap-1.5 active:opacity-70"
-                        style={{
-                          borderColor: detailedMode ? 'rgba(255,184,0,0.5)' : 'var(--border)',
-                          color: detailedMode ? 'var(--accent)' : 'var(--text-muted)',
-                          background: detailedMode ? 'rgba(255,184,0,0.05)' : 'transparent',
-                        }}>
-                        {detailedMode ? 'Detailed ✓' : 'Detailed'}
-                        {!isSubscribed && !detailedMode && (
-                          detailedFreeLeft <= 0
-                            ? <span style={{ color: '#f87171' }}>🔒</span>
-                            : <span className="font-bold text-[10px]"
-                                style={{ color: '#FFB800' }}>
-                                {detailedFreeLeft} free
-                              </span>
-                        )}
-                      </button>
-                      <button
-                        onClick={() => setCustomCosts(c => !c)}
-                        aria-pressed={customCosts}
-                        className="text-xs px-3 py-2 min-h-[44px] rounded-lg border transition-colors active:opacity-70"
-                        style={{
-                          borderColor: customCosts ? 'var(--accent)' : 'var(--border)',
-                          color: customCosts ? 'var(--accent)' : 'var(--text-muted)',
-                        }}>
-                        {customCosts ? 'Use estimates' : 'Customize'}
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <h2 className="font-display font-bold text-white text-lg mb-1">Annual Operating Costs</h2>
                 {!resolvedState ? (
                   <p className="text-sm text-amber-400/80">
                     Enter your location above to see state-specific cost estimates.
                   </p>
                 ) : (
-                  <p className="text-[var(--text-muted)] text-sm">
-                    {customCosts
-                      ? 'Adjust any cost to match your situation.'
-                      : (() => {
-                          const catInfo = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
-                          const effIsEV = modelData ? modelData.is_ev : (catInfo?.isEV ?? false)
-                          const effMpg  = modelData ? (modelData.mpg?.combined ?? 28) : (catInfo?.mpg ?? 28)
-                          const mpgNote = effIsEV ? ' · EV' : ` · ${effMpg} MPG${catInfo && !modelData ? ' avg' : ''}`
-                          return `${detailedMode ? 'Detailed estimates' : 'Estimated'} for ${resolvedState} · ${annualMileage.toLocaleString()} mi/yr${mpgNote}.`
-                        })()}
-                  </p>
+                  <>
+                    {/* One mutually-exclusive source for operating costs:
+                        Estimates (state averages) · Itemized (per-service forecast, gated)
+                        · Custom (your own numbers) */}
+                    {!simpleMode && (() => {
+                      const costMode = customCosts ? 'custom' : detailedMode ? 'itemized' : 'estimates'
+                      return (
+                        <div className="flex gap-1 p-1 rounded-lg mt-2 mb-3"
+                          style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                          {[
+                            { value: 'estimates', label: 'Estimates', desc: 'State averages' },
+                            { value: 'itemized',  label: 'Itemized',  desc: 'Per-service forecast' },
+                            { value: 'custom',    label: 'Custom',    desc: 'Your own numbers' },
+                          ].map(opt => (
+                            <button key={opt.value}
+                              onClick={async () => {
+                                if (opt.value === 'itemized') {
+                                  if (!detailedMode && !(await checkDetailedLimit())) return
+                                  setDetailedMode(true)
+                                  setCustomCosts(false)
+                                } else if (opt.value === 'custom') {
+                                  setCustomCosts(true)
+                                  setDetailedMode(false)
+                                } else {
+                                  setCustomCosts(false)
+                                  setDetailedMode(false)
+                                }
+                              }}
+                              aria-pressed={costMode === opt.value}
+                              className="flex-1 flex flex-col items-center px-2 py-2 rounded-md font-semibold transition-all min-h-[44px] justify-center"
+                              style={{
+                                background: costMode === opt.value ? 'var(--accent)' : 'transparent',
+                                color:      costMode === opt.value ? '#000'          : 'var(--text-muted)',
+                              }}>
+                              <span className="text-sm leading-tight flex items-center gap-1">
+                                {opt.label}
+                                {opt.value === 'itemized' && !isSubscribed && costMode !== 'itemized' && (
+                                  detailedFreeLeft <= 0
+                                    ? <span className="text-[10px]" style={{ color: '#f87171' }}>🔒</span>
+                                    : <span className="font-bold text-[10px]" style={{ color: '#FFB800' }}>
+                                        {detailedFreeLeft} free
+                                      </span>
+                                )}
+                              </span>
+                              <span className="text-[10px] font-normal leading-tight mt-0.5 opacity-70">{opt.desc}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )
+                    })()}
+                    <p className="text-[var(--text-muted)] text-sm">
+                      {customCosts
+                        ? 'Custom costs — set each cost below to match your real bills; they replace our estimates.'
+                        : (() => {
+                            const catInfo = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
+                            const effIsEV = modelData ? modelData.is_ev : (catInfo?.isEV ?? false)
+                            const effMpg  = modelData ? (modelData.mpg?.combined ?? 28) : (catInfo?.mpg ?? 28)
+                            const mpgNote = effIsEV ? ' · EV' : ` · ${effMpg} MPG${catInfo && !modelData ? ' avg' : ''}`
+                            return `${detailedMode ? 'Itemized estimates' : 'Estimated'} for ${resolvedState} · ${annualMileage.toLocaleString()} mi/yr${mpgNote}.`
+                          })()}
+                    </p>
+                  </>
                 )}
               </div>
 
@@ -3160,12 +3320,12 @@ export default function TCOCalculator() {
                 </div>
               )}
 
-              {/* Detailed inputs panel — detailed mode only */}
+              {/* Itemized settings panel — itemized mode only */}
               {!simpleMode && resolvedState && detailedMode && !customCosts && (
                 <div className="rounded-xl border p-4 flex flex-col gap-5"
                   style={{ borderColor: 'rgba(255,184,0,0.2)', background: 'rgba(255,184,0,0.02)' }}>
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)]">
-                    Detailed Parameters
+                    Itemized Estimate Settings
                   </p>
 
                   {/* Custom fuel/electricity price */}
@@ -3278,10 +3438,10 @@ export default function TCOCalculator() {
                               ? <button
                                   onClick={async () => { if (!(await checkDetailedLimit())) return; setDetailedMode(true) }}
                                   className="underline hover:text-[var(--accent)] transition-colors">
-                                  Use Detailed for itemized estimates.
+                                  Switch to Itemized for service-by-service estimates.
                                 </button>
                               : <a href="/subscribe" className="underline hover:text-[var(--accent)] transition-colors">
-                                  Unlock Detailed for itemized estimates.
+                                  Unlock Itemized for service-by-service estimates.
                                 </a>
                             }
                           </div>
@@ -3371,25 +3531,8 @@ export default function TCOCalculator() {
                   </div>
                   <SliderInput label={effIsEV ? 'Annual Charging Cost' : 'Annual Fuel Cost'} value={annualFuel} onChange={setAnnualFuel}
                     min={0} max={6000} step={50} prefix="$" suffix="/yr" />
-                  <div>
-                    <SliderInput label="Maintenance &amp; Repairs" value={annualMaintenance} onChange={setAnnualMaintenance}
-                      min={0} max={5000} step={50} prefix="$" suffix="/yr" />
-                    {detailedMode && (
-                      <div className="mt-3 rounded-xl border overflow-hidden"
-                        style={{ borderColor: 'var(--border)' }}>
-                        <MaintenanceBreakdown
-                          isEV={modelData?.is_ev ?? false}
-                          annualMileage={annualMileage}
-                          segment={classifySegment(selMake||'', selModel||'')}
-                          make={selMake}
-                          startMileage={effectiveStartMileage}
-                          model={selModel}
-                          modelYear={selYear}
-                          trim={selTrim}
-                        />
-                      </div>
-                    )}
-                  </div>
+                  <SliderInput label="Maintenance &amp; Repairs" value={annualMaintenance} onChange={setAnnualMaintenance}
+                    min={0} max={5000} step={50} prefix="$" suffix="/yr" />
                   <SliderInput label="Registration &amp; Fees" value={annualRegistration} onChange={setAnnualRegistration}
                     min={0} max={2000} step={25} prefix="$" suffix="/yr" />
                 </>

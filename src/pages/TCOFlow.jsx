@@ -6,7 +6,7 @@ import VEHICLES from '../data/vehicles.json'
 import {
   classifySegment, estimateCurrentValue, estimateInsurance,
   computeAnnualFuel, STATE_FUEL_PRICES, requiresPremiumFuel,
-  computeAnnualRegistration, resolveLocation, escalateAnnualFuel,
+  projectRegistrationByYear, resolveLocation, escalateAnnualFuel,
   generateMaintenanceByYear,
 } from '../utils/vehicleCosts'
 import { trackSearch } from '../utils/marketSearch'
@@ -840,7 +840,12 @@ export default function TCOFlow() {
 
     const segment  = selMake && selModel ? classifySegment(selMake, selModel) : 'sedan'
 
-    const annualRegistration = computeAnnualRegistration(resolvedState, price)
+    // Per-year registration & compliance (value fees decline with depreciation,
+    // EV/hybrid surcharges and inspection cadence included)
+    const registrationByYear = projectRegistrationByYear(resolvedState, price, DEFAULT_OWNERSHIP_YRS, {
+      make: selMake || null, model: selModel || null, vehicleAge,
+      isEV, isHybrid: segment === 'hybrid', segment,
+    })
 
     const totalInsurance   = Math.round(annualInsurance * DEFAULT_OWNERSHIP_YRS)
     // Fuel escalates at EIA long-run nominal rates (gas 2.5%/yr, elec 2%/yr)
@@ -860,11 +865,7 @@ export default function TCOFlow() {
         null, null, selModel || '', selYear || null,
       ).reduce((s, v) => s + v, 0)
     )
-    const totalRegistration = Math.round(
-      Array.from({ length: DEFAULT_OWNERSHIP_YRS }, (_, i) =>
-        annualRegistration * Math.pow(0.95, i)
-      ).reduce((s, v) => s + v, 0)
-    )
+    const totalRegistration = Math.round(registrationByYear.reduce((s, v) => s + v, 0))
 
     return {
       depreciation,

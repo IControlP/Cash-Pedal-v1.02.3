@@ -1862,28 +1862,209 @@ export function escalateAnnualFuel(annualFuel, yearIndex, isEV = false) {
   return Math.round(annualFuel * Math.pow(1 + r, yearIndex))
 }
 
-// ── Registration ─────────────────────────────────────────
+// ── Registration & Compliance ─────────────────────────────
+// Annual registration modeled as: base fee (flat, weight-class, or age-bracket
+// per state statute) + value-based fee (VLF / ownership tax / excise, with
+// age-declining statutory schedules where they fall faster than market value)
+// + EV/hybrid road-usage surcharge. Safety and emissions inspection programs
+// are modeled separately in computeAnnualCompliance. Dollar figures reflect
+// 2025-26 statutory schedules (approximate where fees are inflation-indexed).
 
+// Flat annual base fee (plate/registration) — used when the state has no
+// weight-class or age-bracket schedule. Statewide averages including typical
+// county/local add-ons. OR is annualized from the biennial $126-$156 schedule;
+// MD from the biennial $135/$187 + surcharge.
 export const STATE_REG_FEE = {
-  AL:50,AK:50,AZ:32,AR:25,CA:65,CO:75,CT:60,DE:40,DC:72,FL:56,
+  AL:50,AK:50,AZ:32,AR:25,CA:65,CO:75,CT:60,DE:40,DC:72,FL:36,
   GA:20,HI:50,ID:68,IL:151,IN:45,IA:50,KS:42,KY:21,LA:30,ME:35,
-  MD:135,MA:60,MI:50,MN:53,MS:14,MO:33,MT:140,NE:37,NV:41,NH:48,
-  NJ:50,NM:40,NY:75,NC:60,ND:49,OH:31,OK:50,OR:268,PA:42,RI:73,
-  SC:40,SD:36,TN:28,TX:51,UT:51,VT:76,VA:36,WA:87,WV:52,WI:89,WY:30,
+  MD:85,MA:60,MI:50,MN:53,MS:14,MO:33,MT:87,NE:37,NV:41,NH:48,
+  NJ:60,NM:40,NY:70,NC:60,ND:49,OH:31,OK:66,OR:76,PA:42,RI:73,
+  SC:40,SD:36,TN:28,TX:51,UT:51,VT:76,VA:31,WA:72,WV:52,WI:89,WY:30,
 }
 
+// Weight class by segment (curb weight proxy): light <3,000 lb,
+// mid 3,000-4,000 lb, heavy >4,000 lb (EVs are heavy — battery mass).
+export const SEGMENT_WEIGHT_CLASS = {
+  economy:'light', compact:'light',
+  sedan:'mid', hybrid:'mid', sports:'mid', luxury:'mid',
+  suv:'heavy', luxury_suv:'heavy', truck:'heavy', electric:'heavy',
+}
+
+// States whose base fee scales with vehicle weight (annualized, incl. typical
+// county add-ons). Overrides STATE_REG_FEE when a segment is known.
+export const STATE_WEIGHT_REG = {
+  FL: { light:28, mid:36, heavy:46 },
+  NY: { light:55, mid:70, heavy:90 },
+  NJ: { light:47, mid:60, heavy:78 },
+  VA: { light:31, mid:31, heavy:36 },
+  WA: { light:70, mid:72, heavy:90 },
+  MD: { light:85, mid:85, heavy:110 },
+}
+
+// States whose base fee is a flat amount by vehicle age.
+// Entries: [maxAge, annualFee], evaluated in order.
+export const STATE_AGE_REG = {
+  MT: [[4,217],[10,87],[Infinity,28]],
+  OK: [[4,96],[8,86],[12,66],[16,46],[Infinity,26]],
+}
+
+// Constant-rate value fees: [rate on current market value, flat add-on].
+// Property-tax states (VA/CT/MO/MS/KS/KY/NC/SC/WV) use effective statewide
+// average levies; VA reflects ~4% average levy net of PPTRA relief on the
+// first $20k. MI's fee is MSRP-based — approximated on market value. WA is
+// the Sound Transit RTA excise (1.1%) weighted by ~45% of state fleet covered.
 export const STATE_VLF = {
-  CA:[0.0065,51],VA:[0.0401,0],CT:[0.007,0],KS:[0.01,0],KY:[0.006,0],
-  MN:[0.0125,0],MS:[0.005,0],MO:[0.0033,0],MT:[0,40],NC:[0.006,0],
-  SC:[0.005,0],WV:[0.006,0],WY:[0.003,0],AZ:[0.005,0],CO:[0.003,15],
-  IA:[0.01,0],MA:[0.025,0],NV:[0.008,0],WA:[0.003,0],
+  CA:[0.0065,32], VA:[0.028,0],  CT:[0.020,0],  KS:[0.014,0],  KY:[0.011,0],
+  MN:[0.0125,0],  MS:[0.018,0],  MO:[0.020,0],  NC:[0.009,0],  SC:[0.013,0],
+  WV:[0.010,0],   WY:[0.015,0],  IA:[0.010,0],  MA:[0.025,0],  NV:[0.013,0],
+  WA:[0.005,0],   MI:[0.006,0],
 }
 
-// state=null → $50 base, no VLF
-export function computeAnnualRegistration(state, vehicleValue) {
-  const base = STATE_REG_FEE[state] ?? 50
-  const [rate, flat] = STATE_VLF[state] ?? [0, 0]
-  return Math.round((base + vehicleValue * rate + flat) / 25) * 25
+// Age-declining value-fee schedules — states whose statutory assessed value
+// falls faster than market value (CO ownership tax 2.1%→0.45% of taxable
+// value; AZ VLT on 60% of MSRP less 16.25%/yr; ME excise 24→4 mills; NH
+// municipal permit $18→$3 per $1,000; IN excise classes). Expressed as the
+// effective rate on current market value; index = vehicle age (last entry
+// applies to all older vehicles).
+export const STATE_VLF_BY_AGE = {
+  CO: [0.020, 0.016, 0.013, 0.010, 0.008, 0.008, 0.007, 0.007, 0.006, 0.006],
+  AZ: [0.017, 0.016, 0.016, 0.015, 0.014, 0.014, 0.013, 0.012, 0.012, 0.011],
+  ME: [0.026, 0.022, 0.019, 0.015, 0.011, 0.008],
+  NH: [0.019, 0.017, 0.014, 0.011, 0.008, 0.005],
+  IN: [0.012, 0.011, 0.009, 0.008, 0.007, 0.006, 0.005, 0.004, 0.003, 0.002],
+}
+
+// California Transportation Improvement Fee — tiered on current value.
+export const CA_TIF_TIERS = [
+  [0,5000,32],[5000,25000,65],[25000,35000,129],[35000,60000,194],[60000,Infinity,227],
+]
+
+// Annual EV road-usage registration surcharges (2025-26 statutory levels;
+// several are gas-tax-indexed and rise slightly each year). States absent
+// from the map (e.g. NY, FL, MD, MA) charge no EV fee yet.
+export const STATE_EV_FEE = {
+  AL:203, AR:200, CA:118, CO:61,  GA:216, HI:50,  ID:140, IL:100, IN:221,
+  IA:130, KS:100, KY:120, LA:110, MI:140, MN:75,  MS:150, MO:120, MT:130,
+  NE:75,  NJ:260, NC:180, ND:120, OH:200, OK:110, OR:85,  SC:60,  SD:50,
+  TN:200, TX:200, UT:140, VA:128, WA:225, WV:200, WI:175, WY:200,
+}
+
+// Annual hybrid/PHEV surcharges where charged (many EV-fee states exempt
+// conventional hybrids — this map only lists states that charge them).
+export const STATE_HYBRID_FEE = {
+  AL:102, AR:100, ID:75, IN:74, IA:65, KS:50, KY:60, LA:60, MI:70,
+  MS:75, MT:70, NC:90, ND:50, OH:100, OK:82, SC:30, TN:100, UT:60,
+  WA:75, WV:100, WI:75,
+}
+
+// Periodic inspection programs.
+//   safety:    [fee per visit, interval years]; safetyMinAge = first vehicle
+//              age at which inspection is required (MO exempts newer cars).
+//   emissions: [fee per visit, interval years, share of state fleet in program
+//              counties, new-vehicle exempt years]. Metro-scoped programs
+//              (GA=Atlanta, TX=17 counties, CO=Front Range…) are weighted by
+//              coverage so the statewide expected cost is right on average.
+//              $0 fees are state-run stations funded through registration.
+// EVs are exempt from emissions testing in every program state.
+export const STATE_INSPECTION = {
+  AZ: { emissions: [20, 1, 0.75, 5] },
+  CA: { emissions: [60, 2, 1.00, 8] },   // biennial smog check incl. certificate
+  CO: { emissions: [25, 2, 0.85, 7] },
+  CT: { emissions: [20, 2, 1.00, 4] },
+  DC: { safety: [35, 2] },
+  DE: { emissions: [0, 2, 1.00, 7] },
+  GA: { emissions: [25, 1, 0.55, 3] },
+  HI: { safety: [25, 1] },
+  IL: { emissions: [0, 2, 0.65, 4] },
+  LA: { safety: [10, 1], emissions: [8, 1, 0.20, 2] },
+  MA: { safety: [35, 1] },               // emissions included in annual fee
+  MD: { emissions: [14, 2, 0.85, 3] },
+  ME: { safety: [15, 1] },
+  MO: { safety: [12, 2], safetyMinAge: 6, emissions: [24, 2, 0.35, 2] },
+  NC: { safety: [14, 1], emissions: [16, 1, 0.55, 3] },
+  NH: { safety: [40, 1] },
+  NJ: { emissions: [0, 2, 1.00, 5] },
+  NM: { emissions: [25, 2, 0.35, 4] },
+  NV: { emissions: [35, 1, 0.85, 3] },
+  NY: { safety: [10, 1], emissions: [11, 1, 1.00, 2] },
+  OH: { emissions: [0, 2, 0.15, 4] },
+  OR: { emissions: [25, 2, 0.55, 4] },
+  PA: { safety: [40, 1], emissions: [40, 1, 0.70, 1] },
+  RI: { safety: [55, 2] },
+  TX: { safety: [7.5, 1], emissions: [25, 1, 0.60, 2] }, // safety test replaced by flat fee in 2025
+  UT: { emissions: [30, 2, 0.80, 6] },
+  VA: { safety: [20, 1], emissions: [28, 2, 0.35, 2] },
+  VT: { safety: [50, 1] },
+  WI: { emissions: [0, 2, 0.30, 5] },
+  WV: { safety: [14, 1] },
+}
+
+// Annualized expected safety + emissions inspection cost.
+export function computeAnnualCompliance(state, { isEV = false, vehicleAge = 0 } = {}) {
+  const prog = STATE_INSPECTION[state]
+  if (!prog) return 0
+  let total = 0
+  if (prog.safety && vehicleAge >= (prog.safetyMinAge ?? 0)) {
+    total += prog.safety[0] / prog.safety[1]
+  }
+  if (prog.emissions && !isEV) {
+    const [fee, interval, coverage, exemptYears] = prog.emissions
+    if (vehicleAge >= (exemptYears ?? 0)) total += (fee / interval) * (coverage ?? 1)
+  }
+  return Math.round(total)
+}
+
+// Annual registration (base + value fee + EV/hybrid surcharge).
+// state=null → national-average fallback. opts (all optional) sharpen the
+// estimate: { isEV, isHybrid, segment, vehicleAge }.
+export function computeAnnualRegistration(state, vehicleValue, opts = {}) {
+  const { isEV = false, isHybrid = false, segment = null, vehicleAge = 0 } = opts
+  if (!state) {
+    // Median flat fee + light national value component + fleet-weighted
+    // average EV surcharge across the ~35 states that charge one.
+    return Math.round((50 + vehicleValue * 0.004 + (isEV ? 100 : 0)) / 5) * 5
+  }
+  let base
+  const ageBrackets = STATE_AGE_REG[state]
+  if (ageBrackets) {
+    base = ageBrackets.find(([maxAge]) => vehicleAge <= maxAge)[1]
+  } else {
+    const wClass = segment ? (SEGMENT_WEIGHT_CLASS[segment] ?? 'mid') : 'mid'
+    base = STATE_WEIGHT_REG[state]?.[wClass] ?? STATE_REG_FEE[state] ?? 50
+  }
+  let valueFee
+  const ageCurve = STATE_VLF_BY_AGE[state]
+  if (ageCurve) {
+    valueFee = vehicleValue * ageCurve[Math.min(vehicleAge, ageCurve.length - 1)]
+  } else {
+    const [rate, flat] = STATE_VLF[state] ?? [0, 0]
+    valueFee = vehicleValue * rate + flat
+  }
+  if (state === 'CA') {
+    valueFee += CA_TIF_TIERS.find(([mn, mx]) => vehicleValue >= mn && vehicleValue < mx)?.[2] ?? 0
+  }
+  if (state === 'MT' && vehicleValue >= 150000) valueFee += 825 // MT luxury vehicle fee
+  const surcharge = isEV ? (STATE_EV_FEE[state] ?? 0) : isHybrid ? (STATE_HYBRID_FEE[state] ?? 0) : 0
+  return Math.round((base + valueFee + surcharge) / 5) * 5
+}
+
+// Registration + inspection compliance — the "Registration & Fees" line item.
+export function computeAnnualRegFees(state, vehicleValue, opts = {}) {
+  return computeAnnualRegistration(state, vehicleValue, opts) + computeAnnualCompliance(state, opts)
+}
+
+// Per-year projection over an ownership horizon: the value-based component
+// declines with the model's depreciation curve (flat fees stay flat, unlike
+// the old uniform 5%/yr decay), age-bracket fees step down, and inspection
+// costs kick in once the vehicle ages past new-car exemptions.
+export function projectRegistrationByYear(state, currentValue, years, opts = {}) {
+  const { make = null, model = null, vehicleAge = 0 } = opts
+  const anchor = vehicleAge > 0 ? estimateCurrentValue(100, make, model, vehicleAge) : 100
+  return Array.from({ length: years }, (_, i) => {
+    const age = vehicleAge + i
+    const rel = Math.min(estimateCurrentValue(100, make, model, age) / anchor, 1)
+    return computeAnnualRegFees(state, currentValue * rel, { ...opts, vehicleAge: age })
+  })
 }
 
 // ── Sales Tax ────────────────────────────────────────────

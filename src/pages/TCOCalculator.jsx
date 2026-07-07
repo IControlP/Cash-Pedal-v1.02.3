@@ -39,7 +39,7 @@ import {
   STATE_FUEL_PRICES, STATE_ELEC_RATES,
   getPublicChargingRate, getEffectiveElecRate, computeAnnualFuel,
   PREMIUM_PRICE_DELTA, requiresPremiumFuel,
-  STATE_REG_FEE, STATE_VLF, computeAnnualRegistration,
+  computeAnnualRegFees, projectRegistrationByYear,
   computeSalesTax, STATE_VEHICLE_SALES_TAX, STATE_DOC_FEE_AVG, getRegionalDemandPremium,
   zipToState, resolveLocation, escalateAnnualFuel,
 } from '../utils/vehicleCosts'
@@ -1431,7 +1431,13 @@ export default function TCOCalculator() {
     const currentVal = (selYear && (selMake || selModel))
       ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)), currentMileage)
       : price
-    setAnnualRegistration(computeAnnualRegistration(resolvedState, currentVal))
+    const regIsEV = modelData ? modelData.is_ev : (VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.isEV ?? false)
+    const regSeg  = (selMake || selModel)
+      ? classifySegment(selMake||'', selModel||'')
+      : (VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.segment ?? 'sedan')
+    setAnnualRegistration(computeAnnualRegFees(resolvedState, currentVal, {
+      isEV: regIsEV, isHybrid: regSeg === 'hybrid', segment: regSeg, vehicleAge,
+    }))
   }, [price, selMake, selModel, selYear, selTrim, resolvedState, resolvedLaborRate, resolvedWear, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage, liveFuelPrices, liveElecRate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Market-analytics search tracking ──
@@ -1623,6 +1629,25 @@ export default function TCOCalculator() {
   const annualOperatingCost = annualInsurance + annualFuel + annualMaintenance + annualRegistration
   const totalAnnualCost = (financeMode === 'lease' ? leaseResults.annualLeaseCost : results.trueAnnualCost) + annualOperatingCost
 
+  // Per-year registration & compliance: value-based fees decline with the
+  // depreciation curve, flat fees stay flat, age-bracket fees step down, and
+  // inspection costs appear once new-vehicle exemptions lapse. Kept as a raw
+  // projection; forecast rows rescale it to honor manual slider overrides.
+  const registrationByYear = useMemo(() => {
+    const years = Math.min(10, Math.max(1, ownershipYears))
+    const regIsEV = modelData ? modelData.is_ev : (VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.isEV ?? false)
+    const regSeg  = (selMake || selModel)
+      ? classifySegment(selMake||'', selModel||'')
+      : (VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.segment ?? 'sedan')
+    const currentVal = (selYear && (selMake || selModel))
+      ? estimateCurrentValue(price, selMake||null, selModel||null, vehicleAge, currentMileage)
+      : price
+    return projectRegistrationByYear(resolvedState, currentVal, years, {
+      make: selMake || null, model: selModel || null, vehicleAge,
+      isEV: regIsEV, isHybrid: regSeg === 'hybrid', segment: regSeg,
+    })
+  }, [ownershipYears, modelData, vehicleCategory, selMake, selModel, selYear, price, vehicleAge, currentMileage, resolvedState])
+
   // Forecast rows computed at parent level so both the summary panel and FiveYearForecast
   // share identical totals (prevents the visual vs. summary number discrepancy).
   const forecastRows = useMemo(() => {
@@ -1652,14 +1677,18 @@ export default function TCOCalculator() {
       // Fuel escalates at EIA long-run nominal rates (gas 2.5%/yr, elec 2%/yr)
       const fuel         = escalateAnnualFuel(annualFuel, i, fuelIsEV)
       const maintenance  = maintenanceByYear?.[i] ?? Math.round(annualMaintenance * Math.pow(1.08, i))
-      const registration = Math.round(annualRegistration * Math.pow(0.95, i))
+      // Scale the projection so a manual "Registration & Fees" slider override
+      // shifts every year proportionally while keeping the state-accurate shape.
+      const registration = registrationByYear[i] != null
+        ? Math.round(registrationByYear[i] * (annualRegistration / Math.max(1, registrationByYear[0])))
+        : Math.round(annualRegistration * Math.pow(0.95, i))
       const total = loanCost + insurance + fuel + maintenance + registration
       return { yr, loanCost, insurance, fuel, maintenance, registration, total }
     })
   }, [ownershipYears, leaseTerm, financeMode, loanTerm, leaseResults.annualLeaseCost,
       results.monthlyPayment, annualInsurance, annualFuel, maintenanceByYear,
-      annualMaintenance, annualRegistration, currentVehicleType, currentLeasePayment,
-      currentLeaseRemainingMonths, currentRemainingTerm, modelData, vehicleCategory])
+      annualMaintenance, annualRegistration, registrationByYear, currentVehicleType,
+      currentLeasePayment, currentLeaseRemainingMonths, currentRemainingTerm, modelData, vehicleCategory])
 
   // Auto-suggest residual % based on the depreciation model for the selected lease term.
   // Fires whenever the lease term, make, or model changes. Runs in buy mode too so the

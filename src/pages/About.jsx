@@ -140,7 +140,7 @@ export default function About() {
                 },
                 {
                   label: 'Registration & fees',
-                  detail: 'State-specific registration fee schedules, typically declining as vehicle value depreciates. Sales tax uses state rates applied to purchase price.',
+                  detail: 'State statutory schedules: flat, weight-based, or age-based registration fees plus value-based taxes (VLF, ownership tax, excise) that decline as the vehicle depreciates. Includes annual EV and hybrid road-usage surcharges where states charge them, and expected smog/emissions and safety inspection costs based on each state\'s program, testing cadence, and new-vehicle exemptions. Sales tax uses state rates applied to purchase price.',
                 },
               ].map(({ label, detail }) => (
                 <div key={label}>

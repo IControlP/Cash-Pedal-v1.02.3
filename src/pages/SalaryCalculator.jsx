@@ -14,7 +14,7 @@ import VEHICLES from '../data/vehicles.json'
 import {
   classifySegment, determineMaintTier,
   estimateInsurance, generateMaintenanceServices,
-  computeAnnualFuel, computeAnnualRegistration,
+  computeAnnualFuel, computeAnnualRegFees,
   STATE_INS_BASE,
 } from '../utils/vehicleCosts'
 
@@ -65,7 +65,7 @@ function estimateBasicMonthlyCosts(price, state, annualMiles = DEFAULT_ANNUAL_MI
   // State provided: use shared utility functions for insurance, fuel, registration
   const fuel = Math.round(computeAnnualFuel(false, 28, null, state, annualMiles) / 12)
   const insurance = Math.round(estimateInsurance(price, null, null, null, state) / 12)
-  const registration = Math.round(computeAnnualRegistration(state, price) / 12)
+  const registration = Math.round(computeAnnualRegFees(state, price) / 12)
   return { fuel, insurance, maintenance, registration, total: fuel + insurance + maintenance + registration, tier: tierLabel[tierKey] }
 }
 
@@ -89,7 +89,10 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
   const maintServices = generateMaintenanceServices(isEv, annualMiles, segment, make, state || null, 0, null, null, model, year)
   const maintenance = Math.round(maintServices.reduce((s, x) => s + x.annual, 0) / 12)
 
-  const registration = Math.round(computeAnnualRegistration(state || null, price) / 12)
+  const vehicleAge = year ? Math.max(0, new Date().getFullYear() - parseInt(year)) : 0
+  const registration = Math.round(computeAnnualRegFees(state || null, price, {
+    isEV: isEv, isHybrid: segment === 'hybrid', segment, vehicleAge,
+  }) / 12)
 
   return {
     fuel, insurance, maintenance, registration,

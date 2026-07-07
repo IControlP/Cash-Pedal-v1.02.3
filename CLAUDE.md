@@ -108,6 +108,7 @@ The Express server (`server.js`) handles payments and subscription state. It ser
 | `GET /api/market-analytics` | Public aggregate rankings — top vehicles nationally and by state (`?state=CA`) |
 | `GET /api/insights/market` | **Protected** full per-state insights export (requires `x-api-key`) — the sellable dataset |
 | `GET /api/electricity-rate?zip=XXXXX` | Zip-code-level residential $/kWh from OpenEI URDB; cached 30 days per zip; returns `null` rate when key absent or zip not found |
+| `POST /api/verify-promo-code` | Verify/redeem a promo code — env `PROMO_CODES` (unlimited) or the capped beta code (50 browsers, 30-day access) |
 | `POST /api/stripe-webhook` | Stripe webhook (raw body required) |
 | `GET /api/health` | Health check — 200 when the server is up (pings Postgres when configured, 503 if unreachable); used by Railway's deploy healthcheck and the smoke test |
 
@@ -125,6 +126,8 @@ Subscribers are stored in PostgreSQL. Device access is limited to 2 devices per 
 - `APP_URL` — Production URL (default: `https://cashpedal.io`)
 - `PORT` — Injected by Railway automatically
 - `INSIGHTS_API_KEY` — (optional) unlocks the `/api/insights/market` sellable export
+- `PROMO_CODES` — (optional) comma-separated promo codes granting unlimited, permanent Pro access (exact match)
+- `BETA_PROMO_CODE` — (optional) overrides the capped beta promo code (default `BETAPEDAL50`, case-insensitive). Server-enforced via the `promo_redemptions` table: max 50 distinct browsers ever, each grant expiring 30 days after redemption
 - `OPENEI_API_KEY` — (optional) OpenEI Utility Rate Database key; enables zip-code-level residential electricity rates via `GET /api/electricity-rate?zip=XXXXX` (falls back to static state-level table without it)
 - `RESEND_API_KEY` — (optional) Resend API key; enables transactional thank-you emails
 - `EMAIL_FROM` — (optional) From address for transactional email (default: `Cash Pedal <hello@cashpedal.io>`; the domain must be verified in Resend)

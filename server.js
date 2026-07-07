@@ -79,6 +79,15 @@ const PROMO_CODES = new Set(
     .filter(Boolean)
 )
 
+// Limited beta promo code — unlike PROMO_CODES (unlimited, permanent), this
+// code is capped at a fixed number of redemptions and each grant expires.
+// Redemptions are keyed by the anonymous browser session UUID and counted in
+// the promo_redemptions table, so the cap survives restarts and redeploys.
+// Matching is case-insensitive; override the code via BETA_PROMO_CODE.
+const BETA_PROMO_CODE            = (process.env.BETA_PROMO_CODE || 'BETAPEDAL50').trim().toUpperCase()
+const BETA_PROMO_MAX_REDEMPTIONS = 50
+const BETA_PROMO_ACCESS_DAYS     = 30
+
 // ── Stripe ────────────────────────────────────────────
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
@@ -767,6 +776,23 @@ async function initTables() {
     `)
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_nhtsa_cache_key ON nhtsa_cache(cache_key)
+    `)
+
+    // ── Promo redemptions (capped beta codes) ─────────
+    // One row per browser that has redeemed a limited promo code. The row
+    // count per code enforces the redemption cap; expires_at bounds each
+    // grant. Rows are intentionally never purged — a redeemed slot stays
+    // consumed even after the grant expires, so the cap means "50 people
+    // ever", not "50 concurrently".
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS promo_redemptions (
+        id          SERIAL PRIMARY KEY,
+        code        VARCHAR(50) NOT NULL,
+        session_id  VARCHAR(36) NOT NULL,
+        redeemed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        expires_at  TIMESTAMP WITH TIME ZONE NOT NULL,
+        UNIQUE (code, session_id)
+      )
     `)
 
     // ── Automation log (email + CRM dedupe) ───────────
@@ -1719,18 +1745,82 @@ app.post('/api/delete-my-data', sensitiveLimiter, async (req, res) => {
   }
 })
 
-// ── API: Verify promo code ────────────────────────────
-app.post('/api/verify-promo-code', sensitiveLimiter, (req, res) => {
-  const { code } = req.body
+// ── API: Verify / redeem promo code ───────────────────
+// Two kinds of codes:
+//  • PROMO_CODES (env) — unlimited redemptions, permanent access (legacy).
+//  • BETA_PROMO_CODE — capped at BETA_PROMO_MAX_REDEMPTIONS distinct
+//    browsers; each grant expires BETA_PROMO_ACCESS_DAYS after redemption.
+//    Re-submitting from a browser that already redeemed returns its original
+//    grant instead of consuming another slot.
+app.post('/api/verify-promo-code', sensitiveLimiter, async (req, res) => {
+  const { code, session_id } = req.body
   if (typeof code !== 'string' || !code.trim()) {
     return res.status(400).json({ valid: false, error: 'Code required' })
   }
-  if (PROMO_CODES.size === 0) {
-    return res.json({ valid: false, error: 'No promo codes configured' })
+  const cleanCode = code.trim()
+
+  // Unlimited env-var codes — exact match, original behavior
+  if (PROMO_CODES.has(cleanCode)) return res.json({ valid: true })
+
+  if (cleanCode.toUpperCase() !== BETA_PROMO_CODE) {
+    console.log(`[promo] invalid attempt — IP: ${anonymizeIp(req.ip)}`)
+    return res.json({ valid: false })
   }
-  const valid = PROMO_CODES.has(code.trim())
-  if (!valid) console.log(`[promo] invalid attempt — IP: ${anonymizeIp(req.ip)}`)
-  res.json({ valid })
+
+  // Beta code — server-enforced redemption cap + per-grant expiry
+  if (!isValidUUID(session_id)) {
+    return res.status(400).json({ valid: false, error: 'Invalid session_id format' })
+  }
+  if (!pool) {
+    return res.status(503).json({ valid: false, error: 'Redemptions unavailable' })
+  }
+
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    // Serialize redemptions of this code so concurrent requests can't race
+    // past the cap (count-then-insert is not atomic under READ COMMITTED).
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [BETA_PROMO_CODE])
+
+    const existing = await client.query(
+      `SELECT expires_at FROM promo_redemptions WHERE code = $1 AND session_id = $2`,
+      [BETA_PROMO_CODE, session_id]
+    )
+    if (existing.rows.length > 0) {
+      await client.query('COMMIT')
+      const expiresAt = existing.rows[0].expires_at
+      if (new Date(expiresAt) <= new Date()) {
+        return res.json({ valid: false, error: 'expired' })
+      }
+      return res.json({ valid: true, expiresAt })
+    }
+
+    const used = (await client.query(
+      `SELECT COUNT(*)::int AS used FROM promo_redemptions WHERE code = $1`,
+      [BETA_PROMO_CODE]
+    )).rows[0].used
+    if (used >= BETA_PROMO_MAX_REDEMPTIONS) {
+      await client.query('COMMIT')
+      console.log(`[promo] beta code fully redeemed — attempt from IP: ${anonymizeIp(req.ip)}`)
+      return res.json({ valid: false, error: 'fully_redeemed' })
+    }
+
+    const inserted = await client.query(
+      `INSERT INTO promo_redemptions (code, session_id, expires_at)
+       VALUES ($1, $2, NOW() + INTERVAL '${BETA_PROMO_ACCESS_DAYS} days')
+       RETURNING expires_at`,
+      [BETA_PROMO_CODE, session_id]
+    )
+    await client.query('COMMIT')
+    console.log(`[promo] beta redemption ${used + 1}/${BETA_PROMO_MAX_REDEMPTIONS} — IP: ${anonymizeIp(req.ip)}`)
+    res.json({ valid: true, expiresAt: inserted.rows[0].expires_at })
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {})
+    console.error('[promo] DB error:', err.message)
+    res.status(500).json({ valid: false, error: 'Internal server error' })
+  } finally {
+    client.release()
+  }
 })
 
 // ── API: Reliability data (NHTSA proxy + 7-day cache) ─

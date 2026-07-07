@@ -6,8 +6,10 @@ buildCommand = "npm install --include=dev && npm run build"
 startCommand = "npm run start"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
-
-[deploy.healthcheck]
-path = "/"
-timeout = 300
-interval = 30
+# Deploy gate: Railway only switches traffic to a new deploy once this path
+# returns 200. /api/health pings Postgres, so a deploy that boots but can't
+# reach the database is rejected and the previous deploy keeps serving.
+# (healthcheckPath/healthcheckTimeout are Railway's documented config-as-code
+# keys; the previous [deploy.healthcheck] table is not part of that schema.)
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300

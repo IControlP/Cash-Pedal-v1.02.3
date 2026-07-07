@@ -41,7 +41,7 @@ import {
   PREMIUM_PRICE_DELTA, requiresPremiumFuel,
   STATE_REG_FEE, STATE_VLF, computeAnnualRegistration,
   computeSalesTax, STATE_VEHICLE_SALES_TAX, STATE_DOC_FEE_AVG, getRegionalDemandPremium,
-  ZIP_RANGES, zipToState, resolveLocation,
+  zipToState, resolveLocation, escalateAnnualFuel,
 } from '../utils/vehicleCosts'
 
 
@@ -1363,19 +1363,23 @@ export default function TCOCalculator() {
   const vehicleAge = selYear ? Math.max(0, new Date().getFullYear() - parseInt(selYear)) : 0
   const effectiveStartMileage = currentMileage ?? Math.round(vehicleAge * annualMileage)
 
-  // Per-year maintenance costs using actual service occurrence counts (detailedMode only)
+  // Per-year maintenance costs using actual service occurrence counts (detailedMode only).
+  // Generated for the full ownership horizon so 7/10-yr forecasts use the real
+  // per-year engine (odometer-crossing services, age-based reserves) rather than
+  // extrapolating from a 5-yr window.
   const maintenanceDetail = useMemo(() => {
     if (!detailedMode) return null
     const sm = effectiveStartMileage
+    const horizonYears = Math.min(10, Math.max(1, ownershipYears))
     if (modelData) {
       const seg = classifySegment(selMake || '', selModel || '')
-      return generateDetailedMaintenanceByYear(modelData.is_ev, annualMileage, seg, selMake, 5, sm, resolvedState, vehicleAge, resolvedLaborRate, resolvedWear, selModel, selYear, selTrim)
+      return generateDetailedMaintenanceByYear(modelData.is_ev, annualMileage, seg, selMake, horizonYears, sm, resolvedState, vehicleAge, resolvedLaborRate, resolvedWear, selModel, selYear, selTrim)
     }
     const catInfo = VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)
     const catIsEV = catInfo?.isEV ?? false
     const catSeg  = catInfo?.segment ?? 'sedan'
-    return generateDetailedMaintenanceByYear(catIsEV, annualMileage, catSeg, '', 5, sm, resolvedState, 0, resolvedLaborRate, resolvedWear)
-  }, [detailedMode, modelData, annualMileage, selMake, selModel, selTrim, vehicleCategory, effectiveStartMileage, selYear, currentMileage, resolvedState, vehicleAge, resolvedLaborRate, resolvedWear])
+    return generateDetailedMaintenanceByYear(catIsEV, annualMileage, catSeg, '', horizonYears, sm, resolvedState, 0, resolvedLaborRate, resolvedWear)
+  }, [detailedMode, modelData, annualMileage, selMake, selModel, selTrim, vehicleCategory, effectiveStartMileage, selYear, currentMileage, resolvedState, vehicleAge, resolvedLaborRate, resolvedWear, ownershipYears])
 
   const maintenanceByYear = useMemo(() => maintenanceDetail?.map(yr => yr.total) ?? null, [maintenanceDetail])
 
@@ -1622,8 +1626,14 @@ export default function TCOCalculator() {
   // Forecast rows computed at parent level so both the summary panel and FiveYearForecast
   // share identical totals (prevents the visual vs. summary number discrepancy).
   const forecastRows = useMemo(() => {
-    const years = Math.min(5, Math.max(1, ownershipYears))
+    // Full ownership horizon (was capped at 5): with 7/10-yr durations the cap
+    // silently dropped years 6+ from every "total over N years" figure while
+    // still crediting N years of depreciation — understating long-horizon cost.
+    const years = Math.min(10, Math.max(1, ownershipYears))
     const leasePeriodYears = Math.ceil(leaseTerm / 12)
+    const fuelIsEV = modelData
+      ? modelData.is_ev
+      : (VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)?.isEV ?? false)
     return Array.from({ length: years }, (_, i) => {
       const yr = i + 1
       const loanMonths = financeMode === 'lease'
@@ -1639,7 +1649,8 @@ export default function TCOCalculator() {
           ? currentLeasePayment * loanMonths
           : results.monthlyPayment * loanMonths
       const insurance    = Math.round(annualInsurance    * Math.pow(1.02, i))
-      const fuel         = annualFuel
+      // Fuel escalates at EIA long-run nominal rates (gas 2.5%/yr, elec 2%/yr)
+      const fuel         = escalateAnnualFuel(annualFuel, i, fuelIsEV)
       const maintenance  = maintenanceByYear?.[i] ?? Math.round(annualMaintenance * Math.pow(1.08, i))
       const registration = Math.round(annualRegistration * Math.pow(0.95, i))
       const total = loanCost + insurance + fuel + maintenance + registration
@@ -1648,7 +1659,7 @@ export default function TCOCalculator() {
   }, [ownershipYears, leaseTerm, financeMode, loanTerm, leaseResults.annualLeaseCost,
       results.monthlyPayment, annualInsurance, annualFuel, maintenanceByYear,
       annualMaintenance, annualRegistration, currentVehicleType, currentLeasePayment,
-      currentLeaseRemainingMonths, currentRemainingTerm])
+      currentLeaseRemainingMonths, currentRemainingTerm, modelData, vehicleCategory])
 
   // Auto-suggest residual % based on the depreciation model for the selected lease term.
   // Fires whenever the lease term, make, or model changes. Runs in buy mode too so the

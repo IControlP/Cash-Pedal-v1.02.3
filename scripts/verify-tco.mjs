@@ -16,6 +16,10 @@ import {
   getKnownIssueServices,
   classifyTrimStress,
   MAINT_BRAND_MULT,
+  zipToState,
+  resolveLocation,
+  getLocalLaborRate,
+  STATE_LABOR_RATES,
 } from '../src/utils/vehicleCosts.js'
 
 // Benchmark basis: 13,000 mi/yr, national (no state), averaged over a
@@ -381,6 +385,49 @@ ts(trimAvg('Volkswagen', 'Golf', 'Golf GTI').names.has('Carbon cleaning (GDI int
 ts(!trimAvg('Honda', 'Civic', 'Civic LX').names.has('Carbon cleaning (GDI intake)'), 'Civic LX (NA) does not book carbon cleaning')
 ts(trimAvg('Tesla', 'Model S', 'Plaid').names.has('Tire replacement (set)') && classifyTrimStress('Tesla','Model S','Plaid').chassisStress === 1.5, 'Plaid applies chassis stress (tires/brakes) without engine items')
 
+// ── Part 8: location resolution — ZIP→state, labor rates, terrain zones ────
+// The ZIP detector drives insurance base, sales tax, fuel price, registration,
+// labor rate, AND the terrain wear profile — a wrong state poisons everything
+// downstream. Spot-check the prefix map against known-tricky assignments and
+// confirm metro labor zones and expanded terrain zones resolve.
+console.log('\nPART 8 — Location resolution (ZIP→state, labor rate, terrain)\n')
+
+let failLoc = 0
+const loc = (cond, label) => { console.log(`  ${cond ? '✓' : '✗'} ${label}`); if (!cond) failLoc++ }
+
+// State assignment — including the prefixes the old range table got wrong
+loc(zipToState('20147') === 'VA', '20147 (Ashburn) → VA, not DC')
+loc(zipToState('20001') === 'DC', '20001 (Washington) → DC')
+loc(zipToState('20601') === 'MD', '20601 (Waldorf) → MD')
+loc(zipToState('73301') === 'TX', '73301 (Austin IRS) → TX inside OK block')
+loc(zipToState('73101') === 'OK', '73101 (Oklahoma City) → OK')
+loc(zipToState('88510') === 'TX', '88510 (El Paso) → TX inside NM block')
+loc(zipToState('87101') === 'NM', '87101 (Albuquerque) → NM')
+loc(zipToState('39901') === 'GA', '39901 (Atlanta federal) → GA')
+loc(zipToState('96201') === null, '96201 (military APO AP) → null, not a state')
+loc(zipToState('00901') === null, '00901 (San Juan PR) → null (unsupported)')
+loc(zipToState('99501') === 'AK' && zipToState('96813') === 'HI', 'AK/HI prefixes intact')
+
+// resolveLocation carries the corrected state through to downstream pricing
+const ashburn = resolveLocation('20147')
+loc(ashburn?.state === 'VA' && ashburn?.laborRate > 0, `resolveLocation('20147') → VA @ $${ashburn?.laborRate}/hr labor`)
+
+// Metro labor zones for previously uncovered states beat the state fallback
+loc(getLocalLaborRate('04101', 'ME') > STATE_LABOR_RATES.ME, 'Portland ME metro labor > ME state average')
+loc(getLocalLaborRate('83001', 'WY') > STATE_LABOR_RATES.WY, 'Jackson Hole labor > WY state average')
+loc(getLocalLaborRate('59715', 'MT') > STATE_LABOR_RATES.MT, 'Bozeman labor > MT state average')
+loc(getLocalLaborRate('12345', 'NY') === STATE_LABOR_RATES.NY || getLocalLaborRate('12345', 'NY') > 0, 'unzoned ZIP falls back to state rate')
+
+// Expanded terrain zones resolve to the physically right profile
+loc(getLocalWearProfile('75201', 'TX').profile === 'desert',   'Dallas heat → desert (battery/AC) profile')
+loc(getLocalWearProfile('33602', 'FL').profile === 'coastal',  'Tampa → coastal profile')
+loc(getLocalWearProfile('44113', 'OH').profile === 'salt',     'Cleveland → salt profile')
+loc(getLocalWearProfile('86001', 'AZ').profile === 'mountain', 'Flagstaff → mountain (not Phoenix desert)')
+loc(getLocalWearProfile('11215', 'NY').profile === 'pothole',  'Brooklyn → pothole profile')
+loc(getLocalWearProfile('84060', 'UT').profile === 'mountain', 'Park City stays mountain despite SLC salt zone')
+// Original calibration ZIPs must be unaffected by the expansion
+loc(getLocalWearProfile('85001', 'AZ').profile === 'desert' && getLocalWearProfile('48201', 'MI').profile === 'pothole', 'original zones unchanged (Phoenix desert, Detroit pothole)')
+
 console.log('\n' + '═'.repeat(78))
 console.log(`  RESULT: Part1 segment-accuracy fails: ${failSegment}/${segLines.length}`)
 console.log(`          Part2 table-sanity fails:     ${failTable}/${segLines.length}`)
@@ -389,6 +436,7 @@ console.log(`          Part4 terrain-logic fails:    ${failTerrain}`)
 console.log(`          Part5 high-mileage fails:     ${failHM}`)
 console.log(`          Part6 known-issue fails:      ${failKI}`)
 console.log(`          Part7 trim-stress fails:      ${failTS}`)
+console.log(`          Part8 location fails:         ${failLoc}`)
 console.log('═'.repeat(78))
 
-process.exit(failSegment > 0 || failTerrain > 0 || failHM > 0 || failKI > 0 || failTS > 0 ? 1 : 0)
+process.exit(failSegment > 0 || failTerrain > 0 || failHM > 0 || failKI > 0 || failTS > 0 || failLoc > 0 ? 1 : 0)

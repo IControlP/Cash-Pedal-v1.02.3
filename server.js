@@ -1970,6 +1970,112 @@ app.get('/api/electricity-rate', async (req, res) => {
   }
 })
 
+// ── Local Market Value (zip-level used-car pricing) ───
+// Returns the median asking price of live dealer listings for a given
+// year/make/model near a zip code, so the TCO calculator can anchor its
+// depreciation estimate to the user's actual local market instead of the
+// national model. Two free-tier providers are supported, checked in order:
+//   1. Marketcheck  (MARKETCHECK_API_KEY) — mc-api.marketcheck.com listings search
+//   2. Auto.dev     (AUTO_DEV_API_KEY)    — auto.dev/api/listings
+// Cached 24h per year|make|model|zip3 (local markets move slowly). Falls back
+// gracefully ({ price: null }) when no key is configured, the vehicle isn't
+// found nearby, or the provider errors — the client then uses the model estimate.
+const MARKETCHECK_API_KEY = (process.env.MARKETCHECK_API_KEY || '').trim()
+const AUTO_DEV_API_KEY    = (process.env.AUTO_DEV_API_KEY || '').trim()
+const MARKET_VALUE_TTL    = 24 * 60 * 60 * 1000
+const MARKET_VALUE_RADIUS = 100 // miles
+const marketValueCache    = new Map() // year|make|model|zip3 → { data, fetchedAt }
+
+// Median + quartiles over listing prices, ignoring junk (missing / <$500 / >$500k)
+function priceStats(prices) {
+  const clean = prices.filter(p => Number.isFinite(p) && p >= 500 && p <= 500000).sort((a, b) => a - b)
+  if (clean.length === 0) return null
+  const q = f => clean[Math.min(clean.length - 1, Math.floor(f * clean.length))]
+  return {
+    price: Math.round(q(0.5)),
+    low:   Math.round(q(0.25)),
+    high:  Math.round(q(0.75)),
+    sampleSize: clean.length,
+  }
+}
+
+async function fetchMarketcheckListings(year, make, model, zip) {
+  const url = new URL('https://mc-api.marketcheck.com/v2/search/car/active')
+  url.searchParams.set('api_key', MARKETCHECK_API_KEY)
+  url.searchParams.set('year', String(year))
+  url.searchParams.set('make', make)
+  url.searchParams.set('model', model)
+  url.searchParams.set('zip', zip)
+  url.searchParams.set('radius', String(MARKET_VALUE_RADIUS))
+  url.searchParams.set('rows', '50')
+  url.searchParams.set('start', '0')
+  const r = await fetch(url.toString(), { signal: AbortSignal.timeout(8000) })
+  if (!r.ok) throw new Error(`Marketcheck responded ${r.status}`)
+  const json = await r.json()
+  const prices = (json.listings ?? []).map(l => Number(l.price))
+  return { stats: priceStats(prices), provider: 'marketcheck' }
+}
+
+async function fetchAutoDevListings(year, make, model, zip) {
+  const url = new URL('https://auto.dev/api/listings')
+  url.searchParams.set('apikey', AUTO_DEV_API_KEY)
+  url.searchParams.set('year_min', String(year))
+  url.searchParams.set('year_max', String(year))
+  url.searchParams.set('make', make)
+  url.searchParams.set('model', model)
+  url.searchParams.set('zip', zip)
+  url.searchParams.set('radius', String(MARKET_VALUE_RADIUS))
+  const r = await fetch(url.toString(), { signal: AbortSignal.timeout(8000) })
+  if (!r.ok) throw new Error(`Auto.dev responded ${r.status}`)
+  const json = await r.json()
+  const prices = (json.records ?? []).map(l =>
+    Number.isFinite(l.priceUnformatted) ? l.priceUnformatted : Number(String(l.price ?? '').replace(/[^0-9.]/g, ''))
+  )
+  return { stats: priceStats(prices), provider: 'autodev' }
+}
+
+app.get('/api/market-value', async (req, res) => {
+  const zip   = (req.query.zip ?? '').trim()
+  const make  = (req.query.make ?? '').trim()
+  const model = (req.query.model ?? '').trim()
+  const year  = parseInt(req.query.year, 10)
+
+  if (!/^\d{5}$/.test(zip)) return res.status(400).json({ error: 'zip must be a 5-digit US zip code' })
+  if (!Number.isFinite(year) || year < 1981 || year > new Date().getFullYear() + 1) {
+    return res.status(400).json({ error: 'invalid year' })
+  }
+  // Only accept real make/model pairs that exist in the vehicle database
+  if (!VEHICLES[make]?.[model]) return res.status(400).json({ error: 'Unknown make/model' })
+
+  const noKey = !MARKETCHECK_API_KEY && !AUTO_DEV_API_KEY
+  if (noKey) return res.json({ price: null, source: 'no-key', zip })
+
+  // Cache on the 3-digit zip prefix — a ~100mi search radius makes finer
+  // granularity pointless and keeps the cache small.
+  const cacheKey = `${year}|${make}|${model}|${zip.slice(0, 3)}`
+  const now = Date.now()
+  const cached = marketValueCache.get(cacheKey)
+  if (cached && now - cached.fetchedAt < MARKET_VALUE_TTL) {
+    return res.json({ ...cached.data, source: 'cache', zip })
+  }
+
+  try {
+    const { stats, provider } = MARKETCHECK_API_KEY
+      ? await fetchMarketcheckListings(year, make, model, zip)
+      : await fetchAutoDevListings(year, make, model, zip)
+    const data = stats
+      ? { ...stats, radiusMiles: MARKET_VALUE_RADIUS }
+      : { price: null, sampleSize: 0, radiusMiles: MARKET_VALUE_RADIUS }
+    if (marketValueCache.size > 2000) marketValueCache.clear()
+    marketValueCache.set(cacheKey, { data, fetchedAt: now })
+    return res.json({ ...data, source: provider, zip })
+  } catch (err) {
+    console.error('[market-value] provider fetch error:', err.message)
+    if (cached) return res.json({ ...cached.data, source: 'stale-cache', zip })
+    return res.json({ price: null, source: 'error', zip })
+  }
+})
+
 // ── Serve Vite build ──────────────────────────────────
 app.use(express.static(join(__dirname, 'dist'), {
   // Long-lived cache for hashed assets (JS chunks, CSS). index.html uses

@@ -108,6 +108,7 @@ The Express server (`server.js`) handles payments and subscription state. It ser
 | `GET /api/market-analytics` | Public aggregate rankings — top vehicles nationally and by state (`?state=CA`) |
 | `GET /api/insights/market` | **Protected** full per-state insights export (requires `x-api-key`) — the sellable dataset |
 | `GET /api/electricity-rate?zip=XXXXX` | Zip-code-level residential $/kWh from OpenEI URDB; cached 30 days per zip; returns `null` rate when key absent or zip not found |
+| `GET /api/market-value?year=&make=&model=&zip=` | Median local dealer asking price (plus quartiles + sample size) for a year/make/model within ~100 mi of a zip, via the Marketcheck or Auto.dev listings API; cached 24h per year/make/model/zip3; returns `null` price when no provider key is configured or no listings are found |
 | `POST /api/stripe-webhook` | Stripe webhook (raw body required) |
 | `GET /api/health` | Health check — 200 when the server is up (pings Postgres when configured, 503 if unreachable); used by Railway's deploy healthcheck and the smoke test |
 
@@ -126,6 +127,8 @@ Subscribers are stored in PostgreSQL. Device access is limited to 2 devices per 
 - `PORT` — Injected by Railway automatically
 - `INSIGHTS_API_KEY` — (optional) unlocks the `/api/insights/market` sellable export
 - `OPENEI_API_KEY` — (optional) OpenEI Utility Rate Database key; enables zip-code-level residential electricity rates via `GET /api/electricity-rate?zip=XXXXX` (falls back to static state-level table without it)
+- `MARKETCHECK_API_KEY` — (optional) Marketcheck API key; enables zip-code-level live used-car pricing via `GET /api/market-value` (checked first)
+- `AUTO_DEV_API_KEY` — (optional) Auto.dev listings API key; alternate provider for `GET /api/market-value` (used when no Marketcheck key). Without either key the calculator falls back to the regionally-adjusted depreciation model
 - `RESEND_API_KEY` — (optional) Resend API key; enables transactional thank-you emails
 - `EMAIL_FROM` — (optional) From address for transactional email (default: `Cash Pedal <hello@cashpedal.io>`; the domain must be verified in Resend)
 - `HUBSPOT_ACCESS_TOKEN` — (optional) HubSpot private-app token; enables CRM sync of leads and purchases (needs `crm.objects.contacts` and `crm.objects.deals` read/write scopes)
@@ -199,6 +202,7 @@ The root directory still contains the original Streamlit implementation (`.py` f
 ## Key Notes for Development
 
 - Most calculation logic lives **client-side** in React components.
+- The depreciation estimator (`estimateCurrentValue` in `src/utils/vehicleCosts.js`) is regionally aware: pass the resolved 2-letter state as the sixth argument to apply the state demand premium plus segment×region adjustments (truck country, sun/snow belt, EV-friendly states, salt-belt corrosion age discount). With no state it reproduces the national model exactly. When a zip is resolved and a provider key is configured, the TCO calculator overlays live local listing medians from `GET /api/market-value` (clamped to ±35% of the model's dealer estimate).
 - Vehicle data is loaded from `src/data/vehicles.json` (static JSON, no external fetch).
 - **Any change to `vehicles.json` must pass `python3 scripts/validate_vehicle_data.py`** (runs in CI). Verified-legitimate pricing anomalies are accepted via `--write-baseline`; a monthly scheduled workflow flags models missing the latest model year. See `docs/VEHICLE_DATA_MAINTENANCE.md` for the full update process and data source options.
 - The WheelZard page embeds an external custom GPT via iframe/link — no server-side AI calls in this repo.

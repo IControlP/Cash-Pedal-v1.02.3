@@ -1251,6 +1251,28 @@ export default function TCOCalculator() {
   const [resolvedRegion,    setResolvedRegion]    = useState(null)   // human-readable terrain region label
   const [locationLabel,  setLocationLabel]  = useState('')
   const [locationError,  setLocationError]  = useState('')
+
+  // Live local market price — median dealer asking price for the selected
+  // year/make/model near the resolved zip (via /api/market-value). null until
+  // fetched or when unavailable; the depreciation model is used as fallback.
+  const [liveMarket, setLiveMarket] = useState(null)
+  useEffect(() => {
+    setLiveMarket(null)
+    if (!selMake || !selModel || !selYear || !resolvedZip) return
+    const age = new Date().getFullYear() - parseInt(selYear)
+    if (age < 1) return // new / current-model-year cars are priced at MSRP
+    const key = `${selYear}|${selMake}|${selModel}|${resolvedZip}`
+    let cancelled = false
+    fetch(`/api/market-value?year=${selYear}&make=${encodeURIComponent(selMake)}&model=${encodeURIComponent(selModel)}&zip=${resolvedZip}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (cancelled) return
+        // Require a handful of comparable listings before trusting the median
+        if (data?.price && (data.sampleSize ?? 0) >= 3) setLiveMarket({ ...data, key })
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [selMake, selModel, selYear, resolvedZip])
   // Operating costs mode
   const [customCosts,    setCustomCosts]    = useState(false)
   // Detailed estimates mode
@@ -1429,7 +1451,7 @@ export default function TCOCalculator() {
       }
     }
     const currentVal = (selYear && (selMake || selModel))
-      ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)), currentMileage)
+      ? estimateCurrentValue(price, selMake||null, selModel||null, Math.max(0, new Date().getFullYear() - parseInt(selYear)), currentMileage, resolvedState)
       : price
     setAnnualRegistration(computeAnnualRegistration(resolvedState, currentVal))
   }, [price, selMake, selModel, selYear, selTrim, resolvedState, resolvedLaborRate, resolvedWear, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage, liveFuelPrices, liveElecRate]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -1471,6 +1493,27 @@ export default function TCOCalculator() {
     }
   }, [])
 
+  // Shared used-car pricing. Baseline: the depreciation model, regionally
+  // adjusted for the resolved state. When live local listing data is available
+  // for this exact vehicle+zip, the listing median (a dealer asking price)
+  // overrides the model — clamped to ±35% of the model's dealer estimate to
+  // guard against thin or mispriced listing samples. The user's mileage
+  // adjustment is re-applied to the median as a model-estimate ratio, since
+  // local listings reflect typical-mileage cars.
+  const computeUsedPrice = useCallback((msrp, make, model, year, mileage = null) => {
+    const ageYrs   = Math.max(0, new Date().getFullYear() - parseInt(year))
+    const modelEst = estimateCurrentValue(msrp, make || null, model || null, ageYrs, mileage, resolvedState)
+    const key = `${year}|${make}|${model}|${resolvedZip}`
+    if (liveMarket?.price && liveMarket.key === key) {
+      const typicalEst = estimateCurrentValue(msrp, make || null, model || null, ageYrs, null, resolvedState)
+      const mileageAdj = typicalEst > 0 ? modelEst / typicalEst : 1
+      const modelAsk   = typicalEst * 1.10
+      const dealerAsk  = Math.max(modelAsk * 0.65, Math.min(modelAsk * 1.35, liveMarket.price)) * mileageAdj
+      return { dealer: dealerAsk, private: dealerAsk / 1.10, isLive: true }
+    }
+    return { dealer: modelEst * 1.10, private: modelEst, isLive: false }
+  }, [liveMarket, resolvedState, resolvedZip])
+
   // Applies a trim selection — shared by explicit picks and auto-defaults
   const applyTrim = useCallback((make, model, year, trimName) => {
     const t = getTrims(make, model, year)
@@ -1485,17 +1528,15 @@ export default function TCOCalculator() {
     let base
     if (financeMode === 'current') {
       // For "Currently Have" mode, use straight market value — no dealer markup
-      base = ageYrs <= 1 ? msrp : Math.round(estimateCurrentValue(msrp, make, model, ageYrs) / 500) * 500
+      base = ageYrs <= 1 ? msrp : Math.round(computeUsedPrice(msrp, make, model, year).private / 500) * 500
     } else if (financeMode === 'lease' || ageYrs <= 1) {
       base = dealerPurchase ? msrp : Math.round(msrp * 0.97 / 500) * 500
     } else {
-      const market = estimateCurrentValue(msrp, make, model, ageYrs)
-      base = dealerPurchase
-        ? Math.round(market * 1.10 / 500) * 500
-        : Math.round(market       / 500) * 500
+      const p = computeUsedPrice(msrp, make, model, year)
+      base = Math.round((dealerPurchase ? p.dealer : p.private) / 500) * 500
     }
     setPrice(base)
-  }, [financeMode, dealerPurchase])
+  }, [financeMode, dealerPurchase, computeUsedPrice])
 
   // Auto-selects the cheapest trim for a given make/model/year
   const autoSelectCheapestTrim = useCallback(async (make, model, year) => {
@@ -1678,8 +1719,8 @@ export default function TCOCalculator() {
     if (financeMode !== 'buy' || !origMsrp || !selMake || !selModel || !selYear || currentMileage === null) return
     const ageYrs = Math.max(0, new Date().getFullYear() - parseInt(selYear))
     if (ageYrs <= 1) return
-    const market = estimateCurrentValue(origMsrp, selMake, selModel, ageYrs, currentMileage)
-    setPrice(Math.round((dealerPurchase ? market * 1.10 : market) / 500) * 500)
+    const p = computeUsedPrice(origMsrp, selMake, selModel, selYear, currentMileage)
+    setPrice(Math.round((dealerPurchase ? p.dealer : p.private) / 500) * 500)
   }, [currentMileage, origMsrp, selMake, selModel, selYear, financeMode, dealerPurchase]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Re-price vehicle when the purchase channel (dealer vs. private) toggles.
@@ -1690,14 +1731,25 @@ export default function TCOCalculator() {
       setPrice(dealerPurchase ? origMsrp : Math.round(origMsrp * 0.97 / 500) * 500)
       return
     }
-    const market = estimateCurrentValue(origMsrp, selMake, selModel, ageYrs, currentMileage ?? undefined)
-    setPrice(Math.round((dealerPurchase ? market * 1.10 : market) / 500) * 500)
+    const p = computeUsedPrice(origMsrp, selMake, selModel, selYear, currentMileage ?? null)
+    setPrice(Math.round((dealerPurchase ? p.dealer : p.private) / 500) * 500)
   }, [dealerPurchase]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-price when live local listing data arrives or the location changes —
+  // this is what makes the estimate track the user's regional market instead
+  // of a single national curve.
+  useEffect(() => {
+    if (financeMode !== 'buy' || !origMsrp || !selMake || !selModel || !selYear) return
+    const ageYrs = Math.max(0, new Date().getFullYear() - parseInt(selYear))
+    if (ageYrs <= 1) return
+    const p = computeUsedPrice(origMsrp, selMake, selModel, selYear, currentMileage ?? null)
+    setPrice(Math.round((dealerPurchase ? p.dealer : p.private) / 500) * 500)
+  }, [liveMarket, resolvedState]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // For the insurance note: estimated current market value after depreciation
   const carAge            = selYear ? Math.max(0, new Date().getFullYear() - parseInt(selYear)) : 0
   const estimatedCarValue = selYear
-    ? estimateCurrentValue(price, selMake || null, selModel || null, carAge, currentMileage)
+    ? estimateCurrentValue(price, selMake || null, selModel || null, carAge, currentMileage, resolvedState)
     : price
 
   const safeDown = isCashPurchase ? effectivePrice : Math.min(downPayment, effectivePrice)
@@ -1705,7 +1757,7 @@ export default function TCOCalculator() {
 
   // Net cost of ownership: total paid minus estimated future resale value
   const futureResaleValue = (financeMode === 'buy' && origMsrp && selYear)
-    ? Math.round(estimateCurrentValue(origMsrp, selMake || null, selModel || null, carAge + ownershipYears))
+    ? Math.round(estimateCurrentValue(origMsrp, selMake || null, selModel || null, carAge + ownershipYears, null, resolvedState))
     : null
   const totalOwnershipPaid = forecastRows.reduce((s, r) => s + r.total, 0)
   // For buy mode: include down payment (paid upfront, only partially recovered via resale).
@@ -1733,7 +1785,7 @@ export default function TCOCalculator() {
     // Equity retained at the end of the horizon (you own a depreciated asset).
     const projectedMiles = Math.round(annualMileage * (carAge + horizonYears))
     const resaleValue = Math.round(
-      estimateCurrentValue(origMsrp ?? price, selMake || null, selModel || null, carAge + horizonYears, projectedMiles)
+      estimateCurrentValue(origMsrp ?? price, selMake || null, selModel || null, carAge + horizonYears, projectedMiles, resolvedState)
     )
 
     // Operating costs (insurance + fuel + maintenance + reg) are identical on both
@@ -1761,7 +1813,7 @@ export default function TCOCalculator() {
       diff: Math.abs(Math.round(diff)), buyWins: diff > 0,
     }
   }, [price, leasePeriodYears, leaseTerm, downPayment, loanTerm, rate, isCashPurchase, annualMileage, carAge,
-      origMsrp, selMake, selModel, annualOperatingCost, leaseResults.totalLeaseCost, capCostReduction])
+      origMsrp, selMake, selModel, resolvedState, annualOperatingCost, leaseResults.totalLeaseCost, capCostReduction])
 
   // Derived EV flag, charging rate, and premium fuel flag — used across the render
   const catInfoForRender = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
@@ -1797,7 +1849,7 @@ export default function TCOCalculator() {
   function handleAddToComparison() {
     const futureAgeYrs = carAge + ownershipYears
     const futureValue  = origMsrp
-      ? estimateCurrentValue(origMsrp, selMake || null, selModel || null, futureAgeYrs)
+      ? estimateCurrentValue(origMsrp, selMake || null, selModel || null, futureAgeYrs, null, resolvedState)
       : null
     const retentionPct = origMsrp && futureValue != null
       ? Math.round((futureValue / origMsrp) * 100)
@@ -2449,14 +2501,28 @@ export default function TCOCalculator() {
                 </p>
               )}
 
-              {/* Regional demand note — detailed mode only */}
-              {!simpleMode && financeMode === 'buy' && carAge > 0 && regionalDemand !== 0 && resolvedState && (
+              {/* Live local market note — real listing data beats any model */}
+              {financeMode === 'buy' && carAge > 0 && liveMarket?.price && (
+                <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
+                  Priced from <span className="text-[var(--accent)]">{liveMarket.sampleSize} live listings</span>{' '}
+                  within {liveMarket.radiusMiles ?? 100} mi of {liveMarket.zip} · local median{' '}
+                  <span className="text-white">{formatCurrency(liveMarket.price)}</span>
+                  {liveMarket.low != null && liveMarket.high != null && (
+                    <> · typical range {formatCurrency(liveMarket.low)}–{formatCurrency(liveMarket.high)}</>
+                  )}
+                </p>
+              )}
+
+              {/* Regional demand note — detailed mode only; hidden when live
+                  listing data is driving the price (it already embodies the
+                  local market) */}
+              {!simpleMode && financeMode === 'buy' && carAge > 0 && regionalDemand !== 0 && resolvedState && !liveMarket?.price && (
                 <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
                   Used-car market in <span className="text-white">{resolvedState}</span> typically runs{' '}
                   <span className={regionalDemand > 0 ? 'text-amber-400' : 'text-green-400'}>
                     {regionalDemand > 0 ? '+' : ''}{Math.round(regionalDemand * 100)}%
                   </span>{' '}
-                  vs. national average — adjust price accordingly.
+                  vs. national average — reflected in this estimate.
                 </p>
               )}
 
@@ -3345,7 +3411,7 @@ export default function TCOCalculator() {
               {financeMode === 'current' && (() => {
                 // Estimate monthly depreciation
                 const annualDeprEst = origMsrp
-                  ? Math.max(0, price - estimateCurrentValue(origMsrp, selMake||null, selModel||null, carAge + 1))
+                  ? Math.max(0, price - estimateCurrentValue(origMsrp, selMake||null, selModel||null, carAge + 1, null, resolvedState))
                   : Math.round(price * 0.12)
                 const monthlyDepr = ownPurchasePrice != null && monthsOwned != null && monthsOwned > 0
                   ? Math.round(Math.max(0, ownPurchasePrice - price) / monthsOwned)

@@ -41,7 +41,7 @@ import {
   PREMIUM_PRICE_DELTA, requiresPremiumFuel,
   STATE_REG_FEE, STATE_VLF, computeAnnualRegistration,
   computeSalesTax, STATE_VEHICLE_SALES_TAX, STATE_DOC_FEE_AVG, getRegionalDemandPremium,
-  ZIP_RANGES, zipToState, resolveLocation,
+  zipToState, resolveLocation,
 } from '../utils/vehicleCosts'
 
 

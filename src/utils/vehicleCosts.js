@@ -713,6 +713,42 @@ export const ZIP_LABOR_RATE_ZONES = [
   [99501, 99524, 148], // Anchorage core
   [99525, 99599, 138], // Anchorage suburbs
   [99600, 99999, 128], // Fairbanks / rural AK
+
+  // ── Maine ─────────────────────────────────────────────────
+  [4001, 4299, 118],   // Portland ME metro / southern coast
+
+  // ── New Hampshire ─────────────────────────────────────────
+  [3001, 3110, 128],   // Manchester / Nashua (Boston commuter belt)
+  [3801, 3899, 125],   // Seacoast (Portsmouth)
+
+  // ── Vermont ───────────────────────────────────────────────
+  [5401, 5495, 118],   // Burlington metro
+
+  // ── Rhode Island ──────────────────────────────────────────
+  [2860, 2929, 128],   // Providence metro
+
+  // ── Delaware ──────────────────────────────────────────────
+  [19701, 19899, 128], // Wilmington / Newark corridor
+
+  // ── Oklahoma ──────────────────────────────────────────────
+  [73101, 73199, 100], // Oklahoma City core
+  [74101, 74199, 100], // Tulsa
+
+  // ── Montana ───────────────────────────────────────────────
+  [59715, 59772, 115], // Bozeman (resort-priced)
+  [59801, 59899, 105], // Missoula
+  [59101, 59199, 102], // Billings
+
+  // ── Wyoming ───────────────────────────────────────────────
+  [83001, 83014, 132], // Jackson Hole (resort-priced)
+  [82001, 82099, 100], // Cheyenne
+
+  // ── North Dakota ──────────────────────────────────────────
+  [58102, 58199, 100], // Fargo
+
+  // ── South Dakota ──────────────────────────────────────────
+  [57101, 57199, 100], // Sioux Falls
+  [57701, 57799, 96],  // Rapid City
 ]
 
 // Returns the most specific labor rate available: ZIP zone → state avg → national fallback.
@@ -854,6 +890,66 @@ export const ZIP_TERRAIN_ZONES = [
   [77000, 77099, 1.10, 'coastal', 'Houston (Gulf humidity)'],
   [29400, 29499, 1.10, 'coastal', 'Charleston coast'],
   [96700, 96899, 1.14, 'coastal', 'Hawaii (salt air + volcanic)'],
+
+  // ── Coverage expansion (2026) ─────────────────────────────────────────────
+  // Additional high-impact regions previously falling through to the coarse
+  // statewide scalar. Appended after the original zones so first-match-wins
+  // keeps every previously covered ZIP identical; entries here only pick up
+  // ZIPs the original set missed. Same sources: TRIP urban pavement rankings
+  // 2024, FHWA pavement condition, AAA salt/pothole research, Interstate
+  // Batteries / CR hot-climate battery life data, OEM severe-service schedules.
+
+  // Mountain (brake/suspension dominant)
+  [86001, 86499, 1.20, 'mountain', 'Flagstaff / AZ high country'],
+  [28601, 28699, 1.16, 'mountain', 'NC High Country (Boone)'],
+  [12801, 12999, 1.20, 'mountain', 'Adirondacks / Lake George'],
+  [98801, 98899, 1.16, 'mountain', 'WA Cascades (Wenatchee/Leavenworth)'],
+
+  // Snow / road-salt belts (corrosion dominant)
+  [44000, 44299, 1.20, 'salt', 'Cleveland / NE Ohio snowbelt'],
+  [16501, 16599, 1.24, 'salt', 'Erie PA lake-effect'],
+  [53001, 53299, 1.16, 'salt', 'Milwaukee metro'],
+  [46301, 46399, 1.16, 'salt', 'NW Indiana lake-effect (Gary)'],
+  [60001, 60599, 1.16, 'salt', 'Chicago suburbs'],
+  [55100, 55199, 1.22, 'salt', 'St. Paul metro'],
+  [63001, 63199, 1.12, 'salt', 'St. Louis metro'],
+  [64101, 64199, 1.10, 'salt', 'Kansas City metro'],
+  [80001, 80299, 1.10, 'salt', 'Denver metro (freeze-thaw + mag chloride)'],
+  [84001, 84199, 1.10, 'salt', 'Salt Lake City (winter salt)'], // Park City zone above wins inside 84060-84098
+  [ 4001,  4299, 1.12, 'salt', 'Southern Maine (Portland)'],
+
+  // Pothole-heavy urban cores (tire/suspension dominant; TRIP 2024 worst-pavement metros)
+  [ 7000,  7399, 1.18, 'pothole', 'Newark / North Jersey urban'],
+  [11200, 11499, 1.20, 'pothole', 'Brooklyn / Queens'],
+  [21201, 21299, 1.16, 'pothole', 'Baltimore urban core'],
+  [46201, 46299, 1.14, 'pothole', 'Indianapolis urban'],
+  [94101, 94199, 1.12, 'pothole', 'San Francisco (worst-ranked urban pavement)'],
+  [90001, 90099, 1.10, 'pothole', 'Los Angeles urban core'],
+
+  // Extreme heat (battery/A/C/tire dry-rot dominant — TX/Central Valley summers
+  // shorten 12V battery life toward ~3 yr, per battery-industry regional data)
+  [75001, 75499, 1.08, 'desert', 'Dallas–Fort Worth (summer heat)'],
+  [76001, 76299, 1.08, 'desert', 'Fort Worth (summer heat)'],
+  [78201, 78299, 1.10, 'desert', 'San Antonio (heat)'],
+  [78601, 78799, 1.08, 'desert', 'Austin metro (heat)'],
+  [79701, 79799, 1.10, 'desert', 'Midland–Odessa (Permian heat + dust)'],
+  [88001, 88099, 1.10, 'desert', 'Las Cruces NM'],
+  [92301, 92399, 1.14, 'desert', 'Mojave (Victorville/Barstow)'],
+  [93601, 93799, 1.08, 'desert', 'Fresno / Central Valley heat'],
+  [95601, 95699, 1.06, 'desert', 'Sacramento Valley heat'],
+
+  // Coastal humidity / salt air (corrosion + A/C + warm-climate battery)
+  [77100, 77599, 1.10, 'coastal', 'Houston metro (Gulf heat/humidity)'],
+  [78401, 78499, 1.10, 'coastal', 'Corpus Christi / TX Gulf'],
+  [33500, 33799, 1.10, 'coastal', 'Tampa Bay / St. Pete'],
+  [32001, 32299, 1.08, 'coastal', 'Jacksonville / NE FL coast'],
+  [32901, 32999, 1.10, 'coastal', 'Space Coast (Melbourne)'],
+  [36501, 36699, 1.10, 'coastal', 'Mobile Bay / AL Gulf Coast'],
+  [39501, 39599, 1.10, 'coastal', 'MS Gulf Coast (Biloxi/Gulfport)'],
+  [23301, 23699, 1.08, 'coastal', 'Hampton Roads / Virginia Beach'],
+  [31401, 31499, 1.08, 'coastal', 'Savannah coast'],
+  [29566, 29599, 1.08, 'coastal', 'Myrtle Beach / Grand Strand'],
+  [28401, 28499, 1.08, 'coastal', 'Wilmington NC / Cape Fear coast'],
 ]
 
 // Returns the most specific terrain wear profile available:
@@ -1775,36 +1871,44 @@ export function getRegionalDemandPremium(state) {
 }
 
 // ── Location ─────────────────────────────────────────────
-
-export const ZIP_RANGES = [
-  ['AL',[[35000,36999]]],['AK',[[99500,99999]]],['AZ',[[85000,86599]]],
-  ['AR',[[71600,72999]]],['CA',[[90000,96199]]],['CO',[[80000,81699]]],
-  ['CT',[[6000,6999]]],['DE',[[19700,19999]]],['DC',[[20000,20599]]],
-  ['FL',[[32000,34999]]],['GA',[[30000,31999],[39800,39999]]],
-  ['HI',[[96700,96899]]],['ID',[[83200,83999]]],['IL',[[60000,62999]]],
-  ['IN',[[46000,47999]]],['IA',[[50000,52999]]],['KS',[[66000,67999]]],
-  ['KY',[[40000,42799]]],['LA',[[70000,71499]]],['ME',[[3900,4999]]],
-  ['MD',[[20600,21999]]],['MA',[[1000,2799]]],['MI',[[48000,49999]]],
-  ['MN',[[55000,56799]]],['MS',[[38600,39999]]],['MO',[[63000,65899]]],
-  ['MT',[[59000,59999]]],['NE',[[68000,69999]]],['NV',[[88900,89999]]],
-  ['NH',[[3000,3899]]],['NJ',[[7000,8999]]],['NM',[[87000,88499]]],
-  ['NY',[[10000,14999]]],['NC',[[27000,28999]]],['ND',[[58000,58999]]],
-  ['OH',[[43000,45999]]],['OK',[[73000,74999]]],['OR',[[97000,97999]]],
-  ['PA',[[15000,19699]]],['RI',[[2800,2999]]],['SC',[[29000,29999]]],
-  ['SD',[[57000,57999]]],['TN',[[37000,38599]]],
-  ['TX',[[73301,73301],[75000,79999],[88500,88599]]],
-  ['UT',[[84000,84799]]],['VT',[[5000,5999]]],
-  ['VA',[[20100,20199],[22000,24699]]],['WA',[[98000,99499]]],
-  ['WV',[[24700,26999]]],['WI',[[53000,54999]]],['WY',[[82000,83199]]],
+// ZIP→state resolution via USPS 3-digit ZIP prefixes. Each prefix belongs to
+// exactly one state, which makes this materially more accurate than the old
+// coarse 5-digit ranges. Fixes real misassignments the range table produced:
+//   • 201xx is Northern Virginia (Ashburn/Dulles/Manassas), NOT DC — the old
+//     table's DC range [20000-20599] shadowed it, skewing insurance base,
+//     sales tax, fuel price, and registration for a huge car market.
+//   • 733xx is Austin TX (inside Oklahoma's numeric block).
+//   • 885xx is El Paso TX (inside New Mexico's numeric block).
+// Unassigned prefixes (military APO/FPO 090-098/340/962-966, PR/VI 006-009)
+// return null rather than a wrong state.
+// Each entry: [prefixLo, prefixHi, state] where prefix = first 3 digits.
+export const ZIP_PREFIX_RANGES = [
+  [  5,   5, 'NY'], // Holtsville (IRS)
+  [ 10,  27, 'MA'], [ 28,  29, 'RI'], [ 30,  38, 'NH'], [ 39,  49, 'ME'],
+  [ 50,  59, 'VT'], [ 60,  69, 'CT'], [ 70,  89, 'NJ'],
+  [100, 149, 'NY'], [150, 196, 'PA'], [197, 199, 'DE'],
+  [200, 200, 'DC'], [201, 201, 'VA'], [202, 205, 'DC'], [206, 219, 'MD'],
+  [220, 246, 'VA'], [247, 268, 'WV'], [270, 289, 'NC'], [290, 299, 'SC'],
+  [300, 319, 'GA'], [320, 339, 'FL'], [341, 349, 'FL'],
+  [350, 369, 'AL'], [370, 385, 'TN'], [386, 397, 'MS'], [398, 399, 'GA'],
+  [400, 427, 'KY'], [430, 459, 'OH'], [460, 479, 'IN'], [480, 499, 'MI'],
+  [500, 528, 'IA'], [530, 549, 'WI'], [550, 567, 'MN'], [570, 577, 'SD'],
+  [580, 588, 'ND'], [590, 599, 'MT'],
+  [600, 629, 'IL'], [630, 658, 'MO'], [660, 679, 'KS'], [680, 693, 'NE'],
+  [700, 714, 'LA'], [716, 729, 'AR'],
+  [730, 732, 'OK'], [733, 733, 'TX'], [734, 749, 'OK'],
+  [750, 799, 'TX'],
+  [800, 816, 'CO'], [820, 831, 'WY'], [832, 838, 'ID'], [840, 847, 'UT'],
+  [850, 865, 'AZ'], [870, 884, 'NM'], [885, 885, 'TX'], [889, 898, 'NV'],
+  [900, 961, 'CA'], [967, 968, 'HI'], [970, 979, 'OR'], [980, 994, 'WA'],
+  [995, 999, 'AK'],
 ]
 
 export function zipToState(zip) {
   if (!/^\d{5}$/.test(zip)) return null
-  const z = parseInt(zip)
-  for (const [state, ranges] of ZIP_RANGES) {
-    for (const [lo, hi] of ranges) {
-      if (z >= lo && z <= hi) return state
-    }
+  const p = Math.floor(parseInt(zip, 10) / 100)
+  for (const [lo, hi, state] of ZIP_PREFIX_RANGES) {
+    if (p >= lo && p <= hi) return state
   }
   return null
 }

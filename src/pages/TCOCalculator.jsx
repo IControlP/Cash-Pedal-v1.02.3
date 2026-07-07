@@ -2514,11 +2514,14 @@ export default function TCOCalculator() {
               {/* Live local market note — real listing data beats any model */}
               {financeMode === 'buy' && carAge > 0 && liveMarket?.price && (
                 <p className="text-[10px] text-[var(--text-muted)] -mt-4 pl-1">
-                  Priced from <span className="text-[var(--accent)]">{liveMarket.sampleSize} live listings</span>{' '}
+                  Priced from <span className="text-[var(--accent)]">{liveMarket.sampleSize} local listings</span>{' '}
                   within {liveMarket.radiusMiles ?? 100} mi of {liveMarket.zip} · local median{' '}
                   <span className="text-white">{formatCurrency(liveMarket.price)}</span>
                   {liveMarket.low != null && liveMarket.high != null && (
                     <> · typical range {formatCurrency(liveMarket.low)}–{formatCurrency(liveMarket.high)}</>
+                  )}
+                  {(liveMarket.ageDays ?? 0) >= 2 && (
+                    <> · listings as of {liveMarket.ageDays} days ago</>
                   )}
                 </p>
               )}

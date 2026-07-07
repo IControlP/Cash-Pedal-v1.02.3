@@ -796,6 +796,19 @@ async function initTables() {
       )
     `)
 
+    // ── Market-value cache ────────────────────────────
+    // Persistent zip-level listing-price cache (year|make|model|zip3). Kept
+    // for 90 days so exhausted-quota months can still serve the most recent
+    // real market data instead of falling back to the model, and so the
+    // cache survives restarts/redeploys (each miss costs paid-API quota).
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS market_value_cache (
+        cache_key   VARCHAR(120) PRIMARY KEY,
+        data        JSONB        NOT NULL,
+        fetched_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+
     // ── Subscribers table (Stripe) ────────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS subscribers (
@@ -2003,9 +2016,52 @@ const MARKETCHECK_API_KEY = (process.env.MARKETCHECK_API_KEY || '').trim()
 const AUTO_DEV_API_KEY    = (process.env.AUTO_DEV_API_KEY || '').trim()
 const MARKETCHECK_MONTHLY_LIMIT = parseInt(process.env.MARKETCHECK_MONTHLY_LIMIT || '480', 10)
 const AUTO_DEV_MONTHLY_LIMIT    = parseInt(process.env.AUTO_DEV_MONTHLY_LIMIT    || '960', 10)
-const MARKET_VALUE_TTL    = 24 * 60 * 60 * 1000
-const MARKET_VALUE_RADIUS = 100 // miles
-const marketValueCache    = new Map() // year|make|model|zip3 → { data, fetchedAt }
+const MARKET_VALUE_TTL      = 24 * 60 * 60 * 1000 // fresh window — served without a provider call
+const MARKET_VALUE_MAX_DAYS = 90                  // stale window — served only when quota/providers fail
+const MARKET_VALUE_RADIUS   = 100 // miles
+const marketValueCache      = new Map() // L1 hot cache: year|make|model|zip3 → { data, fetchedAt }
+
+// Two-tier cache: in-memory L1 for the running instance, Postgres L2 so
+// entries survive restarts/redeploys and stale data stays available for up
+// to MARKET_VALUE_MAX_DAYS. Rows past the window are removed by the daily
+// retention sweep; getMarketValueCache additionally guards against serving
+// anything older.
+async function getMarketValueCache(key) {
+  const mem = marketValueCache.get(key)
+  if (mem) return mem
+  if (!pool) return null
+  try {
+    const r = await pool.query(
+      `SELECT data, fetched_at FROM market_value_cache WHERE cache_key = $1`, [key]
+    )
+    if (r.rows.length === 0) return null
+    const entry = { data: r.rows[0].data, fetchedAt: new Date(r.rows[0].fetched_at).getTime() }
+    if (Date.now() - entry.fetchedAt > MARKET_VALUE_MAX_DAYS * 86400000) return null
+    if (marketValueCache.size > 2000) marketValueCache.clear()
+    marketValueCache.set(key, entry) // warm L1 for subsequent hits
+    return entry
+  } catch (err) {
+    console.error('[market-value] cache read error:', err.message)
+    return null
+  }
+}
+
+async function setMarketValueCache(key, data, fetchedAt) {
+  if (marketValueCache.size > 2000) marketValueCache.clear()
+  marketValueCache.set(key, { data, fetchedAt })
+  if (!pool) return
+  try {
+    await pool.query(
+      `INSERT INTO market_value_cache (cache_key, data, fetched_at)
+       VALUES ($1, $2, to_timestamp($3 / 1000.0))
+       ON CONFLICT (cache_key)
+       DO UPDATE SET data = EXCLUDED.data, fetched_at = EXCLUDED.fetched_at`,
+      [key, JSON.stringify(data), fetchedAt]
+    )
+  } catch (err) {
+    console.error('[market-value] cache write error:', err.message)
+  }
+}
 
 // Atomically claim one call against a provider's monthly quota. Returns true
 // when the call may proceed. Uses Postgres so counts survive restarts; falls
@@ -2144,9 +2200,10 @@ app.post('/api/market-value', async (req, res) => {
   // granularity pointless, keeps the cache small, and stretches the quota.
   const cacheKey = `${year}|${make}|${model}|${zip.slice(0, 3)}`
   const now = Date.now()
-  const cached = marketValueCache.get(cacheKey)
+  const cached = await getMarketValueCache(cacheKey)
+  const cacheAgeDays = cached ? Math.floor((now - cached.fetchedAt) / 86400000) : null
   if (cached && now - cached.fetchedAt < MARKET_VALUE_TTL) {
-    return res.json({ ...cached.data, source: 'cache', zip })
+    return res.json({ ...cached.data, source: 'cache', ageDays: cacheAgeDays, zip })
   }
 
   // Provider chain: each is skipped when unconfigured, over monthly quota, or
@@ -2179,16 +2236,17 @@ app.post('/api/market-value', async (req, res) => {
   }
 
   if (!result) {
-    if (cached) return res.json({ ...cached.data, source: 'stale-cache', zip })
+    // Quota spent or providers down — serve the most recent data we have
+    // (up to MARKET_VALUE_MAX_DAYS old, age-stamped) before giving up.
+    if (cached) return res.json({ ...cached.data, source: 'stale-cache', ageDays: cacheAgeDays, zip })
     return res.json({ price: null, source: exhausted ? 'quota-exhausted' : 'error', zip })
   }
 
   const data = result.stats
     ? { ...result.stats, radiusMiles: MARKET_VALUE_RADIUS }
     : { price: null, sampleSize: 0, radiusMiles: MARKET_VALUE_RADIUS }
-  if (marketValueCache.size > 2000) marketValueCache.clear()
-  marketValueCache.set(cacheKey, { data, fetchedAt: now })
-  return res.json({ ...data, source: result.provider, zip })
+  await setMarketValueCache(cacheKey, data, now)
+  return res.json({ ...data, source: result.provider, ageDays: 0, zip })
 })
 
 // ── Serve Vite build ──────────────────────────────────
@@ -2218,6 +2276,7 @@ async function runRetentionSweep() {
     await pool.query(`DELETE FROM bonus_credits WHERE updated_at < NOW() - INTERVAL '365 days'`)
     await pool.query(`DELETE FROM vehicle_searches WHERE created_at < NOW() - INTERVAL '${MARKET_RETENTION_DAYS} days'`)
     await pool.query(`DELETE FROM subscriber_devices WHERE last_seen < NOW() - INTERVAL '${DEVICE_EXPIRY_DAYS} days'`)
+    await pool.query(`DELETE FROM market_value_cache WHERE fetched_at < NOW() - INTERVAL '${MARKET_VALUE_MAX_DAYS} days'`)
     await pool.query(`DELETE FROM nhtsa_cache WHERE fetched_at < NOW() - INTERVAL '30 days'`)
   } catch (err) {
     console.error('[retention] daily sweep error:', err.message)

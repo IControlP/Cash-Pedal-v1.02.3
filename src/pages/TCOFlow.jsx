@@ -5,9 +5,9 @@ import Footer from '../components/Footer'
 import VEHICLES from '../data/vehicles.json'
 import {
   classifySegment, estimateCurrentValue, estimateInsurance,
-  MAINT_BRAND_MULT, SEGMENT_MAINT_AVG,
   computeAnnualFuel, STATE_FUEL_PRICES, requiresPremiumFuel,
-  computeAnnualRegistration, resolveLocation,
+  computeAnnualRegistration, resolveLocation, escalateAnnualFuel,
+  generateMaintenanceByYear,
 } from '../utils/vehicleCosts'
 import { trackSearch } from '../utils/marketSearch'
 import {
@@ -839,17 +839,25 @@ export default function TCOFlow() {
     )
 
     const segment  = selMake && selModel ? classifySegment(selMake, selModel) : 'sedan'
-    const brandMult = MAINT_BRAND_MULT[selMake] ?? 1.0
-    const segAvg    = isEV ? SEGMENT_MAINT_AVG.electric : (SEGMENT_MAINT_AVG[segment] ?? 1100)
-    const annualMaintenance = Math.round(segAvg * brandMult / 50) * 50
 
     const annualRegistration = computeAnnualRegistration(resolvedState, price)
 
     const totalInsurance   = Math.round(annualInsurance * DEFAULT_OWNERSHIP_YRS)
-    const totalFuel        = Math.round(annualFuel * DEFAULT_OWNERSHIP_YRS)
-    const totalMaintenance = Math.round(
+    // Fuel escalates at EIA long-run nominal rates (gas 2.5%/yr, elec 2%/yr)
+    const totalFuel = Math.round(
       Array.from({ length: DEFAULT_OWNERSHIP_YRS }, (_, i) =>
-        annualMaintenance * Math.pow(1.06, i)
+        escalateAnnualFuel(annualFuel, i, isEV)
+      ).reduce((s, v) => s + v, 0)
+    )
+    // Per-year maintenance from the real service engine — books each service in
+    // the year its interval crosses, starting from the vehicle's current age and
+    // estimated odometer (matches the detailed calculator instead of compounding
+    // a flat segment average).
+    const totalMaintenance = Math.round(
+      generateMaintenanceByYear(
+        isEV, annualMileage, segment, selMake || '', DEFAULT_OWNERSHIP_YRS,
+        Math.round(vehicleAge * annualMileage), resolvedState, vehicleAge,
+        null, null, selModel || '', selYear || null,
       ).reduce((s, v) => s + v, 0)
     )
     const totalRegistration = Math.round(

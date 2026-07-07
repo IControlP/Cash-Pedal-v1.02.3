@@ -1793,6 +1793,21 @@ export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles 
   return Math.round((miles / mpg) * price / 50) * 50
 }
 
+// ── Energy price escalation ──────────────────────────────
+// Nominal year-over-year energy price growth applied to multi-year fuel
+// forecasts. EIA Annual Energy Outlook long-run nominal projections:
+// motor gasoline ≈ +2.5%/yr, residential electricity ≈ +2%/yr. Year-1 fuel
+// uses current prices; later forecast years compound these rates so a
+// 7–10 year ownership total doesn't silently assume frozen energy prices.
+export const GAS_PRICE_ESCALATION  = 0.025
+export const ELEC_PRICE_ESCALATION = 0.02
+
+// Fuel cost for forecast year (yearIndex is 0-based: 0 = year 1, no escalation).
+export function escalateAnnualFuel(annualFuel, yearIndex, isEV = false) {
+  const r = isEV ? ELEC_PRICE_ESCALATION : GAS_PRICE_ESCALATION
+  return Math.round(annualFuel * Math.pow(1 + r, yearIndex))
+}
+
 // ── Registration ─────────────────────────────────────────
 
 export const STATE_REG_FEE = {

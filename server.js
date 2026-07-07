@@ -784,6 +784,18 @@ async function initTables() {
       )
     `)
 
+    // ── Third-party API quota ledger ──────────────────
+    // Persistent per-provider monthly call counters so free-tier limits
+    // (Marketcheck, Auto.dev) survive server restarts and redeploys.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS api_quota (
+        provider  VARCHAR(30) NOT NULL,
+        month     CHAR(7)     NOT NULL,
+        calls     INTEGER     NOT NULL DEFAULT 0,
+        PRIMARY KEY (provider, month)
+      )
+    `)
+
     // ── Subscribers table (Stripe) ────────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS subscribers (
@@ -1974,17 +1986,80 @@ app.get('/api/electricity-rate', async (req, res) => {
 // Returns the median asking price of live dealer listings for a given
 // year/make/model near a zip code, so the TCO calculator can anchor its
 // depreciation estimate to the user's actual local market instead of the
-// national model. Two free-tier providers are supported, checked in order:
-//   1. Marketcheck  (MARKETCHECK_API_KEY) — mc-api.marketcheck.com listings search
-//   2. Auto.dev     (AUTO_DEV_API_KEY)    — auto.dev/api/listings
-// Cached 24h per year|make|model|zip3 (local markets move slowly). Falls back
-// gracefully ({ price: null }) when no key is configured, the vehicle isn't
-// found nearby, or the provider errors — the client then uses the model estimate.
+// national model. Pro-only: requires an active subscriber email (the free
+// tier gets the regionally-adjusted model estimate client-side).
+//
+// Two free-tier providers are supported, tried in order with fallback:
+//   1. Marketcheck  (MARKETCHECK_API_KEY) — 500 calls/mo, 5/sec
+//   2. Auto.dev     (AUTO_DEV_API_KEY)    — 1,000 calls/mo
+// Monthly quotas are tracked in the api_quota Postgres table (atomic claim,
+// survives restarts; in-memory fallback without a DB) with defaults held a
+// little under the published caps for safety headroom. When a provider is
+// over quota or errors, the next provider is tried; when all are exhausted
+// the endpoint returns { price: null, source: 'quota-exhausted' } and the
+// client falls back to the depreciation model. Cached 24h per
+// year|make|model|zip3 — cache hits consume no quota.
 const MARKETCHECK_API_KEY = (process.env.MARKETCHECK_API_KEY || '').trim()
 const AUTO_DEV_API_KEY    = (process.env.AUTO_DEV_API_KEY || '').trim()
+const MARKETCHECK_MONTHLY_LIMIT = parseInt(process.env.MARKETCHECK_MONTHLY_LIMIT || '480', 10)
+const AUTO_DEV_MONTHLY_LIMIT    = parseInt(process.env.AUTO_DEV_MONTHLY_LIMIT    || '960', 10)
 const MARKET_VALUE_TTL    = 24 * 60 * 60 * 1000
 const MARKET_VALUE_RADIUS = 100 // miles
 const marketValueCache    = new Map() // year|make|model|zip3 → { data, fetchedAt }
+
+// Atomically claim one call against a provider's monthly quota. Returns true
+// when the call may proceed. Uses Postgres so counts survive restarts; falls
+// back to an in-process counter when no DB is configured.
+const memQuota = new Map() // provider|month → calls
+async function tryConsumeQuota(provider, limit) {
+  if (!Number.isFinite(limit) || limit <= 0) return false
+  const month = new Date().toISOString().slice(0, 7) // e.g. 2026-07
+  if (pool) {
+    try {
+      const r = await pool.query(
+        `INSERT INTO api_quota (provider, month, calls) VALUES ($1, $2, 1)
+         ON CONFLICT (provider, month)
+         DO UPDATE SET calls = api_quota.calls + 1 WHERE api_quota.calls < $3
+         RETURNING calls`,
+        [provider, month, limit]
+      )
+      return r.rows.length > 0
+    } catch (err) {
+      console.error('[api-quota] ledger error, using in-memory counter:', err.message)
+    }
+  }
+  const key = `${provider}|${month}`
+  const n = memQuota.get(key) ?? 0
+  if (n >= limit) return false
+  memQuota.set(key, n + 1)
+  return true
+}
+
+// Marketcheck also enforces 5 requests/second — keep a 1s sliding window and
+// stay one call under the cap. Purely in-memory (single Railway instance).
+let mcCallTimes = []
+function underMarketcheckRateLimit() {
+  const now = Date.now()
+  mcCallTimes = mcCallTimes.filter(t => now - t < 1000)
+  if (mcCallTimes.length >= 4) return false
+  mcCallTimes.push(now)
+  return true
+}
+
+// Active-subscriber check for pro-gated endpoints. Same criteria as
+// /api/subscription-status but read-only — no device registration.
+async function isActiveSubscriber(email) {
+  if (PRO_USERS_SERVER.has(email)) return true
+  if (!pool) return false
+  const r = await pool.query(
+    `SELECT subscription_status, current_period_end FROM subscribers WHERE email = $1`,
+    [email]
+  )
+  if (r.rows.length === 0) return false
+  const { subscription_status, current_period_end } = r.rows[0]
+  return (subscription_status === 'active' || subscription_status === 'canceling') &&
+    (!current_period_end || new Date(current_period_end) > new Date())
+}
 
 // Median + quartiles over listing prices, ignoring junk (missing / <$500 / >$500k)
 function priceStats(prices) {
@@ -2034,11 +2109,13 @@ async function fetchAutoDevListings(year, make, model, zip) {
   return { stats: priceStats(prices), provider: 'autodev' }
 }
 
-app.get('/api/market-value', async (req, res) => {
-  const zip   = (req.query.zip ?? '').trim()
-  const make  = (req.query.make ?? '').trim()
-  const model = (req.query.model ?? '').trim()
-  const year  = parseInt(req.query.year, 10)
+app.post('/api/market-value', async (req, res) => {
+  const body  = req.body ?? {}
+  const zip   = String(body.zip ?? '').trim()
+  const make  = String(body.make ?? '').trim()
+  const model = String(body.model ?? '').trim()
+  const year  = parseInt(body.year, 10)
+  const email = normalizeEmail(body.email || '')
 
   if (!/^\d{5}$/.test(zip)) return res.status(400).json({ error: 'zip must be a 5-digit US zip code' })
   if (!Number.isFinite(year) || year < 1981 || year > new Date().getFullYear() + 1) {
@@ -2050,8 +2127,21 @@ app.get('/api/market-value', async (req, res) => {
   const noKey = !MARKETCHECK_API_KEY && !AUTO_DEV_API_KEY
   if (noKey) return res.json({ price: null, source: 'no-key', zip })
 
+  // Pro-only: live listing data spends limited third-party quota, so it is
+  // reserved for active subscribers. Same "don't leak account state" shape
+  // as /api/subscription-status — invalid email and non-subscriber both get
+  // the plain fallback response.
+  try {
+    if (!isValidEmail(email) || !(await isActiveSubscriber(email))) {
+      return res.json({ price: null, source: 'not-subscribed', zip })
+    }
+  } catch (err) {
+    console.error('[market-value] subscriber check error:', err.message)
+    return res.json({ price: null, source: 'error', zip })
+  }
+
   // Cache on the 3-digit zip prefix — a ~100mi search radius makes finer
-  // granularity pointless and keeps the cache small.
+  // granularity pointless, keeps the cache small, and stretches the quota.
   const cacheKey = `${year}|${make}|${model}|${zip.slice(0, 3)}`
   const now = Date.now()
   const cached = marketValueCache.get(cacheKey)
@@ -2059,21 +2149,46 @@ app.get('/api/market-value', async (req, res) => {
     return res.json({ ...cached.data, source: 'cache', zip })
   }
 
-  try {
-    const { stats, provider } = MARKETCHECK_API_KEY
-      ? await fetchMarketcheckListings(year, make, model, zip)
-      : await fetchAutoDevListings(year, make, model, zip)
-    const data = stats
-      ? { ...stats, radiusMiles: MARKET_VALUE_RADIUS }
-      : { price: null, sampleSize: 0, radiusMiles: MARKET_VALUE_RADIUS }
-    if (marketValueCache.size > 2000) marketValueCache.clear()
-    marketValueCache.set(cacheKey, { data, fetchedAt: now })
-    return res.json({ ...data, source: provider, zip })
-  } catch (err) {
-    console.error('[market-value] provider fetch error:', err.message)
-    if (cached) return res.json({ ...cached.data, source: 'stale-cache', zip })
-    return res.json({ price: null, source: 'error', zip })
+  // Provider chain: each is skipped when unconfigured, over monthly quota, or
+  // (Marketcheck) over the per-second cap; a provider that errors falls
+  // through to the next. Quota is claimed before the call — provider-side
+  // accounting counts failed requests too, so ours must as well.
+  let result = null
+  let exhausted = false
+  if (!result && MARKETCHECK_API_KEY) {
+    if (underMarketcheckRateLimit() && await tryConsumeQuota('marketcheck', MARKETCHECK_MONTHLY_LIMIT)) {
+      try {
+        result = await fetchMarketcheckListings(year, make, model, zip)
+      } catch (err) {
+        console.error('[market-value] Marketcheck fetch error:', err.message)
+      }
+    } else {
+      exhausted = true
+    }
   }
+  if (!result && AUTO_DEV_API_KEY) {
+    if (await tryConsumeQuota('autodev', AUTO_DEV_MONTHLY_LIMIT)) {
+      try {
+        result = await fetchAutoDevListings(year, make, model, zip)
+      } catch (err) {
+        console.error('[market-value] Auto.dev fetch error:', err.message)
+      }
+    } else {
+      exhausted = true
+    }
+  }
+
+  if (!result) {
+    if (cached) return res.json({ ...cached.data, source: 'stale-cache', zip })
+    return res.json({ price: null, source: exhausted ? 'quota-exhausted' : 'error', zip })
+  }
+
+  const data = result.stats
+    ? { ...result.stats, radiusMiles: MARKET_VALUE_RADIUS }
+    : { price: null, sampleSize: 0, radiusMiles: MARKET_VALUE_RADIUS }
+  if (marketValueCache.size > 2000) marketValueCache.clear()
+  marketValueCache.set(cacheKey, { data, fetchedAt: now })
+  return res.json({ ...data, source: result.provider, zip })
 })
 
 // ── Serve Vite build ──────────────────────────────────

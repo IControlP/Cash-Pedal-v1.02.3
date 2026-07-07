@@ -1133,7 +1133,7 @@ function ExampleResultCard({ onCtaClick }) {
 export default function TCOCalculator() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { isSubscribed } = useSubscription()
+  const { isSubscribed, subscriberEmail } = useSubscription()
 
   // ── User data collection ──
   const [calcCount, setCalcCount] = useState(() =>
@@ -1255,15 +1255,25 @@ export default function TCOCalculator() {
   // Live local market price — median dealer asking price for the selected
   // year/make/model near the resolved zip (via /api/market-value). null until
   // fetched or when unavailable; the depreciation model is used as fallback.
+  // Pro-only: the endpoint spends limited third-party listing-API quota, so
+  // it requires an active subscriber email (promo-code access has no email
+  // and gets the model estimate like the free tier). When quota is exhausted
+  // server-side the response degrades to { price: null } and the regionally-
+  // adjusted model takes over transparently.
   const [liveMarket, setLiveMarket] = useState(null)
   useEffect(() => {
     setLiveMarket(null)
     if (!selMake || !selModel || !selYear || !resolvedZip) return
+    if (!isSubscribed || !subscriberEmail) return
     const age = new Date().getFullYear() - parseInt(selYear)
     if (age < 1) return // new / current-model-year cars are priced at MSRP
     const key = `${selYear}|${selMake}|${selModel}|${resolvedZip}`
     let cancelled = false
-    fetch(`/api/market-value?year=${selYear}&make=${encodeURIComponent(selMake)}&model=${encodeURIComponent(selModel)}&zip=${resolvedZip}`)
+    fetch('/api/market-value', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ year: selYear, make: selMake, model: selModel, zip: resolvedZip, email: subscriberEmail }),
+    })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (cancelled) return
@@ -1272,7 +1282,7 @@ export default function TCOCalculator() {
       })
       .catch(() => {})
     return () => { cancelled = true }
-  }, [selMake, selModel, selYear, resolvedZip])
+  }, [selMake, selModel, selYear, resolvedZip, isSubscribed, subscriberEmail])
   // Operating costs mode
   const [customCosts,    setCustomCosts]    = useState(false)
   // Detailed estimates mode

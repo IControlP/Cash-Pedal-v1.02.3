@@ -780,11 +780,11 @@ export default function TCOFlow() {
       setPrice(avg)
       setIsNew(true)
     } else {
-      const used = Math.round(estimateCurrentValue(avg, selMake, selModel, vehicleAge) / 500) * 500
+      const used = Math.round(estimateCurrentValue(avg, selMake, selModel, vehicleAge, null, resolvedState) / 500) * 500
       setPrice(used || avg)
       setIsNew(false)
     }
-  }, [selMake, selModel, selYear, priceEdited])
+  }, [selMake, selModel, selYear, priceEdited, resolvedState])
 
   // Market search tracking
   const lastSearchRef = useRef('')
@@ -826,7 +826,7 @@ export default function TCOFlow() {
     })
 
     const vehicleAge   = selYear ? Math.max(0, new Date().getFullYear() - parseInt(selYear)) : 0
-    const futureValue  = Math.round(estimateCurrentValue(price, selMake || null, selModel || null, vehicleAge + DEFAULT_OWNERSHIP_YRS))
+    const futureValue  = Math.round(estimateCurrentValue(price, selMake || null, selModel || null, vehicleAge + DEFAULT_OWNERSHIP_YRS, null, resolvedState))
     const depreciation = Math.max(0, price - futureValue)
 
     const annualInsurance = estimateInsurance(price, selMake || null, selModel || null, selYear || null, resolvedState)
@@ -1125,7 +1125,7 @@ export default function TCOFlow() {
                           if (v) {
                             setPrice(avg)
                           } else {
-                            setPrice(Math.round(estimateCurrentValue(avg, selMake, selModel, vehicleAge) / 500) * 500 || avg)
+                            setPrice(Math.round(estimateCurrentValue(avg, selMake, selModel, vehicleAge, null, resolvedState) / 500) * 500 || avg)
                           }
                         }
                       }}

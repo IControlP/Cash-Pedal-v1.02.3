@@ -145,7 +145,59 @@ export function applyModelAdjustments(make, model, brandMult) {
   return brandMult
 }
 
-export function estimateCurrentValue(originalPrice, make, model, ageYears, currentMileage = null) {
+// ── Regional market value adjustment ──────────────────────
+// Used-car values vary meaningfully by region for the SAME vehicle: 4WD trucks
+// command a premium in the rural West/Plains, convertibles and sports cars in
+// the Sun Belt, EVs in ZEV-mandate states with dense charging; road-salt states
+// discount older vehicles for corrosion. Sources: iSeeCars regional pricing
+// studies 2023-2025, Manheim regional wholesale indices, CarGurus IMV regional
+// deltas. Combined with STATE_USED_CAR_DEMAND (overall state price level) in
+// getRegionalValueFactor().
+
+// Convertible/sports premium markets — year-round driving season
+export const SUN_BELT_STATES = new Set(['FL','CA','AZ','NV','TX','HI','GA','SC','LA','AL','MS','NM'])
+// Deep-winter states — AWD/4WD premium, RWD sports discount (winter storage)
+export const SNOW_BELT_STATES = new Set(['CO','UT','VT','NH','ME','MT','WY','ID','MN','WI','MI','ND','SD','AK','NY','MA'])
+// Heavy road-salt states — corrosion discount that grows with vehicle age
+export const SALT_BELT_STATES = new Set(['OH','MI','PA','NY','IL','IN','WI','MN','IA','MA','CT','RI','VT','NH','ME','NJ','WV','MO'])
+// Rural West / Plains / South — pickups and body-on-frame SUVs hold value best
+export const TRUCK_COUNTRY_STATES = new Set(['TX','OK','MT','WY','ID','ND','SD','NE','KS','UT','AR','LA','AL','MS','TN','KY','WV','IA','MO','NM','AK'])
+// Dense-urban Northeast corridor — trucks are discounted (parking, use case)
+export const URBAN_TRUCK_DISCOUNT_STATES = new Set(['NY','NJ','MA','CT','RI','DC','MD'])
+// ZEV-mandate / charging-dense states — used EVs resell measurably better
+export const EV_FRIENDLY_STATES = new Set(['CA','WA','OR','CO','NY','NJ','MA','MD','CT','VT','HI','NV'])
+// Sparse-charging rural states — used EV demand is thin, prices run soft
+export const EV_WEAK_STATES = new Set(['ND','SD','WY','MT','WV','MS','AR','AL','LA','OK','KS','NE','IA','ID','AK','KY'])
+
+// Multiplier applied to a vehicle's estimated USED value for a given state.
+// Composed of the overall state price level plus segment×region interactions
+// and a corrosion-age discount in salt states. Clamped to ±15% total.
+export function getRegionalValueFactor(state, segment, ageYears = 0, make = '') {
+  if (!state) return 1.0
+  let f = 1 + (STATE_USED_CAR_DEMAND[state] ?? 0)
+  if (segment === 'truck') {
+    if (TRUCK_COUNTRY_STATES.has(state)) f *= 1.04
+    else if (URBAN_TRUCK_DISCOUNT_STATES.has(state)) f *= 0.96
+  } else if (segment === 'sports') {
+    if (SUN_BELT_STATES.has(state)) f *= 1.03
+    else if (SNOW_BELT_STATES.has(state)) f *= 0.95
+  } else if (segment === 'electric') {
+    if (EV_FRIENDLY_STATES.has(state)) f *= 1.04
+    else if (EV_WEAK_STATES.has(state)) f *= 0.93
+  } else if (segment === 'suv' || segment === 'luxury_suv') {
+    if (SNOW_BELT_STATES.has(state)) f *= 1.02
+  }
+  // Subaru's AWD-standard lineup carries an extra premium in winter states
+  if (make === 'Subaru' && SNOW_BELT_STATES.has(state)) f *= 1.03
+  // Corrosion: salt-state vehicles older than ~5 years trade at a growing
+  // discount vs. clean southern/western cars, up to ~6% by year 12+.
+  if (SALT_BELT_STATES.has(state) && ageYears > 5) {
+    f *= 1 - Math.min(0.06, (ageYears - 5) * 0.008)
+  }
+  return Math.max(0.85, Math.min(1.15, f))
+}
+
+export function estimateCurrentValue(originalPrice, make, model, ageYears, currentMileage = null, state = null) {
   // A brand-new or current-model-year car retains full value
   if (ageYears <= 0) return originalPrice
   const segment  = (make && model) ? classifySegment(make, model) : 'sedan'
@@ -183,7 +235,9 @@ export function estimateCurrentValue(originalPrice, make, model, ageYears, curre
   }
 
   const finalRate = Math.min(baseRate * adjBrand * mileageFactor, cap)
-  return Math.max(originalPrice * (1 - finalRate), originalPrice * 0.10)
+  // Regional market adjustment (no-op when no state supplied — national average)
+  const regionFactor = getRegionalValueFactor(state, segment, ageYears, make)
+  return Math.max(originalPrice * (1 - finalRate) * regionFactor, originalPrice * 0.10)
 }
 
 // ── Insurance ────────────────────────────────────────────

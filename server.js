@@ -810,6 +810,31 @@ async function initTables() {
       )
     `)
 
+    // ── Third-party API quota ledger ──────────────────
+    // Persistent per-provider monthly call counters so free-tier limits
+    // (Marketcheck, Auto.dev) survive server restarts and redeploys.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS api_quota (
+        provider  VARCHAR(30) NOT NULL,
+        month     CHAR(7)     NOT NULL,
+        calls     INTEGER     NOT NULL DEFAULT 0,
+        PRIMARY KEY (provider, month)
+      )
+    `)
+
+    // ── Market-value cache ────────────────────────────
+    // Persistent zip-level listing-price cache (year|make|model|zip3). Kept
+    // for 90 days so exhausted-quota months can still serve the most recent
+    // real market data instead of falling back to the model, and so the
+    // cache survives restarts/redeploys (each miss costs paid-API quota).
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS market_value_cache (
+        cache_key   VARCHAR(120) PRIMARY KEY,
+        data        JSONB        NOT NULL,
+        fetched_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+
     // ── Subscribers table (Stripe) ────────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS subscribers (
@@ -2060,6 +2085,260 @@ app.get('/api/electricity-rate', async (req, res) => {
   }
 })
 
+// ── Local Market Value (zip-level used-car pricing) ───
+// Returns the median asking price of live dealer listings for a given
+// year/make/model near a zip code, so the TCO calculator can anchor its
+// depreciation estimate to the user's actual local market instead of the
+// national model. Pro-only: requires an active subscriber email (the free
+// tier gets the regionally-adjusted model estimate client-side).
+//
+// Two free-tier providers are supported, tried in order with fallback:
+//   1. Marketcheck  (MARKETCHECK_API_KEY) — 500 calls/mo, 5/sec
+//   2. Auto.dev     (AUTO_DEV_API_KEY)    — 1,000 calls/mo
+// Monthly quotas are tracked in the api_quota Postgres table (atomic claim,
+// survives restarts; in-memory fallback without a DB) with defaults held a
+// little under the published caps for safety headroom. When a provider is
+// over quota or errors, the next provider is tried; when all are exhausted
+// the endpoint returns { price: null, source: 'quota-exhausted' } and the
+// client falls back to the depreciation model. Cached 24h per
+// year|make|model|zip3 — cache hits consume no quota.
+const MARKETCHECK_API_KEY = (process.env.MARKETCHECK_API_KEY || '').trim()
+const AUTO_DEV_API_KEY    = (process.env.AUTO_DEV_API_KEY || '').trim()
+const MARKETCHECK_MONTHLY_LIMIT = parseInt(process.env.MARKETCHECK_MONTHLY_LIMIT || '480', 10)
+const AUTO_DEV_MONTHLY_LIMIT    = parseInt(process.env.AUTO_DEV_MONTHLY_LIMIT    || '960', 10)
+const MARKET_VALUE_TTL      = 24 * 60 * 60 * 1000 // fresh window — served without a provider call
+const MARKET_VALUE_MAX_DAYS = 90                  // stale window — served only when quota/providers fail
+const MARKET_VALUE_RADIUS   = 100 // miles
+const marketValueCache      = new Map() // L1 hot cache: year|make|model|zip3 → { data, fetchedAt }
+
+// Two-tier cache: in-memory L1 for the running instance, Postgres L2 so
+// entries survive restarts/redeploys and stale data stays available for up
+// to MARKET_VALUE_MAX_DAYS. Rows past the window are removed by the daily
+// retention sweep; getMarketValueCache additionally guards against serving
+// anything older.
+async function getMarketValueCache(key) {
+  const mem = marketValueCache.get(key)
+  if (mem) return mem
+  if (!pool) return null
+  try {
+    const r = await pool.query(
+      `SELECT data, fetched_at FROM market_value_cache WHERE cache_key = $1`, [key]
+    )
+    if (r.rows.length === 0) return null
+    const entry = { data: r.rows[0].data, fetchedAt: new Date(r.rows[0].fetched_at).getTime() }
+    if (Date.now() - entry.fetchedAt > MARKET_VALUE_MAX_DAYS * 86400000) return null
+    if (marketValueCache.size > 2000) marketValueCache.clear()
+    marketValueCache.set(key, entry) // warm L1 for subsequent hits
+    return entry
+  } catch (err) {
+    console.error('[market-value] cache read error:', err.message)
+    return null
+  }
+}
+
+async function setMarketValueCache(key, data, fetchedAt) {
+  if (marketValueCache.size > 2000) marketValueCache.clear()
+  marketValueCache.set(key, { data, fetchedAt })
+  if (!pool) return
+  try {
+    await pool.query(
+      `INSERT INTO market_value_cache (cache_key, data, fetched_at)
+       VALUES ($1, $2, to_timestamp($3 / 1000.0))
+       ON CONFLICT (cache_key)
+       DO UPDATE SET data = EXCLUDED.data, fetched_at = EXCLUDED.fetched_at`,
+      [key, JSON.stringify(data), fetchedAt]
+    )
+  } catch (err) {
+    console.error('[market-value] cache write error:', err.message)
+  }
+}
+
+// Atomically claim one call against a provider's monthly quota. Returns true
+// when the call may proceed. Uses Postgres so counts survive restarts; falls
+// back to an in-process counter when no DB is configured.
+const memQuota = new Map() // provider|month → calls
+async function tryConsumeQuota(provider, limit) {
+  if (!Number.isFinite(limit) || limit <= 0) return false
+  const month = new Date().toISOString().slice(0, 7) // e.g. 2026-07
+  if (pool) {
+    try {
+      const r = await pool.query(
+        `INSERT INTO api_quota (provider, month, calls) VALUES ($1, $2, 1)
+         ON CONFLICT (provider, month)
+         DO UPDATE SET calls = api_quota.calls + 1 WHERE api_quota.calls < $3
+         RETURNING calls`,
+        [provider, month, limit]
+      )
+      return r.rows.length > 0
+    } catch (err) {
+      console.error('[api-quota] ledger error, using in-memory counter:', err.message)
+    }
+  }
+  const key = `${provider}|${month}`
+  const n = memQuota.get(key) ?? 0
+  if (n >= limit) return false
+  memQuota.set(key, n + 1)
+  return true
+}
+
+// Marketcheck also enforces 5 requests/second — keep a 1s sliding window and
+// stay one call under the cap. Purely in-memory (single Railway instance).
+let mcCallTimes = []
+function underMarketcheckRateLimit() {
+  const now = Date.now()
+  mcCallTimes = mcCallTimes.filter(t => now - t < 1000)
+  if (mcCallTimes.length >= 4) return false
+  mcCallTimes.push(now)
+  return true
+}
+
+// Active-subscriber check for pro-gated endpoints. Same criteria as
+// /api/subscription-status but read-only — no device registration.
+async function isActiveSubscriber(email) {
+  if (PRO_USERS_SERVER.has(email)) return true
+  if (!pool) return false
+  const r = await pool.query(
+    `SELECT subscription_status, current_period_end FROM subscribers WHERE email = $1`,
+    [email]
+  )
+  if (r.rows.length === 0) return false
+  const { subscription_status, current_period_end } = r.rows[0]
+  return (subscription_status === 'active' || subscription_status === 'canceling') &&
+    (!current_period_end || new Date(current_period_end) > new Date())
+}
+
+// Median + quartiles over listing prices, ignoring junk (missing / <$500 / >$500k)
+function priceStats(prices) {
+  const clean = prices.filter(p => Number.isFinite(p) && p >= 500 && p <= 500000).sort((a, b) => a - b)
+  if (clean.length === 0) return null
+  const q = f => clean[Math.min(clean.length - 1, Math.floor(f * clean.length))]
+  return {
+    price: Math.round(q(0.5)),
+    low:   Math.round(q(0.25)),
+    high:  Math.round(q(0.75)),
+    sampleSize: clean.length,
+  }
+}
+
+async function fetchMarketcheckListings(year, make, model, zip) {
+  const url = new URL('https://mc-api.marketcheck.com/v2/search/car/active')
+  url.searchParams.set('api_key', MARKETCHECK_API_KEY)
+  url.searchParams.set('year', String(year))
+  url.searchParams.set('make', make)
+  url.searchParams.set('model', model)
+  url.searchParams.set('zip', zip)
+  url.searchParams.set('radius', String(MARKET_VALUE_RADIUS))
+  url.searchParams.set('rows', '50')
+  url.searchParams.set('start', '0')
+  const r = await fetch(url.toString(), { signal: AbortSignal.timeout(8000) })
+  if (!r.ok) throw new Error(`Marketcheck responded ${r.status}`)
+  const json = await r.json()
+  const prices = (json.listings ?? []).map(l => Number(l.price))
+  return { stats: priceStats(prices), provider: 'marketcheck' }
+}
+
+async function fetchAutoDevListings(year, make, model, zip) {
+  const url = new URL('https://auto.dev/api/listings')
+  url.searchParams.set('apikey', AUTO_DEV_API_KEY)
+  url.searchParams.set('year_min', String(year))
+  url.searchParams.set('year_max', String(year))
+  url.searchParams.set('make', make)
+  url.searchParams.set('model', model)
+  url.searchParams.set('zip', zip)
+  url.searchParams.set('radius', String(MARKET_VALUE_RADIUS))
+  const r = await fetch(url.toString(), { signal: AbortSignal.timeout(8000) })
+  if (!r.ok) throw new Error(`Auto.dev responded ${r.status}`)
+  const json = await r.json()
+  const prices = (json.records ?? []).map(l =>
+    Number.isFinite(l.priceUnformatted) ? l.priceUnformatted : Number(String(l.price ?? '').replace(/[^0-9.]/g, ''))
+  )
+  return { stats: priceStats(prices), provider: 'autodev' }
+}
+
+app.post('/api/market-value', async (req, res) => {
+  const body  = req.body ?? {}
+  const zip   = String(body.zip ?? '').trim()
+  const make  = String(body.make ?? '').trim()
+  const model = String(body.model ?? '').trim()
+  const year  = parseInt(body.year, 10)
+  const email = normalizeEmail(body.email || '')
+
+  if (!/^\d{5}$/.test(zip)) return res.status(400).json({ error: 'zip must be a 5-digit US zip code' })
+  if (!Number.isFinite(year) || year < 1981 || year > new Date().getFullYear() + 1) {
+    return res.status(400).json({ error: 'invalid year' })
+  }
+  // Only accept real make/model pairs that exist in the vehicle database
+  if (!VEHICLES[make]?.[model]) return res.status(400).json({ error: 'Unknown make/model' })
+
+  const noKey = !MARKETCHECK_API_KEY && !AUTO_DEV_API_KEY
+  if (noKey) return res.json({ price: null, source: 'no-key', zip })
+
+  // Pro-only: live listing data spends limited third-party quota, so it is
+  // reserved for active subscribers. Same "don't leak account state" shape
+  // as /api/subscription-status — invalid email and non-subscriber both get
+  // the plain fallback response.
+  try {
+    if (!isValidEmail(email) || !(await isActiveSubscriber(email))) {
+      return res.json({ price: null, source: 'not-subscribed', zip })
+    }
+  } catch (err) {
+    console.error('[market-value] subscriber check error:', err.message)
+    return res.json({ price: null, source: 'error', zip })
+  }
+
+  // Cache on the 3-digit zip prefix — a ~100mi search radius makes finer
+  // granularity pointless, keeps the cache small, and stretches the quota.
+  const cacheKey = `${year}|${make}|${model}|${zip.slice(0, 3)}`
+  const now = Date.now()
+  const cached = await getMarketValueCache(cacheKey)
+  const cacheAgeDays = cached ? Math.floor((now - cached.fetchedAt) / 86400000) : null
+  if (cached && now - cached.fetchedAt < MARKET_VALUE_TTL) {
+    return res.json({ ...cached.data, source: 'cache', ageDays: cacheAgeDays, zip })
+  }
+
+  // Provider chain: each is skipped when unconfigured, over monthly quota, or
+  // (Marketcheck) over the per-second cap; a provider that errors falls
+  // through to the next. Quota is claimed before the call — provider-side
+  // accounting counts failed requests too, so ours must as well.
+  let result = null
+  let exhausted = false
+  if (!result && MARKETCHECK_API_KEY) {
+    if (underMarketcheckRateLimit() && await tryConsumeQuota('marketcheck', MARKETCHECK_MONTHLY_LIMIT)) {
+      try {
+        result = await fetchMarketcheckListings(year, make, model, zip)
+      } catch (err) {
+        console.error('[market-value] Marketcheck fetch error:', err.message)
+      }
+    } else {
+      exhausted = true
+    }
+  }
+  if (!result && AUTO_DEV_API_KEY) {
+    if (await tryConsumeQuota('autodev', AUTO_DEV_MONTHLY_LIMIT)) {
+      try {
+        result = await fetchAutoDevListings(year, make, model, zip)
+      } catch (err) {
+        console.error('[market-value] Auto.dev fetch error:', err.message)
+      }
+    } else {
+      exhausted = true
+    }
+  }
+
+  if (!result) {
+    // Quota spent or providers down — serve the most recent data we have
+    // (up to MARKET_VALUE_MAX_DAYS old, age-stamped) before giving up.
+    if (cached) return res.json({ ...cached.data, source: 'stale-cache', ageDays: cacheAgeDays, zip })
+    return res.json({ price: null, source: exhausted ? 'quota-exhausted' : 'error', zip })
+  }
+
+  const data = result.stats
+    ? { ...result.stats, radiusMiles: MARKET_VALUE_RADIUS }
+    : { price: null, sampleSize: 0, radiusMiles: MARKET_VALUE_RADIUS }
+  await setMarketValueCache(cacheKey, data, now)
+  return res.json({ ...data, source: result.provider, ageDays: 0, zip })
+})
+
 // ── Serve Vite build ──────────────────────────────────
 app.use(express.static(join(__dirname, 'dist'), {
   // Long-lived cache for hashed assets (JS chunks, CSS). index.html uses
@@ -2087,6 +2366,7 @@ async function runRetentionSweep() {
     await pool.query(`DELETE FROM bonus_credits WHERE updated_at < NOW() - INTERVAL '365 days'`)
     await pool.query(`DELETE FROM vehicle_searches WHERE created_at < NOW() - INTERVAL '${MARKET_RETENTION_DAYS} days'`)
     await pool.query(`DELETE FROM subscriber_devices WHERE last_seen < NOW() - INTERVAL '${DEVICE_EXPIRY_DAYS} days'`)
+    await pool.query(`DELETE FROM market_value_cache WHERE fetched_at < NOW() - INTERVAL '${MARKET_VALUE_MAX_DAYS} days'`)
     await pool.query(`DELETE FROM nhtsa_cache WHERE fetched_at < NOW() - INTERVAL '30 days'`)
   } catch (err) {
     console.error('[retention] daily sweep error:', err.message)

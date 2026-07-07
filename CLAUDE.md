@@ -108,6 +108,7 @@ The Express server (`server.js`) handles payments and subscription state. It ser
 | `GET /api/market-analytics` | Public aggregate rankings — top vehicles nationally and by state (`?state=CA`) |
 | `GET /api/insights/market` | **Protected** full per-state insights export (requires `x-api-key`) — the sellable dataset |
 | `GET /api/electricity-rate?zip=XXXXX` | Zip-code-level residential $/kWh from OpenEI URDB; cached 30 days per zip; returns `null` rate when key absent or zip not found |
+| `POST /api/market-value` | **Pro-only** (requires active subscriber email in body). Median local dealer asking price (plus quartiles + sample size) for a year/make/model within ~100 mi of a zip, via the Marketcheck or Auto.dev listings API with monthly-quota tracking and provider fallback; cached per year/make/model/zip3 in the `market_value_cache` Postgres table — served fresh for 24h, refreshed when quota allows, and served stale (age-stamped `ageDays`) for up to 90 days when quota is exhausted; returns `null` price when not subscribed, no key configured, or no data available |
 | `POST /api/verify-promo-code` | Verify/redeem a promo code — env `PROMO_CODES` (unlimited) or the capped beta code (50 browsers, 30-day access) |
 | `POST /api/stripe-webhook` | Stripe webhook (raw body required) |
 | `GET /api/health` | Health check — 200 when the server is up (pings Postgres when configured, 503 if unreachable); used by Railway's deploy healthcheck and the smoke test |
@@ -129,6 +130,9 @@ Subscribers are stored in PostgreSQL. Device access is limited to 2 devices per 
 - `PROMO_CODES` — (optional) comma-separated promo codes granting unlimited, permanent Pro access (exact match)
 - `BETA_PROMO_CODE` — (optional) overrides the capped beta promo code (default `BETAPEDAL50`, case-insensitive). Server-enforced via the `promo_redemptions` table: max 50 distinct browsers ever, each grant expiring 30 days after redemption
 - `OPENEI_API_KEY` — (optional) OpenEI Utility Rate Database key; enables zip-code-level residential electricity rates via `GET /api/electricity-rate?zip=XXXXX` (falls back to static state-level table without it)
+- `MARKETCHECK_API_KEY` — (optional) Marketcheck API key; primary provider for `POST /api/market-value` (free tier: 500 calls/mo, 5/sec)
+- `AUTO_DEV_API_KEY` — (optional) Auto.dev listings API key; fallback provider for `POST /api/market-value` when Marketcheck is unconfigured, over quota, or errors (free tier: 1,000 calls/mo). Without either key the calculator falls back to the regionally-adjusted depreciation model
+- `MARKETCHECK_MONTHLY_LIMIT` / `AUTO_DEV_MONTHLY_LIMIT` — (optional) monthly call budgets for the two providers (defaults 480 / 960 — slightly under the published free-tier caps for headroom). Counters live in the `api_quota` Postgres table, keyed by provider+month, so they survive restarts; when a provider's budget is spent it is skipped and the next fallback is used
 - `RESEND_API_KEY` — (optional) Resend API key; enables transactional thank-you emails
 - `EMAIL_FROM` — (optional) From address for transactional email (default: `Cash Pedal <hello@cashpedal.io>`; the domain must be verified in Resend)
 - `HUBSPOT_ACCESS_TOKEN` — (optional) HubSpot private-app token; enables CRM sync of leads and purchases (needs `crm.objects.contacts` and `crm.objects.deals` read/write scopes)
@@ -202,6 +206,7 @@ The root directory still contains the original Streamlit implementation (`.py` f
 ## Key Notes for Development
 
 - Most calculation logic lives **client-side** in React components.
+- The depreciation estimator (`estimateCurrentValue` in `src/utils/vehicleCosts.js`) is regionally aware: pass the resolved 2-letter state as the sixth argument to apply the state demand premium plus segment×region adjustments (truck country, sun/snow belt, EV-friendly states, salt-belt corrosion age discount). With no state it reproduces the national model exactly. For **active subscribers**, when a zip is resolved and a provider key is configured, the TCO calculator overlays live local listing medians from `POST /api/market-value` (clamped to ±35% of the model's dealer estimate); free users and exhausted-quota months transparently fall back to the model.
 - Vehicle data is loaded from `src/data/vehicles.json` (static JSON, no external fetch).
 - **Any change to `vehicles.json` must pass `python3 scripts/validate_vehicle_data.py`** (runs in CI). Verified-legitimate pricing anomalies are accepted via `--write-baseline`; a monthly scheduled workflow flags models missing the latest model year. See `docs/VEHICLE_DATA_MAINTENANCE.md` for the full update process and data source options.
 - The WheelZard page embeds an external custom GPT via iframe/link — no server-side AI calls in this repo.

@@ -20,6 +20,18 @@ import {
   resolveLocation,
   getLocalLaborRate,
   STATE_LABOR_RATES,
+  STATE_REG_FEE,
+  STATE_VLF,
+  STATE_VLF_BY_AGE,
+  STATE_WEIGHT_REG,
+  STATE_AGE_REG,
+  STATE_EV_FEE,
+  STATE_HYBRID_FEE,
+  STATE_INSPECTION,
+  computeAnnualRegistration,
+  computeAnnualCompliance,
+  computeAnnualRegFees,
+  projectRegistrationByYear,
 } from '../src/utils/vehicleCosts.js'
 
 // Benchmark basis: 13,000 mi/yr, national (no state), averaged over a
@@ -428,6 +440,85 @@ loc(getLocalWearProfile('84060', 'UT').profile === 'mountain', 'Park City stays 
 // Original calibration ZIPs must be unaffected by the expansion
 loc(getLocalWearProfile('85001', 'AZ').profile === 'desert' && getLocalWearProfile('48201', 'MI').profile === 'pothole', 'original zones unchanged (Phoenix desert, Detroit pothole)')
 
+// ── Part 9: registration & compliance — state schedules, EV fees, smog ────
+// Spot-checks the annual registration model against published DMV totals and
+// verifies structural behavior: EV/hybrid surcharges, value-fee decline with
+// depreciation, age brackets, and inspection cadence with new-car exemptions.
+console.log('\nPART 9 — Registration & compliance (state fees, EV surcharges, inspections)\n')
+
+let failReg = 0
+const rg = (cond, label) => { console.log(`  ${cond ? '✓' : '✗'} ${label}`); if (!cond) failReg++ }
+const between = (v, lo, hi) => v >= lo && v <= hi
+
+// Spot benchmarks: annual registration (incl. value fees) vs published DMV
+// fee-calculator totals for representative cases, gas vehicle.
+const caNew = computeAnnualRegistration('CA', 40000, { segment: 'sedan', vehicleAge: 0 })
+rg(between(caNew, 450, 700), `CA new $40k sedan ≈ $${caNew}/yr (reg + VLF + TIF; DMV ~$550)`)
+const coNew = computeAnnualRegistration('CO', 40000, { segment: 'sedan', vehicleAge: 0 })
+rg(between(coNew, 700, 1000), `CO new $40k sedan ≈ $${coNew}/yr (ownership tax 2.1% yr-1; ~$850)`)
+const azNew = computeAnnualRegistration('AZ', 45000, { segment: 'suv', vehicleAge: 0 })
+rg(between(azNew, 650, 950), `AZ new $45k SUV ≈ $${azNew}/yr (VLT on 60% of value; ~$790)`)
+const txUsed = computeAnnualRegistration('TX', 30000, { segment: 'sedan', vehicleAge: 3 })
+rg(between(txUsed, 40, 90), `TX $30k sedan ≈ $${txUsed}/yr (flat $50.75 + county)`)
+const gaUsed = computeAnnualRegistration('GA', 30000, { segment: 'sedan', vehicleAge: 3 })
+rg(between(gaUsed, 15, 45), `GA $30k sedan ≈ $${gaUsed}/yr (flat $20 tag)`)
+const mtOld = computeAnnualRegistration('MT', 8000, { segment: 'suv', vehicleAge: 12 })
+rg(between(mtOld, 20, 60), `MT 12-yr-old vehicle ≈ $${mtOld}/yr (age-bracket $28)`)
+const mtLux = computeAnnualRegistration('MT', 200000, { segment: 'luxury', vehicleAge: 0 })
+rg(mtLux >= 1000, `MT $200k vehicle ≈ $${mtLux}/yr (luxury fee $825 applies)`)
+
+// Weight-based base fees: FL heavy > FL light
+rg(computeAnnualRegistration('FL', 25000, { segment: 'truck' }) >
+   computeAnnualRegistration('FL', 25000, { segment: 'compact' }),
+   'FL truck registration > FL compact (weight-based schedule)')
+
+// EV / hybrid road-usage surcharges
+const txGas = computeAnnualRegistration('TX', 45000, { segment: 'electric' })
+const txEV  = computeAnnualRegistration('TX', 45000, { segment: 'electric', isEV: true })
+rg(txEV - txGas === 200, `TX EV surcharge = $${txEV - txGas} (statute: $200)`)
+const gaEV = computeAnnualRegistration('GA', 45000, { segment: 'electric', isEV: true }) -
+             computeAnnualRegistration('GA', 45000, { segment: 'electric' })
+rg(between(gaEV, 210, 220), `GA EV surcharge ≈ $${gaEV} (statute: ~$216)`)
+rg(computeAnnualRegistration('NY', 45000, { segment: 'electric', isEV: true }) ===
+   computeAnnualRegistration('NY', 45000, { segment: 'electric' }),
+   'NY charges no EV surcharge')
+const ncHybrid = computeAnnualRegistration('NC', 35000, { segment: 'hybrid', isHybrid: true }) -
+                 computeAnnualRegistration('NC', 35000, { segment: 'hybrid' })
+rg(between(ncHybrid, 85, 95), `NC hybrid surcharge ≈ $${ncHybrid} (statute: $90)`)
+
+// Inspection / smog compliance
+rg(computeAnnualCompliance('CA', { vehicleAge: 0 }) === 0, 'CA new car exempt from smog (8-yr exemption)')
+rg(computeAnnualCompliance('CA', { vehicleAge: 10 }) === 30, 'CA 10-yr-old car ≈ $30/yr (biennial $60 smog)')
+rg(computeAnnualCompliance('CA', { isEV: true, vehicleAge: 10 }) === 0, 'CA EV exempt from smog')
+rg(computeAnnualCompliance('NH', { vehicleAge: 3 }) === 40, 'NH annual safety inspection $40')
+rg(computeAnnualCompliance('PA', { vehicleAge: 5 }) === 68, 'PA safety $40 + weighted emissions ≈ $68/yr')
+rg(computeAnnualCompliance('FL', { vehicleAge: 10 }) === 0, 'FL has no inspection program → $0')
+rg(computeAnnualCompliance('MO', { vehicleAge: 1 }) === 0, 'MO newer car exempt from safety + emissions')
+rg(computeAnnualCompliance('TX', { vehicleAge: 5, isEV: true }) <
+   computeAnnualCompliance('TX', { vehicleAge: 5 }), 'TX EV skips emissions but pays inspection fee')
+
+// Multi-year projection: flat-fee states must NOT decay; value-fee states must
+const txProj = projectRegistrationByYear('TX', 32000, 8, { make: 'Toyota', model: 'Camry', vehicleAge: 0, segment: 'sedan' })
+rg(txProj[7] >= txProj[0], `TX projection stays flat (yr1 $${txProj[0]} → yr8 $${txProj[7]}, no phantom 5%/yr decay)`)
+const caProj = projectRegistrationByYear('CA', 45000, 10, { make: 'Toyota', model: 'Camry', vehicleAge: 0, segment: 'sedan' })
+rg(caProj[9] < caProj[0] * 0.75, `CA projection declines with value (yr1 $${caProj[0]} → yr10 $${caProj[9]})`)
+rg(caProj.length === 10 && txProj.length === 8, 'projection horizon lengths correct')
+
+// Structural: every auxiliary table key is a real state; totals stay sane
+const validStates = new Set(Object.keys(STATE_REG_FEE))
+const auxKeys = [
+  ...Object.keys(STATE_VLF), ...Object.keys(STATE_VLF_BY_AGE),
+  ...Object.keys(STATE_WEIGHT_REG), ...Object.keys(STATE_AGE_REG),
+  ...Object.keys(STATE_EV_FEE), ...Object.keys(STATE_HYBRID_FEE),
+  ...Object.keys(STATE_INSPECTION),
+]
+rg(auxKeys.every(k => validStates.has(k)), 'all auxiliary fee-table keys are valid states')
+const outOfRange = [...validStates].filter(st => {
+  const v = computeAnnualRegFees(st, 40000, { segment: 'sedan', vehicleAge: 0 })
+  return !between(v, 15, 1250)
+})
+rg(outOfRange.length === 0, `new $40k sedan lands in $15-$1,250/yr in every state${outOfRange.length ? ` (out: ${outOfRange.join(',')})` : ''}`)
+
 console.log('\n' + '═'.repeat(78))
 console.log(`  RESULT: Part1 segment-accuracy fails: ${failSegment}/${segLines.length}`)
 console.log(`          Part2 table-sanity fails:     ${failTable}/${segLines.length}`)
@@ -437,6 +528,7 @@ console.log(`          Part5 high-mileage fails:     ${failHM}`)
 console.log(`          Part6 known-issue fails:      ${failKI}`)
 console.log(`          Part7 trim-stress fails:      ${failTS}`)
 console.log(`          Part8 location fails:         ${failLoc}`)
+console.log(`          Part9 registration fails:     ${failReg}`)
 console.log('═'.repeat(78))
 
-process.exit(failSegment > 0 || failTerrain > 0 || failHM > 0 || failKI > 0 || failTS > 0 || failLoc > 0 ? 1 : 0)
+process.exit(failSegment > 0 || failTerrain > 0 || failHM > 0 || failKI > 0 || failTS > 0 || failLoc > 0 || failReg > 0 ? 1 : 0)

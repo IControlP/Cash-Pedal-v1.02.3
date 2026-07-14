@@ -44,6 +44,7 @@ const BONUS_CREDITS = 5
 const USAGE_FEATURES = new Set([
   'visit_tco', 'visit_compare', 'visit_salary', 'visit_checklist',
   'tco_detailed', 'checklist_generated', 'salary_pro', 'compare_unlock',
+  'salary_add_to_compare',
 ])
 const USAGE_GATES = new Set(['free', 'bonus', 'subscribed'])
 

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { safeGet, safeSet } from '../utils/safeStorage'
+import { safeUUID } from '../utils/safeId'
 import { Link, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -238,6 +239,14 @@ const RECOMMENDATION_REASONING = {
 
 // Shared cost-breakdown lines for a matched vehicle — used by both the
 // recommended pick and the matching-vehicles grid so the two stay in sync.
+// Share of the entered gross annual salary this vehicle's year-1 costs
+// (financing + fuel + insurance + maintenance + registration) would consume.
+function pctOfIncome(v, salary) {
+  const s = Number(salary)
+  if (!s) return null
+  return Math.round((v.annualTotal / s) * 1000) / 10
+}
+
 function vehicleCostLines(v, rate, loanTerm) {
   const financeLabel = `Financing (80% · ${loanTerm}mo · ${rate}%)`
   if (v.fiveYear) {
@@ -353,6 +362,15 @@ export default function SalaryCalculator() {
   const [carFilterCategory, setCarFilterCategory] = useState('all')
   const [pickYear, setPickYear] = useState(CURRENT_YEAR)
   const [sortBy, setSortBy] = useState('price')
+
+  // Comparison hand-off — mirrors TCOCalculator's "Add to Comparison" queue
+  // (same cashpedal_tco_for_comparison localStorage key MultiVehicleComparison
+  // reads on mount), plus a session-only set so a card can show "Added" instead
+  // of silently re-queuing the same vehicle on repeat clicks.
+  const [comparisonCount, setComparisonCount] = useState(() => {
+    try { return JSON.parse(safeGet('cashpedal_tco_for_comparison') || '[]').length } catch { return 0 }
+  })
+  const [addedToCompare, setAddedToCompare] = useState(() => new Set())
 
   // Buy inputs
   const [vehiclePrice, setVehiclePrice] = useState(30000)
@@ -730,6 +748,48 @@ export default function SalaryCalculator() {
   }, [sortedGridVehicles, recommendedVehicle, sortBy])
 
   const downAmount = vehiclePrice * (downPct / 100)
+
+  // Queue a matched vehicle into the same comparison hand-off TCOCalculator
+  // uses — MultiVehicleComparison imports this on mount and clears it after.
+  function addVehicleToComparison(v) {
+    const key = `${v.make}|${v.model}|${v.year}`
+    if (addedToCompare.has(key)) return
+
+    const downPayment = v.fiveYear ? v.fiveYear.downPayment : Math.round(v.basePrice * 0.20)
+    const resaleValue = v.fiveYear ? v.fiveYear.resaleValue : null
+    const valueRetentionPct = resaleValue != null ? Math.round((resaleValue / v.basePrice) * 100) : null
+
+    const entry = {
+      id: safeUUID(),
+      name: `${v.year} ${v.make} ${v.model}`,
+      addedAt: new Date().toISOString(),
+      isLease: false,
+      price: v.basePrice,
+      downPayment,
+      loanTerm,
+      rate,
+      ownershipYears: 5,
+      totalAnnualCost: v.annualTotal,
+      totalOwnershipCost: v.fiveYear ? v.fiveYear.total : v.annualTotal * 5,
+      make: v.make, model: v.model, year: v.year,
+      mpgCombined: null,
+      cargoSqFt: v.specs.cargo_cu_ft ?? null,
+      seats: v.specs.seats ?? null,
+      isEV: v.is_ev,
+      valueRetentionPct,
+    }
+
+    let existing = []
+    try {
+      const parsed = JSON.parse(safeGet('cashpedal_tco_for_comparison') || '[]')
+      if (Array.isArray(parsed)) existing = parsed
+    } catch { /* start fresh on malformed data */ }
+    const updated = [...existing, entry].slice(-5)
+    safeSet('cashpedal_tco_for_comparison', JSON.stringify(updated))
+    setComparisonCount(updated.length)
+    setAddedToCompare(prev => new Set(prev).add(key))
+    trackUsage('salary_add_to_compare')
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">
@@ -1644,6 +1704,11 @@ export default function SalaryCalculator() {
                       <div className="text-left sm:text-right shrink-0">
                         <p className="font-display font-bold text-white text-2xl tabular-nums">{fmt(recommendedVehicle.basePrice)}</p>
                         <span className={`text-[11px] font-semibold ${t.color}`}>{t.label}</span>
+                        {pctOfIncome(recommendedVehicle, knownSalary) != null && (
+                          <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                            {pctOfIncome(recommendedVehicle, knownSalary)}% of gross income/yr
+                          </p>
+                        )}
                       </div>
                     </div>
                     <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-4">
@@ -1670,9 +1735,33 @@ export default function SalaryCalculator() {
                         <span className="font-display font-bold tabular-nums" style={{ color: 'var(--accent)' }}>{fmt(b.totalVal)}</span>
                       </div>
                     </div>
+                    <button
+                      onClick={() => addVehicleToComparison(recommendedVehicle)}
+                      disabled={addedToCompare.has(`${recommendedVehicle.make}|${recommendedVehicle.model}|${recommendedVehicle.year}`)}
+                      className="btn-ghost text-xs w-full mt-4 flex items-center justify-center gap-1.5 disabled:opacity-60"
+                    >
+                      {addedToCompare.has(`${recommendedVehicle.make}|${recommendedVehicle.model}|${recommendedVehicle.year}`)
+                        ? '✓ Added to Comparison'
+                        : <>＋ Add to Comparison</>}
+                    </button>
                   </div>
                 )
               })()}
+
+              {comparisonCount > 0 && (
+                <div className="flex items-center justify-between rounded-lg px-3 py-2.5 mb-6 text-xs"
+                  style={{ background: 'rgba(200,255,0,0.06)', border: '1px solid rgba(200,255,0,0.2)' }}>
+                  <span style={{ color: 'var(--accent)' }} className="font-semibold">
+                    {comparisonCount} car{comparisonCount !== 1 ? 's' : ''} queued for comparison
+                  </span>
+                  {comparisonCount >= 2 && (
+                    <Link to="/compare"
+                      className="font-bold text-white hover:text-[var(--accent)] transition-colors ml-3 shrink-0">
+                      View Comparison →
+                    </Link>
+                  )}
+                </div>
+              )}
 
               {filteredVehicles.length === 0 ? (
                 <div className="card text-center py-8">
@@ -1723,7 +1812,12 @@ export default function SalaryCalculator() {
                             </p>
                           )}
                           <p className="font-display font-bold text-white tabular-nums text-lg mt-1.5">{fmt(v.basePrice)}</p>
-                          <span className={`text-xs font-semibold ${tierStyles.color} mb-1`}>{tierStyles.label}</span>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className={`text-xs font-semibold ${tierStyles.color}`}>{tierStyles.label}</span>
+                            {pctOfIncome(v, knownSalary) != null && (
+                              <span className="text-[11px] text-[var(--text-muted)]">{pctOfIncome(v, knownSalary)}% of income/yr</span>
+                            )}
+                          </div>
                           <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1.5">
                             <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                               {b.header}
@@ -1745,6 +1839,13 @@ export default function SalaryCalculator() {
                               <span className="text-sm font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(b.totalVal)}</span>
                             </div>
                           </div>
+                          <button
+                            onClick={() => addVehicleToComparison(v)}
+                            disabled={addedToCompare.has(`${v.make}|${v.model}|${v.year}`)}
+                            className="btn-ghost text-xs w-full mt-2 py-1.5 flex items-center justify-center gap-1.5 disabled:opacity-60"
+                          >
+                            {addedToCompare.has(`${v.make}|${v.model}|${v.year}`) ? '✓ Added' : <>＋ Add to Compare</>}
+                          </button>
                         </div>
                       )
                     })}

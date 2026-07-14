@@ -161,13 +161,23 @@ const CURRENT_YEAR = String(
   )
 )
 
-// Every model year present anywhere in the catalog, newest first — powers the
-// "Model Year" selector for the matched-vehicles pick list.
-const CATALOG_YEARS = [...new Set(
-  Object.values(VEHICLES).flatMap(make =>
-    Object.values(make).flatMap(model => Object.keys(model.trims_by_year || {}))
+// Model years with broad catalog coverage, newest first — powers the "Model
+// Year" selector for the matched-vehicles pick list. A handful of models
+// carry a few sparse legacy year entries (e.g. a single discontinued trim
+// dating back to 2008) alongside the ~200-model-deep 2015+ range; those
+// near-empty years would make for a useless dropdown option, so years below
+// a minimum-coverage threshold are dropped rather than hardcoding a cutoff year.
+const CATALOG_YEARS = (() => {
+  const counts = {}
+  Object.values(VEHICLES).forEach(make =>
+    Object.values(make).forEach(model =>
+      Object.keys(model.trims_by_year || {}).forEach(y => { counts[y] = (counts[y] || 0) + 1 })
+    )
   )
-)].sort((a, b) => Number(b) - Number(a))
+  return Object.keys(counts)
+    .filter(y => counts[y] >= 20)
+    .sort((a, b) => Number(b) - Number(a))
+})()
 
 const SALARY_LUXURY_MAKES = new Set([
   'BMW', 'Mercedes-Benz', 'Audi', 'Porsche', 'Lexus', 'Acura', 'Infiniti',

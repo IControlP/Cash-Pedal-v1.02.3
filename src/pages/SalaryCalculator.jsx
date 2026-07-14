@@ -170,6 +170,53 @@ function classifyCarCategory(make, type, basePrice) {
   return basePrice <= 30000 ? 'economy' : 'other'
 }
 
+const TIER_STYLES = {
+  conservative: { color: 'text-green-400', label: '✓ Conservative' },
+  comfortable:  { color: 'text-[var(--accent)]', label: 'Comfortable' },
+  aggressive:   { color: 'text-amber-400', label: '⚠ Stretched' },
+}
+
+const RECOMMENDATION_REASONING = {
+  conservative: 'The most vehicle you can get in this category while keeping total costs at or below 10% of your gross income — the safest tier of the 20/4/10 rule.',
+  comfortable: "Nothing in this category fits the safest 10% tier at your income — this is the top pick within the comfortable 15% tier.",
+  aggressive: "Nothing in this category fits the safest or comfortable tiers at your income — this is the top pick within the stretched 20% tier. A lower category or higher salary would give you more room.",
+}
+
+// Shared cost-breakdown lines for a matched vehicle — used by both the
+// recommended pick and the matching-vehicles grid so the two stay in sync.
+function vehicleCostLines(v, rate) {
+  const financeLabel = `Financing (80% · 5yr · ${rate}%)`
+  if (v.fiveYear) {
+    return {
+      header: 'Est. 5-year net cost',
+      lines: [
+        { label: financeLabel, val: v.fiveYear.financing },
+        { label: 'Down payment (20%)', val: v.fiveYear.downPayment },
+        { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.fiveYear.fuel },
+        { label: 'Insurance', val: v.fiveYear.insurance },
+        { label: 'Maintenance', val: v.fiveYear.maintenance },
+        { label: 'Registration', val: v.fiveYear.registration },
+      ],
+      credit: { label: 'Est. resale value (yr 5)', val: v.fiveYear.resaleValue },
+      totalLabel: 'Net cost (5-yr)',
+      totalVal: v.fiveYear.total,
+    }
+  }
+  return {
+    header: 'Est. annual costs',
+    lines: [
+      { label: financeLabel, val: v.annualFinancing },
+      { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.annualFuel },
+      { label: 'Insurance', val: v.annualInsurance },
+      { label: 'Maintenance', val: v.annualMaintenance },
+      { label: 'Registration', val: v.annualRegistration },
+    ],
+    credit: null,
+    totalLabel: 'Total/yr',
+    totalVal: v.annualTotal,
+  }
+}
+
 // ── Paywall constants ─────────────────────────────────
 const FREE_SALARY_PRO_LIMIT = 5
 const LS_SALARY_PRO_COUNT   = 'cashpedal_salary_pro_count'
@@ -537,6 +584,28 @@ export default function SalaryCalculator() {
     if (carFilterCategory === 'all') return matchedVehicles
     return matchedVehicles.filter(v => v.category === carFilterCategory)
   }, [matchedVehicles, carFilterCategory])
+
+  // Single "best fit" pick: the priciest vehicle in the safest tier that still
+  // fits (conservative → comfortable → aggressive), within the active filter.
+  // filteredVehicles is already sorted by basePrice desc, so .find gives the
+  // top-of-tier vehicle directly.
+  const recommendedVehicle = useMemo(() => {
+    if (!filteredVehicles.length) return null
+    return filteredVehicles.find(v => v.tier === 'conservative')
+      ?? filteredVehicles.find(v => v.tier === 'comfortable')
+      ?? filteredVehicles.find(v => v.tier === 'aggressive')
+      ?? null
+  }, [filteredVehicles])
+
+  // Top 20 by price, but guaranteed to include the recommended pick — it's
+  // often the safest (cheaper) option and can otherwise fall outside the
+  // price-sorted top 20 dominated by pricier "stretched"-tier vehicles.
+  const gridVehicles = useMemo(() => {
+    const top20 = filteredVehicles.slice(0, 20)
+    if (!recommendedVehicle) return top20
+    const alreadyShown = top20.some(v => v.make === recommendedVehicle.make && v.model === recommendedVehicle.model)
+    return alreadyShown ? top20 : [recommendedVehicle, ...top20.slice(0, 19)]
+  }, [filteredVehicles, recommendedVehicle])
 
   const downAmount = vehiclePrice * (downPct / 100)
 
@@ -1365,6 +1434,56 @@ export default function SalaryCalculator() {
                 </div>
               </div>
 
+              {recommendedVehicle && (() => {
+                const b = vehicleCostLines(recommendedVehicle, rate)
+                const t = TIER_STYLES[recommendedVehicle.tier]
+                return (
+                  <div className="card border-[var(--accent)] p-5 mb-6" style={{ background: 'rgba(200,255,0,0.04)' }}>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-widest text-[var(--accent)] mb-1">
+                          ★ Recommended for You
+                        </p>
+                        <p className="font-display font-bold text-white text-xl leading-tight">
+                          {recommendedVehicle.year} {recommendedVehicle.make} {recommendedVehicle.model}
+                        </p>
+                        <p className="text-xs text-[var(--text-muted)] capitalize mt-0.5">
+                          {recommendedVehicle.type.replace('_', ' ')}{recommendedVehicle.is_ev ? ' · EV' : ''}
+                        </p>
+                      </div>
+                      <div className="text-left sm:text-right shrink-0">
+                        <p className="font-display font-bold text-white text-2xl tabular-nums">{fmt(recommendedVehicle.basePrice)}</p>
+                        <span className={`text-[11px] font-semibold ${t.color}`}>{t.label}</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-4">
+                      {RECOMMENDATION_REASONING[recommendedVehicle.tier]}
+                    </p>
+                    <div className="border-t border-[var(--border)] pt-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">{b.header}</p>
+                      <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5">
+                        {b.lines.map(({ label, val }) => (
+                          <div key={label} className="flex items-center justify-between gap-2 text-xs">
+                            <span className="text-[var(--text-muted)]">{label}</span>
+                            <span className="text-white font-medium tabular-nums shrink-0">{fmt(val)}</span>
+                          </div>
+                        ))}
+                        {b.credit && (
+                          <div className="flex items-center justify-between gap-2 text-xs">
+                            <span className="text-[var(--text-muted)]">{b.credit.label}</span>
+                            <span className="text-green-400 font-medium tabular-nums shrink-0">− {fmt(b.credit.val)}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between border-t border-[var(--border)] pt-2 mt-2">
+                        <span className="text-sm font-bold text-white">{b.totalLabel}</span>
+                        <span className="font-display font-bold tabular-nums" style={{ color: 'var(--accent)' }}>{fmt(b.totalVal)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+
               {filteredVehicles.length === 0 ? (
                 <div className="card text-center py-8">
                   <p className="text-[var(--text-muted)] text-sm">No vehicles in this category fit your current budget.</p>
@@ -1372,26 +1491,37 @@ export default function SalaryCalculator() {
                 </div>
               ) : (
                 <>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
+                    All matches
+                  </p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                    {filteredVehicles.slice(0, 20).map(v => {
-                      const tierStyles = {
-                        conservative: { color: 'text-green-400', label: '✓ Conservative' },
-                        comfortable:  { color: 'text-[var(--accent)]', label: 'Comfortable' },
-                        aggressive:   { color: 'text-amber-400', label: '⚠ Stretched' },
-                      }[v.tier]
+                    {gridVehicles.map(v => {
+                      const tierStyles = TIER_STYLES[v.tier]
+                      const b = vehicleCostLines(v, rate)
+                      const isRecommended = recommendedVehicle
+                        && v.make === recommendedVehicle.make && v.model === recommendedVehicle.model
                       return (
                         <div
                           key={`${v.make}-${v.model}`}
-                          className="card p-3 flex flex-col gap-1 hover:border-[var(--accent)] transition-all"
+                          className={`card p-3 flex flex-col gap-1 transition-all ${isRecommended ? '' : 'hover:border-[var(--accent)]'}`}
+                          style={isRecommended ? { borderColor: 'var(--accent)' } : undefined}
                         >
                           <div className="flex items-start justify-between gap-1 mb-0.5">
                             <p className="text-[11px] font-semibold text-[var(--text-muted)] leading-tight">{v.make}</p>
-                            {v.is_ev && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
-                                style={{ background: 'rgba(200,255,0,0.15)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.3)' }}>
-                                EV
-                              </span>
-                            )}
+                            <div className="flex gap-1 shrink-0">
+                              {isRecommended && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                                  style={{ background: 'var(--accent)', color: '#000' }}>
+                                  ★ Pick
+                                </span>
+                              )}
+                              {v.is_ev && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                                  style={{ background: 'rgba(200,255,0,0.15)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.3)' }}>
+                                  EV
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <p className="text-sm font-bold text-white leading-tight">{v.model}</p>
                           <p className="text-[11px] text-[var(--text-muted)] capitalize">{v.type.replace('_', ' ')}</p>
@@ -1399,36 +1529,23 @@ export default function SalaryCalculator() {
                           <span className={`text-[10px] font-semibold ${tierStyles.color} mb-1`}>{tierStyles.label}</span>
                           <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1">
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-                              {v.fiveYear ? 'Est. 5-year net cost' : 'Est. annual costs'}
+                              {b.header}
                             </p>
-                            {(v.fiveYear ? [
-                              { label: `Financing (80% · 5yr · ${rate}%)`, val: v.fiveYear.financing },
-                              { label: 'Down payment (20%)', val: v.fiveYear.downPayment },
-                              { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.fiveYear.fuel },
-                              { label: 'Insurance', val: v.fiveYear.insurance },
-                              { label: 'Maintenance', val: v.fiveYear.maintenance },
-                              { label: 'Registration', val: v.fiveYear.registration },
-                            ] : [
-                              { label: `Financing (80% · 5yr · ${rate}%)`, val: v.annualFinancing },
-                              { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.annualFuel },
-                              { label: 'Insurance', val: v.annualInsurance },
-                              { label: 'Maintenance', val: v.annualMaintenance },
-                              { label: 'Registration', val: v.annualRegistration },
-                            ]).map(({ label, val }) => (
+                            {b.lines.map(({ label, val }) => (
                               <div key={label} className="flex items-center justify-between gap-1">
                                 <span className="text-[10px] text-[var(--text-muted)] leading-tight">{label}</span>
                                 <span className="text-[10px] text-white tabular-nums shrink-0">{fmt(val)}</span>
                               </div>
                             ))}
-                            {v.fiveYear && (
+                            {b.credit && (
                               <div className="flex items-center justify-between gap-1">
-                                <span className="text-[10px] text-[var(--text-muted)] leading-tight">Est. resale value (yr 5)</span>
-                                <span className="text-[10px] text-green-400 tabular-nums shrink-0">− {fmt(v.fiveYear.resaleValue)}</span>
+                                <span className="text-[10px] text-[var(--text-muted)] leading-tight">{b.credit.label}</span>
+                                <span className="text-[10px] text-green-400 tabular-nums shrink-0">− {fmt(b.credit.val)}</span>
                               </div>
                             )}
                             <div className="flex items-center justify-between border-t border-[var(--border)] pt-1 mt-0.5">
-                              <span className="text-[10px] font-bold text-white">{v.fiveYear ? 'Net cost (5-yr)' : 'Total/yr'}</span>
-                              <span className="text-[10px] font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(v.fiveYear ? v.fiveYear.total : v.annualTotal)}</span>
+                              <span className="text-[10px] font-bold text-white">{b.totalLabel}</span>
+                              <span className="text-[10px] font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(b.totalVal)}</span>
                             </div>
                           </div>
                         </div>

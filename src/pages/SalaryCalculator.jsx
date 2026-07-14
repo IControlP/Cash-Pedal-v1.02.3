@@ -208,7 +208,7 @@ function sortVehicles(list, sortBy) {
   const sorted = [...list]
   switch (sortBy) {
     case 'value':
-      sorted.sort((a, b) => (a.fiveYear?.total ?? a.annualTotal) - (b.fiveYear?.total ?? b.annualTotal))
+      sorted.sort((a, b) => (a.ownershipCost?.total ?? a.annualTotal) - (b.ownershipCost?.total ?? b.annualTotal))
       break
     case 'cargo':
       sorted.sort((a, b) => (b.specs.cargo_cu_ft ?? 0) - (a.specs.cargo_cu_ft ?? 0))
@@ -237,8 +237,6 @@ const RECOMMENDATION_REASONING = {
   aggressive: "Nothing in this category fits the safest or comfortable tiers at your income — this is the top pick within the stretched 20% tier. A lower category or higher salary would give you more room.",
 }
 
-// Shared cost-breakdown lines for a matched vehicle — used by both the
-// recommended pick and the matching-vehicles grid so the two stay in sync.
 // Share of the entered gross annual salary this vehicle's year-1 costs
 // (financing + fuel + insurance + maintenance + registration) would consume.
 function pctOfIncome(v, salary) {
@@ -247,22 +245,25 @@ function pctOfIncome(v, salary) {
   return Math.round((v.annualTotal / s) * 1000) / 10
 }
 
+// Shared cost-breakdown lines for a matched vehicle — used by both the
+// recommended pick and the matching-vehicles grid so the two stay in sync.
 function vehicleCostLines(v, rate, loanTerm) {
   const financeLabel = `Financing (80% · ${loanTerm}mo · ${rate}%)`
-  if (v.fiveYear) {
+  if (v.ownershipCost) {
+    const yrs = v.ownershipCost.years
     return {
-      header: 'Est. 5-year net cost',
+      header: `Est. all-in cost — ${yrs} yr${yrs !== 1 ? 's' : ''}`,
       lines: [
-        { label: financeLabel, val: v.fiveYear.financing },
-        { label: 'Down payment (20%)', val: v.fiveYear.downPayment },
-        { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.fiveYear.fuel },
-        { label: 'Insurance', val: v.fiveYear.insurance },
-        { label: 'Maintenance', val: v.fiveYear.maintenance },
-        { label: 'Registration', val: v.fiveYear.registration },
+        { label: financeLabel, val: v.ownershipCost.financing },
+        { label: 'Down payment (20%)', val: v.ownershipCost.downPayment },
+        { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.ownershipCost.fuel },
+        { label: 'Insurance', val: v.ownershipCost.insurance },
+        { label: 'Maintenance', val: v.ownershipCost.maintenance },
+        { label: 'Registration', val: v.ownershipCost.registration },
       ],
-      credit: { label: 'Est. resale value (yr 5)', val: v.fiveYear.resaleValue },
-      totalLabel: 'Net cost (5-yr)',
-      totalVal: v.fiveYear.total,
+      credit: { label: `Est. resale value (yr ${yrs})`, val: v.ownershipCost.resaleValue },
+      totalLabel: `All-In Cost (${yrs}-yr)`,
+      totalVal: v.ownershipCost.total,
     }
   }
   return {
@@ -362,6 +363,7 @@ export default function SalaryCalculator() {
   const [carFilterCategory, setCarFilterCategory] = useState('all')
   const [pickYear, setPickYear] = useState(CURRENT_YEAR)
   const [sortBy, setSortBy] = useState('price')
+  const [ownershipYears, setOwnershipYears] = useState(5)
 
   // Comparison hand-off — mirrors TCOCalculator's "Add to Comparison" queue
   // (same cashpedal_tco_for_comparison localStorage key MultiVehicleComparison
@@ -649,10 +651,11 @@ export default function SalaryCalculator() {
         const annualRegistration = ops.registration * 12
         const annualOperating = ops.total * 12
 
-        // Pro: real 5-year TCO — same functions & net-cost-of-ownership formula
-        // as the TCO Calculator (financing + escalated operating costs + down
-        // payment, minus the modeled resale value at year 5).
-        let fiveYear = null
+        // Pro: real all-in TCO over the chosen ownership horizon — same
+        // functions & net-cost-of-ownership formula as the TCO Calculator
+        // (financing + escalated operating costs + down payment, minus the
+        // modeled resale value at the end of the horizon).
+        let ownershipCost = null
         if (proMode) {
           const state = userState || null
           const isEv = !!data.is_ev
@@ -660,39 +663,42 @@ export default function SalaryCalculator() {
           const mpg = data.mpg || null
           const mpgNum  = mpg && typeof mpg === 'object' ? (mpg.combined ?? null) : (mpg || null)
           const mpgeNum = mpg && typeof mpg === 'object' ? (mpg.mpge_combined ?? null) : null
+          const years = Array.from({ length: ownershipYears }, (_, i) => i)
 
           const fuelYear0 = computeAnnualFuel(
             isEv, isEv ? null : mpgNum, isEv ? mpgeNum : null, state, annualMiles,
             isEv ? liveElecRate : null
           )
-          const fuel5yr = [0, 1, 2, 3, 4].reduce((s, i) => s + escalateAnnualFuel(fuelYear0, i, isEv), 0)
+          const fuelTotal = years.reduce((s, i) => s + escalateAnnualFuel(fuelYear0, i, isEv), 0)
 
           const insuranceYear0 = estimateInsurance(basePrice, make, model, modelYear, state)
-          const insurance5yr = [0, 1, 2, 3, 4].reduce((s, i) => s + Math.round(insuranceYear0 * Math.pow(1.02, i)), 0)
+          const insuranceTotal = years.reduce((s, i) => s + Math.round(insuranceYear0 * Math.pow(1.02, i)), 0)
 
-          const maintenance5yr = generateMaintenanceByYear(
-            isEv, annualMiles, segment, make, 5, 0, state, 0, resolvedLaborRate, resolvedWear, model, modelYear
+          const maintenanceTotal = generateMaintenanceByYear(
+            isEv, annualMiles, segment, make, ownershipYears, 0, state, 0, resolvedLaborRate, resolvedWear, model, modelYear
           ).reduce((s, x) => s + x, 0)
 
-          const registration5yr = projectRegistrationByYear(state, basePrice, 5, {
+          const registrationTotal = projectRegistrationByYear(state, basePrice, ownershipYears, {
             make, model, vehicleAge: 0, isEV: isEv, isHybrid: segment === 'hybrid', segment,
           }).reduce((s, x) => s + x, 0)
 
-          // Payments run for the actual loan term, not the full 5-yr horizon —
-          // a 36 or 48-month loan is paid off before year 5, a 72-month loan
-          // still has payments left at year 5 that fall outside this window.
-          const financing5yr = Math.round(monthlyFinance * Math.min(60, loanTerm))
-          const downPayment5yr = Math.round(basePrice * 0.20)
-          const resaleValue = Math.round(estimateCurrentValue(basePrice, make, model, 5, null, state))
-          const totalPaid = financing5yr + downPayment5yr + fuel5yr + insurance5yr + maintenance5yr + registration5yr
+          // Payments run for the actual loan term, not the full ownership
+          // horizon — a 36 or 48-month loan may be paid off before the
+          // horizon ends, while a 72-month loan may still have payments left
+          // at the end of a shorter horizon.
+          const financingTotal = Math.round(monthlyFinance * Math.min(ownershipYears * 12, loanTerm))
+          const downPaymentAmt = Math.round(basePrice * 0.20)
+          const resaleValue = Math.round(estimateCurrentValue(basePrice, make, model, ownershipYears, null, state))
+          const totalPaid = financingTotal + downPaymentAmt + fuelTotal + insuranceTotal + maintenanceTotal + registrationTotal
 
-          fiveYear = {
-            financing: financing5yr,
-            downPayment: downPayment5yr,
-            fuel: Math.round(fuel5yr),
-            insurance: insurance5yr,
-            maintenance: Math.round(maintenance5yr),
-            registration: Math.round(registration5yr),
+          ownershipCost = {
+            years: ownershipYears,
+            financing: financingTotal,
+            downPayment: downPaymentAmt,
+            fuel: Math.round(fuelTotal),
+            insurance: insuranceTotal,
+            maintenance: Math.round(maintenanceTotal),
+            registration: Math.round(registrationTotal),
             resaleValue,
             total: Math.round(totalPaid - resaleValue),
           }
@@ -705,12 +711,12 @@ export default function SalaryCalculator() {
           annualFinancing, annualFuel, annualInsurance, annualMaintenance, annualRegistration,
           annualOperating,
           annualTotal: annualFinancing + annualOperating,
-          fiveYear,
+          ownershipCost,
         })
       })
     })
     return entries.sort((a, b) => b.basePrice - a.basePrice)
-  }, [affordableResults, userState, annualMiles, rate, proMode, resolvedLaborRate, resolvedWear, liveElecRate, pickYear, loanTerm])
+  }, [affordableResults, userState, annualMiles, rate, proMode, resolvedLaborRate, resolvedWear, liveElecRate, pickYear, loanTerm, ownershipYears])
 
   const filteredVehicles = useMemo(() => {
     if (carFilterCategory === 'all') return matchedVehicles
@@ -755,8 +761,8 @@ export default function SalaryCalculator() {
     const key = `${v.make}|${v.model}|${v.year}`
     if (addedToCompare.has(key)) return
 
-    const downPayment = v.fiveYear ? v.fiveYear.downPayment : Math.round(v.basePrice * 0.20)
-    const resaleValue = v.fiveYear ? v.fiveYear.resaleValue : null
+    const downPayment = v.ownershipCost ? v.ownershipCost.downPayment : Math.round(v.basePrice * 0.20)
+    const resaleValue = v.ownershipCost ? v.ownershipCost.resaleValue : null
     const valueRetentionPct = resaleValue != null ? Math.round((resaleValue / v.basePrice) * 100) : null
 
     const entry = {
@@ -768,9 +774,9 @@ export default function SalaryCalculator() {
       downPayment,
       loanTerm,
       rate,
-      ownershipYears: 5,
+      ownershipYears,
       totalAnnualCost: v.annualTotal,
-      totalOwnershipCost: v.fiveYear ? v.fiveYear.total : v.annualTotal * 5,
+      totalOwnershipCost: v.ownershipCost ? v.ownershipCost.total : v.annualTotal * ownershipYears,
       make: v.make, model: v.model, year: v.year,
       mpgCombined: null,
       cargoSqFt: v.specs.cargo_cu_ft ?? null,
@@ -1646,6 +1652,20 @@ export default function SalaryCalculator() {
                       {SORT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                     </select>
                   </div>
+                  {proMode && (
+                    <div className="flex items-center gap-2">
+                      <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap">
+                        Ownership Years
+                      </label>
+                      <select
+                        value={ownershipYears}
+                        onChange={e => setOwnershipYears(Number(e.target.value))}
+                        className="input-field text-sm py-2 w-auto"
+                      >
+                        {[1, 2, 3, 4, 5].map(y => <option key={y} value={y}>{y} yr{y !== 1 ? 's' : ''}</option>)}
+                      </select>
+                    </div>
+                  )}
                   <div className="flex gap-1 p-1 rounded-lg"
                     style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
                     {[

@@ -10,6 +10,7 @@ import {
   generateMaintenanceByYear,
 } from '../utils/vehicleCosts'
 import { trackSearch } from '../utils/marketSearch'
+import { useSubscription } from '../hooks/useSubscription'
 import {
   trackSimpleMakeSelected, trackSimpleModelSelected, trackSimpleYearSelected,
   trackSimpleEstimateStarted, trackFreeEstimateStarted,
@@ -338,6 +339,7 @@ function ResultsDisplay({
   loanTerm, onLoanTerm,
   annualMileage, onMileage,
   fuelPriceOverride, onFuelPrice,
+  isSubscribed,
 }) {
   const proCtaRef    = useRef(null)
   const proCtaSeenRef = useRef(false)
@@ -623,44 +625,53 @@ function ResultsDisplay({
         )}
       </div>
 
-      {/* Pro upsell */}
-      <div ref={proCtaRef} className="mt-6 rounded-2xl border p-5"
-        style={{ borderColor: 'rgba(255,184,0,0.3)', background: 'rgba(255,184,0,0.04)' }}>
-        <p className="font-display font-bold text-white text-base mb-1">
-          Want even greater accuracy?
-        </p>
-        <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-4">
-          Cash Pedal Pro unlocks ZIP-specific insurance, local registration fees,
-          detailed year-by-year forecasts, and side-by-side vehicle comparisons.
-        </p>
-        <ul className="flex flex-col gap-1.5 mb-4">
-          {[
-            'ZIP-specific insurance estimates',
-            'Local registration & tax fees',
-            'Year-by-year ownership forecast',
-            'Side-by-side vehicle comparisons',
-            'Advanced financing scenarios',
-          ].map(f => (
-            <li key={f} className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-              <span style={{ color: '#4ade80' }}>✓</span> {f}
-            </li>
-          ))}
-        </ul>
-        <Link
-          to="/subscribe"
-          onClick={() => trackProCtaClicked({ featureName: 'tco_flow_results', priceShown: 'Pro' })}
-          className="btn-primary w-full justify-center text-sm py-3"
-        >
-          Unlock Pro →
-        </Link>
-      </div>
+      {/* Pro upsell — only shown to non-subscribers */}
+      {!isSubscribed && (
+        <div ref={proCtaRef} className="mt-6 rounded-2xl border p-5"
+          style={{ borderColor: 'rgba(255,184,0,0.3)', background: 'rgba(255,184,0,0.04)' }}>
+          <p className="font-display font-bold text-white text-base mb-1">
+            Want even greater accuracy?
+          </p>
+          <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-4">
+            Cash Pedal Pro unlocks ZIP-specific insurance, local registration fees,
+            detailed year-by-year forecasts, and side-by-side vehicle comparisons.
+          </p>
+          <ul className="flex flex-col gap-1.5 mb-4">
+            {[
+              'ZIP-specific insurance estimates',
+              'Local registration & tax fees',
+              'Year-by-year ownership forecast',
+              'Side-by-side vehicle comparisons',
+              'Advanced financing scenarios',
+            ].map(f => (
+              <li key={f} className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+                <span style={{ color: '#4ade80' }}>✓</span> {f}
+              </li>
+            ))}
+          </ul>
+          <Link
+            to="/subscribe"
+            onClick={() => trackProCtaClicked({ featureName: 'tco_flow_results', priceShown: 'Pro' })}
+            className="btn-primary w-full justify-center text-sm py-3"
+          >
+            Unlock Pro →
+          </Link>
+        </div>
+      )}
 
       {/* Link to full calculator */}
       <p className="text-center text-xs text-[var(--text-muted)] mt-5">
-        Need lease analysis, "Currently Have" mode, or detailed maintenance breakdown?{' '}
-        <Link to="/tco-full" className="text-[var(--accent)] underline hover:brightness-110">
-          Open the full calculator →
-        </Link>
+        {isSubscribed
+          ? <>You're on Cash Pedal Pro. Head to the{' '}
+              <Link to="/tco-full" className="text-[var(--accent)] underline hover:brightness-110">
+                full calculator →
+              </Link>{' '}
+              for lease analysis, itemized maintenance, and side-by-side comparisons.</>
+          : <>Need lease analysis, "Currently Have" mode, or detailed maintenance breakdown?{' '}
+              <Link to="/tco-full" className="text-[var(--accent)] underline hover:brightness-110">
+                Open the full calculator →
+              </Link></>
+        }
       </p>
     </div>
   )
@@ -669,6 +680,7 @@ function ResultsDisplay({
 // ── Main component ─────────────────────────────────────────
 export default function TCOFlow() {
   const [searchParams] = useSearchParams()
+  const { isSubscribed } = useSubscription()
   const [step, setStep] = useState('vehicle')
 
   // Step 1 — vehicle
@@ -1227,6 +1239,7 @@ export default function TCOFlow() {
             loanTerm={loanTerm} onLoanTerm={setLoanTerm}
             annualMileage={annualMileage} onMileage={setAnnualMileage}
             fuelPriceOverride={fuelPriceOverride} onFuelPrice={setFuelPriceOverride}
+            isSubscribed={isSubscribed}
           />
         )}
       </main>

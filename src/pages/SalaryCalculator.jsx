@@ -15,7 +15,7 @@ import {
   classifySegment, determineMaintTier,
   estimateInsurance, generateMaintenanceServices, generateMaintenanceByYear,
   computeAnnualFuel, computeAnnualRegFees, projectRegistrationByYear,
-  escalateAnnualFuel, estimateCurrentValue,
+  escalateAnnualFuel, estimateCurrentValue, resolveLocation,
   STATE_INS_BASE,
 } from '../utils/vehicleCosts'
 
@@ -70,8 +70,10 @@ function estimateBasicMonthlyCosts(price, state, annualMiles = DEFAULT_ANNUAL_MI
   return { fuel, insurance, maintenance, registration, total: fuel + insurance + maintenance + registration, tier: tierLabel[tierKey] }
 }
 
-// Pro mode: vehicle-specific + state-aware
-function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, annualMiles = DEFAULT_ANNUAL_MILES) {
+// Pro mode: vehicle-specific + state-aware. laborRate/wearProfile (from a
+// resolved ZIP) sharpen maintenance; elecRate (ZIP-level, via OpenEI) sharpens
+// EV charging cost — both fall back to state-level modeling without a ZIP.
+function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, annualMiles = DEFAULT_ANNUAL_MILES, laborRate = null, wearProfile = null, elecRate = null) {
   const segment = isEv ? 'electric' : classifySegment(make, model)
 
   const mpgNum  = mpg && typeof mpg === 'object' ? (mpg.combined ?? null) : (mpg || null)
@@ -82,12 +84,13 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
     isEv ? null : mpgNum,
     isEv ? mpgeNum : null,
     state || null,
-    annualMiles
+    annualMiles,
+    isEv ? elecRate : null
   ) / 12)
 
   const insurance = Math.round(estimateInsurance(price, make, model, year, state || null) / 12)
 
-  const maintServices = generateMaintenanceServices(isEv, annualMiles, segment, make, state || null, 0, null, null, model, year)
+  const maintServices = generateMaintenanceServices(isEv, annualMiles, segment, make, state || null, 0, laborRate, wearProfile, model, year)
   const maintenance = Math.round(maintServices.reduce((s, x) => s + x.annual, 0) / 12)
 
   const vehicleAge = year ? Math.max(0, new Date().getFullYear() - parseInt(year)) : 0
@@ -158,6 +161,24 @@ const CURRENT_YEAR = String(
   )
 )
 
+// Model years with broad catalog coverage, newest first — powers the "Model
+// Year" selector for the matched-vehicles pick list. A handful of models
+// carry a few sparse legacy year entries (e.g. a single discontinued trim
+// dating back to 2008) alongside the ~200-model-deep 2015+ range; those
+// near-empty years would make for a useless dropdown option, so years below
+// a minimum-coverage threshold are dropped rather than hardcoding a cutoff year.
+const CATALOG_YEARS = (() => {
+  const counts = {}
+  Object.values(VEHICLES).forEach(make =>
+    Object.values(make).forEach(model =>
+      Object.keys(model.trims_by_year || {}).forEach(y => { counts[y] = (counts[y] || 0) + 1 })
+    )
+  )
+  return Object.keys(counts)
+    .filter(y => counts[y] >= 20)
+    .sort((a, b) => Number(b) - Number(a))
+})()
+
 const SALARY_LUXURY_MAKES = new Set([
   'BMW', 'Mercedes-Benz', 'Audi', 'Porsche', 'Lexus', 'Acura', 'Infiniti',
   'Cadillac', 'Lincoln', 'Genesis', 'Jaguar', 'Land Rover', 'Maserati',
@@ -168,6 +189,39 @@ function classifyCarCategory(make, type, basePrice) {
   if (SALARY_LUXURY_MAKES.has(make)) return 'luxury'
   if (['suv', 'suv_large', 'truck', 'sports', 'ev_sedan', 'ev_suv', 'minivan'].includes(type)) return 'other'
   return basePrice <= 30000 ? 'economy' : 'other'
+}
+
+// Sort dimensions for the matched-vehicles pick list. cargo_cu_ft, horsepower,
+// and seats are filled in for every catalog model, so they sort cleanly;
+// mpg is only populated for ~14% of models and is left out until the catalog
+// has fuller coverage — sorting by it would mostly be sorting by missing data.
+const SORT_OPTIONS = [
+  { value: 'price', label: 'Price (High to Low)' },
+  { value: 'value', label: 'Best Value (Lowest Cost)' },
+  { value: 'cargo', label: 'Most Cargo Space' },
+  { value: 'horsepower', label: 'Most Horsepower' },
+  { value: 'seats', label: 'Most Seats' },
+]
+
+function sortVehicles(list, sortBy) {
+  const sorted = [...list]
+  switch (sortBy) {
+    case 'value':
+      sorted.sort((a, b) => (a.fiveYear?.total ?? a.annualTotal) - (b.fiveYear?.total ?? b.annualTotal))
+      break
+    case 'cargo':
+      sorted.sort((a, b) => (b.specs.cargo_cu_ft ?? 0) - (a.specs.cargo_cu_ft ?? 0))
+      break
+    case 'horsepower':
+      sorted.sort((a, b) => (b.specs.horsepower ?? 0) - (a.specs.horsepower ?? 0))
+      break
+    case 'seats':
+      sorted.sort((a, b) => (b.specs.seats ?? 0) - (a.specs.seats ?? 0))
+      break
+    default:
+      sorted.sort((a, b) => b.basePrice - a.basePrice)
+  }
+  return sorted
 }
 
 const TIER_STYLES = {
@@ -277,6 +331,14 @@ export default function SalaryCalculator() {
   const [stateDetecting, setStateDetecting] = useState(false)
   const [stateDetectFailed, setStateDetectFailed] = useState(false)
 
+  // ZIP code (optional) — sharpens Pro maintenance (local labor rate & wear
+  // profile) and EV charging cost beyond the state-level averages above.
+  const [userZip, setUserZip] = useState('')
+  const [zipError, setZipError] = useState('')
+  const [resolvedLaborRate, setResolvedLaborRate] = useState(null)
+  const [resolvedWear, setResolvedWear] = useState(null)
+  const [liveElecRate, setLiveElecRate] = useState(null)
+
   // Pro mode
   const [proMode, setProMode] = useState(false)
   const [selMake, setSelMake] = useState('')
@@ -289,6 +351,8 @@ export default function SalaryCalculator() {
 
   // Car suggestion filter
   const [carFilterCategory, setCarFilterCategory] = useState('all')
+  const [pickYear, setPickYear] = useState(CURRENT_YEAR)
+  const [sortBy, setSortBy] = useState('price')
 
   // Buy inputs
   const [vehiclePrice, setVehiclePrice] = useState(30000)
@@ -372,6 +436,47 @@ export default function SalaryCalculator() {
       .finally(() => { setStateDetecting(false); clearTimeout(timeout) })
   }, [])
 
+  // ZIP resolves to a state (syncing the selector above), a local labor rate,
+  // and a wear profile — same resolveLocation() the TCO Calculator uses.
+  function handleZipInput(val) {
+    setUserZip(val)
+    setZipError('')
+    if (!val) {
+      setResolvedLaborRate(null)
+      setResolvedWear(null)
+      return
+    }
+    if (!/^\d{5}$/.test(val)) {
+      setResolvedLaborRate(null)
+      setResolvedWear(null)
+      if (val.length >= 5) setZipError('Enter a 5-digit ZIP code')
+      return
+    }
+    const resolved = resolveLocation(val)
+    if (resolved) {
+      setUserState(resolved.state)
+      setStateAutoDetected(false)
+      setResolvedLaborRate(resolved.laborRate ?? null)
+      setResolvedWear(resolved.wear ?? null)
+    } else {
+      setResolvedLaborRate(null)
+      setResolvedWear(null)
+      setZipError('ZIP code not recognized')
+    }
+  }
+
+  // Live electricity rate ($/kWh) for the resolved ZIP — sharpens EV charging
+  // cost beyond the state-level table. Falls back silently when unavailable.
+  useEffect(() => {
+    if (!/^\d{5}$/.test(userZip)) { setLiveElecRate(null); return }
+    let cancelled = false
+    fetch(`/api/electricity-rate?zip=${userZip}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (!cancelled) setLiveElecRate(data?.rate ?? null) })
+      .catch(() => { if (!cancelled) setLiveElecRate(null) })
+    return () => { cancelled = true }
+  }, [userZip])
+
   // When trim selected, auto-populate price field
   useEffect(() => {
     if (!proMode || !selectedVehicleInfo?.price) return
@@ -424,8 +529,11 @@ export default function SalaryCalculator() {
   const proExtras = useMemo(() => {
     if (!proMode || !selectedVehicleInfo) return null
     const { make, model, year, is_ev, mpg } = selectedVehicleInfo
-    return estimateProMonthlyCosts(activePrice, make, model, year, is_ev, mpg, userState, annualMiles)
-  }, [proMode, selectedVehicleInfo, activePrice, userState, annualMiles])
+    return estimateProMonthlyCosts(
+      activePrice, make, model, year, is_ev, mpg, userState, annualMiles,
+      resolvedLaborRate, resolvedWear, liveElecRate
+    )
+  }, [proMode, selectedVehicleInfo, activePrice, userState, annualMiles, resolvedLaborRate, resolvedWear, liveElecRate])
 
   const results = useMemo(() => {
     const extra = proExtras
@@ -505,10 +613,9 @@ export default function SalaryCalculator() {
     const entries = []
     Object.entries(VEHICLES).forEach(([make, models]) => {
       Object.entries(models).forEach(([model, data]) => {
-        const years = Object.keys(data.trims_by_year || {}).sort((a, b) => Number(b) - Number(a))
-        if (!years.length) return
-        const latestYear = years[0]
-        const trims = data.trims_by_year[latestYear]
+        const trims = data.trims_by_year?.[pickYear]
+        if (!trims) return // model not offered in the selected model year
+        const modelYear = pickYear
         const basePrice = Math.min(...Object.values(trims))
         if (basePrice > maxPrice || basePrice <= 0) return
         const category = classifyCarCategory(make, data.type, basePrice)
@@ -536,14 +643,17 @@ export default function SalaryCalculator() {
           const mpgNum  = mpg && typeof mpg === 'object' ? (mpg.combined ?? null) : (mpg || null)
           const mpgeNum = mpg && typeof mpg === 'object' ? (mpg.mpge_combined ?? null) : null
 
-          const fuelYear0 = computeAnnualFuel(isEv, isEv ? null : mpgNum, isEv ? mpgeNum : null, state, annualMiles)
+          const fuelYear0 = computeAnnualFuel(
+            isEv, isEv ? null : mpgNum, isEv ? mpgeNum : null, state, annualMiles,
+            isEv ? liveElecRate : null
+          )
           const fuel5yr = [0, 1, 2, 3, 4].reduce((s, i) => s + escalateAnnualFuel(fuelYear0, i, isEv), 0)
 
-          const insuranceYear0 = estimateInsurance(basePrice, make, model, latestYear, state)
+          const insuranceYear0 = estimateInsurance(basePrice, make, model, modelYear, state)
           const insurance5yr = [0, 1, 2, 3, 4].reduce((s, i) => s + Math.round(insuranceYear0 * Math.pow(1.02, i)), 0)
 
           const maintenance5yr = generateMaintenanceByYear(
-            isEv, annualMiles, segment, make, 5, 0, state, 0, null, null, model, latestYear
+            isEv, annualMiles, segment, make, 5, 0, state, 0, resolvedLaborRate, resolvedWear, model, modelYear
           ).reduce((s, x) => s + x, 0)
 
           const registration5yr = projectRegistrationByYear(state, basePrice, 5, {
@@ -569,7 +679,8 @@ export default function SalaryCalculator() {
 
         entries.push({
           make, model, type: data.type, is_ev: data.is_ev,
-          basePrice, year: latestYear, category, tier,
+          basePrice, year: modelYear, category, tier,
+          specs: data.specs || {},
           annualFinancing, annualFuel, annualInsurance, annualMaintenance, annualRegistration,
           annualOperating,
           annualTotal: annualFinancing + annualOperating,
@@ -578,7 +689,7 @@ export default function SalaryCalculator() {
       })
     })
     return entries.sort((a, b) => b.basePrice - a.basePrice)
-  }, [affordableResults, userState, annualMiles, rate, proMode])
+  }, [affordableResults, userState, annualMiles, rate, proMode, resolvedLaborRate, resolvedWear, liveElecRate, pickYear])
 
   const filteredVehicles = useMemo(() => {
     if (carFilterCategory === 'all') return matchedVehicles
@@ -597,15 +708,23 @@ export default function SalaryCalculator() {
       ?? null
   }, [filteredVehicles])
 
-  // Top 20 by price, but guaranteed to include the recommended pick — it's
-  // often the safest (cheaper) option and can otherwise fall outside the
-  // price-sorted top 20 dominated by pricier "stretched"-tier vehicles.
+  // The grid re-ranks the same category-filtered list by the chosen sort
+  // dimension (price, value, cargo, horsepower, seats); recommendedVehicle
+  // above always stays price-based regardless of this display sort.
+  const sortedGridVehicles = useMemo(() => sortVehicles(filteredVehicles, sortBy), [filteredVehicles, sortBy])
+
+  // Top 20 by the active sort. On the default price sort, the recommended
+  // pick is guaranteed to appear (it's price/tier-based, so it's often the
+  // safest, cheaper option that can fall outside a price-desc top 20). For
+  // the other sort dimensions (cargo, horsepower, seats, value) that
+  // guarantee is skipped — forcing a pick chosen for price/tier to the front
+  // of, say, a "Most Cargo Space" ranking would contradict the sort itself.
   const gridVehicles = useMemo(() => {
-    const top20 = filteredVehicles.slice(0, 20)
-    if (!recommendedVehicle) return top20
+    const top20 = sortedGridVehicles.slice(0, 20)
+    if (!recommendedVehicle || sortBy !== 'price') return top20
     const alreadyShown = top20.some(v => v.make === recommendedVehicle.make && v.model === recommendedVehicle.model)
     return alreadyShown ? top20 : [recommendedVehicle, ...top20.slice(0, 19)]
-  }, [filteredVehicles, recommendedVehicle])
+  }, [sortedGridVehicles, recommendedVehicle, sortBy])
 
   const downAmount = vehiclePrice * (downPct / 100)
 
@@ -742,7 +861,10 @@ export default function SalaryCalculator() {
                     )}
                     {userState && (
                       <button
-                        onClick={() => { setUserState(''); setStateAutoDetected(false) }}
+                        onClick={() => {
+                          setUserState(''); setStateAutoDetected(false)
+                          setUserZip(''); setResolvedLaborRate(null); setResolvedWear(null); setZipError('')
+                        }}
                         className="text-[10px] text-[var(--text-muted)] hover:text-white transition-colors"
                       >
                         Clear
@@ -767,6 +889,38 @@ export default function SalaryCalculator() {
                       : 'National average rates applied for this state.'}
                   </p>
                 )}
+
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className="flex items-center justify-between">
+                    <label className="input-label text-[11px]">ZIP Code (optional)</label>
+                    {userZip && (
+                      <button
+                        onClick={() => { setUserZip(''); setResolvedLaborRate(null); setResolvedWear(null); setZipError('') }}
+                        className="text-[10px] text-[var(--text-muted)] hover:text-white transition-colors"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={5}
+                    value={userZip}
+                    onChange={e => handleZipInput(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                    placeholder="e.g. 90210"
+                    className="input-field text-sm"
+                  />
+                  {zipError ? (
+                    <p className="text-[10px] text-yellow-500">{zipError}</p>
+                  ) : (
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      {resolvedLaborRate
+                        ? `Local labor rate & wear profile applied to Pro maintenance estimates${liveElecRate ? ', plus ZIP-level EV charging rates' : ''}.`
+                        : 'Sharpens Pro maintenance & EV charging cost estimates beyond state averages.'}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Pro: Vehicle picker */}
@@ -1400,37 +1554,63 @@ export default function SalaryCalculator() {
                     Cars within your budget
                   </h2>
                   <p className="text-xs text-[var(--text-muted)] mt-1">
-                    Base MSRP fits your {downPct}% down · {loanTerm}-mo loan · {rate}% APR · includes operating costs
+                    {pickYear} model year · Base MSRP fits your {downPct}% down · {loanTerm}-mo loan · {rate}% APR · includes operating costs
                     {userState ? ` · ${userState} rates` : ''}
                   </p>
                 </div>
-                <div className="flex gap-1 p-1 rounded-lg shrink-0"
-                  style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                  {[
-                    { value: 'all', label: 'All' },
-                    { value: 'economy', label: 'Economy' },
-                    { value: 'luxury', label: 'Luxury' },
-                    { value: 'other', label: 'Other' },
-                  ].map(opt => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setCarFilterCategory(opt.value)}
-                      aria-pressed={carFilterCategory === opt.value}
-                      className="px-3 py-2.5 min-h-[44px] rounded-md text-xs font-semibold transition-all active:opacity-70"
-                      style={{
-                        background: carFilterCategory === opt.value ? 'var(--accent)' : 'transparent',
-                        color: carFilterCategory === opt.value ? '#000' : 'var(--text-muted)',
-                      }}
+                <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
+                  <div className="flex items-center gap-2">
+                    <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap">
+                      Model Year
+                    </label>
+                    <select
+                      value={pickYear}
+                      onChange={e => setPickYear(e.target.value)}
+                      className="input-field text-sm py-2 w-auto"
                     >
-                      {opt.label}
-                      {' '}
-                      <span className="opacity-60 font-normal">
-                        ({carFilterCategory === opt.value || opt.value === 'all'
-                          ? (opt.value === 'all' ? matchedVehicles.length : filteredVehicles.length)
-                          : matchedVehicles.filter(v => v.category === opt.value).length})
-                      </span>
-                    </button>
-                  ))}
+                      {CATALOG_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap">
+                      Sort By
+                    </label>
+                    <select
+                      value={sortBy}
+                      onChange={e => setSortBy(e.target.value)}
+                      className="input-field text-sm py-2 w-auto"
+                    >
+                      {SORT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex gap-1 p-1 rounded-lg"
+                    style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                    {[
+                      { value: 'all', label: 'All' },
+                      { value: 'economy', label: 'Economy' },
+                      { value: 'luxury', label: 'Luxury' },
+                      { value: 'other', label: 'Other' },
+                    ].map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setCarFilterCategory(opt.value)}
+                        aria-pressed={carFilterCategory === opt.value}
+                        className="px-3 py-2.5 min-h-[44px] rounded-md text-xs font-semibold transition-all active:opacity-70"
+                        style={{
+                          background: carFilterCategory === opt.value ? 'var(--accent)' : 'transparent',
+                          color: carFilterCategory === opt.value ? '#000' : 'var(--text-muted)',
+                        }}
+                      >
+                        {opt.label}
+                        {' '}
+                        <span className="opacity-60 font-normal">
+                          ({carFilterCategory === opt.value || opt.value === 'all'
+                            ? (opt.value === 'all' ? matchedVehicles.length : filteredVehicles.length)
+                            : matchedVehicles.filter(v => v.category === opt.value).length})
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -1450,6 +1630,13 @@ export default function SalaryCalculator() {
                         <p className="text-xs text-[var(--text-muted)] capitalize mt-0.5">
                           {recommendedVehicle.type.replace('_', ' ')}{recommendedVehicle.is_ev ? ' · EV' : ''}
                         </p>
+                        {(recommendedVehicle.specs.horsepower || recommendedVehicle.specs.seats || recommendedVehicle.specs.cargo_cu_ft) && (
+                          <p className="text-xs text-[var(--text-muted)] flex flex-wrap gap-x-2 mt-1">
+                            {recommendedVehicle.specs.horsepower && <span>{recommendedVehicle.specs.horsepower} hp</span>}
+                            {recommendedVehicle.specs.seats && <span>{recommendedVehicle.specs.seats} seats</span>}
+                            {recommendedVehicle.specs.cargo_cu_ft && <span>{recommendedVehicle.specs.cargo_cu_ft} cu ft cargo</span>}
+                          </p>
+                        )}
                       </div>
                       <div className="text-left sm:text-right shrink-0">
                         <p className="font-display font-bold text-white text-2xl tabular-nums">{fmt(recommendedVehicle.basePrice)}</p>
@@ -1486,15 +1673,15 @@ export default function SalaryCalculator() {
 
               {filteredVehicles.length === 0 ? (
                 <div className="card text-center py-8">
-                  <p className="text-[var(--text-muted)] text-sm">No vehicles in this category fit your current budget.</p>
-                  <p className="text-[var(--text-muted)] text-xs mt-1">Try a higher salary or switch to a different category.</p>
+                  <p className="text-[var(--text-muted)] text-sm">No {pickYear} model year vehicles in this category fit your current budget.</p>
+                  <p className="text-[var(--text-muted)] text-xs mt-1">Try a higher salary, a different model year, or a different category.</p>
                 </div>
               ) : (
                 <>
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
                     All matches
                   </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {gridVehicles.map(v => {
                       const tierStyles = TIER_STYLES[v.tier]
                       const b = vehicleCostLines(v, rate)
@@ -1503,49 +1690,56 @@ export default function SalaryCalculator() {
                       return (
                         <div
                           key={`${v.make}-${v.model}`}
-                          className={`card p-3 flex flex-col gap-1 transition-all ${isRecommended ? '' : 'hover:border-[var(--accent)]'}`}
+                          className={`card p-4 flex flex-col gap-1.5 transition-all ${isRecommended ? '' : 'hover:border-[var(--accent)]'}`}
                           style={isRecommended ? { borderColor: 'var(--accent)' } : undefined}
                         >
                           <div className="flex items-start justify-between gap-1 mb-0.5">
-                            <p className="text-[11px] font-semibold text-[var(--text-muted)] leading-tight">{v.make}</p>
+                            <p className="text-xs font-semibold text-[var(--text-muted)] leading-tight">{v.make}</p>
                             <div className="flex gap-1 shrink-0">
                               {isRecommended && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                                   style={{ background: 'var(--accent)', color: '#000' }}>
                                   ★ Pick
                                 </span>
                               )}
                               {v.is_ev && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                                   style={{ background: 'rgba(200,255,0,0.15)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.3)' }}>
                                   EV
                                 </span>
                               )}
                             </div>
                           </div>
-                          <p className="text-sm font-bold text-white leading-tight">{v.model}</p>
-                          <p className="text-[11px] text-[var(--text-muted)] capitalize">{v.type.replace('_', ' ')}</p>
-                          <p className="font-display font-bold text-white tabular-nums text-base mt-1.5">{fmt(v.basePrice)}</p>
-                          <span className={`text-[10px] font-semibold ${tierStyles.color} mb-1`}>{tierStyles.label}</span>
-                          <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1">
-                            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                          <p className="text-base font-bold text-white leading-tight">{v.model}</p>
+                          <p className="text-xs text-[var(--text-muted)] capitalize">{v.year} · {v.type.replace('_', ' ')}</p>
+                          {(v.specs.horsepower || v.specs.seats || v.specs.cargo_cu_ft) && (
+                            <p className="text-[11px] text-[var(--text-muted)] flex flex-wrap gap-x-2">
+                              {v.specs.horsepower && <span>{v.specs.horsepower} hp</span>}
+                              {v.specs.seats && <span>{v.specs.seats} seats</span>}
+                              {v.specs.cargo_cu_ft && <span>{v.specs.cargo_cu_ft} cu ft cargo</span>}
+                            </p>
+                          )}
+                          <p className="font-display font-bold text-white tabular-nums text-lg mt-1.5">{fmt(v.basePrice)}</p>
+                          <span className={`text-xs font-semibold ${tierStyles.color} mb-1`}>{tierStyles.label}</span>
+                          <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1.5">
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                               {b.header}
                             </p>
                             {b.lines.map(({ label, val }) => (
-                              <div key={label} className="flex items-center justify-between gap-1">
-                                <span className="text-[10px] text-[var(--text-muted)] leading-tight">{label}</span>
-                                <span className="text-[10px] text-white tabular-nums shrink-0">{fmt(val)}</span>
+                              <div key={label} className="flex items-center justify-between gap-1.5">
+                                <span className="text-xs text-[var(--text-muted)] leading-tight">{label}</span>
+                                <span className="text-xs text-white tabular-nums shrink-0">{fmt(val)}</span>
                               </div>
                             ))}
                             {b.credit && (
-                              <div className="flex items-center justify-between gap-1">
-                                <span className="text-[10px] text-[var(--text-muted)] leading-tight">{b.credit.label}</span>
-                                <span className="text-[10px] text-green-400 tabular-nums shrink-0">− {fmt(b.credit.val)}</span>
+                              <div className="flex items-center justify-between gap-1.5">
+                                <span className="text-xs text-[var(--text-muted)] leading-tight">{b.credit.label}</span>
+                                <span className="text-xs text-green-400 tabular-nums shrink-0">− {fmt(b.credit.val)}</span>
                               </div>
                             )}
-                            <div className="flex items-center justify-between border-t border-[var(--border)] pt-1 mt-0.5">
-                              <span className="text-[10px] font-bold text-white">{b.totalLabel}</span>
-                              <span className="text-[10px] font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(b.totalVal)}</span>
+                            <div className="flex items-center justify-between border-t border-[var(--border)] pt-1.5 mt-0.5">
+                              <span className="text-xs font-bold text-white">{b.totalLabel}</span>
+                              <span className="text-sm font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(b.totalVal)}</span>
                             </div>
                           </div>
                         </div>

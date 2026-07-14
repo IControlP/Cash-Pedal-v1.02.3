@@ -191,6 +191,39 @@ function classifyCarCategory(make, type, basePrice) {
   return basePrice <= 30000 ? 'economy' : 'other'
 }
 
+// Sort dimensions for the matched-vehicles pick list. cargo_cu_ft, horsepower,
+// and seats are filled in for every catalog model, so they sort cleanly;
+// mpg is only populated for ~14% of models and is left out until the catalog
+// has fuller coverage — sorting by it would mostly be sorting by missing data.
+const SORT_OPTIONS = [
+  { value: 'price', label: 'Price (High to Low)' },
+  { value: 'value', label: 'Best Value (Lowest Cost)' },
+  { value: 'cargo', label: 'Most Cargo Space' },
+  { value: 'horsepower', label: 'Most Horsepower' },
+  { value: 'seats', label: 'Most Seats' },
+]
+
+function sortVehicles(list, sortBy) {
+  const sorted = [...list]
+  switch (sortBy) {
+    case 'value':
+      sorted.sort((a, b) => (a.fiveYear?.total ?? a.annualTotal) - (b.fiveYear?.total ?? b.annualTotal))
+      break
+    case 'cargo':
+      sorted.sort((a, b) => (b.specs.cargo_cu_ft ?? 0) - (a.specs.cargo_cu_ft ?? 0))
+      break
+    case 'horsepower':
+      sorted.sort((a, b) => (b.specs.horsepower ?? 0) - (a.specs.horsepower ?? 0))
+      break
+    case 'seats':
+      sorted.sort((a, b) => (b.specs.seats ?? 0) - (a.specs.seats ?? 0))
+      break
+    default:
+      sorted.sort((a, b) => b.basePrice - a.basePrice)
+  }
+  return sorted
+}
+
 const TIER_STYLES = {
   conservative: { color: 'text-green-400', label: '✓ Conservative' },
   comfortable:  { color: 'text-[var(--accent)]', label: 'Comfortable' },
@@ -319,6 +352,7 @@ export default function SalaryCalculator() {
   // Car suggestion filter
   const [carFilterCategory, setCarFilterCategory] = useState('all')
   const [pickYear, setPickYear] = useState(CURRENT_YEAR)
+  const [sortBy, setSortBy] = useState('price')
 
   // Buy inputs
   const [vehiclePrice, setVehiclePrice] = useState(30000)
@@ -646,6 +680,7 @@ export default function SalaryCalculator() {
         entries.push({
           make, model, type: data.type, is_ev: data.is_ev,
           basePrice, year: modelYear, category, tier,
+          specs: data.specs || {},
           annualFinancing, annualFuel, annualInsurance, annualMaintenance, annualRegistration,
           annualOperating,
           annualTotal: annualFinancing + annualOperating,
@@ -673,15 +708,23 @@ export default function SalaryCalculator() {
       ?? null
   }, [filteredVehicles])
 
-  // Top 20 by price, but guaranteed to include the recommended pick — it's
-  // often the safest (cheaper) option and can otherwise fall outside the
-  // price-sorted top 20 dominated by pricier "stretched"-tier vehicles.
+  // The grid re-ranks the same category-filtered list by the chosen sort
+  // dimension (price, value, cargo, horsepower, seats); recommendedVehicle
+  // above always stays price-based regardless of this display sort.
+  const sortedGridVehicles = useMemo(() => sortVehicles(filteredVehicles, sortBy), [filteredVehicles, sortBy])
+
+  // Top 20 by the active sort. On the default price sort, the recommended
+  // pick is guaranteed to appear (it's price/tier-based, so it's often the
+  // safest, cheaper option that can fall outside a price-desc top 20). For
+  // the other sort dimensions (cargo, horsepower, seats, value) that
+  // guarantee is skipped — forcing a pick chosen for price/tier to the front
+  // of, say, a "Most Cargo Space" ranking would contradict the sort itself.
   const gridVehicles = useMemo(() => {
-    const top20 = filteredVehicles.slice(0, 20)
-    if (!recommendedVehicle) return top20
+    const top20 = sortedGridVehicles.slice(0, 20)
+    if (!recommendedVehicle || sortBy !== 'price') return top20
     const alreadyShown = top20.some(v => v.make === recommendedVehicle.make && v.model === recommendedVehicle.model)
     return alreadyShown ? top20 : [recommendedVehicle, ...top20.slice(0, 19)]
-  }, [filteredVehicles, recommendedVehicle])
+  }, [sortedGridVehicles, recommendedVehicle, sortBy])
 
   const downAmount = vehiclePrice * (downPct / 100)
 
@@ -1528,6 +1571,18 @@ export default function SalaryCalculator() {
                       {CATALOG_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap">
+                      Sort By
+                    </label>
+                    <select
+                      value={sortBy}
+                      onChange={e => setSortBy(e.target.value)}
+                      className="input-field text-sm py-2 w-auto"
+                    >
+                      {SORT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                    </select>
+                  </div>
                   <div className="flex gap-1 p-1 rounded-lg"
                     style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
                     {[
@@ -1575,6 +1630,13 @@ export default function SalaryCalculator() {
                         <p className="text-xs text-[var(--text-muted)] capitalize mt-0.5">
                           {recommendedVehicle.type.replace('_', ' ')}{recommendedVehicle.is_ev ? ' · EV' : ''}
                         </p>
+                        {(recommendedVehicle.specs.horsepower || recommendedVehicle.specs.seats || recommendedVehicle.specs.cargo_cu_ft) && (
+                          <p className="text-xs text-[var(--text-muted)] flex flex-wrap gap-x-2 mt-1">
+                            {recommendedVehicle.specs.horsepower && <span>{recommendedVehicle.specs.horsepower} hp</span>}
+                            {recommendedVehicle.specs.seats && <span>{recommendedVehicle.specs.seats} seats</span>}
+                            {recommendedVehicle.specs.cargo_cu_ft && <span>{recommendedVehicle.specs.cargo_cu_ft} cu ft cargo</span>}
+                          </p>
+                        )}
                       </div>
                       <div className="text-left sm:text-right shrink-0">
                         <p className="font-display font-bold text-white text-2xl tabular-nums">{fmt(recommendedVehicle.basePrice)}</p>
@@ -1650,6 +1712,13 @@ export default function SalaryCalculator() {
                           </div>
                           <p className="text-base font-bold text-white leading-tight">{v.model}</p>
                           <p className="text-xs text-[var(--text-muted)] capitalize">{v.year} · {v.type.replace('_', ' ')}</p>
+                          {(v.specs.horsepower || v.specs.seats || v.specs.cargo_cu_ft) && (
+                            <p className="text-[11px] text-[var(--text-muted)] flex flex-wrap gap-x-2">
+                              {v.specs.horsepower && <span>{v.specs.horsepower} hp</span>}
+                              {v.specs.seats && <span>{v.specs.seats} seats</span>}
+                              {v.specs.cargo_cu_ft && <span>{v.specs.cargo_cu_ft} cu ft cargo</span>}
+                            </p>
+                          )}
                           <p className="font-display font-bold text-white tabular-nums text-lg mt-1.5">{fmt(v.basePrice)}</p>
                           <span className={`text-xs font-semibold ${tierStyles.color} mb-1`}>{tierStyles.label}</span>
                           <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1.5">

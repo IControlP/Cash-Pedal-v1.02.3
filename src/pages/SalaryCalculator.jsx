@@ -238,8 +238,8 @@ const RECOMMENDATION_REASONING = {
 
 // Shared cost-breakdown lines for a matched vehicle — used by both the
 // recommended pick and the matching-vehicles grid so the two stay in sync.
-function vehicleCostLines(v, rate) {
-  const financeLabel = `Financing (80% · 5yr · ${rate}%)`
+function vehicleCostLines(v, rate, loanTerm) {
+  const financeLabel = `Financing (80% · ${loanTerm}mo · ${rate}%)`
   if (v.fiveYear) {
     return {
       header: 'Est. 5-year net cost',
@@ -623,7 +623,7 @@ export default function SalaryCalculator() {
         if (basePrice <= (affordableResults.conservative || 0)) tier = 'conservative'
         else if (basePrice <= (affordableResults.comfortable || 0)) tier = 'comfortable'
         const ops = estimateBasicMonthlyCosts(basePrice, userState || null, annualMiles)
-        const monthlyFinance = monthlyPayment(basePrice * 0.80, rate, 60)
+        const monthlyFinance = monthlyPayment(basePrice * 0.80, rate, loanTerm)
         const annualFinancing = Math.round(monthlyFinance * 12)
         const annualFuel = ops.fuel * 12
         const annualInsurance = ops.insurance * 12
@@ -660,7 +660,10 @@ export default function SalaryCalculator() {
             make, model, vehicleAge: 0, isEV: isEv, isHybrid: segment === 'hybrid', segment,
           }).reduce((s, x) => s + x, 0)
 
-          const financing5yr = Math.round(monthlyFinance * 60)
+          // Payments run for the actual loan term, not the full 5-yr horizon —
+          // a 36 or 48-month loan is paid off before year 5, a 72-month loan
+          // still has payments left at year 5 that fall outside this window.
+          const financing5yr = Math.round(monthlyFinance * Math.min(60, loanTerm))
           const downPayment5yr = Math.round(basePrice * 0.20)
           const resaleValue = Math.round(estimateCurrentValue(basePrice, make, model, 5, null, state))
           const totalPaid = financing5yr + downPayment5yr + fuel5yr + insurance5yr + maintenance5yr + registration5yr
@@ -689,7 +692,7 @@ export default function SalaryCalculator() {
       })
     })
     return entries.sort((a, b) => b.basePrice - a.basePrice)
-  }, [affordableResults, userState, annualMiles, rate, proMode, resolvedLaborRate, resolvedWear, liveElecRate, pickYear])
+  }, [affordableResults, userState, annualMiles, rate, proMode, resolvedLaborRate, resolvedWear, liveElecRate, pickYear, loanTerm])
 
   const filteredVehicles = useMemo(() => {
     if (carFilterCategory === 'all') return matchedVehicles
@@ -1615,7 +1618,7 @@ export default function SalaryCalculator() {
               </div>
 
               {recommendedVehicle && (() => {
-                const b = vehicleCostLines(recommendedVehicle, rate)
+                const b = vehicleCostLines(recommendedVehicle, rate, loanTerm)
                 const t = TIER_STYLES[recommendedVehicle.tier]
                 return (
                   <div className="card border-[var(--accent)] p-5 mb-6" style={{ background: 'rgba(200,255,0,0.04)' }}>
@@ -1684,7 +1687,7 @@ export default function SalaryCalculator() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {gridVehicles.map(v => {
                       const tierStyles = TIER_STYLES[v.tier]
-                      const b = vehicleCostLines(v, rate)
+                      const b = vehicleCostLines(v, rate, loanTerm)
                       const isRecommended = recommendedVehicle
                         && v.make === recommendedVehicle.make && v.model === recommendedVehicle.model
                       return (

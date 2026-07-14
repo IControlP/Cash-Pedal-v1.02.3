@@ -18,6 +18,7 @@ import {
   TIER_STYLES, RECOMMENDATION_REASONING, pctOfIncome, vehicleCostLines,
   solveAffordablePrice, buildMatchedVehicles,
   VEHICLE_CATEGORY_FILTERS, matchesCategory, isCategoryValue,
+  US_AVG_OWNERSHIP_YEARS, OWNERSHIP_YEAR_OPTIONS,
 } from '../utils/affordability'
 
 // Free Pro previews before the paywall — shared counter with /salary so a
@@ -78,7 +79,7 @@ export default function Affordability() {
   })
   const [pickYear, setPickYear] = useState(CURRENT_YEAR)
   const [sortBy, setSortBy] = useState('price')
-  const [ownershipYears, setOwnershipYears] = useState(5)
+  const [ownershipYears, setOwnershipYears] = useState(US_AVG_OWNERSHIP_YEARS)
 
   // Comparison hand-off — same cashpedal_tco_for_comparison localStorage queue
   // the TCO Calculator and Salary Calculator use; MultiVehicleComparison reads
@@ -626,20 +627,22 @@ export default function Affordability() {
                       {SORT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                     </select>
                   </div>
-                  {proMode && (
-                    <div className="flex items-center gap-2">
-                      <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap">
-                        Ownership Years
-                      </label>
-                      <select
-                        value={ownershipYears}
-                        onChange={e => setOwnershipYears(Number(e.target.value))}
-                        className="input-field text-sm py-2 w-auto"
-                      >
-                        {[1, 2, 3, 4, 5].map(y => <option key={y} value={y}>{y} yr{y !== 1 ? 's' : ''}</option>)}
-                      </select>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap">
+                      Ownership Duration
+                    </label>
+                    <select
+                      value={ownershipYears}
+                      onChange={e => setOwnershipYears(Number(e.target.value))}
+                      className="input-field text-sm py-2 w-auto"
+                    >
+                      {OWNERSHIP_YEAR_OPTIONS.map(y => (
+                        <option key={y} value={y}>
+                          {y} yr{y !== 1 ? 's' : ''}{y === US_AVG_OWNERSHIP_YEARS ? ' (US avg)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="flex items-center gap-2">
                     <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap">
                       Category
@@ -719,6 +722,12 @@ export default function Affordability() {
                         <span className="text-sm font-bold text-white">{b.totalLabel}</span>
                         <span className="font-display font-bold tabular-nums" style={{ color: 'var(--accent)' }}>{fmt(b.totalVal)}</span>
                       </div>
+                      {b.range && (
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-xs text-[var(--text-muted)]">{b.range.label}</span>
+                          <span className="text-xs font-semibold text-white tabular-nums">{b.range.text}</span>
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={() => addVehicleToComparison(recommendedVehicle)}
@@ -823,6 +832,12 @@ export default function Affordability() {
                               <span className="text-xs font-bold text-white">{b.totalLabel}</span>
                               <span className="text-sm font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(b.totalVal)}</span>
                             </div>
+                            {b.range && (
+                              <div className="flex items-center justify-between gap-1.5">
+                                <span className="text-[11px] text-[var(--text-muted)] leading-tight">{b.range.label}</span>
+                                <span className="text-[11px] font-semibold text-white tabular-nums shrink-0">{b.range.text}</span>
+                              </div>
+                            )}
                           </div>
                           <button
                             onClick={() => addVehicleToComparison(v)}

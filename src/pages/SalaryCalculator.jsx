@@ -13,8 +13,9 @@ import { trackUsage } from '../utils/usage'
 import VEHICLES from '../data/vehicles.json'
 import {
   classifySegment, determineMaintTier,
-  estimateInsurance, generateMaintenanceServices,
-  computeAnnualFuel, computeAnnualRegFees,
+  estimateInsurance, generateMaintenanceServices, generateMaintenanceByYear,
+  computeAnnualFuel, computeAnnualRegFees, projectRegistrationByYear,
+  escalateAnnualFuel, estimateCurrentValue,
   STATE_INS_BASE,
 } from '../utils/vehicleCosts'
 
@@ -475,24 +476,62 @@ export default function SalaryCalculator() {
         const annualMaintenance = ops.maintenance * 12
         const annualRegistration = ops.registration * 12
         const annualOperating = ops.total * 12
-        const fiveYearFinancing = Math.round(monthlyFinance * 60)
-        const fiveYearFuel = annualFuel * 5
-        const fiveYearInsurance = annualInsurance * 5
-        const fiveYearMaintenance = annualMaintenance * 5
-        const fiveYearRegistration = annualRegistration * 5
+
+        // Pro: real 5-year TCO — same functions & net-cost-of-ownership formula
+        // as the TCO Calculator (financing + escalated operating costs + down
+        // payment, minus the modeled resale value at year 5).
+        let fiveYear = null
+        if (proMode) {
+          const state = userState || null
+          const isEv = !!data.is_ev
+          const segment = isEv ? 'electric' : classifySegment(make, model)
+          const mpg = data.mpg || null
+          const mpgNum  = mpg && typeof mpg === 'object' ? (mpg.combined ?? null) : (mpg || null)
+          const mpgeNum = mpg && typeof mpg === 'object' ? (mpg.mpge_combined ?? null) : null
+
+          const fuelYear0 = computeAnnualFuel(isEv, isEv ? null : mpgNum, isEv ? mpgeNum : null, state, annualMiles)
+          const fuel5yr = [0, 1, 2, 3, 4].reduce((s, i) => s + escalateAnnualFuel(fuelYear0, i, isEv), 0)
+
+          const insuranceYear0 = estimateInsurance(basePrice, make, model, latestYear, state)
+          const insurance5yr = [0, 1, 2, 3, 4].reduce((s, i) => s + Math.round(insuranceYear0 * Math.pow(1.02, i)), 0)
+
+          const maintenance5yr = generateMaintenanceByYear(
+            isEv, annualMiles, segment, make, 5, 0, state, 0, null, null, model, latestYear
+          ).reduce((s, x) => s + x, 0)
+
+          const registration5yr = projectRegistrationByYear(state, basePrice, 5, {
+            make, model, vehicleAge: 0, isEV: isEv, isHybrid: segment === 'hybrid', segment,
+          }).reduce((s, x) => s + x, 0)
+
+          const financing5yr = Math.round(monthlyFinance * 60)
+          const downPayment5yr = Math.round(basePrice * 0.20)
+          const resaleValue = Math.round(estimateCurrentValue(basePrice, make, model, 5, null, state))
+          const totalPaid = financing5yr + downPayment5yr + fuel5yr + insurance5yr + maintenance5yr + registration5yr
+
+          fiveYear = {
+            financing: financing5yr,
+            downPayment: downPayment5yr,
+            fuel: Math.round(fuel5yr),
+            insurance: insurance5yr,
+            maintenance: Math.round(maintenance5yr),
+            registration: Math.round(registration5yr),
+            resaleValue,
+            total: Math.round(totalPaid - resaleValue),
+          }
+        }
+
         entries.push({
           make, model, type: data.type, is_ev: data.is_ev,
           basePrice, year: latestYear, category, tier,
           annualFinancing, annualFuel, annualInsurance, annualMaintenance, annualRegistration,
           annualOperating,
           annualTotal: annualFinancing + annualOperating,
-          fiveYearFinancing, fiveYearFuel, fiveYearInsurance, fiveYearMaintenance, fiveYearRegistration,
-          fiveYearTotal: fiveYearFinancing + fiveYearFuel + fiveYearInsurance + fiveYearMaintenance + fiveYearRegistration,
+          fiveYear,
         })
       })
     })
     return entries.sort((a, b) => b.basePrice - a.basePrice)
-  }, [affordableResults, userState, annualMiles, rate])
+  }, [affordableResults, userState, annualMiles, rate, proMode])
 
   const filteredVehicles = useMemo(() => {
     if (carFilterCategory === 'all') return matchedVehicles
@@ -1360,23 +1399,36 @@ export default function SalaryCalculator() {
                           <span className={`text-[10px] font-semibold ${tierStyles.color} mb-1`}>{tierStyles.label}</span>
                           <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1">
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-                              {proMode ? 'Est. 5-year costs' : 'Est. annual costs'}
+                              {v.fiveYear ? 'Est. 5-year net cost' : 'Est. annual costs'}
                             </p>
-                            {[
-                              { label: `Financing (80% · 5yr · ${rate}%)`, val: proMode ? v.fiveYearFinancing : v.annualFinancing },
-                              { label: v.is_ev ? 'Electricity' : 'Fuel', val: proMode ? v.fiveYearFuel : v.annualFuel },
-                              { label: 'Insurance', val: proMode ? v.fiveYearInsurance : v.annualInsurance },
-                              { label: 'Maintenance', val: proMode ? v.fiveYearMaintenance : v.annualMaintenance },
-                              { label: 'Registration', val: proMode ? v.fiveYearRegistration : v.annualRegistration },
-                            ].map(({ label, val }) => (
+                            {(v.fiveYear ? [
+                              { label: `Financing (80% · 5yr · ${rate}%)`, val: v.fiveYear.financing },
+                              { label: 'Down payment (20%)', val: v.fiveYear.downPayment },
+                              { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.fiveYear.fuel },
+                              { label: 'Insurance', val: v.fiveYear.insurance },
+                              { label: 'Maintenance', val: v.fiveYear.maintenance },
+                              { label: 'Registration', val: v.fiveYear.registration },
+                            ] : [
+                              { label: `Financing (80% · 5yr · ${rate}%)`, val: v.annualFinancing },
+                              { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.annualFuel },
+                              { label: 'Insurance', val: v.annualInsurance },
+                              { label: 'Maintenance', val: v.annualMaintenance },
+                              { label: 'Registration', val: v.annualRegistration },
+                            ]).map(({ label, val }) => (
                               <div key={label} className="flex items-center justify-between gap-1">
                                 <span className="text-[10px] text-[var(--text-muted)] leading-tight">{label}</span>
                                 <span className="text-[10px] text-white tabular-nums shrink-0">{fmt(val)}</span>
                               </div>
                             ))}
+                            {v.fiveYear && (
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-[10px] text-[var(--text-muted)] leading-tight">Est. resale value (yr 5)</span>
+                                <span className="text-[10px] text-green-400 tabular-nums shrink-0">− {fmt(v.fiveYear.resaleValue)}</span>
+                              </div>
+                            )}
                             <div className="flex items-center justify-between border-t border-[var(--border)] pt-1 mt-0.5">
-                              <span className="text-[10px] font-bold text-white">{proMode ? 'Total (5-yr)' : 'Total/yr'}</span>
-                              <span className="text-[10px] font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(proMode ? v.fiveYearTotal : v.annualTotal)}</span>
+                              <span className="text-[10px] font-bold text-white">{v.fiveYear ? 'Net cost (5-yr)' : 'Total/yr'}</span>
+                              <span className="text-[10px] font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(v.fiveYear ? v.fiveYear.total : v.annualTotal)}</span>
                             </div>
                           </div>
                         </div>

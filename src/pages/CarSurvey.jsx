@@ -5,7 +5,7 @@ import Footer from '../components/Footer'
 import ProGate from '../components/ProGate'
 import ProUpsell from '../components/ProUpsell'
 import { useSubscription } from '../hooks/useSubscription'
-import { questions, questionImpacts, vehicleProfiles } from '../data/surveyData'
+import { questions, questionImpacts, vehicleProfiles, categoryToAffordabilityFilter } from '../data/surveyData'
 
 function scoreVehicles(answers) {
   const categories = Object.keys(vehicleProfiles)
@@ -367,13 +367,24 @@ export default function CarSurvey() {
           </div>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-4 anim-5">
-            <Link to="/tco" className="btn-primary flex-1 justify-center py-4">
-              Calculate TCO for this vehicle →
-            </Link>
-            <button onClick={handleRestart} className="btn-ghost flex-1 justify-center py-4">
-              Retake the survey
-            </button>
+          <div className="flex flex-col gap-4 anim-5">
+            {topMatch && (() => {
+              const filter = categoryToAffordabilityFilter[topMatch.key] ?? 'all'
+              const href = filter === 'all' ? '/affordability' : `/affordability?category=${filter}`
+              return (
+                <Link to={href} className="btn-primary justify-center py-4">
+                  See affordable {topMatch.profile.name} in your budget →
+                </Link>
+              )
+            })()}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link to="/tco" className="btn-ghost flex-1 justify-center py-4">
+                Calculate TCO for this vehicle →
+              </Link>
+              <button onClick={handleRestart} className="btn-ghost flex-1 justify-center py-4">
+                Retake the survey
+              </button>
+            </div>
           </div>
 
           <ProUpsell

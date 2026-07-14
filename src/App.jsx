@@ -13,6 +13,7 @@ const TCOFlow                = lazy(() => import('./pages/TCOFlow'))
 const TCOCalculator          = lazy(() => import('./pages/TCOCalculator'))
 const CarSurvey              = lazy(() => import('./pages/CarSurvey'))
 const SalaryCalculator       = lazy(() => import('./pages/SalaryCalculator'))
+const Affordability          = lazy(() => import('./pages/Affordability'))
 const MultiVehicleComparison = lazy(() => import('./pages/MultiVehicleComparison'))
 const CarBuyingChecklist     = lazy(() => import('./pages/CarBuyingChecklist'))
 const WheelZard              = lazy(() => import('./pages/WheelZard'))
@@ -51,6 +52,7 @@ export default function App() {
             <Route path="/tco-full"   element={<TCOCalculator />} />
             <Route path="/survey"     element={<CarSurvey />} />
             <Route path="/salary"     element={<SalaryCalculator />} />
+            <Route path="/affordability" element={<Affordability />} />
             <Route path="/compare"    element={<MultiVehicleComparison />} />
             <Route path="/checklist"  element={<CarBuyingChecklist />} />
             <Route path="/wheelzard"  element={<WheelZard />} />

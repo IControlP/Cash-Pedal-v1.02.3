@@ -468,18 +468,26 @@ export default function SalaryCalculator() {
         if (basePrice <= (affordableResults.conservative || 0)) tier = 'conservative'
         else if (basePrice <= (affordableResults.comfortable || 0)) tier = 'comfortable'
         const ops = estimateBasicMonthlyCosts(basePrice, userState || null, annualMiles)
-        const annualFinancing = Math.round(monthlyPayment(basePrice * 0.80, rate, 60) * 12)
+        const monthlyFinance = monthlyPayment(basePrice * 0.80, rate, 60)
+        const annualFinancing = Math.round(monthlyFinance * 12)
+        const annualFuel = ops.fuel * 12
+        const annualInsurance = ops.insurance * 12
+        const annualMaintenance = ops.maintenance * 12
+        const annualRegistration = ops.registration * 12
         const annualOperating = ops.total * 12
+        const fiveYearFinancing = Math.round(monthlyFinance * 60)
+        const fiveYearFuel = annualFuel * 5
+        const fiveYearInsurance = annualInsurance * 5
+        const fiveYearMaintenance = annualMaintenance * 5
+        const fiveYearRegistration = annualRegistration * 5
         entries.push({
           make, model, type: data.type, is_ev: data.is_ev,
           basePrice, year: latestYear, category, tier,
-          annualFinancing,
-          annualFuel: ops.fuel * 12,
-          annualInsurance: ops.insurance * 12,
-          annualMaintenance: ops.maintenance * 12,
-          annualRegistration: ops.registration * 12,
+          annualFinancing, annualFuel, annualInsurance, annualMaintenance, annualRegistration,
           annualOperating,
           annualTotal: annualFinancing + annualOperating,
+          fiveYearFinancing, fiveYearFuel, fiveYearInsurance, fiveYearMaintenance, fiveYearRegistration,
+          fiveYearTotal: fiveYearFinancing + fiveYearFuel + fiveYearInsurance + fiveYearMaintenance + fiveYearRegistration,
         })
       })
     })
@@ -1351,13 +1359,15 @@ export default function SalaryCalculator() {
                           <p className="font-display font-bold text-white tabular-nums text-base mt-1.5">{fmt(v.basePrice)}</p>
                           <span className={`text-[10px] font-semibold ${tierStyles.color} mb-1`}>{tierStyles.label}</span>
                           <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1">
-                            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Est. annual costs</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                              {proMode ? 'Est. 5-year costs' : 'Est. annual costs'}
+                            </p>
                             {[
-                              { label: `Financing (80% · 5yr · ${rate}%)`, val: v.annualFinancing },
-                              { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.annualFuel },
-                              { label: 'Insurance', val: v.annualInsurance },
-                              { label: 'Maintenance', val: v.annualMaintenance },
-                              { label: 'Registration', val: v.annualRegistration },
+                              { label: `Financing (80% · 5yr · ${rate}%)`, val: proMode ? v.fiveYearFinancing : v.annualFinancing },
+                              { label: v.is_ev ? 'Electricity' : 'Fuel', val: proMode ? v.fiveYearFuel : v.annualFuel },
+                              { label: 'Insurance', val: proMode ? v.fiveYearInsurance : v.annualInsurance },
+                              { label: 'Maintenance', val: proMode ? v.fiveYearMaintenance : v.annualMaintenance },
+                              { label: 'Registration', val: proMode ? v.fiveYearRegistration : v.annualRegistration },
                             ].map(({ label, val }) => (
                               <div key={label} className="flex items-center justify-between gap-1">
                                 <span className="text-[10px] text-[var(--text-muted)] leading-tight">{label}</span>
@@ -1365,8 +1375,8 @@ export default function SalaryCalculator() {
                               </div>
                             ))}
                             <div className="flex items-center justify-between border-t border-[var(--border)] pt-1 mt-0.5">
-                              <span className="text-[10px] font-bold text-white">Total/yr</span>
-                              <span className="text-[10px] font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(v.annualTotal)}</span>
+                              <span className="text-[10px] font-bold text-white">{proMode ? 'Total (5-yr)' : 'Total/yr'}</span>
+                              <span className="text-[10px] font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(proMode ? v.fiveYearTotal : v.annualTotal)}</span>
                             </div>
                           </div>
                         </div>

@@ -17,6 +17,7 @@ import {
   CURRENT_YEAR, CATALOG_YEARS, SORT_OPTIONS, sortVehicles,
   TIER_STYLES, RECOMMENDATION_REASONING, pctOfIncome, vehicleCostLines,
   solveAffordablePrice, buildMatchedVehicles,
+  VEHICLE_CATEGORY_FILTERS, matchesCategory, isCategoryValue,
 } from '../utils/affordability'
 
 // Free Pro previews before the paywall — shared counter with /salary so a
@@ -69,8 +70,12 @@ export default function Affordability() {
   const [rate, setRate] = useState(6.5)
   const [annualMiles, setAnnualMiles] = useState(DEFAULT_ANNUAL_MILES)
 
-  // Pick-list controls
-  const [carFilterCategory, setCarFilterCategory] = useState('all')
+  // Pick-list controls — the category filter can be pre-selected via ?category=
+  // (e.g. deep-linked from the Car Survey once it knows the visitor's body type).
+  const [carFilterCategory, setCarFilterCategory] = useState(() => {
+    const q = searchParams.get('category')
+    return q && isCategoryValue(q) ? q : 'all'
+  })
   const [pickYear, setPickYear] = useState(CURRENT_YEAR)
   const [sortBy, setSortBy] = useState('price')
   const [ownershipYears, setOwnershipYears] = useState(5)
@@ -177,8 +182,20 @@ export default function Affordability() {
 
   const filteredVehicles = useMemo(() => {
     if (carFilterCategory === 'all') return matchedVehicles
-    return matchedVehicles.filter(v => v.category === carFilterCategory)
+    return matchedVehicles.filter(v => matchesCategory(v, carFilterCategory))
   }, [matchedVehicles, carFilterCategory])
+
+  // How many matched vehicles fall in each category — shown in the selector so
+  // a visitor sees which body types their budget actually covers.
+  const categoryCounts = useMemo(() => {
+    const counts = {}
+    for (const f of VEHICLE_CATEGORY_FILTERS) {
+      counts[f.value] = f.value === 'all'
+        ? matchedVehicles.length
+        : matchedVehicles.filter(f.match).length
+    }
+    return counts
+  }, [matchedVehicles])
 
   // Single "best fit" pick: priciest vehicle in the safest tier that still fits.
   const recommendedVehicle = useMemo(() => {
@@ -623,34 +640,25 @@ export default function Affordability() {
                       </select>
                     </div>
                   )}
-                  <div className="flex gap-1 p-1 rounded-lg"
-                    style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                    {[
-                      { value: 'all', label: 'All' },
-                      { value: 'economy', label: 'Economy' },
-                      { value: 'luxury', label: 'Luxury' },
-                      { value: 'other', label: 'Other' },
-                    ].map(opt => (
-                      <button
-                        key={opt.value}
-                        onClick={() => setCarFilterCategory(opt.value)}
-                        aria-pressed={carFilterCategory === opt.value}
-                        className="px-3 py-2.5 min-h-[44px] rounded-md text-xs font-semibold transition-all active:opacity-70"
-                        style={{
-                          background: carFilterCategory === opt.value ? 'var(--accent)' : 'transparent',
-                          color: carFilterCategory === opt.value ? '#000' : 'var(--text-muted)',
-                        }}
-                      >
-                        {opt.label}
-                        {' '}
-                        <span className="opacity-60 font-normal">
-                          ({carFilterCategory === opt.value || opt.value === 'all'
-                            ? (opt.value === 'all' ? matchedVehicles.length : filteredVehicles.length)
-                            : matchedVehicles.filter(v => v.category === opt.value).length})
-                        </span>
-                      </button>
-                    ))}
+                  <div className="flex items-center gap-2">
+                    <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap">
+                      Category
+                    </label>
+                    <select
+                      value={carFilterCategory}
+                      onChange={e => setCarFilterCategory(e.target.value)}
+                      className="input-field text-sm py-2 w-auto"
+                    >
+                      {VEHICLE_CATEGORY_FILTERS.map(f => (
+                        <option key={f.value} value={f.value}>
+                          {f.label} ({categoryCounts[f.value] ?? 0})
+                        </option>
+                      ))}
+                    </select>
                   </div>
+                  <Link to="/survey" className="text-[11px] text-[var(--accent)] hover:underline whitespace-nowrap">
+                    Not sure which type fits? Take the 2-min survey →
+                  </Link>
                 </div>
               </div>
 

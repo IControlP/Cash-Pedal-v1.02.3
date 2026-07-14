@@ -217,6 +217,23 @@ export const questionImpacts = [
   ],
 ]
 
+// Maps a survey result category to the matching /affordability category filter
+// value (see VEHICLE_CATEGORY_FILTERS in utils/affordability.js). Lives here —
+// not in that util — so the survey page can deep-link without importing the
+// vehicles.json-heavy affordability module. Hybrid has no catalog body type, so
+// it falls back to the unfiltered list.
+export const categoryToAffordabilityFilter = {
+  suv: 'suv',
+  sedan: 'sedan',
+  pickup: 'truck',
+  sports: 'sports',
+  luxury: 'luxury',
+  economy: 'economy',
+  electric: 'ev',
+  hybrid: 'all',
+  minivan: 'minivan',
+}
+
 export const vehicleProfiles = {
   suv: {
     name: 'SUV / Crossover',

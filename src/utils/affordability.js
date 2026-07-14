@@ -108,10 +108,33 @@ const SALARY_LUXURY_MAKES = new Set([
   'Alfa Romeo', 'Volvo', 'Buick', 'Mini', 'Ferrari', 'Tesla', 'Rivian', 'Lucid',
 ])
 
-export function classifyCarCategory(make, type, basePrice) {
-  if (SALARY_LUXURY_MAKES.has(make)) return 'luxury'
-  if (['suv', 'suv_large', 'truck', 'sports', 'ev_sedan', 'ev_suv', 'minivan'].includes(type)) return 'other'
-  return basePrice <= 30000 ? 'economy' : 'other'
+// Category filters for the matched-vehicle pick list. Body-type filters map to
+// the catalog `type` field (fully populated for every model); EV/Luxury/Economy
+// are cross-cutting attribute filters. These are single-select and may overlap
+// (an EV SUV matches both "SUV" and "EV") — selecting one just narrows the list.
+// `value`s line up with surveyData's categoryToAffordabilityFilter so the Car
+// Survey can deep-link a visitor straight to the body type that fits them.
+export const VEHICLE_CATEGORY_FILTERS = [
+  { value: 'all',     label: 'All',      match: () => true },
+  { value: 'suv',     label: 'SUV',      match: v => ['suv', 'suv_large', 'ev_suv'].includes(v.type) },
+  { value: 'sedan',   label: 'Sedan',    match: v => ['sedan', 'ev_sedan'].includes(v.type) },
+  { value: 'truck',   label: 'Truck',    match: v => v.type === 'truck' },
+  { value: 'sports',  label: 'Sports',   match: v => v.type === 'sports' },
+  { value: 'minivan', label: 'Minivan',  match: v => v.type === 'minivan' },
+  { value: 'ev',      label: 'Electric', match: v => !!v.is_ev },
+  { value: 'luxury',  label: 'Luxury',   match: v => SALARY_LUXURY_MAKES.has(v.make) },
+  { value: 'economy', label: 'Economy',  match: v => !SALARY_LUXURY_MAKES.has(v.make) && v.basePrice <= 30000 },
+]
+
+const CATEGORY_MATCHERS = Object.fromEntries(VEHICLE_CATEGORY_FILTERS.map(f => [f.value, f.match]))
+
+export function isCategoryValue(value) {
+  return Object.prototype.hasOwnProperty.call(CATEGORY_MATCHERS, value)
+}
+
+export function matchesCategory(vehicle, value) {
+  const m = CATEGORY_MATCHERS[value]
+  return m ? m(vehicle) : true
 }
 
 // Sort dimensions for the matched-vehicles pick list. cargo_cu_ft, horsepower,
@@ -252,7 +275,6 @@ export function buildMatchedVehicles(affordableResults, {
       const modelYear = pickYear
       const basePrice = Math.min(...Object.values(trims))
       if (basePrice > maxPrice || basePrice <= 0) return
-      const category = classifyCarCategory(make, data.type, basePrice)
       let tier = 'aggressive'
       if (basePrice <= (affordableResults.conservative || 0)) tier = 'conservative'
       else if (basePrice <= (affordableResults.comfortable || 0)) tier = 'comfortable'
@@ -320,7 +342,7 @@ export function buildMatchedVehicles(affordableResults, {
 
       entries.push({
         make, model, type: data.type, is_ev: data.is_ev,
-        basePrice, year: modelYear, category, tier,
+        basePrice, year: modelYear, tier,
         specs: data.specs || {},
         annualFinancing, annualFuel, annualInsurance, annualMaintenance, annualRegistration,
         annualOperating,

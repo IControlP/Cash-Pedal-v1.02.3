@@ -627,22 +627,24 @@ export default function Affordability() {
                       {SORT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                     </select>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap">
-                      Ownership Duration
-                    </label>
-                    <select
-                      value={ownershipYears}
-                      onChange={e => setOwnershipYears(Number(e.target.value))}
-                      className="input-field text-sm py-2 w-auto"
-                    >
-                      {OWNERSHIP_YEAR_OPTIONS.map(y => (
-                        <option key={y} value={y}>
-                          {y} yr{y !== 1 ? 's' : ''}{y === US_AVG_OWNERSHIP_YEARS ? ' (US avg)' : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  {proMode && (
+                    <div className="flex items-center gap-2">
+                      <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap">
+                        Ownership Duration
+                      </label>
+                      <select
+                        value={ownershipYears}
+                        onChange={e => setOwnershipYears(Number(e.target.value))}
+                        className="input-field text-sm py-2 w-auto"
+                      >
+                        {OWNERSHIP_YEAR_OPTIONS.map(y => (
+                          <option key={y} value={y}>
+                            {y} yr{y !== 1 ? 's' : ''}{y === US_AVG_OWNERSHIP_YEARS ? ' (US avg)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
                     <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap">
                       Category

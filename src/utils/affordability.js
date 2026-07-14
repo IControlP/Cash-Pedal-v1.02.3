@@ -304,23 +304,14 @@ export function buildMatchedVehicles(affordableResults, {
       const annualRegistration = ops.registration * 12
       const annualOperating = ops.total * 12
 
-      // Per-year running costs across the chosen ownership duration. Financing
-      // tapers to $0 once the loan is paid off within the duration; in Pro mode
-      // fuel & maintenance escalate and registration follows the depreciation
-      // curve — so the yearly total is a range, not one flat number.
-      const durYears = Math.max(1, ownershipYears)
-      const financingByYear = Array.from({ length: durYears }, (_, i) => {
-        const monthsThisYear = Math.min(12, Math.max(0, loanTerm - i * 12))
-        return Math.round(monthlyFinance * monthsThisYear)
-      })
-
-      let fuelByYear, insuranceByYear, maintByYear, regByYear
+      // Pro-only: real all-in TCO over the chosen ownership duration plus the
+      // year-by-year cost range. Same functions & net-cost-of-ownership formula
+      // as the TCO Calculator (financing + escalated operating costs + down
+      // payment, minus the modeled resale value).
       let ownershipCost = null
-
+      let annualRange = null
       if (proMode) {
-        // Real all-in TCO over the horizon — same functions & net-cost-of-
-        // ownership formula as the TCO Calculator (financing + escalated
-        // operating costs + down payment, minus modeled resale value).
+        const durYears = Math.max(1, ownershipYears)
         const state = userState || null
         const isEv = !!data.is_ev
         const segment = isEv ? 'electric' : classifySegment(make, model)
@@ -328,20 +319,26 @@ export function buildMatchedVehicles(affordableResults, {
         const mpgNum  = mpg && typeof mpg === 'object' ? (mpg.combined ?? null) : (mpg || null)
         const mpgeNum = mpg && typeof mpg === 'object' ? (mpg.mpge_combined ?? null) : null
 
+        // Financing tapers to $0 once the loan is paid off within the duration.
+        const financingByYear = Array.from({ length: durYears }, (_, i) => {
+          const monthsThisYear = Math.min(12, Math.max(0, loanTerm - i * 12))
+          return Math.round(monthlyFinance * monthsThisYear)
+        })
+
         const fuelYear0 = computeAnnualFuel(
           isEv, isEv ? null : mpgNum, isEv ? mpgeNum : null, state, annualMiles,
           isEv ? liveElecRate : null
         )
-        fuelByYear = Array.from({ length: durYears }, (_, i) => Math.round(escalateAnnualFuel(fuelYear0, i, isEv)))
+        const fuelByYear = Array.from({ length: durYears }, (_, i) => Math.round(escalateAnnualFuel(fuelYear0, i, isEv)))
 
         const insuranceYear0 = estimateInsurance(basePrice, make, model, modelYear, state)
-        insuranceByYear = Array.from({ length: durYears }, (_, i) => Math.round(insuranceYear0 * Math.pow(1.02, i)))
+        const insuranceByYear = Array.from({ length: durYears }, (_, i) => Math.round(insuranceYear0 * Math.pow(1.02, i)))
 
-        maintByYear = generateMaintenanceByYear(
+        const maintByYear = generateMaintenanceByYear(
           isEv, annualMiles, segment, make, durYears, 0, state, 0, resolvedLaborRate, resolvedWear, model, modelYear
         ).map(x => Math.round(x))
 
-        regByYear = projectRegistrationByYear(state, basePrice, durYears, {
+        const regByYear = projectRegistrationByYear(state, basePrice, durYears, {
           make, model, vehicleAge: 0, isEV: isEv, isHybrid: segment === 'hybrid', segment,
         }).map(x => Math.round(x))
 
@@ -362,24 +359,17 @@ export function buildMatchedVehicles(affordableResults, {
           resaleValue,
           total: Math.round(totalPaid - resaleValue),
         }
-      } else {
-        // Free mode: flat operating costs each year (no escalation). Still a
-        // range, because financing drops to $0 once the loan is paid off.
-        fuelByYear = Array(durYears).fill(annualFuel)
-        insuranceByYear = Array(durYears).fill(annualInsurance)
-        maintByYear = Array(durYears).fill(annualMaintenance)
-        regByYear = Array(durYears).fill(annualRegistration)
-      }
 
-      // Annual total-cost range over the duration — financing + operating for
-      // each year; excludes the one-time down payment and end-of-term resale.
-      const perYearTotals = Array.from({ length: durYears }, (_, i) =>
-        financingByYear[i] + fuelByYear[i] + insuranceByYear[i] + maintByYear[i] + regByYear[i]
-      )
-      const annualRange = {
-        years: durYears,
-        low: Math.min(...perYearTotals),
-        high: Math.max(...perYearTotals),
+        // Annual total-cost range over the duration — financing + operating for
+        // each year; excludes the one-time down payment and end-of-term resale.
+        const perYearTotals = Array.from({ length: durYears }, (_, i) =>
+          financingByYear[i] + fuelByYear[i] + insuranceByYear[i] + maintByYear[i] + regByYear[i]
+        )
+        annualRange = {
+          years: durYears,
+          low: Math.min(...perYearTotals),
+          high: Math.max(...perYearTotals),
+        }
       }
 
       entries.push({

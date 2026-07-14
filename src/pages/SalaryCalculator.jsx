@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { safeGet, safeSet } from '../utils/safeStorage'
+import { safeUUID } from '../utils/safeId'
 import { Link, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -207,7 +208,7 @@ function sortVehicles(list, sortBy) {
   const sorted = [...list]
   switch (sortBy) {
     case 'value':
-      sorted.sort((a, b) => (a.fiveYear?.total ?? a.annualTotal) - (b.fiveYear?.total ?? b.annualTotal))
+      sorted.sort((a, b) => (a.ownershipCost?.total ?? a.annualTotal) - (b.ownershipCost?.total ?? b.annualTotal))
       break
     case 'cargo':
       sorted.sort((a, b) => (b.specs.cargo_cu_ft ?? 0) - (a.specs.cargo_cu_ft ?? 0))
@@ -236,24 +237,33 @@ const RECOMMENDATION_REASONING = {
   aggressive: "Nothing in this category fits the safest or comfortable tiers at your income — this is the top pick within the stretched 20% tier. A lower category or higher salary would give you more room.",
 }
 
+// Share of the entered gross annual salary this vehicle's year-1 costs
+// (financing + fuel + insurance + maintenance + registration) would consume.
+function pctOfIncome(v, salary) {
+  const s = Number(salary)
+  if (!s) return null
+  return Math.round((v.annualTotal / s) * 1000) / 10
+}
+
 // Shared cost-breakdown lines for a matched vehicle — used by both the
 // recommended pick and the matching-vehicles grid so the two stay in sync.
-function vehicleCostLines(v, rate) {
-  const financeLabel = `Financing (80% · 5yr · ${rate}%)`
-  if (v.fiveYear) {
+function vehicleCostLines(v, rate, loanTerm) {
+  const financeLabel = `Financing (80% · ${loanTerm}mo · ${rate}%)`
+  if (v.ownershipCost) {
+    const yrs = v.ownershipCost.years
     return {
-      header: 'Est. 5-year net cost',
+      header: `Est. all-in cost — ${yrs} yr${yrs !== 1 ? 's' : ''}`,
       lines: [
-        { label: financeLabel, val: v.fiveYear.financing },
-        { label: 'Down payment (20%)', val: v.fiveYear.downPayment },
-        { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.fiveYear.fuel },
-        { label: 'Insurance', val: v.fiveYear.insurance },
-        { label: 'Maintenance', val: v.fiveYear.maintenance },
-        { label: 'Registration', val: v.fiveYear.registration },
+        { label: financeLabel, val: v.ownershipCost.financing },
+        { label: 'Down payment (20%)', val: v.ownershipCost.downPayment },
+        { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.ownershipCost.fuel },
+        { label: 'Insurance', val: v.ownershipCost.insurance },
+        { label: 'Maintenance', val: v.ownershipCost.maintenance },
+        { label: 'Registration', val: v.ownershipCost.registration },
       ],
-      credit: { label: 'Est. resale value (yr 5)', val: v.fiveYear.resaleValue },
-      totalLabel: 'Net cost (5-yr)',
-      totalVal: v.fiveYear.total,
+      credit: { label: `Est. resale value (yr ${yrs})`, val: v.ownershipCost.resaleValue },
+      totalLabel: `All-In Cost (${yrs}-yr)`,
+      totalVal: v.ownershipCost.total,
     }
   }
   return {
@@ -353,6 +363,16 @@ export default function SalaryCalculator() {
   const [carFilterCategory, setCarFilterCategory] = useState('all')
   const [pickYear, setPickYear] = useState(CURRENT_YEAR)
   const [sortBy, setSortBy] = useState('price')
+  const [ownershipYears, setOwnershipYears] = useState(5)
+
+  // Comparison hand-off — mirrors TCOCalculator's "Add to Comparison" queue
+  // (same cashpedal_tco_for_comparison localStorage key MultiVehicleComparison
+  // reads on mount), plus a session-only set so a card can show "Added" instead
+  // of silently re-queuing the same vehicle on repeat clicks.
+  const [comparisonCount, setComparisonCount] = useState(() => {
+    try { return JSON.parse(safeGet('cashpedal_tco_for_comparison') || '[]').length } catch { return 0 }
+  })
+  const [addedToCompare, setAddedToCompare] = useState(() => new Set())
 
   // Buy inputs
   const [vehiclePrice, setVehiclePrice] = useState(30000)
@@ -623,7 +643,7 @@ export default function SalaryCalculator() {
         if (basePrice <= (affordableResults.conservative || 0)) tier = 'conservative'
         else if (basePrice <= (affordableResults.comfortable || 0)) tier = 'comfortable'
         const ops = estimateBasicMonthlyCosts(basePrice, userState || null, annualMiles)
-        const monthlyFinance = monthlyPayment(basePrice * 0.80, rate, 60)
+        const monthlyFinance = monthlyPayment(basePrice * 0.80, rate, loanTerm)
         const annualFinancing = Math.round(monthlyFinance * 12)
         const annualFuel = ops.fuel * 12
         const annualInsurance = ops.insurance * 12
@@ -631,10 +651,11 @@ export default function SalaryCalculator() {
         const annualRegistration = ops.registration * 12
         const annualOperating = ops.total * 12
 
-        // Pro: real 5-year TCO — same functions & net-cost-of-ownership formula
-        // as the TCO Calculator (financing + escalated operating costs + down
-        // payment, minus the modeled resale value at year 5).
-        let fiveYear = null
+        // Pro: real all-in TCO over the chosen ownership horizon — same
+        // functions & net-cost-of-ownership formula as the TCO Calculator
+        // (financing + escalated operating costs + down payment, minus the
+        // modeled resale value at the end of the horizon).
+        let ownershipCost = null
         if (proMode) {
           const state = userState || null
           const isEv = !!data.is_ev
@@ -642,36 +663,42 @@ export default function SalaryCalculator() {
           const mpg = data.mpg || null
           const mpgNum  = mpg && typeof mpg === 'object' ? (mpg.combined ?? null) : (mpg || null)
           const mpgeNum = mpg && typeof mpg === 'object' ? (mpg.mpge_combined ?? null) : null
+          const years = Array.from({ length: ownershipYears }, (_, i) => i)
 
           const fuelYear0 = computeAnnualFuel(
             isEv, isEv ? null : mpgNum, isEv ? mpgeNum : null, state, annualMiles,
             isEv ? liveElecRate : null
           )
-          const fuel5yr = [0, 1, 2, 3, 4].reduce((s, i) => s + escalateAnnualFuel(fuelYear0, i, isEv), 0)
+          const fuelTotal = years.reduce((s, i) => s + escalateAnnualFuel(fuelYear0, i, isEv), 0)
 
           const insuranceYear0 = estimateInsurance(basePrice, make, model, modelYear, state)
-          const insurance5yr = [0, 1, 2, 3, 4].reduce((s, i) => s + Math.round(insuranceYear0 * Math.pow(1.02, i)), 0)
+          const insuranceTotal = years.reduce((s, i) => s + Math.round(insuranceYear0 * Math.pow(1.02, i)), 0)
 
-          const maintenance5yr = generateMaintenanceByYear(
-            isEv, annualMiles, segment, make, 5, 0, state, 0, resolvedLaborRate, resolvedWear, model, modelYear
+          const maintenanceTotal = generateMaintenanceByYear(
+            isEv, annualMiles, segment, make, ownershipYears, 0, state, 0, resolvedLaborRate, resolvedWear, model, modelYear
           ).reduce((s, x) => s + x, 0)
 
-          const registration5yr = projectRegistrationByYear(state, basePrice, 5, {
+          const registrationTotal = projectRegistrationByYear(state, basePrice, ownershipYears, {
             make, model, vehicleAge: 0, isEV: isEv, isHybrid: segment === 'hybrid', segment,
           }).reduce((s, x) => s + x, 0)
 
-          const financing5yr = Math.round(monthlyFinance * 60)
-          const downPayment5yr = Math.round(basePrice * 0.20)
-          const resaleValue = Math.round(estimateCurrentValue(basePrice, make, model, 5, null, state))
-          const totalPaid = financing5yr + downPayment5yr + fuel5yr + insurance5yr + maintenance5yr + registration5yr
+          // Payments run for the actual loan term, not the full ownership
+          // horizon — a 36 or 48-month loan may be paid off before the
+          // horizon ends, while a 72-month loan may still have payments left
+          // at the end of a shorter horizon.
+          const financingTotal = Math.round(monthlyFinance * Math.min(ownershipYears * 12, loanTerm))
+          const downPaymentAmt = Math.round(basePrice * 0.20)
+          const resaleValue = Math.round(estimateCurrentValue(basePrice, make, model, ownershipYears, null, state))
+          const totalPaid = financingTotal + downPaymentAmt + fuelTotal + insuranceTotal + maintenanceTotal + registrationTotal
 
-          fiveYear = {
-            financing: financing5yr,
-            downPayment: downPayment5yr,
-            fuel: Math.round(fuel5yr),
-            insurance: insurance5yr,
-            maintenance: Math.round(maintenance5yr),
-            registration: Math.round(registration5yr),
+          ownershipCost = {
+            years: ownershipYears,
+            financing: financingTotal,
+            downPayment: downPaymentAmt,
+            fuel: Math.round(fuelTotal),
+            insurance: insuranceTotal,
+            maintenance: Math.round(maintenanceTotal),
+            registration: Math.round(registrationTotal),
             resaleValue,
             total: Math.round(totalPaid - resaleValue),
           }
@@ -684,12 +711,12 @@ export default function SalaryCalculator() {
           annualFinancing, annualFuel, annualInsurance, annualMaintenance, annualRegistration,
           annualOperating,
           annualTotal: annualFinancing + annualOperating,
-          fiveYear,
+          ownershipCost,
         })
       })
     })
     return entries.sort((a, b) => b.basePrice - a.basePrice)
-  }, [affordableResults, userState, annualMiles, rate, proMode, resolvedLaborRate, resolvedWear, liveElecRate, pickYear])
+  }, [affordableResults, userState, annualMiles, rate, proMode, resolvedLaborRate, resolvedWear, liveElecRate, pickYear, loanTerm, ownershipYears])
 
   const filteredVehicles = useMemo(() => {
     if (carFilterCategory === 'all') return matchedVehicles
@@ -727,6 +754,48 @@ export default function SalaryCalculator() {
   }, [sortedGridVehicles, recommendedVehicle, sortBy])
 
   const downAmount = vehiclePrice * (downPct / 100)
+
+  // Queue a matched vehicle into the same comparison hand-off TCOCalculator
+  // uses — MultiVehicleComparison imports this on mount and clears it after.
+  function addVehicleToComparison(v) {
+    const key = `${v.make}|${v.model}|${v.year}`
+    if (addedToCompare.has(key)) return
+
+    const downPayment = v.ownershipCost ? v.ownershipCost.downPayment : Math.round(v.basePrice * 0.20)
+    const resaleValue = v.ownershipCost ? v.ownershipCost.resaleValue : null
+    const valueRetentionPct = resaleValue != null ? Math.round((resaleValue / v.basePrice) * 100) : null
+
+    const entry = {
+      id: safeUUID(),
+      name: `${v.year} ${v.make} ${v.model}`,
+      addedAt: new Date().toISOString(),
+      isLease: false,
+      price: v.basePrice,
+      downPayment,
+      loanTerm,
+      rate,
+      ownershipYears,
+      totalAnnualCost: v.annualTotal,
+      totalOwnershipCost: v.ownershipCost ? v.ownershipCost.total : v.annualTotal * ownershipYears,
+      make: v.make, model: v.model, year: v.year,
+      mpgCombined: null,
+      cargoSqFt: v.specs.cargo_cu_ft ?? null,
+      seats: v.specs.seats ?? null,
+      isEV: v.is_ev,
+      valueRetentionPct,
+    }
+
+    let existing = []
+    try {
+      const parsed = JSON.parse(safeGet('cashpedal_tco_for_comparison') || '[]')
+      if (Array.isArray(parsed)) existing = parsed
+    } catch { /* start fresh on malformed data */ }
+    const updated = [...existing, entry].slice(-5)
+    safeSet('cashpedal_tco_for_comparison', JSON.stringify(updated))
+    setComparisonCount(updated.length)
+    setAddedToCompare(prev => new Set(prev).add(key))
+    trackUsage('salary_add_to_compare')
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)]">
@@ -1583,6 +1652,20 @@ export default function SalaryCalculator() {
                       {SORT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                     </select>
                   </div>
+                  {proMode && (
+                    <div className="flex items-center gap-2">
+                      <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap">
+                        Ownership Years
+                      </label>
+                      <select
+                        value={ownershipYears}
+                        onChange={e => setOwnershipYears(Number(e.target.value))}
+                        className="input-field text-sm py-2 w-auto"
+                      >
+                        {[1, 2, 3, 4, 5].map(y => <option key={y} value={y}>{y} yr{y !== 1 ? 's' : ''}</option>)}
+                      </select>
+                    </div>
+                  )}
                   <div className="flex gap-1 p-1 rounded-lg"
                     style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
                     {[
@@ -1615,7 +1698,7 @@ export default function SalaryCalculator() {
               </div>
 
               {recommendedVehicle && (() => {
-                const b = vehicleCostLines(recommendedVehicle, rate)
+                const b = vehicleCostLines(recommendedVehicle, rate, loanTerm)
                 const t = TIER_STYLES[recommendedVehicle.tier]
                 return (
                   <div className="card border-[var(--accent)] p-5 mb-6" style={{ background: 'rgba(200,255,0,0.04)' }}>
@@ -1641,6 +1724,11 @@ export default function SalaryCalculator() {
                       <div className="text-left sm:text-right shrink-0">
                         <p className="font-display font-bold text-white text-2xl tabular-nums">{fmt(recommendedVehicle.basePrice)}</p>
                         <span className={`text-[11px] font-semibold ${t.color}`}>{t.label}</span>
+                        {pctOfIncome(recommendedVehicle, knownSalary) != null && (
+                          <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                            {pctOfIncome(recommendedVehicle, knownSalary)}% of gross income/yr
+                          </p>
+                        )}
                       </div>
                     </div>
                     <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-4">
@@ -1667,9 +1755,33 @@ export default function SalaryCalculator() {
                         <span className="font-display font-bold tabular-nums" style={{ color: 'var(--accent)' }}>{fmt(b.totalVal)}</span>
                       </div>
                     </div>
+                    <button
+                      onClick={() => addVehicleToComparison(recommendedVehicle)}
+                      disabled={addedToCompare.has(`${recommendedVehicle.make}|${recommendedVehicle.model}|${recommendedVehicle.year}`)}
+                      className="btn-ghost text-xs w-full mt-4 flex items-center justify-center gap-1.5 disabled:opacity-60"
+                    >
+                      {addedToCompare.has(`${recommendedVehicle.make}|${recommendedVehicle.model}|${recommendedVehicle.year}`)
+                        ? '✓ Added to Comparison'
+                        : <>＋ Add to Comparison</>}
+                    </button>
                   </div>
                 )
               })()}
+
+              {comparisonCount > 0 && (
+                <div className="flex items-center justify-between rounded-lg px-3 py-2.5 mb-6 text-xs"
+                  style={{ background: 'rgba(200,255,0,0.06)', border: '1px solid rgba(200,255,0,0.2)' }}>
+                  <span style={{ color: 'var(--accent)' }} className="font-semibold">
+                    {comparisonCount} car{comparisonCount !== 1 ? 's' : ''} queued for comparison
+                  </span>
+                  {comparisonCount >= 2 && (
+                    <Link to="/compare"
+                      className="font-bold text-white hover:text-[var(--accent)] transition-colors ml-3 shrink-0">
+                      View Comparison →
+                    </Link>
+                  )}
+                </div>
+              )}
 
               {filteredVehicles.length === 0 ? (
                 <div className="card text-center py-8">
@@ -1684,7 +1796,7 @@ export default function SalaryCalculator() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {gridVehicles.map(v => {
                       const tierStyles = TIER_STYLES[v.tier]
-                      const b = vehicleCostLines(v, rate)
+                      const b = vehicleCostLines(v, rate, loanTerm)
                       const isRecommended = recommendedVehicle
                         && v.make === recommendedVehicle.make && v.model === recommendedVehicle.model
                       return (
@@ -1720,7 +1832,12 @@ export default function SalaryCalculator() {
                             </p>
                           )}
                           <p className="font-display font-bold text-white tabular-nums text-lg mt-1.5">{fmt(v.basePrice)}</p>
-                          <span className={`text-xs font-semibold ${tierStyles.color} mb-1`}>{tierStyles.label}</span>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className={`text-xs font-semibold ${tierStyles.color}`}>{tierStyles.label}</span>
+                            {pctOfIncome(v, knownSalary) != null && (
+                              <span className="text-[11px] text-[var(--text-muted)]">{pctOfIncome(v, knownSalary)}% of income/yr</span>
+                            )}
+                          </div>
                           <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1.5">
                             <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                               {b.header}
@@ -1742,6 +1859,13 @@ export default function SalaryCalculator() {
                               <span className="text-sm font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(b.totalVal)}</span>
                             </div>
                           </div>
+                          <button
+                            onClick={() => addVehicleToComparison(v)}
+                            disabled={addedToCompare.has(`${v.make}|${v.model}|${v.year}`)}
+                            className="btn-ghost text-xs w-full mt-2 py-1.5 flex items-center justify-center gap-1.5 disabled:opacity-60"
+                          >
+                            {addedToCompare.has(`${v.make}|${v.model}|${v.year}`) ? '✓ Added' : <>＋ Add to Compare</>}
+                          </button>
                         </div>
                       )
                     })}

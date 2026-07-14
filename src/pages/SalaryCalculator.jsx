@@ -15,7 +15,7 @@ import {
   classifySegment, determineMaintTier,
   estimateInsurance, generateMaintenanceServices, generateMaintenanceByYear,
   computeAnnualFuel, computeAnnualRegFees, projectRegistrationByYear,
-  escalateAnnualFuel, estimateCurrentValue,
+  escalateAnnualFuel, estimateCurrentValue, resolveLocation,
   STATE_INS_BASE,
 } from '../utils/vehicleCosts'
 
@@ -70,8 +70,10 @@ function estimateBasicMonthlyCosts(price, state, annualMiles = DEFAULT_ANNUAL_MI
   return { fuel, insurance, maintenance, registration, total: fuel + insurance + maintenance + registration, tier: tierLabel[tierKey] }
 }
 
-// Pro mode: vehicle-specific + state-aware
-function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, annualMiles = DEFAULT_ANNUAL_MILES) {
+// Pro mode: vehicle-specific + state-aware. laborRate/wearProfile (from a
+// resolved ZIP) sharpen maintenance; elecRate (ZIP-level, via OpenEI) sharpens
+// EV charging cost — both fall back to state-level modeling without a ZIP.
+function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, annualMiles = DEFAULT_ANNUAL_MILES, laborRate = null, wearProfile = null, elecRate = null) {
   const segment = isEv ? 'electric' : classifySegment(make, model)
 
   const mpgNum  = mpg && typeof mpg === 'object' ? (mpg.combined ?? null) : (mpg || null)
@@ -82,12 +84,13 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
     isEv ? null : mpgNum,
     isEv ? mpgeNum : null,
     state || null,
-    annualMiles
+    annualMiles,
+    isEv ? elecRate : null
   ) / 12)
 
   const insurance = Math.round(estimateInsurance(price, make, model, year, state || null) / 12)
 
-  const maintServices = generateMaintenanceServices(isEv, annualMiles, segment, make, state || null, 0, null, null, model, year)
+  const maintServices = generateMaintenanceServices(isEv, annualMiles, segment, make, state || null, 0, laborRate, wearProfile, model, year)
   const maintenance = Math.round(maintServices.reduce((s, x) => s + x.annual, 0) / 12)
 
   const vehicleAge = year ? Math.max(0, new Date().getFullYear() - parseInt(year)) : 0
@@ -277,6 +280,14 @@ export default function SalaryCalculator() {
   const [stateDetecting, setStateDetecting] = useState(false)
   const [stateDetectFailed, setStateDetectFailed] = useState(false)
 
+  // ZIP code (optional) — sharpens Pro maintenance (local labor rate & wear
+  // profile) and EV charging cost beyond the state-level averages above.
+  const [userZip, setUserZip] = useState('')
+  const [zipError, setZipError] = useState('')
+  const [resolvedLaborRate, setResolvedLaborRate] = useState(null)
+  const [resolvedWear, setResolvedWear] = useState(null)
+  const [liveElecRate, setLiveElecRate] = useState(null)
+
   // Pro mode
   const [proMode, setProMode] = useState(false)
   const [selMake, setSelMake] = useState('')
@@ -372,6 +383,47 @@ export default function SalaryCalculator() {
       .finally(() => { setStateDetecting(false); clearTimeout(timeout) })
   }, [])
 
+  // ZIP resolves to a state (syncing the selector above), a local labor rate,
+  // and a wear profile — same resolveLocation() the TCO Calculator uses.
+  function handleZipInput(val) {
+    setUserZip(val)
+    setZipError('')
+    if (!val) {
+      setResolvedLaborRate(null)
+      setResolvedWear(null)
+      return
+    }
+    if (!/^\d{5}$/.test(val)) {
+      setResolvedLaborRate(null)
+      setResolvedWear(null)
+      if (val.length >= 5) setZipError('Enter a 5-digit ZIP code')
+      return
+    }
+    const resolved = resolveLocation(val)
+    if (resolved) {
+      setUserState(resolved.state)
+      setStateAutoDetected(false)
+      setResolvedLaborRate(resolved.laborRate ?? null)
+      setResolvedWear(resolved.wear ?? null)
+    } else {
+      setResolvedLaborRate(null)
+      setResolvedWear(null)
+      setZipError('ZIP code not recognized')
+    }
+  }
+
+  // Live electricity rate ($/kWh) for the resolved ZIP — sharpens EV charging
+  // cost beyond the state-level table. Falls back silently when unavailable.
+  useEffect(() => {
+    if (!/^\d{5}$/.test(userZip)) { setLiveElecRate(null); return }
+    let cancelled = false
+    fetch(`/api/electricity-rate?zip=${userZip}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (!cancelled) setLiveElecRate(data?.rate ?? null) })
+      .catch(() => { if (!cancelled) setLiveElecRate(null) })
+    return () => { cancelled = true }
+  }, [userZip])
+
   // When trim selected, auto-populate price field
   useEffect(() => {
     if (!proMode || !selectedVehicleInfo?.price) return
@@ -424,8 +476,11 @@ export default function SalaryCalculator() {
   const proExtras = useMemo(() => {
     if (!proMode || !selectedVehicleInfo) return null
     const { make, model, year, is_ev, mpg } = selectedVehicleInfo
-    return estimateProMonthlyCosts(activePrice, make, model, year, is_ev, mpg, userState, annualMiles)
-  }, [proMode, selectedVehicleInfo, activePrice, userState, annualMiles])
+    return estimateProMonthlyCosts(
+      activePrice, make, model, year, is_ev, mpg, userState, annualMiles,
+      resolvedLaborRate, resolvedWear, liveElecRate
+    )
+  }, [proMode, selectedVehicleInfo, activePrice, userState, annualMiles, resolvedLaborRate, resolvedWear, liveElecRate])
 
   const results = useMemo(() => {
     const extra = proExtras
@@ -536,14 +591,17 @@ export default function SalaryCalculator() {
           const mpgNum  = mpg && typeof mpg === 'object' ? (mpg.combined ?? null) : (mpg || null)
           const mpgeNum = mpg && typeof mpg === 'object' ? (mpg.mpge_combined ?? null) : null
 
-          const fuelYear0 = computeAnnualFuel(isEv, isEv ? null : mpgNum, isEv ? mpgeNum : null, state, annualMiles)
+          const fuelYear0 = computeAnnualFuel(
+            isEv, isEv ? null : mpgNum, isEv ? mpgeNum : null, state, annualMiles,
+            isEv ? liveElecRate : null
+          )
           const fuel5yr = [0, 1, 2, 3, 4].reduce((s, i) => s + escalateAnnualFuel(fuelYear0, i, isEv), 0)
 
           const insuranceYear0 = estimateInsurance(basePrice, make, model, latestYear, state)
           const insurance5yr = [0, 1, 2, 3, 4].reduce((s, i) => s + Math.round(insuranceYear0 * Math.pow(1.02, i)), 0)
 
           const maintenance5yr = generateMaintenanceByYear(
-            isEv, annualMiles, segment, make, 5, 0, state, 0, null, null, model, latestYear
+            isEv, annualMiles, segment, make, 5, 0, state, 0, resolvedLaborRate, resolvedWear, model, latestYear
           ).reduce((s, x) => s + x, 0)
 
           const registration5yr = projectRegistrationByYear(state, basePrice, 5, {
@@ -578,7 +636,7 @@ export default function SalaryCalculator() {
       })
     })
     return entries.sort((a, b) => b.basePrice - a.basePrice)
-  }, [affordableResults, userState, annualMiles, rate, proMode])
+  }, [affordableResults, userState, annualMiles, rate, proMode, resolvedLaborRate, resolvedWear, liveElecRate])
 
   const filteredVehicles = useMemo(() => {
     if (carFilterCategory === 'all') return matchedVehicles
@@ -742,7 +800,10 @@ export default function SalaryCalculator() {
                     )}
                     {userState && (
                       <button
-                        onClick={() => { setUserState(''); setStateAutoDetected(false) }}
+                        onClick={() => {
+                          setUserState(''); setStateAutoDetected(false)
+                          setUserZip(''); setResolvedLaborRate(null); setResolvedWear(null); setZipError('')
+                        }}
                         className="text-[10px] text-[var(--text-muted)] hover:text-white transition-colors"
                       >
                         Clear
@@ -767,6 +828,38 @@ export default function SalaryCalculator() {
                       : 'National average rates applied for this state.'}
                   </p>
                 )}
+
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className="flex items-center justify-between">
+                    <label className="input-label text-[11px]">ZIP Code (optional)</label>
+                    {userZip && (
+                      <button
+                        onClick={() => { setUserZip(''); setResolvedLaborRate(null); setResolvedWear(null); setZipError('') }}
+                        className="text-[10px] text-[var(--text-muted)] hover:text-white transition-colors"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={5}
+                    value={userZip}
+                    onChange={e => handleZipInput(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                    placeholder="e.g. 90210"
+                    className="input-field text-sm"
+                  />
+                  {zipError ? (
+                    <p className="text-[10px] text-yellow-500">{zipError}</p>
+                  ) : (
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      {resolvedLaborRate
+                        ? `Local labor rate & wear profile applied to Pro maintenance estimates${liveElecRate ? ', plus ZIP-level EV charging rates' : ''}.`
+                        : 'Sharpens Pro maintenance & EV charging cost estimates beyond state averages.'}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Pro: Vehicle picker */}

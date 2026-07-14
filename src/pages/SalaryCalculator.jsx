@@ -161,6 +161,14 @@ const CURRENT_YEAR = String(
   )
 )
 
+// Every model year present anywhere in the catalog, newest first — powers the
+// "Model Year" selector for the matched-vehicles pick list.
+const CATALOG_YEARS = [...new Set(
+  Object.values(VEHICLES).flatMap(make =>
+    Object.values(make).flatMap(model => Object.keys(model.trims_by_year || {}))
+  )
+)].sort((a, b) => Number(b) - Number(a))
+
 const SALARY_LUXURY_MAKES = new Set([
   'BMW', 'Mercedes-Benz', 'Audi', 'Porsche', 'Lexus', 'Acura', 'Infiniti',
   'Cadillac', 'Lincoln', 'Genesis', 'Jaguar', 'Land Rover', 'Maserati',
@@ -300,6 +308,7 @@ export default function SalaryCalculator() {
 
   // Car suggestion filter
   const [carFilterCategory, setCarFilterCategory] = useState('all')
+  const [pickYear, setPickYear] = useState(CURRENT_YEAR)
 
   // Buy inputs
   const [vehiclePrice, setVehiclePrice] = useState(30000)
@@ -560,10 +569,9 @@ export default function SalaryCalculator() {
     const entries = []
     Object.entries(VEHICLES).forEach(([make, models]) => {
       Object.entries(models).forEach(([model, data]) => {
-        const years = Object.keys(data.trims_by_year || {}).sort((a, b) => Number(b) - Number(a))
-        if (!years.length) return
-        const latestYear = years[0]
-        const trims = data.trims_by_year[latestYear]
+        const trims = data.trims_by_year?.[pickYear]
+        if (!trims) return // model not offered in the selected model year
+        const modelYear = pickYear
         const basePrice = Math.min(...Object.values(trims))
         if (basePrice > maxPrice || basePrice <= 0) return
         const category = classifyCarCategory(make, data.type, basePrice)
@@ -597,11 +605,11 @@ export default function SalaryCalculator() {
           )
           const fuel5yr = [0, 1, 2, 3, 4].reduce((s, i) => s + escalateAnnualFuel(fuelYear0, i, isEv), 0)
 
-          const insuranceYear0 = estimateInsurance(basePrice, make, model, latestYear, state)
+          const insuranceYear0 = estimateInsurance(basePrice, make, model, modelYear, state)
           const insurance5yr = [0, 1, 2, 3, 4].reduce((s, i) => s + Math.round(insuranceYear0 * Math.pow(1.02, i)), 0)
 
           const maintenance5yr = generateMaintenanceByYear(
-            isEv, annualMiles, segment, make, 5, 0, state, 0, resolvedLaborRate, resolvedWear, model, latestYear
+            isEv, annualMiles, segment, make, 5, 0, state, 0, resolvedLaborRate, resolvedWear, model, modelYear
           ).reduce((s, x) => s + x, 0)
 
           const registration5yr = projectRegistrationByYear(state, basePrice, 5, {
@@ -627,7 +635,7 @@ export default function SalaryCalculator() {
 
         entries.push({
           make, model, type: data.type, is_ev: data.is_ev,
-          basePrice, year: latestYear, category, tier,
+          basePrice, year: modelYear, category, tier,
           annualFinancing, annualFuel, annualInsurance, annualMaintenance, annualRegistration,
           annualOperating,
           annualTotal: annualFinancing + annualOperating,
@@ -636,7 +644,7 @@ export default function SalaryCalculator() {
       })
     })
     return entries.sort((a, b) => b.basePrice - a.basePrice)
-  }, [affordableResults, userState, annualMiles, rate, proMode, resolvedLaborRate, resolvedWear, liveElecRate])
+  }, [affordableResults, userState, annualMiles, rate, proMode, resolvedLaborRate, resolvedWear, liveElecRate, pickYear])
 
   const filteredVehicles = useMemo(() => {
     if (carFilterCategory === 'all') return matchedVehicles
@@ -1493,37 +1501,51 @@ export default function SalaryCalculator() {
                     Cars within your budget
                   </h2>
                   <p className="text-xs text-[var(--text-muted)] mt-1">
-                    Base MSRP fits your {downPct}% down · {loanTerm}-mo loan · {rate}% APR · includes operating costs
+                    {pickYear} model year · Base MSRP fits your {downPct}% down · {loanTerm}-mo loan · {rate}% APR · includes operating costs
                     {userState ? ` · ${userState} rates` : ''}
                   </p>
                 </div>
-                <div className="flex gap-1 p-1 rounded-lg shrink-0"
-                  style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                  {[
-                    { value: 'all', label: 'All' },
-                    { value: 'economy', label: 'Economy' },
-                    { value: 'luxury', label: 'Luxury' },
-                    { value: 'other', label: 'Other' },
-                  ].map(opt => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setCarFilterCategory(opt.value)}
-                      aria-pressed={carFilterCategory === opt.value}
-                      className="px-3 py-2.5 min-h-[44px] rounded-md text-xs font-semibold transition-all active:opacity-70"
-                      style={{
-                        background: carFilterCategory === opt.value ? 'var(--accent)' : 'transparent',
-                        color: carFilterCategory === opt.value ? '#000' : 'var(--text-muted)',
-                      }}
+                <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
+                  <div className="flex items-center gap-2">
+                    <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap">
+                      Model Year
+                    </label>
+                    <select
+                      value={pickYear}
+                      onChange={e => setPickYear(e.target.value)}
+                      className="input-field text-sm py-2 w-auto"
                     >
-                      {opt.label}
-                      {' '}
-                      <span className="opacity-60 font-normal">
-                        ({carFilterCategory === opt.value || opt.value === 'all'
-                          ? (opt.value === 'all' ? matchedVehicles.length : filteredVehicles.length)
-                          : matchedVehicles.filter(v => v.category === opt.value).length})
-                      </span>
-                    </button>
-                  ))}
+                      {CATALOG_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex gap-1 p-1 rounded-lg"
+                    style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                    {[
+                      { value: 'all', label: 'All' },
+                      { value: 'economy', label: 'Economy' },
+                      { value: 'luxury', label: 'Luxury' },
+                      { value: 'other', label: 'Other' },
+                    ].map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setCarFilterCategory(opt.value)}
+                        aria-pressed={carFilterCategory === opt.value}
+                        className="px-3 py-2.5 min-h-[44px] rounded-md text-xs font-semibold transition-all active:opacity-70"
+                        style={{
+                          background: carFilterCategory === opt.value ? 'var(--accent)' : 'transparent',
+                          color: carFilterCategory === opt.value ? '#000' : 'var(--text-muted)',
+                        }}
+                      >
+                        {opt.label}
+                        {' '}
+                        <span className="opacity-60 font-normal">
+                          ({carFilterCategory === opt.value || opt.value === 'all'
+                            ? (opt.value === 'all' ? matchedVehicles.length : filteredVehicles.length)
+                            : matchedVehicles.filter(v => v.category === opt.value).length})
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -1579,15 +1601,15 @@ export default function SalaryCalculator() {
 
               {filteredVehicles.length === 0 ? (
                 <div className="card text-center py-8">
-                  <p className="text-[var(--text-muted)] text-sm">No vehicles in this category fit your current budget.</p>
-                  <p className="text-[var(--text-muted)] text-xs mt-1">Try a higher salary or switch to a different category.</p>
+                  <p className="text-[var(--text-muted)] text-sm">No {pickYear} model year vehicles in this category fit your current budget.</p>
+                  <p className="text-[var(--text-muted)] text-xs mt-1">Try a higher salary, a different model year, or a different category.</p>
                 </div>
               ) : (
                 <>
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
                     All matches
                   </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {gridVehicles.map(v => {
                       const tierStyles = TIER_STYLES[v.tier]
                       const b = vehicleCostLines(v, rate)
@@ -1596,49 +1618,49 @@ export default function SalaryCalculator() {
                       return (
                         <div
                           key={`${v.make}-${v.model}`}
-                          className={`card p-3 flex flex-col gap-1 transition-all ${isRecommended ? '' : 'hover:border-[var(--accent)]'}`}
+                          className={`card p-4 flex flex-col gap-1.5 transition-all ${isRecommended ? '' : 'hover:border-[var(--accent)]'}`}
                           style={isRecommended ? { borderColor: 'var(--accent)' } : undefined}
                         >
                           <div className="flex items-start justify-between gap-1 mb-0.5">
-                            <p className="text-[11px] font-semibold text-[var(--text-muted)] leading-tight">{v.make}</p>
+                            <p className="text-xs font-semibold text-[var(--text-muted)] leading-tight">{v.make}</p>
                             <div className="flex gap-1 shrink-0">
                               {isRecommended && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                                   style={{ background: 'var(--accent)', color: '#000' }}>
                                   ★ Pick
                                 </span>
                               )}
                               {v.is_ev && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                                   style={{ background: 'rgba(200,255,0,0.15)', color: 'var(--accent)', border: '1px solid rgba(200,255,0,0.3)' }}>
                                   EV
                                 </span>
                               )}
                             </div>
                           </div>
-                          <p className="text-sm font-bold text-white leading-tight">{v.model}</p>
-                          <p className="text-[11px] text-[var(--text-muted)] capitalize">{v.type.replace('_', ' ')}</p>
-                          <p className="font-display font-bold text-white tabular-nums text-base mt-1.5">{fmt(v.basePrice)}</p>
-                          <span className={`text-[10px] font-semibold ${tierStyles.color} mb-1`}>{tierStyles.label}</span>
-                          <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1">
-                            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                          <p className="text-base font-bold text-white leading-tight">{v.model}</p>
+                          <p className="text-xs text-[var(--text-muted)] capitalize">{v.year} · {v.type.replace('_', ' ')}</p>
+                          <p className="font-display font-bold text-white tabular-nums text-lg mt-1.5">{fmt(v.basePrice)}</p>
+                          <span className={`text-xs font-semibold ${tierStyles.color} mb-1`}>{tierStyles.label}</span>
+                          <div className="border-t border-[var(--border)] pt-2 flex flex-col gap-1.5">
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                               {b.header}
                             </p>
                             {b.lines.map(({ label, val }) => (
-                              <div key={label} className="flex items-center justify-between gap-1">
-                                <span className="text-[10px] text-[var(--text-muted)] leading-tight">{label}</span>
-                                <span className="text-[10px] text-white tabular-nums shrink-0">{fmt(val)}</span>
+                              <div key={label} className="flex items-center justify-between gap-1.5">
+                                <span className="text-xs text-[var(--text-muted)] leading-tight">{label}</span>
+                                <span className="text-xs text-white tabular-nums shrink-0">{fmt(val)}</span>
                               </div>
                             ))}
                             {b.credit && (
-                              <div className="flex items-center justify-between gap-1">
-                                <span className="text-[10px] text-[var(--text-muted)] leading-tight">{b.credit.label}</span>
-                                <span className="text-[10px] text-green-400 tabular-nums shrink-0">− {fmt(b.credit.val)}</span>
+                              <div className="flex items-center justify-between gap-1.5">
+                                <span className="text-xs text-[var(--text-muted)] leading-tight">{b.credit.label}</span>
+                                <span className="text-xs text-green-400 tabular-nums shrink-0">− {fmt(b.credit.val)}</span>
                               </div>
                             )}
-                            <div className="flex items-center justify-between border-t border-[var(--border)] pt-1 mt-0.5">
-                              <span className="text-[10px] font-bold text-white">{b.totalLabel}</span>
-                              <span className="text-[10px] font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(b.totalVal)}</span>
+                            <div className="flex items-center justify-between border-t border-[var(--border)] pt-1.5 mt-0.5">
+                              <span className="text-xs font-bold text-white">{b.totalLabel}</span>
+                              <span className="text-sm font-bold tabular-nums shrink-0" style={{ color: 'var(--accent)' }}>{fmt(b.totalVal)}</span>
                             </div>
                           </div>
                         </div>

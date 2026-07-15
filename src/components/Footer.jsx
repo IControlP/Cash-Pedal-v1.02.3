@@ -4,6 +4,7 @@ const links = [
   { to: '/tco', label: 'TCO Calculator' },
   { to: '/compare', label: 'Compare Vehicles' },
   { to: '/salary', label: 'Salary Check' },
+  { to: '/affordability', label: 'Car Recommendation' },
   { to: '/survey', label: 'Car Survey' },
   { to: '/checklist', label: 'Buying Checklist' },
   { to: '/wheelzard', label: 'Wheel-Zard AI' },

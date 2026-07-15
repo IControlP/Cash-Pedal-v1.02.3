@@ -11,8 +11,16 @@ import {
   classifySegment,
   estimateInsurance, generateMaintenanceByYear,
   computeAnnualFuel, computeAnnualRegFees, projectRegistrationByYear,
-  escalateAnnualFuel, estimateCurrentValue,
+  escalateAnnualFuel, estimateCurrentValue, getKnownIssueServices,
 } from './vehicleCosts'
+
+// Trims the parenthetical qualifier vehicleCosts.js appends to every known-
+// issue name (" (known issue)" / " (known service requirement)" / etc.) so
+// the pick list can show a clean label without repeating "known issue" three
+// times per card.
+function cleanIssueName(name) {
+  return name.replace(/\s*\(known[^)]*\)\s*$/i, '')
+}
 
 export function fmt(n) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
@@ -295,6 +303,16 @@ export function buildMatchedVehicles(affordableResults, {
       let tier = 'aggressive'
       if (basePrice <= (affordableResults.conservative || 0)) tier = 'conservative'
       else if (basePrice <= (affordableResults.comfortable || 0)) tier = 'comfortable'
+
+      // Widely documented reliability issues tracked for this exact make/model/
+      // year (e.g. timing-chain, transmission, oil-consumption patterns) — the
+      // same curated registry that already bumps Pro maintenance estimates,
+      // surfaced here so free users see the flag too. Base-trim only (no trim
+      // selected in the pick list), so trim-scoped entries are excluded.
+      const knownIssues = getKnownIssueServices(make, model, modelYear, '', !!data.is_ev)
+        .map(e => ({ category: e.category, name: cleanIssueName(e.name) }))
+        .filter((e, i, arr) => arr.findIndex(x => x.name === e.name) === i)
+
       const ops = estimateBasicMonthlyCosts(basePrice, userState || null, annualMiles)
       const monthlyFinance = monthlyPayment(basePrice * 0.80, rate, loanTerm)
       const annualFinancing = Math.round(monthlyFinance * 12)
@@ -376,6 +394,7 @@ export function buildMatchedVehicles(affordableResults, {
         make, model, type: data.type, is_ev: data.is_ev,
         basePrice, year: modelYear, tier,
         specs: data.specs || {},
+        knownIssues,
         annualFinancing, annualFuel, annualInsurance, annualMaintenance, annualRegistration,
         annualOperating,
         annualTotal: annualFinancing + annualOperating,

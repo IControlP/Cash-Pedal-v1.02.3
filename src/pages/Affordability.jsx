@@ -701,6 +701,19 @@ export default function Affordability() {
                         )}
                       </div>
                     </div>
+                    {recommendedVehicle.knownIssues.length > 0 && (
+                      <div className="rounded-lg px-3 py-2 mb-4 text-xs"
+                        style={{ background: 'rgba(255,184,0,0.06)', border: '1px solid rgba(255,184,0,0.2)' }}>
+                        <p className="font-semibold text-amber-400 mb-1">
+                          ⚠ {recommendedVehicle.knownIssues.length === 1 ? 'Known issue tracked for this year' : `${recommendedVehicle.knownIssues.length} known issues tracked for this year`}
+                        </p>
+                        <ul className="flex flex-col gap-0.5 text-[var(--text-muted)]">
+                          {recommendedVehicle.knownIssues.map(issue => (
+                            <li key={issue.name}>· {issue.name}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                     <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-4">
                       {RECOMMENDATION_REASONING[recommendedVehicle.tier]}
                     </p>
@@ -805,6 +818,12 @@ export default function Affordability() {
                               {v.specs.horsepower && <span>{v.specs.horsepower} hp</span>}
                               {v.specs.seats && <span>{v.specs.seats} seats</span>}
                               {v.specs.cargo_cu_ft && <span>{v.specs.cargo_cu_ft} cu ft cargo</span>}
+                            </p>
+                          )}
+                          {v.knownIssues.length > 0 && (
+                            <p className="text-[11px] text-amber-400 font-medium"
+                              title={v.knownIssues.map(i => i.name).join(' · ')}>
+                              ⚠ {v.knownIssues.length === 1 ? '1 known issue' : `${v.knownIssues.length} known issues`}
                             </p>
                           )}
                           <p className="font-display font-bold text-white tabular-nums text-lg mt-1.5">{fmt(v.basePrice)}</p>

@@ -190,9 +190,59 @@ export const TIER_STYLES = {
 }
 
 export const RECOMMENDATION_REASONING = {
-  conservative: 'The most vehicle you can get in this category while keeping total costs at or below 10% of your gross income — the safest tier of the 20/4/10 rule.',
-  comfortable: "Nothing in this category fits the safest 10% tier at your income — this is the top pick within the comfortable 15% tier.",
-  aggressive: "Nothing in this category fits the safest or comfortable tiers at your income — this is the top pick within the stretched 20% tier. A lower category or higher salary would give you more room.",
+  conservative: 'The best value-and-capability pick within the safest tier of the 20/4/10 rule — total costs stay at or below 10% of your gross income.',
+  comfortable: "Nothing in this category fits the safest 10% tier at your income — this is the best value-and-capability pick within the comfortable 15% tier.",
+  aggressive: "Nothing in this category fits the safest or comfortable tiers at your income — this is the best value-and-capability pick within the stretched 20% tier. A lower category or higher salary would give you more room.",
+}
+
+// Min-max normalizes a numeric field across a pool to 0-1 (0.5 for every
+// entry when the pool has no spread) so cost, horsepower, seats, and cargo —
+// all different units — can be combined into one fair score.
+function normalizeField(pool, getter, invert = false) {
+  const nums = pool.map(getter)
+  const min = Math.min(...nums), max = Math.max(...nums)
+  return nums.map(x => {
+    if (max === min) return 0.5
+    const n = (x - min) / (max - min)
+    return invert ? 1 - n : n
+  })
+}
+
+// Ranks a pool of candidates by cost efficiency (running cost per dollar of
+// price — lower is better) and capability (horsepower/seats/cargo, each
+// normalized so different units combine fairly), then subtracts a penalty
+// for tracked known issues. Returns the highest-scoring vehicle.
+function pickBestInPool(pool) {
+  if (pool.length === 1) return pool[0]
+
+  const costPerDollar = v => (v.ownershipCost?.total ?? v.annualTotal) / v.basePrice
+  const valueScores = normalizeField(pool, costPerDollar, true) // cheaper to run per $ spent => higher score
+  const hpScores     = normalizeField(pool, v => v.specs.horsepower ?? 0)
+  const seatScores   = normalizeField(pool, v => v.specs.seats ?? 0)
+  const cargoScores  = normalizeField(pool, v => v.specs.cargo_cu_ft ?? 0)
+
+  let best = pool[0], bestScore = -Infinity
+  pool.forEach((v, i) => {
+    const capabilityScore = (hpScores[i] + seatScores[i] + cargoScores[i]) / 3
+    const issuePenalty = Math.min(0.6, v.knownIssues.length * 0.2)
+    const score = 0.5 * valueScores[i] + 0.5 * capabilityScore - issuePenalty
+    if (score > bestScore) { bestScore = score; best = v }
+  })
+  return best
+}
+
+// Single "best fit" pick: within the safest tier that has any matches
+// (conservative → comfortable → aggressive — the 20/4/10 rule's own safety
+// ordering), ranks candidates by value + capability and penalizes tracked
+// known issues, rather than defaulting to the priciest option in the tier.
+export function pickRecommendedVehicle(vehicles) {
+  if (!vehicles.length) return null
+
+  for (const tier of ['conservative', 'comfortable', 'aggressive']) {
+    const candidates = vehicles.filter(v => v.tier === tier)
+    if (candidates.length) return pickBestInPool(candidates)
+  }
+  return null
 }
 
 // Share of the entered gross annual salary this vehicle's year-1 costs

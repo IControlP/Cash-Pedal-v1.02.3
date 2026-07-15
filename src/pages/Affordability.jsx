@@ -16,7 +16,7 @@ import {
   fmt, monthlyPayment, DEFAULT_ANNUAL_MILES, US_STATES, loanTermOptions,
   CURRENT_YEAR, CATALOG_YEARS, SORT_OPTIONS, sortVehicles,
   TIER_STYLES, RECOMMENDATION_REASONING, pctOfIncome, vehicleCostLines,
-  solveAffordablePrice, buildMatchedVehicles,
+  solveAffordablePrice, buildMatchedVehicles, pickRecommendedVehicle,
   VEHICLE_CATEGORY_FILTERS, matchesCategory, isCategoryValue,
   US_AVG_OWNERSHIP_YEARS, OWNERSHIP_YEAR_OPTIONS,
 } from '../utils/affordability'
@@ -198,14 +198,14 @@ export default function Affordability() {
     return counts
   }, [matchedVehicles])
 
-  // Single "best fit" pick: priciest vehicle in the safest tier that still fits.
-  const recommendedVehicle = useMemo(() => {
-    if (!filteredVehicles.length) return null
-    return filteredVehicles.find(v => v.tier === 'conservative')
-      ?? filteredVehicles.find(v => v.tier === 'comfortable')
-      ?? filteredVehicles.find(v => v.tier === 'aggressive')
-      ?? null
-  }, [filteredVehicles])
+  // Single "best fit" pick: within the safest tier that still fits, ranked by
+  // value + capability with a penalty for tracked known issues (see
+  // pickRecommendedVehicle in utils/affordability.js) — not just the priciest
+  // option in the tier.
+  const recommendedVehicle = useMemo(
+    () => pickRecommendedVehicle(filteredVehicles),
+    [filteredVehicles]
+  )
 
   const sortedGridVehicles = useMemo(() => sortVehicles(filteredVehicles, sortBy), [filteredVehicles, sortBy])
 
@@ -714,8 +714,12 @@ export default function Affordability() {
                         </ul>
                       </div>
                     )}
-                    <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-4">
+                    <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-1">
                       {RECOMMENDATION_REASONING[recommendedVehicle.tier]}
+                    </p>
+                    <p className="text-[11px] text-[var(--text-muted)] opacity-70 leading-relaxed mb-4">
+                      Ranked on running cost per dollar of price and capability (horsepower, seats, cargo);
+                      tracked known issues count against the ranking.
                     </p>
                     <div className="border-t border-[var(--border)] pt-3">
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">{b.header}</p>

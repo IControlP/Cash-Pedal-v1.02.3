@@ -1,7 +1,9 @@
 import { useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { trackPageView } from './utils/analytics'
+import { initConsent } from './utils/consent'
 import ErrorBoundary from './components/ErrorBoundary'
+import CookieConsent from './components/CookieConsent'
 
 // Landing stays in the main bundle — it's the most-visited route and
 // keeping it eager gives the fastest possible first paint on '/'.
@@ -41,10 +43,18 @@ function PageViewTracker() {
 }
 
 export default function App() {
+  // Re-apply a returning visitor's saved cookie consent so their permitted
+  // trackers load without re-prompting. First-time visitors load nothing until
+  // they choose in the consent banner.
+  useEffect(() => {
+    initConsent()
+  }, [])
+
   return (
     <ErrorBoundary>
       <BrowserRouter>
         <PageViewTracker />
+        <CookieConsent />
         <Suspense fallback={<PageFallback />}>
           <Routes>
             <Route path="/"           element={<Landing />} />

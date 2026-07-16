@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { openConsentSettings } from '../utils/consent'
 
 const links = [
   { to: '/tco', label: 'TCO Calculator' },
@@ -44,10 +45,24 @@ export default function Footer() {
 
         <div className="border-t border-[var(--border)] pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--text-muted)]">
           <span>© {new Date().getFullYear()} Cash Pedal · cashpedal.io</span>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <span>Results are estimates only — not financial advice.</span>
             <Link to="/terms" className="hover:text-[var(--accent)] transition-colors">Terms</Link>
             <Link to="/privacy" className="hover:text-[var(--accent)] transition-colors">Privacy &amp; Data Rights</Link>
+            <button
+              type="button"
+              onClick={openConsentSettings}
+              className="hover:text-[var(--accent)] transition-colors underline-offset-2 hover:underline"
+            >
+              Cookie Preferences
+            </button>
+            <button
+              type="button"
+              onClick={openConsentSettings}
+              className="hover:text-[var(--accent)] transition-colors underline-offset-2 hover:underline"
+            >
+              Do Not Sell or Share My Personal Information
+            </button>
           </div>
         </div>
       </div>

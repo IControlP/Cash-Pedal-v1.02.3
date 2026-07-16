@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
-const LAST_UPDATED = 'May 2026'
+const LAST_UPDATED = 'July 2026'
 const CONTACT_EMAIL = 'support@cashpedal.io'
 
 function Section({ title, children }) {
@@ -56,7 +56,7 @@ export default function Privacy() {
             Your Data &amp; Privacy
           </h1>
           <p className="text-[var(--text-muted)] text-sm mb-8 anim-1">
-            Last updated: {LAST_UPDATED} &nbsp;·&nbsp; Version 1.0
+            Last updated: {LAST_UPDATED} &nbsp;·&nbsp; Version 1.1
           </p>
 
           <Section title="1. Who we are">
@@ -127,20 +127,57 @@ export default function Privacy() {
             </p>
           </Section>
 
-          <Section title="3. localStorage and browser storage">
+          <Section title="3. Cookies, tracking technologies & browser storage">
             <p>
-              We use your browser's <code className="text-white bg-white/10 px-1 rounded">localStorage</code> for
-              strictly functional purposes — no tracking cookies are used.
+              <strong className="text-white">Strictly necessary storage (always active).</strong> We use your
+              browser's <code className="text-white bg-white/10 px-1 rounded">localStorage</code> for functional
+              purposes that are essential to the service. This does not require consent:
             </p>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong className="text-white">Session ID</strong> — a random UUID generated in your browser, used to link anonymous activity (analytics, market rankings, and any consent record) to a session</li>
+              <li><strong className="text-white">Session ID</strong> — a random UUID generated in your browser, used to link anonymous activity (market rankings, consent records, and abuse prevention) to a session</li>
               <li><strong className="text-white">Subscriber email &amp; expiry</strong> — so you stay logged in without a password</li>
               <li><strong className="text-white">Calculator state</strong> — your last vehicle inputs, saved locally for convenience</li>
               <li><strong className="text-white">Usage counters</strong> — to enforce free-tier limits locally</li>
+              <li><strong className="text-white">Cookie-consent choice</strong> — remembers which optional cookies you allowed</li>
             </ul>
             <p>
-              None of this localStorage data is shared with third parties or sent to analytics services.
-              You can clear it at any time via your browser's site data settings.
+              <strong className="text-white">Optional analytics &amp; advertising cookies (consent required).</strong>{' '}
+              With your consent, we load the third-party services below. <strong className="text-white">None of
+              them load until you accept them</strong> in our cookie banner — if you reject or ignore the banner,
+              none of these run and no data is sent to these providers.
+            </p>
+            <Table rows={[
+              ['Service', 'Category', 'Purpose', 'Set / read by'],
+              [
+                'Google Analytics 4',
+                'Analytics',
+                'Aggregate, anonymized traffic and usage statistics',
+                'google.com (cookies + local identifiers)',
+              ],
+              [
+                'Microsoft Clarity',
+                'Analytics',
+                'Anonymized session insights and heatmaps to improve usability',
+                'clarity.ms (cookies + local identifiers)',
+              ],
+              [
+                'Meta (Facebook) Pixel',
+                'Advertising',
+                'Measures ad performance; may share activity with Meta for cross-context behavioral advertising',
+                'facebook.com / connect.facebook.net (cookies)',
+              ],
+            ]} />
+            <p>
+              <strong className="text-white">Managing your choice.</strong> You can change or withdraw your consent
+              at any time using the <em>"Cookie Preferences"</em> link in the site footer. Withdrawing consent
+              stops these services from loading on your next page view. You can also clear all stored data via your
+              browser's site-data settings.
+            </p>
+            <p>
+              <strong className="text-white">Proof of consent.</strong> When you make a choice in the cookie banner
+              we keep a pseudonymous record of it — your browser's random session ID, the categories you allowed,
+              a timestamp, and your IP address with the last octet masked. This lets us demonstrate your choice as
+              required by GDPR Art. 7(1). It contains no name or email address.
             </p>
           </Section>
 
@@ -162,10 +199,49 @@ export default function Privacy() {
                 'All data stored in our PostgreSQL database is hosted on Railway infrastructure',
                 'railway.app/legal/privacy',
               ],
+              [
+                'Resend',
+                'Sending transactional & welcome emails',
+                'Email address and first name (to address and personalize the message)',
+                'resend.com/legal/privacy-policy',
+              ],
+              [
+                'HubSpot',
+                'CRM — managing leads and customers',
+                'Name, email address, and purchase status',
+                'legal.hubspot.com/privacy-policy',
+              ],
+              [
+                'Google (Analytics 4)',
+                'Website analytics — only if you consent to analytics cookies',
+                'Anonymized usage events, device/browser type, IP-based approximate location',
+                'policies.google.com/privacy',
+              ],
+              [
+                'Microsoft (Clarity)',
+                'Session analytics / heatmaps — only if you consent to analytics cookies',
+                'Anonymized interaction data (clicks, scrolls, page views)',
+                'privacy.microsoft.com',
+              ],
+              [
+                'Meta Platforms (Pixel)',
+                'Advertising measurement — only if you consent to advertising cookies',
+                'Page views and conversion events tied to a Meta advertising identifier',
+                'facebook.com/privacy/policy',
+              ],
             ]} />
             <p>
-              We do not use Google Analytics, Facebook Pixel, or any other behavioral tracking
-              service. We do not sell, rent, or trade your personal data to any third party.
+              The analytics and advertising services above run <strong className="text-white">only after you
+              consent</strong> to the relevant cookie category, and you can withdraw consent at any time via
+              the <em>"Cookie Preferences"</em> link in the footer.
+            </p>
+            <p>
+              We do not sell your personal data for money. However, the Meta Pixel's use of advertising
+              identifiers may qualify as "sharing" (for cross-context behavioral advertising) or a "sale"
+              under California law. You can opt out of this at any time using the
+              <strong className="text-white"> "Do Not Sell or Share My Personal Information"</strong> or
+              <strong className="text-white"> "Cookie Preferences"</strong> links in the footer, or by rejecting
+              advertising cookies in the banner. We honor Global Privacy Control (GPC) signals where required.
             </p>
           </Section>
 

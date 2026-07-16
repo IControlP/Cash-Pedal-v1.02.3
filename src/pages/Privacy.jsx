@@ -200,6 +200,18 @@ export default function Privacy() {
                 'railway.app/legal/privacy',
               ],
               [
+                'Resend',
+                'Sending transactional & welcome emails',
+                'Email address and first name (to address and personalize the message)',
+                'resend.com/legal/privacy-policy',
+              ],
+              [
+                'HubSpot',
+                'CRM — managing leads and customers',
+                'Name, email address, and purchase status',
+                'legal.hubspot.com/privacy-policy',
+              ],
+              [
                 'Google (Analytics 4)',
                 'Website analytics — only if you consent to analytics cookies',
                 'Anonymized usage events, device/browser type, IP-based approximate location',

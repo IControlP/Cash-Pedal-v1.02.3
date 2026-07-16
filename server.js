@@ -380,7 +380,16 @@ const EMAIL_FROM     = (process.env.EMAIL_FROM || 'Cash Pedal <hello@cashpedal.i
 
 // Branded wrapper shared by all transactional emails. Inline styles only —
 // email clients strip <style> blocks.
-function emailLayout(bodyHtml) {
+// Address visitors can email to opt out / exercise data rights.
+const SUPPORT_EMAIL = 'support@cashpedal.io'
+
+function emailLayout(bodyHtml, { unsubscribe = false } = {}) {
+  // Promotional emails (the welcome) carry a visible opt-out line; purely
+  // transactional messages (purchase receipts) do not — you can't unsubscribe
+  // from a receipt.
+  const footerNote = unsubscribe
+    ? `You're receiving this because you shared your email on cashpedal.io. Don't want emails from us? <a href="mailto:${SUPPORT_EMAIL}?subject=Unsubscribe" style="color:#a1a1aa;text-decoration:underline;">Unsubscribe</a> and we'll remove you.`
+    : `You're receiving this because of a purchase or account action on cashpedal.io. This is a transactional message about your account.`
   return `<!DOCTYPE html>
 <html>
 <body style="margin:0;padding:0;background-color:#f4f4f5;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
@@ -395,7 +404,7 @@ function emailLayout(bodyHtml) {
         </td></tr>
         <tr><td style="padding:20px 32px;border-top:1px solid #e4e4e7;color:#a1a1aa;font-size:12px;line-height:1.5;">
           Cash Pedal &middot; <a href="${APP_URL}" style="color:#a1a1aa;">cashpedal.io</a><br>
-          You're receiving this one-time email because of your activity on cashpedal.io. We don't send marketing emails from this address.
+          ${footerNote}
         </td></tr>
       </table>
     </td></tr>
@@ -408,7 +417,10 @@ function welcomeEmailContent(firstName) {
   const greeting = firstName ? `Hi ${firstName},` : 'Hi there,'
   return {
     subject: 'Thanks for trying Cash Pedal',
-    text: `${greeting}\n\nThanks for trying Cash Pedal! We built it to take the guesswork out of car buying.\n\nHere's what you can do with it:\n- True Cost to Own calculator — see the real monthly cost of any vehicle\n- Side-by-side comparison — line up to 5 vehicles\n- Salary calculator — know what you can actually afford (20/4/10 rule)\n- Used-car checklist — a mileage-based maintenance audit\n\nJump back in any time: ${APP_URL}\n\nHappy car hunting,\nThe Cash Pedal team`,
+    // List-Unsubscribe lets mail clients show a native unsubscribe button and
+    // is expected for promotional mail (CAN-SPAM / GDPR opt-out).
+    headers: { 'List-Unsubscribe': `<mailto:${SUPPORT_EMAIL}?subject=Unsubscribe>` },
+    text: `${greeting}\n\nThanks for trying Cash Pedal! We built it to take the guesswork out of car buying.\n\nHere's what you can do with it:\n- True Cost to Own calculator — see the real monthly cost of any vehicle\n- Side-by-side comparison — line up to 5 vehicles\n- Salary calculator — know what you can actually afford (20/4/10 rule)\n- Used-car checklist — a mileage-based maintenance audit\n\nJump back in any time: ${APP_URL}\n\nDon't want emails from us? Reply "unsubscribe" or email ${SUPPORT_EMAIL} and we'll remove you.\n\nHappy car hunting,\nThe Cash Pedal team`,
     html: emailLayout(`
       <p style="margin:0 0 16px;">${greeting}</p>
       <p style="margin:0 0 16px;">Thanks for trying <strong>Cash Pedal</strong>! We built it to take the guesswork out of car buying.</p>
@@ -423,7 +435,7 @@ function welcomeEmailContent(firstName) {
         <a href="${APP_URL}" style="display:inline-block;padding:12px 24px;color:#111111;font-weight:700;text-decoration:none;">Open Cash Pedal</a>
       </td></tr></table>
       <p style="margin:20px 0 0;">Happy car hunting,<br>The Cash Pedal team</p>
-    `),
+    `, { unsubscribe: true }),
   }
 }
 
@@ -451,14 +463,16 @@ function purchaseEmailContent(purchaseType, accessUntil) {
   }
 }
 
-async function deliverEmail(to, { subject, text, html }) {
+async function deliverEmail(to, { subject, text, html, headers }) {
+  const payload = { from: EMAIL_FROM, to: [to], subject, text, html }
+  if (headers) payload.headers = headers   // e.g. List-Unsubscribe for promotional mail
   const resp = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       Authorization:  `Bearer ${RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ from: EMAIL_FROM, to: [to], subject, text, html }),
+    body: JSON.stringify(payload),
   })
   if (!resp.ok) {
     const body = await resp.text().catch(() => '')
@@ -551,6 +565,25 @@ async function upsertHubSpotContact(email, properties) {
     inputs: [{ idProperty: 'email', id: email, properties }],
   })
   return res.results?.[0]?.id
+}
+
+// CRM erasure: archive the HubSpot contact when a visitor exercises their right
+// to erasure, so deletion propagates to the disclosed CRM processor. Keyed by
+// email via idProperty. Fire-and-forget — logged no-op when HubSpot isn't
+// configured or the contact doesn't exist (404).
+function queueCrmErasure(email) {
+  if (!HUBSPOT_TOKEN) return
+  ;(async () => {
+    const resp = await fetch(
+      `https://api.hubapi.com/crm/v3/objects/contacts/${encodeURIComponent(email)}?idProperty=email`,
+      { method: 'DELETE', headers: { Authorization: `Bearer ${HUBSPOT_TOKEN}` } }
+    )
+    if (resp.ok || resp.status === 404) {
+      console.log(`[crm] erasure processed — ${redactEmail(email)}`)
+      return
+    }
+    throw new Error(`HubSpot ${resp.status}`)
+  })().catch(err => console.error(`[crm] erasure failed for ${redactEmail(email)}:`, err.message))
 }
 
 // CRM automation 1: a shared email becomes (or refreshes) a HubSpot contact.
@@ -1835,6 +1868,9 @@ app.post('/api/delete-my-data', sensitiveLimiter, async (req, res) => {
        WHERE email = $1`,
       [normalizedEmail, crypto.createHash('sha256').update(normalizedEmail).digest('hex')]
     )
+    // Propagate erasure to the CRM processor (HubSpot) so the disclosed
+    // recipient of this personal data drops it too.
+    queueCrmErasure(normalizedEmail)
 
     console.log(`[delete-my-data] erasure completed — email: ${redactEmail(normalizedEmail)}, IP: ${anonymizeIp(req.ip)}`)
     // Return the same shape whether or not the email existed to prevent enumeration.

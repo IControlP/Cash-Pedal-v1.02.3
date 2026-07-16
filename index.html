@@ -34,7 +34,11 @@
 
     <title>Cash Pedal</title>
     <!-- DNS prefetch for third-party analytics origins so their scripts
-         resolve faster once they load asynchronously after first paint. -->
+         resolve faster IF the visitor consents and they load later. These
+         hints send no cookies and no personal data. The tracker scripts
+         themselves (Google Analytics, Microsoft Clarity, Meta Pixel) are NOT
+         loaded here — they are injected only after cookie consent by
+         src/utils/consent.js. Do not re-add tracker <script> tags to this file. -->
     <link rel="dns-prefetch" href="https://www.clarity.ms" />
     <link rel="dns-prefetch" href="https://connect.facebook.net" />
     <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
@@ -52,42 +56,14 @@
     <noscript><link
       href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet" /></noscript>
-    <!-- Microsoft Clarity -->
-    <script type="text/javascript">
-      (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-      })(window, document, "clarity", "script", "x7nktllrep");
-    </script>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-65PBP0W12S"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-65PBP0W12S', { send_page_view: false });
-    </script>
-    <!-- Meta Pixel -->
-    <script>
-      !function(f,b,e,v,n,t,s)
-      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-      n.queue=[];t=b.createElement(e);t.async=!0;
-      t.src=v;s=b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t,s)}(window, document,'script',
-      'https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init', '1771464733854543');
-      // PageView is fired by the SPA router (src/utils/analytics.js) on every
-      // route change, including initial load — firing it here too would
-      // double-count the first PageView.
-    </script>
+    <!-- Analytics & advertising trackers (Google Analytics, Microsoft Clarity,
+         Meta Pixel) are intentionally NOT loaded here. They are injected only
+         after the visitor grants cookie consent — see src/utils/consent.js and
+         src/components/CookieConsent.jsx. This is what keeps the site compliant
+         with GDPR/ePrivacy (prior opt-in) and California CPRA (opt-out of
+         "sharing"). Do not add tracker scripts or a Meta <noscript> pixel here. -->
   </head>
   <body>
-    <noscript><img height="1" width="1" style="display:none"
-      src="https://www.facebook.com/tr?id=1771464733854543&amp;ev=PageView&amp;noscript=1"
-    ></noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

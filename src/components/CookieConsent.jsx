@@ -79,17 +79,17 @@ export default function CookieConsent() {
   const acceptAll = () => {
     // A GPC signal is a binding opt-out of advertising/"sharing" — never store
     // advertising consent while it's present, even on "Accept all".
-    setConsent({ analytics: true, advertising: !gpc })
+    setConsent({ analytics: true, advertising: !gpc, method: 'accept_all' })
     close()
   }
 
   const rejectAll = () => {
-    setConsent({ analytics: false, advertising: false })
+    setConsent({ analytics: false, advertising: false, method: 'reject_all' })
     close()
   }
 
   const savePrefs = () => {
-    setConsent({ analytics, advertising: gpc ? false : advertising })
+    setConsent({ analytics, advertising: gpc ? false : advertising, method: 'save_prefs' })
     close()
   }
 

@@ -16,6 +16,7 @@
 //   advertising — Meta (Facebook) Pixel
 
 import { safeGet, safeSet } from './safeStorage'
+import { getSessionId } from './session'
 
 // Bump CONSENT_VERSION when the set of trackers or categories materially
 // changes — returning visitors will then be re-prompted for a fresh choice.
@@ -61,8 +62,9 @@ export function gpcEnabled() {
 }
 
 // Persist a choice and immediately apply it (load any newly-permitted scripts).
-// prefs: { analytics: boolean, advertising: boolean }
-export function setConsent({ analytics = false, advertising = false } = {}) {
+// prefs: { analytics, advertising, method } — method is one of
+// 'accept_all' | 'reject_all' | 'save_prefs', used for the server audit log.
+export function setConsent({ analytics = false, advertising = false, method = 'save_prefs' } = {}) {
   const record = {
     v: CONSENT_VERSION,
     ts: Date.now(),
@@ -71,10 +73,35 @@ export function setConsent({ analytics = false, advertising = false } = {}) {
   }
   safeSet(STORAGE_KEY, JSON.stringify(record))
   applyConsent(record)
+  logConsentToServer(record, method)
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent(CONSENT_CHANGED_EVENT, { detail: record }))
   }
   return record
+}
+
+// Fire-and-forget audit log so we can demonstrate consent (GDPR Art. 7(1)).
+// Never blocks the UI and never throws — a logging failure must not stop the
+// visitor's choice from taking effect locally.
+function logConsentToServer(record, method) {
+  if (typeof fetch === 'undefined') return
+  try {
+    fetch('/api/cookie-consent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id:      getSessionId(),
+        consent_version: record.v,
+        analytics:       record.analytics,
+        advertising:     record.advertising,
+        gpc:             gpcEnabled(),
+        method,
+      }),
+      keepalive: true,
+    }).catch(() => {})
+  } catch {
+    /* ignore — consent logging is best-effort */
+  }
 }
 
 // ── Script loaders (idempotent) ───────────────────────────────────────────────

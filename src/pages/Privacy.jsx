@@ -173,6 +173,12 @@ export default function Privacy() {
               stops these services from loading on your next page view. You can also clear all stored data via your
               browser's site-data settings.
             </p>
+            <p>
+              <strong className="text-white">Proof of consent.</strong> When you make a choice in the cookie banner
+              we keep a pseudonymous record of it — your browser's random session ID, the categories you allowed,
+              a timestamp, and your IP address with the last octet masked. This lets us demonstrate your choice as
+              required by GDPR Art. 7(1). It contains no name or email address.
+            </p>
           </Section>
 
           <Section title="4. Third-party data processors">

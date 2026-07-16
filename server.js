@@ -883,6 +883,36 @@ async function initTables() {
         AND NOT ip_address ~ '^[0-9a-f]{64}$'
     `)
 
+    // ── Cookie-consent log (GDPR Art. 7(1) demonstrable consent) ──
+    // One row per cookie-banner decision (accept/reject/save). Pseudonymous:
+    // keyed by the browser session UUID with a last-octet-masked IP, so we can
+    // demonstrate what a visitor consented to and when, even if they later clear
+    // their browser storage. Kept as legal evidence (not auto-purged), matching
+    // how consent_records is treated.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS cookie_consent_log (
+        id              SERIAL PRIMARY KEY,
+        session_id      VARCHAR(36) NOT NULL,
+        timestamp_utc   TIMESTAMP WITH TIME ZONE NOT NULL,
+        consent_version INTEGER NOT NULL,
+        analytics       BOOLEAN NOT NULL DEFAULT FALSE,
+        advertising     BOOLEAN NOT NULL DEFAULT FALSE,
+        gpc             BOOLEAN NOT NULL DEFAULT FALSE,
+        consent_method  VARCHAR(30),
+        ip_address      VARCHAR(45),
+        user_agent      TEXT,
+        created_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_cookie_consent_session
+        ON cookie_consent_log(session_id)
+    `)
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_cookie_consent_timestamp
+        ON cookie_consent_log(timestamp_utc)
+    `)
+
     // ── Data-retention enforcement ────────────────────
     // user_data_collection is marketing/analytics data — 365-day retention.
     // Consent records are legal evidence of agreement and are intentionally exempt
@@ -967,6 +997,50 @@ app.post('/api/consent', async (req, res) => {
     res.json({ success: true, record_id })
   } catch (err) {
     console.error('[consent] DB error:', err.message)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+// ── API: Log a cookie-consent decision (demonstrable consent) ──
+// Records each cookie-banner choice so we can prove, per GDPR Art. 7(1), what a
+// visitor consented to and when. Pseudonymous — session UUID + anonymized IP,
+// no email. Fired fire-and-forget by the client; failures never block the UI.
+const VALID_CONSENT_METHODS = ['accept_all', 'reject_all', 'save_prefs']
+
+app.post('/api/cookie-consent', async (req, res) => {
+  const { session_id, consent_version, analytics, advertising, gpc, method } = req.body
+
+  if (!isValidUUID(session_id)) {
+    return res.status(400).json({ success: false, error: 'Invalid session_id format' })
+  }
+  const version = parseInt(consent_version, 10)
+  if (isNaN(version) || version < 1 || version > 9999) {
+    return res.status(400).json({ success: false, error: 'Invalid consent_version' })
+  }
+  const consentMethod = VALID_CONSENT_METHODS.includes(method) ? method : 'save_prefs'
+  const storedIp      = anonymizeIp(req.ip || 'unknown')   // last octet masked for GDPR storage
+  const user_agent    = clamp(req.headers['user-agent'] || 'unknown', 512)
+  const timestamp_utc = new Date().toISOString()
+
+  if (!pool) {
+    console.log('[cookie-consent] No DB configured — skipping save')
+    return res.json({ success: true, storage: 'none' })
+  }
+
+  try {
+    await pool.query(
+      `INSERT INTO cookie_consent_log
+         (session_id, timestamp_utc, consent_version, analytics, advertising,
+          gpc, consent_method, ip_address, user_agent)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      [
+        session_id, timestamp_utc, version, !!analytics, !!advertising,
+        !!gpc, consentMethod, storedIp, user_agent,
+      ]
+    )
+    res.json({ success: true })
+  } catch (err) {
+    console.error('[cookie-consent] DB error:', err.message)
     res.status(500).json({ success: false, error: 'Internal server error' })
   }
 })

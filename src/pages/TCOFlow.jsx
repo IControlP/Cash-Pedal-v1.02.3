@@ -708,6 +708,7 @@ export default function TCOFlow() {
 
   const hasTrackedStartRef           = useRef(false)
   const hasTrackedPersonalizationRef = useRef(false)
+  const hasSnapshotRef               = useRef(false)
   const heroCardSeenRef              = useRef(false)
   const vehicleCardRef               = useRef(null)
 
@@ -954,15 +955,11 @@ export default function TCOFlow() {
     setStep('loading')
   }
 
-  function handleLoadingComplete() {
-    setStep('results')
-    trackEstimateGenerated({ make: selMake, model: selModel, year: selYear, mode: 'flow', hasEV: isEV })
-    trackFreeEstimateGenerated({ make: selMake, model: selModel, year: selYear, mode: 'flow', hasEV: isEV })
-    trackCalculatorCompleted({ vehicleCount: 1, hasEV: isEV, ownershipYears: DEFAULT_OWNERSHIP_YRS })
-    trackEstimateViewed({ make: selMake, model: selModel, year: selYear })
-    // Snapshot the user-entered numbers for market analytics — values still at
-    // their pre-filled defaults are sent as null so estimates never masquerade
-    // as user input. This flow has no odometer or dealer/private inputs.
+  // Snapshot the user-entered numbers for market analytics — values still at
+  // their pre-filled defaults are sent as null so estimates never masquerade
+  // as user input. This flow has no odometer or dealer/private inputs.
+  // The server upserts one row per session+vehicle and stamps updated_at.
+  function snapshotCalculation() {
     trackCalculation({
       make: selMake, model: selModel, year: selYear || null,
       state: resolvedState, zip: zipCode,
@@ -974,6 +971,27 @@ export default function TCOFlow() {
         : null,
     })
   }
+
+  function handleLoadingComplete() {
+    setStep('results')
+    trackEstimateGenerated({ make: selMake, model: selModel, year: selYear, mode: 'flow', hasEV: isEV })
+    trackFreeEstimateGenerated({ make: selMake, model: selModel, year: selYear, mode: 'flow', hasEV: isEV })
+    trackCalculatorCompleted({ vehicleCount: 1, hasEV: isEV, ownershipYears: DEFAULT_OWNERSHIP_YRS })
+    trackEstimateViewed({ make: selMake, model: selModel, year: selYear })
+    snapshotCalculation()
+    hasSnapshotRef.current = true
+  }
+
+  // The personalize panel (zip, price, down payment, APR, term) lives on the
+  // results screen — after the first snapshot. Re-snapshot once edits settle
+  // so the stored row carries the personalized values, not just defaults;
+  // the server updates the same session+vehicle row with a fresh updated_at.
+  useEffect(() => {
+    if (!hasSnapshotRef.current) return
+    const t = setTimeout(snapshotCalculation, 2000)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selMake, selModel, selYear, resolvedState, zipCode, price, priceEdited, downPct, apr, loanTerm])
 
   const isStep1Complete = !!(selYear && selMake && selModel)
   const isPersonalised  = zipCode !== '' || downPct !== DEFAULT_DOWN_PCT * 100

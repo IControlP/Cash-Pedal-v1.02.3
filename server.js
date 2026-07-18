@@ -798,11 +798,14 @@ async function initTables() {
     `)
 
     // ── Calculation snapshots (market analytics) ──────
-    // One row per completed TCO calculation, capturing the numbers the
-    // visitor entered (asking price, mileage, financing terms) alongside the
-    // vehicle. Location is deliberately coarse — 2-letter state plus the
-    // first 3 zip digits only; a full 5-digit zip is never stored. Keyed only
-    // by the browser session UUID, same as vehicle_searches.
+    // One row per session+vehicle, capturing the numbers the visitor entered
+    // into a TCO calculator (asking price, mileage, financing terms). Later
+    // personalization passes upsert the same row in place — updated_at marks
+    // how fresh the numbers are, so the dataset always holds each visitor's
+    // latest values instead of a trail of stale intermediates. Location is
+    // deliberately coarse — 2-letter state plus the first 3 zip digits only;
+    // a full 5-digit zip is never stored. Keyed only by the browser session
+    // UUID, same as vehicle_searches.
     await client.query(`
       CREATE TABLE IF NOT EXISTS calculation_snapshots (
         id                    SERIAL PRIMARY KEY,
@@ -819,8 +822,13 @@ async function initTables() {
         financing_term_months SMALLINT,
         apr                   NUMERIC(4,2),
         down_payment          INTEGER,
-        created_at            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        created_at            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
+    `)
+    await client.query(`
+      ALTER TABLE calculation_snapshots
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     `)
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_calculation_snapshots_make_model
@@ -829,6 +837,20 @@ async function initTables() {
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_calculation_snapshots_zip3
         ON calculation_snapshots(zip3, created_at)
+    `)
+    // Dedupe (keep the newest row) before building the unique index, so the
+    // index can still build on a table populated before upserts existed.
+    await client.query(`
+      DELETE FROM calculation_snapshots a
+      USING calculation_snapshots b
+      WHERE a.session_id = b.session_id
+        AND a.make = b.make AND a.model = b.model
+        AND COALESCE(a.year, 0) = COALESCE(b.year, 0)
+        AND a.id < b.id
+    `)
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_calculation_snapshots_session_vehicle
+        ON calculation_snapshots(session_id, make, model, COALESCE(year, 0))
     `)
 
     // ── NHTSA reliability cache ───────────────────────
@@ -1003,10 +1025,11 @@ async function initTables() {
       DELETE FROM vehicle_searches
       WHERE created_at < NOW() - INTERVAL '${MARKET_RETENTION_DAYS} days'
     `)
-    // Calculation snapshots are pseudonymous analytics — same retention.
+    // Calculation snapshots are pseudonymous analytics — same retention,
+    // keyed on updated_at so recently refreshed rows aren't purged as stale.
     await client.query(`
       DELETE FROM calculation_snapshots
-      WHERE created_at < NOW() - INTERVAL '${MARKET_RETENTION_DAYS} days'
+      WHERE updated_at < NOW() - INTERVAL '${MARKET_RETENTION_DAYS} days'
     `)
     // Stale device slots (no login in 30 days) are cleaned per-request already,
     // but also sweep on startup to catch orphaned rows from inactive subscribers.
@@ -1314,11 +1337,29 @@ app.post('/api/track-calculation', async (req, res) => {
   if (!pool) return res.json({ success: true, storage: 'none' })
 
   try {
+    // Upsert: one row per session+vehicle. Later passes (the personalize
+    // panel fires after the first snapshot) refresh the row and updated_at.
+    // COALESCE keeps a previously captured value when a later pass sends
+    // null (e.g. a slider moved back to its default) — the row always holds
+    // the best numbers the visitor has entered so far.
     await pool.query(
       `INSERT INTO calculation_snapshots
          (session_id, state, zip3, make, model, year, segment, listing_type,
           asking_price, mileage, financing_term_months, apr, down_payment)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+       ON CONFLICT (session_id, make, model, COALESCE(year, 0)) DO UPDATE SET
+         state        = COALESCE(EXCLUDED.state, calculation_snapshots.state),
+         zip3         = COALESCE(EXCLUDED.zip3, calculation_snapshots.zip3),
+         segment      = COALESCE(EXCLUDED.segment, calculation_snapshots.segment),
+         listing_type = CASE WHEN EXCLUDED.listing_type = 'unspecified'
+                             THEN calculation_snapshots.listing_type
+                             ELSE EXCLUDED.listing_type END,
+         asking_price          = COALESCE(EXCLUDED.asking_price, calculation_snapshots.asking_price),
+         mileage               = COALESCE(EXCLUDED.mileage, calculation_snapshots.mileage),
+         financing_term_months = COALESCE(EXCLUDED.financing_term_months, calculation_snapshots.financing_term_months),
+         apr                   = COALESCE(EXCLUDED.apr, calculation_snapshots.apr),
+         down_payment          = COALESCE(EXCLUDED.down_payment, calculation_snapshots.down_payment),
+         updated_at            = CURRENT_TIMESTAMP`,
       [session_id, cleanState, cleanZip3, make, model, cleanYear, segment, cleanListing,
        cleanPrice, cleanMileage, cleanTerm, cleanApr, cleanDown]
     )
@@ -2593,7 +2634,7 @@ async function runRetentionSweep() {
     await pool.query(`DELETE FROM usage_events WHERE created_at < NOW() - INTERVAL '365 days'`)
     await pool.query(`DELETE FROM bonus_credits WHERE updated_at < NOW() - INTERVAL '365 days'`)
     await pool.query(`DELETE FROM vehicle_searches WHERE created_at < NOW() - INTERVAL '${MARKET_RETENTION_DAYS} days'`)
-    await pool.query(`DELETE FROM calculation_snapshots WHERE created_at < NOW() - INTERVAL '${MARKET_RETENTION_DAYS} days'`)
+    await pool.query(`DELETE FROM calculation_snapshots WHERE updated_at < NOW() - INTERVAL '${MARKET_RETENTION_DAYS} days'`)
     await pool.query(`DELETE FROM subscriber_devices WHERE last_seen < NOW() - INTERVAL '${DEVICE_EXPIRY_DAYS} days'`)
     await pool.query(`DELETE FROM market_value_cache WHERE fetched_at < NOW() - INTERVAL '${MARKET_VALUE_MAX_DAYS} days'`)
     await pool.query(`DELETE FROM nhtsa_cache WHERE fetched_at < NOW() - INTERVAL '30 days'`)

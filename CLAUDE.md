@@ -117,6 +117,7 @@ Express hardening in place: `helmet`, `compression`, `express-rate-limit` (a gen
 | `POST /api/delete-my-data` | GDPR erasure — deletes profile data; consent + Stripe records retained |
 | `POST /api/track-usage` | First-party usage events (allowlisted feature/gate values, anonymized IP) |
 | `POST /api/track-search` | Record a vehicle search (make/model + optional state) for market analytics |
+| `POST /api/track-calculation` | Record a completed TCO calculation snapshot (make/model/year plus user-entered asking price, mileage, financing terms; location coarsened to state + zip3) |
 | `GET /api/market-analytics` | Public aggregate rankings — top vehicles nationally and by state (`?state=CA`) |
 | `GET /api/insights/market` | **Protected** full per-state insights export (requires `x-api-key`) — the sellable dataset |
 | `GET /api/reliability/:make/:model/:year` | NHTSA recall/complaint proxy, cached 7 days in `nhtsa_cache`; degrades gracefully on NHTSA timeout |
@@ -129,6 +130,8 @@ Express hardening in place: `helmet`, `compression`, `express-rate-limit` (a gen
 ### Market analytics
 
 `POST /api/track-search` is fired from the TCO tools whenever a visitor selects a real make/model. Rows are stored in the `vehicle_searches` table, keyed only by the browser session UUID (no email/IP), tagged with the resolved US state when available, and validated against `src/data/vehicles.json` (loaded once at server boot). Public rankings count **distinct sessions** (not raw hits) over a rolling 90-day window so a single visitor can't skew results. The `/api/insights/market` export returns the full per-state breakdown for licensing and is gated behind the `INSIGHTS_API_KEY` header.
+
+`POST /api/track-calculation` is fired (via `src/utils/calculationTracking.js`) at the same moment the `calculator_completed` GA4 event fires in the TCO tools, and stores one row per completed calculation in the `calculation_snapshots` table: make/model/year/segment plus the numbers the user actually entered — asking price, odometer mileage, financing terms (term/APR/down payment), and listing type (dealer vs. private party). Values left at their pre-filled defaults are sent as `null` so model estimates never pollute the dataset. Same hygiene as `vehicle_searches`: session UUID only, make/model validated against the vehicle database, out-of-range numbers nulled server-side, and location stored coarse — 2-letter state plus the first 3 zip digits (a full 5-digit zip is never persisted). Same 365-day retention sweep as `vehicle_searches`. Silent collection only for now — not yet surfaced in `/market` or `/api/insights/market`.
 
 ### Environment variables
 

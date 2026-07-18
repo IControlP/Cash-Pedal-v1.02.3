@@ -10,6 +10,7 @@ import {
   generateMaintenanceByYear,
 } from '../utils/vehicleCosts'
 import { trackSearch } from '../utils/marketSearch'
+import { trackCalculation } from '../utils/calculationTracking'
 import { useSubscription } from '../hooks/useSubscription'
 import {
   trackSimpleMakeSelected, trackSimpleModelSelected, trackSimpleYearSelected,
@@ -959,6 +960,19 @@ export default function TCOFlow() {
     trackFreeEstimateGenerated({ make: selMake, model: selModel, year: selYear, mode: 'flow', hasEV: isEV })
     trackCalculatorCompleted({ vehicleCount: 1, hasEV: isEV, ownershipYears: DEFAULT_OWNERSHIP_YRS })
     trackEstimateViewed({ make: selMake, model: selModel, year: selYear })
+    // Snapshot the user-entered numbers for market analytics — values still at
+    // their pre-filled defaults are sent as null so estimates never masquerade
+    // as user input. This flow has no odometer or dealer/private inputs.
+    trackCalculation({
+      make: selMake, model: selModel, year: selYear || null,
+      state: resolvedState, zip: zipCode,
+      askingPrice: priceEdited ? price : null,
+      financingTermMonths: loanTerm !== DEFAULT_LOAN_TERM ? loanTerm : null,
+      apr: apr !== DEFAULT_APR ? apr : null,
+      downPayment: downPct !== DEFAULT_DOWN_PCT * 100 && price
+        ? Math.round(price * downPct / 100)
+        : null,
+    })
   }
 
   const isStep1Complete = !!(selYear && selMake && selModel)

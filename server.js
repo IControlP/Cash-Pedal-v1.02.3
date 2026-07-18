@@ -797,6 +797,40 @@ async function initTables() {
         ON vehicle_searches(created_at)
     `)
 
+    // ── Calculation snapshots (market analytics) ──────
+    // One row per completed TCO calculation, capturing the numbers the
+    // visitor entered (asking price, mileage, financing terms) alongside the
+    // vehicle. Location is deliberately coarse — 2-letter state plus the
+    // first 3 zip digits only; a full 5-digit zip is never stored. Keyed only
+    // by the browser session UUID, same as vehicle_searches.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS calculation_snapshots (
+        id                    SERIAL PRIMARY KEY,
+        session_id            VARCHAR(36) NOT NULL,
+        state                 VARCHAR(2),
+        zip3                  VARCHAR(3),
+        make                  VARCHAR(50)  NOT NULL,
+        model                 VARCHAR(100) NOT NULL,
+        year                  SMALLINT,
+        segment               VARCHAR(20),
+        listing_type          VARCHAR(20),
+        asking_price          INTEGER,
+        mileage               INTEGER,
+        financing_term_months SMALLINT,
+        apr                   NUMERIC(4,2),
+        down_payment          INTEGER,
+        created_at            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_calculation_snapshots_make_model
+        ON calculation_snapshots(make, model, created_at)
+    `)
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_calculation_snapshots_zip3
+        ON calculation_snapshots(zip3, created_at)
+    `)
+
     // ── NHTSA reliability cache ───────────────────────
     // Caches recall + complaint summaries from NHTSA's public API for 7 days.
     // Keyed by "make|model|year"; stale rows are pruned in the daily sweep.
@@ -967,6 +1001,11 @@ async function initTables() {
     // Vehicle searches are pseudonymous analytics — same 365-day retention.
     await client.query(`
       DELETE FROM vehicle_searches
+      WHERE created_at < NOW() - INTERVAL '${MARKET_RETENTION_DAYS} days'
+    `)
+    // Calculation snapshots are pseudonymous analytics — same retention.
+    await client.query(`
+      DELETE FROM calculation_snapshots
       WHERE created_at < NOW() - INTERVAL '${MARKET_RETENTION_DAYS} days'
     `)
     // Stale device slots (no login in 30 days) are cleaned per-request already,
@@ -1208,6 +1247,84 @@ app.post('/api/track-search', async (req, res) => {
     res.json({ success: true })
   } catch (err) {
     console.error('[track-search] DB error:', err.message)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+// ── API: Track a completed calculation (market analytics) ────
+// Fired alongside the calculator_completed GA4 event, capturing the numbers a
+// visitor entered into a TCO calculator (asking price, mileage, financing
+// terms). Same hygiene as /api/track-search: session UUID only, make/model
+// validated against the vehicle database. Location is stored coarse — the
+// 2-letter state and the first 3 zip digits; a full 5-digit zip is never
+// persisted even if the client sends one. Out-of-range numbers are nulled
+// rather than rejected so one bad field doesn't cost the whole row.
+app.post('/api/track-calculation', async (req, res) => {
+  const {
+    session_id, state, zip3, make, model, year,
+    listing_type, asking_price, mileage, financing_term_months, apr, down_payment,
+  } = req.body
+
+  if (!isValidUUID(session_id)) {
+    return res.status(400).json({ success: false, error: 'Invalid session_id format' })
+  }
+  if (typeof make !== 'string' || typeof model !== 'string') {
+    return res.status(400).json({ success: false, error: 'make and model required' })
+  }
+  // Only accept real make/model pairs that exist in the vehicle database.
+  const modelData = VEHICLES[make]?.[model]
+  if (!modelData) {
+    return res.status(400).json({ success: false, error: 'Unknown make/model' })
+  }
+
+  const cleanState = typeof state === 'string' && US_STATES.has(state.toUpperCase())
+    ? state.toUpperCase()
+    : null
+
+  // Truncate whatever zip was sent to its first 3 digits before storing.
+  const zipDigits = typeof zip3 === 'string' ? zip3.replace(/\D/g, '') : ''
+  const cleanZip3 = zipDigits.length >= 3 ? zipDigits.slice(0, 3) : null
+
+  // Trust the database for the year range and segment, not the client.
+  let cleanYear = null
+  const parsedYear = parseInt(year, 10)
+  if (!isNaN(parsedYear) && parsedYear >= 1990 && parsedYear <= 2035) cleanYear = parsedYear
+  const segment = typeof modelData.type === 'string' ? modelData.type.slice(0, 20) : null
+
+  const cleanListing = listing_type === 'dealer' || listing_type === 'private_party'
+    ? listing_type
+    : 'unspecified'
+
+  // Whole-integer field within [min, max], else null.
+  const intInRange = (v, min, max) => {
+    if (v === null || v === undefined || v === '') return null
+    const n = Math.round(Number(v))
+    return Number.isFinite(n) && n >= min && n <= max ? n : null
+  }
+  const cleanPrice   = intInRange(asking_price, 1, 499999)          // 0 < price < 500000
+  const cleanMileage = intInRange(mileage, 0, 499999)               // 0 <= mileage < 500000
+  const cleanTerm    = intInRange(financing_term_months, 1, 120)
+  const cleanDown    = intInRange(down_payment, 0, 499999)
+  const parsedApr    = Number(apr)
+  const cleanApr     = apr !== null && apr !== undefined && apr !== ''
+    && Number.isFinite(parsedApr) && parsedApr >= 0 && parsedApr <= 99.99
+    ? Math.round(parsedApr * 100) / 100
+    : null
+
+  if (!pool) return res.json({ success: true, storage: 'none' })
+
+  try {
+    await pool.query(
+      `INSERT INTO calculation_snapshots
+         (session_id, state, zip3, make, model, year, segment, listing_type,
+          asking_price, mileage, financing_term_months, apr, down_payment)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+      [session_id, cleanState, cleanZip3, make, model, cleanYear, segment, cleanListing,
+       cleanPrice, cleanMileage, cleanTerm, cleanApr, cleanDown]
+    )
+    res.json({ success: true })
+  } catch (err) {
+    console.error('[track-calculation] DB error:', err.message)
     res.status(500).json({ success: false, error: 'Internal server error' })
   }
 })
@@ -2476,6 +2593,7 @@ async function runRetentionSweep() {
     await pool.query(`DELETE FROM usage_events WHERE created_at < NOW() - INTERVAL '365 days'`)
     await pool.query(`DELETE FROM bonus_credits WHERE updated_at < NOW() - INTERVAL '365 days'`)
     await pool.query(`DELETE FROM vehicle_searches WHERE created_at < NOW() - INTERVAL '${MARKET_RETENTION_DAYS} days'`)
+    await pool.query(`DELETE FROM calculation_snapshots WHERE created_at < NOW() - INTERVAL '${MARKET_RETENTION_DAYS} days'`)
     await pool.query(`DELETE FROM subscriber_devices WHERE last_seen < NOW() - INTERVAL '${DEVICE_EXPIRY_DAYS} days'`)
     await pool.query(`DELETE FROM market_value_cache WHERE fetched_at < NOW() - INTERVAL '${MARKET_VALUE_MAX_DAYS} days'`)
     await pool.query(`DELETE FROM nhtsa_cache WHERE fetched_at < NOW() - INTERVAL '30 days'`)

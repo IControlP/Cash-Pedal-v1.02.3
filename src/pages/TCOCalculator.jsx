@@ -24,6 +24,7 @@ import { useSubscription } from '../hooks/useSubscription'
 import { useBonusCredits } from '../hooks/useBonusCredits'
 import { trackUsage } from '../utils/usage'
 import { trackSearch } from '../utils/marketSearch'
+import { trackCalculation } from '../utils/calculationTracking'
 import VEHICLES from '../data/vehicles.json'
 import {
   BRAND_DEPRECIATION_MULT,
@@ -1204,6 +1205,9 @@ export default function TCOCalculator() {
   const countIncrementedRef    = useRef(false)
   const hasTrackedStartRef     = useRef(false)
   const hasTrackedDoneRef      = useRef(false)
+  // True once the user has touched the price input themselves — auto-set
+  // model estimates must never be reported as a user-entered asking price.
+  const priceEditedRef         = useRef(false)
   const lastChargedVehicleRef  = useRef(null)
 
   // Entry-CTA targets — let cold/ad traffic jump straight into the calculator
@@ -1609,6 +1613,7 @@ export default function TCOCalculator() {
       const p = computeUsedPrice(msrp, make, model, year)
       base = Math.round((dealerPurchase ? p.dealer : p.private) / 500) * 500
     }
+    priceEditedRef.current = false
     setPrice(base)
   }, [financeMode, dealerPurchase, computeUsedPrice])
 
@@ -1817,6 +1822,7 @@ export default function TCOCalculator() {
     const ageYrs = Math.max(0, new Date().getFullYear() - parseInt(selYear))
     if (ageYrs <= 1) return
     const p = computeUsedPrice(origMsrp, selMake, selModel, selYear, currentMileage)
+    priceEditedRef.current = false
     setPrice(Math.round((dealerPurchase ? p.dealer : p.private) / 500) * 500)
   }, [currentMileage, origMsrp, selMake, selModel, selYear, financeMode, dealerPurchase]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1824,6 +1830,7 @@ export default function TCOCalculator() {
   useEffect(() => {
     if (financeMode !== 'buy' || !origMsrp || !selMake || !selModel || !selYear) return
     const ageYrs = Math.max(0, new Date().getFullYear() - parseInt(selYear))
+    priceEditedRef.current = false
     if (ageYrs <= 1) {
       setPrice(dealerPurchase ? origMsrp : Math.round(origMsrp * 0.97 / 500) * 500)
       return
@@ -1840,6 +1847,7 @@ export default function TCOCalculator() {
     const ageYrs = Math.max(0, new Date().getFullYear() - parseInt(selYear))
     if (ageYrs <= 1) return
     const p = computeUsedPrice(origMsrp, selMake, selModel, selYear, currentMileage ?? null)
+    priceEditedRef.current = false
     setPrice(Math.round((dealerPurchase ? p.dealer : p.private) / 500) * 500)
   }, [liveMarket, resolvedState]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -2096,7 +2104,38 @@ export default function TCOCalculator() {
       mode,
       hasEV: modelData?.is_ev ?? false,
     })
+    snapshotCalculation()
   }, [selTrim]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Snapshot the user-entered numbers for market analytics. Values still at
+  // their defaults (the useState initials: $5,000 down / 60 mo / 6.5%) or
+  // auto-estimated (untouched price, auto odometer) are sent as null so our
+  // own estimates never masquerade as user input. The server upserts one row
+  // per session+vehicle and stamps updated_at.
+  function snapshotCalculation() {
+    trackCalculation({
+      make: selMake, model: selModel, year: selYear || null,
+      state: resolvedState, zip: resolvedZip,
+      listingType: detailedMode ? (dealerPurchase ? 'dealer' : 'private_party') : 'unspecified',
+      askingPrice: priceEditedRef.current ? price : null,
+      mileage: currentMileage,
+      financingTermMonths: !isCashPurchase && loanTerm !== 60 ? loanTerm : null,
+      apr: !isCashPurchase && rate !== 6.5 ? rate : null,
+      downPayment: !isCashPurchase && downPayment !== 5000 ? downPayment : null,
+    })
+  }
+
+  // Re-snapshot after the visitor personalizes (price, odometer, financing,
+  // location, dealer/private) or switches vehicles — waits for edits to
+  // settle, then the server refreshes the session+vehicle row's updated_at
+  // so the stored numbers are the visitor's latest, not their first pass.
+  useEffect(() => {
+    if (!hasTrackedDoneRef.current) return
+    const t = setTimeout(snapshotCalculation, 2000)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selMake, selModel, selYear, resolvedState, resolvedZip, detailedMode, dealerPurchase,
+      price, currentMileage, loanTerm, rate, downPayment, isCashPurchase])
 
   // 8. detailed_mode_opened — fires whenever detailedMode transitions false → true.
   const prevDetailedModeRef = useRef(false)
@@ -2619,13 +2658,14 @@ export default function TCOCalculator() {
               <SliderInput
                 label={financeMode === 'current' ? 'Current Market Value' : financeMode === 'lease' ? 'Vehicle MSRP' : 'Vehicle Purchase Price (Out-the-Door)'}
                 value={price}
-                onChange={v => { trackFirstInteraction('price_slider'); setPrice(v) }}
+                onChange={v => { trackFirstInteraction('price_slider'); priceEditedRef.current = true; setPrice(v) }}
                 displayValue={financeMode === 'buy' ? effectivePrice : undefined}
                 onDisplayChange={financeMode === 'buy' ? (otd) => {
                   const taxRate = taxRateOverride !== null
                     ? parseFloat(taxRateOverride) / 100
                     : (STATE_VEHICLE_SALES_TAX[resolvedState] ?? 0.0625)
                   const base = Math.round((otd - effectiveDocFee) / (1 + taxRate) / 500) * 500
+                  priceEditedRef.current = true
                   setPrice(Math.max(5000, Math.min(500000, base)))
                 } : undefined}
                 min={5000} max={500000} step={500} prefix="$"

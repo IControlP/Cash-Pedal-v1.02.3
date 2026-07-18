@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { trackPageView } from './utils/analytics'
 import { initConsent } from './utils/consent'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -18,7 +18,6 @@ const SalaryCalculator       = lazy(() => import('./pages/SalaryCalculator'))
 const Affordability          = lazy(() => import('./pages/Affordability'))
 const MultiVehicleComparison = lazy(() => import('./pages/MultiVehicleComparison'))
 const CarBuyingChecklist     = lazy(() => import('./pages/CarBuyingChecklist'))
-const WheelZard              = lazy(() => import('./pages/WheelZard'))
 const Resources              = lazy(() => import('./pages/Resources'))
 const About                  = lazy(() => import('./pages/About'))
 const Subscribe              = lazy(() => import('./pages/Subscribe'))
@@ -65,7 +64,8 @@ export default function App() {
             <Route path="/affordability" element={<Affordability />} />
             <Route path="/compare"    element={<MultiVehicleComparison />} />
             <Route path="/checklist"  element={<CarBuyingChecklist />} />
-            <Route path="/wheelzard"  element={<WheelZard />} />
+            {/* Wheel-Zard was retired — keep old links/bookmarks working */}
+            <Route path="/wheelzard"  element={<Navigate to="/" replace />} />
             <Route path="/resources"  element={<Resources />} />
             <Route path="/market"     element={<MarketAnalytics />} />
             <Route path="/about"      element={<About />} />

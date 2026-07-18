@@ -8,7 +8,6 @@ const links = [
   { to: '/affordability', label: 'Car Recommendation' },
   { to: '/survey', label: 'Car Survey' },
   { to: '/checklist', label: 'Buying Checklist' },
-  { to: '/wheelzard', label: 'Wheel-Zard AI' },
   { to: '/resources', label: 'Resources' },
   { to: '/about', label: 'About' },
   { to: '/privacy', label: 'Privacy Policy' },

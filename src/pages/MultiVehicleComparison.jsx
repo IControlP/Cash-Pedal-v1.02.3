@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { safeGet, safeSet, safeRemove } from '../utils/safeStorage'
+import { safeUUID } from '../utils/safeId'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -25,17 +26,25 @@ function fmtRetention(n) {
   return n != null ? `${n}%` : '—'
 }
 
+// Coerce anything (user input, restored localStorage) to a finite number.
+function num(value, fallback = 0) {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : fallback
+}
+
 function calcLoan({ price, downPayment, loanTermMonths, annualRatePercent, ownershipYears }) {
-  const loanAmount = price - downPayment
-  const r = annualRatePercent / 12 / 100
-  const n = loanTermMonths
+  const safePrice = Math.max(0, num(price))
+  const loanAmount = Math.max(0, safePrice - Math.min(Math.max(0, num(downPayment)), safePrice))
+  const r = num(annualRatePercent) / 12 / 100
+  const n = Math.max(1, num(loanTermMonths, 60))
+  const years = Math.max(1, num(ownershipYears, 5))
   const monthlyPayment = r === 0
     ? loanAmount / n
     : (loanAmount * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1)
   const totalPaid    = monthlyPayment * n
   const totalInterest = totalPaid - loanAmount
-  const effectiveMonths = Math.min(ownershipYears * 12, n)
-  const annualCost   = (monthlyPayment * effectiveMonths) / ownershipYears
+  const effectiveMonths = Math.min(years * 12, n)
+  const annualCost   = (monthlyPayment * effectiveMonths) / years
   return { loanAmount, monthlyPayment, totalInterest, totalCostOfLoan: totalPaid, annualCost }
 }
 
@@ -46,9 +55,61 @@ const defaultVehicle = {
   name: '', price: 30000, downPayment: 5000, loanTerm: 60, rate: 6.5, ownershipYears: 5,
   isLease: false, leaseMonthlyPayment: 0, leaseTerm: 36,
   // Extended fields (null = not available for this entry)
-  totalAnnualCost: null, totalOwnershipCost: null,
+  totalAnnualCost: null, totalOwnershipCost: null, costPerMile: null,
   mpgCombined: null, cargoSqFt: null, valueRetentionPct: null,
   isFromTCO: false,
+}
+
+// Nullable extended fields: keep only finite numbers, otherwise null.
+function numOrNull(value) {
+  const n = Number(value)
+  return value != null && Number.isFinite(n) ? n : null
+}
+
+// Normalize a vehicle restored from localStorage (or imported from another
+// tool) so missing/corrupted fields can never produce NaN in the math or
+// crash a render. Every vehicle gets a stable uid for React keys.
+function sanitizeVehicle(raw) {
+  const v = raw && typeof raw === 'object' ? raw : {}
+  return {
+    ...defaultVehicle,
+    uid:            typeof v.uid === 'string' && v.uid ? v.uid : safeUUID(),
+    tcoId:          typeof v.tcoId === 'string' ? v.tcoId : undefined,
+    name:           typeof v.name === 'string' ? v.name : '',
+    price:          Math.max(0, num(v.price, defaultVehicle.price)),
+    downPayment:    Math.max(0, num(v.downPayment, defaultVehicle.downPayment)),
+    loanTerm:       Math.max(1, num(v.loanTerm, defaultVehicle.loanTerm)),
+    rate:           Math.max(0, num(v.rate, defaultVehicle.rate)),
+    ownershipYears: Math.max(1, num(v.ownershipYears, defaultVehicle.ownershipYears)),
+    isLease:        v.isLease === true,
+    leaseMonthlyPayment: Math.max(0, num(v.leaseMonthlyPayment, 0)),
+    leaseTerm:      Math.max(1, num(v.leaseTerm, defaultVehicle.leaseTerm)),
+    totalAnnualCost:    numOrNull(v.totalAnnualCost),
+    totalOwnershipCost: numOrNull(v.totalOwnershipCost),
+    costPerMile:        numOrNull(v.costPerMile),
+    mpgCombined:        numOrNull(v.mpgCombined),
+    cargoSqFt:          numOrNull(v.cargoSqFt),
+    valueRetentionPct:  numOrNull(v.valueRetentionPct),
+    isFromTCO:      v.isFromTCO === true,
+    touched:        v.touched === true,
+  }
+}
+
+// A "blank placeholder" is a manually-added slot the user never customized —
+// still auto-named ("Vehicle N" or empty) with every input at its default.
+// These get replaced (not stacked next to) vehicles imported from the TCO
+// or Affordability pages.
+function isBlankPlaceholder(v) {
+  if (v.isFromTCO || v.tcoId || v.touched) return false
+  if (v.name !== '' && !/^Vehicle \d+$/.test(v.name)) return false
+  return v.price === defaultVehicle.price
+    && v.downPayment === defaultVehicle.downPayment
+    && v.loanTerm === defaultVehicle.loanTerm
+    && v.rate === defaultVehicle.rate
+    && v.ownershipYears === defaultVehicle.ownershipYears
+    && v.isLease === defaultVehicle.isLease
+    && v.mpgCombined == null
+    && v.cargoSqFt == null
 }
 
 // ── Ranking parameters available to the user ──────────
@@ -61,7 +122,9 @@ const RANK_PARAMS = [
 
 // ── VehicleCard ────────────────────────────────────────
 function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
-  const pct = (val, min, max) => ((val - min) / (max - min)) * 100
+  // Slider fill percentage — guard the degenerate range (e.g. price of $0
+  // makes the down-payment slider's min === max) so we never emit NaN CSS.
+  const pct = (val, min, max) => max > min ? Math.min(100, Math.max(0, ((val - min) / (max - min)) * 100)) : 0
 
   return (
     <div className="card flex flex-col gap-4" style={{ borderColor: color, borderWidth: '1px' }}>
@@ -90,7 +153,7 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
           {vehicle.isFromTCO && (
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded"
               style={{ color: 'var(--accent)', background: 'rgba(255,184,0,0.1)', border: '1px solid rgba(255,184,0,0.25)' }}>
-              Imported from TCO
+              Imported
             </span>
           )}
           {vehicle.isLease && (
@@ -132,11 +195,11 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
         <div className="relative mb-2">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
           <input type="number" value={vehicle.price}
-            onChange={e => onChange({ ...vehicle, price: Number(e.target.value) })}
+            onChange={e => onChange({ ...vehicle, price: num(e.target.value) })}
             className="input-field text-sm py-2" style={{ paddingLeft: '1.75rem' }} />
         </div>
         <input type="range" min={5000} max={500000} step={500} value={vehicle.price}
-          onChange={e => onChange({ ...vehicle, price: Number(e.target.value) })}
+          onChange={e => onChange({ ...vehicle, price: num(e.target.value) })}
           style={{ background: `linear-gradient(to right, ${color} ${pct(vehicle.price, 5000, 500000)}%, var(--border) ${pct(vehicle.price, 5000, 500000)}%)` }} />
       </div>
 
@@ -148,12 +211,12 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
             <div className="relative mb-2">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
               <input type="number" min={0} value={vehicle.leaseMonthlyPayment ?? 0}
-                onChange={e => onChange({ ...vehicle, leaseMonthlyPayment: Number(e.target.value) })}
+                onChange={e => onChange({ ...vehicle, leaseMonthlyPayment: num(e.target.value) })}
                 className="input-field text-sm py-2" style={{ paddingLeft: '1.75rem' }} />
             </div>
             <input type="range" min={0} max={3000} step={25}
               value={vehicle.leaseMonthlyPayment ?? 0}
-              onChange={e => onChange({ ...vehicle, leaseMonthlyPayment: Number(e.target.value) })}
+              onChange={e => onChange({ ...vehicle, leaseMonthlyPayment: num(e.target.value) })}
               style={{ background: `linear-gradient(to right, ${color} ${pct(vehicle.leaseMonthlyPayment ?? 0, 0, 3000)}%, var(--border) ${pct(vehicle.leaseMonthlyPayment ?? 0, 0, 3000)}%)` }} />
           </div>
 
@@ -161,7 +224,7 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
           <div>
             <label className="input-label">Lease Term</label>
             <select value={vehicle.leaseTerm ?? 36}
-              onChange={e => onChange({ ...vehicle, leaseTerm: Number(e.target.value) })}
+              onChange={e => onChange({ ...vehicle, leaseTerm: num(e.target.value) })}
               className="input-field text-sm py-2">
               {[24, 36, 39, 48].map(m => <option key={m} value={m}>{m} mo</option>)}
             </select>
@@ -175,12 +238,12 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
             <div className="relative mb-2">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none">$</span>
               <input type="number" value={vehicle.downPayment}
-                onChange={e => onChange({ ...vehicle, downPayment: Math.min(Number(e.target.value), vehicle.price) })}
+                onChange={e => onChange({ ...vehicle, downPayment: Math.min(num(e.target.value), vehicle.price) })}
                 className="input-field text-sm py-2" style={{ paddingLeft: '1.75rem' }} />
             </div>
             <input type="range" min={0} max={vehicle.price} step={500}
               value={Math.min(vehicle.downPayment, vehicle.price)}
-              onChange={e => onChange({ ...vehicle, downPayment: Number(e.target.value) })}
+              onChange={e => onChange({ ...vehicle, downPayment: num(e.target.value) })}
               style={{ background: `linear-gradient(to right, ${color} ${pct(Math.min(vehicle.downPayment, vehicle.price), 0, vehicle.price)}%, var(--border) ${pct(Math.min(vehicle.downPayment, vehicle.price), 0, vehicle.price)}%)` }} />
           </div>
 
@@ -189,7 +252,7 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
             <div>
               <label className="input-label">Loan Term</label>
               <select value={vehicle.loanTerm}
-                onChange={e => onChange({ ...vehicle, loanTerm: Number(e.target.value) })}
+                onChange={e => onChange({ ...vehicle, loanTerm: num(e.target.value) })}
                 className="input-field text-sm py-2">
                 {[24,36,48,60,72,84].map(m => <option key={m} value={m}>{m} mo</option>)}
               </select>
@@ -197,7 +260,7 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
             <div>
               <label className="input-label">Rate (%)</label>
               <input type="number" value={vehicle.rate} min={0} max={25} step={0.1}
-                onChange={e => onChange({ ...vehicle, rate: Number(e.target.value) })}
+                onChange={e => onChange({ ...vehicle, rate: num(e.target.value) })}
                 className="input-field text-sm py-2" />
             </div>
           </div>
@@ -206,7 +269,7 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
           <div>
             <label className="input-label">Own for (years)</label>
             <select value={vehicle.ownershipYears}
-              onChange={e => onChange({ ...vehicle, ownershipYears: Number(e.target.value) })}
+              onChange={e => onChange({ ...vehicle, ownershipYears: num(e.target.value) })}
               className="input-field text-sm py-2">
               {[1,2,3,4,5,7,10].map(y => <option key={y} value={y}>{y} yr{y > 1 ? 's' : ''}</option>)}
             </select>
@@ -226,7 +289,7 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
           <input type="number" min={0} max={200} step={1}
             value={vehicle.mpgCombined ?? ''}
             placeholder="e.g. 32"
-            onChange={e => onChange({ ...vehicle, mpgCombined: e.target.value === '' ? null : Number(e.target.value) })}
+            onChange={e => onChange({ ...vehicle, mpgCombined: e.target.value === '' ? null : num(e.target.value) })}
             className="input-field text-sm py-2" />
         </div>
         <div>
@@ -234,7 +297,7 @@ function VehicleCard({ vehicle, index, onChange, onRemove, canRemove, color }) {
           <input type="number" min={0} max={200} step={0.1}
             value={vehicle.cargoSqFt ?? ''}
             placeholder="e.g. 15.1"
-            onChange={e => onChange({ ...vehicle, cargoSqFt: e.target.value === '' ? null : Number(e.target.value) })}
+            onChange={e => onChange({ ...vehicle, cargoSqFt: e.target.value === '' ? null : num(e.target.value) })}
             className="input-field text-sm py-2" />
         </div>
       </div>
@@ -279,66 +342,78 @@ export default function MultiVehicleComparison() {
   const [vehicles, setVehicles] = useState(() => {
     try {
       const saved = JSON.parse(safeGet('cashpedal_comparison_vehicles') || 'null')
-      if (saved && Array.isArray(saved) && saved.length >= 1) return saved
-    } catch { /* ignore */ }
+      if (Array.isArray(saved)) return saved.slice(0, 5).map(sanitizeVehicle)
+    } catch { /* ignore corrupted saved state */ }
     return []
   })
 
-  const [importBanner, setImportBanner] = useState(null) // { count }
+  const [importBanner, setImportBanner] = useState(null) // { count, skipped }
 
   // Persist vehicles state across navigation
   useEffect(() => {
     safeSet('cashpedal_comparison_vehicles', JSON.stringify(vehicles))
   }, [vehicles])
 
-  // Pull TCO-imported vehicles from localStorage on mount
+  // Pull vehicles queued for comparison (TCO Calculator / Affordability page)
+  // from localStorage on mount. Imports REPLACE untouched blank placeholder
+  // cards instead of stacking next to them; customized entries are kept.
   useEffect(() => {
     const raw = safeGet('cashpedal_tco_for_comparison')
     if (!raw) return
+    let imports
     try {
-      const imports = JSON.parse(raw)
-      if (!Array.isArray(imports) || imports.length === 0) return
-
-      setVehicles(prev => {
-        // Drop auto-named blank placeholders (e.g. "Vehicle 1") before adding imports
-        const nonDefault = prev.filter(v => v.isFromTCO || v.tcoId || !/^Vehicle \d+$/.test(v.name))
-        const merged = [...nonDefault]
-        imports.forEach(imp => {
-          const existing = merged.findIndex(v => v.tcoId === imp.id)
-          const mapped = {
-            tcoId:               imp.id,
-            name:                imp.name || 'TCO Import',
-            price:               imp.price,
-            downPayment:         imp.downPayment,
-            loanTerm:            imp.loanTerm,
-            rate:                imp.rate,
-            ownershipYears:      imp.ownershipYears,
-            // Lease fields
-            isLease:             imp.isLease ?? false,
-            leaseMonthlyPayment: imp.leaseMonthlyPayment ?? 0,
-            leaseTerm:           imp.leaseTerm ?? 36,
-            // Extended
-            totalAnnualCost:     imp.totalAnnualCost ?? null,
-            totalOwnershipCost:  imp.totalOwnershipCost ?? null,
-            mpgCombined:         imp.mpgCombined ?? null,
-            cargoSqFt:           imp.cargoSqFt ?? null,
-            valueRetentionPct:   imp.valueRetentionPct ?? null,
-            isFromTCO:           true,
-          }
-          if (existing >= 0) {
-            merged[existing] = mapped
-          } else if (merged.length < 5) {
-            merged.push(mapped)
-          }
-        })
-        return merged
-      })
-
-      setImportBanner({ count: imports.length })
-      // Clear after loading so re-visit doesn't re-import
+      imports = JSON.parse(raw)
+    } catch {
+      // Malformed queue — clear it so it can't wedge every future visit
       safeRemove('cashpedal_tco_for_comparison')
-    } catch { /* ignore malformed data */ }
-  }, [])
+      return
+    }
+    if (!Array.isArray(imports) || imports.length === 0) {
+      safeRemove('cashpedal_tco_for_comparison')
+      return
+    }
+
+    let imported = 0
+    let skipped = 0
+    // Merge into the mount-time vehicle list (this effect runs exactly once,
+    // before any user edits, so the closure value is current).
+    const merged = [...vehicles]
+    imports.forEach(imp => {
+      if (!imp || typeof imp !== 'object') return
+      const mapped = sanitizeVehicle({
+        ...imp,
+        tcoId:     typeof imp.id === 'string' ? imp.id : safeUUID(),
+        name:      imp.name || 'Imported Vehicle',
+        isFromTCO: true,
+        touched:   false,
+      })
+      // Same vehicle re-added from the source tool → refresh in place
+      const existing = merged.findIndex(v => v.tcoId === mapped.tcoId)
+      if (existing >= 0) {
+        merged[existing] = { ...mapped, uid: merged[existing].uid }
+        imported++
+        return
+      }
+      // Fill a blank placeholder slot first, keeping its position
+      const blank = merged.findIndex(isBlankPlaceholder)
+      if (blank >= 0) {
+        merged[blank] = { ...mapped, uid: merged[blank].uid }
+        imported++
+        return
+      }
+      if (merged.length < 5) {
+        merged.push(mapped)
+        imported++
+      } else {
+        skipped++
+      }
+    })
+
+    setVehicles(merged)
+    setImportBanner({ count: imported, skipped })
+    // Clear after loading so a re-visit doesn't re-import
+    safeRemove('cashpedal_tco_for_comparison')
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const results = useMemo(() =>
     vehicles.map(v => {
@@ -371,12 +446,13 @@ export default function MultiVehicleComparison() {
     ), [vehicles, results])
 
   function updateVehicle(i, v) {
-    setVehicles(vs => vs.map((orig, idx) => idx === i ? v : orig))
+    // Any manual edit marks the card as customized, so a later import from
+    // the TCO/Affordability pages won't silently overwrite it.
+    setVehicles(vs => vs.map((orig, idx) => idx === i ? { ...v, touched: true } : orig))
   }
 
   function addVehicle() {
-    if (vehicles.length >= 5) return
-    setVehicles(vs => [...vs, { ...defaultVehicle, name: `Vehicle ${vs.length + 1}` }])
+    setVehicles(vs => vs.length >= 5 ? vs : [...vs, { ...defaultVehicle, uid: safeUUID(), name: `Vehicle ${vs.length + 1}` }])
   }
 
   function removeVehicle(i) {
@@ -503,8 +579,8 @@ export default function MultiVehicleComparison() {
           </h1>
           <p className="anim-2 text-[var(--text-muted)] mt-2 text-base max-w-xl">
             Stack up to 5 vehicles side by side — payments, interest, fuel, insurance, maintenance —
-            and see which one leaves the most money in your pocket. Import straight from the
-            TCO Calculator; everything updates live.
+            and see which one leaves the most money in your pocket. Add cars straight from the
+            TCO Calculator or the Car Recommendation page; everything updates live.
           </p>
         </div>
 
@@ -549,11 +625,16 @@ export default function MultiVehicleComparison() {
         {hasAccess && <div className="max-w-6xl mx-auto px-4 sm:px-6">
 
           {/* Import banner */}
-          {importBanner && (
+          {importBanner && importBanner.count > 0 && (
             <div className="mb-5 anim-2 flex items-center justify-between rounded-xl border px-4 py-3 text-sm"
               style={{ borderColor: 'rgba(255,184,0,0.25)', background: 'rgba(255,184,0,0.05)' }}>
               <span style={{ color: 'var(--accent)' }} className="font-semibold">
-                {importBanner.count} vehicle{importBanner.count !== 1 ? 's' : ''} imported from TCO Calculator
+                {importBanner.count} vehicle{importBanner.count !== 1 ? 's' : ''} added to your comparison
+                {importBanner.skipped > 0 && (
+                  <span className="text-[var(--text-muted)] font-normal">
+                    {' '}· {importBanner.skipped} skipped — all 5 slots are full (remove a vehicle to make room)
+                  </span>
+                )}
               </span>
               <button onClick={() => setImportBanner(null)}
                 className="text-[var(--text-muted)] hover:text-white transition-colors text-lg leading-none">
@@ -600,7 +681,7 @@ export default function MultiVehicleComparison() {
             >
               {vehicles.map((v, i) => (
                 <VehicleCard
-                  key={v.tcoId || i}
+                  key={v.uid || v.tcoId || i}
                   index={i}
                   vehicle={v}
                   color={COLORS[i]}
@@ -754,7 +835,7 @@ export default function MultiVehicleComparison() {
             <div className="flex flex-col gap-3">
               {vehicles.map((v, i) => {
                 const maxPayment = Math.max(...results.map(r => r.monthlyPayment))
-                const pct = (results[i].monthlyPayment / maxPayment) * 100
+                const pct = maxPayment > 0 ? (results[i].monthlyPayment / maxPayment) * 100 : 0
                 return (
                   <div key={i} className="flex items-center gap-4">
                     <span className="text-sm text-[var(--text-muted)] w-24 shrink-0 truncate">{v.name || `Vehicle ${i + 1}`}</span>
@@ -777,8 +858,8 @@ export default function MultiVehicleComparison() {
               <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-6">Total ownership cost comparison</p>
               <div className="flex flex-col gap-3">
                 {vehicles.map((v, i) => {
-                  const maxTCO = Math.max(...totalOutOfPocket)
-                  const pct = (totalOutOfPocket[i] / maxTCO) * 100
+                  const maxTCO = Math.max(...totalOutOfPocket.filter(v => v != null))
+                  const pct = maxTCO > 0 ? ((totalOutOfPocket[i] ?? 0) / maxTCO) * 100 : 0
                   return (
                     <div key={i} className="flex items-center gap-4">
                       <span className="text-sm text-[var(--text-muted)] w-24 shrink-0 truncate">{v.name || `Vehicle ${i + 1}`}</span>

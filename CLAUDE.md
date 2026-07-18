@@ -76,7 +76,6 @@ src/
 | `/salary` | `SalaryCalculator` | Minimum salary for a vehicle (20/4/10) |
 | `/survey` | `CarSurvey` | Vehicle type personality quiz |
 | `/checklist` | `CarBuyingChecklist` | Used car maintenance audit |
-| `/wheelzard` | `WheelZard` | Wheel-Zard AI chatbot (external custom GPT via iframe/link — no server-side AI in this repo) |
 | `/resources` | `Resources` | Affiliate resource links |
 | `/market` | `MarketAnalytics` | Most-searched vehicles, nationally and by state |
 | `/blog`, `/blog/:slug` | `Blog`, `BlogPost` | Blog index and posts (content in `src/data/posts.js`) |

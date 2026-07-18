@@ -21,7 +21,7 @@ const NOT_FOUND_MARKER = 'This road doesn’t exist'
 // covered by their index/section pages).
 const ROUTES = [
   '/', '/tco', '/tco-full', '/compare', '/salary', '/survey', '/checklist',
-  '/wheelzard', '/resources', '/market', '/about', '/subscribe', '/blog',
+  '/resources', '/market', '/about', '/subscribe', '/blog',
   '/privacy', '/terms',
 ]
 

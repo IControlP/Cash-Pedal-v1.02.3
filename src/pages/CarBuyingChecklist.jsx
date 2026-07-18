@@ -862,11 +862,11 @@ export default function CarBuyingChecklist() {
         </div>
       </main>
       <NextStep
-        tag="Last step · still unsure?"
-        title="Questions before you sign? Ask Wheel-Zard."
-        body="Our AI car-buying advisor can talk you through financing, negotiation, or any red flag the checklist surfaced — in plain English, anytime."
-        to="/wheelzard"
-        cta="Ask Wheel-Zard"
+        tag="Last step · know the real cost"
+        title="Car passed the inspection? Now check the price."
+        body="Run the true 5-year cost of ownership on this exact car — fuel, insurance, maintenance, depreciation, interest — so you negotiate from the numbers, not the sticker."
+        to="/tco"
+        cta="Run the numbers"
       />
       <Footer />
     </div>

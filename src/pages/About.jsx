@@ -43,7 +43,6 @@ const tools = [
   { to: '/salary', emoji: '💵', title: 'Salary Calculator', desc: 'The income you need using the 20/4/10 rule.' },
   { to: '/survey', emoji: '🎯', title: 'Car Survey', desc: 'Personality-based vehicle type matching.' },
   { to: '/checklist', emoji: '🔍', title: 'Buying Checklist', desc: 'Used car maintenance audit and seller questions.' },
-  { to: '/wheelzard', emoji: '🤖', title: 'Wheel-Zard AI', desc: 'AI-powered vehicle advisor.' },
 ]
 
 export default function About() {

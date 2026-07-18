@@ -54,11 +54,6 @@ const STAGES = [
 // Tools that aren't a single step — they ride along the whole way.
 const COMPANIONS = [
   {
-    tool: 'Wheel-Zard',
-    to: '/wheelzard',
-    body: 'Stuck at any step? Ask our AI car-buying advisor anything — financing, negotiation, reliability, EV vs gas — in plain English.',
-  },
-  {
     tool: 'Blog',
     to: '/blog',
     body: 'Go deeper on the why behind the math — guides on depreciation, loans, leasing, and avoiding dealer traps.',
@@ -107,7 +102,7 @@ export default function Journey() {
 
         <div className="journey-companions">
           <div className="journey-companions-label">Along for the whole ride</div>
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-2 gap-5">
             {COMPANIONS.map(c => (
               <Link key={c.tool} to={c.to} className="journey-companion">
                 <h4 className="journey-companion-tool font-display">{c.tool}</h4>

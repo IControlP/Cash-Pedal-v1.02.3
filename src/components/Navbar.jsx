@@ -9,7 +9,6 @@ const navLinks = [
   { to: '/affordability', label: 'Car Recommendation' },
   { to: '/survey', label: 'Car Survey' },
   { to: '/checklist', label: 'Checklist' },
-  { to: '/wheelzard', label: 'Wheel-Zard' },
   { to: '/market', label: 'Market Data' },
   { to: '/blog', label: 'Blog' },
 ]

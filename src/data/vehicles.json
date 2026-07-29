@@ -880,6 +880,44 @@
         "horsepower": 201,
         "seats": 5,
         "cargo_cu_ft": 10
+      },
+      "trim_specs": {
+        "A3 Cabriolet 1.8T Premium": {
+          "seats": 4,
+          "cargo_cu_ft": 9.9
+        },
+        "A3 Cabriolet 1.8T Premium Plus": {
+          "seats": 4,
+          "cargo_cu_ft": 9.9
+        },
+        "A3 Cabriolet 1.8T Prestige": {
+          "seats": 4,
+          "cargo_cu_ft": 9.9
+        },
+        "A3 Cabriolet 2.0T Premium": {
+          "seats": 4,
+          "cargo_cu_ft": 9.9
+        },
+        "A3 Cabriolet 2.0T Premium Plus": {
+          "seats": 4,
+          "cargo_cu_ft": 9.9
+        },
+        "A3 Cabriolet 2.0T Prestige": {
+          "seats": 4,
+          "cargo_cu_ft": 9.9
+        },
+        "A3 Cabriolet 2.0T quattro Premium": {
+          "seats": 4,
+          "cargo_cu_ft": 9.9
+        },
+        "A3 Cabriolet 2.0T quattro Premium Plus": {
+          "seats": 4,
+          "cargo_cu_ft": 9.9
+        },
+        "A3 Cabriolet 2.0T quattro Prestige": {
+          "seats": 4,
+          "cargo_cu_ft": 9.9
+        }
       }
     },
     "A4": {
@@ -1143,6 +1181,78 @@
         "horsepower": 261,
         "seats": 4,
         "cargo_cu_ft": 12.6
+      },
+      "trim_specs": {
+        "A5 Coupe 2.0T Premium": {
+          "cargo_cu_ft": 11.6
+        },
+        "A5 Coupe 2.0T Premium Plus": {
+          "cargo_cu_ft": 11.6
+        },
+        "A5 Coupe 2.0T Prestige": {
+          "cargo_cu_ft": 11.6
+        },
+        "A5 Coupe 2.0T quattro Premium": {
+          "cargo_cu_ft": 11.6
+        },
+        "A5 Coupe 2.0T quattro Premium Plus": {
+          "cargo_cu_ft": 11.6
+        },
+        "A5 Coupe 2.0T quattro Prestige": {
+          "cargo_cu_ft": 11.6
+        },
+        "A5 Coupe 45 TFSI quattro Premium": {
+          "cargo_cu_ft": 11.6
+        },
+        "A5 Coupe 45 TFSI quattro Premium Plus": {
+          "cargo_cu_ft": 11.6
+        },
+        "A5 Coupe 45 TFSI quattro Prestige": {
+          "cargo_cu_ft": 11.6
+        },
+        "A5 Sportback 2.0T Premium": {
+          "seats": 5,
+          "cargo_cu_ft": 21.8
+        },
+        "A5 Sportback 2.0T Premium Plus": {
+          "seats": 5,
+          "cargo_cu_ft": 21.8
+        },
+        "A5 Sportback 2.0T Prestige": {
+          "seats": 5,
+          "cargo_cu_ft": 21.8
+        },
+        "A5 Sportback 2.0T quattro Premium": {
+          "seats": 5,
+          "cargo_cu_ft": 21.8
+        },
+        "A5 Sportback 2.0T quattro Premium Plus": {
+          "seats": 5,
+          "cargo_cu_ft": 21.8
+        },
+        "A5 Sportback 2.0T quattro Prestige": {
+          "seats": 5,
+          "cargo_cu_ft": 21.8
+        },
+        "A5 Sportback 45 TFSI quattro Premium": {
+          "seats": 5,
+          "cargo_cu_ft": 21.8
+        },
+        "A5 Sportback 45 TFSI quattro Premium Plus": {
+          "seats": 5,
+          "cargo_cu_ft": 21.8
+        },
+        "A5 Sportback 45 TFSI quattro Prestige": {
+          "seats": 5,
+          "cargo_cu_ft": 21.8
+        },
+        "S5 Coupe": {
+          "cargo_cu_ft": 11.6
+        },
+        "S5 Sportback": {
+          "seats": 5,
+          "cargo_cu_ft": 21.8
+        }
       }
     },
     "A6": {
@@ -2023,6 +2133,15 @@
         "horsepower": 349,
         "seats": 4,
         "cargo_cu_ft": 12.6
+      },
+      "trim_specs": {
+        "S5 Coupe": {
+          "cargo_cu_ft": 11.6
+        },
+        "S5 Sportback": {
+          "seats": 5,
+          "cargo_cu_ft": 21.8
+        }
       }
     },
     "e-tron": {
@@ -2842,6 +2961,9 @@
             "combined": 18
           },
           "horsepower": 503
+        },
+        "M4 Convertible": {
+          "cargo_cu_ft": 9.9
         }
       }
     },
@@ -2992,13 +3114,27 @@
       },
       "trim_specs": {
         "M8 Competition Convertible": {
-          "horsepower": 617
+          "horsepower": 617,
+          "cargo_cu_ft": 7.6
         },
         "M8 Competition Coupe": {
-          "horsepower": 617
+          "horsepower": 617,
+          "cargo_cu_ft": 14.8
         },
         "M8 Competition Gran Coupe": {
-          "horsepower": 617
+          "horsepower": 617,
+          "seats": 5,
+          "cargo_cu_ft": 15.5
+        },
+        "M8 Convertible": {
+          "cargo_cu_ft": 7.6
+        },
+        "M8 Coupe": {
+          "cargo_cu_ft": 14.8
+        },
+        "M8 Gran Coupe": {
+          "seats": 5,
+          "cargo_cu_ft": 15.5
         }
       }
     },
@@ -4007,6 +4143,17 @@
         "horsepower": 272,
         "seats": 5,
         "cargo_cu_ft": 10.4
+      },
+      "trim_specs": {
+        "ATS Coupe 2.0L Turbo": {
+          "seats": 4
+        },
+        "ATS Coupe 3.6L Premium Performance": {
+          "seats": 4
+        },
+        "ATS-V Coupe": {
+          "seats": 4
+        }
       }
     },
     "CT4": {
@@ -4333,6 +4480,28 @@
         "horsepower": 420,
         "seats": 7,
         "cargo_cu_ft": 25.5
+      },
+      "trim_specs": {
+        "Escalade ESV Luxury": {
+          "seats": 8,
+          "cargo_cu_ft": 42.9
+        },
+        "Escalade ESV Platinum": {
+          "seats": 8,
+          "cargo_cu_ft": 42.9
+        },
+        "Escalade ESV Premium": {
+          "seats": 8,
+          "cargo_cu_ft": 42.9
+        },
+        "Escalade ESV Premium Luxury": {
+          "seats": 8,
+          "cargo_cu_ft": 42.9
+        },
+        "Escalade ESV Sport": {
+          "seats": 8,
+          "cargo_cu_ft": 42.9
+        }
       }
     },
     "SRX": {
@@ -4761,13 +4930,17 @@
           },
           "horsepower": 455
         },
+        "Camaro Convertible LT": {
+          "cargo_cu_ft": 7.3
+        },
         "Camaro Convertible SS": {
           "mpg": {
             "city": 16,
             "highway": 27,
             "combined": 20
           },
-          "horsepower": 455
+          "horsepower": 455,
+          "cargo_cu_ft": 7.3
         },
         "Camaro SS": {
           "mpg": {
@@ -4911,6 +5084,17 @@
         "horsepower": 237,
         "seats": 5,
         "cargo_cu_ft": 50.5
+      },
+      "trim_specs": {
+        "Colorado Extended Cab LT": {
+          "seats": 4
+        },
+        "Colorado Extended Cab Work Truck": {
+          "seats": 4
+        },
+        "Colorado Regular Cab Work Truck": {
+          "seats": 2
+        }
       }
     },
     "Corvette": {
@@ -5435,6 +5619,17 @@
         "horsepower": 310,
         "seats": 3,
         "cargo_cu_ft": 71.7
+      },
+      "trim_specs": {
+        "Silverado Crew Cab LT": {
+          "seats": 6
+        },
+        "Silverado Crew Cab LTZ": {
+          "seats": 6
+        },
+        "Silverado Double Cab LT": {
+          "seats": 6
+        }
       }
     },
     "Silverado 1500": {
@@ -5519,6 +5714,20 @@
         "horsepower": 310,
         "seats": 3,
         "cargo_cu_ft": 71.7
+      },
+      "trim_specs": {
+        "Silverado 1500 Crew Cab LT": {
+          "seats": 6
+        },
+        "Silverado 1500 Crew Cab LTZ": {
+          "seats": 6
+        },
+        "Silverado 1500 Crew Cab RST": {
+          "seats": 6
+        },
+        "Silverado 1500 Double Cab LT": {
+          "seats": 6
+        }
       }
     },
     "Sonic": {
@@ -7460,13 +7669,39 @@
         "cargo_cu_ft": 35.6
       },
       "trim_specs": {
+        "Bronco Badlands 2-Door": {
+          "seats": 4,
+          "cargo_cu_ft": 22.4
+        },
+        "Bronco Base 2-Door": {
+          "seats": 4,
+          "cargo_cu_ft": 22.4
+        },
+        "Bronco Big Bend 2-Door": {
+          "seats": 4,
+          "cargo_cu_ft": 22.4
+        },
+        "Bronco Black Diamond 2-Door": {
+          "seats": 4,
+          "cargo_cu_ft": 22.4
+        },
+        "Bronco Everglades 2-Door": {
+          "seats": 4,
+          "cargo_cu_ft": 22.4
+        },
+        "Bronco Outer Banks 2-Door": {
+          "seats": 4,
+          "cargo_cu_ft": 22.4
+        },
         "Bronco Raptor 2-Door": {
           "mpg": {
             "city": 15,
             "highway": 16,
             "combined": 15
           },
-          "horsepower": 418
+          "horsepower": 418,
+          "seats": 4,
+          "cargo_cu_ft": 22.4
         },
         "Bronco Raptor 4-Door": {
           "mpg": {
@@ -7475,6 +7710,10 @@
             "combined": 15
           },
           "horsepower": 418
+        },
+        "Bronco Wildtrak 2-Door": {
+          "seats": 4,
+          "cargo_cu_ft": 22.4
         },
         "Raptor": {
           "mpg": {
@@ -7778,6 +8017,23 @@
         "horsepower": 380,
         "seats": 8,
         "cargo_cu_ft": 19.3
+      },
+      "trim_specs": {
+        "Expedition Max King Ranch": {
+          "cargo_cu_ft": 36.0
+        },
+        "Expedition Max Limited": {
+          "cargo_cu_ft": 36.0
+        },
+        "Expedition Max Platinum": {
+          "cargo_cu_ft": 36.0
+        },
+        "Expedition Max XL": {
+          "cargo_cu_ft": 36.0
+        },
+        "Expedition Max XLT": {
+          "cargo_cu_ft": 36.0
+        }
       }
     },
     "Explorer": {
@@ -7955,6 +8211,27 @@
           },
           "horsepower": 700
         },
+        "F-150 SuperCab XL": {
+          "seats": 6
+        },
+        "F-150 SuperCrew King Ranch": {
+          "seats": 6
+        },
+        "F-150 SuperCrew Lariat": {
+          "seats": 6
+        },
+        "F-150 SuperCrew Limited": {
+          "seats": 6
+        },
+        "F-150 SuperCrew Platinum": {
+          "seats": 6
+        },
+        "F-150 SuperCrew XL": {
+          "seats": 6
+        },
+        "F-150 SuperCrew XLT": {
+          "seats": 6
+        },
         "Raptor": {
           "mpg": {
             "city": 15,
@@ -7962,6 +8239,15 @@
             "combined": 16
           },
           "horsepower": 450
+        },
+        "SuperCab XL": {
+          "seats": 6
+        },
+        "SuperCab XLT": {
+          "seats": 6
+        },
+        "SuperCrew XLT": {
+          "seats": 6
         }
       }
     },
@@ -8037,6 +8323,38 @@
         "horsepower": 385,
         "seats": 3,
         "cargo_cu_ft": 78.5
+      },
+      "trim_specs": {
+        "Crew Cab XLT": {
+          "seats": 6
+        },
+        "F-250 SuperCab XL": {
+          "seats": 6
+        },
+        "F-250 SuperCrew King Ranch": {
+          "seats": 6
+        },
+        "F-250 SuperCrew Lariat": {
+          "seats": 6
+        },
+        "F-250 SuperCrew Limited": {
+          "seats": 6
+        },
+        "F-250 SuperCrew Platinum": {
+          "seats": 6
+        },
+        "F-250 SuperCrew XL": {
+          "seats": 6
+        },
+        "F-250 SuperCrew XLT": {
+          "seats": 6
+        },
+        "SuperCab XL": {
+          "seats": 6
+        },
+        "SuperCab XLT": {
+          "seats": 6
+        }
       }
     },
     "Focus": {
@@ -8281,6 +8599,12 @@
           },
           "horsepower": 450
         },
+        "Mustang EcoBoost Convertible": {
+          "cargo_cu_ft": 11.4
+        },
+        "Mustang EcoBoost Premium Convertible": {
+          "cargo_cu_ft": 11.4
+        },
         "Mustang GT Fastback": {
           "mpg": {
             "city": 15,
@@ -8295,7 +8619,8 @@
             "highway": 24,
             "combined": 18
           },
-          "horsepower": 450
+          "horsepower": 450,
+          "cargo_cu_ft": 11.4
         },
         "Mustang GT Premium Fastback": {
           "mpg": {
@@ -8774,6 +9099,53 @@
         "horsepower": 310,
         "seats": 3,
         "cargo_cu_ft": 71.7
+      },
+      "trim_specs": {
+        "Crew Cab AT4": {
+          "seats": 6
+        },
+        "Crew Cab All Terrain": {
+          "seats": 6
+        },
+        "Crew Cab SLE": {
+          "seats": 6
+        },
+        "Crew Cab SLT": {
+          "seats": 6
+        },
+        "Double Cab AT4": {
+          "seats": 6
+        },
+        "Double Cab All Terrain": {
+          "seats": 6
+        },
+        "Double Cab SLE": {
+          "seats": 6
+        },
+        "Double Cab SLT": {
+          "seats": 6
+        },
+        "Sierra 1500 Crew Cab AT4": {
+          "seats": 6
+        },
+        "Sierra 1500 Crew Cab AT4X": {
+          "seats": 6
+        },
+        "Sierra 1500 Crew Cab Denali": {
+          "seats": 6
+        },
+        "Sierra 1500 Crew Cab Denali Ultimate": {
+          "seats": 6
+        },
+        "Sierra 1500 Crew Cab SLE": {
+          "seats": 6
+        },
+        "Sierra 1500 Crew Cab SLT": {
+          "seats": 6
+        },
+        "Sierra 1500 Double Cab Pro": {
+          "seats": 6
+        }
       }
     },
     "Terrain": {
@@ -9001,6 +9373,35 @@
         "horsepower": 355,
         "seats": 9,
         "cargo_cu_ft": 25.5
+      },
+      "trim_specs": {
+        "XL AT4": {
+          "cargo_cu_ft": 41.5
+        },
+        "XL Denali": {
+          "cargo_cu_ft": 41.5
+        },
+        "XL SLE": {
+          "cargo_cu_ft": 41.5
+        },
+        "XL SLT": {
+          "cargo_cu_ft": 41.5
+        },
+        "Yukon XL AT4": {
+          "cargo_cu_ft": 41.5
+        },
+        "Yukon XL Denali": {
+          "cargo_cu_ft": 41.5
+        },
+        "Yukon XL Denali Ultimate": {
+          "cargo_cu_ft": 41.5
+        },
+        "Yukon XL SLE": {
+          "cargo_cu_ft": 41.5
+        },
+        "Yukon XL SLT": {
+          "cargo_cu_ft": 41.5
+        }
       }
     }
   },
@@ -9393,6 +9794,11 @@
         "horsepower": 300,
         "seats": 7,
         "cargo_cu_ft": 11
+      },
+      "trim_specs": {
+        "GV80 Coupe 3.5T": {
+          "seats": 5
+        }
       }
     }
   },
@@ -14185,7 +14591,8 @@
           "mpg": {
             "mpge_combined": 80
           },
-          "horsepower": 379
+          "horsepower": 379,
+          "seats": 6
         },
         "EV9 Land AWD": {
           "mpg": {
@@ -17881,6 +18288,11 @@
         "horsepower": 332,
         "seats": 2,
         "cargo_cu_ft": 6.9
+      },
+      "trim_specs": {
+        "Roadster": {
+          "cargo_cu_ft": 4.2
+        }
       }
     },
     "Altima": {
@@ -19066,6 +19478,9 @@
         "cargo_cu_ft": 27.2
       },
       "trim_specs": {
+        "Cayenne Coupe": {
+          "cargo_cu_ft": 25.1
+        },
         "Cayenne E-Hybrid": {
           "mpg": {
             "city": 22,
@@ -19090,7 +19505,11 @@
             "highway": 21,
             "combined": 18
           },
-          "horsepower": 453
+          "horsepower": 453,
+          "cargo_cu_ft": 25.1
+        },
+        "Cayenne S Coupe": {
+          "cargo_cu_ft": 25.1
         },
         "Cayenne S E-Hybrid": {
           "mpg": {
@@ -19101,6 +19520,9 @@
           },
           "plugin_hybrid": true,
           "horsepower": 455
+        },
+        "Cayenne Turbo Coupe": {
+          "cargo_cu_ft": 25.1
         },
         "Cayenne Turbo GT": {
           "mpg": {
@@ -19515,6 +19937,12 @@
         "cargo_cu_ft": 14.3
       },
       "trim_specs": {
+        "Taycan 4S Cross Turismo": {
+          "cargo_cu_ft": 15.7
+        },
+        "Taycan Cross Turismo": {
+          "cargo_cu_ft": 15.7
+        },
         "Taycan GTS": {
           "mpg": {
             "mpge_combined": 78
@@ -19525,7 +19953,11 @@
           "mpg": {
             "mpge_combined": 78
           },
-          "horsepower": 590
+          "horsepower": 590,
+          "cargo_cu_ft": 15.7
+        },
+        "Taycan Turbo Cross Turismo": {
+          "cargo_cu_ft": 15.7
         },
         "Taycan Turbo S": {
           "mpg": {
@@ -19537,7 +19969,8 @@
           "mpg": {
             "mpge_combined": 76
           },
-          "horsepower": 750
+          "horsepower": 750,
+          "cargo_cu_ft": 15.7
         }
       }
     }
@@ -19682,6 +20115,41 @@
         "horsepower": 305,
         "seats": 6,
         "cargo_cu_ft": 61.5
+      },
+      "trim_specs": {
+        "1500 TRX Crew Cab": {
+          "seats": 5,
+          "horsepower": 702,
+          "mpg": {
+            "city": 10,
+            "highway": 14,
+            "combined": 12
+          }
+        },
+        "1500 Tradesman Regular Cab": {
+          "seats": 3
+        },
+        "Crew Cab TRX": {
+          "seats": 5,
+          "horsepower": 702,
+          "mpg": {
+            "city": 10,
+            "highway": 14,
+            "combined": 12
+          }
+        },
+        "Regular Cab Express": {
+          "seats": 3
+        },
+        "Regular Cab SLT": {
+          "seats": 3
+        },
+        "Regular Cab ST": {
+          "seats": 3
+        },
+        "Regular Cab Tradesman": {
+          "seats": 3
+        }
       }
     },
     "2500": {
@@ -19785,6 +20253,17 @@
         "horsepower": 410,
         "seats": 6,
         "cargo_cu_ft": 74.7
+      },
+      "trim_specs": {
+        "2500 Tradesman Regular Cab": {
+          "seats": 3
+        },
+        "Regular Cab SLT": {
+          "seats": 3
+        },
+        "Regular Cab Tradesman": {
+          "seats": 3
+        }
       }
     },
     "3500": {
@@ -19887,6 +20366,17 @@
         "horsepower": 410,
         "seats": 6,
         "cargo_cu_ft": 74.7
+      },
+      "trim_specs": {
+        "3500 Tradesman Regular Cab": {
+          "seats": 3
+        },
+        "Regular Cab SLT": {
+          "seats": 3
+        },
+        "Regular Cab Tradesman": {
+          "seats": 3
+        }
       }
     },
     "ProMaster": {
@@ -22972,6 +23462,14 @@
         "horsepower": 228,
         "seats": 5,
         "cargo_cu_ft": 32.7
+      },
+      "trim_specs": {
+        "Access Cab": {
+          "seats": 4
+        },
+        "Regular Cab": {
+          "seats": 3
+        }
       }
     },
     "Tundra": {

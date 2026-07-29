@@ -73,9 +73,12 @@ pricing:
    patch scripts in the repo documents every change and its sourcing.
 4. Bump each model's `production_years` end year; update `mpg`/`specs` if the
    powertrain changed (fueleconomy.gov has free official MPG data). If the new
-   model year adds or drops a powertrain-distinct trim, update the model's
-   rules in `scripts/fill_mpg_patch2.py` and re-run it rather than hand-editing
-   the `trim_specs` block.
+   model year adds or drops a trim that differs in powertrain or body style,
+   update the model's rules in `scripts/fill_mpg_patch2.py` (powertrain) or
+   `scripts/fill_specs_patch3.py` (seats/cargo) and re-run them rather than
+   hand-editing the `trim_specs` block. The patches are cumulative and must run
+   in order — patch 2 rewrites each model's `trim_specs`, patch 3 merges into
+   it.
 5. Run the validator; verify or baseline anything it flags.
 
 ## Data source options
@@ -135,12 +138,20 @@ Conventions:
 - **Model level describes the base powertrain**, in the most common drivetrain
   (FWD/RWD where the model offers a choice), matched to the configuration
   `specs.horsepower` was recorded for.
-- **`trim_specs` is keyed by exact trim name** and only exists for trims that
-  change the powertrain — hybrids, plug-ins, V8 and performance variants,
-  diesels, EV drivetrain tiers. Equipment-level trims (LX/EX/Touring) share the
-  base engine and correctly inherit the model figures; the validator rejects an
-  override that duplicates them. Read it through `resolveTrimSpecs()` in
-  `src/utils/vehicleCosts.js`, which merges an override over the model defaults.
+- **`trim_specs` is keyed by exact trim name** and exists for trims that depart
+  from the model on either axis: the **powertrain** (hybrids, plug-ins, V8 and
+  performance variants, diesels, EV drivetrain tiers) or the **body/cab
+  configuration** (convertibles, coupes, 2-door vs 4-door, long-wheelbase SUVs,
+  pickup cabs). An entry may set any subset of `horsepower`, `seats`,
+  `cargo_cu_ft` and `mpg`; whatever it omits is inherited. Equipment-level trims
+  (LX/EX/Touring) differ in neither and correctly inherit everything; the
+  validator rejects an override that duplicates the model default. Read it
+  through `resolveTrimSpecs()` in `src/utils/vehicleCosts.js`, which merges an
+  override over the model defaults.
+- **Only what the trim name determines.** Pickup bed volume is not encoded in
+  the trim name (a SuperCrew takes either bed), so cab trims set `seats` alone.
+  Captain's-chair and third-row-delete options change seat count without
+  changing the trim name and are not inferred.
 - **EVs** (`is_ev: true`) are rated in `mpge_combined`; everything else in
   city/highway/combined.
 - **Plug-in hybrids** set `plugin_hybrid: true` and carry both: the

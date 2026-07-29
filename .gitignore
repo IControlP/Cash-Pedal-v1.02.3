@@ -7,3 +7,7 @@ user_data/
 *.log
 .env
 .env.*
+
+# EPA fetch artifacts (scripts/fetch_epa_mpg.py) — regenerable, not source data
+.epa-cache/
+epa-report/

@@ -47,6 +47,18 @@ FROZEN_MIN_YEARS = 3
 PRICE_MIN = 5000
 PRICE_MAX = 10_000_000  # Ferrari F1 client-racing cars legitimately reach ~$5M
 
+# Spec/efficiency bounds. Wide enough for the real extremes in the catalog
+# (Mitsubishi Mirage at 78 hp, Rivian quad-motor at 835 hp, Ram ProMaster at
+# 283 cu ft, and the single-seat 4 MPG Ferrari F1 client-racing cars) but
+# tight enough to catch a transposed or unit-confused figure.
+MPG_MIN, MPG_MAX = 3, 60
+MPGE_MIN, MPGE_MAX = 40, 200
+SPEC_BOUNDS = {
+    "horsepower": (60, 1200),
+    "seats": (1, 15),
+    "cargo_cu_ft": (0, 350),
+}
+
 
 def load_data():
     with open(DATA_PATH) as f:
@@ -82,6 +94,97 @@ def structural_errors(data):
                         errors.append(
                             f"{make} {model} {y} '{trim}': implausible price {price!r}"
                         )
+            errors.extend(spec_errors(make, model, md))
+    return errors
+
+
+def _mpg_errors(label, mpg, is_ev):
+    """Validate one mpg block. `label` prefixes any message."""
+    errors = []
+    if not isinstance(mpg, dict):
+        return [f"{label}: mpg must be an object, got {mpg!r}"]
+
+    unknown = set(mpg) - {"city", "highway", "combined", "mpge_combined", "estimated"}
+    if unknown:
+        return [f"{label}: unknown mpg keys {sorted(unknown)}"]
+
+    mpge = mpg.get("mpge_combined")
+    if mpge is not None:
+        if not (MPGE_MIN <= mpge <= MPGE_MAX):
+            errors.append(f"{label}: implausible {mpge} MPGe")
+        if any(k in mpg for k in ("city", "highway", "combined")):
+            errors.append(f"{label}: mixes MPGe with gas MPG figures")
+        return errors
+
+    if is_ev:
+        return [f"{label}: is_ev model must be rated in mpge_combined"]
+
+    city, hwy, comb = mpg.get("city"), mpg.get("highway"), mpg.get("combined")
+    if None in (city, hwy, comb):
+        return [f"{label}: gas mpg needs city, highway and combined"]
+    for name, val in (("city", city), ("highway", hwy), ("combined", comb)):
+        if not (MPG_MIN <= val <= MPG_MAX):
+            errors.append(f"{label}: implausible {name} MPG {val}")
+    # EPA combined is a weighted blend (55/45 city/highway), so it always
+    # falls between the two figures. A combined outside that band means one of
+    # the three numbers came from a different configuration.
+    if not (min(city, hwy) <= comb <= max(city, hwy)):
+        errors.append(
+            f"{label}: combined {comb} outside city {city} / highway {hwy}"
+        )
+    return errors
+
+
+def spec_errors(make, model, md):
+    """Structural checks on the mpg and specs blocks.
+
+    Coverage is mandatory: a null here silently degrades the calculator to a
+    flat category average, which is the failure mode this data backfill fixed.
+    """
+    label = f"{make} {model}"
+    errors = []
+    is_ev = md.get("is_ev", False)
+
+    mpg = md.get("mpg")
+    if mpg is None:
+        errors.append(f"{label}: missing mpg")
+    else:
+        errors.extend(_mpg_errors(label, mpg, is_ev))
+
+    specs = md.get("specs")
+    if not isinstance(specs, dict):
+        return errors + [f"{label}: missing specs block"]
+    for field, (lo, hi) in SPEC_BOUNDS.items():
+        val = specs.get(field)
+        if val is None:
+            errors.append(f"{label}: missing specs.{field}")
+        elif not (lo <= val <= hi):
+            errors.append(f"{label}: implausible specs.{field} {val}")
+
+    for trim, override in (md.get("trim_specs") or {}).items():
+        tlabel = f"{label} '{trim}'"
+        if not isinstance(override, dict):
+            errors.append(f"{tlabel}: trim_specs entry must be an object")
+            continue
+        unknown = set(override) - ({"mpg", "is_ev"} | set(SPEC_BOUNDS))
+        if unknown:
+            errors.append(f"{tlabel}: unknown trim_specs keys {sorted(unknown)}")
+        for field, (lo, hi) in SPEC_BOUNDS.items():
+            val = override.get(field)
+            if val is not None and not (lo <= val <= hi):
+                errors.append(f"{tlabel}: implausible {field} {val}")
+        if "mpg" in override:
+            errors.extend(
+                _mpg_errors(tlabel, override["mpg"], override.get("is_ev", is_ev))
+            )
+        # A trim override that restates the model default is dead weight.
+        if all(
+            override.get(k) == md.get(k) if k in ("mpg", "is_ev") else
+            override.get(k) == specs.get(k)
+            for k in override
+        ):
+            errors.append(f"{tlabel}: trim_specs entry duplicates the model default")
+
     return errors
 
 

@@ -15,6 +15,14 @@ enforces:
 
 - **Structural checks** — sane prices ($5k–$10M), plausible years,
   `production_years` consistent with trim years.
+- **Specs and efficiency coverage** — every model must carry an `mpg` block
+  and complete `specs` (horsepower/seats/cargo). EVs must be rated in
+  `mpge_combined` and combustion cars in city/highway/combined, combined must
+  fall between city and highway (EPA combined is a 55/45 blend, so a figure
+  outside that band means the three numbers came from different
+  configurations), and every value must sit within plausible bounds. Any
+  `trim_specs` override is held to the same rules and rejected if it merely
+  restates the model default.
 - **Pricing anomaly detection** — the heuristics developed during the 2026
   full-database audit (Patches 1–15):
   - year-over-year **drop** > $1,500 for the same trim
@@ -64,7 +72,10 @@ pricing:
    the pattern: load → deepcopy → `fix()` → write → print changes). Keeping
    patch scripts in the repo documents every change and its sourcing.
 4. Bump each model's `production_years` end year; update `mpg`/`specs` if the
-   powertrain changed (fueleconomy.gov has free official MPG data).
+   powertrain changed (fueleconomy.gov has free official MPG data). If the new
+   model year adds or drops a powertrain-distinct trim, update the model's
+   rules in `scripts/fill_mpg_patch2.py` and re-run it rather than hand-editing
+   the `trim_specs` block.
 5. Run the validator; verify or baseline anything it flags.
 
 ## Data source options
@@ -94,3 +105,64 @@ The 2026 full-database audit (PRs through #247) reviewed all 280 models and
 corrected ~15 patch batches of MSRP errors. The detection heuristics above
 were derived from that work; the baseline file encodes its conclusions about
 which anomalies are real-world pricing facts rather than data errors.
+
+## Specs and efficiency data
+
+Alongside pricing, each model carries the figures the calculators need to
+model fuel cost and to sort/compare vehicles:
+
+```jsonc
+{
+  "is_ev": false,
+  "mpg": { "city": 27, "highway": 35, "combined": 30 },
+  "specs": { "horsepower": 203, "seats": 5, "cargo_cu_ft": 37.6 },
+  "trim_specs": {
+    "Hybrid XLE": {
+      "mpg": { "city": 41, "highway": 38, "combined": 39 },
+      "horsepower": 219
+    },
+    "Prime XSE": {
+      "mpg": { "city": 38, "highway": 38, "combined": 38, "mpge_combined": 94 },
+      "plugin_hybrid": true,
+      "horsepower": 302
+    }
+  }
+}
+```
+
+Conventions:
+
+- **Model level describes the base powertrain**, in the most common drivetrain
+  (FWD/RWD where the model offers a choice), matched to the configuration
+  `specs.horsepower` was recorded for.
+- **`trim_specs` is keyed by exact trim name** and only exists for trims that
+  change the powertrain — hybrids, plug-ins, V8 and performance variants,
+  diesels, EV drivetrain tiers. Equipment-level trims (LX/EX/Touring) share the
+  base engine and correctly inherit the model figures; the validator rejects an
+  override that duplicates them. Read it through `resolveTrimSpecs()` in
+  `src/utils/vehicleCosts.js`, which merges an override over the model defaults.
+- **EVs** (`is_ev: true`) are rated in `mpge_combined`; everything else in
+  city/highway/combined.
+- **Plug-in hybrids** set `plugin_hybrid: true` and carry both: the
+  charge-sustaining gasoline MPG and the EPA blended MPGe. `is_ev` stays false,
+  so `computeAnnualFuel` bills their fuel as gasoline — a deliberately
+  conservative choice, since how much of a PHEV's mileage is electric depends
+  entirely on the owner's charging habits. Blended-mode cost is not modelled.
+- **Vehicles over 8,500 lb GVWR** (F-250, Ram 2500/3500, ProMaster) get no EPA
+  rating. They carry real-world figures marked `"estimated": true`, which is
+  still far better than letting them fall back to the 28 MPG category default.
+- Trims in the database that were never sold in the US have no EPA rating and
+  are deliberately left inheriting the model default rather than given invented
+  numbers. `scripts/fill_mpg_patch2.py` lists them in `SKIPPED`.
+
+### Sourcing
+
+fueleconomy.gov is the authoritative free source for MPG/MPGe and should be
+used for any refresh. The initial backfill (`scripts/fill_mpg_patch1.py` and
+`fill_mpg_patch2.py`) could not reach it — the environment's network policy
+blocks the domain — so its figures were authored against the base
+configuration each model's recorded horsepower identifies, and are best
+treated as accurate to about ±1–2 MPG rather than exact EPA cell values. The
+structural checks above catch gross errors, not off-by-one ones. When
+fueleconomy.gov is reachable, diffing its ratings against these values is a
+worthwhile cleanup pass.

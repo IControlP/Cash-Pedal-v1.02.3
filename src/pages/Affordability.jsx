@@ -239,7 +239,7 @@ export default function Affordability() {
       totalAnnualCost: v.annualTotal,
       totalOwnershipCost: v.ownershipCost ? v.ownershipCost.total : v.annualTotal * ownershipYears,
       make: v.make, model: v.model, year: v.year,
-      mpgCombined: null,
+      mpgCombined: v.mpg?.combined ?? null,
       cargoSqFt: v.specs.cargo_cu_ft ?? null,
       seats: v.specs.seats ?? null,
       isEV: v.is_ev,

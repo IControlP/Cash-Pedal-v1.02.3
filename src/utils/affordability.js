@@ -151,22 +151,35 @@ export function matchesCategory(vehicle, value) {
 }
 
 // Sort dimensions for the matched-vehicles pick list. cargo_cu_ft, horsepower,
-// and seats are filled in for every catalog model, so they sort cleanly;
-// mpg is only populated for ~14% of models and is left out until the catalog
-// has fuller coverage — sorting by it would mostly be sorting by missing data.
+// seats and mpg are filled in for every catalog model, so they all sort
+// cleanly. Efficiency sorts EVs and gas cars together by ranking MPGe against
+// MPG directly — that is what EPA designed MPGe for, since both express miles
+// per 33.7 kWh of energy.
 export const SORT_OPTIONS = [
   { value: 'price', label: 'Price (High to Low)' },
   { value: 'value', label: 'Best Value (Lowest Cost)' },
+  { value: 'efficiency', label: 'Most Efficient' },
   { value: 'cargo', label: 'Most Cargo Space' },
   { value: 'horsepower', label: 'Most Horsepower' },
   { value: 'seats', label: 'Most Seats' },
 ]
+
+// Comparable efficiency figure for a catalog entry: combined MPGe for EVs,
+// combined MPG otherwise. Plug-in hybrids carry both and rank on their MPGe.
+export function efficiencyScore(vehicle) {
+  const mpg = vehicle?.mpg
+  if (!mpg || typeof mpg !== 'object') return 0
+  return mpg.mpge_combined ?? mpg.combined ?? 0
+}
 
 export function sortVehicles(list, sortBy) {
   const sorted = [...list]
   switch (sortBy) {
     case 'value':
       sorted.sort((a, b) => (a.ownershipCost?.total ?? a.annualTotal) - (b.ownershipCost?.total ?? b.annualTotal))
+      break
+    case 'efficiency':
+      sorted.sort((a, b) => efficiencyScore(b) - efficiencyScore(a))
       break
     case 'cargo':
       sorted.sort((a, b) => (b.specs.cargo_cu_ft ?? 0) - (a.specs.cargo_cu_ft ?? 0))
@@ -394,6 +407,7 @@ export function buildMatchedVehicles(affordableResults, {
         make, model, type: data.type, is_ev: data.is_ev,
         basePrice, year: modelYear, tier,
         specs: data.specs || {},
+        mpg: data.mpg || null,
         knownIssues,
         annualFinancing, annualFuel, annualInsurance, annualMaintenance, annualRegistration,
         annualOperating,

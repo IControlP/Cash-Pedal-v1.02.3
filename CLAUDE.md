@@ -59,7 +59,9 @@ src/
 │   ├── session.js            # Anonymous browser session UUID
 │   └── safeStorage.js        # localStorage guards for locked-down in-app browsers
 └── data/
-    ├── vehicles.json         # Vehicle make/model/year/trim database (~517 KB, static, validated in CI)
+    ├── vehicles.json         # Vehicle make/model/year/trim database (~600 KB, static, validated in CI)
+    │                         #   MSRP by trim/year, plus mpg + specs per model and
+    │                         #   trim_specs overrides for powertrain-distinct trims
     ├── posts.js              # Blog posts — add posts here (instructions at top of file), no CMS
     ├── surveyData.js         # Car survey questions and scoring logic
     └── checklistData.js      # Maintenance checklist items by mileage range
@@ -212,6 +214,7 @@ The root directory still contains the original Streamlit implementation (`.py` f
 
 ## Key Notes for Development
 
+- Vehicle specs live at two levels: model-level `mpg`/`specs` describe the base powertrain, and `trim_specs` overrides them for trims that change it (hybrids, plug-ins, V8s, EV drivetrain tiers). Read them through `resolveTrimSpecs(modelData, trim)` in `src/utils/vehicleCosts.js` rather than reaching into `modelData.mpg` directly, or a Hellcat gets billed for fuel as a base V6. Field conventions are in `docs/VEHICLE_DATA_MAINTENANCE.md`.
 - Most calculation logic lives **client-side**; the shared cost model is `src/utils/vehicleCosts.js`. The depreciation estimator (`estimateCurrentValue`) is regionally aware: pass the resolved 2-letter state as the sixth argument to apply the state demand premium plus segment×region adjustments (truck country, sun/snow belt, EV-friendly states, salt-belt corrosion age discount). With no state it reproduces the national model exactly. For **entitled users**, when a zip is resolved and a provider key is configured, the TCO calculator overlays live local listing medians from `POST /api/market-value` (clamped to ±35% of the model's dealer estimate); free users and exhausted-quota months transparently fall back to the model.
 - Changes to maintenance/cost logic in `vehicleCosts.js` must keep `node scripts/verify-tco.mjs` passing (runs in CI on every push).
 - **Any change to `vehicles.json` must pass `python3 scripts/validate_vehicle_data.py`** (runs in CI). Verified-legitimate pricing anomalies are accepted via `--write-baseline`. See `docs/VEHICLE_DATA_MAINTENANCE.md` for the full update process and data source options.

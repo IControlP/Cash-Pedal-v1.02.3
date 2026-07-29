@@ -1828,6 +1828,32 @@ export function getEffectiveElecRate(state, style, homeRateOverride = null) {
   return home
 }
 
+// ── Trim-level specs ─────────────────────────────────────
+// A model's `mpg` and `specs` describe its base powertrain, which is what
+// equipment-level trims (LX/EX/Touring) share. Trims that change the
+// powertrain — hybrids, plug-ins, V8s, EV drivetrain tiers — carry an entry in
+// `trim_specs` that overrides the fields it names and inherits the rest.
+// Returns null only when there is no model data at all.
+export function resolveTrimSpecs(modelData, trim = null) {
+  if (!modelData) return null
+  const base = {
+    mpg:          modelData.mpg ?? null,
+    specs:        modelData.specs ?? null,
+    isEV:         modelData.is_ev ?? false,
+    pluginHybrid: modelData.plugin_hybrid ?? false,
+  }
+  const override = trim ? modelData.trim_specs?.[trim] : null
+  if (!override) return base
+
+  const { mpg, is_ev: isEV, plugin_hybrid: pluginHybrid, ...specFields } = override
+  return {
+    mpg:          mpg ?? base.mpg,
+    specs:        { ...(base.specs ?? {}), ...specFields },
+    isEV:         isEV ?? base.isEV,
+    pluginHybrid: pluginHybrid ?? base.pluginHybrid,
+  }
+}
+
 // state=null → national average defaults ($3.50/gal gas, $0.16/kWh electricity)
 // isPremium: adds PREMIUM_PRICE_DELTA to the state average when no override is set
 // stateFuelPrices: optional live prices map (defaults to static STATE_FUEL_PRICES)

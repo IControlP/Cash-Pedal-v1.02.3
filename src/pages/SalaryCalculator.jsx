@@ -14,7 +14,7 @@ import VEHICLES from '../data/vehicles.json'
 import {
   classifySegment, determineMaintTier,
   estimateInsurance, generateMaintenanceServices,
-  computeAnnualFuel, computeAnnualRegFees, resolveLocation,
+  computeAnnualFuel, computeAnnualRegFees, resolveLocation, resolveTrimSpecs,
   STATE_INS_BASE,
 } from '../utils/vehicleCosts'
 import {
@@ -222,15 +222,17 @@ export default function SalaryCalculator() {
     const price = selTrim && selYear
       ? vd.trims_by_year?.[selYear]?.[selTrim]
       : null
+    // A trim that changes the powertrain carries its own horsepower and MPG.
+    const resolved = resolveTrimSpecs(vd, selTrim)
     return {
       make: selMake,
       model: selModel,
       year: selYear,
       trim: selTrim,
-      is_ev: vd.is_ev,
+      is_ev: resolved.isEV,
       type: vd.type,
-      specs: vd.specs,
-      mpg: vd.mpg,
+      specs: resolved.specs,
+      mpg: resolved.mpg,
       price,
     }
   }, [proMode, selMake, selModel, selYear, selTrim])

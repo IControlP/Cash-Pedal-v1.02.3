@@ -38,7 +38,7 @@ import {
   determineMaintTier, MAINT_TIER_COSTS, LABOR_RATE, STATE_LABOR_RATES, STATE_ROAD_WEAR_FACTOR, getLocalLaborRate,
   generateMaintenanceServices, generateMaintenanceByYear, generateDetailedMaintenanceByYear,
   STATE_FUEL_PRICES, STATE_ELEC_RATES,
-  getPublicChargingRate, getEffectiveElecRate, computeAnnualFuel,
+  getPublicChargingRate, getEffectiveElecRate, computeAnnualFuel, resolveTrimSpecs,
   PREMIUM_PRICE_DELTA, requiresPremiumFuel,
   computeAnnualRegFees, projectRegistrationByYear,
   computeSalesTax, STATE_VEHICLE_SALES_TAX, STATE_DOC_FEE_AVG, getRegionalDemandPremium,
@@ -136,7 +136,7 @@ function getTrims(make, model, year) {
 }
 
 // ── Vehicle specs panel ───────────────────────────────
-function SpecsPanel({ specs, mpg, isEV }) {
+function SpecsPanel({ specs, mpg, isEV, pluginHybrid = false }) {
   if (!specs && !mpg) return null
 
   const items = []
@@ -145,7 +145,12 @@ function SpecsPanel({ specs, mpg, isEV }) {
   if (specs?.cargo_cu_ft) items.push({ label: 'Cargo',     value: `${specs.cargo_cu_ft} cu ft` })
 
   if (mpg) {
-    if (mpg.mpge_combined) {
+    // A plug-in hybrid carries both ratings and needs both shown: the MPGe
+    // applies while there is charge, the MPG once the battery is depleted.
+    if (pluginHybrid && mpg.mpge_combined && mpg.combined) {
+      items.push({ label: 'Efficiency', value: `${mpg.mpge_combined} MPGe` })
+      items.push({ label: 'On gas',     value: `${mpg.combined} mpg` })
+    } else if (mpg.mpge_combined) {
       items.push({ label: 'Efficiency', value: `${mpg.mpge_combined} MPGe` })
     } else if (mpg.combined) {
       items.push({ label: 'MPG (comb.)', value: `${mpg.combined} mpg` })
@@ -1452,6 +1457,9 @@ export default function TCOCalculator() {
 
   // Derived model data (type, specs, mpg, isEV)
   const modelData = useMemo(() => getModelData(selMake, selModel), [selMake, selModel])
+  // Powertrain-aware view of the selected vehicle: a trim that changes the
+  // engine (hybrid, V8, EV drivetrain tier) overrides the model's base figures.
+  const trimData = useMemo(() => resolveTrimSpecs(modelData, selTrim), [modelData, selTrim])
 
   // Effective odometer start: user override or vehicle age × annual mileage
   const vehicleAge = selYear ? Math.max(0, new Date().getFullYear() - parseInt(selYear)) : 0
@@ -1493,7 +1501,7 @@ export default function TCOCalculator() {
       const fuelOverride = (modelData.is_ev && customOverride === null)
         ? getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate)
         : customOverride
-      setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel), liveFuelPrices))
+      setAnnualFuel(computeAnnualFuel(modelData.is_ev, trimData?.mpg?.combined, trimData?.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel), liveFuelPrices))
       if (detailedMode) {
         const seg = classifySegment(selMake||'', selModel||'')
         const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake, resolvedState, vehicleAge, resolvedLaborRate, resolvedWear, selModel, selYear, selTrim)
@@ -1532,7 +1540,7 @@ export default function TCOCalculator() {
     setAnnualRegistration(computeAnnualRegFees(resolvedState, currentVal, {
       isEV: regIsEV, isHybrid: regSeg === 'hybrid', segment: regSeg, vehicleAge,
     }))
-  }, [price, selMake, selModel, selYear, selTrim, resolvedState, resolvedLaborRate, resolvedWear, modelData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage, liveFuelPrices, liveElecRate]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [price, selMake, selModel, selYear, selTrim, resolvedState, resolvedLaborRate, resolvedWear, modelData, trimData, customCosts, detailedMode, multiCarPolicy, annualMileage, customFuelPrice, vehicleCategory, chargingStyle, currentMileage, liveFuelPrices, liveElecRate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Market-analytics search tracking ──
   // Record each make/model the visitor inspects, tagged with their resolved
@@ -2058,9 +2066,9 @@ export default function TCOCalculator() {
       // Vehicle identity
       make: selMake, model: selModel, year: selYear, trim: selTrim,
       // Specs (may be null for category-only or no-picker entries)
-      mpgCombined:    modelData?.mpg?.combined ?? null,
-      cargoSqFt:      modelData?.specs?.cargo_cu_ft ?? null,
-      seats:          modelData?.specs?.seats ?? null,
+      mpgCombined:    trimData?.mpg?.combined ?? null,
+      cargoSqFt:      trimData?.specs?.cargo_cu_ft ?? null,
+      seats:          trimData?.specs?.seats ?? null,
       isEV:           effIsEV,
       // Value retention (not applicable for leases but keep for reference)
       futureValue,
@@ -3223,7 +3231,7 @@ export default function TCOCalculator() {
                         : (() => {
                             const catInfo = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
                             const effIsEV = modelData ? modelData.is_ev : (catInfo?.isEV ?? false)
-                            const effMpg  = modelData ? (modelData.mpg?.combined ?? 28) : (catInfo?.mpg ?? 28)
+                            const effMpg  = modelData ? (trimData?.mpg?.combined ?? 28) : (catInfo?.mpg ?? 28)
                             const mpgNote = effIsEV ? ' · EV' : ` · ${effMpg} MPG${catInfo && !modelData ? ' avg' : ''}`
                             return `${detailedMode ? 'Itemized estimates' : 'Estimated'} for ${resolvedState} · ${annualMileage.toLocaleString()} mi/yr${mpgNote}.`
                           })()}
@@ -3519,8 +3527,8 @@ export default function TCOCalculator() {
                             const defaultRate = effIsEV ? getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate) : null
                             setAnnualFuel(computeAnnualFuel(
                               effIsEV,
-                              modelData?.mpg?.combined ?? (catInfoForRender?.mpg ?? 28),
-                              modelData?.mpg?.mpge_combined ?? (catInfoForRender?.mpge ?? null),
+                              trimData?.mpg?.combined ?? (catInfoForRender?.mpg ?? 28),
+                              trimData?.mpg?.mpge_combined ?? (catInfoForRender?.mpge ?? null),
                               resolvedState,
                               annualMileage,
                               defaultRate,
@@ -3550,8 +3558,8 @@ export default function TCOCalculator() {
                             if (!isNaN(rate)) {
                               setAnnualFuel(computeAnnualFuel(
                                 effIsEV,
-                                modelData?.mpg?.combined ?? (catInfoForRender?.mpg ?? 28),
-                                modelData?.mpg?.mpge_combined ?? (catInfoForRender?.mpge ?? null),
+                                trimData?.mpg?.combined ?? (catInfoForRender?.mpg ?? 28),
+                                trimData?.mpg?.mpge_combined ?? (catInfoForRender?.mpge ?? null),
                                 resolvedState,
                                 annualMileage,
                                 rate
@@ -3589,7 +3597,7 @@ export default function TCOCalculator() {
                     make={selMake} model={selModel}
                     carType={modelData.type} isEV={modelData.is_ev}
                   />
-                  <SpecsPanel specs={modelData.specs} mpg={modelData.mpg} isEV={modelData.is_ev} />
+                  <SpecsPanel specs={trimData?.specs} mpg={trimData?.mpg} isEV={modelData.is_ev} pluginHybrid={trimData?.pluginHybrid} />
                 </div>
               ) : vehicleCategory && (() => {
                 const cat = VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory)

@@ -98,7 +98,7 @@ def structural_errors(data):
     return errors
 
 
-def _mpg_errors(label, mpg, is_ev):
+def _mpg_errors(label, mpg, is_ev, plugin_hybrid=False):
     """Validate one mpg block. `label` prefixes any message."""
     errors = []
     if not isinstance(mpg, dict):
@@ -112,12 +112,20 @@ def _mpg_errors(label, mpg, is_ev):
     if mpge is not None:
         if not (MPGE_MIN <= mpge <= MPGE_MAX):
             errors.append(f"{label}: implausible {mpge} MPGe")
-        if any(k in mpg for k in ("city", "highway", "combined")):
-            errors.append(f"{label}: mixes MPGe with gas MPG figures")
-        return errors
+        # A plug-in hybrid legitimately carries both: the charge-sustaining
+        # gasoline rating (what fuel cost is billed at, since is_ev stays
+        # false) and the EPA blended MPGe. Anything else must pick one.
+        if not plugin_hybrid:
+            if any(k in mpg for k in ("city", "highway", "combined")):
+                errors.append(f"{label}: mixes MPGe with gas MPG figures")
+            return errors
+        if is_ev:
+            errors.append(f"{label}: plugin_hybrid conflicts with is_ev")
+    elif plugin_hybrid:
+        errors.append(f"{label}: plugin_hybrid needs an mpge_combined figure")
 
     if is_ev:
-        return [f"{label}: is_ev model must be rated in mpge_combined"]
+        return errors + [f"{label}: is_ev model must be rated in mpge_combined"]
 
     city, hwy, comb = mpg.get("city"), mpg.get("highway"), mpg.get("combined")
     if None in (city, hwy, comb):
@@ -149,7 +157,9 @@ def spec_errors(make, model, md):
     if mpg is None:
         errors.append(f"{label}: missing mpg")
     else:
-        errors.extend(_mpg_errors(label, mpg, is_ev))
+        errors.extend(
+            _mpg_errors(label, mpg, is_ev, md.get("plugin_hybrid", False))
+        )
 
     specs = md.get("specs")
     if not isinstance(specs, dict):
@@ -166,7 +176,8 @@ def spec_errors(make, model, md):
         if not isinstance(override, dict):
             errors.append(f"{tlabel}: trim_specs entry must be an object")
             continue
-        unknown = set(override) - ({"mpg", "is_ev"} | set(SPEC_BOUNDS))
+        model_level = {"mpg", "is_ev", "plugin_hybrid"}
+        unknown = set(override) - (model_level | set(SPEC_BOUNDS))
         if unknown:
             errors.append(f"{tlabel}: unknown trim_specs keys {sorted(unknown)}")
         for field, (lo, hi) in SPEC_BOUNDS.items():
@@ -174,13 +185,15 @@ def spec_errors(make, model, md):
             if val is not None and not (lo <= val <= hi):
                 errors.append(f"{tlabel}: implausible {field} {val}")
         if "mpg" in override:
-            errors.extend(
-                _mpg_errors(tlabel, override["mpg"], override.get("is_ev", is_ev))
-            )
+            errors.extend(_mpg_errors(
+                tlabel,
+                override["mpg"],
+                override.get("is_ev", is_ev),
+                override.get("plugin_hybrid", md.get("plugin_hybrid", False)),
+            ))
         # A trim override that restates the model default is dead weight.
         if all(
-            override.get(k) == md.get(k) if k in ("mpg", "is_ev") else
-            override.get(k) == specs.get(k)
+            override.get(k) == (md if k in model_level else specs).get(k)
             for k in override
         ):
             errors.append(f"{tlabel}: trim_specs entry duplicates the model default")

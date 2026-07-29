@@ -139,6 +139,16 @@
         "horsepower": 200,
         "seats": 5,
         "cargo_cu_ft": 24.3
+      },
+      "trim_specs": {
+        "Integra Type S": {
+          "mpg": {
+            "city": 21,
+            "highway": 28,
+            "combined": 24
+          },
+          "horsepower": 320
+        }
       }
     },
     "MDX": {
@@ -239,6 +249,24 @@
         "horsepower": 290,
         "seats": 7,
         "cargo_cu_ft": 16.3
+      },
+      "trim_specs": {
+        "MDX Sport Hybrid": {
+          "mpg": {
+            "city": 26,
+            "highway": 27,
+            "combined": 27
+          },
+          "horsepower": 321
+        },
+        "MDX Type S": {
+          "mpg": {
+            "city": 17,
+            "highway": 21,
+            "combined": 19
+          },
+          "horsepower": 355
+        }
       }
     },
     "NSX": {
@@ -474,6 +502,30 @@
         "horsepower": 272,
         "seats": 5,
         "cargo_cu_ft": 13.5
+      },
+      "trim_specs": {
+        "TLX SH-AWD": {
+          "mpg": {
+            "city": 21,
+            "highway": 29,
+            "combined": 24
+          }
+        },
+        "TLX SH-AWD A-SPEC": {
+          "mpg": {
+            "city": 21,
+            "highway": 29,
+            "combined": 24
+          }
+        },
+        "TLX Type S": {
+          "mpg": {
+            "city": 19,
+            "highway": 25,
+            "combined": 21
+          },
+          "horsepower": 355
+        }
       }
     }
   },
@@ -2053,6 +2105,20 @@
         "horsepower": 402,
         "seats": 5,
         "cargo_cu_ft": 28.5
+      },
+      "trim_specs": {
+        "SQ8 e-tron Premium": {
+          "mpg": {
+            "mpge_combined": 74
+          },
+          "horsepower": 496
+        },
+        "SQ8 e-tron Premium Plus": {
+          "mpg": {
+            "mpge_combined": 74
+          },
+          "horsepower": 496
+        }
       }
     },
     "R8": {
@@ -2158,6 +2224,24 @@
         "horsepower": 562,
         "seats": 2,
         "cargo_cu_ft": 3.5
+      },
+      "trim_specs": {
+        "R8 4.2 V8": {
+          "mpg": {
+            "city": 13,
+            "highway": 20,
+            "combined": 16
+          },
+          "horsepower": 430
+        },
+        "R8 4.2 V8 Spyder": {
+          "mpg": {
+            "city": 13,
+            "highway": 20,
+            "combined": 16
+          },
+          "horsepower": 430
+        }
       }
     }
   },
@@ -2273,6 +2357,16 @@
         "horsepower": 255,
         "seats": 5,
         "cargo_cu_ft": 13
+      },
+      "trim_specs": {
+        "M3 Competition": {
+          "mpg": {
+            "city": 16,
+            "highway": 22,
+            "combined": 18
+          },
+          "horsepower": 503
+        }
       }
     },
     "328i": {
@@ -2655,6 +2749,16 @@
         "horsepower": 473,
         "seats": 5,
         "cargo_cu_ft": 13
+      },
+      "trim_specs": {
+        "M3 Competition": {
+          "mpg": {
+            "city": 16,
+            "highway": 22,
+            "combined": 18
+          },
+          "horsepower": 503
+        }
       }
     },
     "M4": {
@@ -2729,6 +2833,16 @@
         "horsepower": 473,
         "seats": 4,
         "cargo_cu_ft": 12.4
+      },
+      "trim_specs": {
+        "M4 Competition": {
+          "mpg": {
+            "city": 16,
+            "highway": 22,
+            "combined": 18
+          },
+          "horsepower": 503
+        }
       }
     },
     "M5": {
@@ -2794,6 +2908,11 @@
         "horsepower": 600,
         "seats": 5,
         "cargo_cu_ft": 18.7
+      },
+      "trim_specs": {
+        "M5 Competition": {
+          "horsepower": 617
+        }
       }
     },
     "M8": {
@@ -2870,6 +2989,17 @@
         "horsepower": 600,
         "seats": 4,
         "cargo_cu_ft": 12.4
+      },
+      "trim_specs": {
+        "M8 Competition Convertible": {
+          "horsepower": 617
+        },
+        "M8 Competition Coupe": {
+          "horsepower": 617
+        },
+        "M8 Competition Gran Coupe": {
+          "horsepower": 617
+        }
       }
     },
     "X1": {
@@ -3022,6 +3152,24 @@
         "horsepower": 295,
         "seats": 5,
         "cargo_cu_ft": 29.7
+      },
+      "trim_specs": {
+        "X3 M Competition": {
+          "mpg": {
+            "city": 14,
+            "highway": 19,
+            "combined": 16
+          },
+          "horsepower": 503
+        },
+        "X3 M50 xDrive": {
+          "mpg": {
+            "city": 21,
+            "highway": 27,
+            "combined": 23
+          },
+          "horsepower": 393
+        }
       }
     },
     "X5": {
@@ -3129,6 +3277,16 @@
         "horsepower": 335,
         "seats": 5,
         "cargo_cu_ft": 33.9
+      },
+      "trim_specs": {
+        "X5 M Competition": {
+          "mpg": {
+            "city": 13,
+            "highway": 18,
+            "combined": 15
+          },
+          "horsepower": 617
+        }
       }
     },
     "X7": {
@@ -3290,6 +3448,14 @@
         "horsepower": 335,
         "seats": 5,
         "cargo_cu_ft": 14.8
+      },
+      "trim_specs": {
+        "i4 M50": {
+          "mpg": {
+            "mpge_combined": 80
+          },
+          "horsepower": 536
+        }
       }
     },
     "iX": {
@@ -4577,6 +4743,56 @@
         "horsepower": 275,
         "seats": 4,
         "cargo_cu_ft": 9.1
+      },
+      "trim_specs": {
+        "Camaro 1SS": {
+          "mpg": {
+            "city": 16,
+            "highway": 27,
+            "combined": 20
+          },
+          "horsepower": 455
+        },
+        "Camaro 2SS": {
+          "mpg": {
+            "city": 16,
+            "highway": 27,
+            "combined": 20
+          },
+          "horsepower": 455
+        },
+        "Camaro Convertible SS": {
+          "mpg": {
+            "city": 16,
+            "highway": 27,
+            "combined": 20
+          },
+          "horsepower": 455
+        },
+        "Camaro SS": {
+          "mpg": {
+            "city": 16,
+            "highway": 27,
+            "combined": 20
+          },
+          "horsepower": 455
+        },
+        "Camaro ZL1": {
+          "mpg": {
+            "city": 13,
+            "highway": 21,
+            "combined": 16
+          },
+          "horsepower": 650
+        },
+        "Camaro ZL1 1LE": {
+          "mpg": {
+            "city": 13,
+            "highway": 21,
+            "combined": 16
+          },
+          "horsepower": 650
+        }
       }
     },
     "Colorado": {
@@ -4871,6 +5087,16 @@
         "horsepower": 153,
         "seats": 5,
         "cargo_cu_ft": 13.7
+      },
+      "trim_specs": {
+        "Cruze Diesel": {
+          "mpg": {
+            "city": 31,
+            "highway": 47,
+            "combined": 37
+          },
+          "horsepower": 137
+        }
       }
     },
     "Equinox": {
@@ -5095,6 +5321,16 @@
         "horsepower": 160,
         "seats": 5,
         "cargo_cu_ft": 15.7
+      },
+      "trim_specs": {
+        "Malibu Hybrid": {
+          "mpg": {
+            "city": 49,
+            "highway": 43,
+            "combined": 46
+          },
+          "horsepower": 182
+        }
       }
     },
     "Silverado": {
@@ -5829,6 +6065,20 @@
         "horsepower": 210,
         "seats": 5,
         "cargo_cu_ft": 29.2
+      },
+      "trim_specs": {
+        "3LT AWD": {
+          "mpg": {
+            "mpge_combined": 96
+          },
+          "horsepower": 288
+        },
+        "RS AWD": {
+          "mpg": {
+            "mpge_combined": 96
+          },
+          "horsepower": 288
+        }
       }
     },
     "Blazer EV": {
@@ -5865,6 +6115,14 @@
         "horsepower": 288,
         "seats": 5,
         "cargo_cu_ft": 30.1
+      },
+      "trim_specs": {
+        "SS AWD": {
+          "mpg": {
+            "mpge_combined": 78
+          },
+          "horsepower": 615
+        }
       }
     }
   },
@@ -6055,6 +6313,38 @@
         "horsepower": 287,
         "seats": 8,
         "cargo_cu_ft": 32.3
+      },
+      "trim_specs": {
+        "Pacifica Hybrid Limited": {
+          "mpg": {
+            "city": 30,
+            "highway": 30,
+            "combined": 30,
+            "mpge_combined": 82
+          },
+          "plugin_hybrid": true,
+          "horsepower": 260
+        },
+        "Pacifica Hybrid Touring": {
+          "mpg": {
+            "city": 30,
+            "highway": 30,
+            "combined": 30,
+            "mpge_combined": 82
+          },
+          "plugin_hybrid": true,
+          "horsepower": 260
+        },
+        "Pacifica Hybrid Touring-L": {
+          "mpg": {
+            "city": 30,
+            "highway": 30,
+            "combined": 30,
+            "mpge_combined": 82
+          },
+          "plugin_hybrid": true,
+          "horsepower": 260
+        }
       }
     },
     "Voyager": {
@@ -6187,6 +6477,63 @@
         "horsepower": 305,
         "seats": 5,
         "cargo_cu_ft": 16.2
+      },
+      "trim_specs": {
+        "GT": {
+          "mpg": {
+            "city": 18,
+            "highway": 27,
+            "combined": 21
+          }
+        },
+        "R/T": {
+          "mpg": {
+            "city": 16,
+            "highway": 25,
+            "combined": 19
+          },
+          "horsepower": 375
+        },
+        "R/T Scat Pack": {
+          "mpg": {
+            "city": 15,
+            "highway": 24,
+            "combined": 18
+          },
+          "horsepower": 485
+        },
+        "SRT 392": {
+          "mpg": {
+            "city": 15,
+            "highway": 24,
+            "combined": 18
+          },
+          "horsepower": 485
+        },
+        "SRT Demon": {
+          "mpg": {
+            "city": 13,
+            "highway": 21,
+            "combined": 16
+          },
+          "horsepower": 808
+        },
+        "SRT Hellcat": {
+          "mpg": {
+            "city": 13,
+            "highway": 22,
+            "combined": 16
+          },
+          "horsepower": 717
+        },
+        "SRT Hellcat Redeye": {
+          "mpg": {
+            "city": 12,
+            "highway": 21,
+            "combined": 15
+          },
+          "horsepower": 797
+        }
       }
     },
     "Charger": {
@@ -6282,6 +6629,55 @@
         "horsepower": 292,
         "seats": 5,
         "cargo_cu_ft": 16.5
+      },
+      "trim_specs": {
+        "GT": {
+          "mpg": {
+            "city": 18,
+            "highway": 27,
+            "combined": 21
+          }
+        },
+        "R/T": {
+          "mpg": {
+            "city": 16,
+            "highway": 25,
+            "combined": 19
+          },
+          "horsepower": 375
+        },
+        "R/T Scat Pack": {
+          "mpg": {
+            "city": 15,
+            "highway": 24,
+            "combined": 18
+          },
+          "horsepower": 485
+        },
+        "SRT 392": {
+          "mpg": {
+            "city": 15,
+            "highway": 24,
+            "combined": 18
+          },
+          "horsepower": 485
+        },
+        "SRT Hellcat": {
+          "mpg": {
+            "city": 13,
+            "highway": 22,
+            "combined": 16
+          },
+          "horsepower": 717
+        },
+        "SRT Hellcat Redeye": {
+          "mpg": {
+            "city": 12,
+            "highway": 21,
+            "combined": 15
+          },
+          "horsepower": 797
+        }
       }
     },
     "Dart": {
@@ -6416,6 +6812,56 @@
         "horsepower": 293,
         "seats": 7,
         "cargo_cu_ft": 17.2
+      },
+      "trim_specs": {
+        "Durango R/T": {
+          "mpg": {
+            "city": 14,
+            "highway": 22,
+            "combined": 17
+          },
+          "horsepower": 360
+        },
+        "Durango SRT 392": {
+          "mpg": {
+            "city": 13,
+            "highway": 19,
+            "combined": 15
+          },
+          "horsepower": 475
+        },
+        "R/T": {
+          "mpg": {
+            "city": 14,
+            "highway": 22,
+            "combined": 17
+          },
+          "horsepower": 360
+        },
+        "SRT": {
+          "mpg": {
+            "city": 13,
+            "highway": 19,
+            "combined": 15
+          },
+          "horsepower": 475
+        },
+        "SRT 392": {
+          "mpg": {
+            "city": 13,
+            "highway": 19,
+            "combined": 15
+          },
+          "horsepower": 475
+        },
+        "SRT Hellcat": {
+          "mpg": {
+            "city": 12,
+            "highway": 17,
+            "combined": 14
+          },
+          "horsepower": 710
+        }
       }
     },
     "Grand Caravan": {
@@ -6637,6 +7083,20 @@
         "horsepower": 496,
         "seats": 5,
         "cargo_cu_ft": 16
+      },
+      "trim_specs": {
+        "Charger Daytona Scat Pack AWD": {
+          "mpg": {
+            "mpge_combined": 74
+          },
+          "horsepower": 670
+        },
+        "Charger Daytona Scat Pack RWD": {
+          "mpg": {
+            "mpge_combined": 74
+          },
+          "horsepower": 670
+        }
       }
     }
   },
@@ -6998,6 +7458,32 @@
         "horsepower": 275,
         "seats": 5,
         "cargo_cu_ft": 35.6
+      },
+      "trim_specs": {
+        "Bronco Raptor 2-Door": {
+          "mpg": {
+            "city": 15,
+            "highway": 16,
+            "combined": 15
+          },
+          "horsepower": 418
+        },
+        "Bronco Raptor 4-Door": {
+          "mpg": {
+            "city": 15,
+            "highway": 16,
+            "combined": 15
+          },
+          "horsepower": 418
+        },
+        "Raptor": {
+          "mpg": {
+            "city": 15,
+            "highway": 16,
+            "combined": 15
+          },
+          "horsepower": 418
+        }
       }
     },
     "Edge": {
@@ -7150,6 +7636,66 @@
         "horsepower": 180,
         "seats": 5,
         "cargo_cu_ft": 33.5
+      },
+      "trim_specs": {
+        "Escape Plug-In Hybrid": {
+          "mpg": {
+            "city": 44,
+            "highway": 41,
+            "combined": 42,
+            "mpge_combined": 101
+          },
+          "plugin_hybrid": true,
+          "horsepower": 210
+        },
+        "Hybrid Platinum": {
+          "mpg": {
+            "city": 44,
+            "highway": 37,
+            "combined": 41
+          },
+          "horsepower": 200
+        },
+        "Hybrid SE": {
+          "mpg": {
+            "city": 44,
+            "highway": 37,
+            "combined": 41
+          },
+          "horsepower": 200
+        },
+        "Hybrid SEL": {
+          "mpg": {
+            "city": 44,
+            "highway": 37,
+            "combined": 41
+          },
+          "horsepower": 200
+        },
+        "Hybrid ST-Line": {
+          "mpg": {
+            "city": 44,
+            "highway": 37,
+            "combined": 41
+          },
+          "horsepower": 200
+        },
+        "Hybrid ST-Line Elite": {
+          "mpg": {
+            "city": 44,
+            "highway": 37,
+            "combined": 41
+          },
+          "horsepower": 200
+        },
+        "Hybrid Titanium": {
+          "mpg": {
+            "city": 44,
+            "highway": 37,
+            "combined": 41
+          },
+          "horsepower": 200
+        }
       }
     },
     "Expedition": {
@@ -7391,6 +7937,32 @@
         "horsepower": 290,
         "seats": 3,
         "cargo_cu_ft": 62.3
+      },
+      "trim_specs": {
+        "F-150 Raptor": {
+          "mpg": {
+            "city": 15,
+            "highway": 18,
+            "combined": 16
+          },
+          "horsepower": 450
+        },
+        "F-150 Raptor R": {
+          "mpg": {
+            "city": 10,
+            "highway": 15,
+            "combined": 12
+          },
+          "horsepower": 700
+        },
+        "Raptor": {
+          "mpg": {
+            "city": 15,
+            "highway": 18,
+            "combined": 16
+          },
+          "horsepower": 450
+        }
       }
     },
     "F-250": {
@@ -7576,6 +8148,40 @@
         "horsepower": 175,
         "seats": 5,
         "cargo_cu_ft": 16
+      },
+      "trim_specs": {
+        "Hybrid S": {
+          "mpg": {
+            "city": 43,
+            "highway": 41,
+            "combined": 42
+          },
+          "horsepower": 188
+        },
+        "Hybrid SE": {
+          "mpg": {
+            "city": 43,
+            "highway": 41,
+            "combined": 42
+          },
+          "horsepower": 188
+        },
+        "Hybrid SEL": {
+          "mpg": {
+            "city": 43,
+            "highway": 41,
+            "combined": 42
+          },
+          "horsepower": 188
+        },
+        "Hybrid Titanium": {
+          "mpg": {
+            "city": 43,
+            "highway": 41,
+            "combined": 42
+          },
+          "horsepower": 188
+        }
       }
     },
     "Mustang": {
@@ -7657,6 +8263,48 @@
         "horsepower": 315,
         "seats": 4,
         "cargo_cu_ft": 13.5
+      },
+      "trim_specs": {
+        "GT": {
+          "mpg": {
+            "city": 15,
+            "highway": 24,
+            "combined": 18
+          },
+          "horsepower": 450
+        },
+        "GT Premium": {
+          "mpg": {
+            "city": 15,
+            "highway": 24,
+            "combined": 18
+          },
+          "horsepower": 450
+        },
+        "Mustang GT Fastback": {
+          "mpg": {
+            "city": 15,
+            "highway": 24,
+            "combined": 18
+          },
+          "horsepower": 450
+        },
+        "Mustang GT Premium Convertible": {
+          "mpg": {
+            "city": 15,
+            "highway": 24,
+            "combined": 18
+          },
+          "horsepower": 450
+        },
+        "Mustang GT Premium Fastback": {
+          "mpg": {
+            "city": 15,
+            "highway": 24,
+            "combined": 18
+          },
+          "horsepower": 450
+        }
       }
     },
     "Taurus": {
@@ -7755,6 +8403,44 @@
         "horsepower": 266,
         "seats": 5,
         "cargo_cu_ft": 29.7
+      },
+      "trim_specs": {
+        "First Edition AWD ER": {
+          "mpg": {
+            "mpge_combined": 90
+          },
+          "horsepower": 346
+        },
+        "GT AWD": {
+          "mpg": {
+            "mpge_combined": 90
+          },
+          "horsepower": 480
+        },
+        "GT AWD ER": {
+          "mpg": {
+            "mpge_combined": 90
+          },
+          "horsepower": 480
+        },
+        "Premium AWD ER": {
+          "mpg": {
+            "mpge_combined": 90
+          },
+          "horsepower": 346
+        },
+        "Rally AWD": {
+          "mpg": {
+            "mpge_combined": 79
+          },
+          "horsepower": 480
+        },
+        "Select AWD ER": {
+          "mpg": {
+            "mpge_combined": 90
+          },
+          "horsepower": 346
+        }
       }
     }
   },
@@ -8499,6 +9185,16 @@
         "horsepower": 300,
         "seats": 5,
         "cargo_cu_ft": 13.1
+      },
+      "trim_specs": {
+        "G80 5.0": {
+          "mpg": {
+            "city": 16,
+            "highway": 25,
+            "combined": 19
+          },
+          "horsepower": 420
+        }
       }
     },
     "G90": {
@@ -8559,6 +9255,16 @@
         "horsepower": 409,
         "seats": 5,
         "cargo_cu_ft": 11.6
+      },
+      "trim_specs": {
+        "G90 5.0": {
+          "mpg": {
+            "city": 16,
+            "highway": 24,
+            "combined": 19
+          },
+          "horsepower": 420
+        }
       }
     },
     "GV60": {
@@ -8593,6 +9299,14 @@
         "horsepower": 314,
         "seats": 5,
         "cargo_cu_ft": 24
+      },
+      "trim_specs": {
+        "GV60 Performance": {
+          "mpg": {
+            "mpge_combined": 90
+          },
+          "horsepower": 429
+        }
       }
     },
     "GV70": {
@@ -8817,6 +9531,80 @@
         "horsepower": 192,
         "seats": 5,
         "cargo_cu_ft": 16.7
+      },
+      "trim_specs": {
+        "Accord EX-L Hybrid": {
+          "mpg": {
+            "city": 46,
+            "highway": 41,
+            "combined": 44
+          },
+          "horsepower": 204
+        },
+        "Accord Hybrid": {
+          "mpg": {
+            "city": 46,
+            "highway": 41,
+            "combined": 44
+          },
+          "horsepower": 204
+        },
+        "Accord Hybrid EX-L": {
+          "mpg": {
+            "city": 46,
+            "highway": 41,
+            "combined": 44
+          },
+          "horsepower": 204
+        },
+        "Accord Hybrid Sport": {
+          "mpg": {
+            "city": 46,
+            "highway": 41,
+            "combined": 44
+          },
+          "horsepower": 204
+        },
+        "Accord Hybrid Touring": {
+          "mpg": {
+            "city": 44,
+            "highway": 41,
+            "combined": 43
+          },
+          "horsepower": 204
+        },
+        "Accord Sport Hybrid": {
+          "mpg": {
+            "city": 46,
+            "highway": 41,
+            "combined": 44
+          },
+          "horsepower": 204
+        },
+        "Accord Sport-L Hybrid": {
+          "mpg": {
+            "city": 44,
+            "highway": 41,
+            "combined": 43
+          },
+          "horsepower": 204
+        },
+        "Accord Touring": {
+          "mpg": {
+            "city": 44,
+            "highway": 41,
+            "combined": 43
+          },
+          "horsepower": 204
+        },
+        "Accord Touring Hybrid": {
+          "mpg": {
+            "city": 44,
+            "highway": 41,
+            "combined": 43
+          },
+          "horsepower": 204
+        }
       }
     },
     "CR-V": {
@@ -8935,6 +9723,70 @@
         "horsepower": 190,
         "seats": 5,
         "cargo_cu_ft": 36.3
+      },
+      "trim_specs": {
+        "CR-V EX AWD": {
+          "mpg": {
+            "city": 27,
+            "highway": 32,
+            "combined": 29
+          }
+        },
+        "CR-V EX-L AWD": {
+          "mpg": {
+            "city": 27,
+            "highway": 32,
+            "combined": 29
+          }
+        },
+        "CR-V Hybrid EX": {
+          "mpg": {
+            "city": 43,
+            "highway": 36,
+            "combined": 40
+          },
+          "horsepower": 204
+        },
+        "CR-V Hybrid EX-L": {
+          "mpg": {
+            "city": 43,
+            "highway": 36,
+            "combined": 40
+          },
+          "horsepower": 204
+        },
+        "CR-V Hybrid LX": {
+          "mpg": {
+            "city": 43,
+            "highway": 36,
+            "combined": 40
+          },
+          "horsepower": 204
+        },
+        "CR-V Hybrid Sport": {
+          "mpg": {
+            "city": 43,
+            "highway": 36,
+            "combined": 40
+          },
+          "horsepower": 204
+        },
+        "CR-V Hybrid Sport Touring": {
+          "mpg": {
+            "city": 43,
+            "highway": 36,
+            "combined": 40
+          },
+          "horsepower": 204
+        },
+        "CR-V Hybrid Touring": {
+          "mpg": {
+            "city": 43,
+            "highway": 36,
+            "combined": 40
+          },
+          "horsepower": 204
+        }
       }
     },
     "Civic": {
@@ -9050,6 +9902,24 @@
         "horsepower": 158,
         "seats": 5,
         "cargo_cu_ft": 14.8
+      },
+      "trim_specs": {
+        "Civic Sport Hybrid": {
+          "mpg": {
+            "city": 50,
+            "highway": 47,
+            "combined": 49
+          },
+          "horsepower": 200
+        },
+        "Civic Sport Touring Hybrid": {
+          "mpg": {
+            "city": 50,
+            "highway": 47,
+            "combined": 49
+          },
+          "horsepower": 200
+        }
       }
     },
     "Insight": {
@@ -9627,6 +10497,24 @@
         "horsepower": 311,
         "seats": 5,
         "cargo_cu_ft": 15.3
+      },
+      "trim_specs": {
+        "Genesis 5.0": {
+          "mpg": {
+            "city": 15,
+            "highway": 23,
+            "combined": 18
+          },
+          "horsepower": 420
+        },
+        "Genesis 5.0 Ultimate": {
+          "mpg": {
+            "city": 15,
+            "highway": 23,
+            "combined": 18
+          },
+          "horsepower": 420
+        }
       }
     },
     "Ioniq": {
@@ -9694,6 +10582,18 @@
         "horsepower": 139,
         "seats": 5,
         "cargo_cu_ft": 23.2
+      },
+      "trim_specs": {
+        "Ioniq Plug-in Hybrid": {
+          "mpg": {
+            "city": 54,
+            "highway": 50,
+            "combined": 52,
+            "mpge_combined": 119
+          },
+          "plugin_hybrid": true,
+          "horsepower": 156
+        }
       }
     },
     "Ioniq 5": {
@@ -10063,6 +10963,32 @@
         "horsepower": 191,
         "seats": 5,
         "cargo_cu_ft": 36.4
+      },
+      "trim_specs": {
+        "Santa Fe Hybrid Calligraphy": {
+          "mpg": {
+            "city": 36,
+            "highway": 31,
+            "combined": 34
+          },
+          "horsepower": 226
+        },
+        "Santa Fe Hybrid Limited": {
+          "mpg": {
+            "city": 36,
+            "highway": 31,
+            "combined": 34
+          },
+          "horsepower": 226
+        },
+        "Santa Fe Hybrid SEL": {
+          "mpg": {
+            "city": 36,
+            "highway": 31,
+            "combined": 34
+          },
+          "horsepower": 226
+        }
       }
     },
     "Sonata": {
@@ -10189,6 +11115,40 @@
         "horsepower": 191,
         "seats": 5,
         "cargo_cu_ft": 16.3
+      },
+      "trim_specs": {
+        "Sonata Hybrid Blue": {
+          "mpg": {
+            "city": 50,
+            "highway": 54,
+            "combined": 52
+          },
+          "horsepower": 192
+        },
+        "Sonata Hybrid Limited": {
+          "mpg": {
+            "city": 45,
+            "highway": 51,
+            "combined": 47
+          },
+          "horsepower": 192
+        },
+        "Sonata Hybrid SE": {
+          "mpg": {
+            "city": 45,
+            "highway": 51,
+            "combined": 47
+          },
+          "horsepower": 192
+        },
+        "Sonata Hybrid SEL": {
+          "mpg": {
+            "city": 45,
+            "highway": 51,
+            "combined": 47
+          },
+          "horsepower": 192
+        }
       }
     },
     "Tucson": {
@@ -10300,6 +11260,32 @@
         "horsepower": 187,
         "seats": 5,
         "cargo_cu_ft": 38.7
+      },
+      "trim_specs": {
+        "Tucson Hybrid Blue": {
+          "mpg": {
+            "city": 38,
+            "highway": 38,
+            "combined": 38
+          },
+          "horsepower": 226
+        },
+        "Tucson Hybrid Limited": {
+          "mpg": {
+            "city": 38,
+            "highway": 38,
+            "combined": 38
+          },
+          "horsepower": 226
+        },
+        "Tucson Hybrid SEL": {
+          "mpg": {
+            "city": 38,
+            "highway": 38,
+            "combined": 38
+          },
+          "horsepower": 226
+        }
       }
     },
     "Veloster": {
@@ -10402,6 +11388,26 @@
         "horsepower": 268,
         "seats": 7,
         "cargo_cu_ft": 21.9
+      },
+      "trim_specs": {
+        "Calligraphy AWD": {
+          "mpg": {
+            "mpge_combined": 88
+          },
+          "horsepower": 303
+        },
+        "Limited AWD": {
+          "mpg": {
+            "mpge_combined": 88
+          },
+          "horsepower": 303
+        },
+        "SEL AWD": {
+          "mpg": {
+            "mpge_combined": 88
+          },
+          "horsepower": 303
+        }
       }
     }
   },
@@ -10774,6 +11780,24 @@
         "horsepower": 295,
         "seats": 7,
         "cargo_cu_ft": 14.5
+      },
+      "trim_specs": {
+        "QX60 Hybrid": {
+          "mpg": {
+            "city": 25,
+            "highway": 28,
+            "combined": 26
+          },
+          "horsepower": 250
+        },
+        "QX60 Hybrid AWD": {
+          "mpg": {
+            "city": 25,
+            "highway": 28,
+            "combined": 26
+          },
+          "horsepower": 250
+        }
       }
     },
     "QX80": {
@@ -11152,6 +12176,32 @@
         "horsepower": 296,
         "seats": 2,
         "cargo_cu_ft": 14.4
+      },
+      "trim_specs": {
+        "F-TYPE S": {
+          "mpg": {
+            "city": 19,
+            "highway": 27,
+            "combined": 22
+          },
+          "horsepower": 380
+        },
+        "F-TYPE SVR": {
+          "mpg": {
+            "city": 19,
+            "highway": 27,
+            "combined": 22
+          },
+          "horsepower": 380
+        },
+        "F-TYPE V8 S": {
+          "mpg": {
+            "city": 16,
+            "highway": 23,
+            "combined": 18
+          },
+          "horsepower": 495
+        }
       }
     },
     "I-PACE": {
@@ -11780,6 +12830,24 @@
         "horsepower": 293,
         "seats": 5,
         "cargo_cu_ft": 37.7
+      },
+      "trim_specs": {
+        "Grand Cherokee SRT": {
+          "mpg": {
+            "city": 13,
+            "highway": 19,
+            "combined": 15
+          },
+          "horsepower": 475
+        },
+        "Grand Cherokee Trackhawk": {
+          "mpg": {
+            "city": 11,
+            "highway": 17,
+            "combined": 13
+          },
+          "horsepower": 707
+        }
       }
     },
     "Renegade": {
@@ -12034,6 +13102,16 @@
         "horsepower": 147,
         "seats": 5,
         "cargo_cu_ft": 15.3
+      },
+      "trim_specs": {
+        "Forte GT": {
+          "mpg": {
+            "city": 27,
+            "highway": 35,
+            "combined": 30
+          },
+          "horsepower": 201
+        }
       }
     },
     "K4": {
@@ -12146,6 +13224,16 @@
         "horsepower": 180,
         "seats": 5,
         "cargo_cu_ft": 16
+      },
+      "trim_specs": {
+        "K5 GT": {
+          "mpg": {
+            "city": 24,
+            "highway": 32,
+            "combined": 27
+          },
+          "horsepower": 290
+        }
       }
     },
     "Niro": {
@@ -12263,6 +13351,40 @@
         "horsepower": 139,
         "seats": 5,
         "cargo_cu_ft": 19.4
+      },
+      "trim_specs": {
+        "Niro EV Wave": {
+          "mpg": {
+            "mpge_combined": 113
+          },
+          "horsepower": 201
+        },
+        "Niro EV Wind": {
+          "mpg": {
+            "mpge_combined": 113
+          },
+          "horsepower": 201
+        },
+        "Niro Plug-In Hybrid EX": {
+          "mpg": {
+            "city": 48,
+            "highway": 48,
+            "combined": 48,
+            "mpge_combined": 105
+          },
+          "plugin_hybrid": true,
+          "horsepower": 139
+        },
+        "Niro Plug-In Hybrid EX Touring": {
+          "mpg": {
+            "city": 48,
+            "highway": 48,
+            "combined": 48,
+            "mpge_combined": 105
+          },
+          "plugin_hybrid": true,
+          "horsepower": 139
+        }
       }
     },
     "Optima": {
@@ -12330,6 +13452,32 @@
         "horsepower": 185,
         "seats": 5,
         "cargo_cu_ft": 15.9
+      },
+      "trim_specs": {
+        "Optima Hybrid EX": {
+          "mpg": {
+            "city": 39,
+            "highway": 46,
+            "combined": 42
+          },
+          "horsepower": 192
+        },
+        "Optima Hybrid LX": {
+          "mpg": {
+            "city": 39,
+            "highway": 46,
+            "combined": 42
+          },
+          "horsepower": 192
+        },
+        "Optima Hybrid Premium": {
+          "mpg": {
+            "city": 39,
+            "highway": 46,
+            "combined": 42
+          },
+          "horsepower": 192
+        }
       }
     },
     "Seltos": {
@@ -12497,6 +13645,52 @@
         "horsepower": 191,
         "seats": 7,
         "cargo_cu_ft": 12.6
+      },
+      "trim_specs": {
+        "Sorento Hybrid EX": {
+          "mpg": {
+            "city": 39,
+            "highway": 35,
+            "combined": 37
+          },
+          "horsepower": 227
+        },
+        "Sorento Hybrid LX": {
+          "mpg": {
+            "city": 39,
+            "highway": 35,
+            "combined": 37
+          },
+          "horsepower": 227
+        },
+        "Sorento Hybrid SX": {
+          "mpg": {
+            "city": 39,
+            "highway": 35,
+            "combined": 37
+          },
+          "horsepower": 227
+        },
+        "Sorento Plug-In Hybrid EX": {
+          "mpg": {
+            "city": 35,
+            "highway": 33,
+            "combined": 34,
+            "mpge_combined": 79
+          },
+          "plugin_hybrid": true,
+          "horsepower": 261
+        },
+        "Sorento Plug-In Hybrid SX Prestige": {
+          "mpg": {
+            "city": 35,
+            "highway": 33,
+            "combined": 34,
+            "mpge_combined": 79
+          },
+          "plugin_hybrid": true,
+          "horsepower": 261
+        }
       }
     },
     "Soul": {
@@ -12587,6 +13781,14 @@
         "horsepower": 147,
         "seats": 5,
         "cargo_cu_ft": 24.2
+      },
+      "trim_specs": {
+        "Soul EV": {
+          "mpg": {
+            "mpge_combined": 114
+          },
+          "horsepower": 201
+        }
       }
     },
     "Sportage": {
@@ -12690,6 +13892,52 @@
         "horsepower": 187,
         "seats": 5,
         "cargo_cu_ft": 39.4
+      },
+      "trim_specs": {
+        "Sportage Hybrid EX": {
+          "mpg": {
+            "city": 42,
+            "highway": 44,
+            "combined": 43
+          },
+          "horsepower": 227
+        },
+        "Sportage Hybrid LX": {
+          "mpg": {
+            "city": 42,
+            "highway": 44,
+            "combined": 43
+          },
+          "horsepower": 227
+        },
+        "Sportage Hybrid SX": {
+          "mpg": {
+            "city": 42,
+            "highway": 44,
+            "combined": 43
+          },
+          "horsepower": 227
+        },
+        "Sportage Plug-In Hybrid EX": {
+          "mpg": {
+            "city": 35,
+            "highway": 35,
+            "combined": 35,
+            "mpge_combined": 84
+          },
+          "plugin_hybrid": true,
+          "horsepower": 261
+        },
+        "Sportage Plug-In Hybrid SX Prestige": {
+          "mpg": {
+            "city": 35,
+            "highway": 35,
+            "combined": 35,
+            "mpge_combined": 84
+          },
+          "plugin_hybrid": true,
+          "horsepower": 261
+        }
       }
     },
     "Stinger": {
@@ -12746,6 +13994,16 @@
         "horsepower": 300,
         "seats": 5,
         "cargo_cu_ft": 23.3
+      },
+      "trim_specs": {
+        "Stinger GT": {
+          "mpg": {
+            "city": 18,
+            "highway": 25,
+            "combined": 21
+          },
+          "horsepower": 365
+        }
       }
     },
     "Telluride": {
@@ -12865,6 +14123,26 @@
         "horsepower": 225,
         "seats": 5,
         "cargo_cu_ft": 24.4
+      },
+      "trim_specs": {
+        "EV6 GT AWD": {
+          "mpg": {
+            "mpge_combined": 79
+          },
+          "horsepower": 576
+        },
+        "EV6 GT-Line AWD": {
+          "mpg": {
+            "mpge_combined": 105
+          },
+          "horsepower": 320
+        },
+        "EV6 Wind AWD": {
+          "mpg": {
+            "mpge_combined": 105
+          },
+          "horsepower": 320
+        }
       }
     },
     "EV9": {
@@ -12901,6 +14179,26 @@
         "horsepower": 215,
         "seats": 7,
         "cargo_cu_ft": 20
+      },
+      "trim_specs": {
+        "EV9 GT-Line AWD": {
+          "mpg": {
+            "mpge_combined": 80
+          },
+          "horsepower": 379
+        },
+        "EV9 Land AWD": {
+          "mpg": {
+            "mpge_combined": 80
+          },
+          "horsepower": 379
+        },
+        "EV9 Wind AWD": {
+          "mpg": {
+            "mpge_combined": 80
+          },
+          "horsepower": 379
+        }
       }
     }
   },
@@ -13003,6 +14301,111 @@
         "horsepower": 203,
         "seats": 5,
         "cargo_cu_ft": 16.7
+      },
+      "trim_specs": {
+        "ES 250 AWD": {
+          "mpg": {
+            "city": 25,
+            "highway": 34,
+            "combined": 28
+          }
+        },
+        "ES 300h": {
+          "mpg": {
+            "city": 43,
+            "highway": 44,
+            "combined": 44
+          },
+          "horsepower": 215
+        },
+        "ES 300h AWD": {
+          "mpg": {
+            "city": 43,
+            "highway": 44,
+            "combined": 44
+          },
+          "horsepower": 215
+        },
+        "ES 300h FWD": {
+          "mpg": {
+            "city": 43,
+            "highway": 44,
+            "combined": 44
+          },
+          "horsepower": 215
+        },
+        "ES 300h Luxury": {
+          "mpg": {
+            "city": 43,
+            "highway": 44,
+            "combined": 44
+          },
+          "horsepower": 215
+        },
+        "ES 300h Ultra Luxury": {
+          "mpg": {
+            "city": 43,
+            "highway": 44,
+            "combined": 44
+          },
+          "horsepower": 215
+        },
+        "ES 350": {
+          "mpg": {
+            "city": 22,
+            "highway": 32,
+            "combined": 26
+          },
+          "horsepower": 302
+        },
+        "ES 350 F SPORT Design": {
+          "mpg": {
+            "city": 22,
+            "highway": 32,
+            "combined": 26
+          },
+          "horsepower": 302
+        },
+        "ES 350 F SPORT Handling": {
+          "mpg": {
+            "city": 22,
+            "highway": 32,
+            "combined": 26
+          },
+          "horsepower": 302
+        },
+        "ES 350 F SPORT Performance": {
+          "mpg": {
+            "city": 22,
+            "highway": 32,
+            "combined": 26
+          },
+          "horsepower": 302
+        },
+        "ES 350 F Sport": {
+          "mpg": {
+            "city": 22,
+            "highway": 32,
+            "combined": 26
+          },
+          "horsepower": 302
+        },
+        "ES 350 FWD": {
+          "mpg": {
+            "city": 22,
+            "highway": 32,
+            "combined": 26
+          },
+          "horsepower": 302
+        },
+        "ES 350 Ultra Luxury": {
+          "mpg": {
+            "city": 22,
+            "highway": 32,
+            "combined": 26
+          },
+          "horsepower": 302
+        }
       }
     },
     "GX": {
@@ -13181,6 +14584,72 @@
         "horsepower": 241,
         "seats": 5,
         "cargo_cu_ft": 10.8
+      },
+      "trim_specs": {
+        "IS 300 AWD": {
+          "mpg": {
+            "city": 19,
+            "highway": 26,
+            "combined": 22
+          },
+          "horsepower": 260
+        },
+        "IS 300 F SPORT AWD": {
+          "mpg": {
+            "city": 19,
+            "highway": 26,
+            "combined": 22
+          },
+          "horsepower": 260
+        },
+        "IS 350": {
+          "mpg": {
+            "city": 20,
+            "highway": 27,
+            "combined": 23
+          },
+          "horsepower": 311
+        },
+        "IS 350 F SPORT AWD": {
+          "mpg": {
+            "city": 20,
+            "highway": 27,
+            "combined": 23
+          },
+          "horsepower": 311
+        },
+        "IS 350 F Sport": {
+          "mpg": {
+            "city": 20,
+            "highway": 27,
+            "combined": 23
+          },
+          "horsepower": 311
+        },
+        "IS 500 F SPORT Performance": {
+          "mpg": {
+            "city": 17,
+            "highway": 25,
+            "combined": 20
+          },
+          "horsepower": 472
+        },
+        "IS 500 F SPORT Performance Launch Edition": {
+          "mpg": {
+            "city": 17,
+            "highway": 25,
+            "combined": 20
+          },
+          "horsepower": 472
+        },
+        "IS 500 F Sport Performance": {
+          "mpg": {
+            "city": 17,
+            "highway": 25,
+            "combined": 20
+          },
+          "horsepower": 472
+        }
       }
     },
     "LS": {
@@ -13278,6 +14747,38 @@
         "horsepower": 416,
         "seats": 5,
         "cargo_cu_ft": 16.9
+      },
+      "trim_specs": {
+        "LS 500 AWD": {
+          "mpg": {
+            "city": 18,
+            "highway": 27,
+            "combined": 21
+          }
+        },
+        "LS 500 F SPORT AWD": {
+          "mpg": {
+            "city": 18,
+            "highway": 27,
+            "combined": 21
+          }
+        },
+        "LS 500h": {
+          "mpg": {
+            "city": 23,
+            "highway": 31,
+            "combined": 26
+          },
+          "horsepower": 354
+        },
+        "LS 500h AWD": {
+          "mpg": {
+            "city": 23,
+            "highway": 31,
+            "combined": 26
+          },
+          "horsepower": 354
+        }
       }
     },
     "LX": {
@@ -13444,6 +14945,93 @@
         "horsepower": 203,
         "seats": 5,
         "cargo_cu_ft": 22.7
+      },
+      "trim_specs": {
+        "NX 250 AWD": {
+          "mpg": {
+            "city": 25,
+            "highway": 32,
+            "combined": 28
+          }
+        },
+        "NX 350": {
+          "mpg": {
+            "city": 22,
+            "highway": 28,
+            "combined": 24
+          },
+          "horsepower": 275
+        },
+        "NX 350 AWD": {
+          "mpg": {
+            "city": 22,
+            "highway": 28,
+            "combined": 24
+          },
+          "horsepower": 275
+        },
+        "NX 350 F SPORT AWD": {
+          "mpg": {
+            "city": 22,
+            "highway": 28,
+            "combined": 24
+          },
+          "horsepower": 275
+        },
+        "NX 350 F Sport": {
+          "mpg": {
+            "city": 22,
+            "highway": 28,
+            "combined": 24
+          },
+          "horsepower": 275
+        },
+        "NX 350h AWD": {
+          "mpg": {
+            "city": 41,
+            "highway": 37,
+            "combined": 39
+          },
+          "horsepower": 240
+        },
+        "NX 350h F SPORT AWD": {
+          "mpg": {
+            "city": 41,
+            "highway": 37,
+            "combined": 39
+          },
+          "horsepower": 240
+        },
+        "NX 450h+": {
+          "mpg": {
+            "city": 36,
+            "highway": 36,
+            "combined": 36,
+            "mpge_combined": 84
+          },
+          "plugin_hybrid": true,
+          "horsepower": 302
+        },
+        "NX 450h+ AWD": {
+          "mpg": {
+            "city": 36,
+            "highway": 36,
+            "combined": 36,
+            "mpge_combined": 84
+          },
+          "plugin_hybrid": true,
+          "horsepower": 302
+        },
+        "NX 450h+ F SPORT AWD": {
+          "mpg": {
+            "city": 36,
+            "highway": 36,
+            "combined": 36,
+            "mpge_combined": 84
+          },
+          "plugin_hybrid": true,
+          "horsepower": 302
+        }
       }
     },
     "RX": {
@@ -13539,6 +15127,60 @@
         "horsepower": 275,
         "seats": 5,
         "cargo_cu_ft": 29.6
+      },
+      "trim_specs": {
+        "RX 350h AWD": {
+          "mpg": {
+            "city": 37,
+            "highway": 34,
+            "combined": 36
+          },
+          "horsepower": 246
+        },
+        "RX 350h F SPORT AWD": {
+          "mpg": {
+            "city": 37,
+            "highway": 34,
+            "combined": 36
+          },
+          "horsepower": 246
+        },
+        "RX 450h+": {
+          "mpg": {
+            "city": 35,
+            "highway": 35,
+            "combined": 35,
+            "mpge_combined": 83
+          },
+          "plugin_hybrid": true,
+          "horsepower": 304
+        },
+        "RX 450h+ AWD": {
+          "mpg": {
+            "city": 35,
+            "highway": 35,
+            "combined": 35,
+            "mpge_combined": 83
+          },
+          "plugin_hybrid": true,
+          "horsepower": 304
+        },
+        "RX 500h F SPORT Performance+": {
+          "mpg": {
+            "city": 27,
+            "highway": 28,
+            "combined": 27
+          },
+          "horsepower": 366
+        },
+        "RX 500h F Sport": {
+          "mpg": {
+            "city": 27,
+            "highway": 28,
+            "combined": 27
+          },
+          "horsepower": 366
+        }
       }
     },
     "UX": {
@@ -13607,6 +15249,48 @@
         "horsepower": 169,
         "seats": 5,
         "cargo_cu_ft": 21.7
+      },
+      "trim_specs": {
+        "UX 250h": {
+          "mpg": {
+            "city": 41,
+            "highway": 38,
+            "combined": 39
+          },
+          "horsepower": 181
+        },
+        "UX 250h AWD": {
+          "mpg": {
+            "city": 41,
+            "highway": 38,
+            "combined": 39
+          },
+          "horsepower": 181
+        },
+        "UX 250h F SPORT AWD": {
+          "mpg": {
+            "city": 41,
+            "highway": 38,
+            "combined": 39
+          },
+          "horsepower": 181
+        },
+        "UX 250h F Sport": {
+          "mpg": {
+            "city": 41,
+            "highway": 38,
+            "combined": 39
+          },
+          "horsepower": 181
+        },
+        "UX 250h Luxury AWD": {
+          "mpg": {
+            "city": 41,
+            "highway": 38,
+            "combined": 39
+          },
+          "horsepower": 181
+        }
       }
     }
   },
@@ -13666,6 +15350,38 @@
         "horsepower": 400,
         "seats": 7,
         "cargo_cu_ft": 18.3
+      },
+      "trim_specs": {
+        "Aviator Grand Touring": {
+          "mpg": {
+            "city": 23,
+            "highway": 23,
+            "combined": 23,
+            "mpge_combined": 56
+          },
+          "plugin_hybrid": true,
+          "horsepower": 494
+        },
+        "Aviator Grand Touring (PHEV)": {
+          "mpg": {
+            "city": 23,
+            "highway": 23,
+            "combined": 23,
+            "mpge_combined": 56
+          },
+          "plugin_hybrid": true,
+          "horsepower": 494
+        },
+        "Aviator Grand Touring Reserve": {
+          "mpg": {
+            "city": 23,
+            "highway": 23,
+            "combined": 23,
+            "mpge_combined": 56
+          },
+          "plugin_hybrid": true,
+          "horsepower": 494
+        }
       }
     },
     "Continental": {
@@ -13756,6 +15472,18 @@
         "horsepower": 250,
         "seats": 5,
         "cargo_cu_ft": 27.6
+      },
+      "trim_specs": {
+        "Corsair Grand Touring (PHEV)": {
+          "mpg": {
+            "city": 34,
+            "highway": 32,
+            "combined": 33,
+            "mpge_combined": 78
+          },
+          "plugin_hybrid": true,
+          "horsepower": 266
+        }
       }
     },
     "MKC": {
@@ -13894,6 +15622,16 @@
         "horsepower": 245,
         "seats": 5,
         "cargo_cu_ft": 15.4
+      },
+      "trim_specs": {
+        "MKZ Hybrid": {
+          "mpg": {
+            "city": 41,
+            "highway": 38,
+            "combined": 40
+          },
+          "horsepower": 188
+        }
       }
     },
     "Nautilus": {
@@ -14664,6 +16402,38 @@
         "horsepower": 340,
         "seats": 7,
         "cargo_cu_ft": 14.4
+      },
+      "trim_specs": {
+        "PHEV Premium": {
+          "mpg": {
+            "city": 25,
+            "highway": 25,
+            "combined": 25,
+            "mpge_combined": 56
+          },
+          "plugin_hybrid": true,
+          "horsepower": 323
+        },
+        "PHEV Premium Plus": {
+          "mpg": {
+            "city": 25,
+            "highway": 25,
+            "combined": 25,
+            "mpge_combined": 56
+          },
+          "plugin_hybrid": true,
+          "horsepower": 323
+        },
+        "PHEV Select": {
+          "mpg": {
+            "city": 25,
+            "highway": 25,
+            "combined": 25,
+            "mpge_combined": 56
+          },
+          "plugin_hybrid": true,
+          "horsepower": 323
+        }
       }
     }
   },
@@ -14710,6 +16480,16 @@
         "horsepower": 188,
         "seats": 5,
         "cargo_cu_ft": 14
+      },
+      "trim_specs": {
+        "AMG A 35": {
+          "mpg": {
+            "city": 22,
+            "highway": 30,
+            "combined": 25
+          },
+          "horsepower": 302
+        }
       }
     },
     "AMG GT": {
@@ -14792,6 +16572,64 @@
         "horsepower": 469,
         "seats": 2,
         "cargo_cu_ft": 10.1
+      },
+      "trim_specs": {
+        "AMG GT 63 S": {
+          "mpg": {
+            "city": 15,
+            "highway": 20,
+            "combined": 17
+          },
+          "horsepower": 630
+        },
+        "AMG GT 63 S E Performance": {
+          "mpg": {
+            "city": 15,
+            "highway": 20,
+            "combined": 17
+          },
+          "horsepower": 630
+        },
+        "AMG GT Black Series": {
+          "mpg": {
+            "city": 15,
+            "highway": 20,
+            "combined": 17
+          },
+          "horsepower": 720
+        },
+        "AMG GT C": {
+          "mpg": {
+            "city": 15,
+            "highway": 20,
+            "combined": 17
+          },
+          "horsepower": 550
+        },
+        "AMG GT R": {
+          "mpg": {
+            "city": 15,
+            "highway": 20,
+            "combined": 17
+          },
+          "horsepower": 577
+        },
+        "AMG GT R Pro": {
+          "mpg": {
+            "city": 15,
+            "highway": 20,
+            "combined": 17
+          },
+          "horsepower": 577
+        },
+        "AMG GT S": {
+          "mpg": {
+            "city": 16,
+            "highway": 22,
+            "combined": 18
+          },
+          "horsepower": 515
+        }
       }
     },
     "C-Class": {
@@ -14891,6 +16729,40 @@
         "horsepower": 255,
         "seats": 5,
         "cargo_cu_ft": 12.6
+      },
+      "trim_specs": {
+        "AMG C 43": {
+          "mpg": {
+            "city": 21,
+            "highway": 29,
+            "combined": 24
+          },
+          "horsepower": 385
+        },
+        "AMG C 63": {
+          "mpg": {
+            "city": 16,
+            "highway": 22,
+            "combined": 18
+          },
+          "horsepower": 469
+        },
+        "AMG C 63 S": {
+          "mpg": {
+            "city": 16,
+            "highway": 22,
+            "combined": 18
+          },
+          "horsepower": 503
+        },
+        "AMG C 63 S E Performance": {
+          "mpg": {
+            "city": 16,
+            "highway": 22,
+            "combined": 18
+          },
+          "horsepower": 503
+        }
       }
     },
     "CLA": {
@@ -14978,6 +16850,32 @@
         "horsepower": 221,
         "seats": 5,
         "cargo_cu_ft": 11.6
+      },
+      "trim_specs": {
+        "AMG CLA 35": {
+          "mpg": {
+            "city": 22,
+            "highway": 30,
+            "combined": 25
+          },
+          "horsepower": 302
+        },
+        "AMG CLA 45": {
+          "mpg": {
+            "city": 21,
+            "highway": 28,
+            "combined": 24
+          },
+          "horsepower": 382
+        },
+        "AMG CLA 45 S": {
+          "mpg": {
+            "city": 21,
+            "highway": 28,
+            "combined": 24
+          },
+          "horsepower": 382
+        }
       }
     },
     "E-Class": {
@@ -15068,6 +16966,32 @@
         "horsepower": 255,
         "seats": 5,
         "cargo_cu_ft": 13.1
+      },
+      "trim_specs": {
+        "AMG E 43": {
+          "mpg": {
+            "city": 18,
+            "highway": 25,
+            "combined": 21
+          },
+          "horsepower": 396
+        },
+        "AMG E 53": {
+          "mpg": {
+            "city": 21,
+            "highway": 28,
+            "combined": 24
+          },
+          "horsepower": 429
+        },
+        "AMG E 63 S": {
+          "mpg": {
+            "city": 16,
+            "highway": 22,
+            "combined": 18
+          },
+          "horsepower": 603
+        }
       }
     },
     "G-Class": {
@@ -15120,6 +17044,16 @@
         "horsepower": 416,
         "seats": 5,
         "cargo_cu_ft": 19.4
+      },
+      "trim_specs": {
+        "AMG G 63": {
+          "mpg": {
+            "city": 13,
+            "highway": 16,
+            "combined": 14
+          },
+          "horsepower": 577
+        }
       }
     },
     "GLC": {
@@ -15207,6 +17141,40 @@
         "horsepower": 258,
         "seats": 5,
         "cargo_cu_ft": 19.4
+      },
+      "trim_specs": {
+        "AMG GLC 43": {
+          "mpg": {
+            "city": 19,
+            "highway": 25,
+            "combined": 21
+          },
+          "horsepower": 385
+        },
+        "AMG GLC 63": {
+          "mpg": {
+            "city": 16,
+            "highway": 22,
+            "combined": 18
+          },
+          "horsepower": 503
+        },
+        "AMG GLC 63 S": {
+          "mpg": {
+            "city": 16,
+            "highway": 22,
+            "combined": 18
+          },
+          "horsepower": 503
+        },
+        "AMG GLC 63 S E Performance": {
+          "mpg": {
+            "city": 16,
+            "highway": 22,
+            "combined": 18
+          },
+          "horsepower": 503
+        }
       }
     },
     "GLS": {
@@ -15284,6 +17252,16 @@
         "horsepower": 362,
         "seats": 7,
         "cargo_cu_ft": 17.4
+      },
+      "trim_specs": {
+        "AMG GLS 63": {
+          "mpg": {
+            "city": 14,
+            "highway": 18,
+            "combined": 15
+          },
+          "horsepower": 603
+        }
       }
     },
     "S-Class": {
@@ -15368,6 +17346,24 @@
         "horsepower": 429,
         "seats": 5,
         "cargo_cu_ft": 12.9
+      },
+      "trim_specs": {
+        "AMG S 63": {
+          "mpg": {
+            "city": 15,
+            "highway": 23,
+            "combined": 18
+          },
+          "horsepower": 603
+        },
+        "AMG S 65": {
+          "mpg": {
+            "city": 13,
+            "highway": 21,
+            "combined": 16
+          },
+          "horsepower": 621
+        }
       }
     }
   },
@@ -15983,6 +17979,59 @@
         "horsepower": 188,
         "seats": 5,
         "cargo_cu_ft": 15.4
+      },
+      "trim_specs": {
+        "3.5 SL": {
+          "mpg": {
+            "city": 22,
+            "highway": 32,
+            "combined": 26
+          },
+          "horsepower": 270
+        },
+        "3.5 SV": {
+          "mpg": {
+            "city": 22,
+            "highway": 32,
+            "combined": 26
+          },
+          "horsepower": 270
+        },
+        "Altima Platinum AWD": {
+          "mpg": {
+            "city": 26,
+            "highway": 36,
+            "combined": 30
+          }
+        },
+        "Altima S AWD": {
+          "mpg": {
+            "city": 26,
+            "highway": 36,
+            "combined": 30
+          }
+        },
+        "Altima SL AWD": {
+          "mpg": {
+            "city": 26,
+            "highway": 36,
+            "combined": 30
+          }
+        },
+        "Altima SR AWD": {
+          "mpg": {
+            "city": 26,
+            "highway": 36,
+            "combined": 30
+          }
+        },
+        "Altima SV AWD": {
+          "mpg": {
+            "city": 26,
+            "highway": 36,
+            "combined": 30
+          }
+        }
       }
     },
     "Maxima": {
@@ -16315,6 +18364,43 @@
         "horsepower": 201,
         "seats": 5,
         "cargo_cu_ft": 36.3
+      },
+      "trim_specs": {
+        "Rogue Platinum AWD": {
+          "mpg": {
+            "city": 28,
+            "highway": 34,
+            "combined": 30
+          }
+        },
+        "Rogue Rock Creek AWD": {
+          "mpg": {
+            "city": 28,
+            "highway": 34,
+            "combined": 30
+          }
+        },
+        "Rogue S AWD": {
+          "mpg": {
+            "city": 28,
+            "highway": 34,
+            "combined": 30
+          }
+        },
+        "Rogue SL AWD": {
+          "mpg": {
+            "city": 28,
+            "highway": 34,
+            "combined": 30
+          }
+        },
+        "Rogue SV AWD": {
+          "mpg": {
+            "city": 28,
+            "highway": 34,
+            "combined": 30
+          }
+        }
       }
     },
     "Sentra": {
@@ -16608,6 +18694,24 @@
         "horsepower": 300,
         "seats": 2,
         "cargo_cu_ft": 4.6
+      },
+      "trim_specs": {
+        "718 Boxster GTS 4.0": {
+          "mpg": {
+            "city": 17,
+            "highway": 24,
+            "combined": 20
+          },
+          "horsepower": 394
+        },
+        "718 Cayman GTS 4.0": {
+          "mpg": {
+            "city": 17,
+            "highway": 24,
+            "combined": 20
+          },
+          "horsepower": 394
+        }
       }
     },
     "911": {
@@ -16762,6 +18866,32 @@
         "horsepower": 379,
         "seats": 4,
         "cargo_cu_ft": 4.6
+      },
+      "trim_specs": {
+        "911 Carrera 4 GTS": {
+          "mpg": {
+            "city": 17,
+            "highway": 24,
+            "combined": 20
+          },
+          "horsepower": 473
+        },
+        "911 Carrera GTS": {
+          "mpg": {
+            "city": 17,
+            "highway": 24,
+            "combined": 20
+          },
+          "horsepower": 473
+        },
+        "911 Turbo S": {
+          "mpg": {
+            "city": 15,
+            "highway": 20,
+            "combined": 17
+          },
+          "horsepower": 640
+        }
       }
     },
     "Boxster": {
@@ -16934,6 +19064,60 @@
         "horsepower": 348,
         "seats": 5,
         "cargo_cu_ft": 27.2
+      },
+      "trim_specs": {
+        "Cayenne E-Hybrid": {
+          "mpg": {
+            "city": 22,
+            "highway": 22,
+            "combined": 22,
+            "mpge_combined": 46
+          },
+          "plugin_hybrid": true,
+          "horsepower": 455
+        },
+        "Cayenne GTS": {
+          "mpg": {
+            "city": 16,
+            "highway": 21,
+            "combined": 18
+          },
+          "horsepower": 453
+        },
+        "Cayenne GTS Coupe": {
+          "mpg": {
+            "city": 16,
+            "highway": 21,
+            "combined": 18
+          },
+          "horsepower": 453
+        },
+        "Cayenne S E-Hybrid": {
+          "mpg": {
+            "city": 22,
+            "highway": 22,
+            "combined": 22,
+            "mpge_combined": 46
+          },
+          "plugin_hybrid": true,
+          "horsepower": 455
+        },
+        "Cayenne Turbo GT": {
+          "mpg": {
+            "city": 14,
+            "highway": 19,
+            "combined": 16
+          },
+          "horsepower": 631
+        },
+        "Cayenne Turbo S": {
+          "mpg": {
+            "city": 14,
+            "highway": 19,
+            "combined": 16
+          },
+          "horsepower": 631
+        }
       }
     },
     "Cayman": {
@@ -17188,6 +19372,54 @@
         "horsepower": 325,
         "seats": 5,
         "cargo_cu_ft": 17.6
+      },
+      "trim_specs": {
+        "Panamera 4 E-Hybrid": {
+          "mpg": {
+            "city": 22,
+            "highway": 22,
+            "combined": 22,
+            "mpge_combined": 50
+          },
+          "plugin_hybrid": true,
+          "horsepower": 455
+        },
+        "Panamera GTS": {
+          "mpg": {
+            "city": 16,
+            "highway": 23,
+            "combined": 19
+          },
+          "horsepower": 473
+        },
+        "Panamera S E-Hybrid": {
+          "mpg": {
+            "city": 22,
+            "highway": 22,
+            "combined": 22,
+            "mpge_combined": 50
+          },
+          "plugin_hybrid": true,
+          "horsepower": 455
+        },
+        "Panamera Turbo S": {
+          "mpg": {
+            "city": 15,
+            "highway": 22,
+            "combined": 18
+          },
+          "horsepower": 620
+        },
+        "Panamera Turbo S E-Hybrid": {
+          "mpg": {
+            "city": 17,
+            "highway": 17,
+            "combined": 17,
+            "mpge_combined": 48
+          },
+          "plugin_hybrid": true,
+          "horsepower": 690
+        }
       }
     },
     "Taycan": {
@@ -17281,6 +19513,32 @@
         "horsepower": 402,
         "seats": 5,
         "cargo_cu_ft": 14.3
+      },
+      "trim_specs": {
+        "Taycan GTS": {
+          "mpg": {
+            "mpge_combined": 78
+          },
+          "horsepower": 590
+        },
+        "Taycan GTS Sport Turismo": {
+          "mpg": {
+            "mpge_combined": 78
+          },
+          "horsepower": 590
+        },
+        "Taycan Turbo S": {
+          "mpg": {
+            "mpge_combined": 76
+          },
+          "horsepower": 750
+        },
+        "Taycan Turbo S Cross Turismo": {
+          "mpg": {
+            "mpge_combined": 76
+          },
+          "horsepower": 750
+        }
       }
     }
   },
@@ -17794,6 +20052,14 @@
         "horsepower": 835,
         "seats": 7,
         "cargo_cu_ft": 17
+      },
+      "trim_specs": {
+        "R1S Performance Dual-Motor": {
+          "mpg": {
+            "mpge_combined": 72
+          },
+          "horsepower": 665
+        }
       }
     },
     "R1T": {
@@ -17840,6 +20106,14 @@
         "horsepower": 835,
         "seats": 5,
         "cargo_cu_ft": 11
+      },
+      "trim_specs": {
+        "R1T Performance Dual-Motor": {
+          "mpg": {
+            "mpge_combined": 73
+          },
+          "horsepower": 665
+        }
       }
     }
   },
@@ -18071,6 +20345,26 @@
         "horsepower": 152,
         "seats": 5,
         "cargo_cu_ft": 20.8
+      },
+      "trim_specs": {
+        "Hybrid": {
+          "mpg": {
+            "city": 31,
+            "highway": 33,
+            "combined": 31
+          },
+          "horsepower": 160
+        },
+        "Plug-in Hybrid": {
+          "mpg": {
+            "city": 35,
+            "highway": 33,
+            "combined": 35,
+            "mpge_combined": 90
+          },
+          "plugin_hybrid": true,
+          "horsepower": 148
+        }
       }
     },
     "Forester": {
@@ -18712,6 +21006,32 @@
         "horsepower": 283,
         "seats": 5,
         "cargo_cu_ft": 23
+      },
+      "trim_specs": {
+        "Model 3 Long Range": {
+          "mpg": {
+            "mpge_combined": 131
+          },
+          "horsepower": 394
+        },
+        "Model 3 Long Range AWD": {
+          "mpg": {
+            "mpge_combined": 131
+          },
+          "horsepower": 394
+        },
+        "Model 3 Long Range RWD": {
+          "mpg": {
+            "mpge_combined": 131
+          },
+          "horsepower": 394
+        },
+        "Model 3 Performance": {
+          "mpg": {
+            "mpge_combined": 113
+          },
+          "horsepower": 510
+        }
       }
     },
     "Model S": {
@@ -18789,6 +21109,26 @@
         "horsepower": 670,
         "seats": 5,
         "cargo_cu_ft": 28
+      },
+      "trim_specs": {
+        "Model S Long Range": {
+          "mpg": {
+            "mpge_combined": 120
+          },
+          "horsepower": 670
+        },
+        "Model S Performance": {
+          "mpg": {
+            "mpge_combined": 104
+          },
+          "horsepower": 778
+        },
+        "Model S Plaid": {
+          "mpg": {
+            "mpge_combined": 101
+          },
+          "horsepower": 1020
+        }
       }
     },
     "Model X": {
@@ -18861,6 +21201,26 @@
         "horsepower": 670,
         "seats": 7,
         "cargo_cu_ft": 28
+      },
+      "trim_specs": {
+        "Model X Long Range": {
+          "mpg": {
+            "mpge_combined": 105
+          },
+          "horsepower": 670
+        },
+        "Model X Performance": {
+          "mpg": {
+            "mpge_combined": 96
+          },
+          "horsepower": 778
+        },
+        "Model X Plaid": {
+          "mpg": {
+            "mpge_combined": 98
+          },
+          "horsepower": 1020
+        }
       }
     },
     "Model Y": {
@@ -18914,6 +21274,32 @@
         "horsepower": 283,
         "seats": 5,
         "cargo_cu_ft": 30.2
+      },
+      "trim_specs": {
+        "Model Y Long Range": {
+          "mpg": {
+            "mpge_combined": 122
+          },
+          "horsepower": 384
+        },
+        "Model Y Long Range AWD": {
+          "mpg": {
+            "mpge_combined": 122
+          },
+          "horsepower": 384
+        },
+        "Model Y Long Range RWD": {
+          "mpg": {
+            "mpge_combined": 122
+          },
+          "horsepower": 384
+        },
+        "Model Y Performance": {
+          "mpg": {
+            "mpge_combined": 111
+          },
+          "horsepower": 456
+        }
       }
     }
   },
@@ -19126,6 +21512,32 @@
         "horsepower": 301,
         "seats": 5,
         "cargo_cu_ft": 16.1
+      },
+      "trim_specs": {
+        "Hybrid Limited": {
+          "mpg": {
+            "city": 43,
+            "highway": 44,
+            "combined": 43
+          },
+          "horsepower": 215
+        },
+        "Hybrid XLE Premium": {
+          "mpg": {
+            "city": 43,
+            "highway": 44,
+            "combined": 43
+          },
+          "horsepower": 215
+        },
+        "Hybrid XLE Touring": {
+          "mpg": {
+            "city": 43,
+            "highway": 44,
+            "combined": 43
+          },
+          "horsepower": 215
+        }
       }
     },
     "C-HR": {
@@ -19305,6 +21717,32 @@
         "horsepower": 225,
         "seats": 5,
         "cargo_cu_ft": 15.1
+      },
+      "trim_specs": {
+        "Hybrid LE": {
+          "mpg": {
+            "city": 51,
+            "highway": 53,
+            "combined": 52
+          },
+          "horsepower": 208
+        },
+        "Hybrid SE": {
+          "mpg": {
+            "city": 44,
+            "highway": 47,
+            "combined": 46
+          },
+          "horsepower": 208
+        },
+        "Hybrid XLE": {
+          "mpg": {
+            "city": 44,
+            "highway": 47,
+            "combined": 46
+          },
+          "horsepower": 208
+        }
       }
     },
     "Corolla": {
@@ -19641,6 +22079,40 @@
         "horsepower": 295,
         "seats": 8,
         "cargo_cu_ft": 16
+      },
+      "trim_specs": {
+        "Hybrid Bronze Edition": {
+          "mpg": {
+            "city": 36,
+            "highway": 35,
+            "combined": 36
+          },
+          "horsepower": 243
+        },
+        "Hybrid LE": {
+          "mpg": {
+            "city": 36,
+            "highway": 35,
+            "combined": 36
+          },
+          "horsepower": 243
+        },
+        "Hybrid Limited": {
+          "mpg": {
+            "city": 36,
+            "highway": 35,
+            "combined": 36
+          },
+          "horsepower": 243
+        },
+        "Hybrid XLE": {
+          "mpg": {
+            "city": 36,
+            "highway": 35,
+            "combined": 36
+          },
+          "horsepower": 243
+        }
       }
     },
     "Land Cruiser": {
@@ -19896,6 +22368,98 @@
         "horsepower": 194,
         "seats": 5,
         "cargo_cu_ft": 20.3
+      },
+      "trim_specs": {
+        "Prius Prime Advanced": {
+          "mpg": {
+            "city": 53,
+            "highway": 51,
+            "combined": 52,
+            "mpge_combined": 127
+          },
+          "plugin_hybrid": true,
+          "horsepower": 220
+        },
+        "Prius Prime L Eco": {
+          "mpg": {
+            "city": 53,
+            "highway": 51,
+            "combined": 52,
+            "mpge_combined": 127
+          },
+          "plugin_hybrid": true,
+          "horsepower": 220
+        },
+        "Prius Prime LE": {
+          "mpg": {
+            "city": 53,
+            "highway": 51,
+            "combined": 52,
+            "mpge_combined": 127
+          },
+          "plugin_hybrid": true,
+          "horsepower": 220
+        },
+        "Prius Prime Limited": {
+          "mpg": {
+            "city": 53,
+            "highway": 51,
+            "combined": 52,
+            "mpge_combined": 127
+          },
+          "plugin_hybrid": true,
+          "horsepower": 220
+        },
+        "Prius Prime Plus": {
+          "mpg": {
+            "city": 53,
+            "highway": 51,
+            "combined": 52,
+            "mpge_combined": 127
+          },
+          "plugin_hybrid": true,
+          "horsepower": 220
+        },
+        "Prius Prime Premium": {
+          "mpg": {
+            "city": 53,
+            "highway": 51,
+            "combined": 52,
+            "mpge_combined": 127
+          },
+          "plugin_hybrid": true,
+          "horsepower": 220
+        },
+        "Prius Prime SE": {
+          "mpg": {
+            "city": 53,
+            "highway": 51,
+            "combined": 52,
+            "mpge_combined": 127
+          },
+          "plugin_hybrid": true,
+          "horsepower": 220
+        },
+        "Prius Prime XLE": {
+          "mpg": {
+            "city": 53,
+            "highway": 51,
+            "combined": 52,
+            "mpge_combined": 127
+          },
+          "plugin_hybrid": true,
+          "horsepower": 220
+        },
+        "Prius Prime XSE": {
+          "mpg": {
+            "city": 53,
+            "highway": 51,
+            "combined": 52,
+            "mpge_combined": 127
+          },
+          "plugin_hybrid": true,
+          "horsepower": 220
+        }
       }
     },
     "RAV4": {
@@ -20041,6 +22605,70 @@
         "horsepower": 203,
         "seats": 5,
         "cargo_cu_ft": 37.6
+      },
+      "trim_specs": {
+        "Hybrid LE": {
+          "mpg": {
+            "city": 41,
+            "highway": 38,
+            "combined": 39
+          },
+          "horsepower": 219
+        },
+        "Hybrid Limited": {
+          "mpg": {
+            "city": 41,
+            "highway": 38,
+            "combined": 39
+          },
+          "horsepower": 219
+        },
+        "Hybrid XLE": {
+          "mpg": {
+            "city": 41,
+            "highway": 38,
+            "combined": 39
+          },
+          "horsepower": 219
+        },
+        "Hybrid XSE": {
+          "mpg": {
+            "city": 41,
+            "highway": 38,
+            "combined": 39
+          },
+          "horsepower": 219
+        },
+        "Prime LE": {
+          "mpg": {
+            "city": 38,
+            "highway": 38,
+            "combined": 38,
+            "mpge_combined": 94
+          },
+          "plugin_hybrid": true,
+          "horsepower": 302
+        },
+        "Prime SE": {
+          "mpg": {
+            "city": 38,
+            "highway": 38,
+            "combined": 38,
+            "mpge_combined": 94
+          },
+          "plugin_hybrid": true,
+          "horsepower": 302
+        },
+        "Prime XSE": {
+          "mpg": {
+            "city": 38,
+            "highway": 38,
+            "combined": 38,
+            "mpge_combined": 94
+          },
+          "plugin_hybrid": true,
+          "horsepower": 302
+        }
       }
     },
     "Sequoia": {
@@ -20549,6 +23177,20 @@
         "horsepower": 201,
         "seats": 5,
         "cargo_cu_ft": 27.7
+      },
+      "trim_specs": {
+        "Limited AWD": {
+          "mpg": {
+            "mpge_combined": 102
+          },
+          "horsepower": 214
+        },
+        "XLE AWD": {
+          "mpg": {
+            "mpge_combined": 102
+          },
+          "horsepower": 214
+        }
       }
     }
   },
@@ -21332,6 +23974,28 @@
         "horsepower": 247,
         "seats": 5,
         "cargo_cu_ft": 22.4
+      },
+      "trim_specs": {
+        "XC60 Recharge Plus T8 AWD": {
+          "mpg": {
+            "city": 28,
+            "highway": 28,
+            "combined": 28,
+            "mpge_combined": 63
+          },
+          "plugin_hybrid": true,
+          "horsepower": 455
+        },
+        "XC60 Recharge Ultimate T8 AWD": {
+          "mpg": {
+            "city": 28,
+            "highway": 28,
+            "combined": 28,
+            "mpge_combined": 63
+          },
+          "plugin_hybrid": true,
+          "horsepower": 455
+        }
       }
     },
     "XC90": {
@@ -21429,6 +24093,28 @@
         "horsepower": 247,
         "seats": 7,
         "cargo_cu_ft": 15.8
+      },
+      "trim_specs": {
+        "XC90 Recharge Plus T8 AWD": {
+          "mpg": {
+            "city": 27,
+            "highway": 27,
+            "combined": 27,
+            "mpge_combined": 58
+          },
+          "plugin_hybrid": true,
+          "horsepower": 455
+        },
+        "XC90 Recharge Ultimate T8 AWD": {
+          "mpg": {
+            "city": 27,
+            "highway": 27,
+            "combined": 27,
+            "mpge_combined": 58
+          },
+          "plugin_hybrid": true,
+          "horsepower": 455
+        }
       }
     }
   },

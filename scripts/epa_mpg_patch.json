@@ -1,0 +1,5695 @@
+{
+  "_comment": "Draft EPA MPG patch produced by scripts/fetch_epa_mpg.py. Review notes[] (especially needs_review) before applying with --apply.",
+  "source": "https://www.fueleconomy.gov/ws/rest",
+  "generated_at": "2026-07-30T01:08:45Z",
+  "changes": {
+    "Acura": {
+      "ADX": {
+        "city": 26,
+        "highway": 30,
+        "combined": 28
+      },
+      "ILX": {
+        "city": 24,
+        "highway": 34,
+        "combined": 28
+      },
+      "Integra": {
+        "city": 28,
+        "highway": 36,
+        "combined": 31
+      },
+      "MDX": {
+        "city": 19,
+        "highway": 25,
+        "combined": 21
+      },
+      "RDX": {
+        "city": 21,
+        "highway": 26,
+        "combined": 23
+      },
+      "TLX": {
+        "city": 21,
+        "highway": 29,
+        "combined": 24
+      }
+    },
+    "Alfa Romeo": {
+      "4C": {
+        "city": 24,
+        "highway": 34,
+        "combined": 28
+      },
+      "Giulia": {
+        "city": 24,
+        "highway": 32,
+        "combined": 26
+      },
+      "Stelvio": {
+        "city": 22,
+        "highway": 28,
+        "combined": 24
+      }
+    },
+    "Audi": {
+      "A3": {
+        "city": 24,
+        "highway": 34,
+        "combined": 28
+      },
+      "A5": {
+        "city": 22,
+        "highway": 32,
+        "combined": 26
+      },
+      "A6": {
+        "city": 20,
+        "highway": 30,
+        "combined": 24
+      },
+      "A7": {
+        "city": 22,
+        "highway": 30,
+        "combined": 25
+      },
+      "A8": {
+        "city": 19,
+        "highway": 27,
+        "combined": 22
+      },
+      "Q3": {
+        "city": 22,
+        "highway": 29,
+        "combined": 25
+      },
+      "Q5 Sportback": {
+        "city": 21,
+        "highway": 29,
+        "combined": 24
+      },
+      "Q7": {
+        "city": 19,
+        "highway": 24,
+        "combined": 21
+      },
+      "Q8": {
+        "city": 17,
+        "highway": 23,
+        "combined": 19
+      },
+      "Q8 e-tron": {
+        "mpge_combined": 76
+      },
+      "R8": {
+        "city": 14,
+        "highway": 21,
+        "combined": 17
+      },
+      "RS7": {
+        "city": 14,
+        "highway": 21,
+        "combined": 16
+      },
+      "S4": {
+        "city": 20,
+        "highway": 29,
+        "combined": 24
+      },
+      "S5": {
+        "city": 20,
+        "highway": 29,
+        "combined": 23
+      },
+      "e-tron": {
+        "mpge_combined": 75
+      }
+    },
+    "BMW": {
+      "328i": {
+        "city": 22,
+        "highway": 32,
+        "combined": 26
+      },
+      "330i": {
+        "city": 27,
+        "highway": 34,
+        "combined": 30
+      },
+      "340i": {
+        "city": 20,
+        "highway": 29,
+        "combined": 23
+      },
+      "530i": {
+        "city": 28,
+        "highway": 35,
+        "combined": 30
+      },
+      "540i": {
+        "city": 26,
+        "highway": 32,
+        "combined": 28
+      },
+      "750i": {
+        "city": 17,
+        "highway": 24,
+        "combined": 19
+      },
+      "M3": {
+        "city": 16,
+        "highway": 23,
+        "combined": 19
+      },
+      "M4": {
+        "city": 16,
+        "highway": 23,
+        "combined": 18
+      },
+      "M5": {
+        "city": 15,
+        "highway": 21,
+        "combined": 17
+      },
+      "M8": {
+        "city": 15,
+        "highway": 22,
+        "combined": 17
+      },
+      "X1": {
+        "city": 24,
+        "highway": 33,
+        "combined": 28
+      },
+      "X5": {
+        "city": 20,
+        "highway": 24,
+        "combined": 22
+      },
+      "X7": {
+        "city": 18,
+        "highway": 22,
+        "combined": 20
+      },
+      "i3": {
+        "mpge_combined": 113
+      },
+      "i4": {
+        "mpge_combined": 101
+      },
+      "i5": {
+        "mpge_combined": 98
+      },
+      "iX": {
+        "mpge_combined": 87
+      }
+    },
+    "Buick": {
+      "Enclave": {
+        "city": 20,
+        "highway": 24,
+        "combined": 22
+      },
+      "Encore": {
+        "city": 24,
+        "highway": 31,
+        "combined": 26
+      },
+      "Encore GX": {
+        "city": 29,
+        "highway": 31,
+        "combined": 30
+      },
+      "Envision": {
+        "city": 22,
+        "highway": 28,
+        "combined": 25
+      },
+      "LaCrosse": {
+        "city": 20,
+        "highway": 30,
+        "combined": 24
+      },
+      "Regal": {
+        "city": 21,
+        "highway": 29,
+        "combined": 24
+      }
+    },
+    "Cadillac": {
+      "ATS": {
+        "city": 18,
+        "highway": 28,
+        "combined": 22
+      },
+      "CT4": {
+        "city": 20,
+        "highway": 29,
+        "combined": 24
+      },
+      "CT5": {
+        "city": 18,
+        "highway": 27,
+        "combined": 21
+      },
+      "CTS": {
+        "city": 18,
+        "highway": 28,
+        "combined": 22
+      },
+      "Escalade": {
+        "city": 14,
+        "highway": 18,
+        "combined": 16
+      },
+      "SRX": {
+        "city": 16,
+        "highway": 24,
+        "combined": 18
+      },
+      "XT4": {
+        "city": 24,
+        "highway": 28,
+        "combined": 26
+      },
+      "XT5": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
+      "XT6": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      }
+    },
+    "Chevrolet": {
+      "Blazer": {
+        "city": 20,
+        "highway": 26,
+        "combined": 23
+      },
+      "Blazer EV": {
+        "mpge_combined": 94
+      },
+      "Camaro": {
+        "city": 16,
+        "highway": 25,
+        "combined": 20
+      },
+      "Colorado": {
+        "city": 17,
+        "highway": 20,
+        "combined": 18
+      },
+      "Cruze": {
+        "city": 28,
+        "highway": 38,
+        "combined": 32
+      },
+      "Equinox EV": {
+        "mpge_combined": 103
+      },
+      "Impala": {
+        "city": 18,
+        "highway": 28,
+        "combined": 22
+      },
+      "Silverado": {
+        "city": 16,
+        "highway": 20,
+        "combined": 17
+      },
+      "Sonic": {
+        "city": 26,
+        "highway": 34,
+        "combined": 29
+      },
+      "Spark": {
+        "city": 30,
+        "highway": 38,
+        "combined": 33
+      },
+      "Suburban": {
+        "city": 15,
+        "highway": 20,
+        "combined": 16
+      },
+      "Tahoe": {
+        "city": 15,
+        "highway": 20,
+        "combined": 17
+      },
+      "Traverse": {
+        "city": 20,
+        "highway": 25,
+        "combined": 22
+      },
+      "Trax": {
+        "city": 28,
+        "highway": 32,
+        "combined": 30
+      }
+    },
+    "Chrysler": {
+      "300": {
+        "city": 17,
+        "highway": 26,
+        "combined": 20
+      },
+      "Pacifica": {
+        "city": 19,
+        "highway": 28,
+        "combined": 22
+      },
+      "Voyager": {
+        "city": 19,
+        "highway": 28,
+        "combined": 22
+      }
+    },
+    "Dodge": {
+      "Challenger": {
+        "city": 14,
+        "highway": 23,
+        "combined": 17
+      },
+      "Charger": {
+        "city": 16,
+        "highway": 24,
+        "combined": 18
+      },
+      "Charger Daytona": {
+        "mpge_combined": 85
+      },
+      "Dart": {
+        "city": 24,
+        "highway": 34,
+        "combined": 28
+      },
+      "Durango": {
+        "city": 14,
+        "highway": 21,
+        "combined": 16
+      },
+      "Grand Caravan": {
+        "city": 17,
+        "highway": 25,
+        "combined": 20
+      },
+      "Journey": {
+        "city": 19,
+        "highway": 25,
+        "combined": 21
+      },
+      "Viper": {
+        "city": 12,
+        "highway": 19,
+        "combined": 14
+      }
+    },
+    "Fiat": {
+      "124 Spider": {
+        "city": 26,
+        "highway": 36,
+        "combined": 30
+      },
+      "500": {
+        "city": 26,
+        "highway": 32,
+        "combined": 28
+      },
+      "500L": {
+        "city": 22,
+        "highway": 30,
+        "combined": 25
+      },
+      "500X": {
+        "city": 24,
+        "highway": 30,
+        "combined": 26
+      }
+    },
+    "Ford": {
+      "Bronco": {
+        "city": 18,
+        "highway": 20,
+        "combined": 18
+      },
+      "Edge": {
+        "city": 21,
+        "highway": 28,
+        "combined": 23
+      },
+      "Escape": {
+        "city": 26,
+        "highway": 33,
+        "combined": 29
+      },
+      "Expedition": {
+        "city": 16,
+        "highway": 23,
+        "combined": 18
+      },
+      "Focus": {
+        "city": 25,
+        "highway": 34,
+        "combined": 28
+      },
+      "Fusion": {
+        "city": 22,
+        "highway": 32,
+        "combined": 26
+      },
+      "Mustang Mach-E": {
+        "mpge_combined": 102
+      },
+      "Taurus": {
+        "city": 17,
+        "highway": 24,
+        "combined": 19
+      }
+    },
+    "GMC": {
+      "Acadia": {
+        "city": 20,
+        "highway": 24,
+        "combined": 22
+      },
+      "Canyon": {
+        "city": 17,
+        "highway": 20,
+        "combined": 18
+      },
+      "Sierra 1500": {
+        "city": 16,
+        "highway": 19,
+        "combined": 17
+      },
+      "Terrain": {
+        "city": 24,
+        "highway": 28,
+        "combined": 25
+      },
+      "Yukon": {
+        "city": 15,
+        "highway": 20,
+        "combined": 17
+      }
+    },
+    "Genesis": {
+      "Electrified G80": {
+        "mpge_combined": 96
+      },
+      "Electrified GV70": {
+        "mpge_combined": 92
+      },
+      "G70": {
+        "city": 18,
+        "highway": 26,
+        "combined": 22
+      },
+      "G80": {
+        "city": 18,
+        "highway": 26,
+        "combined": 20
+      },
+      "G90": {
+        "city": 18,
+        "highway": 25,
+        "combined": 20
+      },
+      "GV60": {
+        "mpge_combined": 98
+      },
+      "GV70": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
+      "GV80": {
+        "city": 18,
+        "highway": 23,
+        "combined": 20
+      }
+    },
+    "Honda": {
+      "Insight": {
+        "city": 53,
+        "highway": 47,
+        "combined": 50
+      },
+      "Odyssey": {
+        "city": 19,
+        "highway": 28,
+        "combined": 22
+      },
+      "Passport": {
+        "city": 18,
+        "highway": 24,
+        "combined": 20
+      },
+      "Prologue": {
+        "mpge_combined": 99
+      },
+      "Ridgeline": {
+        "city": 18,
+        "highway": 24,
+        "combined": 20
+      }
+    },
+    "Hyundai": {
+      "Genesis": {
+        "city": 16,
+        "highway": 25,
+        "combined": 19
+      },
+      "Ioniq": {
+        "city": 56,
+        "highway": 58,
+        "combined": 57
+      },
+      "Ioniq 5": {
+        "mpge_combined": 98
+      },
+      "Ioniq 6": {
+        "mpge_combined": 121
+      },
+      "Ioniq 9": {
+        "mpge_combined": 88
+      },
+      "Kona": {
+        "city": 26,
+        "highway": 30,
+        "combined": 28
+      },
+      "Palisade": {
+        "city": 24,
+        "highway": 28,
+        "combined": 25
+      },
+      "Sonata": {
+        "city": 26,
+        "highway": 37,
+        "combined": 30
+      },
+      "Tucson": {
+        "city": 30,
+        "highway": 35,
+        "combined": 32
+      },
+      "Veloster": {
+        "city": 21,
+        "highway": 28,
+        "combined": 24
+      }
+    },
+    "Infiniti": {
+      "Q50": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
+      "Q60": {
+        "city": 19,
+        "highway": 27,
+        "combined": 22
+      },
+      "QX50": {
+        "city": 22,
+        "highway": 28,
+        "combined": 26
+      },
+      "QX60": {
+        "city": 22,
+        "highway": 28,
+        "combined": 24
+      },
+      "QX80": {
+        "city": 16,
+        "highway": 20,
+        "combined": 18
+      }
+    },
+    "Jaguar": {
+      "E-PACE": {
+        "city": 20,
+        "highway": 26,
+        "combined": 23
+      },
+      "F-PACE": {
+        "city": 19,
+        "highway": 25,
+        "combined": 21
+      },
+      "F-TYPE": {
+        "city": 16,
+        "highway": 24,
+        "combined": 18
+      },
+      "I-PACE": {
+        "mpge_combined": 80
+      },
+      "XE": {
+        "city": 24,
+        "highway": 33,
+        "combined": 28
+      },
+      "XF": {
+        "city": 22,
+        "highway": 29,
+        "combined": 25
+      },
+      "XJ": {
+        "city": 17,
+        "highway": 26,
+        "combined": 20
+      }
+    },
+    "Jeep": {
+      "Cherokee": {
+        "city": 20,
+        "highway": 28,
+        "combined": 23
+      },
+      "Compass": {
+        "city": 23,
+        "highway": 31,
+        "combined": 26
+      },
+      "Gladiator": {
+        "city": 17,
+        "highway": 22,
+        "combined": 19
+      },
+      "Grand Cherokee": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
+      "Renegade": {
+        "city": 22,
+        "highway": 28,
+        "combined": 25
+      },
+      "Wrangler": {
+        "city": 18,
+        "highway": 22,
+        "combined": 20
+      }
+    },
+    "Kia": {
+      "EV6": {
+        "mpge_combined": 106
+      },
+      "EV9": {
+        "mpge_combined": 84
+      },
+      "Forte": {
+        "city": 28,
+        "highway": 37,
+        "combined": 31
+      },
+      "K4": {
+        "city": 28,
+        "highway": 34,
+        "combined": 30
+      },
+      "K5": {
+        "city": 24,
+        "highway": 34,
+        "combined": 28
+      },
+      "Niro": {
+        "city": 53,
+        "highway": 50,
+        "combined": 51
+      },
+      "Optima": {
+        "city": 25,
+        "highway": 35,
+        "combined": 29
+      },
+      "Seltos": {
+        "city": 26,
+        "highway": 29,
+        "combined": 27
+      },
+      "Sorento": {
+        "city": 23,
+        "highway": 30,
+        "combined": 26
+      },
+      "Soul": {
+        "city": 28,
+        "highway": 34,
+        "combined": 30
+      },
+      "Sportage": {
+        "city": 25,
+        "highway": 33,
+        "combined": 28
+      },
+      "Stinger": {
+        "city": 20,
+        "highway": 27,
+        "combined": 22
+      },
+      "Telluride": {
+        "city": 19,
+        "highway": 24,
+        "combined": 21
+      }
+    },
+    "Lexus": {
+      "GX": {
+        "city": 15,
+        "highway": 21,
+        "combined": 17
+      },
+      "IS": {
+        "city": 19,
+        "highway": 26,
+        "combined": 22
+      },
+      "LS": {
+        "city": 17,
+        "highway": 27,
+        "combined": 21
+      },
+      "LX": {
+        "city": 18,
+        "highway": 22,
+        "combined": 20
+      },
+      "NX": {
+        "city": 31,
+        "highway": 32,
+        "combined": 32
+      },
+      "UX": {
+        "city": 44,
+        "highway": 40,
+        "combined": 42
+      }
+    },
+    "Lincoln": {
+      "Continental": {
+        "city": 16,
+        "highway": 24,
+        "combined": 20
+      },
+      "MKC": {
+        "city": 19,
+        "highway": 25,
+        "combined": 22
+      },
+      "MKX": {
+        "city": 17,
+        "highway": 24,
+        "combined": 20
+      },
+      "MKZ": {
+        "city": 20,
+        "highway": 29,
+        "combined": 23
+      }
+    },
+    "Lucid": {
+      "Air": {
+        "mpge_combined": 126
+      }
+    },
+    "Mazda": {
+      "CX-3": {
+        "city": 28,
+        "highway": 33,
+        "combined": 30
+      },
+      "CX-30": {
+        "city": 23,
+        "highway": 30,
+        "combined": 26
+      },
+      "CX-5": {
+        "city": 24,
+        "highway": 30,
+        "combined": 26
+      },
+      "CX-50": {
+        "city": 24,
+        "highway": 30,
+        "combined": 26
+      },
+      "CX-9": {
+        "city": 20,
+        "highway": 26,
+        "combined": 23
+      },
+      "CX-90": {
+        "city": 23,
+        "highway": 28,
+        "combined": 25
+      },
+      "MX-5 Miata": {
+        "city": 26,
+        "highway": 34,
+        "combined": 29
+      },
+      "Mazda3": {
+        "city": 25,
+        "highway": 34,
+        "combined": 28
+      },
+      "Mazda6": {
+        "city": 24,
+        "highway": 33,
+        "combined": 28
+      }
+    },
+    "Mercedes-Benz": {
+      "A-Class": {
+        "city": 24,
+        "highway": 35,
+        "combined": 28
+      },
+      "AMG GT": {
+        "city": 15,
+        "highway": 21,
+        "combined": 17
+      },
+      "CLA": {
+        "city": 26,
+        "highway": 35,
+        "combined": 30
+      },
+      "G-Class": {
+        "city": 17,
+        "highway": 19,
+        "combined": 18
+      },
+      "GLC": {
+        "city": 23,
+        "highway": 31,
+        "combined": 26
+      },
+      "GLS": {
+        "city": 19,
+        "highway": 24,
+        "combined": 21
+      },
+      "S-Class": {
+        "city": 17,
+        "highway": 27,
+        "combined": 20
+      }
+    },
+    "Mini": {
+      "Clubman": {
+        "city": 23,
+        "highway": 32,
+        "combined": 26
+      },
+      "Cooper": {
+        "city": 28,
+        "highway": 39,
+        "combined": 32
+      },
+      "Countryman": {
+        "city": 24,
+        "highway": 32,
+        "combined": 27
+      }
+    },
+    "Mitsubishi": {
+      "Eclipse Cross": {
+        "city": 25,
+        "highway": 27,
+        "combined": 26
+      },
+      "Mirage": {
+        "city": 36,
+        "highway": 42,
+        "combined": 38
+      },
+      "Outlander": {
+        "city": 24,
+        "highway": 30,
+        "combined": 26
+      }
+    },
+    "Nissan": {
+      "370Z": {
+        "city": 18,
+        "highway": 26,
+        "combined": 21
+      },
+      "Maxima": {
+        "city": 20,
+        "highway": 30,
+        "combined": 24
+      },
+      "Murano": {
+        "city": 20,
+        "highway": 28,
+        "combined": 22
+      },
+      "Pathfinder": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
+      "Sentra": {
+        "city": 30,
+        "highway": 38,
+        "combined": 33
+      },
+      "Titan": {
+        "city": 15,
+        "highway": 21,
+        "combined": 17
+      }
+    },
+    "Porsche": {
+      "718": {
+        "city": 19,
+        "highway": 24,
+        "combined": 21
+      },
+      "911": {
+        "city": 17,
+        "highway": 24,
+        "combined": 19
+      },
+      "Boxster": {
+        "city": 20,
+        "highway": 29,
+        "combined": 24
+      },
+      "Cayenne": {
+        "city": 16,
+        "highway": 22,
+        "combined": 18
+      },
+      "Cayman": {
+        "city": 20,
+        "highway": 29,
+        "combined": 24
+      },
+      "Macan": {
+        "city": 18,
+        "highway": 24,
+        "combined": 20
+      },
+      "Panamera": {
+        "city": 18,
+        "highway": 25,
+        "combined": 21
+      },
+      "Taycan": {
+        "mpge_combined": 86
+      }
+    },
+    "Ram": {
+      "1500": {
+        "city": 17,
+        "highway": 22,
+        "combined": 18
+      },
+      "ProMaster": {
+        "city": 21,
+        "highway": 28,
+        "combined": 24
+      }
+    },
+    "Rivian": {
+      "R1S": {
+        "mpge_combined": 78
+      },
+      "R1T": {
+        "mpge_combined": 78
+      }
+    },
+    "Subaru": {
+      "Ascent": {
+        "city": 19,
+        "highway": 26,
+        "combined": 22
+      },
+      "BRZ": {
+        "city": 20,
+        "highway": 28,
+        "combined": 24
+      },
+      "Crosstrek": {
+        "city": 26,
+        "highway": 33,
+        "combined": 29
+      },
+      "Forester": {
+        "city": 26,
+        "highway": 32,
+        "combined": 28
+      },
+      "Impreza": {
+        "city": 26,
+        "highway": 33,
+        "combined": 29
+      },
+      "Legacy": {
+        "city": 25,
+        "highway": 33,
+        "combined": 28
+      },
+      "Outback": {
+        "city": 21,
+        "highway": 29,
+        "combined": 24
+      },
+      "STI": {
+        "city": 16,
+        "highway": 22,
+        "combined": 18
+      },
+      "WRX": {
+        "city": 18,
+        "highway": 26,
+        "combined": 22
+      }
+    },
+    "Tesla": {
+      "Cybertruck": {
+        "mpge_combined": 78
+      }
+    },
+    "Toyota": {
+      "4Runner": {
+        "city": 20,
+        "highway": 24,
+        "combined": 22
+      },
+      "Avalon": {
+        "city": 32,
+        "highway": 38,
+        "combined": 34
+      },
+      "C-HR": {
+        "city": 27,
+        "highway": 31,
+        "combined": 29
+      },
+      "GR Supra": {
+        "city": 22,
+        "highway": 29,
+        "combined": 25
+      },
+      "GR86": {
+        "city": 20,
+        "highway": 28,
+        "combined": 23
+      },
+      "Land Cruiser": {
+        "city": 22,
+        "highway": 25,
+        "combined": 23
+      },
+      "Mirai": {
+        "mpge_combined": 72
+      },
+      "Sequoia": {
+        "city": 20,
+        "highway": 23,
+        "combined": 21
+      },
+      "Sienna": {
+        "city": 36,
+        "highway": 36,
+        "combined": 36
+      },
+      "Tacoma": {
+        "city": 20,
+        "highway": 24,
+        "combined": 22
+      },
+      "Tundra": {
+        "city": 18,
+        "highway": 22,
+        "combined": 20
+      },
+      "Venza": {
+        "city": 40,
+        "highway": 37,
+        "combined": 39
+      },
+      "bZ4X": {
+        "mpge_combined": 104
+      }
+    },
+    "Volkswagen": {
+      "Atlas": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
+      "Golf": {
+        "city": 22,
+        "highway": 31,
+        "combined": 25
+      },
+      "Jetta": {
+        "city": 29,
+        "highway": 40,
+        "combined": 34
+      },
+      "Passat": {
+        "city": 24,
+        "highway": 36,
+        "combined": 28
+      },
+      "Tiguan": {
+        "city": 24,
+        "highway": 31,
+        "combined": 26
+      }
+    },
+    "Volvo": {
+      "S60": {
+        "city": 26,
+        "highway": 35,
+        "combined": 29
+      },
+      "V90": {
+        "city": 22,
+        "highway": 29,
+        "combined": 25
+      },
+      "XC40": {
+        "city": 24,
+        "highway": 31,
+        "combined": 26
+      },
+      "XC60": {
+        "city": 23,
+        "highway": 30,
+        "combined": 26
+      },
+      "XC90": {
+        "city": 21,
+        "highway": 26,
+        "combined": 24
+      }
+    }
+  },
+  "notes": [
+    {
+      "make": "Acura",
+      "model": "ADX",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "ADX AWD",
+        "ADX FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 26,
+        "highway": 30,
+        "combined": 28
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Acura",
+      "model": "ILX",
+      "verdict": "fill",
+      "epa_year": 2022,
+      "epa_variants": [
+        "ILX"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 34,
+        "combined": 28
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Acura",
+      "model": "Integra",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Integra",
+        "Integra A-Spec"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 28,
+        "highway": 36,
+        "combined": 31
+      },
+      "combined_spread": 8.0,
+      "needs_review": false
+    },
+    {
+      "make": "Acura",
+      "model": "MDX",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "MDX AWD",
+        "MDX AWD Type-S",
+        "MDX FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 19,
+        "highway": 25,
+        "combined": 21
+      },
+      "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Acura",
+      "model": "RDX",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "RDX AWD",
+        "RDX AWD A-SPEC"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 21,
+        "highway": 26,
+        "combined": 23
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Acura",
+      "model": "TLX",
+      "verdict": "fill",
+      "epa_year": 2025,
+      "epa_variants": [
+        "TLX AWD A-SPEC",
+        "TLX FWD",
+        "TLX Type-S"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 21,
+        "highway": 29,
+        "combined": 24
+      },
+      "combined_spread": 4.0,
+      "needs_review": false
+    },
+    {
+      "make": "Alfa Romeo",
+      "model": "4C",
+      "verdict": "fill",
+      "epa_year": 2020,
+      "epa_variants": [
+        "4C"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 34,
+        "combined": 28
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Alfa Romeo",
+      "model": "Giulia",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Giulia",
+        "Giulia AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 32,
+        "combined": 26
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Alfa Romeo",
+      "model": "Stelvio",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Stelvio AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 22,
+        "highway": 28,
+        "combined": 24
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Audi",
+      "model": "A3",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "A3 quattro"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 34,
+        "combined": 28
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Audi",
+      "model": "A5",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "A5 quattro"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 22,
+        "highway": 32,
+        "combined": 26
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Audi",
+      "model": "A6",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "A6 Allroad quattro",
+        "A6 Sedan"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 30,
+        "combined": 24
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Audi",
+      "model": "A7",
+      "verdict": "fill",
+      "epa_year": 2025,
+      "epa_variants": [
+        "A7 quattro"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 22,
+        "highway": 30,
+        "combined": 25
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Audi",
+      "model": "A8",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "A8 quattro"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 19,
+        "highway": 27,
+        "combined": 22
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Audi",
+      "model": "Q3",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Q3"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 22,
+        "highway": 29,
+        "combined": 25
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Audi",
+      "model": "Q5 Sportback",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Q5 Sportback TFSI quattro"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 21,
+        "highway": 29,
+        "combined": 24
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Audi",
+      "model": "Q7",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Q7",
+        "Q7 quattro"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 19,
+        "highway": 24,
+        "combined": 21
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Audi",
+      "model": "Q8",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Q8 quattro"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 17,
+        "highway": 23,
+        "combined": 19
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Audi",
+      "model": "Q8 e-tron",
+      "verdict": "fill",
+      "epa_year": 2025,
+      "epa_variants": [
+        "Q8 e-tron quattro (20 inch wheels)",
+        "Q8 e-tron quattro (21 inch wheels)"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 76
+      },
+      "combined_spread": 4.0,
+      "needs_review": false
+    },
+    {
+      "make": "Audi",
+      "model": "R8",
+      "verdict": "fill",
+      "epa_year": 2023,
+      "epa_variants": [
+        "R8 Coupe quattro",
+        "R8 Coupe RWD",
+        "R8 GT RWD",
+        "R8 Spyder quattro",
+        "R8 Spyder RWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 14,
+        "highway": 21,
+        "combined": 17
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Audi",
+      "model": "RS7",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "RS 7"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 14,
+        "highway": 21,
+        "combined": 16
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Audi",
+      "model": "S4",
+      "verdict": "fill",
+      "epa_year": 2025,
+      "epa_variants": [
+        "S4"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 29,
+        "combined": 24
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Audi",
+      "model": "S5",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "S5 Sport Sedan"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 29,
+        "combined": 23
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Audi",
+      "model": "e-tron",
+      "verdict": "fill",
+      "epa_year": 2023,
+      "epa_variants": [
+        "e-tron GT",
+        "e-tron quattro",
+        "e-tron S (20 inch wheels)",
+        "e-tron S (21/22 inch wheels)",
+        "e-tron S Sportback (20 inch wheels)",
+        "e-tron S Sportback (21/22 inch wheels)",
+        "e-tron Sportback quattro"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 75
+      },
+      "combined_spread": 19.0,
+      "needs_review": false
+    },
+    {
+      "make": "BMW",
+      "model": "328i",
+      "verdict": "fill",
+      "epa_year": 2015,
+      "epa_variants": [
+        "328i",
+        "328i xDrive",
+        "328i xDrive Gran Turismo",
+        "328i xDrive Sports Wagon"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 22,
+        "highway": 32,
+        "combined": 26
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "BMW",
+      "model": "330i",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "330i Sedan",
+        "330i xDrive Sedan"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 27,
+        "highway": 34,
+        "combined": 30
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "BMW",
+      "model": "340i",
+      "verdict": "fill",
+      "epa_year": 2018,
+      "epa_variants": [
+        "340i",
+        "340i xDrive",
+        "340i xDrive Gran Turismo"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 29,
+        "combined": 23
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "BMW",
+      "model": "530i",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "530i Sedan",
+        "530i xDrive Sedan"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 28,
+        "highway": 35,
+        "combined": 30
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "BMW",
+      "model": "540i",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "540i xDrive Sedan"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 26,
+        "highway": 32,
+        "combined": 28
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "BMW",
+      "model": "750i",
+      "verdict": "fill",
+      "epa_year": 2022,
+      "epa_variants": [
+        "750i xDrive Sedan"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 17,
+        "highway": 24,
+        "combined": 19
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "BMW",
+      "model": "M3",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "M3 Competition M xDrive Sedan",
+        "M3 Competition Sedan",
+        "M3 Sedan"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 16,
+        "highway": 23,
+        "combined": 19
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "BMW",
+      "model": "M4",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "M4 Competition Coupe",
+        "M4 Competition M xDrive Convertible",
+        "M4 Competition M xDrive Coupe",
+        "M4 Coupe"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 16,
+        "highway": 23,
+        "combined": 18
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "BMW",
+      "model": "M5",
+      "verdict": "fill",
+      "epa_year": 2023,
+      "epa_variants": [
+        "M5 Competition Sedan",
+        "M5 Sedan"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 15,
+        "highway": 21,
+        "combined": 17
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "BMW",
+      "model": "M8",
+      "verdict": "fill",
+      "epa_year": 2025,
+      "epa_variants": [
+        "M8 Competition Convertible",
+        "M8 Competition Coupe",
+        "M8 Competition Gran Coupe"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 15,
+        "highway": 22,
+        "combined": 17
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "BMW",
+      "model": "X1",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "X1 M35i",
+        "X1 xDrive28i"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 33,
+        "combined": 28
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "BMW",
+      "model": "X5",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "X5 M Competition",
+        "X5 M60i xDrive",
+        "X5 sDrive40i",
+        "X5 xDrive40i",
+        "X5 xDrive50e"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 24,
+        "combined": 22
+      },
+      "combined_spread": 10.0,
+      "needs_review": true
+    },
+    {
+      "make": "BMW",
+      "model": "X7",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "X7 M60i xDrive",
+        "X7 xDrive40i"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 22,
+        "combined": 20
+      },
+      "combined_spread": 5.0,
+      "needs_review": false
+    },
+    {
+      "make": "BMW",
+      "model": "i3",
+      "verdict": "fill",
+      "epa_year": 2021,
+      "epa_variants": [
+        "i3",
+        "i3 with Range Extender"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 113
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "BMW",
+      "model": "i4",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "i4 eDrive35 Gran Coupe (19 inch Wheels)",
+        "i4 eDrive40 Gran Coupe (18 inch wheels)",
+        "i4 eDrive40 Gran Coupe (19 inch Wheels)",
+        "i4 M60 xDrive Gran Coupe (19 inch Wheels)",
+        "i4 M60 xDrive Gran Coupe (20 inch Wheels)",
+        "i4 xDrive40 Gran Coupe (18 inch Wheels)",
+        "i4 xDrive40 Gran Coupe (19 inch Wheels)"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 101
+      },
+      "combined_spread": 37.0,
+      "needs_review": true
+    },
+    {
+      "make": "BMW",
+      "model": "i5",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "i5 eDrive40 Sedan (19 inch Wheels)",
+        "i5 eDrive40 Sedan (20 inch Wheels)",
+        "i5 eDrive40 Sedan (21 inch Wheels)",
+        "i5 M60 xDrive Sedan (19 inch Wheels)",
+        "i5 M60 xDrive Sedan (20 inch Wheels)",
+        "i5 M60 xDrive Sedan (21 inch Wheels)",
+        "i5 xDrive40 Sedan (19 inch Wheels)",
+        "i5 xDrive40 Sedan (20 inch Wheels)",
+        "i5 xDrive40 Sedan (21 inch Wheels)"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 98
+      },
+      "combined_spread": 19.0,
+      "needs_review": false
+    },
+    {
+      "make": "BMW",
+      "model": "iX",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "iX M70 (21 inch Wheels)",
+        "iX M70 (22 inch Wheels)",
+        "iX M70 (23 inch Wheels)",
+        "iX xDrive45 (20 inch Wheels)",
+        "iX xDrive45 (21 inch Wheels)",
+        "iX xDrive45 (22 inch Wheels)",
+        "iX xDrive45 (23 inch Wheels)",
+        "iX xDrive60 (20 inch Wheels)",
+        "iX xDrive60 (21 inch Wheels)",
+        "iX xDrive60 (22 inch Wheels)",
+        "iX xDrive60 (23 inch Wheels)"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 87
+      },
+      "combined_spread": 22.0,
+      "needs_review": false
+    },
+    {
+      "make": "Buick",
+      "model": "Enclave",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Enclave AWD",
+        "Enclave FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 24,
+        "combined": 22
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Buick",
+      "model": "Encore",
+      "verdict": "fill",
+      "epa_year": 2022,
+      "epa_variants": [
+        "Encore AWD",
+        "Encore FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 31,
+        "combined": 26
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Buick",
+      "model": "Encore GX",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Encore GX AWD",
+        "Encore GX FWD",
+        "Encore GX FWD FFV"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 29,
+        "highway": 31,
+        "combined": 30
+      },
+      "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Buick",
+      "model": "Envision",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Envision AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 22,
+        "highway": 28,
+        "combined": 25
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Buick",
+      "model": "LaCrosse",
+      "verdict": "fill",
+      "epa_year": 2019,
+      "epa_variants": [
+        "LaCrosse",
+        "LaCrosse AWD",
+        "LaCrosse eAssist"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 30,
+        "combined": 24
+      },
+      "combined_spread": 6.0,
+      "needs_review": false
+    },
+    {
+      "make": "Buick",
+      "model": "Regal",
+      "verdict": "fill",
+      "epa_year": 2020,
+      "epa_variants": [
+        "Regal",
+        "Regal AWD",
+        "Regal TourX AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 21,
+        "highway": 29,
+        "combined": 24
+      },
+      "combined_spread": 4.0,
+      "needs_review": false
+    },
+    {
+      "make": "Cadillac",
+      "model": "ATS",
+      "verdict": "fill",
+      "epa_year": 2019,
+      "epa_variants": [
+        "ATS",
+        "ATS AWD",
+        "ATS-V"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 28,
+        "combined": 22
+      },
+      "combined_spread": 6.0,
+      "needs_review": false
+    },
+    {
+      "make": "Cadillac",
+      "model": "CT4",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "CT4",
+        "CT4 AWD",
+        "CT4 V",
+        "CT4 V AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 29,
+        "combined": 24
+      },
+      "combined_spread": 8.0,
+      "needs_review": false
+    },
+    {
+      "make": "Cadillac",
+      "model": "CT5",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "CT5",
+        "CT5 AWD",
+        "CT5 V",
+        "CT5 V AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 27,
+        "combined": 21
+      },
+      "combined_spread": 11.0,
+      "needs_review": true
+    },
+    {
+      "make": "Cadillac",
+      "model": "CTS",
+      "verdict": "fill",
+      "epa_year": 2019,
+      "epa_variants": [
+        "CTS",
+        "CTS AWD",
+        "CTS-V"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 28,
+        "combined": 22
+      },
+      "combined_spread": 9.0,
+      "needs_review": true
+    },
+    {
+      "make": "Cadillac",
+      "model": "Escalade",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Escalade 2WD",
+        "Escalade 4WD",
+        "Escalade V AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 14,
+        "highway": 18,
+        "combined": 16
+      },
+      "combined_spread": 4.0,
+      "needs_review": false
+    },
+    {
+      "make": "Cadillac",
+      "model": "SRX",
+      "verdict": "fill",
+      "epa_year": 2016,
+      "epa_variants": [
+        "SRX",
+        "SRX AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 16,
+        "highway": 24,
+        "combined": 18
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Cadillac",
+      "model": "XT4",
+      "verdict": "fill",
+      "epa_year": 2025,
+      "epa_variants": [
+        "XT4 AWD",
+        "XT4 FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 28,
+        "combined": 26
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Cadillac",
+      "model": "XT5",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "XT5 AWD",
+        "XT5 FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
+      "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Cadillac",
+      "model": "XT6",
+      "verdict": "fill",
+      "epa_year": 2025,
+      "epa_variants": [
+        "XT6 AWD",
+        "XT6 FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
+      "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Blazer",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Blazer AWD",
+        "Blazer FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 26,
+        "combined": 23
+      },
+      "combined_spread": 4.0,
+      "needs_review": false
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Blazer EV",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Blazer EV AWD",
+        "Blazer EV AWD SS",
+        "Blazer EV FWD",
+        "Blazer EV FWD 22 inch tire"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 94
+      },
+      "combined_spread": 19.0,
+      "needs_review": false
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Camaro",
+      "verdict": "fill",
+      "epa_year": 2024,
+      "epa_variants": [
+        "Camaro"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 16,
+        "highway": 25,
+        "combined": 20
+      },
+      "combined_spread": 6.0,
+      "needs_review": false
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Colorado",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Colorado 2WD",
+        "Colorado 4WD",
+        "Colorado Mud Terrain Tires 4WD",
+        "Colorado ZR2 4WD",
+        "Colorado ZR2 Bison 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 17,
+        "highway": 20,
+        "combined": 18
+      },
+      "combined_spread": 5.0,
+      "needs_review": false
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Cruze",
+      "verdict": "fill",
+      "epa_year": 2019,
+      "epa_variants": [
+        "Cruze",
+        "Cruze Hatchback",
+        "Cruze Premier",
+        "Cruze Premier Hatchback"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 28,
+        "highway": 38,
+        "combined": 32
+      },
+      "combined_spread": 6.0,
+      "needs_review": false
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Equinox EV",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Equinox EV AWD (11 kW Charger)",
+        "Equinox EV AWD (19 kW Charger)",
+        "Equinox EV FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 103
+      },
+      "combined_spread": 12.0,
+      "needs_review": false
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Impala",
+      "verdict": "fill",
+      "epa_year": 2020,
+      "epa_variants": [
+        "Impala"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 28,
+        "combined": 22
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Silverado",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Silverado (with Sport Mode) 2WD",
+        "Silverado (with Sport Mode) 4WD",
+        "Silverado (with Sport Mode) 4WD M6",
+        "Silverado 2WD",
+        "Silverado 4WD",
+        "Silverado 4WD  (Flex Fuel)",
+        "Silverado 4WD 4M",
+        "Silverado 4WD ZR2",
+        "Silverado 4WD ZR2 (Sport/Off Road)",
+        "Silverado Cab Chassis 2WD",
+        "Silverado Cab Chassis 4WD",
+        "Silverado EV Ext Range (11kW Charger)",
+        "Silverado EV Ext Range (19kW Charger)",
+        "Silverado EV Ext Range WT",
+        "Silverado EV Max Range WT (19kW Charger)",
+        "Silverado EV Std Range (11kW Charger)",
+        "Silverado EV Std Range WT (11kW Charger)",
+        "Silverado Mud Terrain Tires (Sport Mode) 4WD",
+        "Silverado Mud Terrain Tires (with Sport Mode) 4WD",
+        "Silverado Mud Terrain Tires 4WD",
+        "Silverado Mud Terrain Tires 4WD (Sport/off road)",
+        "Silverado Mud Terrain Tires 4WD 4M",
+        "Silverado Mud Terrain Tires 4WD FFV"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 16,
+        "highway": 20,
+        "combined": 17
+      },
+      "combined_spread": 10.0,
+      "needs_review": true
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Sonic",
+      "verdict": "fill",
+      "epa_year": 2020,
+      "epa_variants": [
+        "Sonic",
+        "Sonic 5"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 26,
+        "highway": 34,
+        "combined": 29
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Spark",
+      "verdict": "fill",
+      "epa_year": 2022,
+      "epa_variants": [
+        "Spark",
+        "Spark ACTIV"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 30,
+        "highway": 38,
+        "combined": 33
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Suburban",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Suburban 2WD",
+        "Suburban 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 15,
+        "highway": 20,
+        "combined": 16
+      },
+      "combined_spread": 7.0,
+      "needs_review": false
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Tahoe",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Tahoe 2WD",
+        "Tahoe 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 15,
+        "highway": 20,
+        "combined": 17
+      },
+      "combined_spread": 8.0,
+      "needs_review": false
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Traverse",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Traverse AWD",
+        "Traverse FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 25,
+        "combined": 22
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Trax",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Trax",
+        "Trax FFV"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 28,
+        "highway": 32,
+        "combined": 30
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Chrysler",
+      "model": "300",
+      "verdict": "fill",
+      "epa_year": 2023,
+      "epa_variants": [
+        "300",
+        "300 AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 17,
+        "highway": 26,
+        "combined": 20
+      },
+      "combined_spread": 5.0,
+      "needs_review": false
+    },
+    {
+      "make": "Chrysler",
+      "model": "Pacifica",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Pacifica",
+        "Pacifica Hybrid"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 19,
+        "highway": 28,
+        "combined": 22
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Chrysler",
+      "model": "Voyager",
+      "verdict": "fill",
+      "epa_year": 2023,
+      "epa_variants": [
+        "Voyager"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 19,
+        "highway": 28,
+        "combined": 22
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Dodge",
+      "model": "Challenger",
+      "verdict": "fill",
+      "epa_year": 2023,
+      "epa_variants": [
+        "Challenger",
+        "Challenger AWD",
+        "Challenger SRT",
+        "Challenger SRT Demon 170",
+        "Challenger SRT Widebody",
+        "Challenger Widebody"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 14,
+        "highway": 23,
+        "combined": 17
+      },
+      "combined_spread": 10.0,
+      "needs_review": true
+    },
+    {
+      "make": "Dodge",
+      "model": "Charger",
+      "verdict": "fill",
+      "epa_year": 2023,
+      "epa_variants": [
+        "Charger",
+        "Charger AWD",
+        "Charger SRT Widebody",
+        "Charger Widebody"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 16,
+        "highway": 24,
+        "combined": 18
+      },
+      "combined_spread": 8.0,
+      "needs_review": false
+    },
+    {
+      "make": "Dodge",
+      "model": "Charger Daytona",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Charger Daytona R/T AWD 245/55ZR18",
+        "Charger Daytona R/T AWD 255/45R20",
+        "Charger Daytona R/T AWD 275/40R20",
+        "Charger Daytona R/T AWD 305/35ZR20",
+        "Charger Daytona Scat Pack AWD 305/35ZR20",
+        "Charger Daytona Scat Pack AWD 325/35ZR20 Rear",
+        "Charger Daytona Scat Pack AWD 325/35ZR20 Rear A/S"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 85
+      },
+      "combined_spread": 23.0,
+      "needs_review": false
+    },
+    {
+      "make": "Dodge",
+      "model": "Dart",
+      "verdict": "fill",
+      "epa_year": 2016,
+      "epa_variants": [
+        "Dart",
+        "Dart Aero",
+        "Dart GT"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 34,
+        "combined": 28
+      },
+      "combined_spread": 7.0,
+      "needs_review": false
+    },
+    {
+      "make": "Dodge",
+      "model": "Durango",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Durango AWD",
+        "Durango RWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 14,
+        "highway": 21,
+        "combined": 16
+      },
+      "combined_spread": 7.0,
+      "needs_review": false
+    },
+    {
+      "make": "Dodge",
+      "model": "Grand Caravan",
+      "verdict": "fill",
+      "epa_year": 2020,
+      "epa_variants": [
+        "Grand Caravan"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 17,
+        "highway": 25,
+        "combined": 20
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Dodge",
+      "model": "Journey",
+      "verdict": "fill",
+      "epa_year": 2020,
+      "epa_variants": [
+        "Journey"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 19,
+        "highway": 25,
+        "combined": 21
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Dodge",
+      "model": "Viper",
+      "verdict": "fill",
+      "epa_year": 2017,
+      "epa_variants": [
+        "Viper"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 12,
+        "highway": 19,
+        "combined": 14
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Fiat",
+      "model": "124 Spider",
+      "verdict": "fill",
+      "epa_year": 2020,
+      "epa_variants": [
+        "124 Spider"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 26,
+        "highway": 36,
+        "combined": 30
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Fiat",
+      "model": "500",
+      "verdict": "fill",
+      "epa_year": 2019,
+      "epa_variants": [
+        "500",
+        "500 Abarth"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 26,
+        "highway": 32,
+        "combined": 28
+      },
+      "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Fiat",
+      "model": "500L",
+      "verdict": "fill",
+      "epa_year": 2020,
+      "epa_variants": [
+        "500 L"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 22,
+        "highway": 30,
+        "combined": 25
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Fiat",
+      "model": "500X",
+      "verdict": "fill",
+      "epa_year": 2019,
+      "epa_variants": [
+        "500X AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 30,
+        "combined": 26
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Ford",
+      "model": "Bronco",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Bronco 4WD",
+        "Bronco Badlands 4WD",
+        "Bronco Outer Banks 4WD",
+        "Bronco Raptor 4WD",
+        "Bronco Sasquatch 4WD",
+        "Bronco Sport 4WD",
+        "Bronco Sport Sasquatch 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 20,
+        "combined": 18
+      },
+      "combined_spread": 12.0,
+      "needs_review": true
+    },
+    {
+      "make": "Ford",
+      "model": "Edge",
+      "verdict": "fill",
+      "epa_year": 2024,
+      "epa_variants": [
+        "Edge AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 21,
+        "highway": 28,
+        "combined": 23
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Ford",
+      "model": "Escape",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Escape AWD",
+        "Escape AWD HEV",
+        "Escape FWD",
+        "Escape FWD PHEV"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 26,
+        "highway": 33,
+        "combined": 29
+      },
+      "combined_spread": 13.0,
+      "needs_review": true
+    },
+    {
+      "make": "Ford",
+      "model": "Expedition",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Expedition 2WD",
+        "Expedition 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 16,
+        "highway": 23,
+        "combined": 18
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Ford",
+      "model": "Focus",
+      "verdict": "fill",
+      "epa_year": 2018,
+      "epa_variants": [
+        "Focus Electric",
+        "Focus FWD",
+        "Focus RS AWD",
+        "Focus ST FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 25,
+        "highway": 34,
+        "combined": 28
+      },
+      "combined_spread": 12.0,
+      "needs_review": true
+    },
+    {
+      "make": "Ford",
+      "model": "Fusion",
+      "verdict": "fill",
+      "epa_year": 2020,
+      "epa_variants": [
+        "Fusion AWD",
+        "Fusion Energi Plug-in Hybrid",
+        "Fusion FWD",
+        "Fusion Hybrid FWD",
+        "Fusion Hybrid Taxi",
+        "Fusion Special Service PHEV"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 22,
+        "highway": 32,
+        "combined": 26
+      },
+      "combined_spread": 19.0,
+      "needs_review": true
+    },
+    {
+      "make": "Ford",
+      "model": "Mustang Mach-E",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Mustang Mach-E AWD",
+        "Mustang Mach-E AWD Extended",
+        "Mustang Mach-E GT",
+        "Mustang Mach-E Rally",
+        "Mustang Mach-E RWD",
+        "Mustang Mach-E RWD Extended"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 102
+      },
+      "combined_spread": 26.0,
+      "needs_review": true
+    },
+    {
+      "make": "Ford",
+      "model": "Taurus",
+      "verdict": "fill",
+      "epa_year": 2019,
+      "epa_variants": [
+        "Taurus AWD",
+        "Taurus AWD FFV",
+        "Taurus FWD",
+        "Taurus FWD FFV"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 17,
+        "highway": 24,
+        "combined": 19
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "GMC",
+      "model": "Acadia",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Acadia AWD",
+        "Acadia FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 24,
+        "combined": 22
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "GMC",
+      "model": "Canyon",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Canyon 2WD",
+        "Canyon 4WD",
+        "Canyon AT4X 4WD",
+        "Canyon AT4X AEV 4WD",
+        "Canyon Mud Terrain Tires 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 17,
+        "highway": 20,
+        "combined": 18
+      },
+      "combined_spread": 4.0,
+      "needs_review": false
+    },
+    {
+      "make": "GMC",
+      "model": "Sierra 1500",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Sierra 2WD",
+        "Sierra 2WD with Sport Mode",
+        "Sierra 4WD",
+        "Sierra 4WD AT4X",
+        "Sierra 4WD AT4X with Sport Mode",
+        "Sierra 4WD FFV",
+        "Sierra 4WD with Sport Mode",
+        "Sierra Mud Terrain Tires 4WD",
+        "Sierra Mud Terrain Tires 4WD (Sport Mode)",
+        "Sierra Mud Terrain Tires 4WD FFV",
+        "Sierra Mud Terrain Tires with Sport Mode"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 16,
+        "highway": 19,
+        "combined": 17
+      },
+      "combined_spread": 10.0,
+      "needs_review": true
+    },
+    {
+      "make": "GMC",
+      "model": "Terrain",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Terrain AWD",
+        "Terrain AWD  Denali/AT4",
+        "Terrain FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 28,
+        "combined": 25
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "GMC",
+      "model": "Yukon",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Yukon 2WD",
+        "Yukon 4WD",
+        "Yukon XL 2WD",
+        "Yukon XL 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 15,
+        "highway": 20,
+        "combined": 17
+      },
+      "combined_spread": 7.0,
+      "needs_review": false
+    },
+    {
+      "make": "Genesis",
+      "model": "Electrified G80",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Electrified G80"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 96
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Genesis",
+      "model": "Electrified GV70",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Electrified GV70 AWD (19 inch Wheels)",
+        "Electrified GV70 AWD (20 inch Wheels)"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 92
+      },
+      "combined_spread": 8.0,
+      "needs_review": false
+    },
+    {
+      "make": "Genesis",
+      "model": "G70",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "G70 AWD",
+        "G70 RWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 26,
+        "combined": 22
+      },
+      "combined_spread": 5.0,
+      "needs_review": false
+    },
+    {
+      "make": "Genesis",
+      "model": "G80",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "G80 AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 26,
+        "combined": 20
+      },
+      "combined_spread": 5.0,
+      "needs_review": false
+    },
+    {
+      "make": "Genesis",
+      "model": "G90",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "G90 AWD",
+        "G90 MHEV"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 25,
+        "combined": 20
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Genesis",
+      "model": "GV60",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "GV60 AWD (19 inch Wheels)",
+        "GV60 AWD Advanced (20 inch Wheels)",
+        "GV60 AWD Performance",
+        "GV60 RWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 98
+      },
+      "combined_spread": 20.0,
+      "needs_review": false
+    },
+    {
+      "make": "Genesis",
+      "model": "GV70",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "GV70 AWD",
+        "GV70 AWD (4 Mode)",
+        "GV70 AWD (5 Mode)"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Genesis",
+      "model": "GV80",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "GV80 AWD",
+        "GV80 MHEV",
+        "GV80 RWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 23,
+        "combined": 20
+      },
+      "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Honda",
+      "model": "Insight",
+      "verdict": "fill",
+      "epa_year": 2022,
+      "epa_variants": [
+        "Insight",
+        "Insight Touring"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 53,
+        "highway": 47,
+        "combined": 50
+      },
+      "combined_spread": 4.0,
+      "needs_review": false
+    },
+    {
+      "make": "Honda",
+      "model": "Odyssey",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Odyssey"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 19,
+        "highway": 28,
+        "combined": 22
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Honda",
+      "model": "Passport",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Passport AWD",
+        "Passport AWD Trailsport"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 24,
+        "combined": 20
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Honda",
+      "model": "Prologue",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Prologue AWD",
+        "Prologue FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 99
+      },
+      "combined_spread": 9.0,
+      "needs_review": false
+    },
+    {
+      "make": "Honda",
+      "model": "Ridgeline",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Ridgeline AWD",
+        "Ridgeline AWD TrailSport"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 24,
+        "combined": 20
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Hyundai",
+      "model": "Genesis",
+      "verdict": "fill",
+      "epa_year": 2016,
+      "epa_variants": [
+        "Genesis AWD",
+        "Genesis Coupe",
+        "Genesis RWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 16,
+        "highway": 25,
+        "combined": 19
+      },
+      "combined_spread": 4.0,
+      "needs_review": false
+    },
+    {
+      "make": "Hyundai",
+      "model": "Ioniq",
+      "verdict": "fill",
+      "epa_year": 2022,
+      "epa_variants": [
+        "Ioniq",
+        "Ioniq Blue",
+        "Ioniq Plug-in Hybrid"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 56,
+        "highway": 58,
+        "combined": 57
+      },
+      "combined_spread": 4.0,
+      "needs_review": false
+    },
+    {
+      "make": "Hyundai",
+      "model": "Ioniq 5",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Ioniq 5 AWD (19inch Wheels)",
+        "Ioniq 5 AWD (20inch Wheels)",
+        "Ioniq 5 AWD XRT",
+        "Ioniq 5 N",
+        "Ioniq 5 Robo taxi",
+        "Ioniq 5 RWD",
+        "Ioniq 5 Standard range"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 98
+      },
+      "combined_spread": 44.0,
+      "needs_review": true
+    },
+    {
+      "make": "Hyundai",
+      "model": "Ioniq 6",
+      "verdict": "fill",
+      "epa_year": 2025,
+      "epa_variants": [
+        "Ioniq 6 AWD (18 inch Wheels)",
+        "Ioniq 6 AWD (20 inch Wheels)",
+        "Ioniq 6 RWD (18 inch Wheels)",
+        "Ioniq 6 RWD (20 inch Wheels)",
+        "Ioniq 6 Standard Range"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 121
+      },
+      "combined_spread": 32.0,
+      "needs_review": true
+    },
+    {
+      "make": "Hyundai",
+      "model": "Ioniq 9",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Ioniq 9 AWD",
+        "Ioniq 9 AWD Performance",
+        "Ioniq 9 RWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 88
+      },
+      "combined_spread": 7.0,
+      "needs_review": false
+    },
+    {
+      "make": "Hyundai",
+      "model": "Kona",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Kona AWD",
+        "Kona AWD SX2 1.6T 8AT AWD",
+        "Kona AWD w/Stop-Start",
+        "Kona FWD",
+        "Kona FWD SX2 1.6T 8AT FWD",
+        "Kona FWD w/Stop-Start"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 26,
+        "highway": 30,
+        "combined": 28
+      },
+      "combined_spread": 5.0,
+      "needs_review": false
+    },
+    {
+      "make": "Hyundai",
+      "model": "Palisade",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Palisade AWD",
+        "Palisade FWD",
+        "Palisade Hybrid AWD",
+        "Palisade Hybrid FWD",
+        "Palisade Hybrid FWD Blue",
+        "Palisade XRT Pro"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 28,
+        "combined": 25
+      },
+      "combined_spread": 15.0,
+      "needs_review": true
+    },
+    {
+      "make": "Hyundai",
+      "model": "Sonata",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Sonata AWD",
+        "Sonata FWD",
+        "Sonata FWD w/Stop-Start",
+        "Sonata Hybrid",
+        "Sonata Hybrid Blue"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 26,
+        "highway": 37,
+        "combined": 30
+      },
+      "combined_spread": 24.0,
+      "needs_review": true
+    },
+    {
+      "make": "Hyundai",
+      "model": "Tucson",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Tucson AWD",
+        "Tucson FWD",
+        "Tucson Hybrid",
+        "Tucson Hybrid Blue",
+        "Tucson Plug-in Hybrid"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 30,
+        "highway": 35,
+        "combined": 32
+      },
+      "combined_spread": 12.0,
+      "needs_review": true
+    },
+    {
+      "make": "Hyundai",
+      "model": "Veloster",
+      "verdict": "fill",
+      "epa_year": 2022,
+      "epa_variants": [
+        "Veloster N"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 21,
+        "highway": 28,
+        "combined": 24
+      },
+      "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Infiniti",
+      "model": "Q50",
+      "verdict": "fill",
+      "epa_year": 2024,
+      "epa_variants": [
+        "Q50",
+        "Q50 AWD",
+        "Q50 Red Sport",
+        "Q50 Red Sport  AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Infiniti",
+      "model": "Q60",
+      "verdict": "fill",
+      "epa_year": 2022,
+      "epa_variants": [
+        "Q60",
+        "Q60 AWD",
+        "Q60 Red Sport",
+        "Q60 Red Sport AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 19,
+        "highway": 27,
+        "combined": 22
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Infiniti",
+      "model": "QX50",
+      "verdict": "fill",
+      "epa_year": 2025,
+      "epa_variants": [
+        "QX50",
+        "QX50 AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 22,
+        "highway": 28,
+        "combined": 26
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Infiniti",
+      "model": "QX60",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "QX60 AWD",
+        "QX60 FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 22,
+        "highway": 28,
+        "combined": 24
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Infiniti",
+      "model": "QX80",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "QX80 2WD",
+        "QX80 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 16,
+        "highway": 20,
+        "combined": 18
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Jaguar",
+      "model": "E-PACE",
+      "verdict": "fill",
+      "epa_year": 2024,
+      "epa_variants": [
+        "E-Pace"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 26,
+        "combined": 23
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Jaguar",
+      "model": "F-PACE",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "F-Pace",
+        "F-Pace MHEV",
+        "F-Pace SVR"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 19,
+        "highway": 25,
+        "combined": 21
+      },
+      "combined_spread": 7.0,
+      "needs_review": false
+    },
+    {
+      "make": "Jaguar",
+      "model": "F-TYPE",
+      "verdict": "fill",
+      "epa_year": 2024,
+      "epa_variants": [
+        "F-Type P450 AWD R-Dynamic Convertible",
+        "F-Type P450 AWD R-Dynamic Coupe",
+        "F-Type P450 RWD Convertible",
+        "F-Type P450 RWD Coupe",
+        "F-Type R AWD Convertible",
+        "F-Type R AWD Coupe"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 16,
+        "highway": 24,
+        "combined": 18
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Jaguar",
+      "model": "I-PACE",
+      "verdict": "fill",
+      "epa_year": 2024,
+      "epa_variants": [
+        "I-Pace EV400 (20 inch tires)",
+        "I-Pace EV400 (22 inch tires)"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 80
+      },
+      "combined_spread": 9.0,
+      "needs_review": false
+    },
+    {
+      "make": "Jaguar",
+      "model": "XE",
+      "verdict": "fill",
+      "epa_year": 2020,
+      "epa_variants": [
+        "XE",
+        "XE 30t",
+        "XE AWD",
+        "XE AWD 30t"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 33,
+        "combined": 28
+      },
+      "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Jaguar",
+      "model": "XF",
+      "verdict": "fill",
+      "epa_year": 2024,
+      "epa_variants": [
+        "XF P250",
+        "XF P300 AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 22,
+        "highway": 29,
+        "combined": 25
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Jaguar",
+      "model": "XJ",
+      "verdict": "fill",
+      "epa_year": 2019,
+      "epa_variants": [
+        "XJ",
+        "XJ AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 17,
+        "highway": 26,
+        "combined": 20
+      },
+      "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Jeep",
+      "model": "Cherokee",
+      "verdict": "fill",
+      "epa_year": 2023,
+      "epa_variants": [
+        "Cherokee 4WD",
+        "Cherokee Trailhawk 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 28,
+        "combined": 23
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Jeep",
+      "model": "Compass",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Compass 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 23,
+        "highway": 31,
+        "combined": 26
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Jeep",
+      "model": "Gladiator",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Gladiator 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 17,
+        "highway": 22,
+        "combined": 19
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Jeep",
+      "model": "Grand Cherokee",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Grand Cherokee 2WD",
+        "Grand Cherokee 4WD",
+        "Grand Cherokee 4xe",
+        "Grand Cherokee L 2WD",
+        "Grand Cherokee L 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Jeep",
+      "model": "Renegade",
+      "verdict": "fill",
+      "epa_year": 2023,
+      "epa_variants": [
+        "Renegade 4WD",
+        "Renegade Trailhawk 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 22,
+        "highway": 28,
+        "combined": 25
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Jeep",
+      "model": "Wrangler",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Wrangler 2dr 4WD",
+        "Wrangler 4dr 4WD",
+        "Wrangler 4dr 4xe"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 22,
+        "combined": 20
+      },
+      "combined_spread": 7.0,
+      "needs_review": false
+    },
+    {
+      "make": "Kia",
+      "model": "EV6",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "EV6 AWD GT",
+        "EV6 Long Range AWD (19 inch Wheels)",
+        "EV6 Long Range AWD (20 inch Wheels)",
+        "EV6 Long Range RWD",
+        "EV6 Standard Range RWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 106
+      },
+      "combined_spread": 32.0,
+      "needs_review": true
+    },
+    {
+      "make": "Kia",
+      "model": "EV9",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "EV9 GT",
+        "EV9 Long Range AWD",
+        "EV9 Long Range AWD GT-Line",
+        "EV9 Long Range RWD",
+        "EV9 Standard Range RWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 84
+      },
+      "combined_spread": 11.0,
+      "needs_review": false
+    },
+    {
+      "make": "Kia",
+      "model": "Forte",
+      "verdict": "fill",
+      "epa_year": 2024,
+      "epa_variants": [
+        "Forte",
+        "Forte FE"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 28,
+        "highway": 37,
+        "combined": 31
+      },
+      "combined_spread": 8.0,
+      "needs_review": false
+    },
+    {
+      "make": "Kia",
+      "model": "K4",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "K4",
+        "K4 4DR w/ DMS",
+        "K4 Hatchback",
+        "K4 without DMS"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 28,
+        "highway": 34,
+        "combined": 30
+      },
+      "combined_spread": 5.0,
+      "needs_review": false
+    },
+    {
+      "make": "Kia",
+      "model": "K5",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "K5",
+        "K5 AWD",
+        "K5 w/Stop-Start"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 34,
+        "combined": 28
+      },
+      "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Kia",
+      "model": "Niro",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Niro",
+        "Niro Electric",
+        "Niro FE",
+        "Niro Plug-in Hybrid"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 53,
+        "highway": 50,
+        "combined": 51
+      },
+      "combined_spread": 4.0,
+      "needs_review": false
+    },
+    {
+      "make": "Kia",
+      "model": "Optima",
+      "verdict": "fill",
+      "epa_year": 2020,
+      "epa_variants": [
+        "Optima",
+        "Optima FE",
+        "Optima Hybrid",
+        "Optima Plug-in Hybrid"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 25,
+        "highway": 35,
+        "combined": 29
+      },
+      "combined_spread": 18.0,
+      "needs_review": true
+    },
+    {
+      "make": "Kia",
+      "model": "Seltos",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Seltos AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 26,
+        "highway": 29,
+        "combined": 27
+      },
+      "combined_spread": 4.0,
+      "needs_review": false
+    },
+    {
+      "make": "Kia",
+      "model": "Sorento",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Sorento AWD",
+        "Sorento FWD",
+        "Sorento Hybrid AWD",
+        "Sorento Hybrid FWD",
+        "Sorento Plug-in Hybrid"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 23,
+        "highway": 30,
+        "combined": 26
+      },
+      "combined_spread": 14.0,
+      "needs_review": true
+    },
+    {
+      "make": "Kia",
+      "model": "Soul",
+      "verdict": "fill",
+      "epa_year": 2025,
+      "epa_variants": [
+        "Soul",
+        "Soul Eco dynamics"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 28,
+        "highway": 34,
+        "combined": 30
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Kia",
+      "model": "Sportage",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Sportage AWD",
+        "Sportage FWD",
+        "Sportage Hybrid AWD",
+        "Sportage Hybrid FWD",
+        "Sportage Plug-in Hybrid",
+        "Sportage X-pro"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 25,
+        "highway": 33,
+        "combined": 28
+      },
+      "combined_spread": 18.0,
+      "needs_review": true
+    },
+    {
+      "make": "Kia",
+      "model": "Stinger",
+      "verdict": "fill",
+      "epa_year": 2023,
+      "epa_variants": [
+        "Stinger AWD",
+        "Stinger RWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 27,
+        "combined": 22
+      },
+      "combined_spread": 5.0,
+      "needs_review": false
+    },
+    {
+      "make": "Kia",
+      "model": "Telluride",
+      "verdict": "fill",
+      "epa_year": 2025,
+      "epa_variants": [
+        "Telluride AWD",
+        "Telluride FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 19,
+        "highway": 24,
+        "combined": 21
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Lexus",
+      "model": "GX",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "GX 550"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 15,
+        "highway": 21,
+        "combined": 17
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Lexus",
+      "model": "IS",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "IS 350",
+        "IS 350 AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 19,
+        "highway": 26,
+        "combined": 22
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Lexus",
+      "model": "LS",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "LS 500 AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 17,
+        "highway": 27,
+        "combined": 21
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Lexus",
+      "model": "LX",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "LX 600",
+        "LX 700h"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 22,
+        "combined": 20
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Lexus",
+      "model": "NX",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "NX 350 AWD",
+        "NX 350 AWD F Sport",
+        "NX 350h",
+        "NX 350h AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 31,
+        "highway": 32,
+        "combined": 32
+      },
+      "combined_spread": 16.0,
+      "needs_review": true
+    },
+    {
+      "make": "Lexus",
+      "model": "UX",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "UX 300h",
+        "UX 300h AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 44,
+        "highway": 40,
+        "combined": 42
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Lincoln",
+      "model": "Continental",
+      "verdict": "fill",
+      "epa_year": 2020,
+      "epa_variants": [
+        "Continental  AWD",
+        "Continental  FWD",
+        "Continental Coach"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 16,
+        "highway": 24,
+        "combined": 20
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Lincoln",
+      "model": "MKC",
+      "verdict": "fill",
+      "epa_year": 2019,
+      "epa_variants": [
+        "MKC AWD",
+        "MKC FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 19,
+        "highway": 25,
+        "combined": 22
+      },
+      "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Lincoln",
+      "model": "MKX",
+      "verdict": "fill",
+      "epa_year": 2018,
+      "epa_variants": [
+        "MKX AWD",
+        "MKX FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 17,
+        "highway": 24,
+        "combined": 20
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Lincoln",
+      "model": "MKZ",
+      "verdict": "fill",
+      "epa_year": 2020,
+      "epa_variants": [
+        "MKZ AWD",
+        "MKZ FWD",
+        "MKZ Hybrid FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 29,
+        "combined": 23
+      },
+      "combined_spread": 21.0,
+      "needs_review": true
+    },
+    {
+      "make": "Lucid",
+      "model": "Air",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Air G Touring XR AWD with 20 inch wheels",
+        "Air G Touring XR AWD with 21 inch wheels",
+        "Air G Touring XR AWD with19 inch wheels",
+        "Air Pure RWD with 19 inch wheels",
+        "Air Pure RWD with 20 inch wheels",
+        "Air Sapphire AWD",
+        "Air Touring AWD with 19 inch wheels",
+        "Air Touring AWD with 20 inch wheels"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 126
+      },
+      "combined_spread": 41.0,
+      "needs_review": true
+    },
+    {
+      "make": "Mazda",
+      "model": "CX-3",
+      "verdict": "fill",
+      "epa_year": 2021,
+      "epa_variants": [
+        "CX-3 2WD",
+        "CX-3 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 28,
+        "highway": 33,
+        "combined": 30
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mazda",
+      "model": "CX-30",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "CX-30 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 23,
+        "highway": 30,
+        "combined": 26
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mazda",
+      "model": "CX-5",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "CX-5 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 30,
+        "combined": 26
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mazda",
+      "model": "CX-50",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "CX-50 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 30,
+        "combined": 26
+      },
+      "combined_spread": 13.0,
+      "needs_review": true
+    },
+    {
+      "make": "Mazda",
+      "model": "CX-9",
+      "verdict": "fill",
+      "epa_year": 2023,
+      "epa_variants": [
+        "CX-9 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 26,
+        "combined": 23
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mazda",
+      "model": "CX-90",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "CX-90 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 23,
+        "highway": 28,
+        "combined": 25
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mazda",
+      "model": "MX-5 Miata",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "MX-5"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 26,
+        "highway": 34,
+        "combined": 29
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mazda",
+      "model": "Mazda3",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "3 4-Door 2WD",
+        "3 4-Door 4WD",
+        "3 5-Door 2WD",
+        "3 5-Door 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 25,
+        "highway": 34,
+        "combined": 28
+      },
+      "combined_spread": 4.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mazda",
+      "model": "Mazda6",
+      "verdict": "fill",
+      "epa_year": 2021,
+      "epa_variants": [
+        "6"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 33,
+        "combined": 28
+      },
+      "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mercedes-Benz",
+      "model": "A-Class",
+      "verdict": "fill",
+      "epa_year": 2022,
+      "epa_variants": [
+        "A220",
+        "A220 4matic"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 35,
+        "combined": 28
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mercedes-Benz",
+      "model": "AMG GT",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "AMG GT 43 (coupe)",
+        "AMG GT 43 4matic Plus",
+        "AMG GT 53 4matic Plus",
+        "AMG GT 55 4matic Plus (coupe)",
+        "AMG GT 63 4matic Plus",
+        "AMG GT 63 4matic Plus (coupe)",
+        "AMG GT 63 PRO 4matic Plus (coupe)"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 15,
+        "highway": 21,
+        "combined": 17
+      },
+      "combined_spread": 6.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mercedes-Benz",
+      "model": "CLA",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "CLA250",
+        "CLA250 4matic",
+        "CLA250 Plus with EQ Tech",
+        "CLA250 Plus with EQ Tech (R22)"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 26,
+        "highway": 35,
+        "combined": 30
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mercedes-Benz",
+      "model": "G-Class",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "G550"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 17,
+        "highway": 19,
+        "combined": 18
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mercedes-Benz",
+      "model": "GLC",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "GLC300",
+        "GLC300 4matic",
+        "GLC300 4matic (coupe)"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 23,
+        "highway": 31,
+        "combined": 26
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mercedes-Benz",
+      "model": "GLS",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "GLS450 4matic"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 19,
+        "highway": 24,
+        "combined": 21
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mercedes-Benz",
+      "model": "S-Class",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "S500 4matic",
+        "S580 4matic",
+        "S580 4matic Maybach"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 17,
+        "highway": 27,
+        "combined": 20
+      },
+      "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mini",
+      "model": "Clubman",
+      "verdict": "fill",
+      "epa_year": 2023,
+      "epa_variants": [
+        "Cooper S Clubman",
+        "Cooper S Clubman All4",
+        "John Cooper Works Clubman All4"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 23,
+        "highway": 32,
+        "combined": 26
+      },
+      "combined_spread": 4.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mini",
+      "model": "Cooper",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Cooper C 2 Door",
+        "Cooper C 4 Door",
+        "Cooper C Convertible",
+        "Cooper S 2 Door",
+        "Cooper S 4 Door",
+        "Cooper S Convertible"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 28,
+        "highway": 39,
+        "combined": 32
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mini",
+      "model": "Countryman",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Countryman S All4",
+        "Countryman SE ALL4 (18 inch Wheels)",
+        "Countryman SE ALL4 (19 inch Wheels)"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 32,
+        "combined": 27
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mitsubishi",
+      "model": "Eclipse Cross",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Eclipse Cross 4WD",
+        "Eclipse Cross ES 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 25,
+        "highway": 27,
+        "combined": 26
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mitsubishi",
+      "model": "Mirage",
+      "verdict": "fill",
+      "epa_year": 2024,
+      "epa_variants": [
+        "Mirage",
+        "Mirage G4"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 36,
+        "highway": 42,
+        "combined": 38
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Mitsubishi",
+      "model": "Outlander",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Outlander 2WD",
+        "Outlander 4WD",
+        "Outlander PHEV",
+        "Outlander Sport 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 30,
+        "combined": 26
+      },
+      "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Nissan",
+      "model": "370Z",
+      "verdict": "fill",
+      "epa_year": 2020,
+      "epa_variants": [
+        "370Z",
+        "370Z Roadster"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 26,
+        "combined": 21
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Nissan",
+      "model": "Maxima",
+      "verdict": "fill",
+      "epa_year": 2023,
+      "epa_variants": [
+        "Maxima"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 30,
+        "combined": 24
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Nissan",
+      "model": "Murano",
+      "verdict": "fill",
+      "epa_year": 2024,
+      "epa_variants": [
+        "Murano AWD",
+        "Murano FWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 28,
+        "combined": 22
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Nissan",
+      "model": "Pathfinder",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Pathfinder 2WD",
+        "Pathfinder 4WD",
+        "Pathfinder 4WD Platinum",
+        "Pathfinder 4WD Rock Creek"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Nissan",
+      "model": "Sentra",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Sentra (2-mode)",
+        "Sentra (3-mode)",
+        "Sentra SL/SR"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 30,
+        "highway": 38,
+        "combined": 33
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Nissan",
+      "model": "Titan",
+      "verdict": "fill",
+      "epa_year": 2024,
+      "epa_variants": [
+        "Titan 2WD",
+        "Titan 4WD",
+        "Titan 4WD PRO4X"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 15,
+        "highway": 21,
+        "combined": 17
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Porsche",
+      "model": "718",
+      "verdict": "fill",
+      "epa_year": 2025,
+      "epa_variants": [
+        "718 Boxster",
+        "718 Boxster GTS",
+        "718 Boxster S",
+        "718 Cayman",
+        "718 Cayman GTS",
+        "718 Cayman S",
+        "718 GT4 RS",
+        "718 Spyder RS"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 19,
+        "highway": 24,
+        "combined": 21
+      },
+      "combined_spread": 8.0,
+      "needs_review": false
+    },
+    {
+      "make": "Porsche",
+      "model": "911",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "911 Carrera",
+        "911 Carrera 4 GTS",
+        "911 Carrera 4 GTS Cabriolet",
+        "911 Carrera 4S",
+        "911 Carrera 4S Cabriolet",
+        "911 Carrera Cabriolet",
+        "911 Carrera GTS",
+        "911 Carrera GTS Cabriolet",
+        "911 Carrera S",
+        "911 Carrera S Cabriolet",
+        "911 Carrera T",
+        "911 Carrera T Cabriolet",
+        "911 GT3",
+        "911 GT3 Touring",
+        "911 Targa 4 GTS",
+        "911 Targa 4S",
+        "911 Turbo S",
+        "911 Turbo S Cabriolet"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 17,
+        "highway": 24,
+        "combined": 19
+      },
+      "combined_spread": 6.0,
+      "needs_review": false
+    },
+    {
+      "make": "Porsche",
+      "model": "Boxster",
+      "verdict": "fill",
+      "epa_year": 2016,
+      "epa_variants": [
+        "Boxster",
+        "Boxster GTS",
+        "Boxster S",
+        "Boxster Spyder"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 29,
+        "combined": 24
+      },
+      "combined_spread": 5.0,
+      "needs_review": false
+    },
+    {
+      "make": "Porsche",
+      "model": "Cayenne",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Cayenne",
+        "Cayenne Coupe",
+        "Cayenne GTS",
+        "Cayenne GTS Coupe",
+        "Cayenne S",
+        "Cayenne S Coupe",
+        "Cayenne Turbo GT"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 16,
+        "highway": 22,
+        "combined": 18
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Porsche",
+      "model": "Cayman",
+      "verdict": "fill",
+      "epa_year": 2016,
+      "epa_variants": [
+        "Cayman",
+        "Cayman GT4",
+        "Cayman GTS",
+        "Cayman S"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 29,
+        "combined": 24
+      },
+      "combined_spread": 5.0,
+      "needs_review": false
+    },
+    {
+      "make": "Porsche",
+      "model": "Macan",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Macan",
+        "Macan 4 Electric",
+        "Macan 4 Electric 20in Wheels",
+        "Macan 4S Electric",
+        "Macan Electric",
+        "Macan Electric 20in Wheels",
+        "Macan GTS",
+        "Macan GTS Electric",
+        "Macan S",
+        "Macan T",
+        "Macan Turbo Electric"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 24,
+        "combined": 20
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Porsche",
+      "model": "Panamera",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Panamera",
+        "Panamera 4"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 25,
+        "combined": 21
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Porsche",
+      "model": "Taycan",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Taycan 4 Cross Turismo",
+        "Taycan 4 Perf Battery Plus",
+        "Taycan 4 Perf Battery Plus 19in All-Season (M+S)",
+        "Taycan 4 Performance Battery",
+        "Taycan 4S Cross Turismo",
+        "Taycan 4S Perf Battery Plus",
+        "Taycan 4S Perf Battery Plus 19in All-Season (M+S)",
+        "Taycan 4S Performance Battery",
+        "Taycan GTS",
+        "Taycan GTS Sport Turismo",
+        "Taycan Performance Battery",
+        "Taycan Turbo",
+        "Taycan Turbo Cross Turismo",
+        "Taycan Turbo GT",
+        "Taycan Turbo GT with Weissach Package",
+        "Taycan Turbo S",
+        "Taycan Turbo S Cross Turismo"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 86
+      },
+      "combined_spread": 16.0,
+      "needs_review": false
+    },
+    {
+      "make": "Ram",
+      "model": "1500",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "1500 2WD",
+        "1500 4WD",
+        "1500 HO 4WD",
+        "1500 RHO 4WD",
+        "1500 Warlock 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 17,
+        "highway": 22,
+        "combined": 18
+      },
+      "combined_spread": 10.0,
+      "needs_review": true
+    },
+    {
+      "make": "Ram",
+      "model": "ProMaster",
+      "verdict": "fill",
+      "epa_year": 2022,
+      "epa_variants": [
+        "Promaster City"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 21,
+        "highway": 28,
+        "combined": 24
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Rivian",
+      "model": "R1S",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "R1S All-Terrain Dual Large (20in)",
+        "R1S All-Terrain Dual Large Plus (20in)",
+        "R1S All-Terrain Dual Max (20in)",
+        "R1S All-Terrain Performance  Dual Max (20in)",
+        "R1S All-Terrain Performance Dual Large (20in)",
+        "R1S All-Terrain Performance Dual Large Plus (20in)",
+        "R1S All-Terrain Tri Max (20in)",
+        "R1S Dual Large (20in)",
+        "R1S Dual Large (22in)",
+        "R1S Dual Large Plus (20in)",
+        "R1S Dual Large Plus (22in)",
+        "R1S Dual Max (20in)",
+        "R1S Dual Max (22in)",
+        "R1S Dual Standard (20in)",
+        "R1S Dual Standard (22in)",
+        "R1S Performance Dual Large (20in)",
+        "R1S Performance Dual Large (22in)",
+        "R1S Performance Dual Large Plus (20in)",
+        "R1S Performance Dual Large Plus (22in)",
+        "R1S Performance Dual Max (20in)",
+        "R1S Performance Dual Max (22in)",
+        "R1S Quad Max (20in AT)",
+        "R1S Quad Max (22in UHP)",
+        "R1S Quad Max (22in)",
+        "R1S Tri Max (22in)"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 78
+      },
+      "combined_spread": 18.0,
+      "needs_review": false
+    },
+    {
+      "make": "Rivian",
+      "model": "R1T",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "R1T All-Terrain Dual Large (20in)",
+        "R1T All-Terrain Dual Large Plus (20in)",
+        "R1T All-Terrain Dual Max (20in)",
+        "R1T All-Terrain Performance Dual Large (20in)",
+        "R1T All-Terrain Performance Dual Large Plus (20in)",
+        "R1T All-Terrain Performance Dual Max (20in)",
+        "R1T All-Terrain Tri Max (20in)",
+        "R1T Dual Large (20in)",
+        "R1T Dual Large (22in)",
+        "R1T Dual Large Plus (20in)",
+        "R1T Dual Large Plus (22in)",
+        "R1T Dual Max (20in)",
+        "R1T Dual Max (22in)",
+        "R1T Dual Standard (20in)",
+        "R1T Dual Standard (22in)",
+        "R1T Performance Dual Large (20in)",
+        "R1T Performance Dual Large (22in)",
+        "R1T Performance Dual Large Plus (20in)",
+        "R1T Performance Dual Large Plus (22in)",
+        "R1T Performance Dual Max (20in)",
+        "R1T Performance Dual Max (22in)",
+        "R1T Quad Max (20in AT)",
+        "R1T Quad Max (22in UHP)",
+        "R1T Quad Max (22in)",
+        "R1T Tri Max (22in)"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 78
+      },
+      "combined_spread": 20.0,
+      "needs_review": false
+    },
+    {
+      "make": "Subaru",
+      "model": "Ascent",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Ascent",
+        "Ascent Limited/Touring/Onyx AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 19,
+        "highway": 26,
+        "combined": 22
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Subaru",
+      "model": "BRZ",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "BRZ"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 28,
+        "combined": 24
+      },
+      "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Subaru",
+      "model": "Crosstrek",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Crosstrek AWD",
+        "Crosstrek Hybrid AWD",
+        "Crosstrek Wilderness AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 26,
+        "highway": 33,
+        "combined": 29
+      },
+      "combined_spread": 10.0,
+      "needs_review": true
+    },
+    {
+      "make": "Subaru",
+      "model": "Forester",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Forester AWD",
+        "Forester Hybrid AWD",
+        "Forester Sport/Touring AWD",
+        "Forester Wilderness AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 26,
+        "highway": 32,
+        "combined": 28
+      },
+      "combined_spread": 9.0,
+      "needs_review": true
+    },
+    {
+      "make": "Subaru",
+      "model": "Impreza",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Impreza"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 26,
+        "highway": 33,
+        "combined": 29
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Subaru",
+      "model": "Legacy",
+      "verdict": "fill",
+      "epa_year": 2025,
+      "epa_variants": [
+        "Legacy AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 25,
+        "highway": 33,
+        "combined": 28
+      },
+      "combined_spread": 4.0,
+      "needs_review": false
+    },
+    {
+      "make": "Subaru",
+      "model": "Outback",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Outback AWD",
+        "Outback Wilderness AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 21,
+        "highway": 29,
+        "combined": 24
+      },
+      "combined_spread": 4.0,
+      "needs_review": false
+    },
+    {
+      "make": "Subaru",
+      "model": "STI",
+      "verdict": "fill",
+      "epa_year": 2018,
+      "epa_variants": [
+        "WRX STI Type RA"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 16,
+        "highway": 22,
+        "combined": 18
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Subaru",
+      "model": "WRX",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "WRX"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 26,
+        "combined": 22
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Tesla",
+      "model": "Cybertruck",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Cybertruck AWD",
+        "Cybertruck Dual Motor AWD",
+        "Cybertruck Long Range (20in Cyber wheels)"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 78
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Toyota",
+      "model": "4Runner",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "4Runner 2WD",
+        "4Runner 4WD",
+        "4Runner Hybrid 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 24,
+        "combined": 22
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Toyota",
+      "model": "Avalon",
+      "verdict": "fill",
+      "epa_year": 2022,
+      "epa_variants": [
+        "Avalon",
+        "Avalon Hybrid",
+        "Avalon Hybrid XLE",
+        "Avalon XLE"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 32,
+        "highway": 38,
+        "combined": 34
+      },
+      "combined_spread": 19.0,
+      "needs_review": true
+    },
+    {
+      "make": "Toyota",
+      "model": "C-HR",
+      "verdict": "fill",
+      "epa_year": 2022,
+      "epa_variants": [
+        "C-HR"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 27,
+        "highway": 31,
+        "combined": 29
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Toyota",
+      "model": "GR Supra",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "GR Supra"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 22,
+        "highway": 29,
+        "combined": 25
+      },
+      "combined_spread": 6.0,
+      "needs_review": false
+    },
+    {
+      "make": "Toyota",
+      "model": "GR86",
+      "verdict": "fill",
+      "epa_year": 2025,
+      "epa_variants": [
+        "GR 86"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 28,
+        "combined": 23
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Toyota",
+      "model": "Land Cruiser",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Land Cruiser"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 22,
+        "highway": 25,
+        "combined": 23
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Toyota",
+      "model": "Mirai",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Mirai"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 72
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Toyota",
+      "model": "Sequoia",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Sequoia 2WD",
+        "Sequoia 4WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 23,
+        "combined": 21
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Toyota",
+      "model": "Sienna",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Sienna 2WD",
+        "Sienna AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 36,
+        "highway": 36,
+        "combined": 36
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Toyota",
+      "model": "Tacoma",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Tacoma 2WD",
+        "Tacoma 4WD",
+        "Tacoma 4WD MT",
+        "Tacoma Hybrid 4WD",
+        "Tacoma SR5/Sport/Off-Road/Limited 4WD",
+        "Tacoma SR5/Sport/PreRunner 2WD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 24,
+        "combined": 22
+      },
+      "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Toyota",
+      "model": "Tundra",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Tundra 2WD",
+        "Tundra 2WD TRD Perf",
+        "Tundra 4WD",
+        "Tundra 4WD TRD Perf",
+        "Tundra Hybrid 2WD",
+        "Tundra Hybrid 2WD TRD Perf",
+        "Tundra Hybrid 4WD",
+        "Tundra Hybrid 4WD PRO",
+        "Tundra Hybrid 4WD PRO TRD Perf",
+        "Tundra Hybrid 4WD TRD Per"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 18,
+        "highway": 22,
+        "combined": 20
+      },
+      "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Toyota",
+      "model": "Venza",
+      "verdict": "fill",
+      "epa_year": 2024,
+      "epa_variants": [
+        "Venza AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 40,
+        "highway": 37,
+        "combined": 39
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Toyota",
+      "model": "bZ4X",
+      "verdict": "fill",
+      "epa_year": 2025,
+      "epa_variants": [
+        "bZ4X",
+        "bZ4X AWD (18inch Wheels)",
+        "bZ4X AWD (20inch Wheels)",
+        "bZ4X LIMITED",
+        "bZ4X LIMITED AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "mpge_combined": 104
+      },
+      "combined_spread": 17.0,
+      "needs_review": false
+    },
+    {
+      "make": "Volkswagen",
+      "model": "Atlas",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Atlas",
+        "Atlas 4motion Peak Edition",
+        "Atlas Cross Sport",
+        "Atlas Cross Sport 4motion",
+        "Atlas SE 4motion",
+        "Atlas SEL 4motion"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Volkswagen",
+      "model": "Golf",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Golf R"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 22,
+        "highway": 31,
+        "combined": 25
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Volkswagen",
+      "model": "Jetta",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Jetta",
+        "Jetta Sport/SE/SEL"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 29,
+        "highway": 40,
+        "combined": 34
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Volkswagen",
+      "model": "Passat",
+      "verdict": "fill",
+      "epa_year": 2022,
+      "epa_variants": [
+        "Passat"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 36,
+        "combined": 28
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Volkswagen",
+      "model": "Tiguan",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "Tiguan",
+        "Tiguan 4motion",
+        "Tiguan S",
+        "Tiguan SEL 4Motion"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 31,
+        "combined": 26
+      },
+      "combined_spread": 4.0,
+      "needs_review": false
+    },
+    {
+      "make": "Volvo",
+      "model": "S60",
+      "verdict": "fill",
+      "epa_year": 2025,
+      "epa_variants": [
+        "S60 B5",
+        "S60 B5 AWD",
+        "S60 T8 AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 26,
+        "highway": 35,
+        "combined": 29
+      },
+      "combined_spread": 2.0,
+      "needs_review": false
+    },
+    {
+      "make": "Volvo",
+      "model": "V90",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "V90CC B6 AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 22,
+        "highway": 29,
+        "combined": 25
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Volvo",
+      "model": "XC40",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "XC40 B4",
+        "XC40 B5 AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 24,
+        "highway": 31,
+        "combined": 26
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    },
+    {
+      "make": "Volvo",
+      "model": "XC60",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "XC60 B5 AWD",
+        "XC60 T8 AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 23,
+        "highway": 30,
+        "combined": 26
+      },
+      "combined_spread": 0.0,
+      "needs_review": false
+    },
+    {
+      "make": "Volvo",
+      "model": "XC90",
+      "verdict": "fill",
+      "epa_year": 2026,
+      "epa_variants": [
+        "XC90 B5 AWD",
+        "XC90 B6 AWD",
+        "XC90 T8 AWD"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 21,
+        "highway": 26,
+        "combined": 24
+      },
+      "combined_spread": 1.0,
+      "needs_review": false
+    }
+  ]
+}

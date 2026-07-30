@@ -38,8 +38,10 @@ Verdicts
   agrees    existing values already match EPA (within --tolerance)
   differs   existing values disagree with EPA -> proposed only with
             --include-differs, since committed data may be deliberate
-  no-match  no EPA variant matched (e.g. "3 Series", which EPA lists as "330i")
+  no-match  no EPA variant matched -- a gap in MODEL_ALIASES worth chasing
   no-data   variants matched but none of a comparable fuel type
+  unrated   EPA has no rating by design (F1 cars, >8,500 lb GVWR trucks), so an
+            empty result is correct; see UNRATED_MODELS
 
 Usage
 -----
@@ -88,6 +90,53 @@ MPGE_CLASSES = {CLASS_MPGE}
 # combined-MPG spread across variants above which a reviewer should look
 WIDE_SPREAD_MPG = 8
 WIDE_SPREAD_MPGE = 25
+
+# Models EPA names so differently that prefix matching cannot reach them. Values
+# are EPA name prefixes, matched loosely (punctuation/spacing ignored, no token
+# boundary required) because the list is curated rather than inferred. Keep the
+# generic-name guard in mind: an alias here bypasses the "A4 must not match A45"
+# boundary check, so aliases must be specific enough to only hit the intended
+# variants.
+MODEL_ALIASES = {
+    # EPA drops the tonnage from GM's light-duty pickups.
+    ("Chevrolet", "Silverado 1500"): ["Silverado 2WD", "Silverado 4WD",
+                                      "Silverado Mud Terrain"],
+    ("GMC", "Sierra 1500"): ["Sierra 2WD", "Sierra 4WD", "Sierra Mud Terrain"],
+    # EPA lists BMW by engine badge, not series. Base sedan stands in for the line.
+    ("BMW", "3 Series"): ["330i"],
+    # EPA drops the "Mazda" brand prefix ("3 4-Door 2WD") and the "Miata" suffix.
+    ("Mazda", "Mazda3"): ["3 4-Door", "3 5-Door"],
+    ("Mazda", "Mazda6"): ["6 4-Door", "6 "],
+    ("Mazda", "MX-5 Miata"): ["MX-5"],
+    # EPA lists Mercedes by engine badge ("C300"), not by class.
+    ("Mercedes-Benz", "A-Class"): ["A220", "A 220"],
+    ("Mercedes-Benz", "C-Class"): ["C300", "C 300"],
+    ("Mercedes-Benz", "E-Class"): ["E350", "E 350", "E450", "E 450"],
+    ("Mercedes-Benz", "S-Class"): ["S500", "S 500", "S580", "S 580"],
+    ("Mercedes-Benz", "G-Class"): ["G550", "G 550"],
+    ("Mercedes-Benz", "GLC"): ["GLC300", "GLC 300"],
+    ("Mercedes-Benz", "GLS"): ["GLS450", "GLS 450"],
+    ("Mercedes-Benz", "CLA"): ["CLA250", "CLA 250"],
+    # EPA prefixes every MINI with its Cooper trim.
+    ("Mini", "Clubman"): ["Cooper Clubman", "Cooper S Clubman",
+                          "John Cooper Works Clubman"],
+    # EPA never listed a bare "STI"; it is a WRX variant.
+    ("Subaru", "STI"): ["WRX STI"],
+    # EPA lists the V90 only as the Cross Country ("V90CC B6 AWD").
+    ("Volvo", "V90"): ["V90"],
+}
+
+# Models EPA legitimately has no rating for, so an empty result is correct and
+# not a matcher failure worth chasing.
+UNRATED_MODELS = {
+    ("Ferrari", "SF-23"): "Formula 1 race car, never EPA rated",
+    ("Ferrari", "SF-24"): "Formula 1 race car, never EPA rated",
+    ("Ferrari", "SF21"): "Formula 1 race car, never EPA rated",
+    ("Ford", "F-250"): "over 8,500 lb GVWR; EPA does not rate heavy duty",
+    ("Ram", "2500"): "over 8,500 lb GVWR; EPA does not rate heavy duty",
+    ("Ram", "3500"): "over 8,500 lb GVWR; EPA does not rate heavy duty",
+    ("Dodge", "Ram 1500"): "Ram became its own make in 2011; EPA lists it there",
+}
 
 
 # ---------------------------------------------------------------- HTTP + cache
@@ -213,15 +262,32 @@ def variant_matches(model_name, epa_name):
     return bool(remainder)
 
 
-def assign_variants(our_models, epa_names):
+def alias_matches(alias, epa_name):
+    """Loose prefix test for curated aliases: no token-boundary requirement."""
+    return squash(epa_name).startswith(squash(alias))
+
+
+def assign_variants(make, our_models, epa_names):
     """Map each of our model names to the EPA variants it owns.
 
-    An EPA variant goes to the longest of our names that matches it, so
-    "Q5 Sportback S line quattro" lands on "Q5 Sportback" rather than "Q5".
+    Aliased models resolve directly from MODEL_ALIASES and sit out the prefix
+    arbitration. Everything else competes, and an EPA variant goes to the
+    longest of our names that matches it, so "Q5 Sportback S line quattro"
+    lands on "Q5 Sportback" rather than "Q5".
     """
     assigned = {name: [] for name in our_models}
+    aliased = {name for name in our_models if (make, name) in MODEL_ALIASES}
+
+    for name in aliased:
+        aliases = MODEL_ALIASES[(make, name)]
+        assigned[name] = [
+            epa_name for epa_name in epa_names
+            if any(alias_matches(alias, epa_name) for alias in aliases)
+        ]
+
+    contenders = [name for name in our_models if name not in aliased]
     for epa_name in epa_names:
-        candidates = [name for name in our_models if variant_matches(name, epa_name)]
+        candidates = [name for name in contenders if variant_matches(name, epa_name)]
         if not candidates:
             continue
         winner = max(candidates, key=lambda name: (len(squash(name)), name))
@@ -346,12 +412,14 @@ def compare(existing, proposal, tolerance):
 def resolve_model(client, make, model, model_data, epa_models_by_year, args):
     """Resolve one vehicles.json model against EPA data."""
     want_mpge = bool(model_data.get("is_ev"))
+    unrated_reason = UNRATED_MODELS.get((make, model))
     result = {
         "make": make,
         "model": model,
         "is_ev": want_mpge,
         "existing": model_data.get("mpg"),
-        "verdict": "no-match",
+        "note": unrated_reason,
+        "verdict": "unrated" if unrated_reason else "no-match",
         "year": None,
         "epa_variants": [],
         "proposal": None,
@@ -359,6 +427,9 @@ def resolve_model(client, make, model, model_data, epa_models_by_year, args):
         "wide": False,
         "detail": [],
     }
+
+    if unrated_reason:
+        return result
 
     years = candidate_years(model_data, args.year_window, args.year)
     for year in years:
@@ -390,7 +461,7 @@ def build_year_index(client, make, our_models, years):
         payload = client.get("vehicle/menu/model", {"year": year, "make": make})
         epa_names = [item["text"] for item in menu_items(payload) if item.get("text")]
         if epa_names:
-            index[year] = assign_variants(our_models, epa_names)
+            index[year] = assign_variants(make, our_models, epa_names)
     return index
 
 
@@ -405,10 +476,13 @@ def format_mpg(values):
 
 
 def print_report(results, verbose):
-    order = {"fill": 0, "differs": 1, "agrees": 2, "no-data": 3, "no-match": 4}
+    order = {"fill": 0, "differs": 1, "agrees": 2, "no-data": 3, "no-match": 4,
+             "unrated": 5}
     for result in sorted(results, key=lambda r: (order.get(r["verdict"], 9),
                                                 r["make"], r["model"])):
         flags = " [WIDE SPREAD]" if result["wide"] else ""
+        if result.get("note"):
+            flags += f" ({result['note']})"
         year = result["year"] or "-"
         print(f"{result['verdict']:9} {result['make']:14} {result['model']:22} "
               f"{year!s:6} current={format_mpg(result['existing']):16} "
@@ -425,7 +499,7 @@ def print_summary(results, client):
     for result in results:
         counts[result["verdict"]] = counts.get(result["verdict"], 0) + 1
     print("\n--- summary ---")
-    for verdict in ("fill", "differs", "agrees", "no-data", "no-match"):
+    for verdict in ("fill", "differs", "agrees", "no-data", "no-match", "unrated"):
         if verdict in counts:
             print(f"  {verdict:9} {counts[verdict]}")
     wide = sum(1 for r in results if r["wide"])

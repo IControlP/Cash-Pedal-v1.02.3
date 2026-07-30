@@ -7,3 +7,6 @@ user_data/
 *.log
 .env
 .env.*
+
+# EPA fuel-economy response cache (scripts/fetch_epa_mpg.py)
+.epa-cache/

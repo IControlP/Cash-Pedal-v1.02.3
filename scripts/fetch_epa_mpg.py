@@ -135,7 +135,6 @@ UNRATED_MODELS = {
     ("Ford", "F-250"): "over 8,500 lb GVWR; EPA does not rate heavy duty",
     ("Ram", "2500"): "over 8,500 lb GVWR; EPA does not rate heavy duty",
     ("Ram", "3500"): "over 8,500 lb GVWR; EPA does not rate heavy duty",
-    ("Dodge", "Ram 1500"): "Ram became its own make in 2011; EPA lists it there",
 }
 
 

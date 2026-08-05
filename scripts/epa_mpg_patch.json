@@ -1,7 +1,7 @@
 {
   "_comment": "Draft EPA MPG patch produced by scripts/fetch_epa_mpg.py. Review notes[] (especially needs_review) before applying with --apply.",
   "source": "https://www.fueleconomy.gov/ws/rest",
-  "generated_at": "2026-07-30T01:08:45Z",
+  "generated_at": "2026-08-05T20:04:06Z",
   "changes": {
     "Acura": {
       "ADX": {
@@ -22,6 +22,11 @@
       "MDX": {
         "city": 19,
         "highway": 25,
+        "combined": 21
+      },
+      "NSX": {
+        "city": 21,
+        "highway": 22,
         "combined": 21
       },
       "RDX": {
@@ -1271,6 +1276,23 @@
         "combined": 21
       },
       "combined_spread": 3.0,
+      "needs_review": false
+    },
+    {
+      "make": "Acura",
+      "model": "NSX",
+      "verdict": "fill",
+      "epa_year": 2022,
+      "epa_variants": [
+        "NSX Hybrid"
+      ],
+      "existing": null,
+      "proposed": {
+        "city": 21,
+        "highway": 22,
+        "combined": 21
+      },
+      "combined_spread": 0.0,
       "needs_review": false
     },
     {

@@ -227,7 +227,7 @@
     },
     "NSX": {
       "type": "sports",
-      "is_ev": true,
+      "is_ev": false,
       "production_years": [
         2017,
         2022
@@ -6216,56 +6216,6 @@
         "horsepower": 173,
         "seats": 5,
         "cargo_cu_ft": 10.7
-      }
-    },
-    "Ram 1500": {
-      "type": "truck",
-      "is_ev": false,
-      "production_years": [
-        2009,
-        2018
-      ],
-      "trims_by_year": {
-        "2015": {
-          "Tradesman": 26995,
-          "Express": 28995,
-          "SLT": 31995,
-          "Sport": 35995,
-          "Laramie": 40995,
-          "Laramie Longhorn": 46995
-        },
-        "2016": {
-          "Tradesman": 27995,
-          "Express": 29995,
-          "SLT": 32995,
-          "Sport": 36995,
-          "Laramie": 41995,
-          "Laramie Longhorn": 47995
-        },
-        "2017": {
-          "Tradesman": 28995,
-          "Express": 30995,
-          "SLT": 33995,
-          "Sport": 37995,
-          "Laramie": 42995,
-          "Laramie Longhorn": 48995,
-          "Limited": 51995
-        },
-        "2018": {
-          "Tradesman": 29995,
-          "Express": 31995,
-          "SLT": 34995,
-          "Sport": 38995,
-          "Laramie": 43995,
-          "Laramie Longhorn": 49995,
-          "Limited": 52995
-        }
-      },
-      "mpg": null,
-      "specs": {
-        "horsepower": 305,
-        "seats": 3,
-        "cargo_cu_ft": 61.5
       }
     },
     "Viper": {

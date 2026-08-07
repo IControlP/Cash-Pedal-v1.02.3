@@ -3,6 +3,12 @@
 // maintenance_utils.py, zip_code_utils.py, taxes_fees_utils.py
 // Used by TCOCalculator and SalaryCalculator (Pro mode).
 
+// classifySegment prefers the catalog's own body type over its keyword lists.
+// This adds no bundle weight: vehicles.json is its own 'app-data' chunk (see
+// vite.config.js) and every page importing this module already pulls it in,
+// directly or through utils/affordability.
+import VEHICLES from '../data/vehicles.json' with { type: 'json' }
+
 // ── Depreciation ─────────────────────────────────────────
 
 export const BRAND_DEPRECIATION_MULT = {
@@ -109,7 +115,19 @@ export const POOR_RETENTION = {
 export function classifySegment(make, model) {
   const m = (model ?? '').toLowerCase()
   const mk = (make ?? '').toLowerCase()
+  // vehicles.json already records a body type and an EV flag per model, so
+  // prefer it over the keyword lists below. Those lists only ever see the model
+  // name, which misfiles anything the catalog names differently than expected:
+  // Ram's pickups are keyed "1500"/"2500"/"3500", so `m.includes('ram 1500')`
+  // is never true and all three fell through to 'sedan'. Unknown makes/models
+  // (free-text entry, older saved estimates) still fall back to the keywords.
+  const catalog = VEHICLES?.[make]?.[model] ?? null
+  const catType = catalog?.type ?? null
+
   if (mk === 'tesla' || ['rivian','lucid','polestar','fisker'].includes(mk)) return 'electric'
+  // The catalog's is_ev flag covers battery and fuel-cell models the name list
+  // misses: Ioniq 9, Mirai, Charger Daytona, and the Electrified Genesis pair.
+  if (catalog?.is_ev) return 'electric'
   const evKw = ['leaf','ariya','bolt ev','bolt euv','equinox ev','blazer ev','lyriq','ioniq 5','ioniq 6','ioniq electric','kona electric','niro ev','ev6','ev9','gv60','i3','i4','i5','i7','ix','e-tron','taycan','id.4','id.3','mach-e','lightning','eqb','eqc','eqe','eqs','bz4x','rz','solterra','mx-30','i-pace','prologue','zdx']
   if (evKw.some(k => m.includes(k))) return 'electric'
   if (['prius','insight','sienna'].some(k => m.includes(k))) return 'hybrid'
@@ -121,12 +139,15 @@ export function classifySegment(make, model) {
   const luxBrands = ['bmw','mercedes-benz','audi','lexus','acura','infiniti','cadillac','lincoln','jaguar','land rover','porsche','maserati','alfa romeo','genesis','volvo']
   if (luxBrands.includes(mk)) {
     const luxSuvKw = ['escalade','xt4','xt5','xt6','x1','x2','x3','x4','x5','x6','x7','gla','glb','glc','gle','gls','g-class','q3','q4','q5','q7','q8','ux','nx','rx','gx','lx','rdx','mdx','qx50','qx55','qx60','qx80','navigator','nautilus','aviator','corsair','cayenne','macan','e-pace','f-pace','range rover','discovery','defender','evoque','gv60','gv70','gv80','levante','grecale','xc40','xc60','xc90','v90 cross country']
-    return luxSuvKw.some(k => m.includes(k)) ? 'luxury_suv' : 'luxury'
+    const isSuv = luxSuvKw.some(k => m.includes(k)) ||
+                  catType === 'suv' || catType === 'suv_large'
+    return isSuv ? 'luxury_suv' : 'luxury'
   }
   const truckKw = ['f-150','f-250','f-350','silverado','sierra','ram 1500','ram 2500','tundra','tacoma','frontier','ridgeline','gladiator','ranger','colorado','canyon','titan','maverick','santa cruz']
-  if (truckKw.some(k => m.includes(k))) return 'truck'
+  if (catType === 'truck' || truckKw.some(k => m.includes(k))) return 'truck'
   const suvKw = ['suburban','tahoe','yukon','pilot','highlander','rav4','cr-v','hr-v','explorer','expedition','escape','equinox','traverse','pathfinder','armada','palisade','telluride','sorento','santa fe','tucson','cx-5','cx-9','outback','forester','ascent','wrangler','grand cherokee','durango','atlas','tiguan','4runner','sequoia','land cruiser','bronco','blazer','trailblazer','compass','renegade','edge','bronco sport','passport','envoy','pacifica','odyssey','caravan','voyager','carnival','sedona','murano','rogue','kicks','kona','venue','sportage','cx-3','cx-30','cx-50','cx-70','cx-90','enclave','encore','envision','acadia','cherokee','taos','trax','ev9']
-  if (suvKw.some(k => m.includes(k))) return 'suv'
+  if (catType === 'suv' || catType === 'suv_large' ||
+      suvKw.some(k => m.includes(k))) return 'suv'
   if (['civic','corolla','elantra','sentra','forte','jetta','golf','mazda3','impreza','crosstrek'].some(k => m.includes(k))) return 'compact'
   if (['spark','mirage','rio','versa','accent','yaris','fit'].some(k => m.includes(k))) return 'economy'
   return 'sedan'

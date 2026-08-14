@@ -18,6 +18,9 @@ cases, e.g. Tesla price cuts, generation-change restructures):
   - yoy_drop:  same trim drops more than $1,500 year-over-year
   - yoy_jump:  same trim jumps more than $5,000 year-over-year
   - frozen:    same trim holds the exact same price 3+ consecutive years
+  - linear_ramp: same trim climbs by an identical dollar step 4+ consecutive
+    years, the signature of interpolated rather than sourced pricing (it
+    misses generation changes and the 2021-2023 price surge)
 
 Staleness (--staleness):
   - flags active models missing data for the expected latest model year
@@ -28,6 +31,7 @@ Usage
   python3 scripts/validate_vehicle_data.py                  # check vs baseline
   python3 scripts/validate_vehicle_data.py --write-baseline # accept current anomalies
   python3 scripts/validate_vehicle_data.py --staleness      # model-year freshness report
+  python3 scripts/validate_vehicle_data.py --linear-report  # interpolated-pricing worklist
 
 Exit codes: 0 ok / 1 new anomalies or structural errors / 2 stale data.
 """
@@ -44,6 +48,12 @@ BASELINE_PATH = os.path.join(REPO_ROOT, "scripts", "msrp_anomaly_baseline.json")
 YOY_DROP_THRESHOLD = 1500
 YOY_JUMP_THRESHOLD = 5000
 FROZEN_MIN_YEARS = 3
+# Consecutive years a trim must climb by the exact same dollar amount before the
+# series is treated as interpolated rather than sourced. Four years means three
+# identical deltas in a row, which real MSRP effectively never does -- it misses
+# generation changes and the 2021-2023 price surge. Lowering this catches more
+# interpolation at the cost of more false positives; both are baselineable.
+LINEAR_RAMP_MIN_YEARS = 4
 PRICE_MIN = 5000
 PRICE_MAX = 10_000_000  # Ferrari F1 client-racing cars legitimately reach ~$5M
 
@@ -140,7 +150,44 @@ def pricing_anomalies(data):
                         f"{make} {model} '{trim}': ${run_price:,} frozen "
                         f"{run_start}-{years[-1]} ({run_len} years)"
                     )
+            # Linear ramps: the same dollar step every year for several years
+            # running, which is the signature of interpolated rather than
+            # sourced pricing.
+            for trim in trim_names:
+                series = {int(y): tby[y][trim] for y in years if trim in tby[y]}
+                for start, end, step in linear_runs(series):
+                    key = f"linear_ramp|{make}|{model}|{trim}|{start}"
+                    findings[key] = (
+                        f"{make} {model} '{trim}': ${series[start]:,} → "
+                        f"${series[end]:,} at exactly {step:+,}/yr every year "
+                        f"{start}-{end} ({end - start + 1} years)"
+                    )
     return findings
+
+
+def linear_runs(series):
+    """Yield (start_year, end_year, step) for each maximal constant-step run.
+
+    `series` maps year -> price. A run needs LINEAR_RAMP_MIN_YEARS consecutive
+    years moving by an identical non-zero step. Maximal sub-runs are reported,
+    so a series that was interpolated for part of its life and sourced for the
+    rest still gets flagged for the interpolated stretch.
+    """
+    years = sorted(series)
+    if len(years) < LINEAR_RAMP_MIN_YEARS:
+        return
+    run_start, run_step = years[0], None
+    for prev, curr in zip(years, years[1:]):
+        step = series[curr] - series[prev] if curr - prev == 1 else None
+        if step is not None and step == run_step:
+            continue
+        # the run ends at `prev`; emit it before starting the next one
+        if run_step not in (None, 0) and prev - run_start + 1 >= LINEAR_RAMP_MIN_YEARS:
+            yield run_start, prev, run_step
+        run_start, run_step = (prev, step) if step is not None else (curr, None)
+    last = years[-1]
+    if run_step not in (None, 0) and last - run_start + 1 >= LINEAR_RAMP_MIN_YEARS:
+        yield run_start, last, run_step
 
 
 def expected_latest_model_year(today=None):
@@ -171,9 +218,26 @@ def main():
                     help="accept all current anomalies as the new baseline")
     ap.add_argument("--staleness", action="store_true",
                     help="report models missing the expected latest model year")
+    ap.add_argument("--linear-report", action="store_true",
+                    help="list interpolated-looking price series, grouped by make")
     args = ap.parse_args()
 
     data = load_data()
+
+    if args.linear_report:
+        by_make, total = {}, 0
+        for key, desc in sorted(pricing_anomalies(data).items()):
+            if not key.startswith("linear_ramp|"):
+                continue
+            by_make.setdefault(key.split("|")[1], []).append(desc)
+            total += 1
+        print(f"{total} interpolated-looking price series "
+              f"across {len(by_make)} make(s):\n")
+        for make in sorted(by_make, key=lambda m: (-len(by_make[m]), m)):
+            print(f"  {make} ({len(by_make[make])})")
+            for desc in by_make[make]:
+                print(f"    {desc}")
+        return
 
     if args.staleness:
         expected, stale = staleness_report(data)
@@ -230,8 +294,11 @@ def main():
             print(f"  {k}")
 
     if ok:
-        print(f"OK: {len(findings)} known anomalies (all baselined), "
-              f"no structural errors.")
+        ramps = sum(1 for k in findings if k.startswith("linear_ramp|"))
+        ramp_note = (f", {ramps} interpolated-looking price series "
+                     f"(--linear-report)") if ramps else ""
+        print(f"OK: {len(findings) - ramps} known anomalies (all baselined)"
+              f"{ramp_note}, no structural errors.")
     else:
         sys.exit(1)
 

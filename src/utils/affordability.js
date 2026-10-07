@@ -343,9 +343,10 @@ export function buildMatchedVehicles(affordableResults, {
           return Math.round(monthlyFinance * monthsThisYear)
         })
 
+        const isH2 = data.fuel_type === 'hydrogen'
         const fuelYear0 = computeAnnualFuel(
           isEv, isEv ? null : mpgNum, isEv ? mpgeNum : null, state, annualMiles,
-          isEv ? liveElecRate : null
+          isEv && !isH2 ? liveElecRate : null, false, undefined, data.fuel_type ?? null
         )
         const fuelByYear = Array.from({ length: durYears }, (_, i) => Math.round(escalateAnnualFuel(fuelYear0, i, isEv)))
 

@@ -39,7 +39,7 @@ import {
   generateMaintenanceServices, generateMaintenanceByYear, generateDetailedMaintenanceByYear,
   STATE_FUEL_PRICES, STATE_ELEC_RATES,
   getPublicChargingRate, getEffectiveElecRate, computeAnnualFuel,
-  PREMIUM_PRICE_DELTA, requiresPremiumFuel,
+  PREMIUM_PRICE_DELTA, HYDROGEN_PRICE_PER_KG, requiresPremiumFuel,
   computeAnnualRegFees, projectRegistrationByYear,
   computeSalesTax, STATE_VEHICLE_SALES_TAX, STATE_DOC_FEE_AVG, getRegionalDemandPremium,
   zipToState, resolveLocation, escalateAnnualFuel,
@@ -1490,10 +1490,10 @@ export default function TCOCalculator() {
     const customOverride = customFuelPrice !== '' ? parseFloat(customFuelPrice) : null
     if (modelData) {
       // For EVs: use zip-level rate (OpenEI) when available, else state table
-      const fuelOverride = (modelData.is_ev && customOverride === null)
+      const fuelOverride = (modelData.is_ev && modelData.fuel_type !== 'hydrogen' && customOverride === null)
         ? getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate)
         : customOverride
-      setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel), liveFuelPrices))
+      setAnnualFuel(computeAnnualFuel(modelData.is_ev, modelData.mpg?.combined, modelData.mpg?.mpge_combined, resolvedState, annualMileage, fuelOverride, requiresPremiumFuel(selMake, selModel), liveFuelPrices, modelData.fuel_type))
       if (detailedMode) {
         const seg = classifySegment(selMake||'', selModel||'')
         const services = generateMaintenanceServices(modelData.is_ev, annualMileage, seg, selMake, resolvedState, vehicleAge, resolvedLaborRate, resolvedWear, selModel, selYear, selTrim)
@@ -1983,6 +1983,9 @@ export default function TCOCalculator() {
   // Derived EV flag, charging rate, and premium fuel flag — used across the render
   const catInfoForRender = !selMake ? VEHICLE_CATEGORIES.find(c => c.value === vehicleCategory) : null
   const effIsEV = modelData ? modelData.is_ev : (catInfoForRender?.isEV ?? false)
+  // Fuel-cell cars count as EVs for maintenance but buy hydrogen, not electricity
+  const effFuelType = modelData?.fuel_type ?? null
+  const effIsH2 = effFuelType === 'hydrogen'
   const isPremium = !effIsEV && !!(selMake && requiresPremiumFuel(selMake, selModel))
 
   // Free detailed calcs remaining (base allowance + email-unlock bonus credits)
@@ -3269,7 +3272,7 @@ export default function TCOCalculator() {
               )}
 
               {/* EV Charging Setup — detailed mode only (simple mode defaults to home charging) */}
-              {!simpleMode && resolvedState && !customCosts && effIsEV && (
+              {!simpleMode && resolvedState && !customCosts && effIsEV && !effIsH2 && (
                 <div className="rounded-xl border p-4 flex flex-col gap-4"
                   style={{ borderColor: 'rgba(96,200,255,0.25)', background: 'rgba(96,200,255,0.03)' }}>
 
@@ -3371,7 +3374,7 @@ export default function TCOCalculator() {
                   {/* Custom fuel/electricity price */}
                   <div className="flex flex-col gap-2">
                     <label className="input-label">
-                      {effIsEV ? 'Override Electricity Rate ($/kWh)' : 'Fuel Price ($/gallon)'}
+                      {effIsH2 ? 'Hydrogen Price ($/kg)' : effIsEV ? 'Override Electricity Rate ($/kWh)' : 'Fuel Price ($/gallon)'}
                     </label>
                     <div className="flex items-center gap-2">
                       <div className="relative flex-1">
@@ -3379,12 +3382,14 @@ export default function TCOCalculator() {
                         <input
                           type="number"
                           className="input-field pl-7"
-                          placeholder={effIsEV
+                          placeholder={effIsH2
+                            ? `${HYDROGEN_PRICE_PER_KG.toFixed(2)} (CA avg)`
+                            : effIsEV
                             ? `${getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate).toFixed(3)} (${{ home: 'home', mixed: 'blended', public: 'public DCFC' }[chargingStyle]})`
                             : `${((liveFuelPrices[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)} (${resolvedState} ${isPremium ? 'premium' : 'regular'} avg)`}
                           value={customFuelPrice}
                           onChange={e => setCustomFuelPrice(e.target.value)}
-                          step={effIsEV ? 0.001 : 0.05}
+                          step={effIsEV && !effIsH2 ? 0.001 : 0.05}
                           min={0}
                         />
                       </div>
@@ -3396,7 +3401,9 @@ export default function TCOCalculator() {
                       )}
                     </div>
                     <p className="text-[10px] text-[var(--text-muted)]">
-                      {effIsEV
+                      {effIsH2
+                        ? `Leave blank to use the California hydrogen avg ($${HYDROGEN_PRICE_PER_KG.toFixed(2)}/kg)`
+                        : effIsEV
                         ? `Leave blank to use charging-style rate ($${getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate).toFixed(3)}/kWh)`
                         : `Leave blank to use ${resolvedState} ${isPremium ? 'premium' : 'regular'} avg ($${((liveFuelPrices[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)}/gal)`}
                     </p>
@@ -3430,7 +3437,9 @@ export default function TCOCalculator() {
                   : getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate)
                 const chargingStyleLabel = { home: 'home', mixed: 'home+public', public: 'public DCFC' }[chargingStyle]
                 const effectiveGasPrice = (liveFuelPrices[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)
-                const fuelNote = effIsEV
+                const fuelNote = effIsH2
+                  ? `$${customFuelPrice ? parseFloat(customFuelPrice).toFixed(2) : HYDROGEN_PRICE_PER_KG.toFixed(2)}/kg hydrogen`
+                  : effIsEV
                   ? `$${activeElecRate.toFixed(3)}/kWh · ${customFuelPrice ? 'custom' : chargingStyleLabel}`
                   : `${(customFuelPrice && detailedMode) ? `$${customFuelPrice}` : `$${effectiveGasPrice.toFixed(2)}`}/gal`
                 const insNote = `${resolvedState} · ${selMake || 'avg'}${detailedMode && multiCarPolicy ? ' · multi-car' : ''}`
@@ -3510,13 +3519,13 @@ export default function TCOCalculator() {
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between">
                       <label className="input-label">
-                        {effIsEV ? 'Electricity Rate ($/kWh)' : 'Gas Price ($/gallon)'}
+                        {effIsH2 ? 'Hydrogen Price ($/kg)' : effIsEV ? 'Electricity Rate ($/kWh)' : 'Gas Price ($/gallon)'}
                       </label>
                       {customFuelPrice && (
                         <button
                           onClick={() => {
                             setCustomFuelPrice('')
-                            const defaultRate = effIsEV ? getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate) : null
+                            const defaultRate = effIsEV && !effIsH2 ? getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate) : null
                             setAnnualFuel(computeAnnualFuel(
                               effIsEV,
                               modelData?.mpg?.combined ?? (catInfoForRender?.mpg ?? 28),
@@ -3525,7 +3534,8 @@ export default function TCOCalculator() {
                               annualMileage,
                               defaultRate,
                               isPremium,
-                              liveFuelPrices
+                              liveFuelPrices,
+                              effFuelType
                             ))
                           }}
                           className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
@@ -3538,7 +3548,9 @@ export default function TCOCalculator() {
                       <input
                         type="number"
                         className="input-field pl-7"
-                        placeholder={effIsEV
+                        placeholder={effIsH2
+                          ? `${HYDROGEN_PRICE_PER_KG.toFixed(2)} (CA avg)`
+                          : effIsEV
                           ? `${getEffectiveElecRate(resolvedState, chargingStyle, liveElecRate).toFixed(3)} (${resolvedState} avg)`
                           : `${((liveFuelPrices[resolvedState] ?? 3.50) + (isPremium ? PREMIUM_PRICE_DELTA : 0)).toFixed(2)} (${resolvedState}${isPremium ? ' premium' : ''} avg)`}
                         value={customFuelPrice}
@@ -3554,12 +3566,15 @@ export default function TCOCalculator() {
                                 modelData?.mpg?.mpge_combined ?? (catInfoForRender?.mpge ?? null),
                                 resolvedState,
                                 annualMileage,
-                                rate
+                                rate,
+                                isPremium,
+                                liveFuelPrices,
+                                effFuelType
                               ))
                             }
                           }
                         }}
-                        step={effIsEV ? 0.001 : 0.05}
+                        step={effIsEV && !effIsH2 ? 0.001 : 0.05}
                         min={0}
                       />
                     </div>

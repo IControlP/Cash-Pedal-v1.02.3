@@ -1849,11 +1849,24 @@ export function getEffectiveElecRate(state, style, homeRateOverride = null) {
   return home
 }
 
+// Retail hydrogen, $/kg. California pump average was $34.55/kg in Oct 2024
+// (S&P Global Commodity Insights) and every US retail station is in California,
+// so there is no state table. One kg of H2 holds about one gallon of gasoline's
+// energy, which makes EPA MPGe for a fuel-cell car equal to miles per kg.
+export const HYDROGEN_PRICE_PER_KG = 35
+
 // state=null → national average defaults ($3.50/gal gas, $0.16/kWh electricity)
 // isPremium: adds PREMIUM_PRICE_DELTA to the state average when no override is set
 // stateFuelPrices: optional live prices map (defaults to static STATE_FUEL_PRICES)
-export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 15000, fuelPriceOverride = null, isPremium = false, stateFuelPrices = STATE_FUEL_PRICES) {
+// fuelType: the catalog's fuel_type; 'hydrogen' prices fuel-cell cars per kg,
+// with fuelPriceOverride read as $/kg (callers must not pass an electricity rate)
+export function computeAnnualFuel(isEV, mpgCombined, mpgeCombined, state, miles = 15000, fuelPriceOverride = null, isPremium = false, stateFuelPrices = STATE_FUEL_PRICES, fuelType = null) {
   const KWH_PER_GAL = 33.7
+  if (fuelType === 'hydrogen') {
+    const milesPerKg = mpgeCombined ?? 70
+    const price = fuelPriceOverride !== null ? fuelPriceOverride : HYDROGEN_PRICE_PER_KG
+    return Math.round((miles / milesPerKg) * price / 50) * 50
+  }
   if (isEV) {
     const mpge = mpgeCombined ?? 100
     const annualKwh = miles / (mpge / KWH_PER_GAL)

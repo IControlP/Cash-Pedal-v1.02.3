@@ -779,6 +779,7 @@ export default function TCOFlow() {
   const isEV         = modelData?.is_ev ?? false
   const mpgCombined  = modelData?.mpg?.combined ?? null
   const mpgeCombined = modelData?.mpg?.mpge_combined ?? null
+  const fuelType     = modelData?.fuel_type ?? null
 
   // Available options
   const availableMakes  = useMemo(() => getMakesForYear(selYear), [selYear])
@@ -849,7 +850,7 @@ export default function TCOFlow() {
     const annualFuel   = computeAnnualFuel(
       isEV, mpgCombined, mpgeCombined, resolvedState, annualMileage,
       fuelOverride, !isEV && !!selMake && requiresPremiumFuel(selMake, selModel || ''),
-      STATE_FUEL_PRICES,
+      STATE_FUEL_PRICES, fuelType,
     )
 
     const segment  = selMake && selModel ? classifySegment(selMake, selModel) : 'sedan'
@@ -893,7 +894,7 @@ export default function TCOFlow() {
     }
   }, [
     price, step, downPct, apr, loanTerm, selYear, selMake, selModel,
-    isEV, mpgCombined, mpgeCombined, resolvedState, annualMileage, fuelPriceOverride,
+    isEV, mpgCombined, mpgeCombined, fuelType, resolvedState, annualMileage, fuelPriceOverride,
   ])
 
   // ── Step handlers ───────────────────────────────────────

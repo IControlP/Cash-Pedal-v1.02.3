@@ -19,19 +19,8 @@ import {
 } from '../utils/vehicleCosts'
 import {
   fmt, monthlyPayment, DEFAULT_ANNUAL_MILES, estimateBasicMonthlyCosts,
-  US_STATES, loanTermOptions, CURRENT_YEAR,
+  US_STATES, loanTermOptions, CURRENT_YEAR, estimateLeaseMonthly,
 } from '../utils/affordability'
-
-// Estimated monthly lease payment using standard dealer math
-// residual ≈ 55% (36mo), 60% (24mo), 50% (48mo); money factor ≈ 0.00250 (~6% APR)
-function estimateLeaseMonthly(msrp, capReduction, termMonths) {
-  const residualPct = termMonths <= 24 ? 0.60 : termMonths <= 36 ? 0.55 : 0.50
-  const residual = msrp * residualPct
-  const capCost = msrp - capReduction
-  const depreciation = (capCost - residual) / termMonths
-  const financeCharge = (capCost + residual) * 0.00250
-  return Math.max(0, Math.round(depreciation + financeCharge))
-}
 
 // ── Cost estimation ──────────────────────────────────────
 // Shared cost helpers (estimateBasicMonthlyCosts, monthlyPayment, US_STATES,

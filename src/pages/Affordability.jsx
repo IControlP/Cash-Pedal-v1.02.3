@@ -18,7 +18,7 @@ import {
   TIER_STYLES, RECOMMENDATION_REASONING, pctOfIncome, vehicleCostLines,
   solveAffordablePrice, buildMatchedVehicles,
   VEHICLE_CATEGORY_FILTERS, matchesCategory, isCategoryValue,
-  US_AVG_OWNERSHIP_YEARS, OWNERSHIP_YEAR_OPTIONS,
+  US_AVG_OWNERSHIP_YEARS, OWNERSHIP_YEAR_OPTIONS, LEASE_TERM_OPTIONS,
 } from '../utils/affordability'
 
 // Free Pro previews before the paywall — shared counter with /salary so a
@@ -65,11 +65,19 @@ export default function Affordability() {
   // Pro mode
   const [proMode, setProMode] = useState(false)
 
+  // Buy (loan) vs. lease — can be pre-selected via ?mode=lease
+  const [mode, setMode] = useState(() => searchParams.get('mode') === 'lease' ? 'lease' : 'buy')
+  const isLease = mode === 'lease'
+
   // Loan assumptions + mileage
   const [downPct, setDownPct] = useState(20)
   const [loanTerm, setLoanTerm] = useState(48)
   const [rate, setRate] = useState(6.5)
   const [annualMiles, setAnnualMiles] = useState(DEFAULT_ANNUAL_MILES)
+
+  // Lease assumptions (cash due at signing + term)
+  const [leaseDown, setLeaseDown] = useState(0)
+  const [leaseTerm, setLeaseTerm] = useState(36)
 
   // Pick-list controls — the category filter can be pre-selected via ?category=
   // (e.g. deep-linked from the Car Survey once it knows the visitor's body type).
@@ -169,16 +177,16 @@ export default function Affordability() {
   }
 
   const affordableResults = useMemo(
-    () => solveAffordablePrice(knownSalary, { userState, annualMiles, rate, loanTerm, downPct }),
-    [knownSalary, userState, annualMiles, rate, loanTerm, downPct]
+    () => solveAffordablePrice(knownSalary, { userState, annualMiles, rate, loanTerm, downPct, mode, leaseDown, leaseTerm }),
+    [knownSalary, userState, annualMiles, rate, loanTerm, downPct, mode, leaseDown, leaseTerm]
   )
 
   const matchedVehicles = useMemo(
     () => buildMatchedVehicles(affordableResults, {
       pickYear, userState, annualMiles, rate, loanTerm, proMode, ownershipYears,
-      resolvedLaborRate, resolvedWear, liveElecRate,
+      resolvedLaborRate, resolvedWear, liveElecRate, mode, leaseDown, leaseTerm,
     }),
-    [affordableResults, pickYear, userState, annualMiles, rate, loanTerm, proMode, ownershipYears, resolvedLaborRate, resolvedWear, liveElecRate]
+    [affordableResults, pickYear, userState, annualMiles, rate, loanTerm, proMode, ownershipYears, resolvedLaborRate, resolvedWear, liveElecRate, mode, leaseDown, leaseTerm]
   )
 
   const filteredVehicles = useMemo(() => {
@@ -222,22 +230,26 @@ export default function Affordability() {
     const key = `${v.make}|${v.model}|${v.year}`
     if (addedToCompare.has(key)) return
 
-    const downPayment = v.ownershipCost ? v.ownershipCost.downPayment : Math.round(v.basePrice * 0.20)
-    const resaleValue = v.ownershipCost ? v.ownershipCost.resaleValue : null
+    const downPayment = v.ownershipCost
+      ? v.ownershipCost.downPayment
+      : (v.isLease ? leaseDown : Math.round(v.basePrice * 0.20))
+    const resaleValue = v.ownershipCost && !v.isLease ? v.ownershipCost.resaleValue : null
     const valueRetentionPct = resaleValue != null ? Math.round((resaleValue / v.basePrice) * 100) : null
+    const entryYears = v.isLease ? Math.ceil(leaseTerm / 12) : ownershipYears
 
     const entry = {
       id: safeUUID(),
       name: `${v.year} ${v.make} ${v.model}`,
       addedAt: new Date().toISOString(),
-      isLease: false,
+      isLease: !!v.isLease,
       price: v.basePrice,
       downPayment,
       loanTerm,
       rate,
-      ownershipYears,
+      ownershipYears: entryYears,
+      ...(v.isLease ? { leaseMonthlyPayment: v.monthlyPayment, leaseTerm } : {}),
       totalAnnualCost: v.annualTotal,
-      totalOwnershipCost: v.ownershipCost ? v.ownershipCost.total : v.annualTotal * ownershipYears,
+      totalOwnershipCost: v.ownershipCost ? v.ownershipCost.total : v.annualTotal * entryYears,
       make: v.make, model: v.model, year: v.year,
       mpgCombined: null,
       cargoSqFt: v.specs.cargo_cu_ft ?? null,
@@ -323,6 +335,26 @@ export default function Affordability() {
                   </svg>
                   Pro
                 </button>
+              </div>
+
+              {/* Buy / Lease toggle */}
+              <div className="flex gap-1 p-1 rounded-lg"
+                style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                {[
+                  { value: 'buy', label: 'Buy / Finance' },
+                  { value: 'lease', label: 'Lease' },
+                ].map(opt => (
+                  <button key={opt.value}
+                    onClick={() => setMode(opt.value)}
+                    aria-pressed={mode === opt.value}
+                    className="flex-1 py-2 rounded-md text-sm font-semibold transition-all min-h-[44px] active:opacity-70"
+                    style={{
+                      background: mode === opt.value ? 'var(--accent)' : 'transparent',
+                      color: mode === opt.value ? '#000' : 'var(--text-muted)',
+                    }}>
+                    {opt.label}
+                  </button>
+                ))}
               </div>
 
               {/* Salary */}
@@ -440,12 +472,45 @@ export default function Affordability() {
 
               <div className="h-px bg-[var(--border)]" />
 
-              {/* Loan assumptions */}
+              {/* Loan / lease assumptions */}
               <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] -mb-2">
-                Financing Assumptions
+                {isLease ? 'Lease Assumptions' : 'Financing Assumptions'}
               </p>
 
+              {isLease && (
+                <>
+                  {/* Due at signing */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <label className="input-label">Due at Signing</label>
+                      <span className="text-sm font-bold text-white">{fmt(leaseDown)}</span>
+                    </div>
+                    <input
+                      type="range" min={0} max={20000} step={500}
+                      value={leaseDown}
+                      onChange={e => setLeaseDown(Number(e.target.value))}
+                      style={{ background: `linear-gradient(to right, var(--accent) ${(leaseDown / 20000) * 100}%, var(--border) ${(leaseDown / 20000) * 100}%)` }}
+                    />
+                    <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+                      <span>$0 (no drive-off)</span><span>$20,000</span>
+                    </div>
+                  </div>
+
+                  {/* Lease term */}
+                  <div className="flex flex-col gap-2">
+                    <label className="input-label">Lease Term</label>
+                    <select value={leaseTerm} onChange={e => setLeaseTerm(Number(e.target.value))} className="input-field">
+                      {LEASE_TERM_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                    <p className="text-[10px] text-[var(--text-muted)]">
+                      Payments are estimated with standard dealer math (≈{leaseTerm <= 24 ? 60 : leaseTerm <= 36 ? 55 : 50}% residual, ≈6% APR money factor).
+                    </p>
+                  </div>
+                </>
+              )}
+
               {/* Down payment % */}
+              {!isLease && (
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <label className="input-label">Down Payment</label>
@@ -461,8 +526,10 @@ export default function Affordability() {
                   <span>0%</span><span className="font-semibold text-[var(--accent)]">20% recommended</span><span>100%</span>
                 </div>
               </div>
+              )}
 
               {/* Loan term */}
+              {!isLease && (
               <div className="flex flex-col gap-2">
                 <label className="input-label">Loan Term</label>
                 <select value={loanTerm} onChange={e => setLoanTerm(Number(e.target.value))} className="input-field">
@@ -472,8 +539,10 @@ export default function Affordability() {
                   <p className="text-xs text-yellow-500">⚠ The 20/4/10 rule recommends 48 months max to keep total cost down.</p>
                 )}
               </div>
+              )}
 
               {/* Interest rate */}
+              {!isLease && (
               <div className="flex flex-col gap-2">
                 <label className="input-label">Annual Interest Rate</label>
                 <div className="relative">
@@ -494,6 +563,7 @@ export default function Affordability() {
                   style={{ background: `linear-gradient(to right, var(--accent) ${(rate / 25) * 100}%, var(--border) ${(rate / 25) * 100}%)` }}
                 />
               </div>
+              )}
 
               {/* Annual mileage */}
               <div className="flex flex-col gap-2">
@@ -512,6 +582,9 @@ export default function Affordability() {
                   <span className="font-semibold text-[var(--accent)]">13,500 avg</span>
                   <span>30,000</span>
                 </div>
+                {isLease && annualMiles > 15000 && (
+                  <p className="text-xs text-yellow-500">⚠ Most leases cap mileage at 10,000–15,000 mi/yr; overage typically runs $0.15–$0.25 per mile and isn&apos;t included here.</p>
+                )}
               </div>
             </div>
 
@@ -550,7 +623,10 @@ export default function Affordability() {
                     </div>
                   ))}
                   <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
-                    Assumes {downPct}% down · {loanTerm}-month loan · {rate}% APR · includes estimated insurance,
+                    {isLease
+                      ? <>Max MSRP · {fmt(leaseDown)} due at signing · {leaseTerm}-month lease · </>
+                      : <>Assumes {downPct}% down · {loanTerm}-month loan · {rate}% APR · </>}
+                    includes estimated insurance,
                     fuel, maintenance &amp; registration.{userState ? ` ${userState} rates applied.` : ' National average rates.'}
                   </p>
                 </div>
@@ -565,19 +641,33 @@ export default function Affordability() {
 
               {/* Rule explainer */}
               <div className="card border-[var(--border)]">
-                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">The 20/4/10 Rule</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)] mb-3">
+                  {isLease ? 'Lease Affordability Guide' : 'The 20/4/10 Rule'}
+                </p>
                 <div className="flex flex-col gap-2.5">
-                  {[
-                    { num: '20%', desc: 'Minimum down payment' },
-                    { num: '4 yrs', desc: 'Maximum loan term' },
-                    { num: '10%', desc: 'Max % of gross income for all vehicle costs' },
-                  ].map(({ num, desc }) => (
+                  {(isLease
+                    ? [
+                        { num: '10%', desc: 'Conservative — all vehicle costs ≤ 10% of gross income' },
+                        { num: '15%', desc: 'Comfortable — most can manage without strain' },
+                        { num: '20%', desc: 'Aggressive — stretched but feasible for some' },
+                      ]
+                    : [
+                        { num: '20%', desc: 'Minimum down payment' },
+                        { num: '4 yrs', desc: 'Maximum loan term' },
+                        { num: '10%', desc: 'Max % of gross income for all vehicle costs' },
+                      ]
+                  ).map(({ num, desc }) => (
                     <div key={num} className="flex items-center gap-3">
                       <span className="font-display font-bold text-[var(--accent)] text-sm w-12 shrink-0">{num}</span>
                       <span className="text-sm text-[var(--text-muted)]">{desc}</span>
                     </div>
                   ))}
                 </div>
+                {isLease && (
+                  <p className="text-[10px] text-[var(--text-muted)] mt-3">
+                    Note: Leases build no equity. At lease end you return the vehicle or buy it at residual value.
+                  </p>
+                )}
               </div>
 
               <Link to="/salary" className="btn-ghost text-sm justify-center">
@@ -598,7 +688,9 @@ export default function Affordability() {
                     Cars within your budget
                   </h2>
                   <p className="text-xs text-[var(--text-muted)] mt-1">
-                    {pickYear} model year · Base MSRP fits your {downPct}% down · {loanTerm}-mo loan · {rate}% APR · includes operating costs
+                    {pickYear} model year · {isLease
+                      ? `Base MSRP leased with ${fmt(leaseDown)} due at signing · ${leaseTerm}-mo term`
+                      : `Base MSRP fits your ${downPct}% down · ${loanTerm}-mo loan · ${rate}% APR`} · includes operating costs
                     {userState ? ` · ${userState} rates` : ''}
                   </p>
                 </div>
@@ -627,7 +719,7 @@ export default function Affordability() {
                       {SORT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                     </select>
                   </div>
-                  {proMode && (
+                  {proMode && !isLease && (
                     <div className="flex items-center gap-2">
                       <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wide whitespace-nowrap">
                         Ownership Duration

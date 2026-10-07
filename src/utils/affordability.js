@@ -33,6 +33,40 @@ export function monthlyPayment(principal, annualRate, months) {
   return (principal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1)
 }
 
+// ── Lease math ───────────────────────────────────────────────────────────
+// Standard dealer formula: residual ≈ 60% (≤24mo), 55% (≤36mo), 50% (longer);
+// money factor 0.00250 (~6% APR). Shared by /salary and /affordability.
+const LEASE_MONEY_FACTOR = 0.00250
+
+function leaseResidualPct(termMonths) {
+  return termMonths <= 24 ? 0.60 : termMonths <= 36 ? 0.55 : 0.50
+}
+
+export const LEASE_TERM_OPTIONS = [
+  { value: 24, label: '24 months' },
+  { value: 36, label: '36 months' },
+  { value: 48, label: '48 months' },
+]
+
+// Estimated monthly lease payment for a given MSRP, cap-cost reduction (cash
+// due at signing) and term.
+export function estimateLeaseMonthly(msrp, capReduction, termMonths) {
+  const residual = msrp * leaseResidualPct(termMonths)
+  const capCost = msrp - capReduction
+  const depreciation = (capCost - residual) / termMonths
+  const financeCharge = (capCost + residual) * LEASE_MONEY_FACTOR
+  return Math.max(0, Math.round(depreciation + financeCharge))
+}
+
+// Inverse of estimateLeaseMonthly: the MSRP whose lease payment equals
+// `payment`. Payment is linear in MSRP, so this solves in closed form.
+export function leaseMsrpForPayment(payment, capReduction, termMonths) {
+  const pct = leaseResidualPct(termMonths)
+  const perMsrp = (1 - pct) / termMonths + (1 + pct) * LEASE_MONEY_FACTOR
+  const perDown = 1 / termMonths + LEASE_MONEY_FACTOR
+  return (payment + capReduction * perDown) / perMsrp
+}
+
 export const DEFAULT_ANNUAL_MILES = 13500
 
 // Average length of new-vehicle ownership in the US (~8 years, S&P Global
@@ -206,7 +240,9 @@ export function pctOfIncome(v, salary) {
 // Shared cost-breakdown lines for a matched vehicle — used by both the
 // recommended pick and the matching-vehicles grid so the two stay in sync.
 export function vehicleCostLines(v, rate, loanTerm) {
-  const financeLabel = `Financing (80% · ${loanTerm}mo · ${rate}%)`
+  const financeLabel = v.isLease
+    ? `Lease payments (${v.leaseTerm}mo)`
+    : `Financing (80% · ${loanTerm}mo · ${rate}%)`
   // Annual total-cost range across the ownership duration (loan payments fall
   // off once the car is paid off; in Pro mode operating costs also escalate).
   const rng = v.annualRange
@@ -220,17 +256,20 @@ export function vehicleCostLines(v, rate, loanTerm) {
   if (v.ownershipCost) {
     const yrs = v.ownershipCost.years
     return {
-      header: `Est. all-in cost — ${yrs} yr${yrs !== 1 ? 's' : ''}`,
+      header: v.isLease
+        ? `Est. all-in cost — ${v.leaseTerm}-mo lease`
+        : `Est. all-in cost — ${yrs} yr${yrs !== 1 ? 's' : ''}`,
       lines: [
         { label: financeLabel, val: v.ownershipCost.financing },
-        { label: 'Down payment (20%)', val: v.ownershipCost.downPayment },
+        { label: v.isLease ? 'Due at signing' : 'Down payment (20%)', val: v.ownershipCost.downPayment },
         { label: v.is_ev ? 'Electricity' : 'Fuel', val: v.ownershipCost.fuel },
         { label: 'Insurance', val: v.ownershipCost.insurance },
         { label: 'Maintenance', val: v.ownershipCost.maintenance },
         { label: 'Registration', val: v.ownershipCost.registration },
       ],
-      credit: { label: `Est. resale value (yr ${yrs})`, val: v.ownershipCost.resaleValue },
-      totalLabel: `All-In Cost (${yrs}-yr)`,
+      // A lease builds no equity — the car goes back at term end, so no resale credit.
+      credit: v.isLease ? null : { label: `Est. resale value (yr ${yrs})`, val: v.ownershipCost.resaleValue },
+      totalLabel: v.isLease ? `All-In Cost (${v.leaseTerm}-mo)` : `All-In Cost (${yrs}-yr)`,
       totalVal: v.ownershipCost.total,
       range,
     }
@@ -253,8 +292,13 @@ export function vehicleCostLines(v, rate, loanTerm) {
 
 // Reverse mode: given a salary, solve for the max affordable vehicle price at
 // each spending-tier threshold (10% / 15% / 20% of gross income). Returns null
-// for salaries under $10k. opts = { userState, annualMiles, rate, loanTerm, downPct }.
-export function solveAffordablePrice(salary, { userState, annualMiles, rate, loanTerm, downPct }) {
+// for salaries under $10k. opts = { userState, annualMiles, rate, loanTerm, downPct,
+// mode ('buy' | 'lease'), leaseDown, leaseTerm } — in lease mode the result is
+// the max MSRP whose lease payment plus running costs fits each threshold.
+export function solveAffordablePrice(salary, {
+  userState, annualMiles, rate, loanTerm, downPct,
+  mode = 'buy', leaseDown = 0, leaseTerm = 36,
+}) {
   const s = Number(salary)
   if (!s || s < 10000) return null
 
@@ -265,6 +309,10 @@ export function solveAffordablePrice(salary, { userState, annualMiles, rate, loa
       const ops = estimateBasicMonthlyCosts(estPrice, userState || null, annualMiles)
       const loanBudget = maxMonthly - ops.total
       if (loanBudget <= 0) return 0
+      if (mode === 'lease') {
+        estPrice = Math.max(500, leaseMsrpForPayment(loanBudget, leaseDown, leaseTerm))
+        continue
+      }
       const r = rate / 12 / 100
       const n = loanTerm
       const factor = r > 0
@@ -284,11 +332,14 @@ export function solveAffordablePrice(salary, { userState, annualMiles, rate, loa
 
 // Build the matched-vehicle list for a resolved affordable-price result.
 // opts = { pickYear, userState, annualMiles, rate, loanTerm, proMode,
-//          ownershipYears, resolvedLaborRate, resolvedWear, liveElecRate }.
+//          ownershipYears, resolvedLaborRate, resolvedWear, liveElecRate,
+//          mode ('buy' | 'lease'), leaseDown, leaseTerm }.
 export function buildMatchedVehicles(affordableResults, {
   pickYear, userState, annualMiles, rate, loanTerm, proMode, ownershipYears,
   resolvedLaborRate, resolvedWear, liveElecRate,
+  mode = 'buy', leaseDown = 0, leaseTerm = 36,
 }) {
+  const isLease = mode === 'lease'
   if (!affordableResults) return []
   const maxPrice = affordableResults.aggressive || 0
   if (maxPrice <= 0) return []
@@ -314,7 +365,9 @@ export function buildMatchedVehicles(affordableResults, {
         .filter((e, i, arr) => arr.findIndex(x => x.name === e.name) === i)
 
       const ops = estimateBasicMonthlyCosts(basePrice, userState || null, annualMiles)
-      const monthlyFinance = monthlyPayment(basePrice * 0.80, rate, loanTerm)
+      const monthlyFinance = isLease
+        ? estimateLeaseMonthly(basePrice, leaseDown, leaseTerm)
+        : monthlyPayment(basePrice * 0.80, rate, loanTerm)
       const annualFinancing = Math.round(monthlyFinance * 12)
       const annualFuel = ops.fuel * 12
       const annualInsurance = ops.insurance * 12
@@ -329,7 +382,9 @@ export function buildMatchedVehicles(affordableResults, {
       let ownershipCost = null
       let annualRange = null
       if (proMode) {
-        const durYears = Math.max(1, ownershipYears)
+        // A lease is costed over its own term (24/36/48 mo → whole years).
+        const durYears = isLease ? Math.ceil(leaseTerm / 12) : Math.max(1, ownershipYears)
+        const finTerm = isLease ? leaseTerm : loanTerm
         const state = userState || null
         const isEv = !!data.is_ev
         const segment = isEv ? 'electric' : classifySegment(make, model)
@@ -339,7 +394,7 @@ export function buildMatchedVehicles(affordableResults, {
 
         // Financing tapers to $0 once the loan is paid off within the duration.
         const financingByYear = Array.from({ length: durYears }, (_, i) => {
-          const monthsThisYear = Math.min(12, Math.max(0, loanTerm - i * 12))
+          const monthsThisYear = Math.min(12, Math.max(0, finTerm - i * 12))
           return Math.round(monthlyFinance * monthsThisYear)
         })
 
@@ -362,8 +417,11 @@ export function buildMatchedVehicles(affordableResults, {
 
         const sum = arr => arr.reduce((s, x) => s + x, 0)
         const financingTotal = sum(financingByYear)
-        const downPaymentAmt = Math.round(basePrice * 0.20)
-        const resaleValue = Math.round(estimateCurrentValue(basePrice, make, model, durYears, null, state))
+        const downPaymentAmt = isLease ? Math.round(leaseDown) : Math.round(basePrice * 0.20)
+        // No equity in a lease — the car goes back at term end.
+        const resaleValue = isLease
+          ? 0
+          : Math.round(estimateCurrentValue(basePrice, make, model, durYears, null, state))
         const totalPaid = financingTotal + downPaymentAmt + sum(fuelByYear) + sum(insuranceByYear) + sum(maintByYear) + sum(regByYear)
 
         ownershipCost = {
@@ -393,6 +451,8 @@ export function buildMatchedVehicles(affordableResults, {
       entries.push({
         make, model, type: data.type, is_ev: data.is_ev,
         basePrice, year: modelYear, tier,
+        isLease, leaseTerm: isLease ? leaseTerm : null,
+        monthlyPayment: Math.round(monthlyFinance),
         specs: data.specs || {},
         knownIssues,
         annualFinancing, annualFuel, annualInsurance, annualMaintenance, annualRegistration,

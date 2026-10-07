@@ -19,7 +19,11 @@
           "ADX A-SPEC Advance": 44000
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 26,
+        "highway": 30,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 192,
         "seats": 5,
@@ -82,7 +86,11 @@
           "ILX A-SPEC": 33920
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 34,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 201,
         "seats": 5,
@@ -122,7 +130,11 @@
           "Integra Type S": 54625
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 28,
+        "highway": 36,
+        "combined": 31
+      },
       "specs": {
         "horsepower": 200,
         "seats": 5,
@@ -218,7 +230,11 @@
           "MDX Type S": 73340
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 19,
+        "highway": 25,
+        "combined": 21
+      },
       "specs": {
         "horsepower": 290,
         "seats": 7,
@@ -252,7 +268,11 @@
           "NSX Type S": 171130
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 21,
+        "highway": 22,
+        "combined": 21
+      },
       "specs": {
         "horsepower": 573,
         "seats": 2,
@@ -336,7 +356,11 @@
           "RDX Advance Package": 52275
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 21,
+        "highway": 26,
+        "combined": 23
+      },
       "specs": {
         "horsepower": 272,
         "seats": 5,
@@ -434,7 +458,11 @@
           "TLX Type S": 56400
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 21,
+        "highway": 29,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 272,
         "seats": 5,
@@ -476,7 +504,11 @@
           "4C Spider": 78895
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 34,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 237,
         "seats": 2,
@@ -556,7 +588,11 @@
           "Giulia Quadrifoglio": 82660
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 32,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 268,
         "seats": 5,
@@ -629,7 +665,11 @@
           "Stelvio Quadrifoglio": 90860
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 22,
+        "highway": 28,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 280,
         "seats": 5,
@@ -772,7 +812,11 @@
           "S3": 50840
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 34,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 201,
         "seats": 5,
@@ -1019,7 +1063,11 @@
           "A5 Prestige": 56700
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 22,
+        "highway": 32,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 261,
         "seats": 4,
@@ -1135,7 +1183,11 @@
           "S6": 94195
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 29,
+        "combined": 23
+      },
       "specs": {
         "horsepower": 261,
         "seats": 5,
@@ -1210,7 +1262,11 @@
           "S7": 92400
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 22,
+        "highway": 30,
+        "combined": 25
+      },
       "specs": {
         "horsepower": 335,
         "seats": 5,
@@ -1314,7 +1370,11 @@
           "S8": 124945
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 19,
+        "highway": 27,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 335,
         "seats": 5,
@@ -1390,7 +1450,11 @@
           "Q3 45 TFSI Prestige": 47865
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 22,
+        "highway": 29,
+        "combined": 25
+      },
       "specs": {
         "horsepower": 228,
         "seats": 5,
@@ -1543,7 +1607,11 @@
           "SQ5 Sportback": 65395
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 21,
+        "highway": 29,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 261,
         "seats": 5,
@@ -1635,7 +1703,11 @@
           "Q7 55 TFSI Prestige": 80155
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 261,
         "seats": 7,
@@ -1689,7 +1761,11 @@
           "SQ8": 98295
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 17,
+        "highway": 23,
+        "combined": 19
+      },
       "specs": {
         "horsepower": 335,
         "seats": 5,
@@ -1741,7 +1817,11 @@
           "RS7": 125665
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 14,
+        "highway": 21,
+        "combined": 16
+      },
       "specs": {
         "horsepower": 591,
         "seats": 5,
@@ -1790,7 +1870,11 @@
           "S4": 62095
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 29,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 349,
         "seats": 5,
@@ -1852,7 +1936,11 @@
           "S5 Prestige": 70900
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 29,
+        "combined": 23
+      },
       "specs": {
         "horsepower": 349,
         "seats": 4,
@@ -1893,7 +1981,9 @@
           "e-tron 55 Prestige": 78400
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 75
+      },
       "specs": {
         "horsepower": 355,
         "seats": 5,
@@ -1930,7 +2020,9 @@
           "SQ8 e-tron Premium Plus": 99835
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 76
+      },
       "specs": {
         "horsepower": 402,
         "seats": 5,
@@ -2031,7 +2123,11 @@
           "R8 V10 Spyder Performance": 239000
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 14,
+        "highway": 21,
+        "combined": 17
+      },
       "specs": {
         "horsepower": 562,
         "seats": 2,
@@ -2202,7 +2298,11 @@
           "530i xDrive": 64470
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 28,
+        "highway": 35,
+        "combined": 30
+      },
       "specs": {
         "horsepower": 248,
         "seats": 5,
@@ -2258,7 +2358,11 @@
           "540i xDrive": 69905
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 26,
+        "highway": 32,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 335,
         "seats": 5,
@@ -2315,7 +2419,11 @@
           "750Li xDrive": 107400
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 17,
+        "highway": 24,
+        "combined": 19
+      },
       "specs": {
         "horsepower": 375,
         "seats": 5,
@@ -2353,7 +2461,11 @@
           "760i xDrive": 124700
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 31,
+        "combined": 27
+      },
       "specs": {
         "horsepower": 375,
         "seats": 5,
@@ -2410,7 +2522,11 @@
           "M3 Competition": 79950
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 16,
+        "highway": 23,
+        "combined": 19
+      },
       "specs": {
         "horsepower": 473,
         "seats": 5,
@@ -2480,7 +2596,11 @@
           "M4 Competition": 81490
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 16,
+        "highway": 23,
+        "combined": 18
+      },
       "specs": {
         "horsepower": 473,
         "seats": 4,
@@ -2541,7 +2661,11 @@
           "M5 Competition": 120950
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 15,
+        "highway": 21,
+        "combined": 17
+      },
       "specs": {
         "horsepower": 600,
         "seats": 5,
@@ -2605,7 +2729,11 @@
           "M8 Competition Gran Coupe": 147600
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 15,
+        "highway": 22,
+        "combined": 17
+      },
       "specs": {
         "horsepower": 600,
         "seats": 4,
@@ -2669,7 +2797,11 @@
           "X1 xDrive28i": 45510
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 33,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 241,
         "seats": 5,
@@ -2856,7 +2988,11 @@
           "X5 M Competition": 120130
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 24,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 335,
         "seats": 5,
@@ -2917,7 +3053,11 @@
           "M60i": 116950
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 22,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 375,
         "seats": 7,
@@ -2969,7 +3109,9 @@
           "i3s with Range Extender": 51500
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 113
+      },
       "specs": {
         "horsepower": 170,
         "seats": 4,
@@ -3009,7 +3151,9 @@
           "i4 M50": 69600
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 101
+      },
       "specs": {
         "horsepower": 335,
         "seats": 5,
@@ -3045,7 +3189,9 @@
           "iX M60": 114390
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 87
+      },
       "specs": {
         "horsepower": 516,
         "seats": 5,
@@ -3076,7 +3222,9 @@
           "M60 xDrive": 102390
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 98
+      },
       "specs": {
         "horsepower": 335,
         "seats": 5,
@@ -3159,7 +3307,11 @@
           "Enclave Avenir": 60200
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 24,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 310,
         "seats": 7,
@@ -3224,7 +3376,11 @@
           "Encore Essence": 29095
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 31,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 155,
         "seats": 5,
@@ -3275,7 +3431,11 @@
           "Encore GX Essence": 32695
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 29,
+        "highway": 31,
+        "combined": 30
+      },
       "specs": {
         "horsepower": 137,
         "seats": 5,
@@ -3357,7 +3517,11 @@
           "Envision Avenir": 45200
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 22,
+        "highway": 28,
+        "combined": 25
+      },
       "specs": {
         "horsepower": 228,
         "seats": 5,
@@ -3403,7 +3567,11 @@
           "LaCrosse Sport Touring": 42465
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 30,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 310,
         "seats": 5,
@@ -3464,7 +3632,11 @@
           "Regal TourX GS": 37145
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 21,
+        "highway": 29,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 250,
         "seats": 5,
@@ -3533,7 +3705,11 @@
           "ATS-V Coupe": 64965
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 28,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 272,
         "seats": 5,
@@ -3596,7 +3772,11 @@
           "CT4-V Blackwing": 64570
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 29,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 237,
         "seats": 5,
@@ -3659,7 +3839,11 @@
           "CT5-V Blackwing": 94085
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 27,
+        "combined": 21
+      },
       "specs": {
         "horsepower": 237,
         "seats": 5,
@@ -3715,7 +3899,11 @@
           "CTS-V": 85790
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 28,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 268,
         "seats": 5,
@@ -3843,7 +4031,11 @@
           "Escalade-V": 159690
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 14,
+        "highway": 18,
+        "combined": 16
+      },
       "specs": {
         "horsepower": 420,
         "seats": 7,
@@ -3871,7 +4063,11 @@
           "SRX Platinum Collection": 55755
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 16,
+        "highway": 24,
+        "combined": 18
+      },
       "specs": {
         "horsepower": 308,
         "seats": 5,
@@ -3922,7 +4118,11 @@
           "XT4 Sport": 45995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 28,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 235,
         "seats": 5,
@@ -3994,7 +4194,11 @@
           "XT5 Sport": 58010
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 310,
         "seats": 5,
@@ -4046,7 +4250,11 @@
           "XT6 Platinum": 72190
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 310,
         "seats": 7,
@@ -4070,7 +4278,9 @@
           "Lyriq Signature Sport": 68300
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 87
+      },
       "specs": {
         "horsepower": 365,
         "seats": 5,
@@ -4148,7 +4358,11 @@
           "Blazer RS": 48585
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 26,
+        "combined": 23
+      },
       "specs": {
         "horsepower": 228,
         "seats": 5,
@@ -4242,7 +4456,11 @@
           "Camaro ZL1 1LE": 72495
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 16,
+        "highway": 25,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 275,
         "seats": 4,
@@ -4356,7 +4574,11 @@
           "Colorado ZR2": 47965
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 17,
+        "highway": 20,
+        "combined": 18
+      },
       "specs": {
         "horsepower": 237,
         "seats": 5,
@@ -4537,7 +4759,11 @@
           "Cruze Diesel": 25195
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 28,
+        "highway": 38,
+        "combined": 32
+      },
       "specs": {
         "horsepower": 153,
         "seats": 5,
@@ -4676,7 +4902,11 @@
           "Impala Premier": 36685
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 28,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 305,
         "seats": 5,
@@ -4931,7 +5161,11 @@
           "Sonic RS": 21745
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 26,
+        "highway": 34,
+        "combined": 29
+      },
       "specs": {
         "horsepower": 138,
         "seats": 5,
@@ -4987,7 +5221,11 @@
           "Spark Premier": 18475
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 30,
+        "highway": 38,
+        "combined": 33
+      },
       "specs": {
         "horsepower": 98,
         "seats": 4,
@@ -5087,7 +5325,11 @@
           "Suburban High Country": 80150
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 15,
+        "highway": 20,
+        "combined": 16
+      },
       "specs": {
         "horsepower": 355,
         "seats": 9,
@@ -5194,7 +5436,11 @@
           "Tahoe High Country": 84200
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 15,
+        "highway": 20,
+        "combined": 17
+      },
       "specs": {
         "horsepower": 355,
         "seats": 9,
@@ -5299,7 +5545,11 @@
           "Traverse High Country": 56100
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 25,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 310,
         "seats": 8,
@@ -5378,7 +5628,11 @@
           "Trax Premier": 30230
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 28,
+        "highway": 32,
+        "combined": 30
+      },
       "specs": {
         "horsepower": 137,
         "seats": 5,
@@ -5412,7 +5666,9 @@
           "RS AWD": 47145
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 103
+      },
       "specs": {
         "horsepower": 210,
         "seats": 5,
@@ -5446,7 +5702,9 @@
           "SS AWD": 67645
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 94
+      },
       "specs": {
         "horsepower": 288,
         "seats": 5,
@@ -5518,7 +5776,11 @@
           "300S": 36795
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 17,
+        "highway": 26,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 292,
         "seats": 5,
@@ -5634,7 +5896,11 @@
           "Pacifica Pinnacle": 54910
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 26,
+        "combined": 21
+      },
       "specs": {
         "horsepower": 287,
         "seats": 8,
@@ -5672,7 +5938,11 @@
           "Voyager LX": 39995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 19,
+        "highway": 28,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 287,
         "seats": 7,
@@ -5764,7 +6034,11 @@
           "SRT Hellcat Redeye": 76995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 14,
+        "highway": 23,
+        "combined": 17
+      },
       "specs": {
         "horsepower": 305,
         "seats": 5,
@@ -5861,7 +6135,11 @@
           "Charger Sixpack Scat Pack 4-Door": 57690
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 16,
+        "highway": 24,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 292,
         "seats": 5,
@@ -5889,7 +6167,11 @@
           "GT": 25995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 34,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 160,
         "seats": 5,
@@ -5987,7 +6269,11 @@
           "Durango SRT 392": 64295
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 14,
+        "highway": 21,
+        "combined": 16
+      },
       "specs": {
         "horsepower": 293,
         "seats": 7,
@@ -6033,7 +6319,11 @@
           "R/T": 36995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 17,
+        "highway": 25,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 283,
         "seats": 7,
@@ -6083,7 +6373,11 @@
           "GT": 32995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 19,
+        "highway": 25,
+        "combined": 21
+      },
       "specs": {
         "horsepower": 173,
         "seats": 5,
@@ -6114,7 +6408,11 @@
           "SRT ACR": 129995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 12,
+        "highway": 19,
+        "combined": 14
+      },
       "specs": {
         "horsepower": 645,
         "seats": 2,
@@ -6140,7 +6438,9 @@
           "Charger Daytona Scat Pack AWD": 81535
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 85
+      },
       "specs": {
         "horsepower": 496,
         "seats": 5,
@@ -6188,7 +6488,11 @@
           "Abarth": 25995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 26,
+        "highway": 32,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 135,
         "seats": 4,
@@ -6224,7 +6528,11 @@
           "Abarth": 36995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 26,
+        "highway": 36,
+        "combined": 30
+      },
       "specs": {
         "horsepower": 160,
         "seats": 2,
@@ -6273,7 +6581,11 @@
           "Lounge": 25995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 22,
+        "highway": 30,
+        "combined": 25
+      },
       "specs": {
         "horsepower": 160,
         "seats": 5,
@@ -6312,7 +6624,11 @@
           "Trekking": 25995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 30,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 177,
         "seats": 5,
@@ -6395,7 +6711,11 @@
           "Bronco Raptor 4-Door": 77995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 17,
+        "highway": 19,
+        "combined": 18
+      },
       "specs": {
         "horsepower": 275,
         "seats": 5,
@@ -6453,7 +6773,11 @@
           "ST": 51995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 21,
+        "highway": 28,
+        "combined": 23
+      },
       "specs": {
         "horsepower": 250,
         "seats": 5,
@@ -6539,7 +6863,11 @@
           "Escape Plug-In Hybrid": 42995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 26,
+        "highway": 32,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 180,
         "seats": 5,
@@ -6617,7 +6945,11 @@
           "Expedition Max Platinum": 87995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 16,
+        "highway": 23,
+        "combined": 18
+      },
       "specs": {
         "horsepower": 380,
         "seats": 8,
@@ -6892,7 +7224,11 @@
           "Electric": 34995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 25,
+        "highway": 34,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 160,
         "seats": 5,
@@ -6948,7 +7284,11 @@
           "Hybrid Titanium": 38995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 21,
+        "highway": 31,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 175,
         "seats": 5,
@@ -7063,7 +7403,11 @@
           "SHO": 44995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 17,
+        "highway": 24,
+        "combined": 19
+      },
       "specs": {
         "horsepower": 288,
         "seats": 5,
@@ -7121,7 +7465,9 @@
           "Rally AWD": 67645
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 102
+      },
       "specs": {
         "horsepower": 266,
         "seats": 5,
@@ -7157,7 +7503,11 @@
           "Badlands": 40265
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 23,
+        "highway": 27,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 180,
         "seats": 5,
@@ -7208,7 +7558,11 @@
           "Maverick Lobo High": 37155
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 22,
+        "highway": 30,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 191,
         "seats": 5,
@@ -7236,7 +7590,11 @@
           "Ranger Raptor": 55720
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 19,
+        "highway": 24,
+        "combined": 21
+      },
       "specs": {
         "horsepower": 270,
         "seats": 5,
@@ -7334,7 +7692,11 @@
           "Acadia Denali Ultimate": 63400
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 24,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 228,
         "seats": 7,
@@ -7427,7 +7789,11 @@
           "Canyon AT4X": 54995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 17,
+        "highway": 20,
+        "combined": 18
+      },
       "specs": {
         "horsepower": 237,
         "seats": 5,
@@ -7561,7 +7927,11 @@
           "Sierra 1500 Crew Cab Denali Ultimate": 73995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 16,
+        "highway": 19,
+        "combined": 17
+      },
       "specs": {
         "horsepower": 310,
         "seats": 3,
@@ -7652,7 +8022,11 @@
           "Terrain Denali": 42200
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 28,
+        "combined": 25
+      },
       "specs": {
         "horsepower": 175,
         "seats": 5,
@@ -7778,7 +8152,11 @@
           "Yukon XL Denali Ultimate": 86995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 15,
+        "highway": 20,
+        "combined": 17
+      },
       "specs": {
         "horsepower": 355,
         "seats": 9,
@@ -7811,7 +8189,9 @@
           "Electrified G80": 84560
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 96
+      },
       "specs": {
         "horsepower": 365,
         "seats": 5,
@@ -7839,7 +8219,9 @@
           "Electrified GV70": 69190
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 92
+      },
       "specs": {
         "horsepower": 429,
         "seats": 5,
@@ -7887,7 +8269,11 @@
           "G70 3.3T Sport": 56530
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 26,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 300,
         "seats": 5,
@@ -7950,7 +8336,11 @@
           "G80 Sport": 68160
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 26,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 300,
         "seats": 5,
@@ -8006,7 +8396,11 @@
           "G90 e-Supercharger": 103525
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 26,
+        "combined": 21
+      },
       "specs": {
         "horsepower": 409,
         "seats": 5,
@@ -8038,7 +8432,9 @@
           "GV60 Performance": 71750
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 98
+      },
       "specs": {
         "horsepower": 314,
         "seats": 5,
@@ -8074,7 +8470,11 @@
           "GV70 3.5T": 58935
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 300,
         "seats": 5,
@@ -8116,7 +8516,11 @@
           "GV80 Coupe 3.5T": 75340
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 19,
+        "highway": 24,
+        "combined": 21
+      },
       "specs": {
         "horsepower": 300,
         "seats": 7,
@@ -8531,7 +8935,11 @@
           "Insight Touring": 29740
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 53,
+        "highway": 47,
+        "combined": 50
+      },
       "specs": {
         "horsepower": 151,
         "seats": 5,
@@ -8633,7 +9041,11 @@
           "Odyssey Elite": 52095
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 19,
+        "highway": 28,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 280,
         "seats": 8,
@@ -8700,7 +9112,11 @@
           "Passport Elite": 48995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 24,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 280,
         "seats": 5,
@@ -8895,7 +9311,11 @@
           "Ridgeline Black Edition": 53990
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 24,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 280,
         "seats": 5,
@@ -8932,7 +9352,9 @@
           "Touring AWD": 59350
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 99
+      },
       "specs": {
         "horsepower": 288,
         "seats": 5,
@@ -8973,7 +9395,11 @@
           "HR-V EX-L": 30450
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 26,
+        "highway": 31,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 158,
         "seats": 5,
@@ -9097,7 +9523,11 @@
           "Genesis 5.0 Ultimate": 52300
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 16,
+        "highway": 25,
+        "combined": 19
+      },
       "specs": {
         "horsepower": 311,
         "seats": 5,
@@ -9160,7 +9590,11 @@
           "Ioniq Plug-in Hybrid": 26150
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 56,
+        "highway": 58,
+        "combined": 57
+      },
       "specs": {
         "horsepower": 139,
         "seats": 5,
@@ -9214,7 +9648,9 @@
           "Ioniq 5 Limited": 49125
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 106
+      },
       "specs": {
         "horsepower": 225,
         "seats": 5,
@@ -9250,7 +9686,9 @@
           "Ioniq 6 Limited": 55655
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 121
+      },
       "specs": {
         "horsepower": 225,
         "seats": 5,
@@ -9357,7 +9795,11 @@
           "Kona Limited": 32585
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 26,
+        "highway": 30,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 147,
         "seats": 5,
@@ -9427,7 +9869,11 @@
           "Palisade Hybrid Limited": 51100
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 24,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 291,
         "seats": 8,
@@ -9677,7 +10123,11 @@
           "Sonata Hybrid Limited": 40385
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 34,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 191,
         "seats": 5,
@@ -9784,7 +10234,11 @@
           "Tucson Hybrid Limited": 41255
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 32,
+        "combined": 27
+      },
       "specs": {
         "horsepower": 187,
         "seats": 5,
@@ -9852,7 +10306,11 @@
           "Veloster N": 32900
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 21,
+        "highway": 28,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 147,
         "seats": 4,
@@ -9880,7 +10338,9 @@
           "Calligraphy AWD": 80455
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 88
+      },
       "specs": {
         "horsepower": 268,
         "seats": 7,
@@ -9910,7 +10370,11 @@
           "Santa Cruz Limited": 43700
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 27,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 191,
         "seats": 5,
@@ -10001,7 +10465,11 @@
           "Red Sport 400": 54950
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 208,
         "seats": 5,
@@ -10053,7 +10521,11 @@
           "Red Sport 400": 53450
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 19,
+        "highway": 27,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 208,
         "seats": 4,
@@ -10151,7 +10623,11 @@
           "Sensory AWD": 51950
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 22,
+        "highway": 28,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 268,
         "seats": 5,
@@ -10247,7 +10723,11 @@
           "QX60 Autograph": 61895
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 22,
+        "highway": 28,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 295,
         "seats": 7,
@@ -10342,7 +10822,11 @@
           "QX80 Autograph": 88895
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 16,
+        "highway": 20,
+        "combined": 18
+      },
       "specs": {
         "horsepower": 400,
         "seats": 8,
@@ -10408,7 +10892,11 @@
           "E-PACE HSE": 52100
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 26,
+        "combined": 23
+      },
       "specs": {
         "horsepower": 246,
         "seats": 5,
@@ -10504,7 +10992,11 @@
           "F-PACE SVR": 88560
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 24,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 246,
         "seats": 5,
@@ -10597,7 +11089,11 @@
           "F-TYPE SVR": 128000
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 16,
+        "highway": 24,
+        "combined": 18
+      },
       "specs": {
         "horsepower": 296,
         "seats": 2,
@@ -10655,7 +11151,9 @@
           "I-PACE HSE": 87500
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 80
+      },
       "specs": {
         "horsepower": 394,
         "seats": 5,
@@ -10711,7 +11209,11 @@
           "XE HSE": 47900
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 33,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 246,
         "seats": 5,
@@ -10792,7 +11294,11 @@
           "XF HSE": 62800
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 22,
+        "highway": 29,
+        "combined": 25
+      },
       "specs": {
         "horsepower": 246,
         "seats": 5,
@@ -10838,7 +11344,11 @@
           "XJ Supersport": 96700
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 17,
+        "highway": 26,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 340,
         "seats": 5,
@@ -10916,7 +11426,11 @@
           "Cherokee Overland": 37695
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 28,
+        "combined": 23
+      },
       "specs": {
         "horsepower": 180,
         "seats": 5,
@@ -11000,7 +11514,11 @@
           "Compass Trailhawk": 32180
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 23,
+        "highway": 31,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 177,
         "seats": 5,
@@ -11064,7 +11582,11 @@
           "Gladiator Mojave": 49755
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 17,
+        "highway": 22,
+        "combined": 19
+      },
       "specs": {
         "horsepower": 285,
         "seats": 5,
@@ -11191,7 +11713,11 @@
           "Grand Cherokee Summit": 60900
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 293,
         "seats": 5,
@@ -11261,7 +11787,11 @@
           "Renegade Trailhawk": 28395
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 22,
+        "highway": 28,
+        "combined": 25
+      },
       "specs": {
         "horsepower": 177,
         "seats": 5,
@@ -11352,7 +11882,11 @@
           "Wrangler Rubicon 392": 78815
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 22,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 285,
         "seats": 5,
@@ -11433,7 +11967,11 @@
           "Forte GT": 26890
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 28,
+        "highway": 37,
+        "combined": 31
+      },
       "specs": {
         "horsepower": 147,
         "seats": 5,
@@ -11461,7 +11999,11 @@
           "K4 GT-Line": 29200
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 28,
+        "highway": 34,
+        "combined": 30
+      },
       "specs": {
         "horsepower": 147,
         "seats": 5,
@@ -11542,7 +12084,11 @@
           "K5 GT": 33790
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 34,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 180,
         "seats": 5,
@@ -11662,7 +12208,11 @@
           "Niro SX Touring": 38990
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 53,
+        "highway": 46,
+        "combined": 50
+      },
       "specs": {
         "horsepower": 139,
         "seats": 5,
@@ -11725,7 +12275,11 @@
           "Optima Hybrid Premium": 29895
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 34,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 185,
         "seats": 5,
@@ -11785,7 +12339,11 @@
           "Seltos X-Line SX": 32790
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 26,
+        "highway": 30,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 146,
         "seats": 5,
@@ -11891,7 +12449,11 @@
           "Sorento Plug-In Hybrid SX Prestige": 49490
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 22,
+        "highway": 28,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 191,
         "seats": 7,
@@ -11969,7 +12531,11 @@
           "Soul GT-Line": 25390
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 28,
+        "highway": 34,
+        "combined": 30
+      },
       "specs": {
         "horsepower": 147,
         "seats": 5,
@@ -12083,7 +12649,11 @@
           "Sportage Plug-In Hybrid X-Line Prestige": 47390
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 30,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 187,
         "seats": 5,
@@ -12135,7 +12705,11 @@
           "Stinger GT2": 47900
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 27,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 300,
         "seats": 5,
@@ -12198,7 +12772,11 @@
           "Telluride Hybrid SX-Prestige": 56590
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 24,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 291,
         "seats": 8,
@@ -12253,7 +12831,9 @@
           "EV6 GT AWD": 64780
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 106
+      },
       "specs": {
         "horsepower": 225,
         "seats": 5,
@@ -12287,7 +12867,9 @@
           "EV9 Land AWD": 77795
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 84
+      },
       "specs": {
         "horsepower": 215,
         "seats": 7,
@@ -12331,7 +12913,11 @@
           "Carnival Hybrid SX Prestige": 53090
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 25,
+        "combined": 21
+      },
       "specs": {
         "horsepower": 287,
         "seats": 8,
@@ -12502,7 +13088,11 @@
           "GX 550 F SPORT Performance+": 83300
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 15,
+        "highway": 21,
+        "combined": 17
+      },
       "specs": {
         "horsepower": 349,
         "seats": 7,
@@ -12603,7 +13193,11 @@
           "IS 350 F SPORT AWD": 51285
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 19,
+        "highway": 26,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 241,
         "seats": 5,
@@ -12696,7 +13290,11 @@
           "LS 500 Inspiration Series": 98285
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 17,
+        "highway": 27,
+        "combined": 21
+      },
       "specs": {
         "horsepower": 416,
         "seats": 5,
@@ -12763,7 +13361,11 @@
           "LX 600 Ultra Luxury": 137800
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 17,
+        "highway": 22,
+        "combined": 19
+      },
       "specs": {
         "horsepower": 409,
         "seats": 7,
@@ -12854,7 +13456,11 @@
           "NX 450h+ F SPORT AWD": 61285
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 21,
+        "highway": 28,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 203,
         "seats": 5,
@@ -13013,7 +13619,11 @@
           "UX 250h Luxury AWD": 43285
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 44,
+        "highway": 40,
+        "combined": 42
+      },
       "specs": {
         "horsepower": 169,
         "seats": 5,
@@ -13108,7 +13718,11 @@
           "Continental Coach Door Edition": 115460
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 16,
+        "highway": 24,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 305,
         "seats": 5,
@@ -13199,7 +13813,11 @@
           "MKC Reserve": 43495
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 19,
+        "highway": 25,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 245,
         "seats": 5,
@@ -13234,7 +13852,11 @@
           "MKX Reserve": 47535
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 17,
+        "highway": 24,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 303,
         "seats": 5,
@@ -13284,7 +13906,11 @@
           "MKZ Hybrid": 37795
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 19,
+        "highway": 28,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 245,
         "seats": 5,
@@ -13478,7 +14104,11 @@
           "CX-3 Grand Touring": 25330
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 28,
+        "highway": 33,
+        "combined": 30
+      },
       "specs": {
         "horsepower": 148,
         "seats": 5,
@@ -13542,7 +14172,11 @@
           "CX-30 Turbo": 33930
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 23,
+        "highway": 30,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 186,
         "seats": 5,
@@ -13635,7 +14269,11 @@
           "CX-5 Signature": 37130
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 30,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 187,
         "seats": 5,
@@ -13675,7 +14313,11 @@
           "CX-50 Premium Plus": 37310
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 30,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 187,
         "seats": 5,
@@ -13745,7 +14387,11 @@
           "CX-9 Signature": 47250
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 26,
+        "combined": 23
+      },
       "specs": {
         "horsepower": 227,
         "seats": 7,
@@ -13821,7 +14467,11 @@
           "MX-5 Miata Grand Touring": 36070
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 26,
+        "highway": 34,
+        "combined": 29
+      },
       "specs": {
         "horsepower": 181,
         "seats": 2,
@@ -13914,7 +14564,11 @@
           "Mazda3 Turbo": 34235
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 25,
+        "highway": 34,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 186,
         "seats": 5,
@@ -13972,7 +14626,11 @@
           "Mazda6 Signature": 35750
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 33,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 187,
         "seats": 5,
@@ -14018,7 +14676,11 @@
           "PHEV Premium Plus": 59860
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 23,
+        "highway": 28,
+        "combined": 25
+      },
       "specs": {
         "horsepower": 340,
         "seats": 7,
@@ -14060,7 +14722,11 @@
           "AMG A 35": 48200
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 35,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 188,
         "seats": 5,
@@ -14138,7 +14804,11 @@
           "AMG GT 63 S E Performance": 220475
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 14,
+        "highway": 20,
+        "combined": 16
+      },
       "specs": {
         "horsepower": 469,
         "seats": 2,
@@ -14320,7 +14990,11 @@
           "AMG CLA 45 S": 69955
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 26,
+        "highway": 35,
+        "combined": 30
+      },
       "specs": {
         "horsepower": 221,
         "seats": 5,
@@ -14458,7 +15132,11 @@
           "AMG G 63": 180655
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 17,
+        "highway": 19,
+        "combined": 18
+      },
       "specs": {
         "horsepower": 416,
         "seats": 5,
@@ -14541,7 +15219,11 @@
           "AMG GLC 63 S E Performance": 103525
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 23,
+        "highway": 31,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 258,
         "seats": 5,
@@ -14614,7 +15296,11 @@
           "AMG GLS 63": 158360
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 19,
+        "highway": 24,
+        "combined": 21
+      },
       "specs": {
         "horsepower": 362,
         "seats": 7,
@@ -14694,7 +15380,11 @@
           "AMG S 63": 186040
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 17,
+        "highway": 27,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 429,
         "seats": 5,
@@ -14718,7 +15408,11 @@
           "GLE 450 4MATIC": 71350
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 19,
+        "highway": 26,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 255,
         "seats": 5,
@@ -14776,7 +15470,11 @@
           "John Cooper Works ALL4": 39300
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 23,
+        "highway": 32,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 134,
         "seats": 5,
@@ -14852,7 +15550,11 @@
           "John Cooper Works": 41310
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 28,
+        "highway": 39,
+        "combined": 32
+      },
       "specs": {
         "horsepower": 134,
         "seats": 4,
@@ -14928,7 +15630,11 @@
           "John Cooper Works ALL4": 44895
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 32,
+        "combined": 27
+      },
       "specs": {
         "horsepower": 134,
         "seats": 5,
@@ -15000,7 +15706,11 @@
           "Eclipse Cross SEL": 34120
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 25,
+        "highway": 27,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 152,
         "seats": 5,
@@ -15066,7 +15776,11 @@
           "Mirage GT": 21090
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 36,
+        "highway": 42,
+        "combined": 38
+      },
       "specs": {
         "horsepower": 78,
         "seats": 5,
@@ -15147,7 +15861,11 @@
           "Outlander GT": 36275
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 26,
+        "highway": 30,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 181,
         "seats": 7,
@@ -15207,7 +15925,11 @@
           "Roadster": 42490
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 26,
+        "combined": 21
+      },
       "specs": {
         "horsepower": 332,
         "seats": 2,
@@ -15374,7 +16096,11 @@
           "SR": 44990
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 30,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 300,
         "seats": 5,
@@ -15455,7 +16181,11 @@
           "Murano Platinum": 49800
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 21,
+        "highway": 27,
+        "combined": 23
+      },
       "specs": {
         "horsepower": 260,
         "seats": 5,
@@ -15544,7 +16274,11 @@
           "Pathfinder Platinum": 48790
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 26,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 284,
         "seats": 8,
@@ -15724,7 +16458,11 @@
           "Sentra SL": 27990
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 30,
+        "highway": 38,
+        "combined": 33
+      },
       "specs": {
         "horsepower": 149,
         "seats": 5,
@@ -15802,7 +16540,11 @@
           "Platinum Reserve": 54990
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 15,
+        "highway": 21,
+        "combined": 17
+      },
       "specs": {
         "horsepower": 400,
         "seats": 6,
@@ -15843,7 +16585,11 @@
           "Frontier PRO-4X": 41870
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 17,
+        "highway": 21,
+        "combined": 19
+      },
       "specs": {
         "horsepower": 310,
         "seats": 5,
@@ -15869,7 +16615,11 @@
           "Kicks SR": 26960
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 28,
+        "highway": 34,
+        "combined": 30
+      },
       "specs": {
         "horsepower": 141,
         "seats": 5,
@@ -15895,7 +16645,11 @@
           "Versa SR": 21190
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 30,
+        "highway": 38,
+        "combined": 32
+      },
       "specs": {
         "horsepower": 122,
         "seats": 5,
@@ -15999,7 +16753,11 @@
           "718 Cayman Style Edition": 69700
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 19,
+        "highway": 24,
+        "combined": 21
+      },
       "specs": {
         "horsepower": 300,
         "seats": 2,
@@ -16149,7 +16907,11 @@
           "911 GT3 RS": 235390
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 17,
+        "highway": 24,
+        "combined": 19
+      },
       "specs": {
         "horsepower": 379,
         "seats": 4,
@@ -16176,7 +16938,11 @@
           "Boxster Spyder": 84900
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 29,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 265,
         "seats": 2,
@@ -16313,7 +17079,11 @@
           "Cayenne Turbo GT": 190545
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 16,
+        "highway": 22,
+        "combined": 18
+      },
       "specs": {
         "horsepower": 348,
         "seats": 5,
@@ -16341,7 +17111,11 @@
           "Cayman GT4": 85400
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 29,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 275,
         "seats": 2,
@@ -16433,7 +17207,11 @@
           "Macan 4S": 68675
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 24,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 261,
         "seats": 5,
@@ -16555,7 +17333,11 @@
           "Panamera Turbo S E-Hybrid": 200385
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 25,
+        "combined": 21
+      },
       "specs": {
         "horsepower": 325,
         "seats": 5,
@@ -16646,7 +17428,9 @@
           "Taycan GTS Sport Turismo": 146730
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 86
+      },
       "specs": {
         "horsepower": 402,
         "seats": 5,
@@ -16785,7 +17569,11 @@
           "1500 TRX Crew Cab": 82995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 15,
+        "highway": 21,
+        "combined": 17
+      },
       "specs": {
         "horsepower": 305,
         "seats": 6,
@@ -17092,7 +17880,11 @@
           "ProMaster City Tradesman SLT": 35995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 21,
+        "highway": 28,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 276,
         "seats": 2,
@@ -17143,7 +17935,9 @@
           "R1S Quad": 121990
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 76
+      },
       "specs": {
         "horsepower": 835,
         "seats": 7,
@@ -17192,7 +17986,9 @@
           "R1T Quad": 115990
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 76
+      },
       "specs": {
         "horsepower": 835,
         "seats": 5,
@@ -17264,7 +18060,11 @@
           "Touring": 51165
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 19,
+        "highway": 26,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 260,
         "seats": 8,
@@ -17331,7 +18131,11 @@
           "tS": 38770
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 28,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 228,
         "seats": 4,
@@ -17429,7 +18233,11 @@
           "Limited Hybrid": 35995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 25,
+        "highway": 31,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 152,
         "seats": 5,
@@ -17534,7 +18342,11 @@
           "Wilderness": 34435
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 25,
+        "highway": 32,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 182,
         "seats": 5,
@@ -17618,7 +18430,11 @@
           "Limited": 27360
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 26,
+        "highway": 33,
+        "combined": 29
+      },
       "specs": {
         "horsepower": 152,
         "seats": 5,
@@ -17706,7 +18522,11 @@
           "Touring XT": 36145
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 25,
+        "highway": 33,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 182,
         "seats": 5,
@@ -17819,7 +18639,11 @@
           "Wilderness": 39660
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 21,
+        "highway": 29,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 182,
         "seats": 5,
@@ -17868,7 +18692,11 @@
           "Final Edition": 41995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 16,
+        "highway": 22,
+        "combined": 18
+      },
       "specs": {
         "horsepower": 310,
         "seats": 5,
@@ -17944,7 +18772,11 @@
           "Limited": 40175
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 26,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 271,
         "seats": 5,
@@ -17976,7 +18808,9 @@
           "Cybertruck Cyberbeast": 102490
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 78
+      },
       "specs": {
         "horsepower": 315,
         "seats": 5,
@@ -18370,7 +19204,11 @@
           "Venture": 42750
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 24,
+        "combined": 22
+      },
       "specs": {
         "horsepower": 278,
         "seats": 5,
@@ -18450,7 +19288,11 @@
           "Touring": 44275
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 22,
+        "highway": 32,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 301,
         "seats": 5,
@@ -18493,7 +19335,11 @@
           "Limited": 27595
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 27,
+        "highway": 31,
+        "combined": 29
+      },
       "specs": {
         "horsepower": 144,
         "seats": 5,
@@ -18784,7 +19630,11 @@
           "3.0 Premium": 60500
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 22,
+        "highway": 29,
+        "combined": 25
+      },
       "specs": {
         "horsepower": 382,
         "seats": 2,
@@ -18820,7 +19670,11 @@
           "GR86 Premium": 33825
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 28,
+        "combined": 23
+      },
       "specs": {
         "horsepower": 228,
         "seats": 4,
@@ -19022,7 +19876,11 @@
           "Land Cruiser": 62725
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 22,
+        "highway": 25,
+        "combined": 23
+      },
       "specs": {
         "horsepower": 326,
         "seats": 5,
@@ -19077,7 +19935,9 @@
           "Limited": 71670
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 72
+      },
       "specs": {
         "horsepower": 182,
         "seats": 5,
@@ -19462,7 +20322,11 @@
           "Capstone": 85025
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 23,
+        "combined": 21
+      },
       "specs": {
         "horsepower": 437,
         "seats": 8,
@@ -19556,7 +20420,11 @@
           "Platinum": 54755
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 36,
+        "highway": 36,
+        "combined": 36
+      },
       "specs": {
         "horsepower": 245,
         "seats": 8,
@@ -19663,7 +20531,11 @@
           "TRD Pro": 48955
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 20,
+        "highway": 24,
+        "combined": 21
+      },
       "specs": {
         "horsepower": 228,
         "seats": 5,
@@ -19780,7 +20652,11 @@
           "Capstone": 81180
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 18,
+        "highway": 22,
+        "combined": 20
+      },
       "specs": {
         "horsepower": 348,
         "seats": 5,
@@ -19822,7 +20698,11 @@
           "Limited": 42050
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 40,
+        "highway": 37,
+        "combined": 39
+      },
       "specs": {
         "horsepower": 219,
         "seats": 5,
@@ -19859,7 +20739,9 @@
           "Limited AWD": 45300
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 104
+      },
       "specs": {
         "horsepower": 201,
         "seats": 5,
@@ -19901,7 +20783,11 @@
           "XLE": 30160
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 30,
+        "highway": 32,
+        "combined": 31
+      },
       "specs": {
         "horsepower": 169,
         "seats": 5,
@@ -19949,7 +20835,11 @@
           "Hybrid MAX Platinum": 59275
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 21,
+        "highway": 28,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 265,
         "seats": 8,
@@ -20049,7 +20939,11 @@
           "Atlas SEL Premium R-Line 4Motion": 56610
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 21,
+        "highway": 28,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 235,
         "seats": 7,
@@ -20155,7 +21049,11 @@
           "Golf R": 47495
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 22,
+        "highway": 31,
+        "combined": 25
+      },
       "specs": {
         "horsepower": 228,
         "seats": 5,
@@ -20252,7 +21150,11 @@
           "Jetta GLI Autobahn": 37995
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 29,
+        "highway": 40,
+        "combined": 34
+      },
       "specs": {
         "horsepower": 158,
         "seats": 5,
@@ -20313,7 +21215,11 @@
           "Passat SEL": 31295
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 36,
+        "combined": 28
+      },
       "specs": {
         "horsepower": 174,
         "seats": 5,
@@ -20410,7 +21316,11 @@
           "Tiguan SEL Premium 4Motion": 41495
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 31,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 184,
         "seats": 7,
@@ -20444,7 +21354,11 @@
           "Taos SEL 4Motion": 35900
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 26,
+        "highway": 34,
+        "combined": 30
+      },
       "specs": {
         "horsepower": 174,
         "seats": 5,
@@ -20517,7 +21431,11 @@
           "S60 B6 Inscription": 48600
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 26,
+        "highway": 35,
+        "combined": 29
+      },
       "specs": {
         "horsepower": 247,
         "seats": 5,
@@ -20582,7 +21500,11 @@
           "V90 B6 Ultimate Cross Country": 73895
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 22,
+        "highway": 29,
+        "combined": 25
+      },
       "specs": {
         "horsepower": 247,
         "seats": 5,
@@ -20644,7 +21566,11 @@
           "XC40 Recharge Pure Electric Ultimate": 60895
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 24,
+        "highway": 31,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 194,
         "seats": 5,
@@ -20730,7 +21656,11 @@
           "XC60 Recharge Ultimate T8 AWD": 64895
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 23,
+        "highway": 30,
+        "combined": 26
+      },
       "specs": {
         "horsepower": 247,
         "seats": 5,
@@ -20823,7 +21753,11 @@
           "XC90 Recharge Ultimate T8 AWD": 76895
         }
       },
-      "mpg": null,
+      "mpg": {
+        "city": 21,
+        "highway": 26,
+        "combined": 24
+      },
       "specs": {
         "horsepower": 247,
         "seats": 7,
@@ -20871,7 +21805,9 @@
           "Air Sapphire": 258300
         }
       },
-      "mpg": null,
+      "mpg": {
+        "mpge_combined": 126
+      },
       "specs": {
         "horsepower": 410,
         "seats": 5,

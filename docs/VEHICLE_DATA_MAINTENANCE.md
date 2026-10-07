@@ -151,6 +151,8 @@ verified real price moves: the Oct 2025 Ioniq 5 cuts, the 2026 Toyota bZ
 (ex-bZ4X) cuts, the 2024 BMW 760i, the 2027 Corvette ZR1 and the 2024 Ford
 Maverick Lariat (AWD and Lux package made standard).
 
+- **EPA fuel economy** was then filled for 248 models with `fetch_epa_mpg.py`, so 284 of 287 models now carry real `mpg`. The three without it are the heavy-duty F-250 and Ram 2500/3500, which EPA does not rate and which still fall back to the 28 MPG default; that default flatters them. The 29 models whose existing `mpg` disagrees with EPA were left alone. They include the Camry and RAV4, now hybrid-only, whose values reflect the older gas versions; review them with `--include-differs`.
+
 **Still open after this review:**
 - 170 active models still lack MY2027 rows (the monthly staleness check lists them). Many had no published
   pricing yet, or it was only given as a range.

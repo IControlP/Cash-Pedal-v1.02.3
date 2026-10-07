@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """EPA fuel-economy backfill helper for src/data/vehicles.json.
 
-Only 39 of the 280 models in the vehicle database carry real `mpg` data; the
+When this script was written only 39 of 280 models carried real `mpg` data; the
 rest are `"mpg": null` and fall back to the hardcoded 28 MPG / 100 MPGe
 defaults in `computeAnnualFuel` (src/utils/vehicleCosts.js). This script pulls
 official numbers from the EPA's fueleconomy.gov web service and reports what it
@@ -122,6 +122,7 @@ MODEL_ALIASES = {
     ("Mercedes-Benz", "G-Class"): ["G550", "G 550"],
     ("Mercedes-Benz", "GLC"): ["GLC300", "GLC 300"],
     ("Mercedes-Benz", "GLS"): ["GLS450", "GLS 450"],
+    ("Mercedes-Benz", "GLE"): ["GLE350", "GLE 350", "GLE450", "GLE 450"],
     ("Mercedes-Benz", "CLA"): ["CLA250", "CLA 250"],
     # EPA prefixes every MINI with its Cooper trim.
     ("Mini", "Clubman"): ["Cooper Clubman", "Cooper S Clubman",

@@ -348,7 +348,7 @@
       "is_ev": false,
       "production_years": [
         2015,
-        2026
+        2025
       ],
       "trims_by_year": {
         "2015": {
@@ -432,13 +432,6 @@
           "TLX A-SPEC Package": 48100,
           "TLX Advance Package": 51200,
           "TLX Type S": 56400
-        },
-        "2026": {
-          "TLX": 42435,
-          "TLX Technology Package": 45200,
-          "TLX A-SPEC Package": 49300,
-          "TLX Advance Package": 52480,
-          "TLX Type S": 57810
         }
       },
       "mpg": null,
@@ -451,7 +444,7 @@
   },
   "Alfa Romeo": {
     "4C": {
-      "type": "sedan",
+      "type": "sports",
       "is_ev": false,
       "production_years": [
         2015,
@@ -791,7 +784,7 @@
       "is_ev": false,
       "production_years": [
         2000,
-        2026
+        2025
       ],
       "trims_by_year": {
         "2015": {
@@ -880,13 +873,6 @@
           "A4 45 TFSI quattro Premium Plus": 48600,
           "A4 45 TFSI quattro Prestige": 52100,
           "S4": 60400
-        },
-        "2026": {
-          "A4 40 TFSI": 43560,
-          "A4 45 TFSI quattro Premium": 46125,
-          "A4 45 TFSI quattro Premium Plus": 49815,
-          "A4 45 TFSI quattro Prestige": 53400,
-          "S4": 61910
         }
       },
       "mpg": {
@@ -1028,14 +1014,9 @@
           "S5 Sportback": 64100
         },
         "2026": {
-          "A5 Coupe 45 TFSI quattro Premium": 52580,
-          "A5 Coupe 45 TFSI quattro Premium Plus": 55450,
-          "A5 Coupe 45 TFSI quattro Prestige": 59245,
-          "A5 Sportback 45 TFSI quattro Premium": 52070,
-          "A5 Sportback 45 TFSI quattro Premium Plus": 54940,
-          "A5 Sportback 45 TFSI quattro Prestige": 58730,
-          "S5 Coupe": 64675,
-          "S5 Sportback": 65700
+          "A5 Premium": 50200,
+          "A5 Premium Plus": 52700,
+          "A5 Prestige": 56700
         }
       },
       "mpg": null,
@@ -1166,7 +1147,7 @@
       "is_ev": false,
       "production_years": [
         2012,
-        2026
+        2025
       ],
       "trims_by_year": {
         "2015": {
@@ -1227,11 +1208,6 @@
           "A7 55 TFSI quattro Premium Plus": 75700,
           "A7 55 TFSI quattro Prestige": 79400,
           "S7": 92400
-        },
-        "2026": {
-          "A7 55 TFSI quattro Premium Plus": 77590,
-          "A7 55 TFSI quattro Prestige": 81385,
-          "S7": 94710
         }
       },
       "mpg": null,
@@ -1777,7 +1753,7 @@
       "is_ev": false,
       "production_years": [
         2000,
-        2026
+        2025
       ],
       "trims_by_year": {
         "2015": {
@@ -1812,9 +1788,6 @@
         },
         "2025": {
           "S4": 62095
-        },
-        "2026": {
-          "S4": 63645
         }
       },
       "mpg": null,
@@ -1874,8 +1847,9 @@
           "S5 Sportback": 62900
         },
         "2026": {
-          "S5 Coupe": 63445,
-          "S5 Sportback": 64470
+          "S5 Premium": 63300,
+          "S5 Premium Plus": 66200,
+          "S5 Prestige": 70900
         }
       },
       "mpg": null,
@@ -2179,114 +2153,6 @@
         "cargo_cu_ft": 13
       }
     },
-    "328i": {
-      "type": "sedan",
-      "is_ev": false,
-      "production_years": [
-        2007,
-        2015
-      ],
-      "trims_by_year": {
-        "2015": {
-          "328i": 36395,
-          "328i xDrive": 38095
-        }
-      },
-      "mpg": null,
-      "specs": {
-        "horsepower": 240,
-        "seats": 5,
-        "cargo_cu_ft": 13
-      }
-    },
-    "330i": {
-      "type": "sedan",
-      "is_ev": false,
-      "production_years": [
-        2016,
-        2026
-      ],
-      "trims_by_year": {
-        "2016": {
-          "330i": 38950,
-          "330i xDrive": 40650
-        },
-        "2017": {
-          "330i": 38950,
-          "330i xDrive": 40650
-        },
-        "2018": {
-          "330i": 39750,
-          "330i xDrive": 41450
-        },
-        "2019": {
-          "330i": 40250,
-          "330i xDrive": 42250
-        },
-        "2020": {
-          "330i": 41250,
-          "330i xDrive": 43250
-        },
-        "2021": {
-          "330i": 42250,
-          "330i xDrive": 44250
-        },
-        "2022": {
-          "330i": 43300,
-          "330i xDrive": 45300
-        },
-        "2023": {
-          "330i": 43900,
-          "330i xDrive": 45900
-        },
-        "2024": {
-          "330i": 43800,
-          "330i xDrive": 46300
-        },
-        "2025": {
-          "330i": 44800,
-          "330i xDrive": 47300
-        },
-        "2026": {
-          "330i": 45920,
-          "330i xDrive": 48480
-        }
-      },
-      "mpg": null,
-      "specs": {
-        "horsepower": 255,
-        "seats": 5,
-        "cargo_cu_ft": 13
-      }
-    },
-    "340i": {
-      "type": "sedan",
-      "is_ev": false,
-      "production_years": [
-        2016,
-        2018
-      ],
-      "trims_by_year": {
-        "2016": {
-          "340i": 45495,
-          "340i xDrive": 47195
-        },
-        "2017": {
-          "340i": 46250,
-          "340i xDrive": 47950
-        },
-        "2018": {
-          "340i": 47050,
-          "340i xDrive": 48750
-        }
-      },
-      "mpg": null,
-      "specs": {
-        "horsepower": 320,
-        "seats": 5,
-        "cargo_cu_ft": 13
-      }
-    },
     "530i": {
       "type": "sedan",
       "is_ev": false,
@@ -2404,7 +2270,7 @@
       "is_ev": false,
       "production_years": [
         2009,
-        2026
+        2022
       ],
       "trims_by_year": {
         "2015": {
@@ -2447,26 +2313,6 @@
           "750i": 101400,
           "750i xDrive": 104400,
           "750Li xDrive": 107400
-        },
-        "2023": {
-          "750i": 103100,
-          "750i xDrive": 106100,
-          "750Li xDrive": 109100
-        },
-        "2024": {
-          "750i": 104700,
-          "750i xDrive": 107700,
-          "750Li xDrive": 110700
-        },
-        "2025": {
-          "750i": 106300,
-          "750i xDrive": 109300,
-          "750Li xDrive": 112300
-        },
-        "2026": {
-          "750i": 108955,
-          "750i xDrive": 112030,
-          "750Li xDrive": 115105
         }
       },
       "mpg": null,
@@ -2474,6 +2320,44 @@
         "horsepower": 375,
         "seats": 5,
         "cargo_cu_ft": 18
+      }
+    },
+    "7 Series": {
+      "type": "sedan",
+      "is_ev": false,
+      "production_years": [
+        2023,
+        2026
+      ],
+      "trims_by_year": {
+        "2023": {
+          "740i": 93300,
+          "760i xDrive": 113600
+        },
+        "2024": {
+          "740i": 96400,
+          "740i xDrive": 99400,
+          "750e xDrive": 107000,
+          "760i xDrive": 121300
+        },
+        "2025": {
+          "740i": 97300,
+          "740i xDrive": 100300,
+          "750e xDrive": 108000,
+          "760i xDrive": 122400
+        },
+        "2026": {
+          "740i": 99300,
+          "740i xDrive": 102300,
+          "750e xDrive": 110000,
+          "760i xDrive": 124700
+        }
+      },
+      "mpg": null,
+      "specs": {
+        "horsepower": 375,
+        "seats": 5,
+        "cargo_cu_ft": 13.7
       }
     },
     "M3": {
@@ -2669,7 +2553,7 @@
       "is_ev": false,
       "production_years": [
         2020,
-        2026
+        2025
       ],
       "trims_by_year": {
         "2020": {
@@ -2719,14 +2603,6 @@
           "M8 Competition Coupe": 145600,
           "M8 Competition Convertible": 157600,
           "M8 Competition Gran Coupe": 147600
-        },
-        "2026": {
-          "M8 Coupe": 141040,
-          "M8 Convertible": 153340,
-          "M8 Gran Coupe": 143090,
-          "M8 Competition Coupe": 149240,
-          "M8 Competition Convertible": 161540,
-          "M8 Competition Gran Coupe": 151290
         }
       },
       "mpg": null,
@@ -4002,7 +3878,7 @@
       "is_ev": false,
       "production_years": [
         2019,
-        2026
+        2025
       ],
       "trims_by_year": {
         "2019": {
@@ -4039,11 +3915,6 @@
           "XT4 Luxury": 39095,
           "XT4 Premium Luxury": 43695,
           "XT4 Sport": 45995
-        },
-        "2026": {
-          "XT4 Luxury": 40070,
-          "XT4 Premium Luxury": 44785,
-          "XT4 Sport": 47145
         }
       },
       "mpg": null,
@@ -4130,7 +4001,7 @@
       "is_ev": false,
       "production_years": [
         2020,
-        2026
+        2025
       ],
       "trims_by_year": {
         "2020": {
@@ -4168,12 +4039,6 @@
           "XT6 Premium Luxury": 63190,
           "XT6 Sport": 65190,
           "XT6 Platinum": 72190
-        },
-        "2026": {
-          "XT6 Luxury": 60260,
-          "XT6 Premium Luxury": 64770,
-          "XT6 Sport": 66820,
-          "XT6 Platinum": 73995
         }
       },
       "mpg": null,
@@ -4861,7 +4726,7 @@
         "cargo_cu_ft": 15.7
       }
     },
-    "Silverado": {
+    "Silverado 1500": {
       "type": "truck",
       "is_ev": false,
       "production_years": [
@@ -4870,105 +4735,33 @@
       ],
       "trims_by_year": {
         "2015": {
-          "Silverado Regular Cab Work Truck": 24885,
-          "Silverado Double Cab LT": 34685,
-          "Silverado Crew Cab LT": 37185,
-          "Silverado Crew Cab LTZ": 43185,
-          "Silverado High Country": 53185
+          "Silverado 1500 Regular Cab Work Truck": 24885,
+          "Silverado 1500 Double Cab LT": 34685,
+          "Silverado 1500 Crew Cab LT": 37185,
+          "Silverado 1500 Crew Cab LTZ": 43185,
+          "Silverado 1500 High Country": 53185
         },
         "2016": {
-          "Silverado Regular Cab Work Truck": 25185,
-          "Silverado Double Cab LT": 34985,
-          "Silverado Crew Cab LT": 37485,
-          "Silverado Crew Cab LTZ": 43485,
-          "Silverado High Country": 53485
+          "Silverado 1500 Regular Cab Work Truck": 25185,
+          "Silverado 1500 Double Cab LT": 34985,
+          "Silverado 1500 Crew Cab LT": 37485,
+          "Silverado 1500 Crew Cab LTZ": 43485,
+          "Silverado 1500 High Country": 53485
         },
         "2017": {
-          "Silverado Regular Cab Work Truck": 25485,
-          "Silverado Double Cab LT": 35285,
-          "Silverado Crew Cab LT": 37785,
-          "Silverado Crew Cab LTZ": 43785,
-          "Silverado High Country": 53785
+          "Silverado 1500 Regular Cab Work Truck": 25485,
+          "Silverado 1500 Double Cab LT": 35285,
+          "Silverado 1500 Crew Cab LT": 37785,
+          "Silverado 1500 Crew Cab LTZ": 43785,
+          "Silverado 1500 High Country": 53785
         },
         "2018": {
-          "Silverado Regular Cab Work Truck": 25785,
-          "Silverado Double Cab LT": 35585,
-          "Silverado Crew Cab LT": 38085,
-          "Silverado Crew Cab LTZ": 44085,
-          "Silverado High Country": 54085
+          "Silverado 1500 Regular Cab Work Truck": 25785,
+          "Silverado 1500 Double Cab LT": 35585,
+          "Silverado 1500 Crew Cab LT": 38085,
+          "Silverado 1500 Crew Cab LTZ": 44085,
+          "Silverado 1500 High Country": 54085
         },
-        "2019": {
-          "Silverado Regular Cab Work Truck": 28300,
-          "Silverado Double Cab LT": 38100,
-          "Silverado Crew Cab LT": 40600,
-          "Silverado Crew Cab LTZ": 46600,
-          "Silverado High Country": 56600
-        },
-        "2020": {
-          "Silverado Regular Cab Work Truck": 28600,
-          "Silverado Double Cab LT": 38400,
-          "Silverado Crew Cab LT": 40900,
-          "Silverado Crew Cab LTZ": 46900,
-          "Silverado High Country": 56900
-        },
-        "2021": {
-          "Silverado Regular Cab Work Truck": 31700,
-          "Silverado Double Cab LT": 40200,
-          "Silverado Crew Cab LT": 42700,
-          "Silverado Crew Cab LTZ": 49200,
-          "Silverado High Country": 59200
-        },
-        "2022": {
-          "Silverado Regular Cab Work Truck": 32400,
-          "Silverado Double Cab LT": 40700,
-          "Silverado Crew Cab LT": 43200,
-          "Silverado Crew Cab LTZ": 49700,
-          "Silverado High Country": 59700
-        },
-        "2023": {
-          "Silverado Regular Cab Work Truck": 34095,
-          "Silverado Double Cab LT": 42700,
-          "Silverado Crew Cab LT": 45200,
-          "Silverado Crew Cab LTZ": 51700,
-          "Silverado High Country": 61700
-        },
-        "2024": {
-          "Silverado Regular Cab Work Truck": 36295,
-          "Silverado Double Cab LT": 44700,
-          "Silverado Crew Cab LT": 47200,
-          "Silverado Crew Cab LTZ": 53700,
-          "Silverado High Country": 63700
-        },
-        "2025": {
-          "Silverado Regular Cab Work Truck": 37800,
-          "Silverado Double Cab LT": 46200,
-          "Silverado Crew Cab LT": 48700,
-          "Silverado Crew Cab LTZ": 55200,
-          "Silverado High Country": 65200
-        },
-        "2026": {
-          "Silverado Regular Cab Work Truck": 38745,
-          "Silverado Double Cab LT": 47355,
-          "Silverado Crew Cab LT": 49935,
-          "Silverado Crew Cab LTZ": 56580,
-          "Silverado High Country": 66830
-        }
-      },
-      "mpg": null,
-      "specs": {
-        "horsepower": 310,
-        "seats": 3,
-        "cargo_cu_ft": 71.7
-      }
-    },
-    "Silverado 1500": {
-      "type": "truck",
-      "is_ev": false,
-      "production_years": [
-        2019,
-        2026
-      ],
-      "trims_by_year": {
         "2019": {
           "Silverado 1500 Regular Cab Work Truck": 28300,
           "Silverado 1500 Double Cab LT": 38100,
@@ -5820,7 +5613,7 @@
       "is_ev": false,
       "production_years": [
         2008,
-        2025
+        2023
       ],
       "trims_by_year": {
         "2015": {
@@ -6273,92 +6066,6 @@
         "horsepower": 496,
         "seats": 5,
         "cargo_cu_ft": 16
-      }
-    }
-  },
-  "Ferrari": {
-    "SF-23": {
-      "type": "sedan",
-      "is_ev": false,
-      "production_years": [
-        2023,
-        2024
-      ],
-      "trims_by_year": {
-        "2023": {
-          "Client Racing - Race Spec": 3800000,
-          "Client Racing - Show Car": 750000
-        },
-        "2024": {
-          "Client Racing - Race Spec": 3500000,
-          "Client Racing - Show Car": 700000
-        }
-      },
-      "mpg": {
-        "city": 3,
-        "highway": 6,
-        "combined": 4
-      },
-      "specs": {
-        "horsepower": 995,
-        "seats": 1,
-        "cargo_cu_ft": 0
-      }
-    },
-    "SF-24": {
-      "type": "sedan",
-      "is_ev": false,
-      "production_years": [
-        2024,
-        2025
-      ],
-      "trims_by_year": {
-        "2024": {
-          "Client Racing - Race Spec": 4500000,
-          "Client Racing - Show Car": 850000
-        },
-        "2025": {
-          "Client Racing - Race Spec": 5200000,
-          "Client Racing - Show Car": 950000
-        }
-      },
-      "mpg": {
-        "city": 3,
-        "highway": 6,
-        "combined": 4
-      },
-      "specs": {
-        "horsepower": 1000,
-        "seats": 1,
-        "cargo_cu_ft": 0
-      }
-    },
-    "SF21": {
-      "type": "sedan",
-      "is_ev": false,
-      "production_years": [
-        2021,
-        2022
-      ],
-      "trims_by_year": {
-        "2021": {
-          "Client Racing - Race Spec": 2800000,
-          "Client Racing - Show Car": 600000
-        },
-        "2022": {
-          "Client Racing - Race Spec": 2600000,
-          "Client Racing - Show Car": 575000
-        }
-      },
-      "mpg": {
-        "city": 3,
-        "highway": 5,
-        "combined": 4
-      },
-      "specs": {
-        "horsepower": 975,
-        "seats": 1,
-        "cargo_cu_ft": 0
       }
     }
   },
@@ -7885,7 +7592,7 @@
   },
   "Genesis": {
     "Electrified G80": {
-      "type": "sedan",
+      "type": "ev_sedan",
       "is_ev": true,
       "production_years": [
         2022,
@@ -7916,7 +7623,7 @@
       }
     },
     "Electrified GV70": {
-      "type": "suv",
+      "type": "ev_suv",
       "is_ev": true,
       "production_years": [
         2023,
@@ -9898,7 +9605,7 @@
       "is_ev": false,
       "production_years": [
         2014,
-        2026
+        2024
       ],
       "trims_by_year": {
         "2015": {
@@ -9973,19 +9680,6 @@
           "3.0t Luxe": 45950,
           "3.0t Sport": 48950,
           "Red Sport 400": 54950
-        },
-        "2025": {
-          "2.0t Pure": 39450,
-          "2.0t Luxe": 42950,
-          "3.0t Luxe": 46450,
-          "3.0t Sport": 49450,
-          "Red Sport 400": 55450
-        },
-        "2026": {
-          "Q50 Pure": 43895,
-          "Q50 Luxe": 46895,
-          "Q50 Sensory": 51895,
-          "Q50 Red Sport 400": 55895
         }
       },
       "mpg": null,
@@ -10052,7 +9746,7 @@
       "is_ev": false,
       "production_years": [
         2013,
-        2026
+        2025
       ],
       "trims_by_year": {
         "2015": {
@@ -10136,12 +9830,6 @@
           "Luxe AWD": 47950,
           "Sensory": 49950,
           "Sensory AWD": 51950
-        },
-        "2026": {
-          "QX50 Pure": 41895,
-          "QX50 Luxe": 45895,
-          "QX50 Sensory": 50895,
-          "QX50 Autograph": 54895
         }
       },
       "mpg": null,
@@ -10349,7 +10037,7 @@
       "is_ev": false,
       "production_years": [
         2017,
-        2026
+        2024
       ],
       "trims_by_year": {
         "2017": {
@@ -10399,18 +10087,6 @@
           "E-PACE S": 46100,
           "E-PACE SE": 49100,
           "E-PACE HSE": 52100
-        },
-        "2025": {
-          "E-PACE": 42600,
-          "E-PACE S": 46600,
-          "E-PACE SE": 49600,
-          "E-PACE HSE": 52600
-        },
-        "2026": {
-          "E-PACE": 43665,
-          "E-PACE S": 47765,
-          "E-PACE SE": 50840,
-          "E-PACE HSE": 53915
         }
       },
       "mpg": null,
@@ -10728,7 +10404,7 @@
       "is_ev": false,
       "production_years": [
         2008,
-        2026
+        2024
       ],
       "trims_by_year": {
         "2015": {
@@ -10795,18 +10471,6 @@
           "XF S": 59800,
           "XF SE": 56800,
           "XF HSE": 62800
-        },
-        "2025": {
-          "XF": 54300,
-          "XF S": 60300,
-          "XF SE": 57300,
-          "XF HSE": 63300
-        },
-        "2026": {
-          "XF": 55655,
-          "XF S": 61805,
-          "XF SE": 58730,
-          "XF HSE": 64880
         }
       },
       "mpg": null,
@@ -11893,7 +11557,7 @@
       "is_ev": false,
       "production_years": [
         2010,
-        2026
+        2025
       ],
       "trims_by_year": {
         "2015": {
@@ -11957,14 +11621,6 @@
           "Soul S": 21390,
           "Soul !": 23390,
           "Soul GT-Line": 25390
-        },
-        "2026": {
-          "Soul LX": 20990,
-          "Soul S": 23990,
-          "Soul EX": 25990,
-          "Soul GT-Line": 26990,
-          "Soul GT-Line Turbo": 29990,
-          "Soul X-Line": 27990
         }
       },
       "mpg": null,
@@ -15715,7 +15371,7 @@
       "is_ev": false,
       "production_years": [
         2017,
-        2026
+        2025
       ],
       "trims_by_year": {
         "2017": {
@@ -15803,17 +15459,6 @@
           "718 Cayman GT4": 108600,
           "718 Spyder": 105800,
           "718 Cayman Style Edition": 69700
-        },
-        "2026": {
-          "718 Boxster": 68725,
-          "718 Boxster S": 80360,
-          "718 Cayman": 67035,
-          "718 Cayman S": 78720,
-          "718 Boxster GTS 4.0": 95940,
-          "718 Cayman GTS 4.0": 95940,
-          "718 Cayman GT4": 111315,
-          "718 Spyder": 108445,
-          "718 Cayman Style Edition": 71440
         }
       },
       "mpg": null,
@@ -18247,7 +17892,7 @@
       }
     },
     "C-HR": {
-      "type": "sedan",
+      "type": "suv",
       "is_ev": false,
       "production_years": [
         2018,
@@ -18805,7 +18450,7 @@
       }
     },
     "Mirai": {
-      "type": "sedan",
+      "type": "ev_sedan",
       "is_ev": true,
       "production_years": [
         2016,
@@ -18857,7 +18502,8 @@
         "horsepower": 182,
         "seats": 5,
         "cargo_cu_ft": 9.6
-      }
+      },
+      "fuel_type": "hydrogen"
     },
     "Prius": {
       "type": "sedan",
@@ -20089,7 +19735,7 @@
       "is_ev": false,
       "production_years": [
         2001,
-        2026
+        2025
       ],
       "trims_by_year": {
         "2015": {
@@ -20146,14 +19792,6 @@
           "S60 B5 Momentum": 43495,
           "S60 B6 R-Design": 44600,
           "S60 B6 Inscription": 48600
-        },
-        "2026": {
-          "S60 B5 Core": 44895,
-          "S60 B5 Plus": 50895,
-          "S60 B5 Plus Dark": 52895,
-          "S60 B5 Ultimate": 58895,
-          "S60 Recharge Plus T8": 57895,
-          "S60 Recharge Ultimate T8": 63895
         }
       },
       "mpg": null,
@@ -20229,7 +19867,7 @@
       }
     },
     "XC40": {
-      "type": "sedan",
+      "type": "suv",
       "is_ev": false,
       "production_years": [
         2019,

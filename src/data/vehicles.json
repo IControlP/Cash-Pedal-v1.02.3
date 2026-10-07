@@ -3090,7 +3090,7 @@
       "is_ev": false,
       "production_years": [
         2008,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -3152,6 +3152,11 @@
           "Enclave Essence": 47455,
           "Enclave Premium": 53400,
           "Enclave Avenir": 60985
+        },
+        "2027": {
+          "Enclave Preferred": 46600,
+          "Enclave Sport Touring": 50100,
+          "Enclave Avenir": 60200
         }
       },
       "mpg": null,
@@ -4047,6 +4052,30 @@
         "seats": 7,
         "cargo_cu_ft": 12.6
       }
+    },
+    "Lyriq": {
+      "type": "ev_suv",
+      "is_ev": true,
+      "production_years": [
+        2023,
+        2026
+      ],
+      "trims_by_year": {
+        "2026": {
+          "Lyriq Luxury": 59200,
+          "Lyriq Sport": 59700,
+          "Lyriq Premium Luxury": 63200,
+          "Lyriq Premium Sport": 63700,
+          "Lyriq Signature Luxury": 67800,
+          "Lyriq Signature Sport": 68300
+        }
+      },
+      "mpg": null,
+      "specs": {
+        "horsepower": 365,
+        "seats": 5,
+        "cargo_cu_ft": 28.0
+      }
     }
   },
   "Chevrolet": {
@@ -4339,7 +4368,7 @@
       "is_ev": false,
       "production_years": [
         1953,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -4436,14 +4465,23 @@
           "Corvette ZR1": 165995
         },
         "2026": {
-          "Corvette Stingray": 66210,
+          "Corvette Stingray": 70000,
           "Corvette Stingray Z51": 74815,
-          "Corvette Stingray Convertible": 72970,
+          "Corvette Stingray Convertible": 77000,
           "Corvette Stingray Convertible Z51": 81575,
-          "Corvette Z06": 111515,
-          "Corvette Z06 Convertible": 118690,
-          "Corvette E-Ray": 108130,
-          "Corvette ZR1": 170145
+          "Corvette Z06": 117700,
+          "Corvette Z06 Convertible": 124700,
+          "Corvette E-Ray": 108600,
+          "Corvette ZR1": 180400
+        },
+        "2027": {
+          "Corvette Stingray": 71000,
+          "Corvette Stingray Convertible": 78000,
+          "Corvette Grand Sport": 86000,
+          "Corvette Grand Sport X": 109700,
+          "Corvette Z06": 118900,
+          "Corvette ZR1": 194700,
+          "Corvette ZR1X": 224900
         }
       },
       "mpg": {
@@ -4511,7 +4549,7 @@
       "is_ev": false,
       "production_years": [
         2005,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -4581,6 +4619,11 @@
           "Equinox LT": 29210,
           "Equinox RS": 31775,
           "Equinox Premier": 35360
+        },
+        "2027": {
+          "Equinox LT": 29000,
+          "Equinox RS": 33900,
+          "Equinox ACTIV": 33900
         }
       },
       "mpg": {
@@ -4645,7 +4688,7 @@
       "is_ev": false,
       "production_years": [
         1997,
-        2024
+        2025
       ],
       "trims_by_year": {
         "2015": {
@@ -4713,6 +4756,11 @@
           "Malibu LT": 29200,
           "Malibu Premier": 33700,
           "Malibu RS": 31200
+        },
+        "2025": {
+          "Malibu LS": 25800,
+          "Malibu LT": 28100,
+          "Malibu 2LT": 31500
         }
       },
       "mpg": {
@@ -5051,7 +5099,7 @@
       "is_ev": false,
       "production_years": [
         1995,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -5137,6 +5185,13 @@
           "Tahoe Z71": 63345,
           "Tahoe Premier": 72060,
           "Tahoe High Country": 76980
+        },
+        "2027": {
+          "Tahoe LS": 61200,
+          "Tahoe LT": 64200,
+          "Tahoe RST": 69600,
+          "Tahoe Premier": 76100,
+          "Tahoe High Country": 84200
         }
       },
       "mpg": null,
@@ -5151,7 +5206,7 @@
       "is_ev": false,
       "production_years": [
         2009,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -5236,6 +5291,12 @@
           "Traverse LT Leather": 43765,
           "Traverse Premier": 48380,
           "Traverse High Country": 56580
+        },
+        "2027": {
+          "Traverse LT": 40800,
+          "Traverse Z71": 49100,
+          "Traverse RS": 55800,
+          "Traverse High Country": 56100
         }
       },
       "mpg": null,
@@ -5469,7 +5530,7 @@
       "is_ev": false,
       "production_years": [
         2017,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2017": {
@@ -5565,6 +5626,12 @@
           "Pacifica Hybrid Touring": 45195,
           "Pacifica Hybrid Touring-L": 48270,
           "Pacifica Hybrid Limited": 53395
+        },
+        "2027": {
+          "Pacifica LX": 41495,
+          "Pacifica Select": 43545,
+          "Pacifica Limited": 47995,
+          "Pacifica Pinnacle": 54910
         }
       },
       "mpg": null,
@@ -5579,7 +5646,7 @@
       "is_ev": false,
       "production_years": [
         2020,
-        2023
+        2026
       ],
       "trims_by_year": {
         "2020": {
@@ -5597,6 +5664,12 @@
         "2023": {
           "Voyager L": 28285,
           "Voyager LX": 31285
+        },
+        "2025": {
+          "Voyager LX": 39995
+        },
+        "2026": {
+          "Voyager LX": 39995
         }
       },
       "mpg": null,
@@ -5703,7 +5776,7 @@
       "is_ev": false,
       "production_years": [
         2006,
-        2023
+        2026
       ],
       "trims_by_year": {
         "2015": {
@@ -5780,6 +5853,12 @@
           "SRT 392": 50995,
           "SRT Hellcat": 73995,
           "SRT Hellcat Redeye": 78995
+        },
+        "2026": {
+          "Charger Sixpack R/T 2-Door": 49995,
+          "Charger Sixpack R/T 4-Door": 51995,
+          "Charger Sixpack Scat Pack 2-Door": 55690,
+          "Charger Sixpack Scat Pack 4-Door": 57690
         }
       },
       "mpg": null,
@@ -7048,6 +7127,121 @@
         "seats": 5,
         "cargo_cu_ft": 29.7
       }
+    },
+    "Bronco Sport": {
+      "type": "suv",
+      "is_ev": false,
+      "production_years": [
+        2021,
+        2026
+      ],
+      "trims_by_year": {
+        "2024": {
+          "Big Bend": 29795,
+          "Heritage": 32095,
+          "Free Wheeling": 32395,
+          "Outer Banks": 33935,
+          "Badlands": 38390
+        },
+        "2025": {
+          "Big Bend": 29995,
+          "Free Wheeling": 33135,
+          "Heritage": 33395,
+          "Outer Banks": 35295,
+          "Badlands": 40115
+        },
+        "2026": {
+          "Big Bend": 31845,
+          "Heritage": 34145,
+          "Outer Banks": 36945,
+          "Badlands": 40265
+        }
+      },
+      "mpg": null,
+      "specs": {
+        "horsepower": 180,
+        "seats": 5,
+        "cargo_cu_ft": 32.5
+      }
+    },
+    "Maverick": {
+      "type": "truck",
+      "is_ev": false,
+      "production_years": [
+        2022,
+        2027
+      ],
+      "trims_by_year": {
+        "2022": {
+          "Maverick XL": 19995,
+          "Maverick XLT": 22280,
+          "Maverick Lariat": 25490
+        },
+        "2023": {
+          "Maverick XL": 22195,
+          "Maverick XLT": 24855,
+          "Maverick Lariat": 28355
+        },
+        "2024": {
+          "Maverick XL": 23815,
+          "Maverick XLT": 26315,
+          "Maverick Lariat": 34855
+        },
+        "2025": {
+          "Maverick XL": 26995,
+          "Maverick XLT": 29495,
+          "Maverick Lariat": 37290,
+          "Maverick Lobo": 35255
+        },
+        "2026": {
+          "Maverick XL": 27145,
+          "Maverick XL Hybrid": 28145,
+          "Maverick XLT": 29645,
+          "Maverick XLT Hybrid": 30645,
+          "Maverick Lariat": 35870,
+          "Maverick Lariat Hybrid": 38090
+        },
+        "2027": {
+          "Maverick XL Hybrid": 28145,
+          "Maverick XLT": 30745,
+          "Maverick Lobo": 32155,
+          "Maverick Lobo High": 37155
+        }
+      },
+      "mpg": null,
+      "specs": {
+        "horsepower": 191,
+        "seats": 5,
+        "cargo_cu_ft": 33.3
+      }
+    },
+    "Ranger": {
+      "type": "truck",
+      "is_ev": false,
+      "production_years": [
+        2019,
+        2025
+      ],
+      "trims_by_year": {
+        "2024": {
+          "Ranger XL": 32720,
+          "Ranger XLT": 36160,
+          "Ranger Lariat": 43680,
+          "Ranger Raptor": 55620
+        },
+        "2025": {
+          "Ranger XL": 32980,
+          "Ranger XLT": 36010,
+          "Ranger Lariat": 43780,
+          "Ranger Raptor": 55720
+        }
+      },
+      "mpg": null,
+      "specs": {
+        "horsepower": 270,
+        "seats": 5,
+        "cargo_cu_ft": 45.0
+      }
     }
   },
   "GMC": {
@@ -7056,7 +7250,7 @@
       "is_ev": false,
       "production_years": [
         2007,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -7128,12 +7322,16 @@
           "Denali": 51995
         },
         "2026": {
-          "Acadia Pro": 38995,
-          "Acadia Elevation": 42995,
-          "Acadia SLE": 46995,
-          "Acadia SLT": 51995,
-          "Acadia AT4": 54995,
-          "Acadia Denali": 57995
+          "Acadia Elevation": 43800,
+          "Acadia AT4": 52500,
+          "Acadia Denali": 55900,
+          "Acadia Denali Ultimate": 63100
+        },
+        "2027": {
+          "Acadia Elevation": 43600,
+          "Acadia AT4": 52400,
+          "Acadia Denali": 55900,
+          "Acadia Denali Ultimate": 63400
         }
       },
       "mpg": null,
@@ -7375,7 +7573,7 @@
       "is_ev": false,
       "production_years": [
         2010,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -7441,19 +7639,17 @@
           "Denali": 45995
         },
         "2025": {
-          "Elevation": 36995,
-          "SLE": 38995,
-          "SLT": 41995,
-          "AT4": 43995,
-          "Denali": 46995
+          "Terrain Elevation": 30000
         },
         "2026": {
-          "Terrain Pro": 32995,
-          "Terrain Elevation": 35995,
-          "Terrain SLE": 37995,
-          "Terrain SLT": 40995,
-          "Terrain AT4": 43995,
-          "Terrain Denali": 46995
+          "Terrain Elevation": 30200,
+          "Terrain AT4": 39400,
+          "Terrain Denali": 41900
+        },
+        "2027": {
+          "Terrain Elevation": 30400,
+          "Terrain AT4": 39100,
+          "Terrain Denali": 42200
         }
       },
       "mpg": null,
@@ -8070,7 +8266,7 @@
       "is_ev": false,
       "production_years": [
         1997,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -8154,22 +8350,30 @@
           "CR-V Hybrid Sport Touring": 41550
         },
         "2025": {
-          "CR-V LX": 29100,
-          "CR-V EX": 31600,
-          "CR-V EX-L": 35100,
-          "CR-V Sport": 32600,
-          "CR-V Sport Touring": 36600,
-          "CR-V Hybrid Sport": 37850,
-          "CR-V Hybrid Sport Touring": 42650
+          "CR-V LX": 30100,
+          "CR-V EX": 32350,
+          "CR-V EX-L": 35000,
+          "CR-V Hybrid Sport": 34650,
+          "CR-V Hybrid Sport-L": 37650,
+          "CR-V Hybrid Sport Touring": 41100
         },
         "2026": {
-          "CR-V LX": 29825,
-          "CR-V EX": 32390,
-          "CR-V EX-L": 35980,
-          "CR-V Sport": 33415,
-          "CR-V Sport Touring": 37515,
-          "CR-V Hybrid Sport": 38795,
-          "CR-V Hybrid Sport Touring": 43715
+          "CR-V LX": 30975,
+          "CR-V EX": 33205,
+          "CR-V EX-L": 35455,
+          "CR-V Hybrid Sport": 35685,
+          "CR-V Hybrid Sport-L": 38780,
+          "CR-V Hybrid TrailSport": 38855,
+          "CR-V Hybrid Sport Touring": 42305
+        },
+        "2027": {
+          "CR-V LX": 31520,
+          "CR-V EX": 33550,
+          "CR-V EX-L": 35800,
+          "CR-V Hybrid Sport": 36030,
+          "CR-V Hybrid Sport-L": 39125,
+          "CR-V Hybrid TrailSport": 39200,
+          "CR-V Hybrid Sport Touring": 42950
         }
       },
       "mpg": {
@@ -8339,7 +8543,7 @@
       "is_ev": false,
       "production_years": [
         1995,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -8411,16 +8615,22 @@
           "Odyssey Elite": 51390
         },
         "2025": {
-          "Odyssey LX": 36090,
-          "Odyssey EX-L": 43590,
-          "Odyssey Touring": 49590,
-          "Odyssey Elite": 52290
+          "Odyssey EX-L": 42220,
+          "Odyssey Sport-L": 43370,
+          "Odyssey Touring": 46910,
+          "Odyssey Elite": 51180
         },
         "2026": {
-          "Odyssey LX": 36990,
-          "Odyssey EX-L": 44680,
-          "Odyssey Touring": 50830,
-          "Odyssey Elite": 53595
+          "Odyssey EX-L": 42795,
+          "Odyssey Sport-L": 43895,
+          "Odyssey Touring": 47495,
+          "Odyssey Elite": 51695
+        },
+        "2027": {
+          "Odyssey EX-L": 43195,
+          "Odyssey Sport-L": 44295,
+          "Odyssey Touring": 47895,
+          "Odyssey Elite": 52095
         }
       },
       "mpg": null,
@@ -8728,6 +8938,47 @@
         "seats": 5,
         "cargo_cu_ft": 31
       }
+    },
+    "HR-V": {
+      "type": "suv",
+      "is_ev": false,
+      "production_years": [
+        2016,
+        2027
+      ],
+      "trims_by_year": {
+        "2023": {
+          "HR-V LX": 23800,
+          "HR-V Sport": 25900,
+          "HR-V EX-L": 27900
+        },
+        "2024": {
+          "HR-V LX": 24600,
+          "HR-V Sport": 26700,
+          "HR-V EX-L": 28700
+        },
+        "2025": {
+          "HR-V LX": 25400,
+          "HR-V Sport": 27500,
+          "HR-V EX-L": 29500
+        },
+        "2026": {
+          "HR-V LX": 26500,
+          "HR-V Sport": 28300,
+          "HR-V EX-L": 30350
+        },
+        "2027": {
+          "HR-V LX": 26600,
+          "HR-V Sport": 28400,
+          "HR-V EX-L": 30450
+        }
+      },
+      "mpg": null,
+      "specs": {
+        "horsepower": 158,
+        "seats": 5,
+        "cargo_cu_ft": 24.4
+      }
     }
   },
   "Hyundai": {
@@ -8921,7 +9172,7 @@
       "is_ev": true,
       "production_years": [
         2022,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2022": {
@@ -8945,9 +9196,22 @@
           "Ioniq 5 Limited": 53900
         },
         "2026": {
-          "Ioniq 5 SE": 44075,
-          "Ioniq 5 SEL": 48125,
-          "Ioniq 5 Limited": 55245
+          "Ioniq 5 SE Standard Range": 35000,
+          "Ioniq 5 SE": 37500,
+          "Ioniq 5 SE AWD": 41000,
+          "Ioniq 5 SEL": 39800,
+          "Ioniq 5 SEL AWD": 43300,
+          "Ioniq 5 XRT AWD": 46275,
+          "Ioniq 5 Limited": 48975
+        },
+        "2027": {
+          "Ioniq 5 SE Standard Range": 35250,
+          "Ioniq 5 SE": 37750,
+          "Ioniq 5 SE AWD": 41250,
+          "Ioniq 5 SEL": 40200,
+          "Ioniq 5 SEL AWD": 44700,
+          "Ioniq 5 XRT AWD": 46525,
+          "Ioniq 5 Limited": 49125
         }
       },
       "mpg": null,
@@ -8998,7 +9262,7 @@
       "is_ev": false,
       "production_years": [
         2018,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2018": {
@@ -9086,6 +9350,11 @@
           "Kona Hybrid Blue": 26955,
           "Kona Hybrid SEL": 29675,
           "Kona Hybrid Limited": 32340
+        },
+        "2027": {
+          "Kona SE": 25500,
+          "Kona SEL Sport": 26825,
+          "Kona Limited": 32585
         }
       },
       "mpg": null,
@@ -9100,7 +9369,7 @@
       "is_ev": false,
       "production_years": [
         2020,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2020": {
@@ -9147,6 +9416,15 @@
           "Palisade XRT": 44075,
           "Palisade Limited": 49710,
           "Palisade Calligraphy": 53660
+        },
+        "2027": {
+          "Palisade SE": 39735,
+          "Palisade SEL": 42240,
+          "Palisade SEL Premium": 45600,
+          "Palisade Limited": 50070,
+          "Palisade Calligraphy": 54860,
+          "Palisade Hybrid SEL": 44560,
+          "Palisade Hybrid Limited": 51100
         }
       },
       "mpg": null,
@@ -9161,7 +9439,7 @@
       "is_ev": false,
       "production_years": [
         2001,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -9260,6 +9538,17 @@
           "Santa Fe Hybrid SEL": 37925,
           "Santa Fe Hybrid Limited": 43560,
           "Santa Fe Hybrid Calligraphy": 46635
+        },
+        "2027": {
+          "Santa Fe SE": 35050,
+          "Santa Fe SEL": 37865,
+          "Santa Fe XRT": 42015,
+          "Santa Fe Limited": 44765,
+          "Santa Fe Calligraphy": 47915,
+          "Santa Fe Hybrid SE": 38300,
+          "Santa Fe Hybrid SEL": 40590,
+          "Santa Fe Hybrid Limited": 47600,
+          "Santa Fe Hybrid Calligraphy": 50600
         }
       },
       "mpg": {
@@ -9596,6 +9885,36 @@
         "horsepower": 268,
         "seats": 7,
         "cargo_cu_ft": 21.9
+      }
+    },
+    "Santa Cruz": {
+      "type": "truck",
+      "is_ev": false,
+      "production_years": [
+        2022,
+        2026
+      ],
+      "trims_by_year": {
+        "2024": {
+          "Santa Cruz SE": 26900,
+          "Santa Cruz SEL": 29650,
+          "Santa Cruz Night": 38460,
+          "Santa Cruz XRT": 40100,
+          "Santa Cruz Limited": 41320
+        },
+        "2026": {
+          "Santa Cruz SE": 29750,
+          "Santa Cruz SEL": 31400,
+          "Santa Cruz SEL Activity": 34450,
+          "Santa Cruz XRT": 41350,
+          "Santa Cruz Limited": 43700
+        }
+      },
+      "mpg": null,
+      "specs": {
+        "horsepower": 191,
+        "seats": 5,
+        "cargo_cu_ft": 27.0
       }
     }
   },
@@ -10757,7 +11076,7 @@
       "is_ev": false,
       "production_years": [
         2000,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -10855,13 +11174,21 @@
           "Grand Cherokee Trackhawk": 90790
         },
         "2026": {
-          "Grand Cherokee Laredo": 41990,
+          "Grand Cherokee Laredo": 38920,
           "Grand Cherokee Limited": 46090,
           "Grand Cherokee Overland": 53295,
           "Grand Cherokee SRT": 70715,
           "Grand Cherokee Summit": 59395,
           "Grand Cherokee Trailhawk": 51895,
           "Grand Cherokee Trackhawk": 93060
+        },
+        "2027": {
+          "Grand Cherokee Laredo": 39520,
+          "Grand Cherokee Laredo Upland": 47995,
+          "Grand Cherokee Limited": 44960,
+          "Grand Cherokee Trailhawk": 53000,
+          "Grand Cherokee Overland": 55900,
+          "Grand Cherokee Summit": 60900
         }
       },
       "mpg": null,
@@ -11146,7 +11473,7 @@
       "is_ev": false,
       "production_years": [
         2021,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2021": {
@@ -11208,6 +11535,11 @@
           "K5 Hybrid LX": 28075,
           "K5 Hybrid LXS": 31150,
           "K5 Hybrid EX": 32585
+        },
+        "2027": {
+          "K5 LXS": 27690,
+          "K5 GT-Line": 28690,
+          "K5 GT": 33790
         }
       },
       "mpg": null,
@@ -11222,7 +11554,7 @@
       "is_ev": false,
       "production_years": [
         2017,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2017": {
@@ -11321,6 +11653,13 @@
           "Niro Plug-In Hybrid EX Touring": 35900,
           "Niro EV Wind": 40400,
           "Niro EV Wave": 45400
+        },
+        "2027": {
+          "Niro LX": 29890,
+          "Niro S": 30590,
+          "Niro EX": 31390,
+          "Niro SX": 35440,
+          "Niro SX Touring": 38990
         }
       },
       "mpg": null,
@@ -11398,7 +11737,7 @@
       "is_ev": false,
       "production_years": [
         2021,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2021": {
@@ -11437,6 +11776,13 @@
           "Seltos EX": 29490,
           "Seltos SX": 32490,
           "Seltos SX Prestige": 34490
+        },
+        "2027": {
+          "Seltos LX": 24990,
+          "Seltos S": 26390,
+          "Seltos EX": 28390,
+          "Seltos X-Line S": 28990,
+          "Seltos X-Line SX": 32790
         }
       },
       "mpg": null,
@@ -11635,7 +11981,7 @@
       "is_ev": false,
       "production_years": [
         2005,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -11715,11 +12061,26 @@
           "Sportage LX": 27490,
           "Sportage S": 29490,
           "Sportage EX": 31490,
-          "Sportage SX Prestige": 34990,
+          "Sportage SX Prestige": 36290,
           "Sportage X-Pro": 32490,
-          "Sportage X-Pro Prestige": 36990,
+          "Sportage X-Pro Prestige": 39590,
           "Sportage Plug-In Hybrid EX": 35990,
           "Sportage Plug-In Hybrid SX Prestige": 39990
+        },
+        "2027": {
+          "Sportage LX": 28990,
+          "Sportage EX": 30790,
+          "Sportage SX": 34590,
+          "Sportage X-Line": 34790,
+          "Sportage SX Prestige": 36590,
+          "Sportage X-Pro Prestige": 39890,
+          "Sportage Hybrid LX": 30590,
+          "Sportage Hybrid S": 31290,
+          "Sportage Hybrid EX": 32290,
+          "Sportage Hybrid X-Line": 35790,
+          "Sportage Hybrid SX Prestige": 40690,
+          "Sportage Plug-In Hybrid X-Line": 40590,
+          "Sportage Plug-In Hybrid X-Line Prestige": 47390
         }
       },
       "mpg": null,
@@ -11786,7 +12147,7 @@
       "is_ev": false,
       "production_years": [
         2020,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2020": {
@@ -11825,11 +12186,16 @@
           "Telluride EX": 45490,
           "Telluride SX": 49490
         },
-        "2026": {
-          "Telluride LX": 40290,
-          "Telluride S": 43290,
-          "Telluride EX": 46290,
-          "Telluride SX": 50290
+        "2027": {
+          "Telluride LX": 39190,
+          "Telluride S": 42090,
+          "Telluride EX": 43790,
+          "Telluride SX": 48790,
+          "Telluride SX-Prestige": 53890,
+          "Telluride X-Pro SX-Prestige": 56790,
+          "Telluride Hybrid EX": 46490,
+          "Telluride Hybrid SX": 51490,
+          "Telluride Hybrid SX-Prestige": 56590
         }
       },
       "mpg": null,
@@ -11926,6 +12292,50 @@
         "horsepower": 215,
         "seats": 7,
         "cargo_cu_ft": 20
+      }
+    },
+    "Carnival": {
+      "type": "minivan",
+      "is_ev": false,
+      "production_years": [
+        2022,
+        2026
+      ],
+      "trims_by_year": {
+        "2022": {
+          "Carnival LX": 32300,
+          "Carnival EX": 37800,
+          "Carnival SX": 41300,
+          "Carnival SX Prestige": 46300
+        },
+        "2025": {
+          "Carnival LX": 36500,
+          "Carnival LXS": 38500,
+          "Carnival EX": 40700,
+          "Carnival SX": 45600,
+          "Carnival SX Prestige": 50600,
+          "Carnival Hybrid LXS": 40500,
+          "Carnival Hybrid EX": 42700,
+          "Carnival Hybrid SX": 47600,
+          "Carnival Hybrid SX Prestige": 52600
+        },
+        "2026": {
+          "Carnival LX": 36990,
+          "Carnival LXS": 38990,
+          "Carnival EX": 41190,
+          "Carnival SX": 46090,
+          "Carnival SX Prestige": 51090,
+          "Carnival Hybrid LXS": 40990,
+          "Carnival Hybrid EX": 43190,
+          "Carnival Hybrid SX": 48090,
+          "Carnival Hybrid SX Prestige": 53090
+        }
+      },
+      "mpg": null,
+      "specs": {
+        "horsepower": 287,
+        "seats": 8,
+        "cargo_cu_ft": 40.2
       }
     }
   },
@@ -14290,6 +14700,30 @@
         "seats": 5,
         "cargo_cu_ft": 12.9
       }
+    },
+    "GLE": {
+      "type": "suv_large",
+      "is_ev": false,
+      "production_years": [
+        2016,
+        2025
+      ],
+      "trims_by_year": {
+        "2024": {
+          "GLE 350 4MATIC": 62650,
+          "GLE 450 4MATIC": 69500
+        },
+        "2025": {
+          "GLE 350 4MATIC": 64350,
+          "GLE 450 4MATIC": 71350
+        }
+      },
+      "mpg": null,
+      "specs": {
+        "horsepower": 255,
+        "seats": 5,
+        "cargo_cu_ft": 33.3
+      }
     }
   },
   "Mini": {
@@ -14952,7 +15386,7 @@
       "is_ev": false,
       "production_years": [
         2009,
-        2024
+        2026
       ],
       "trims_by_year": {
         "2015": {
@@ -15014,6 +15448,11 @@
           "SV": 39490,
           "SL": 40490,
           "Platinum": 43490
+        },
+        "2026": {
+          "Murano SV": 41670,
+          "Murano SL": 46760,
+          "Murano Platinum": 49800
         }
       },
       "mpg": null,
@@ -15203,7 +15642,7 @@
       "is_ev": false,
       "production_years": [
         2007,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -15277,6 +15716,12 @@
           "Sentra SV": 23690,
           "Sentra SR": 25690,
           "Sentra SL": 26690
+        },
+        "2027": {
+          "Sentra S": 22890,
+          "Sentra SV": 23590,
+          "Sentra SR": 24990,
+          "Sentra SL": 27990
         }
       },
       "mpg": null,
@@ -15362,6 +15807,99 @@
         "horsepower": 400,
         "seats": 6,
         "cargo_cu_ft": 36.3
+      }
+    },
+    "Frontier": {
+      "type": "truck",
+      "is_ev": false,
+      "production_years": [
+        2005,
+        2026
+      ],
+      "trims_by_year": {
+        "2022": {
+          "Frontier S": 28690,
+          "Frontier SV": 31390,
+          "Frontier PRO-4X": 38120
+        },
+        "2023": {
+          "Frontier S": 29570,
+          "Frontier SV": 32270,
+          "Frontier PRO-4X": 39100
+        },
+        "2024": {
+          "Frontier S": 30510,
+          "Frontier SV": 33210,
+          "Frontier PRO-4X": 40040
+        },
+        "2025": {
+          "Frontier S": 32050,
+          "Frontier SV": 36190,
+          "Frontier PRO-4X": 41770
+        },
+        "2026": {
+          "Frontier S": 32150,
+          "Frontier SV": 36190,
+          "Frontier PRO-4X": 41870
+        }
+      },
+      "mpg": null,
+      "specs": {
+        "horsepower": 310,
+        "seats": 5,
+        "cargo_cu_ft": 33.5
+      }
+    },
+    "Kicks": {
+      "type": "suv",
+      "is_ev": false,
+      "production_years": [
+        2018,
+        2026
+      ],
+      "trims_by_year": {
+        "2025": {
+          "Kicks S": 21830,
+          "Kicks SV": 23680,
+          "Kicks SR": 26180
+        },
+        "2026": {
+          "Kicks S": 22730,
+          "Kicks SV": 24470,
+          "Kicks SR": 26960
+        }
+      },
+      "mpg": null,
+      "specs": {
+        "horsepower": 141,
+        "seats": 5,
+        "cargo_cu_ft": 30.0
+      }
+    },
+    "Versa": {
+      "type": "sedan",
+      "is_ev": false,
+      "production_years": [
+        2007,
+        2025
+      ],
+      "trims_by_year": {
+        "2024": {
+          "Versa S": 16130,
+          "Versa SV": 19420,
+          "Versa SR": 20140
+        },
+        "2025": {
+          "Versa S": 17190,
+          "Versa SV": 20490,
+          "Versa SR": 21190
+        }
+      },
+      "mpg": null,
+      "specs": {
+        "horsepower": 122,
+        "seats": 5,
+        "cargo_cu_ft": 15.0
       }
     }
   },
@@ -16568,7 +17106,7 @@
       "is_ev": true,
       "production_years": [
         2022,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2022": {
@@ -16598,6 +17136,11 @@
           "R1S Large": 85790,
           "R1S Max": 95325,
           "R1S Performance Dual-Motor": 109675
+        },
+        "2027": {
+          "R1S Premium": 83990,
+          "R1S Performance": 106990,
+          "R1S Quad": 121990
         }
       },
       "mpg": null,
@@ -16612,7 +17155,7 @@
       "is_ev": true,
       "production_years": [
         2022,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2022": {
@@ -16642,6 +17185,11 @@
           "R1T Large": 79640,
           "R1T Max": 89175,
           "R1T Performance Dual-Motor": 104550
+        },
+        "2027": {
+          "R1T Premium": 79990,
+          "R1T Performance": 100990,
+          "R1T Quad": 115990
         }
       },
       "mpg": null,
@@ -16658,7 +17206,7 @@
       "is_ev": false,
       "production_years": [
         2019,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2019": {
@@ -16706,8 +17254,14 @@
         "2026": {
           "Base": 35640,
           "Premium": 37690,
-          "Limited": 41790,
-          "Touring": 48965
+          "Limited": 47885,
+          "Touring": 51165
+        },
+        "2027": {
+          "Premium": 40795,
+          "Limited": 47985,
+          "Limited Bronze Edition": 49095,
+          "Touring": 51165
         }
       },
       "mpg": null,
@@ -16722,7 +17276,7 @@
       "is_ev": false,
       "production_years": [
         2013,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -16771,6 +17325,10 @@
         "2026": {
           "Premium": 31280,
           "Limited": 33330
+        },
+        "2027": {
+          "Limited": 36140,
+          "tS": 38770
         }
       },
       "mpg": null,
@@ -16785,7 +17343,7 @@
       "is_ev": false,
       "production_years": [
         2013,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -16861,6 +17419,14 @@
           "Limited": 30285,
           "Sport": 28235,
           "Wilderness": 33615
+        },
+        "2027": {
+          "Base": 26995,
+          "Premium": 27995,
+          "Limited": 32995,
+          "Wilderness": 33795,
+          "Sport Hybrid": 33995,
+          "Limited Hybrid": 35995
         }
       },
       "mpg": null,
@@ -18071,7 +18637,7 @@
       "is_ev": false,
       "production_years": [
         2000,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -18155,6 +18721,16 @@
           "SE": 25470,
           "XLE": 26575,
           "XSE": 27600
+        },
+        "2027": {
+          "LE": 23325,
+          "SE": 25765,
+          "XSE": 29040,
+          "Hybrid LE": 25175,
+          "Hybrid LE AWD": 26575,
+          "Hybrid SE": 27615,
+          "Hybrid SE AWD": 29015,
+          "Hybrid XLE": 29540
         }
       },
       "mpg": {
@@ -18399,7 +18975,7 @@
       "is_ev": false,
       "production_years": [
         2000,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -18440,6 +19016,10 @@
         "2026": {
           "Land Cruiser 1958": 58425,
           "Land Cruiser First Edition": 76360
+        },
+        "2027": {
+          "Land Cruiser 1958": 57880,
+          "Land Cruiser": 62725
         }
       },
       "mpg": null,
@@ -18510,7 +19090,7 @@
       "is_ev": false,
       "production_years": [
         2001,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2015": {
@@ -18627,10 +19207,20 @@
           "Prius LE": 29160,
           "Prius XLE": 32235,
           "Prius XLE AWD": 33260,
-          "Prius Limited": 37360,
+          "Prius Limited": 35565,
           "Prius Prime SE": 34285,
           "Prius Prime XSE": 37360,
           "Prius Prime Limited": 40950
+        },
+        "2027": {
+          "Prius LE": 28755,
+          "Prius XLE": 32200,
+          "Prius XLE AWD": 33600,
+          "Prius Nightshade": 33005,
+          "Prius Limited": 35770,
+          "Prius Prime SE": 33980,
+          "Prius Prime XSE": 37230,
+          "Prius Prime XSE Premium": 40675
         }
       },
       "mpg": {
@@ -19263,9 +19853,10 @@
           "Limited AWD": 50500
         },
         "2026": {
-          "XLE FWD": 43560,
-          "XLE AWD": 47660,
-          "Limited AWD": 51760
+          "XLE FWD": 34900,
+          "XLE AWD": 39900,
+          "Limited FWD": 43300,
+          "Limited AWD": 45300
         }
       },
       "mpg": null,
@@ -19273,6 +19864,96 @@
         "horsepower": 201,
         "seats": 5,
         "cargo_cu_ft": 27.7
+      }
+    },
+    "Corolla Cross": {
+      "type": "suv",
+      "is_ev": false,
+      "production_years": [
+        2022,
+        2026
+      ],
+      "trims_by_year": {
+        "2023": {
+          "L": 23610,
+          "LE": 25940,
+          "XLE": 27715,
+          "Hybrid S": 27970,
+          "Hybrid SE": 29290,
+          "Hybrid XSE": 31065
+        },
+        "2024": {
+          "L": 23860,
+          "LE": 26190,
+          "XLE": 28085
+        },
+        "2025": {
+          "L": 23990,
+          "LE": 26320,
+          "XLE": 28215,
+          "Hybrid S": 28350,
+          "Hybrid SE": 29670,
+          "Hybrid XSE": 31535
+        },
+        "2026": {
+          "L": 25235,
+          "LE": 27565,
+          "XLE": 30160
+        }
+      },
+      "mpg": null,
+      "specs": {
+        "horsepower": 169,
+        "seats": 5,
+        "cargo_cu_ft": 24.9
+      }
+    },
+    "Grand Highlander": {
+      "type": "suv_large",
+      "is_ev": false,
+      "production_years": [
+        2024,
+        2026
+      ],
+      "trims_by_year": {
+        "2024": {
+          "XLE": 43070,
+          "Limited": 47860,
+          "Platinum": 53545,
+          "Hybrid XLE": 44670,
+          "Hybrid Limited": 51060,
+          "Hybrid MAX Limited": 54040,
+          "Hybrid MAX Platinum": 58125
+        },
+        "2025": {
+          "LE": 42310,
+          "XLE": 45080,
+          "Limited": 49810,
+          "Platinum": 55495,
+          "Hybrid LE": 45660,
+          "Hybrid XLE": 46830,
+          "Hybrid Limited": 53160,
+          "Hybrid Nightshade": 54060,
+          "Hybrid MAX Limited": 56140,
+          "Hybrid MAX Platinum": 60225
+        },
+        "2026": {
+          "LE": 41360,
+          "XLE": 44130,
+          "Limited": 48860,
+          "Platinum": 54545,
+          "Hybrid LE": 44710,
+          "Hybrid XLE": 45880,
+          "Hybrid Limited": 52210,
+          "Hybrid MAX Limited": 55190,
+          "Hybrid MAX Platinum": 59275
+        }
+      },
+      "mpg": null,
+      "specs": {
+        "horsepower": 265,
+        "seats": 8,
+        "cargo_cu_ft": 20.6
       }
     }
   },
@@ -19282,7 +19963,7 @@
       "is_ev": false,
       "production_years": [
         2018,
-        2026
+        2027
       ],
       "trims_by_year": {
         "2018": {
@@ -19358,6 +20039,14 @@
           "Atlas SE Technology 4Motion": 43495,
           "Atlas SEL 4Motion": 47495,
           "Atlas SEL Premium 4Motion": 52495
+        },
+        "2027": {
+          "Atlas SE FWD": 41610,
+          "Atlas SE 4Motion": 43610,
+          "Atlas SE Technology FWD": 45610,
+          "Atlas SE Technology 4Motion": 47610,
+          "Atlas SEL R-Line 4Motion": 52110,
+          "Atlas SEL Premium R-Line 4Motion": 56610
         }
       },
       "mpg": null,
@@ -19726,6 +20415,40 @@
         "horsepower": 184,
         "seats": 7,
         "cargo_cu_ft": 12
+      }
+    },
+    "Taos": {
+      "type": "suv",
+      "is_ev": false,
+      "production_years": [
+        2022,
+        2026
+      ],
+      "trims_by_year": {
+        "2024": {
+          "Taos S": 23995,
+          "Taos SE": 28165,
+          "Taos SE Black": 30365,
+          "Taos SEL 4Motion": 33515
+        },
+        "2025": {
+          "Taos S": 25495,
+          "Taos SE": 28395,
+          "Taos SE Black": 30645,
+          "Taos SEL 4Motion": 35195
+        },
+        "2026": {
+          "Taos S": 26500,
+          "Taos SE": 29260,
+          "Taos SE Black": 31510,
+          "Taos SEL 4Motion": 35900
+        }
+      },
+      "mpg": null,
+      "specs": {
+        "horsepower": 174,
+        "seats": 5,
+        "cargo_cu_ft": 27.9
       }
     }
   },

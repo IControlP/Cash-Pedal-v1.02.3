@@ -10,8 +10,17 @@ Checks
 Structural (always enforced):
   - price is a positive number within sane bounds ($5,000 - $1,000,000)
   - trim years are plausible (1980 .. current year + 2)
-  - production_years is a [start, end] pair consistent with trim years
+  - production_years is a [start, end] pair consistent with trim years, and
+    its end year is the last year with data (a discontinued model must not
+    claim later years; a model gaining a year must bump its end year)
   - every model has at least one trim year
+  - type is a known segment; ev_* segments are is_ev and is_ev models use an
+    ev_* segment (EV pickups may stay "truck")
+  - fuel_type, when present, is a known value ("hydrogen" requires is_ev)
+  - specs.seats is at least 2 (catches race cars and other non-road entries)
+  - no model duplicates another model's prices within the same make (the
+    Silverado / Silverado 1500 and 3 Series / 330i pattern); known, deliberate
+    overlaps are listed in DUPLICATE_OK
 
 Pricing anomalies (compared against a committed baseline of known-legitimate
 cases, e.g. Tesla price cuts, generation-change restructures):
@@ -45,7 +54,21 @@ YOY_DROP_THRESHOLD = 1500
 YOY_JUMP_THRESHOLD = 5000
 FROZEN_MIN_YEARS = 3
 PRICE_MIN = 5000
-PRICE_MAX = 10_000_000  # Ferrari F1 client-racing cars legitimately reach ~$5M
+PRICE_MAX = 1_000_000
+
+VALID_TYPES = {"sedan", "suv", "suv_large", "sports", "truck", "minivan",
+               "ev_sedan", "ev_suv"}
+EV_TYPES = {"ev_sedan", "ev_suv"}
+EV_OK_NON_EV_TYPES = {"truck"}  # R1T, Cybertruck: the truck segment matters more
+VALID_FUEL_TYPES = {"hydrogen"}
+MIN_SEATS = 2
+# A model whose prices are a subset of a sibling's for this many shared years
+# is treated as a duplicate entry.
+DUPLICATE_MIN_YEARS = 3
+# (make, broader model, narrower model) overlaps kept on purpose.
+DUPLICATE_OK = {
+    ("BMW", "3 Series", "M3"),  # M3 is searched for on its own
+}
 
 
 def load_data():
@@ -74,6 +97,12 @@ def structural_errors(data):
                     f"{make} {model}: trim years {years[0]}-{years[-1]} "
                     f"outside production_years {py[0]}-{py[1]}"
                 )
+            if (isinstance(py, list) and len(py) == 2 and years
+                    and py[1] != years[-1]):
+                errors.append(
+                    f"{make} {model}: production_years ends {py[1]} but data "
+                    f"ends {years[-1]}"
+                )
             for y, trims in tby.items():
                 for trim, price in trims.items():
                     if not isinstance(price, (int, float)) or not (
@@ -82,6 +111,60 @@ def structural_errors(data):
                         errors.append(
                             f"{make} {model} {y} '{trim}': implausible price {price!r}"
                         )
+            errors.extend(segment_errors(make, model, md))
+        errors.extend(duplicate_errors(make, models))
+    return errors
+
+
+def segment_errors(make, model, md):
+    errors = []
+    vtype, is_ev = md.get("type"), md.get("is_ev")
+    if vtype not in VALID_TYPES:
+        errors.append(f"{make} {model}: unknown type {vtype!r}")
+    elif vtype in EV_TYPES and not is_ev:
+        errors.append(f"{make} {model}: type {vtype} but is_ev is false")
+    elif is_ev and vtype not in EV_TYPES | EV_OK_NON_EV_TYPES:
+        errors.append(f"{make} {model}: is_ev but type {vtype} (use ev_sedan/ev_suv)")
+    fuel = md.get("fuel_type")
+    if fuel is not None:
+        if fuel not in VALID_FUEL_TYPES:
+            errors.append(f"{make} {model}: unknown fuel_type {fuel!r}")
+        elif fuel == "hydrogen" and not is_ev:
+            errors.append(f"{make} {model}: fuel_type hydrogen requires is_ev")
+    seats = (md.get("specs") or {}).get("seats")
+    if seats is not None and seats < MIN_SEATS:
+        errors.append(f"{make} {model}: {seats} seat(s) is not a road vehicle")
+    return errors
+
+
+def duplicate_errors(make, models):
+    """Flag a model whose per-year prices all sit inside a sibling's."""
+    errors = []
+    names = sorted(models)
+    for wide in names:
+        for narrow in names:
+            if wide == narrow:
+                continue
+            tw = models[wide].get("trims_by_year") or {}
+            tn = models[narrow].get("trims_by_year") or {}
+            shared = [y for y in tn if y in tw]
+            if len(shared) < DUPLICATE_MIN_YEARS:
+                continue
+            contained = all(
+                len(tn[y]) >= 2 and set(tn[y].values()) <= set(tw[y].values())
+                for y in shared
+            )
+            if not contained:
+                continue
+            identical = all(set(tn[y].values()) == set(tw[y].values()) for y in shared)
+            if identical and narrow < wide:
+                continue  # report an identical pair once
+            if (make, wide, narrow) in DUPLICATE_OK:
+                continue
+            errors.append(
+                f"{make} {narrow}: prices duplicate {make} {wide} in "
+                f"{len(shared)} shared years (merge or remove one)"
+            )
     return errors
 
 

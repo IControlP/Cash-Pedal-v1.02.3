@@ -31,7 +31,7 @@ import {
 // Pro mode: vehicle-specific + state-aware. laborRate/wearProfile (from a
 // resolved ZIP) sharpen maintenance; elecRate (ZIP-level, via OpenEI) sharpens
 // EV charging cost — both fall back to state-level modeling without a ZIP.
-function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, annualMiles = DEFAULT_ANNUAL_MILES, laborRate = null, wearProfile = null, elecRate = null) {
+function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, annualMiles = DEFAULT_ANNUAL_MILES, laborRate = null, wearProfile = null, elecRate = null, fuelType = null) {
   const segment = isEv ? 'electric' : classifySegment(make, model)
 
   const mpgNum  = mpg && typeof mpg === 'object' ? (mpg.combined ?? null) : (mpg || null)
@@ -43,7 +43,10 @@ function estimateProMonthlyCosts(price, make, model, year, isEv, mpg, state, ann
     isEv ? mpgeNum : null,
     state || null,
     annualMiles,
-    isEv ? elecRate : null
+    isEv && fuelType !== 'hydrogen' ? elecRate : null,
+    false,
+    undefined,
+    fuelType
   ) / 12)
 
   const insurance = Math.round(estimateInsurance(price, make, model, year, state || null) / 12)
@@ -220,6 +223,7 @@ export default function SalaryCalculator() {
       type: vd.type,
       specs: vd.specs,
       mpg: vd.mpg,
+      fuel_type: vd.fuel_type ?? null,
       price,
     }
   }, [proMode, selMake, selModel, selYear, selTrim])
@@ -336,10 +340,10 @@ export default function SalaryCalculator() {
 
   const proExtras = useMemo(() => {
     if (!proMode || !selectedVehicleInfo) return null
-    const { make, model, year, is_ev, mpg } = selectedVehicleInfo
+    const { make, model, year, is_ev, mpg, fuel_type } = selectedVehicleInfo
     return estimateProMonthlyCosts(
       activePrice, make, model, year, is_ev, mpg, userState, annualMiles,
-      resolvedLaborRate, resolvedWear, liveElecRate
+      resolvedLaborRate, resolvedWear, liveElecRate, fuel_type
     )
   }, [proMode, selectedVehicleInfo, activePrice, userState, annualMiles, resolvedLaborRate, resolvedWear, liveElecRate])
 

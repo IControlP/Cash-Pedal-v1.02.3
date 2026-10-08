@@ -59,7 +59,7 @@ src/
 │   ├── session.js            # Anonymous browser session UUID
 │   └── safeStorage.js        # localStorage guards for locked-down in-app browsers
 └── data/
-    ├── vehicles.json         # Vehicle make/model/year/trim database (~517 KB, static, validated in CI)
+    ├── vehicles.json         # Vehicle make/model/year/trim database (~520 KB, static, validated in CI; base MSRP excl. destination)
     ├── posts.js              # Blog posts — add posts here (instructions at top of file), no CMS
     ├── surveyData.js         # Car survey questions and scoring logic
     └── checklistData.js      # Maintenance checklist items by mileage range
@@ -214,7 +214,8 @@ The root directory still contains the original Streamlit implementation (`.py` f
 
 - Most calculation logic lives **client-side**; the shared cost model is `src/utils/vehicleCosts.js`. The depreciation estimator (`estimateCurrentValue`) is regionally aware: pass the resolved 2-letter state as the sixth argument to apply the state demand premium plus segment×region adjustments (truck country, sun/snow belt, EV-friendly states, salt-belt corrosion age discount). With no state it reproduces the national model exactly. For **entitled users**, when a zip is resolved and a provider key is configured, the TCO calculator overlays live local listing medians from `POST /api/market-value` (clamped to ±35% of the model's dealer estimate); free users and exhausted-quota months transparently fall back to the model.
 - Changes to maintenance/cost logic in `vehicleCosts.js` must keep `node scripts/verify-tco.mjs` passing (runs in CI on every push).
-- **Any change to `vehicles.json` must pass `python3 scripts/validate_vehicle_data.py`** (runs in CI). Verified-legitimate pricing anomalies are accepted via `--write-baseline`. See `docs/VEHICLE_DATA_MAINTENANCE.md` for the full update process and data source options.
+- **Any change to `vehicles.json` must pass `python3 scripts/validate_vehicle_data.py`** (runs in CI). Verified-legitimate pricing anomalies are accepted via `--write-baseline`. Data changes go through a one-shot patch script in `scripts/patches/` that cites a source for every figure; EPA fuel economy is filled with `scripts/fetch_epa_mpg.py`. See `docs/VEHICLE_DATA_MAINTENANCE.md` for the full update process and data source options.
+- A catalog model may carry `"fuel_type": "hydrogen"` (Toyota Mirai). `computeAnnualFuel` then prices fuel per kg of hydrogen (`HYDROGEN_PRICE_PER_KG`) instead of per kWh, and callers must pass the fuel type rather than an electricity rate.
 - Blog posts are plain objects in `src/data/posts.js` (newest first) — follow the how-to comment at the top of that file; no CMS, no server restart needed.
 - Client analytics go through `src/utils/analytics.js` (GA4 + Meta Pixel wrappers that no-op when the scripts haven't loaded); server-side first-party usage tracking goes through `POST /api/track-usage` with allowlisted feature names.
 - Use `safeGet`/`safeSet` from `src/utils/safeStorage.js` instead of raw `localStorage` — some in-app browsers block storage entirely.

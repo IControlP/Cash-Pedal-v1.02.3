@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """EPA fuel-economy backfill helper for src/data/vehicles.json.
 
-Only 39 of the 280 models in the vehicle database carry real `mpg` data; the
+When this script was written only 39 of 280 models carried real `mpg` data; the
 rest are `"mpg": null` and fall back to the hardcoded 28 MPG / 100 MPGe
 defaults in `computeAnnualFuel` (src/utils/vehicleCosts.js). This script pulls
 official numbers from the EPA's fueleconomy.gov web service and reports what it
@@ -29,7 +29,12 @@ maps to a *set* of EPA variants:
      our entry: gas/hybrid/diesel for a normal model, electric/hydrogen for an
      `is_ev` model. This is what stops the F-150 from absorbing the F-150
      Lightning's MPGe.
-  5. Report the median across the kept variants, plus the full spread so a
+  5. For a gas model, drop conventional-hybrid variants when non-hybrid ones
+     exist ("Tucson Hybrid" must not pull the gas Tucson's figure up); hybrid-
+     only lines (Prius, the 2025+ Camry) keep their hybrids. Fleet variants
+     (robotaxi, police) and sibling models EPA files under the same prefix
+     ("Bronco Sport" under "Bronco") are dropped as well.
+  6. Report the median across the kept variants, plus the full spread so a
      reviewer can see how much the variants disagree.
 
 Verdicts
@@ -104,6 +109,7 @@ MODEL_ALIASES = {
     ("GMC", "Sierra 1500"): ["Sierra 2WD", "Sierra 4WD", "Sierra Mud Terrain"],
     # EPA lists BMW by engine badge, not series. Base sedan stands in for the line.
     ("BMW", "3 Series"): ["330i"],
+    ("BMW", "7 Series"): ["740i", "760i"],
     # EPA drops the "Mazda" brand prefix ("3 4-Door 2WD") and the "Miata" suffix.
     ("Mazda", "Mazda3"): ["3 4-Door", "3 5-Door"],
     ("Mazda", "Mazda6"): ["6 4-Door", "6 "],
@@ -116,6 +122,7 @@ MODEL_ALIASES = {
     ("Mercedes-Benz", "G-Class"): ["G550", "G 550"],
     ("Mercedes-Benz", "GLC"): ["GLC300", "GLC 300"],
     ("Mercedes-Benz", "GLS"): ["GLS450", "GLS 450"],
+    ("Mercedes-Benz", "GLE"): ["GLE350", "GLE 350", "GLE450", "GLE 450"],
     ("Mercedes-Benz", "CLA"): ["CLA250", "CLA 250"],
     # EPA prefixes every MINI with its Cooper trim.
     ("Mini", "Clubman"): ["Cooper Clubman", "Cooper S Clubman",
@@ -129,13 +136,23 @@ MODEL_ALIASES = {
 # Models EPA legitimately has no rating for, so an empty result is correct and
 # not a matcher failure worth chasing.
 UNRATED_MODELS = {
-    ("Ferrari", "SF-23"): "Formula 1 race car, never EPA rated",
-    ("Ferrari", "SF-24"): "Formula 1 race car, never EPA rated",
-    ("Ferrari", "SF21"): "Formula 1 race car, never EPA rated",
     ("Ford", "F-250"): "over 8,500 lb GVWR; EPA does not rate heavy duty",
     ("Ram", "2500"): "over 8,500 lb GVWR; EPA does not rate heavy duty",
     ("Ram", "3500"): "over 8,500 lb GVWR; EPA does not rate heavy duty",
 }
+
+
+# Different models EPA files under one of our model names as a prefix. Their
+# variants are dropped from that model even when the sibling is not in
+# vehicles.json (when it is, the longest-name rule already sorts them out).
+SIBLING_EXCLUDES = {
+    ("Ford", "Bronco"): ["Bronco Sport"],
+    ("Mitsubishi", "Outlander"): ["Outlander Sport"],
+    ("Volkswagen", "Atlas"): ["Atlas Cross Sport"],
+}
+
+# Fleet-only variants that no retail buyer can get.
+FLEET_KEYWORDS = ("taxi", "police", "special service")
 
 
 # ---------------------------------------------------------------- HTTP + cache
@@ -286,10 +303,15 @@ def assign_variants(make, our_models, epa_names):
 
     contenders = [name for name in our_models if name not in aliased]
     for epa_name in epa_names:
+        if any(k in epa_name.lower() for k in FLEET_KEYWORDS):
+            continue
         candidates = [name for name in contenders if variant_matches(name, epa_name)]
         if not candidates:
             continue
         winner = max(candidates, key=lambda name: (len(squash(name)), name))
+        excludes = SIBLING_EXCLUDES.get((make, winner), [])
+        if any(alias_matches(x, epa_name) for x in excludes):
+            continue
         assigned[winner].append(epa_name)
     return assigned
 
@@ -365,6 +387,12 @@ def collect_variants(client, year, make, epa_names):
     return records
 
 
+def is_hybrid(record, epa_name):
+    """Conventional (non-plug-in) hybrid variant."""
+    return ((record.get("atvType") or "").lower() == "hybrid"
+            or "hybrid" in epa_name.lower())
+
+
 def summarize(records, want_mpge):
     """Median city/highway/combined (or MPGe) across the comparable variants."""
     wanted = MPGE_CLASSES if want_mpge else GAS_CLASSES
@@ -374,7 +402,12 @@ def summarize(records, want_mpge):
             continue
         triple = mpg_triple(record)
         if triple:
-            rows.append((variant_label(record, epa_name), triple))
+            rows.append((variant_label(record, epa_name), triple,
+                         not want_mpge and is_hybrid(record, epa_name)))
+    # Gas models: the non-hybrid powertrain is the line's baseline figure.
+    if any(not hybrid for _, _, hybrid in rows):
+        rows = [row for row in rows if not row[2]]
+    rows = [(label, triple) for label, triple, _ in rows]
     if not rows:
         return None
 

@@ -120,6 +120,13 @@ export default function SalaryCalculator() {
     const qYear  = searchParams.get('year')
     const qPrice = searchParams.get('price')
 
+    // A bare ?price=N (e.g. a link shared by an AI assistant) pre-fills the
+    // price even without a vehicle selection.
+    if (qPrice) {
+      const p = parseInt(qPrice, 10)
+      if (!isNaN(p) && p > 0) setVehiclePrice(p)
+    }
+
     if (!qMake || !VEHICLES[qMake]) return
 
     const hasModel = qModel && VEHICLES[qMake]?.[qModel]
@@ -127,11 +134,6 @@ export default function SalaryCalculator() {
     if (hasModel) setSelModel(qModel)
     if (qYear)    setSelYear(qYear)
     setSelMake(qMake)
-
-    if (qPrice) {
-      const p = parseInt(qPrice, 10)
-      if (!isNaN(p) && p > 0) setVehiclePrice(p)
-    }
 
     // Enable pro mode so the vehicle picker is shown and used in cost calculations
     if (hasModel) setProMode(true)

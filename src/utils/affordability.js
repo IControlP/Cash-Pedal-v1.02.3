@@ -6,13 +6,13 @@
 // here so both stay in exact sync; behavior is a verbatim extraction from the
 // original SalaryCalculator implementation.
 
-import VEHICLES from '../data/vehicles.json'
+import VEHICLES from '../data/vehicles.json' with { type: 'json' }
 import {
   classifySegment,
   estimateInsurance, generateMaintenanceByYear,
   computeAnnualFuel, computeAnnualRegFees, projectRegistrationByYear,
   escalateAnnualFuel, estimateCurrentValue, getKnownIssueServices,
-} from './vehicleCosts'
+} from './vehicleCosts.js'
 
 // Trims the parenthetical qualifier vehicleCosts.js appends to every known-
 // issue name (" (known issue)" / " (known service requirement)" / etc.) so

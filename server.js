@@ -8,6 +8,7 @@ import Stripe from 'stripe'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import compression from 'compression'
+import { registerAiSearchRoutes, createSpaHandler } from './ai-search.js'
 
 const { Pool } = pg
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -2608,8 +2609,14 @@ app.post('/api/market-value', async (req, res) => {
   return res.json({ ...data, source: result.provider, ageDays: 0, zip })
 })
 
+// ── AI search / agent discoverability ─────────────────
+// Public calculator API, OpenAPI spec, robots.txt, sitemap.xml, llms.txt.
+registerAiSearchRoutes(app)
+
 // ── Serve Vite build ──────────────────────────────────
 app.use(express.static(join(__dirname, 'dist'), {
+  // '/' must fall through to the SPA handler below so it gets per-route SEO.
+  index: false,
   // Long-lived cache for hashed assets (JS chunks, CSS). index.html uses
   // no-cache so browsers always revalidate and pick up new deployments.
   setHeaders(res, filePath) {
@@ -2620,9 +2627,9 @@ app.use(express.static(join(__dirname, 'dist'), {
     }
   },
 }))
-app.get('*', (_req, res) => {
-  res.sendFile(join(__dirname, 'dist', 'index.html'))
-})
+// Every other path serves the SPA shell with that route's title, description,
+// structured data and a pre-rendered summary injected (see ai-search.js).
+app.get('*', createSpaHandler(join(__dirname, 'dist')))
 
 // ── Daily data-retention sweep ────────────────────────
 // initTables() handles the startup sweep; this catches long-running Railway

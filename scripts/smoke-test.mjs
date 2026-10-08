@@ -20,7 +20,7 @@ const NOT_FOUND_MARKER = 'This road doesn’t exist'
 // Every user-facing route in src/App.jsx (blog posts and legal pages are
 // covered by their index/section pages).
 const ROUTES = [
-  '/', '/tco', '/tco-full', '/compare', '/salary', '/survey', '/checklist',
+  '/', '/tco', '/tco-full', '/compare', '/salary', '/affordability', '/survey', '/checklist',
   '/wheelzard', '/resources', '/market', '/about', '/subscribe', '/blog',
   '/privacy', '/terms',
 ]
@@ -32,6 +32,9 @@ const API_CHECKS = [
   { path: '/api/market-analytics',          validate: b => typeof b === 'object' && b !== null },
   { path: '/api/fuel-prices',               validate: b => typeof b === 'object' && b !== null && 'prices' in b },
   { path: '/api/electricity-rate?zip=90210', validate: b => typeof b === 'object' && b !== null && 'rate' in b },
+  { path: '/api/affordability?salary=75000', validate: b => b.recommended_max_price > 0 },
+  { path: '/api/required-salary?price=35000', validate: b => b.required_salary?.comfortable?.required_annual_salary > 0 },
+  { path: '/openapi.json',                  validate: b => typeof b.openapi === 'string' },
 ]
 
 const failures = []
@@ -63,9 +66,12 @@ for (const route of ROUTES) {
       fail(`${route} — HTTP ${resp ? resp.status() : 'no response'}`)
     } else {
       // React must hydrate #root with substantial content — a blank or
-      // near-empty root is the "white screen of death".
+      // near-empty root is the "white screen of death". The server-rendered
+      // SEO summary ([data-prerender]) is replaced on mount, so it must be gone
+      // or it would mask a React crash.
       await page.waitForFunction(
-        () => (document.getElementById('root')?.innerText || '').trim().length > 100,
+        () => !document.querySelector('[data-prerender]') &&
+          (document.getElementById('root')?.innerText || '').trim().length > 100,
         undefined,
         { timeout: 20_000 },
       )

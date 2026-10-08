@@ -1138,3 +1138,16 @@ select.input-field {
   .faq-q { font-size: 15px; padding: 16px 18px; }
   .faq-a { padding: 0 18px 16px; }
 }
+
+/* Server-rendered page summary (ai-search.js) shown to crawlers and for the
+   instant before React mounts; createRoot() replaces it. */
+.seo-prerender {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 96px 16px 48px;
+  line-height: 1.6;
+}
+.seo-prerender h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 1rem; }
+.seo-prerender h2 { font-size: 1.25rem; margin: 2rem 0 0.5rem; }
+.seo-prerender a { color: var(--accent); }
+.seo-prerender header { position: absolute; top: 24px; }

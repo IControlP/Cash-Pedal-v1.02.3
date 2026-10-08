@@ -6,7 +6,6 @@
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <!-- viewport-fit=cover lets content extend under notches; safe-area insets are honored in CSS -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="Cash Pedal — Know the true cost of owning any vehicle before you sign." />
 
     <!-- Mobile browser chrome / rendering -->
     <meta name="color-scheme" content="dark" />
@@ -22,17 +21,16 @@
     <!-- Open Graph (link previews when shared from Instagram / Facebook / Messenger) -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Cash Pedal" />
-    <meta property="og:url" content="https://cashpedal.io/" />
-    <meta property="og:title" content="Cash Pedal" />
-    <meta property="og:description" content="Know the true cost of owning any vehicle before you sign." />
     <!-- TODO: add a 1200x630 PNG at /og-image.png for rich large-image previews -->
-
-    <!-- Twitter / X card -->
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Cash Pedal" />
-    <meta name="twitter:description" content="Know the true cost of owning any vehicle before you sign." />
 
-    <title>Cash Pedal</title>
+    <!-- Per-route title, description, canonical, og/twitter text and JSON-LD.
+         server.js (ai-search.js) replaces everything between these markers on
+         each request using src/data/seo.js; keep the markers intact. -->
+    <!-- seo:start -->
+    <title>Cash Pedal — How Much Car Can I Afford? Free Car Cost Calculators</title>
+    <meta name="description" content="Free car affordability and total-cost-of-ownership calculators. Find out how much car you can afford on your salary, the salary you need for a specific car, and the true 5-year cost of any vehicle." />
+    <!-- seo:end -->
     <!-- DNS prefetch for third-party analytics origins so their scripts
          resolve faster IF the visitor consents and they load later. These
          hints send no cookies and no personal data. The tracker scripts

@@ -214,6 +214,9 @@ app.use(helmet({
         "https://www.googletagmanager.com",
         "https://connect.facebook.net",
       ],
+      // index.html's non-blocking font loader swaps the preload to a stylesheet
+      // via an inline onload attribute; pinned by hash (regenerate if edited).
+      scriptSrcAttr:           ["'unsafe-hashes'", "'sha256-1jAmyYXcRq6zFldLe/GCgIDJBiOONdXjTLgEFMDnDSM='"],
       styleSrc:                ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       imgSrc:                  [
         "'self'",
@@ -235,6 +238,7 @@ app.use(helmet({
         "https://www.googletagmanager.com",
         "https://stats.g.doubleclick.net", // GA4 Google Signals / Ads beacons
         "https://*.facebook.com",
+        "https://ipwho.is", // IP → US state auto-detect on /salary and /affordability
       ],
       // Clarity's session-replay processing runs in a blob: web worker; without
       // this it falls back to script-src (no blob:) and recordings are dropped.

@@ -8,6 +8,7 @@ import Stripe from 'stripe'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import compression from 'compression'
+import { registerAiSearchRoutes, createSpaHandler } from './ai-search.js'
 
 const { Pool } = pg
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -213,6 +214,9 @@ app.use(helmet({
         "https://www.googletagmanager.com",
         "https://connect.facebook.net",
       ],
+      // index.html's non-blocking font loader swaps the preload to a stylesheet
+      // via an inline onload attribute; pinned by hash (regenerate if edited).
+      scriptSrcAttr:           ["'unsafe-hashes'", "'sha256-1jAmyYXcRq6zFldLe/GCgIDJBiOONdXjTLgEFMDnDSM='"],
       styleSrc:                ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       imgSrc:                  [
         "'self'",
@@ -234,6 +238,7 @@ app.use(helmet({
         "https://www.googletagmanager.com",
         "https://stats.g.doubleclick.net", // GA4 Google Signals / Ads beacons
         "https://*.facebook.com",
+        "https://ipwho.is", // IP → US state auto-detect on /salary and /affordability
       ],
       // Clarity's session-replay processing runs in a blob: web worker; without
       // this it falls back to script-src (no blob:) and recordings are dropped.
@@ -2608,8 +2613,14 @@ app.post('/api/market-value', async (req, res) => {
   return res.json({ ...data, source: result.provider, ageDays: 0, zip })
 })
 
+// ── AI search / agent discoverability ─────────────────
+// Public calculator API, OpenAPI spec, robots.txt, sitemap.xml, llms.txt.
+registerAiSearchRoutes(app)
+
 // ── Serve Vite build ──────────────────────────────────
 app.use(express.static(join(__dirname, 'dist'), {
+  // '/' must fall through to the SPA handler below so it gets per-route SEO.
+  index: false,
   // Long-lived cache for hashed assets (JS chunks, CSS). index.html uses
   // no-cache so browsers always revalidate and pick up new deployments.
   setHeaders(res, filePath) {
@@ -2620,9 +2631,9 @@ app.use(express.static(join(__dirname, 'dist'), {
     }
   },
 }))
-app.get('*', (_req, res) => {
-  res.sendFile(join(__dirname, 'dist', 'index.html'))
-})
+// Every other path serves the SPA shell with that route's title, description,
+// structured data and a pre-rendered summary injected (see ai-search.js).
+app.get('*', createSpaHandler(join(__dirname, 'dist')))
 
 // ── Daily data-retention sweep ────────────────────────
 // initTables() handles the startup sweep; this catches long-running Railway

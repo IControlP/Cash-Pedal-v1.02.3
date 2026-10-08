@@ -4,6 +4,7 @@ import { trackPageView } from './utils/analytics'
 import { initConsent } from './utils/consent'
 import ErrorBoundary from './components/ErrorBoundary'
 import CookieConsent from './components/CookieConsent'
+import RouteMeta from './components/RouteMeta'
 
 // Landing stays in the main bundle — it's the most-visited route and
 // keeping it eager gives the fastest possible first paint on '/'.
@@ -54,6 +55,7 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <PageViewTracker />
+        <RouteMeta />
         <CookieConsent />
         <Suspense fallback={<PageFallback />}>
           <Routes>

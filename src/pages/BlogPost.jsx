@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -16,6 +17,10 @@ function formatDate(iso) {
 export default function BlogPost() {
   const { slug } = useParams()
   const post = posts.find(p => p.slug === slug)
+
+  useEffect(() => {
+    if (post) document.title = `${post.title} | Cash Pedal`
+  }, [post])
 
   if (!post) {
     return (

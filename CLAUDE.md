@@ -125,6 +125,9 @@ Express hardening in place: `helmet`, `compression`, `express-rate-limit` (a gen
 | `GET /api/electricity-rate?zip=XXXXX` | Zip-level residential $/kWh from OpenEI URDB; cached 30 days per zip; `null` rate when key absent or zip not found |
 | `POST /api/market-value` | **Pro-only** (requires active subscriber email in body). Median local dealer asking price (plus quartiles + sample size) for a year/make/model within ~100 mi of a zip, via the Marketcheck or Auto.dev listings API with monthly-quota tracking and provider fallback; cached per year/make/model/zip3 in the `market_value_cache` Postgres table — served fresh for 24h, refreshed when quota allows, and served stale (age-stamped `ageDays`) for up to 90 days when quota is exhausted; returns `null` price when not entitled, no key configured, or no data available |
 | `POST /api/stripe-webhook` | Stripe webhook (raw body — registered before `express.json()`) |
+| `GET /api/affordability?salary=N` | **Public, CORS-enabled** agent API — max vehicle price at 10/15/20% of income, monthly budget, example vehicles (optional `state`, `mode=lease`, `down_pct`, `term`, `apr`, `annual_miles`). Defined in `ai-search.js` |
+| `GET /api/required-salary?price=N` | **Public, CORS-enabled** agent API — salary needed for a vehicle price, same optional params |
+| `GET /openapi.json`, `/robots.txt`, `/sitemap.xml`, `/llms.txt` | AI-search discoverability, generated in `ai-search.js` from `src/data/seo.js` + `src/data/posts.js` |
 | `GET /api/health` | Health check — 200 when the server is up (pings Postgres when configured, 503 if unreachable); used by Railway's deploy healthcheck and the smoke test |
 
 ### Market analytics
@@ -209,6 +212,10 @@ Layers that keep bad code off the live site (workflows in `.github/workflows/`):
 The root directory still contains the original Streamlit implementation (`.py` files, `pages/`, `requirements.txt`, `Procfile`). These are **not active** — kept for reference only. Do not modify them expecting any effect on the live site. The active codebase lives entirely in `src/` and `server.js`. (Exception: `scripts/validate_vehicle_data.py` is a live CI tool.)
 
 ---
+
+## AI search / SEO
+
+`ai-search.js` (imported by `server.js`) makes the site readable by AI crawlers that don't run JavaScript. The SPA catch-all injects each route's `<title>`, description, canonical, Open Graph and JSON-LD (between the `<!-- seo:start -->`/`<!-- seo:end -->` markers in `index.html`) and a pre-rendered summary (`[data-prerender]`) inside `#root`, which React replaces on mount. Unknown paths return HTTP 404. `/affordability?salary=N` and `/salary?price=N` pre-render the actual answer. Page copy, FAQs and sitemap priorities live in `src/data/seo.js` (also used client-side by `RouteMeta.jsx`) — **add new routes there**. The calculator API reuses `src/utils/affordability.js`, so that module (and anything it imports) must stay Node-importable (`.js` extensions, `with { type: 'json' }`).
 
 ## Key Notes for Development
 

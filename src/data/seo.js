@@ -63,7 +63,7 @@ export const ROUTE_META = {
     ],
     faq: [
       ['What salary do I need for a $40,000 car?',
-        'With 20% down, a 48-month loan at 6.5% APR and typical operating costs, a $40,000 car costs roughly $1,275 a month all-in. Keeping that under 15% of gross income takes a salary of about $102,000; under 10% (the 20/4/10 rule) about $153,000. Use the calculator for your state and terms.'],
+        'With 20% down, a 48-month loan at 6.5% APR and typical operating costs, a $40,000 car costs roughly $1,225 a month all-in. Keeping that under 15% of gross income takes a salary of about $98,000; under 10% (the 20/4/10 rule) about $147,000. Use the calculator for your state and terms.'],
       ['Is it better to lease or buy?',
         'Leasing lowers the monthly payment but you never build equity; buying costs more per month during the loan but is usually cheaper over 5+ years. The salary calculator has a lease mode so you can compare both.'],
     ],
@@ -182,6 +182,7 @@ export const PRIMARY_TOOLS = [
   ['/affordability', 'How much car can I afford?'],
   ['/salary', 'What salary do I need for a car?'],
   ['/tco', 'True cost of ownership calculator'],
+  ['/guides', 'Affordability guides by salary & price'],
   ['/compare', 'Compare vehicles'],
   ['/checklist', 'Used car checklist'],
   ['/blog', 'Blog'],

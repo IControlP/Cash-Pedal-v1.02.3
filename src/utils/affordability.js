@@ -58,15 +58,6 @@ export function estimateLeaseMonthly(msrp, capReduction, termMonths) {
   return Math.max(0, Math.round(depreciation + financeCharge))
 }
 
-// Inverse of estimateLeaseMonthly: the MSRP whose lease payment equals
-// `payment`. Payment is linear in MSRP, so this solves in closed form.
-export function leaseMsrpForPayment(payment, capReduction, termMonths) {
-  const pct = leaseResidualPct(termMonths)
-  const perMsrp = (1 - pct) / termMonths + (1 + pct) * LEASE_MONEY_FACTOR
-  const perDown = 1 / termMonths + LEASE_MONEY_FACTOR
-  return (payment + capReduction * perDown) / perMsrp
-}
-
 export const DEFAULT_ANNUAL_MILES = 13500
 
 // Average length of new-vehicle ownership in the US (~8 years, S&P Global
@@ -74,20 +65,42 @@ export const DEFAULT_ANNUAL_MILES = 13500
 export const US_AVG_OWNERSHIP_YEARS = 8
 export const OWNERSHIP_YEAR_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-// Basic mode: state-aware when state is provided, otherwise flat tier estimates
+// Basic mode: state-aware when state is provided, otherwise national tier
+// estimates. Tier-based costs are interpolated linearly between tier anchor
+// prices instead of stepping at the $20k/$35k/$60k boundaries: real running
+// costs don't jump when a sticker crosses $20,000, and a step made the
+// salary→price solver plateau (a $5k raise could buy no extra car).
+const TIER_ANCHORS = [
+  // [price, maintenance, flat fuel, flat insurance, flat registration] (monthly)
+  [15000, 60, 120, 100, 20],   // economy
+  [27500, 80, 150, 130, 25],   // standard
+  [47500, 120, 180, 180, 35],  // premium
+  [70000, 180, 250, 280, 50],  // luxury
+]
+
+function tierCosts(price) {
+  const a = TIER_ANCHORS
+  if (price <= a[0][0]) return a[0]
+  if (price >= a[a.length - 1][0]) return a[a.length - 1]
+  const i = a.findIndex(row => row[0] >= price)
+  const [lo, hi] = [a[i - 1], a[i]]
+  const t = (price - lo[0]) / (hi[0] - lo[0])
+  return lo.map((v, k) => v + (hi[k] - v) * t)
+}
+
 export function estimateBasicMonthlyCosts(price, state, annualMiles = DEFAULT_ANNUAL_MILES) {
   const tierKey = price >= 60000 ? 'luxury' : price >= 35000 ? 'premium' : price >= 20000 ? 'standard' : 'economy'
   const tierLabel = { luxury: 'Luxury', premium: 'Premium', standard: 'Standard', economy: 'Economy' }
+  const [, maintRaw, fuelRaw, insRaw, regRaw] = tierCosts(price)
   // Maintenance stays tier-based (no brand info available in basic mode)
-  const maintByTier = { luxury: 180, premium: 120, standard: 80, economy: 60 }
-  const maintenance = maintByTier[tierKey]
+  const maintenance = Math.round(maintRaw)
 
   if (!state) {
     // No state: scale flat fuel estimate by mileage ratio; other costs stay tier-based
-    const flat = { luxury: { fuel:250, insurance:280, registration:50 }, premium: { fuel:180, insurance:180, registration:35 }, standard: { fuel:150, insurance:130, registration:25 }, economy: { fuel:120, insurance:100, registration:20 } }
-    const f = flat[tierKey]
-    const scaledFuel = Math.round(f.fuel * (annualMiles / DEFAULT_ANNUAL_MILES))
-    return { ...f, fuel: scaledFuel, maintenance, total: scaledFuel + f.insurance + maintenance + f.registration, tier: tierLabel[tierKey] }
+    const fuel = Math.round(fuelRaw * (annualMiles / DEFAULT_ANNUAL_MILES))
+    const insurance = Math.round(insRaw)
+    const registration = Math.round(regRaw)
+    return { fuel, insurance, maintenance, registration, total: fuel + insurance + maintenance + registration, tier: tierLabel[tierKey] }
   }
 
   // State provided: use shared utility functions for insurance, fuel, registration
@@ -302,25 +315,31 @@ export function solveAffordablePrice(salary, {
   const s = Number(salary)
   if (!s || s < 10000) return null
 
+  const state = userState || null
+  const financing = mode === 'lease'
+    ? price => estimateLeaseMonthly(price, leaseDown, leaseTerm)
+    : price => monthlyPayment(price * (1 - downPct / 100), rate, loanTerm)
+  // All-in monthly cost of a vehicle at `price`. Non-decreasing in price
+  // (payment and insurance rise with price; maintenance steps up by tier), so
+  // the most affordable price can be found by bisection. A fixed-point
+  // iteration oscillated at the tier steps — a higher salary could return a
+  // lower price — and gave up at $0 whenever its $30k first guess was
+  // unaffordable.
+  const monthlyCost = price => financing(price) + estimateBasicMonthlyCosts(price, state, annualMiles).total
+
   function solve(thresholdPct) {
     const maxMonthly = (s * thresholdPct) / 12
-    let estPrice = 30000
-    for (let i = 0; i < 4; i++) {
-      const ops = estimateBasicMonthlyCosts(estPrice, userState || null, annualMiles)
-      const loanBudget = maxMonthly - ops.total
-      if (loanBudget <= 0) return 0
-      if (mode === 'lease') {
-        estPrice = Math.max(500, leaseMsrpForPayment(loanBudget, leaseDown, leaseTerm))
-        continue
-      }
-      const r = rate / 12 / 100
-      const n = loanTerm
-      const factor = r > 0
-        ? (Math.pow(1 + r, n) - 1) / (r * Math.pow(1 + r, n))
-        : n
-      estPrice = Math.max(500, (loanBudget * factor) / (1 - downPct / 100))
+    let lo = 500
+    let hi = 2_000_000
+    if (monthlyCost(lo) > maxMonthly) return 0
+    if (monthlyCost(hi) <= maxMonthly) return hi
+    while (hi - lo > 25) {
+      const mid = (lo + hi) / 2
+      if (monthlyCost(mid) <= maxMonthly) lo = mid
+      else hi = mid
     }
-    return Math.round(estPrice / 500) * 500
+    // Round down: the result must stay within the budget.
+    return Math.floor(lo / 500) * 500
   }
 
   return {

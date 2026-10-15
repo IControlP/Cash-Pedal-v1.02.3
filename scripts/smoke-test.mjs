@@ -22,7 +22,8 @@ const NOT_FOUND_MARKER = 'This road doesn’t exist'
 const ROUTES = [
   '/', '/tco', '/tco-full', '/compare', '/salary', '/affordability', '/survey', '/checklist',
   '/wheelzard', '/resources', '/market', '/about', '/subscribe', '/blog',
-  '/privacy', '/terms',
+  '/privacy', '/terms', '/guides', '/guides/how-much-car-can-i-afford-75000-salary',
+  '/guides/salary-needed-for-40000-car',
 ]
 
 // Public GET endpoints that must return 200 + JSON even when optional API

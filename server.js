@@ -8,7 +8,7 @@ import Stripe from 'stripe'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import compression from 'compression'
-import { registerAiSearchRoutes, createSpaHandler } from './ai-search.js'
+import { registerAiSearchRoutes, createSpaHandler, pingIndexNow } from './ai-search.js'
 
 const { Pool } = pg
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -45,7 +45,7 @@ const BONUS_CREDITS = 5
 const USAGE_FEATURES = new Set([
   'visit_tco', 'visit_compare', 'visit_salary', 'visit_checklist',
   'tco_detailed', 'checklist_generated', 'salary_pro', 'compare_unlock',
-  'salary_add_to_compare', 'visit_affordability',
+  'salary_add_to_compare', 'visit_affordability', 'visit_guide',
 ])
 const USAGE_GATES = new Set(['free', 'bonus', 'subscribed'])
 
@@ -2661,6 +2661,7 @@ app.listen(PORT, '0.0.0.0', async () => {
     try {
       await initTables()
       console.log('Database tables ready')
+      pingIndexNow(pool) // fire-and-forget; logs its own outcome
     } catch (err) {
       console.error('Database init error:', err.message)
     }

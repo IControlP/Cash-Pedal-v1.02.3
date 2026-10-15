@@ -4,6 +4,7 @@ import { safeUUID } from '../utils/safeId'
 import { Link, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import GuideLinks from '../components/GuideLinks'
 import NextStep from '../components/NextStep'
 import PaywallModal from '../components/PaywallModal'
 import ToolEntryCTA from '../components/ToolEntryCTA'
@@ -995,6 +996,7 @@ export default function Affordability() {
         to="/tco"
         cta="Run the TCO Calculator"
       />
+      <GuideLinks kind="salary" />
       <Footer />
     </div>
   )

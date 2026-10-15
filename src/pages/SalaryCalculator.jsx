@@ -3,6 +3,7 @@ import { safeGet, safeSet } from '../utils/safeStorage'
 import { Link, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import GuideLinks from '../components/GuideLinks'
 import NextStep from '../components/NextStep'
 import PaywallModal from '../components/PaywallModal'
 import ToolEntryCTA from '../components/ToolEntryCTA'
@@ -1168,6 +1169,7 @@ export default function SalaryCalculator() {
         to="/tco"
         cta="Run the TCO Calculator"
       />
+      <GuideLinks kind="price" />
       <Footer />
     </div>
   )

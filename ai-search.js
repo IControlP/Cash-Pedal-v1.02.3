@@ -12,6 +12,9 @@
 //     GET /api/required-salary) with CORS + an OpenAPI 3.1 description, so
 //     agents can compute answers directly instead of scraping the UI.
 //   • /robots.txt (explicitly welcomes AI crawlers), /sitemap.xml, /llms.txt.
+//   • /guides — programmatic affordability answer pages (src/data/guides.js).
+//   • IndexNow — new/changed URLs are pushed to Bing, Yandex, Seznam, Naver
+//     on deploy (pingIndexNow), so new pages are indexed in hours, not weeks.
 //
 // All math comes from src/utils/affordability.js — the same module the
 // /affordability and /salary pages use — so API answers match the UI.
@@ -24,6 +27,12 @@ import {
   DEFAULT_ANNUAL_MILES,
 } from './src/utils/affordability.js'
 import { posts } from './src/data/posts.js'
+import {
+  guideFromSlug, guideSections, relatedLinks, allGuidePaths, GUIDES_INDEX,
+  SALARY_LEVELS, PRICE_LEVELS, salaryGuidePath, priceGuidePath,
+  buildSalaryGuide, buildPriceGuide,
+} from './src/data/guides.js'
+import crypto from 'crypto'
 import {
   SITE_URL, SITE_NAME, DEFAULT_DESCRIPTION, ROUTE_META, PRIMARY_TOOLS, getRouteMeta,
 } from './src/data/seo.js'
@@ -262,6 +271,8 @@ function sitemapXml() {
   const urls = Object.entries(ROUTE_META).map(([path, m]) =>
     ({ loc: SITE_URL + (path === '/' ? '/' : path), priority: m.priority || '0.5' }))
   for (const p of posts) urls.push({ loc: `${SITE_URL}/blog/${p.slug}`, lastmod: p.date, priority: '0.6' })
+  urls.push({ loc: `${SITE_URL}/guides`, priority: '0.8' })
+  for (const path of allGuidePaths()) urls.push({ loc: SITE_URL + path, priority: '0.8' })
   return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     urls.map(u => `  <url><loc>${escapeHtml(u.loc)}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}<priority>${u.priority}</priority></url>`).join('\n') +
     '\n</urlset>\n'
@@ -297,6 +308,16 @@ Deep links: \`${SITE_URL}/affordability?salary=<income>\` (add \`&mode=lease\`) 
 
 - 20/4/10 rule: at least 20% down, a loan of 4 years or less, total vehicle costs under 10% of gross income.
 - Default assumptions: 20% down, 48-month loan, 6.5% APR, 13,500 miles/year.
+
+## Affordability guides
+
+Data-backed answer pages (all-in monthly cost, loan-term and down-payment trade-offs, 50-state comparison, current-model-year cars). Index: ${SITE_URL}/guides
+
+How much car can I afford on…
+${SALARY_LEVELS.map(x => { const g = buildSalaryGuide(x); return `- [$${x.toLocaleString('en-US')} salary](${SITE_URL}${g.path}): comfortable max price ${money(g.tiers[1].maxPrice)}` }).join('\n')}
+
+What salary do I need for a…
+${PRICE_LEVELS.map(x => { const g = buildPriceGuide(x); return `- [$${x.toLocaleString('en-US')} car](${SITE_URL}${g.path}): about ${money(g.required[1].salary)} (15% of income)` }).join('\n')}
 
 ## Blog
 
@@ -345,6 +366,20 @@ function structuredData(meta) {
     graph.push({
       '@type': 'FAQPage',
       mainEntity: meta.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
+    })
+  }
+  if (meta.guide) {
+    graph.push({
+      '@type': 'Article', headline: meta.h1, description: meta.description, url,
+      author: { '@id': `${SITE_URL}/#org` }, publisher: { '@id': `${SITE_URL}/#org` },
+      about: 'Car affordability',
+    })
+    graph.push({
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Guides', item: `${SITE_URL}/guides` },
+        { '@type': 'ListItem', position: 2, name: meta.h1, item: url },
+      ],
     })
   }
   if (meta.post) {
@@ -405,6 +440,31 @@ function answerHtml(meta, query) {
   return ''
 }
 
+function linkListHtml(links) {
+  return links?.length ? `<ul>${links.map(l => `<li><a href="${escapeHtml(l.href)}">${escapeHtml(l.label)}</a></li>`).join('')}</ul>` : ''
+}
+
+function tableHtml({ head, rows }) {
+  return `<table><thead><tr>${head.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+}
+
+function guideHtml(meta) {
+  if (meta.guidesIndex) {
+    return `<h2>How much car can I afford on my salary?</h2>${linkListHtml(SALARY_LEVELS.map(x => ({ href: salaryGuidePath(x), label: `${money(x)} a year` })))}` +
+      `<h2>What salary do I need for this car?</h2>${linkListHtml(PRICE_LEVELS.map(x => ({ href: priceGuidePath(x), label: `${money(x)} car` })))}`
+  }
+  if (!meta.guide) return ''
+  const g = meta.guide
+  const sections = guideSections(g).map(sec =>
+    `<section><h2>${escapeHtml(sec.heading)}</h2>${(sec.paragraphs || []).map(p => `<p>${escapeHtml(p)}</p>`).join('')}${sec.table ? tableHtml(sec.table) : ''}${linkListHtml(sec.links)}${sec.note ? `<p><small>${escapeHtml(sec.note)}</small></p>` : ''}</section>`,
+  ).join('')
+  return `<p><strong>Short answer:</strong> ${escapeHtml(g.answer)}</p><p><a href="${escapeHtml(g.calculatorUrl)}">Personalize this for your state and car with the free calculator →</a></p>${sections}`
+}
+
+function guideFooterHtml(meta) {
+  return meta.guide ? `<section><h2>Related guides</h2>${linkListHtml(relatedLinks(meta.guide))}</section>` : ''
+}
+
 function bodyHtml(meta, query) {
   const intro = (meta.intro || []).map(p => `<p>${escapeHtml(p)}</p>`).join('')
   const faq = meta.faq?.length
@@ -416,7 +476,7 @@ function bodyHtml(meta, query) {
     : ''
   // Blog post bodies are authored HTML in src/data/posts.js (trusted, first-party).
   const article = meta.post ? `<article>${meta.post.content}</article>` : ''
-  return `<div id="root"><div class="seo-prerender" data-prerender><header><a href="/">${SITE_NAME}</a></header><main><h1>${escapeHtml(meta.h1)}</h1>${answerHtml(meta, query)}${intro}${blogList}${article}${faq}</main>${nav}<noscript><p>Cash Pedal's interactive calculators need JavaScript. AI assistants can use the JSON API described at <a href="/openapi.json">/openapi.json</a>.</p></noscript></div></div>`
+  return `<div id="root"><div class="seo-prerender" data-prerender><header><a href="/">${SITE_NAME}</a></header><main><h1>${escapeHtml(meta.h1)}</h1>${answerHtml(meta, query)}${intro}${guideHtml(meta)}${blogList}${article}${faq}${guideFooterHtml(meta)}</main>${nav}<noscript><p>Cash Pedal's interactive calculators need JavaScript. AI assistants can use the JSON API described at <a href="/openapi.json">/openapi.json</a>.</p></noscript></div></div>`
 }
 
 // ── Registration ───────────────────────────────────────────────────────────
@@ -455,6 +515,59 @@ export function registerAiSearchRoutes(app) {
   app.get('/robots.txt', text('text/plain', robotsTxt()))
   app.get('/sitemap.xml', text('application/xml', sitemapXml()))
   app.get('/llms.txt', text('text/plain', llmsTxt()))
+  app.get(`/${INDEXNOW_KEY}.txt`, text('text/plain', INDEXNOW_KEY))
+}
+
+function guideMeta(pathname) {
+  const path = pathname.replace(/\/+$/, '')
+  if (path === '/guides') return { ...GUIDES_INDEX, intro: [GUIDES_INDEX.intro], guidesIndex: true }
+  const m = /^\/guides\/([a-z0-9-]+)$/.exec(path)
+  const g = m && guideFromSlug(m[1])
+  if (!g) return null
+  return { path: g.path, title: g.title, description: g.description, h1: g.h1, faq: g.faq, guide: g }
+}
+
+// ── IndexNow ───────────────────────────────────────────────────────────────
+// Pushes every public URL to IndexNow (Bing and partners) once per distinct
+// URL set, so new guides and blog posts get crawled within hours of a deploy.
+// The key is public by design — it is served at /<key>.txt to prove ownership.
+export const INDEXNOW_KEY = process.env.INDEXNOW_KEY || '8d6afce8b54b1aa92a759ce022d0273e'
+
+function publicUrls() {
+  return [...sitemapXml().matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1].replace(/&amp;/g, '&'))
+}
+
+// Call after the database is ready. No-ops outside production and when the
+// current URL set was already submitted (tracked in the indexnow_log table).
+export async function pingIndexNow(pool) {
+  if (process.env.NODE_ENV !== 'production' && !process.env.RAILWAY_ENVIRONMENT) return
+  if (!pool) return
+  const urls = publicUrls()
+  const hash = crypto.createHash('sha256').update(urls.join('\n')).digest('hex')
+  try {
+    await pool.query(`CREATE TABLE IF NOT EXISTS indexnow_log (url_set_hash TEXT PRIMARY KEY, url_count INTEGER, submitted_at TIMESTAMPTZ DEFAULT NOW())`)
+    const claim = await pool.query(
+      `INSERT INTO indexnow_log (url_set_hash, url_count) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING url_set_hash`,
+      [hash, urls.length],
+    )
+    if (!claim.rowCount) return // this exact URL set was already submitted
+    const resp = await fetch('https://api.indexnow.org/indexnow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ host: new URL(SITE_URL).host, key: INDEXNOW_KEY, keyLocation: `${SITE_URL}/${INDEXNOW_KEY}.txt`, urlList: urls }),
+      signal: AbortSignal.timeout(15000),
+    })
+    if (resp.ok || resp.status === 202) {
+      console.log(`[indexnow] submitted ${urls.length} URLs (HTTP ${resp.status})`)
+    } else {
+      // Release the claim so the next boot retries.
+      await pool.query('DELETE FROM indexnow_log WHERE url_set_hash = $1', [hash])
+      console.warn(`[indexnow] submission failed: HTTP ${resp.status}`)
+    }
+  } catch (err) {
+    await pool.query('DELETE FROM indexnow_log WHERE url_set_hash = $1', [hash]).catch(() => {})
+    console.warn('[indexnow] submission error:', err.message)
+  }
 }
 
 // SPA fallback with per-route SEO. Returns an Express handler that serves
@@ -463,7 +576,7 @@ export function createSpaHandler(distDir) {
   let template = null
   return (req, res) => {
     if (template === null) template = readFileSync(join(distDir, 'index.html'), 'utf8')
-    const meta = getRouteMeta(req.path, posts)
+    const meta = getRouteMeta(req.path, posts) || guideMeta(req.path)
     res.setHeader('Cache-Control', 'no-cache')
     if (!meta) {
       // Unknown path: real 404 status so crawlers don't index a soft-404,

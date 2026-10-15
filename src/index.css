@@ -455,6 +455,33 @@ select.input-field {
   margin: 2rem 0;
 }
 
+/* Data tables in blog posts and server-rendered guides. display:block lets a
+   wide table scroll sideways on phones instead of widening the page. */
+.prose-cashpedal table,
+.seo-prerender table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 0 0 1.5rem;
+  font-size: 0.9rem;
+}
+.prose-cashpedal th,
+.prose-cashpedal td,
+.seo-prerender th,
+.seo-prerender td {
+  text-align: left;
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.prose-cashpedal th {
+  color: #fff;
+  font-weight: 600;
+}
+.prose-cashpedal td {
+  color: var(--text-muted);
+}
+
 /* ── Scrollbar ────────────────────────────────────── */
 
 ::-webkit-scrollbar { width: 6px; }

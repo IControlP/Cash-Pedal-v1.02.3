@@ -29,6 +29,7 @@ const Blog                   = lazy(() => import('./pages/Blog'))
 const BlogPost               = lazy(() => import('./pages/BlogPost'))
 const NotFound               = lazy(() => import('./pages/NotFound'))
 const MarketAnalytics        = lazy(() => import('./pages/MarketAnalytics'))
+const Guide                  = lazy(() => import('./pages/Guide'))
 
 // Full-screen blank while a page chunk loads — no spinner avoids CLS.
 const PageFallback = () => (
@@ -76,6 +77,8 @@ export default function App() {
             <Route path="/subscribe"  element={<Subscribe />} />
             <Route path="/blog"       element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/guides"     element={<Guide />} />
+            <Route path="/guides/:slug" element={<Guide />} />
             <Route path="*"           element={<NotFound />} />
           </Routes>
         </Suspense>

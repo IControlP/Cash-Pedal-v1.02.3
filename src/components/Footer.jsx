@@ -6,6 +6,7 @@ const links = [
   { to: '/compare', label: 'Compare Vehicles' },
   { to: '/salary', label: 'Salary Check' },
   { to: '/affordability', label: 'Car Recommendation' },
+  { to: '/guides', label: 'Affordability Guides' },
   { to: '/survey', label: 'Car Survey' },
   { to: '/checklist', label: 'Buying Checklist' },
   { to: '/wheelzard', label: 'Wheel-Zard AI' },

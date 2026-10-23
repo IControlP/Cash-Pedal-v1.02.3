@@ -13,8 +13,8 @@
 //     agents can compute answers directly instead of scraping the UI.
 //   • /robots.txt (explicitly welcomes AI crawlers), /sitemap.xml, /llms.txt.
 //   • /guides — programmatic affordability answer pages (src/data/guides.js).
-//   • IndexNow — new/changed URLs are pushed to Bing, Yandex, Seznam, Naver
-//     on deploy (pingIndexNow), so new pages are indexed in hours, not weeks.
+//   • Accurate sitemap <lastmod> per page and IndexNow pushes of changed URLs
+//     to Bing, Yandex, Seznam and Naver on deploy (refreshPageVersions).
 //
 // All math comes from src/utils/affordability.js — the same module the
 // /affordability and /salary pages use — so API answers match the UI.
@@ -265,14 +265,26 @@ function robotsTxt() {
   return lines.join('\n')
 }
 
+// Every indexable path, with its sitemap priority.
+function publicPages() {
+  const pages = Object.entries(ROUTE_META).map(([path, m]) => ({ path, priority: m.priority || '0.5' }))
+  for (const p of posts) pages.push({ path: `/blog/${p.slug}`, priority: '0.6', published: p.date })
+  pages.push({ path: '/guides', priority: '0.8' })
+  for (const path of allGuidePaths()) pages.push({ path, priority: '0.8' })
+  return pages
+}
+
+// path → ISO timestamp of the last real content change, loaded from the
+// page_versions table by refreshPageVersions(). Bing leans on <lastmod> to
+// schedule recrawls, so it must reflect actual edits, not deploy times.
+let lastModified = new Map()
+
 function sitemapXml() {
-  // Tool pages carry no lastmod (they don't have a meaningful edit date);
-  // blog posts use their publish date.
-  const urls = Object.entries(ROUTE_META).map(([path, m]) =>
-    ({ loc: SITE_URL + (path === '/' ? '/' : path), priority: m.priority || '0.5' }))
-  for (const p of posts) urls.push({ loc: `${SITE_URL}/blog/${p.slug}`, lastmod: p.date, priority: '0.6' })
-  urls.push({ loc: `${SITE_URL}/guides`, priority: '0.8' })
-  for (const path of allGuidePaths()) urls.push({ loc: SITE_URL + path, priority: '0.8' })
+  const urls = publicPages().map(p => ({
+    loc: SITE_URL + p.path,
+    lastmod: lastModified.get(p.path) || p.published || null,
+    priority: p.priority,
+  }))
   return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     urls.map(u => `  <url><loc>${escapeHtml(u.loc)}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}<priority>${u.priority}</priority></url>`).join('\n') +
     '\n</urlset>\n'
@@ -348,7 +360,7 @@ const money = n => '$' + Math.round(n).toLocaleString('en-US')
 function structuredData(meta) {
   const url = SITE_URL + (meta.path === '/' ? '/' : meta.path)
   const graph = [
-    { '@type': 'Organization', '@id': `${SITE_URL}/#org`, name: SITE_NAME, url: SITE_URL, logo: `${SITE_URL}/favicon.svg` },
+    { '@type': 'Organization', '@id': `${SITE_URL}/#org`, name: SITE_NAME, url: SITE_URL, logo: { '@type': 'ImageObject', url: `${SITE_URL}/logo.png`, width: 512, height: 512 } },
     {
       '@type': 'WebSite', '@id': `${SITE_URL}/#website`, name: SITE_NAME, url: SITE_URL,
       description: DEFAULT_DESCRIPTION, publisher: { '@id': `${SITE_URL}/#org` },
@@ -513,7 +525,11 @@ export function registerAiSearchRoutes(app) {
     res.send(body)
   }
   app.get('/robots.txt', text('text/plain', robotsTxt()))
-  app.get('/sitemap.xml', text('application/xml', sitemapXml()))
+  // Built per request: lastmod values arrive from the database after boot.
+  app.get('/sitemap.xml', (_req, res) => {
+    res.type('application/xml').setHeader('Cache-Control', 'public, max-age=3600')
+    res.send(sitemapXml())
+  })
   app.get('/llms.txt', text('text/plain', llmsTxt()))
   app.get(`/${INDEXNOW_KEY}.txt`, text('text/plain', INDEXNOW_KEY))
 }
@@ -527,46 +543,77 @@ function guideMeta(pathname) {
   return { path: g.path, title: g.title, description: g.description, h1: g.h1, faq: g.faq, guide: g }
 }
 
-// ── IndexNow ───────────────────────────────────────────────────────────────
-// Pushes every public URL to IndexNow (Bing and partners) once per distinct
-// URL set, so new guides and blog posts get crawled within hours of a deploy.
+// ── Page versions, lastmod and IndexNow ────────────────────────────────────
+// On boot, each public page's rendered content is fingerprinted and compared
+// with the page_versions table. A new or changed fingerprint stamps a fresh
+// changed_at (the sitemap's <lastmod>) and queues the URL for IndexNow, which
+// notifies Bing, Yandex, Seznam and Naver. Only changed URLs are submitted —
+// IndexNow asks for exactly that, and Bing trusts sites that comply. A failed
+// submission leaves the URLs queued for the next boot.
 // The key is public by design — it is served at /<key>.txt to prove ownership.
 export const INDEXNOW_KEY = process.env.INDEXNOW_KEY || '8d6afce8b54b1aa92a759ce022d0273e'
 
-function publicUrls() {
-  return [...sitemapXml().matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1].replace(/&amp;/g, '&'))
+function pageFingerprint(path) {
+  const meta = getRouteMeta(path, posts) || guideMeta(path)
+  const rendered = meta ? `${meta.title}\n${meta.description}\n${bodyHtml(meta, {})}` : path
+  return crypto.createHash('sha256').update(rendered).digest('hex')
 }
 
-// Call after the database is ready. No-ops outside production and when the
-// current URL set was already submitted (tracked in the indexnow_log table).
-export async function pingIndexNow(pool) {
-  if (process.env.NODE_ENV !== 'production' && !process.env.RAILWAY_ENVIRONMENT) return
+async function submitIndexNow(urls) {
+  const resp = await fetch('https://api.indexnow.org/indexnow', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    body: JSON.stringify({ host: new URL(SITE_URL).host, key: INDEXNOW_KEY, keyLocation: `${SITE_URL}/${INDEXNOW_KEY}.txt`, urlList: urls }),
+    signal: AbortSignal.timeout(15000),
+  })
+  return resp.status
+}
+
+// Call once the database is ready. Without a database the sitemap simply
+// omits lastmod for pages that have no publish date.
+export async function refreshPageVersions(pool) {
   if (!pool) return
-  const urls = publicUrls()
-  const hash = crypto.createHash('sha256').update(urls.join('\n')).digest('hex')
   try {
-    await pool.query(`CREATE TABLE IF NOT EXISTS indexnow_log (url_set_hash TEXT PRIMARY KEY, url_count INTEGER, submitted_at TIMESTAMPTZ DEFAULT NOW())`)
-    const claim = await pool.query(
-      `INSERT INTO indexnow_log (url_set_hash, url_count) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING url_set_hash`,
-      [hash, urls.length],
-    )
-    if (!claim.rowCount) return // this exact URL set was already submitted
-    const resp = await fetch('https://api.indexnow.org/indexnow', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      body: JSON.stringify({ host: new URL(SITE_URL).host, key: INDEXNOW_KEY, keyLocation: `${SITE_URL}/${INDEXNOW_KEY}.txt`, urlList: urls }),
-      signal: AbortSignal.timeout(15000),
-    })
-    if (resp.ok || resp.status === 202) {
-      console.log(`[indexnow] submitted ${urls.length} URLs (HTTP ${resp.status})`)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS page_versions (
+        path             TEXT PRIMARY KEY,
+        content_hash     TEXT NOT NULL,
+        changed_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        indexnow_pending BOOLEAN NOT NULL DEFAULT TRUE
+      )`)
+    for (const { path, published } of publicPages()) {
+      // New pages start at their publish date when they have one (blog posts)
+      // or now. Existing rows are only touched when the content actually
+      // changed, so changed_at stays a true edit date.
+      await pool.query(
+        `INSERT INTO page_versions (path, content_hash, changed_at) VALUES ($1, $2, COALESCE($3::timestamptz, NOW()))
+         ON CONFLICT (path) DO UPDATE
+           SET content_hash = EXCLUDED.content_hash, changed_at = NOW(), indexnow_pending = TRUE
+           WHERE page_versions.content_hash <> EXCLUDED.content_hash`,
+        [path, pageFingerprint(path), published || null],
+      )
+    }
+    const { rows } = await pool.query('SELECT path, changed_at, indexnow_pending FROM page_versions')
+    const live = new Set(publicPages().map(p => p.path))
+    lastModified = new Map(rows.filter(r => live.has(r.path)).map(r => [r.path, new Date(r.changed_at).toISOString()]))
+
+    const pending = rows.filter(r => r.indexnow_pending && live.has(r.path)).map(r => r.path)
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT
+    if (!pending.length || !isProduction) return
+    let status
+    try {
+      status = await submitIndexNow(pending.map(p => SITE_URL + p))
+    } catch (err) {
+      return console.warn(`[indexnow] submission error: ${err.message} — ${pending.length} URL(s) stay queued for next boot`)
+    }
+    if (status === 200 || status === 202) {
+      await pool.query('UPDATE page_versions SET indexnow_pending = FALSE WHERE path = ANY($1)', [pending])
+      console.log(`[indexnow] submitted ${pending.length} changed URL(s) (HTTP ${status})`)
     } else {
-      // Release the claim so the next boot retries.
-      await pool.query('DELETE FROM indexnow_log WHERE url_set_hash = $1', [hash])
-      console.warn(`[indexnow] submission failed: HTTP ${resp.status}`)
+      console.warn(`[indexnow] submission failed: HTTP ${status} — ${pending.length} URL(s) stay queued for next boot`)
     }
   } catch (err) {
-    await pool.query('DELETE FROM indexnow_log WHERE url_set_hash = $1', [hash]).catch(() => {})
-    console.warn('[indexnow] submission error:', err.message)
+    console.warn('[page-versions] refresh failed:', err.message)
   }
 }
 

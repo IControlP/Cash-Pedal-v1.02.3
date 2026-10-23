@@ -17,7 +17,7 @@
 export const SITE_URL = 'https://cashpedal.io'
 export const SITE_NAME = 'Cash Pedal'
 export const DEFAULT_DESCRIPTION =
-  'Free car affordability and total-cost-of-ownership calculators. Find out how much car you can afford on your salary, the salary you need for a specific car, and the true 5-year cost of any vehicle.'
+  'Free car affordability calculators: how much car you can afford on your salary, the salary a car needs, and its true cost to own.'
 
 // `indexable: false` keeps a route out of the sitemap and adds noindex.
 export const ROUTE_META = {
@@ -32,9 +32,9 @@ export const ROUTE_META = {
     priority: '1.0',
   },
   '/affordability': {
-    title: 'How Much Car Can I Afford? Car Affordability Calculator by Salary | Cash Pedal',
+    title: 'How Much Car Can I Afford? Car Affordability Calculator | Cash Pedal',
     description:
-      'Enter your annual salary to see the car price you can afford — conservative, comfortable and stretch budgets that include the loan or lease payment plus fuel, insurance, maintenance and registration — and matching vehicles.',
+      'Enter your salary to see the car price you can afford, with payment, gas, insurance, maintenance and registration included. Free and state-specific.',
     h1: 'How much car can I afford?',
     intro: [
       'Enter your gross annual salary and Cash Pedal works backwards to the vehicle price you can afford. Unlike calculators that only look at the loan payment, the budget includes the full monthly cost of ownership: payment, fuel, insurance, maintenance and registration for your state.',
@@ -53,9 +53,9 @@ export const ROUTE_META = {
     calculator: true,
   },
   '/salary': {
-    title: 'Car Salary Calculator — What Salary Do I Need for This Car? | Cash Pedal',
+    title: 'What Salary Do I Need for This Car? Salary Calculator | Cash Pedal',
     description:
-      'Enter a vehicle price (or pick a make, model and year) to see the minimum annual salary needed to afford it, based on the full monthly cost of ownership and the 20/4/10 rule. Buy and lease modes.',
+      'Enter a car\'s price to see the salary needed to afford it, based on the full monthly cost of ownership and the 20/4/10 rule. Buy or lease.',
     h1: 'What salary do I need to afford this car?',
     intro: [
       'Enter a vehicle price and Cash Pedal calculates the monthly payment plus fuel, insurance, maintenance and registration, then shows the gross annual salary needed to keep that total at 10% (conservative), 15% (comfortable) or 20% (stretch) of income.',
@@ -73,7 +73,7 @@ export const ROUTE_META = {
   '/tco': {
     title: 'True Cost of Car Ownership Calculator (TCO) | Cash Pedal',
     description:
-      'Estimate the true total cost of owning any car — depreciation, financing, fuel, insurance, maintenance, repairs and registration — for your state, in a quick guided flow.',
+      'Estimate the true cost of owning any car — depreciation, financing, fuel, insurance, maintenance and registration — for your state.',
     h1: 'True cost of ownership calculator',
     intro: [
       'Pick a make, model and year and get a guided total-cost-of-ownership (TCO) estimate covering depreciation, financing, fuel or charging, insurance, scheduled maintenance, known model issues and state registration fees.',
@@ -85,7 +85,7 @@ export const ROUTE_META = {
   '/tco-full': {
     title: 'Full Car Cost & Loan Calculator — Year-by-Year TCO | Cash Pedal',
     description:
-      'Detailed vehicle total-cost-of-ownership and auto loan calculator with year-by-year depreciation, maintenance, insurance, fuel, interest and resale value for new and used cars.',
+      'Year-by-year car cost and auto loan calculator: depreciation, interest, fuel, insurance, maintenance and resale value for new and used cars.',
     h1: 'Full TCO and auto loan calculator',
     intro: [
       'The full calculator breaks down every cost of owning a specific vehicle year by year: purchase and financing, interest, depreciation and resale value, fuel or electricity, insurance, maintenance and repairs, and registration.',
@@ -198,7 +198,7 @@ export function getRouteMeta(pathname, posts = []) {
       return {
         path,
         title: `${post.title} | Cash Pedal`,
-        description: post.excerpt,
+        description: post.description || post.excerpt,
         h1: post.title,
         intro: [post.excerpt],
         post,

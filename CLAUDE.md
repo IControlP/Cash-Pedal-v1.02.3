@@ -222,9 +222,11 @@ The root directory still contains the original Streamlit implementation (`.py` f
 
 `src/data/guides.js` generates 35 answer pages from the live cost model: `/guides/how-much-car-can-i-afford-<salary>-salary` (for each of `SALARY_LEVELS`) and `/guides/salary-needed-for-<price>-car` (for each of `PRICE_LEVELS`). Each page carries the 10/15/20% budgets, loan-term and down-payment trade-offs, the best and worst 5 states and current-model-year cars, plus FAQ JSON-LD. `guideSections()` is the single description of a page that both `src/pages/Guide.jsx` and the server pre-render consume, so the two can't drift. To add a salary or price level, add it to the array — the route, sitemap and llms.txt pick it up automatically. Unknown slugs 404.
 
-### IndexNow
+### Sitemap lastmod and IndexNow
 
-On boot in production, `pingIndexNow()` submits every sitemap URL to IndexNow (Bing, Yandex, Seznam, Naver) — but only when the URL set changes (hash claimed in the `indexnow_log` table), so routine deploys don't resubmit. The ownership key is served at `/<INDEXNOW_KEY>.txt` (default key in `ai-search.js`, overridable via `INDEXNOW_KEY`).
+On boot (`refreshPageVersions()` in `ai-search.js`), every public page's rendered content is fingerprinted and compared with the `page_versions` table. A new or changed fingerprint stamps a fresh `changed_at` — served as the sitemap's `<lastmod>`, which Bing relies on to schedule recrawls — and queues the URL for IndexNow (Bing, Yandex, Seznam, Naver). In production only queued (changed) URLs are submitted; a failed submission leaves them queued for the next boot. Without a database, `<lastmod>` falls back to blog publish dates. The ownership key is served at `/<INDEXNOW_KEY>.txt` (default key in `ai-search.js`, overridable via `INDEXNOW_KEY`).
+
+Bing Webmaster's SEO reports flag titles over 70 characters and meta descriptions outside 25–160 characters — keep new page copy in `seo.js`, `guides.js` and blog posts (`description` field) within those limits. The 1200×630 `public/og-image.png` (og:image / twitter:image) and 512×512 `public/logo.png` (JSON-LD Organization logo) are rendered by `scripts/generate-brand-images.mjs`; bump the `?v=` on the og:image URLs in `index.html` when regenerating, since PNGs are served with a 1-year immutable cache.
 
 ## Key Notes for Development
 

@@ -9,6 +9,9 @@
 //       title   – Full post title shown on the card and post page.
 //       date    – ISO date string "YYYY-MM-DD".
 //       excerpt – One or two sentences shown on the blog index card.
+//       description – (optional) Search-result snippet, 25–160 characters.
+//                 Falls back to the excerpt; set it when the excerpt is longer
+//                 than 160 characters (Bing flags longer descriptions).
 //       tags    – Array of short label strings (optional, can be []).
 //       content – HTML string. Write your post between the backticks.
 //                 Supported tags: <h2>, <h3>, <p>, <ul>/<ol>/<li>,
@@ -28,6 +31,7 @@ export const posts = [
     "date": "2026-10-15",
     "author": "Cash Pedal",
     "readTime": "6 min read",
+    "description": "The same $35,000 car costs $2,964 a year more to run in New York than in Idaho. See the monthly cost of owning a car in all 50 states and D.C.",
     "excerpt": "We priced the monthly running costs of the same $35,000 car in all 50 states and D.C. New York is the most expensive at $623 a month before the loan payment; Idaho is the cheapest at $376. Here is the full ranking.",
     "tags": [
       "Data",
@@ -125,11 +129,12 @@ export const posts = [
   },
   {
     "slug": "how-much-car-can-i-afford-by-salary",
-    "title": "How Much Car Can I Afford? The Real Numbers by Salary (2027)",
+    "title": "How Much Car Can I Afford? Real Numbers by Salary (2027)",
     "subtitle": "Why the \"payment you can afford\" is the wrong question",
     "date": "2026-10-15",
     "author": "Cash Pedal",
     "readTime": "7 min read",
+    "description": "The car price you can afford on every salary from $40k to $200k, including gas, insurance, maintenance and registration \u2014 not just the payment.",
     "excerpt": "Most affordability rules only look at the loan payment. Once gas, insurance, maintenance and registration are included, a $75,000 salary comfortably supports a car of about $28,500 — here is the table for every income.",
     "tags": [
       "Affordability",
@@ -195,6 +200,7 @@ export const posts = [
     "date": "2026-10-15",
     "author": "Cash Pedal",
     "readTime": "5 min read",
+    "description": "A 72- or 84-month loan lowers the payment but adds thousands in interest and years underwater. The real cost of long car loans, with numbers.",
     "excerpt": "Stretching a $35,000 car loan from 48 to 84 months cuts the payment by $248 a month — and adds $3,053 in interest, even before rate markups for long terms. Here is the math.",
     "tags": [
       "Financing",
@@ -256,6 +262,7 @@ export const posts = [
     author: 'Noah',
     readTime: '5 min read',
     cover: '/assets/articles/budget-has-a-leak.png',
+    description: 'Most budgets miss the irregular costs of owning a car. Why a gas price spike exposes the leak, and how to see your car\'s true cost.',
     excerpt:
       'We\'ve gotten good at tracking subscriptions and fixed bills. But there\'s an entire category of spending most budgets aren\'t built to handle — and a gas price spike is just the moment it becomes impossible to ignore.',
     tags: ['Budgeting', 'Car Ownership'],

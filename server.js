@@ -8,7 +8,7 @@ import Stripe from 'stripe'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import compression from 'compression'
-import { registerAiSearchRoutes, createSpaHandler, pingIndexNow } from './ai-search.js'
+import { registerAiSearchRoutes, createSpaHandler, refreshPageVersions } from './ai-search.js'
 
 const { Pool } = pg
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -2672,7 +2672,7 @@ app.listen(PORT, '0.0.0.0', async () => {
     try {
       await initTables()
       console.log('Database tables ready')
-      pingIndexNow(pool) // fire-and-forget; logs its own outcome
+      refreshPageVersions(pool) // sitemap lastmod + IndexNow; fire-and-forget, logs its own outcome
     } catch (err) {
       console.error('Database init error:', err.message)
     }

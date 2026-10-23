@@ -136,7 +136,7 @@ export function buildSalaryGuide(salary) {
     path: salaryGuidePath(salary),
     salary,
     title: `How Much Car Can I Afford on ${s} a Year? (${CURRENT_YEAR} Numbers) | Cash Pedal`,
-    description: `On a ${money(salary)} salary you can comfortably afford a car up to about ${money(comfortable)} — about ${money(tiers[1].monthlyBudget)}/month including the payment, gas, insurance, maintenance and registration. See the 10/15/20% budgets, the best and worst states, and ${CURRENT_YEAR} cars that fit.`,
+    description: `On ${money(salary)} a year you can comfortably afford a car up to ${money(comfortable)} (${money(tiers[1].monthlyBudget)}/mo all-in). Budgets, best states and ${CURRENT_YEAR} cars that fit.`,
     h1: `How much car can I afford on a ${money(salary)} salary?`,
     answer: [
       `On a ${money(salary)} salary (about ${money(salary / 2080)}/hour) you can comfortably afford a vehicle priced up to about ${money(comfortable)}. That keeps your total car costs — loan payment plus gas, insurance, maintenance and registration — at about ${money(tiers[1].monthlyBudget)} a month, or 15% of gross income.`,
@@ -226,7 +226,7 @@ export function buildPriceGuide(price) {
     path: priceGuidePath(price),
     price,
     title: `What Salary Do I Need for a ${p} Car? (${CURRENT_YEAR}) | Cash Pedal`,
-    description: `A ${money(price)} car costs about ${money(base.total)}/month all-in. To keep that at a comfortable 15% of income you need a salary of about ${money(comfortable)} (${money(required[0].salary)} under the 20/4/10 rule). Loan-term, down-payment and state-by-state breakdowns.`,
+    description: `A ${money(price)} car costs about ${money(base.total)}/mo all-in, so you need a salary of about ${money(comfortable)} to afford it. Loan, down payment and state breakdowns.`,
     h1: `What salary do you need for a ${money(price)} car?`,
     answer: `To comfortably afford a ${money(price)} car you need a gross salary of about ${money(comfortable)} a year (${money(comfortable / 2080)}/hour). With 20% down and a 48-month loan at 6.5% APR, the payment is about ${money(base.payment)} a month, and gas, insurance, maintenance and registration add roughly ${money(base.ops.total)} — about ${money(base.total)} a month in total. Under the stricter 20/4/10 rule (10% of income) you would need ${money(required[0].salary)}; the bare minimum at 20% of income is ${money(required[2].salary)}.`,
     monthly: {
@@ -280,7 +280,7 @@ export function guideFromSlug(slug) {
 export const GUIDES_INDEX = {
   path: '/guides',
   title: 'Car Affordability Guides by Salary and Price | Cash Pedal',
-  description: 'How much car can you afford on your salary, and what salary do you need for a given car? Data-backed answers for every income from $30k to $250k and car prices from $15k to $100k, with state-by-state comparisons.',
+  description: 'How much car can you afford on your salary, and what salary does a car need? Data-backed answers for $30k–$250k incomes and $15k–$100k cars.',
   h1: 'Car affordability guides',
   intro: 'Quick, data-backed answers for the two questions every car buyer asks. Every figure includes the whole cost of owning a car — payment, gas, insurance, maintenance and registration — not just the loan.',
 }

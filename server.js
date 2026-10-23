@@ -28,6 +28,17 @@ try {
 // left-most position since Railway appends (not prepends) the real client IP.
 app.set('trust proxy', 1)
 
+// One canonical host: permanently redirect www.cashpedal.io → cashpedal.io so
+// search engines index a single copy of each page instead of splitting
+// ranking signals across two hostnames. Registered first so it also covers
+// static assets and /api.
+app.use((req, res, next) => {
+  if (req.hostname === 'www.cashpedal.io') {
+    return res.redirect(301, `https://cashpedal.io${req.originalUrl}`)
+  }
+  next()
+})
+
 const PORT             = process.env.PORT || 3000
 const APP_URL          = (process.env.APP_URL || 'https://cashpedal.io').replace(/\/$/, '')
 const PRICE_ID         = process.env.STRIPE_PRICE_ID || ''

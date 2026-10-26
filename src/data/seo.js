@@ -24,10 +24,9 @@ export const ROUTE_META = {
   '/': {
     title: 'Cash Pedal — How Much Car Can I Afford? Free Car Cost Calculators',
     description: DEFAULT_DESCRIPTION,
-    h1: 'See the life your income can build',
+    h1: 'Know the true cost of owning any vehicle before you sign',
     intro: [
-      'Cash Pedal is a free lifestyle budget calculator. Share your income, state and household and what matters most, and it shows the home, neighborhoods, dining, travel and car your budget can support, using three pillars: Foundation, Lifestyle and Cushion.',
-      'It also answers the car questions buyers ask: how much car can I afford on my salary, what salary a specific car needs, and what a car really costs to own once fuel, insurance, maintenance, registration and depreciation are added in.',
+      'Cash Pedal is a free vehicle financial toolkit. It answers the questions car buyers actually ask: how much car can I afford on my salary, what salary do I need for a specific car, and what will a car really cost to own once fuel, insurance, maintenance, registration and depreciation are added in.',
       'Estimates are state-aware (insurance, fuel prices and registration fees vary by state) and cover more than 50 brands and thousands of make/model/year/trim combinations.',
     ],
     priority: '1.0',

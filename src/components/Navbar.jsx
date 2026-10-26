@@ -2,20 +2,17 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useSubscription } from '../hooks/useSubscription'
 
-// Desktop nav stays short; the remaining tools live in the footer and the mobile menu.
 const navLinks = [
   { to: '/lifestyle', label: 'Lifestyle' },
-  { to: '/affordability', label: 'Cars You Can Buy' },
-  { to: '/tco', label: 'True Cost' },
+  { to: '/tco', label: 'TCO Calculator' },
   { to: '/compare', label: 'Compare' },
-  { to: '/blog', label: 'Blog' },
-]
-const moreLinks = [
   { to: '/salary', label: 'Salary Check' },
+  { to: '/affordability', label: 'Car Recommendation' },
   { to: '/survey', label: 'Car Survey' },
   { to: '/checklist', label: 'Checklist' },
   { to: '/wheelzard', label: 'Wheel-Zard' },
   { to: '/market', label: 'Market Data' },
+  { to: '/blog', label: 'Blog' },
 ]
 
 // Compute days remaining defensively — supports whatever shape the hook returns.
@@ -135,7 +132,7 @@ export default function Navbar() {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden border-t border-[var(--border)] bg-[var(--bg)] px-4 py-3 flex flex-col gap-1">
-          {[...navLinks, ...moreLinks].map(({ to, label }) => (
+          {navLinks.map(({ to, label }) => (
             <Link
               key={to}
               to={to}

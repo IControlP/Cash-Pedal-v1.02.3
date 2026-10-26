@@ -1,5 +1,5 @@
 // Sanity harness for the lifestyle engine (runs in CI alongside verify-tco.mjs).
-import { computeLifestyle, takeHome, STATES, debtPayoffGain, costCenters, compareScenarios, equivalentIncome } from '../src/utils/lifestyle.js'
+import { computeLifestyle, takeHome, stateIncomeTax, STATES, debtPayoffGain, costCenters, compareScenarios, equivalentIncome } from '../src/utils/lifestyle.js'
 
 let failures = 0
 const check = (name, ok, info = '') => {
@@ -22,7 +22,7 @@ for (const [c, s] of Object.entries(STATES)) {
 }
 
 const th = takeHome([75000], 'TX', false, 0)
-check('TX single $75k take-home 4,900–5,300/mo', th.monthly > 4900 && th.monthly < 5300, `${th.monthly}`)
+check('TX single $75k take-home 4,900–5,400/mo', th.monthly > 4900 && th.monthly < 5400, `${th.monthly}`)
 
 for (const [name, p] of Object.entries(profiles)) {
   const r = computeLifestyle(p)
@@ -76,6 +76,18 @@ check('saver gets more cushion', saver.pillars.percents.cushion > neutral.pillar
   check('CA needs more income than TX for the same life', need.income > 75000, `${need.income}`)
   const back = equivalentIncome({ ...base, state: 'CA' }, 'TX')
   check('TX needs less income than CA for the same life', back.income < 75000, `${back.income}`)
+}
+
+// State income tax against hand-checkable cases (2026 Tax Foundation table).
+{
+  check('TX/FL/WA have no wage tax', stateIncomeTax(100000, 'TX', false) === 0 && stateIncomeTax(100000, 'FL', false) === 0 && stateIncomeTax(100000, 'WA', false) === 0)
+  check('PA flat 3.07%', Math.abs(stateIncomeTax(100000, 'PA', false) - 3070) < 1, `${stateIncomeTax(100000, 'PA', false)}`)
+  check('CO flat 4.4% after std deduction', Math.abs(stateIncomeTax(100000, 'CO', false) - 0.044 * (100000 - 16100)) < 5, `${stateIncomeTax(100000, 'CO', false)}`)
+  const ca = stateIncomeTax(100000, 'CA', false), ny = stateIncomeTax(100000, 'NY', false)
+  check('CA $100k single in 3k–7k', ca > 3000 && ca < 7000, `${ca}`)
+  check('NY $100k single in 4k–6.5k', ny > 4000 && ny < 6500, `${ny}`)
+  check('state tax rises with income', ['CA', 'NY', 'OR', 'MA'].every(s => stateIncomeTax(200000, s, false) > stateIncomeTax(100000, s, false)))
+  check('kids never raise state tax', stateIncomeTax(100000, 'AL', true, 0) >= stateIncomeTax(100000, 'AL', true, 2))
 }
 
 // City data: structure, and cities move results in the right direction.

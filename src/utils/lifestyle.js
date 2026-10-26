@@ -38,18 +38,19 @@ export const DEFAULT_PRIORITIES = Object.fromEntries(PRIORITY_KEYS.map(k => [k, 
 export const AGE_RANGES = ['18-24', '25-34', '35-44', '45-54', '55+']
 const AGE_CUSHION_BONUS = { '18-24': 0, '25-34': 0, '35-44': 2, '45-54': 4, '55+': 5 }
 
-// ── Taxes (2025 federal; state via effective-rate table) ──────────────────
+// ── Taxes (2026 federal per Rev. Proc. 2025-32 via Tax Foundation; state per
+// the Tax Foundation 2026 table in lifestyleData.json) ───────────────────
 const FED = {
   single: {
-    std: 15000,
-    brackets: [[11925, 0.10], [48475, 0.12], [103350, 0.22], [197300, 0.24], [250525, 0.32], [626350, 0.35], [Infinity, 0.37]],
+    std: 16100,
+    brackets: [[12400, 0.10], [50400, 0.12], [105700, 0.22], [201775, 0.24], [256225, 0.32], [640600, 0.35], [Infinity, 0.37]],
   },
   married: {
-    std: 30000,
-    brackets: [[23850, 0.10], [96950, 0.12], [206700, 0.22], [394600, 0.24], [501050, 0.32], [751600, 0.35], [Infinity, 0.37]],
+    std: 32200,
+    brackets: [[24800, 0.10], [100800, 0.12], [211400, 0.22], [403550, 0.24], [512450, 0.32], [768700, 0.35], [Infinity, 0.37]],
   },
 }
-const SS_WAGE_BASE = 176100
+const SS_WAGE_BASE = 184500 // 2026 Social Security wage base (SSA announcement; not re-verified in this build)
 const CHILD_CREDIT = 2200
 
 function bracketTax(taxable, brackets) {
@@ -63,6 +64,27 @@ function bracketTax(taxable, brackets) {
   return tax
 }
 
+// State income tax on wages from the Tax Foundation 2026 table: brackets,
+// standard deduction and exemptions (or credits) per filing status. Estimate
+// only — no federal-deduction add-backs, local taxes or income exclusions.
+export function stateIncomeTax(gross, state, married, children = 0) {
+  const t = STATES[state]?.stateTax
+  if (!t) return 0 // no wage income tax (AK, FL, NV, NH, SD, TN, TX, WA, WY)
+  const f = married ? t.married : t.single
+  let taxable = gross - f.std - (f.exemptionIsCredit ? 0 : f.exemption)
+  taxable -= t.dependentIsCredit ? 0 : t.dependent * children
+  taxable = Math.max(0, taxable)
+  let tax = 0
+  const b = f.brackets
+  for (let i = 0; i < b.length; i++) {
+    const [floor, rate] = b[i]
+    const top = i + 1 < b.length ? b[i + 1][0] : Infinity
+    if (taxable > floor) tax += (Math.min(taxable, top) - floor) * rate
+  }
+  const credits = (f.exemptionIsCredit ? f.exemption : 0) + (t.dependentIsCredit ? t.dependent * children : 0)
+  return Math.max(0, tax - credits)
+}
+
 // incomes: array of gross annual wages (one for singles, two for couples).
 export function takeHome(incomes, state, married, children = 0) {
   const gross = incomes.reduce((a, b) => a + (Number(b) || 0), 0)
@@ -73,8 +95,7 @@ export function takeHome(incomes, state, married, children = 0) {
     const w = Number(inc) || 0
     return sum + Math.min(w, SS_WAGE_BASE) * 0.062 + w * 0.0145
   }, 0)
-  const statePct = STATES[state]?.stateTaxPct ?? 4
-  const stateTax = gross * (statePct / 100) * Math.min(1.4, Math.max(0.6, gross / 75000))
+  const stateTax = stateIncomeTax(gross, state, married, children)
   const net = gross - federal - fica - stateTax
   return {
     gross, federal: Math.round(federal), fica: Math.round(fica), state: Math.round(stateTax),

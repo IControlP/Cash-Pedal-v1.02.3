@@ -208,6 +208,8 @@ turns them into `src/data/lifestyleData.json` (51 states) and `src/data/lifestyl
 | Median home value | ACS B25077 |
 | Effective property tax | ACS B25103 ÷ B25077 |
 | Goods / utilities / other-services price levels | BEA Regional Price Parities 2024, state (SARPP) and metro (MARPP) |
+| State income tax (brackets, standard deduction, exemptions/credits by filing status) | Tax Foundation, State Individual Income Tax Rates and Brackets, 2026 |
+| Federal 2026 brackets, standard deduction, child tax credit | Rev. Proc. 2025-32 as published by Tax Foundation; SS wage base $184,500 from SSA's announcement (not re-verified) |
 
 How it's used: the engine converts gross → contract rent (×0.92), prices groceries by the goods
 index, utilities by the utilities index, and childcare, dining and travel by the services index.
@@ -216,4 +218,6 @@ when the city is a principal city of a metro (243 of 381), otherwise the state i
 
 Known limits: ACS rents are existing leases (new-lease asking rents run higher); neighborhood
 types are national multipliers on the city median; suburbs of big metros that aren't principal
-cities (e.g. Irvine, Plano) use state price indexes; state income tax % is **still a placeholder**.
+cities (e.g. Irvine, Plano) use state price indexes. State income tax is computed on wages from the
+2026 brackets with no federal-deduction add-backs, local income taxes or retirement/Social Security
+exclusions (Washington's capital-gains-only tax is treated as no wage tax).

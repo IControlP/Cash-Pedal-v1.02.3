@@ -10,8 +10,8 @@
 //       B01003 population
 //   • BEA Regional Price Parities 2024 (apps.bea.gov): SARPP (state) and MARPP
 //       (metro) — all items, goods, housing, utilities, other services
-//   • State income tax: carried over from the existing file (NOT yet sourced —
-//       see _meta.stateTax in the output).
+//   • Tax Foundation, State Individual Income Tax Rates and Brackets, 2026
+//       (taxfoundation.org): brackets, standard deduction and exemptions by state.
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -125,8 +125,48 @@ for (const m of metros) {
   }
 }
 
+// ── State income tax (Tax Foundation 2026 table) ─────────────────────────
+const money = v => {
+  const m = String(v ?? '').replace(/,/g, '').match(/\$?(\d+(?:\.\d+)?)/)
+  return m ? Number(m[1]) : null
+}
+const stripTags = x => x.replace(/<[^>]+>/g, ' ').replace(/&nbsp;|&#160;/g, ' ').replace(/&amp;/g, '&').replace(/&#8211;|&ndash;/g, '-').replace(/\s+/g, ' ').trim()
+function parseStateTax() {
+  const html = fs.readFileSync(path.join(DIR, 'taxfoundation-2026.html'), 'utf8')
+  const tables = html.match(/<table[\s\S]*?<\/table>/g) || []
+  const table = tables.find(t => /Single Filer \(Rates\)/.test(t))
+  if (!table) throw new Error('Tax Foundation bracket table not found')
+  const nameToAbbr = { ...STATE_ABBR, 'Washington DC': 'DC', 'District of Columbia': 'DC' }
+  const taxes = {}
+  let cur = null
+  for (const tr of table.match(/<tr[\s\S]*?<\/tr>/g) || []) {
+    const c = (tr.match(/<t[hd][\s\S]*?<\/t[hd]>/g) || []).map(stripTags)
+    if (c.length < 7 || c[0] === 'State') continue
+    const label = c[0].replace(/^-\s*/, '').replace(/\s*\([^)]*\)\s*$/, '').trim()
+    const abbr = nameToAbbr[label]
+    if (!abbr) continue
+    const first = !c[0].startsWith('-')
+    if (first) {
+      cur = taxes[abbr] = {
+        single: { brackets: [], std: money(c[7]) ?? 0, exemption: money(c[9]) ?? 0, exemptionIsCredit: /credit/i.test(c[9]) },
+        married: { brackets: [], std: money(c[8]) ?? 0, exemption: money(c[10]) ?? 0, exemptionIsCredit: /credit/i.test(c[10]) },
+        dependent: money(c[11]) ?? 0, dependentIsCredit: /credit/i.test(c[11]),
+      }
+    }
+    if (!cur || taxes[abbr] !== cur) continue
+    const rate = s => (/none/i.test(s) ? null : Number(String(s).replace('%', '')) / 100)
+    const sr = rate(c[1])
+    const mr = rate(c[4])
+    if (sr != null && Number.isFinite(sr)) cur.single.brackets.push([money(c[3]) ?? 0, sr])
+    if (mr != null && Number.isFinite(mr)) cur.married.brackets.push([money(c[6]) ?? 0, mr])
+  }
+  return taxes
+}
+const stateTax = parseStateTax()
+// Washington's 7% applies to long-term capital gains only; there is no tax on wages.
+delete stateTax.WA
+
 // ── States ───────────────────────────────────────────────────────────────
-const prior = JSON.parse(fs.readFileSync(OUT_STATES, 'utf8'))
 const states = {}
 const stateRatios = {}
 for (const [id, g] of geo) {
@@ -143,7 +183,7 @@ for (const [id, g] of geo) {
     medianHome: r.home,
     propTaxPct: r.home && r.tax ? Math.round((r.tax / r.home) * 10000) / 100 : null,
     rpp: beaState[code],
-    stateTaxPct: prior.states[code]?.stateTaxPct ?? 4,
+    stateTax: stateTax[code] ?? null,
   }
 }
 // DC is a state-equivalent in both sources; make sure all 51 are present.
@@ -156,14 +196,14 @@ const out = {
     bea: `BEA Regional Price Parities ${BEA_YEAR} (SARPP state, MARPP metro), apps.bea.gov`,
     rentNote: 'ACS median GROSS rent (contract rent + utilities) of existing leases; asking rents on new leases run higher. The engine converts gross to contract rent.',
     propTaxNote: 'Median real estate taxes paid ÷ median home value (ACS), so a blended effective rate.',
-    stateTax: 'PLACEHOLDER — effective state income tax % of gross, not yet sourced. Replace with Tax Foundation / state schedules.',
+    stateTax: 'Tax Foundation 2026 state brackets, standard deductions and exemptions (taxfoundation.org). Computed on gross wages with no federal-deduction add-backs, local income taxes or retirement/Social Security exclusions.',
     fields: {
       rent: 'median gross rent by bedroom count (0 = studio … 4 = 4BR), USD/month',
       rentMedian: 'median gross rent, all units, USD/month',
       medianHome: 'median value of owner-occupied homes, USD',
       propTaxPct: 'effective property tax, % of value per year',
       rpp: 'BEA regional price parities, US = 100: all, goods, housing, utilities, other (services)',
-      stateTaxPct: 'effective state income tax, % of gross (placeholder)',
+      stateTax: 'per filing status: brackets [[floor, rate]], std deduction, personal exemption (or credit), plus dependent exemption',
     },
   },
   states,

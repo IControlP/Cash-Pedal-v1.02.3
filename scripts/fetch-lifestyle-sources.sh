@@ -13,4 +13,5 @@ for z in SARPP MARPP; do
   [ -s "$DIR/bea/${z}.zip" ] || curl -fsSL -o "$DIR/bea/${z}.zip" "https://apps.bea.gov/regional/zip/${z}.zip"
   unzip -oq "$DIR/bea/${z}.zip" -d "$DIR/bea"
 done
+[ -s "$DIR/taxfoundation-2026.html" ] || curl -fsSL -o "$DIR/taxfoundation-2026.html" "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/"
 echo "Sources ready in $DIR"

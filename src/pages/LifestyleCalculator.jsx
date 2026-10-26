@@ -597,7 +597,7 @@ export default function LifestyleCalculator() {
         <button className="btn-ghost" onClick={() => { setPriorities(DEFAULT_PRIORITIES); setQ(0); setStep('survey') }}>Retake the survey</button>
       </div>
       <p className="text-xs text-[var(--text-muted)] mt-6">
-        Estimates only, based on 2025 tax rules, state-level price data and a {6.75}% 30-year mortgage. Not financial, tax or legal advice.
+        Estimates only, based on 2026 federal and state tax rules, state-level price data and a {6.75}% 30-year mortgage. Not financial, tax or legal advice.
       </p>
     </>
   )

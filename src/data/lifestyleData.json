@@ -5,14 +5,14 @@
   "bea": "BEA Regional Price Parities 2024 (SARPP state, MARPP metro), apps.bea.gov",
   "rentNote": "ACS median GROSS rent (contract rent + utilities) of existing leases; asking rents on new leases run higher. The engine converts gross to contract rent.",
   "propTaxNote": "Median real estate taxes paid ÷ median home value (ACS), so a blended effective rate.",
-  "stateTax": "PLACEHOLDER — effective state income tax % of gross, not yet sourced. Replace with Tax Foundation / state schedules.",
+  "stateTax": "Tax Foundation 2026 state brackets, standard deductions and exemptions (taxfoundation.org). Computed on gross wages with no federal-deduction add-backs, local income taxes or retirement/Social Security exclusions.",
   "fields": {
    "rent": "median gross rent by bedroom count (0 = studio … 4 = 4BR), USD/month",
    "rentMedian": "median gross rent, all units, USD/month",
    "medianHome": "median value of owner-occupied homes, USD",
    "propTaxPct": "effective property tax, % of value per year",
    "rpp": "BEA regional price parities, US = 100: all, goods, housing, utilities, other (services)",
-   "stateTaxPct": "effective state income tax, % of gross (placeholder)"
+   "stateTax": "per filing status: brackets [[floor, rate]], std deduction, personal exemption (or credit), plus dependent exemption"
   }
  },
  "states": {
@@ -34,7 +34,48 @@
     "utilities": 84.6,
     "other": 96.7
    },
-   "stateTaxPct": 3.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.02
+      ],
+      [
+       500,
+       0.04
+      ],
+      [
+       3000,
+       0.05
+      ]
+     ],
+     "std": 3000,
+     "exemption": 1500,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.02
+      ],
+      [
+       1000,
+       0.04
+      ],
+      [
+       6000,
+       0.05
+      ]
+     ],
+     "std": 8500,
+     "exemption": 3000,
+     "exemptionIsCredit": false
+    },
+    "dependent": 1000,
+    "dependentIsCredit": false
+   }
   },
   "AK": {
    "rent": {
@@ -54,7 +95,22 @@
     "utilities": 119,
     "other": 102.2
    },
-   "stateTaxPct": 0
+   "stateTax": {
+    "single": {
+     "brackets": [],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "AZ": {
    "rent": {
@@ -74,7 +130,32 @@
     "utilities": 92.3,
     "other": 102.8
    },
-   "stateTaxPct": 2.2
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.025
+      ]
+     ],
+     "std": 8350,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.025
+      ]
+     ],
+     "std": 16700,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 100,
+    "dependentIsCredit": true
+   }
   },
   "AR": {
    "rent": {
@@ -94,7 +175,40 @@
     "utilities": 74.7,
     "other": 95.3
    },
-   "stateTaxPct": 3.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.02
+      ],
+      [
+       4600,
+       0.039
+      ]
+     ],
+     "std": 2470,
+     "exemption": 29,
+     "exemptionIsCredit": true
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.02
+      ],
+      [
+       4600,
+       0.039
+      ]
+     ],
+     "std": 4940,
+     "exemption": 58,
+     "exemptionIsCredit": true
+    },
+    "dependent": 29,
+    "dependentIsCredit": true
+   }
   },
   "CA": {
    "rent": {
@@ -114,7 +228,104 @@
     "utilities": 158.9,
     "other": 102.6
    },
-   "stateTaxPct": 5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.01
+      ],
+      [
+       11079,
+       0.02
+      ],
+      [
+       26264,
+       0.04
+      ],
+      [
+       41452,
+       0.06
+      ],
+      [
+       57542,
+       0.08
+      ],
+      [
+       72724,
+       0.09300000000000001
+      ],
+      [
+       371479,
+       0.10300000000000001
+      ],
+      [
+       445771,
+       0.113
+      ],
+      [
+       742953,
+       0.12300000000000001
+      ],
+      [
+       1000000,
+       0.133
+      ]
+     ],
+     "std": 5540,
+     "exemption": 153,
+     "exemptionIsCredit": true
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.01
+      ],
+      [
+       22158,
+       0.02
+      ],
+      [
+       52528,
+       0.04
+      ],
+      [
+       82904,
+       0.06
+      ],
+      [
+       115084,
+       0.08
+      ],
+      [
+       145448,
+       0.09300000000000001
+      ],
+      [
+       742958,
+       0.10300000000000001
+      ],
+      [
+       891542,
+       0.113
+      ],
+      [
+       1000000,
+       0.12300000000000001
+      ],
+      [
+       1485906,
+       0.133
+      ]
+     ],
+     "std": 11080,
+     "exemption": 306,
+     "exemptionIsCredit": true
+    },
+    "dependent": 153,
+    "dependentIsCredit": true
+   }
   },
   "CO": {
    "rent": {
@@ -134,7 +345,32 @@
     "utilities": 85,
     "other": 99.6
    },
-   "stateTaxPct": 3.8
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.044000000000000004
+      ]
+     ],
+     "std": 16100,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.044000000000000004
+      ]
+     ],
+     "std": 32200,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "CT": {
    "rent": {
@@ -154,7 +390,80 @@
     "utilities": 146.5,
     "other": 102.7
    },
-   "stateTaxPct": 4.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.02
+      ],
+      [
+       10000,
+       0.045
+      ],
+      [
+       50000,
+       0.055
+      ],
+      [
+       100000,
+       0.06
+      ],
+      [
+       200000,
+       0.065
+      ],
+      [
+       250000,
+       0.069
+      ],
+      [
+       500000,
+       0.0699
+      ]
+     ],
+     "std": 0,
+     "exemption": 15000,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.02
+      ],
+      [
+       20000,
+       0.045
+      ],
+      [
+       100000,
+       0.055
+      ],
+      [
+       200000,
+       0.06
+      ],
+      [
+       400000,
+       0.065
+      ],
+      [
+       500000,
+       0.069
+      ],
+      [
+       1000000,
+       0.0699
+      ]
+     ],
+     "std": 0,
+     "exemption": 24000,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "DE": {
    "rent": {
@@ -174,7 +483,72 @@
     "utilities": 103.8,
     "other": 101.2
    },
-   "stateTaxPct": 4
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       2000,
+       0.022000000000000002
+      ],
+      [
+       5000,
+       0.039
+      ],
+      [
+       10000,
+       0.048
+      ],
+      [
+       20000,
+       0.052000000000000005
+      ],
+      [
+       25000,
+       0.0555
+      ],
+      [
+       60000,
+       0.066
+      ]
+     ],
+     "std": 3250,
+     "exemption": 110,
+     "exemptionIsCredit": true
+    },
+    "married": {
+     "brackets": [
+      [
+       2000,
+       0.022000000000000002
+      ],
+      [
+       5000,
+       0.039
+      ],
+      [
+       10000,
+       0.048
+      ],
+      [
+       20000,
+       0.052000000000000005
+      ],
+      [
+       25000,
+       0.0555
+      ],
+      [
+       60000,
+       0.066
+      ]
+     ],
+     "std": 6500,
+     "exemption": 220,
+     "exemptionIsCredit": true
+    },
+    "dependent": 110,
+    "dependentIsCredit": true
+   }
   },
   "DC": {
    "rent": {
@@ -194,7 +568,80 @@
     "utilities": 112.8,
     "other": 103
    },
-   "stateTaxPct": 6
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.04
+      ],
+      [
+       10000,
+       0.06
+      ],
+      [
+       40000,
+       0.065
+      ],
+      [
+       60000,
+       0.085
+      ],
+      [
+       250000,
+       0.0925
+      ],
+      [
+       500000,
+       0.0975
+      ],
+      [
+       1000000,
+       0.1075
+      ]
+     ],
+     "std": 16100,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.04
+      ],
+      [
+       10000,
+       0.06
+      ],
+      [
+       40000,
+       0.065
+      ],
+      [
+       60000,
+       0.085
+      ],
+      [
+       250000,
+       0.0925
+      ],
+      [
+       500000,
+       0.0975
+      ],
+      [
+       1000000,
+       0.1075
+      ]
+     ],
+     "std": 32200,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "FL": {
    "rent": {
@@ -214,7 +661,22 @@
     "utilities": 90.1,
     "other": 101.3
    },
-   "stateTaxPct": 0
+   "stateTax": {
+    "single": {
+     "brackets": [],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "GA": {
    "rent": {
@@ -234,7 +696,32 @@
     "utilities": 92.8,
     "other": 97.3
    },
-   "stateTaxPct": 4.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.0519
+      ]
+     ],
+     "std": 12000,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.0519
+      ]
+     ],
+     "std": 24000,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 4000,
+    "dependentIsCredit": false
+   }
   },
   "HI": {
    "rent": {
@@ -254,7 +741,120 @@
     "utilities": 190.2,
     "other": 102.9
    },
-   "stateTaxPct": 5.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.013999999999999999
+      ],
+      [
+       9600,
+       0.032
+      ],
+      [
+       14400,
+       0.055
+      ],
+      [
+       19200,
+       0.064
+      ],
+      [
+       24000,
+       0.068
+      ],
+      [
+       36000,
+       0.07200000000000001
+      ],
+      [
+       48000,
+       0.076
+      ],
+      [
+       125000,
+       0.079
+      ],
+      [
+       175000,
+       0.0825
+      ],
+      [
+       225000,
+       0.09
+      ],
+      [
+       275000,
+       0.1
+      ],
+      [
+       325000,
+       0.11
+      ]
+     ],
+     "std": 4400,
+     "exemption": 1144,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.013999999999999999
+      ],
+      [
+       19200,
+       0.032
+      ],
+      [
+       28800,
+       0.055
+      ],
+      [
+       38400,
+       0.064
+      ],
+      [
+       48000,
+       0.068
+      ],
+      [
+       72000,
+       0.07200000000000001
+      ],
+      [
+       96000,
+       0.076
+      ],
+      [
+       250000,
+       0.079
+      ],
+      [
+       350000,
+       0.0825
+      ],
+      [
+       450000,
+       0.09
+      ],
+      [
+       550000,
+       0.1
+      ],
+      [
+       650000,
+       0.11
+      ]
+     ],
+     "std": 8800,
+     "exemption": 2288,
+     "exemptionIsCredit": false
+    },
+    "dependent": 1144,
+    "dependentIsCredit": false
+   }
   },
   "ID": {
    "rent": {
@@ -274,7 +874,32 @@
     "utilities": 70.4,
     "other": 99
    },
-   "stateTaxPct": 4.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       4811,
+       0.053
+      ]
+     ],
+     "std": 16100,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       9622,
+       0.053
+      ]
+     ],
+     "std": 32200,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "IL": {
    "rent": {
@@ -294,7 +919,32 @@
     "utilities": 85,
     "other": 100.2
    },
-   "stateTaxPct": 4.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.0495
+      ]
+     ],
+     "std": 0,
+     "exemption": 2925,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.0495
+      ]
+     ],
+     "std": 0,
+     "exemption": 5850,
+     "exemptionIsCredit": false
+    },
+    "dependent": 2925,
+    "dependentIsCredit": false
+   }
   },
   "IN": {
    "rent": {
@@ -314,7 +964,32 @@
     "utilities": 85.5,
     "other": 99.1
    },
-   "stateTaxPct": 3
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.029500000000000002
+      ]
+     ],
+     "std": 0,
+     "exemption": 1000,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.029500000000000002
+      ]
+     ],
+     "std": 0,
+     "exemption": 2000,
+     "exemptionIsCredit": false
+    },
+    "dependent": 1000,
+    "dependentIsCredit": false
+   }
   },
   "IA": {
    "rent": {
@@ -334,7 +1009,40 @@
     "utilities": 83.3,
     "other": 92.9
    },
-   "stateTaxPct": 3.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.038
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "std": 16100,
+     "exemption": 40,
+     "exemptionIsCredit": true
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.038
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "std": 32200,
+     "exemption": 80,
+     "exemptionIsCredit": true
+    },
+    "dependent": 40,
+    "dependentIsCredit": true
+   }
   },
   "KS": {
    "rent": {
@@ -354,7 +1062,40 @@
     "utilities": 88.4,
     "other": 93.8
    },
-   "stateTaxPct": 4
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.052000000000000005
+      ],
+      [
+       23000,
+       0.0558
+      ]
+     ],
+     "std": 3605,
+     "exemption": 9160,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.052000000000000005
+      ],
+      [
+       46000,
+       0.0558
+      ]
+     ],
+     "std": 8240,
+     "exemption": 18320,
+     "exemptionIsCredit": false
+    },
+    "dependent": 2320,
+    "dependentIsCredit": false
+   }
   },
   "KY": {
    "rent": {
@@ -374,7 +1115,40 @@
     "utilities": 75.3,
     "other": 97.3
    },
-   "stateTaxPct": 4
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.035
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "std": 3360,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.035
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "std": 3360,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "LA": {
    "rent": {
@@ -394,7 +1168,40 @@
     "utilities": 71.5,
     "other": 95.7
    },
-   "stateTaxPct": 3
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.03
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "std": 12875,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.03
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "std": 25750,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "ME": {
    "rent": {
@@ -414,7 +1221,48 @@
     "utilities": 135.2,
     "other": 103.2
    },
-   "stateTaxPct": 5.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.057999999999999996
+      ],
+      [
+       27399,
+       0.0675
+      ],
+      [
+       64849,
+       0.07150000000000001
+      ]
+     ],
+     "std": 8350,
+     "exemption": 5300,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.057999999999999996
+      ],
+      [
+       54849,
+       0.0675
+      ],
+      [
+       129749,
+       0.07150000000000001
+      ]
+     ],
+     "std": 16700,
+     "exemption": 10600,
+     "exemptionIsCredit": false
+    },
+    "dependent": 305,
+    "dependentIsCredit": true
+   }
   },
   "MD": {
    "rent": {
@@ -434,7 +1282,104 @@
     "utilities": 110.9,
     "other": 101.6
    },
-   "stateTaxPct": 5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.02
+      ],
+      [
+       1000,
+       0.03
+      ],
+      [
+       2000,
+       0.04
+      ],
+      [
+       3000,
+       0.0475
+      ],
+      [
+       100000,
+       0.05
+      ],
+      [
+       125000,
+       0.0525
+      ],
+      [
+       150000,
+       0.055
+      ],
+      [
+       250000,
+       0.0575
+      ],
+      [
+       500000,
+       0.0625
+      ],
+      [
+       1000000,
+       0.065
+      ]
+     ],
+     "std": 3350,
+     "exemption": 3200,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.02
+      ],
+      [
+       1000,
+       0.03
+      ],
+      [
+       2000,
+       0.04
+      ],
+      [
+       3000,
+       0.0475
+      ],
+      [
+       150000,
+       0.05
+      ],
+      [
+       175000,
+       0.0525
+      ],
+      [
+       225000,
+       0.055
+      ],
+      [
+       300000,
+       0.0575
+      ],
+      [
+       600000,
+       0.0625
+      ],
+      [
+       1200000,
+       0.065
+      ]
+     ],
+     "std": 6700,
+     "exemption": 6400,
+     "exemptionIsCredit": false
+    },
+    "dependent": 3200,
+    "dependentIsCredit": false
+   }
   },
   "MA": {
    "rent": {
@@ -454,7 +1399,40 @@
     "utilities": 152.1,
     "other": 102.9
    },
-   "stateTaxPct": 5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.05
+      ],
+      [
+       1083150,
+       0.09
+      ]
+     ],
+     "std": 0,
+     "exemption": 4400,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.05
+      ],
+      [
+       1083150,
+       0.09
+      ]
+     ],
+     "std": 0,
+     "exemption": 8800,
+     "exemptionIsCredit": false
+    },
+    "dependent": 1000,
+    "dependentIsCredit": false
+   }
   },
   "MI": {
    "rent": {
@@ -474,7 +1452,32 @@
     "utilities": 100.2,
     "other": 100.9
    },
-   "stateTaxPct": 4.2
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.0425
+      ]
+     ],
+     "std": 0,
+     "exemption": 5900,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.0425
+      ]
+     ],
+     "std": 0,
+     "exemption": 11800,
+     "exemptionIsCredit": false
+    },
+    "dependent": 5900,
+    "dependentIsCredit": false
+   }
   },
   "MN": {
    "rent": {
@@ -494,7 +1497,56 @@
     "utilities": 90.8,
     "other": 100.2
    },
-   "stateTaxPct": 5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.0535
+      ],
+      [
+       33310,
+       0.068
+      ],
+      [
+       109430,
+       0.0785
+      ],
+      [
+       203150,
+       0.09849999999999999
+      ]
+     ],
+     "std": 15300,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.0535
+      ],
+      [
+       48700,
+       0.068
+      ],
+      [
+       193480,
+       0.0785
+      ],
+      [
+       337930,
+       0.09849999999999999
+      ]
+     ],
+     "std": 30600,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 5300,
+    "dependentIsCredit": false
+   }
   },
   "MS": {
    "rent": {
@@ -514,7 +1566,32 @@
     "utilities": 78.4,
     "other": 96.1
    },
-   "stateTaxPct": 3.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       10000,
+       0.04
+      ]
+     ],
+     "std": 2300,
+     "exemption": 6000,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       10000,
+       0.04
+      ]
+     ],
+     "std": 4600,
+     "exemption": 12000,
+     "exemptionIsCredit": false
+    },
+    "dependent": 1500,
+    "dependentIsCredit": false
+   }
   },
   "MO": {
    "rent": {
@@ -534,7 +1611,80 @@
     "utilities": 79.4,
     "other": 95.2
    },
-   "stateTaxPct": 4
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       1348,
+       0.02
+      ],
+      [
+       2696,
+       0.025
+      ],
+      [
+       4044,
+       0.03
+      ],
+      [
+       5392,
+       0.035
+      ],
+      [
+       6740,
+       0.04
+      ],
+      [
+       8088,
+       0.045
+      ],
+      [
+       9436,
+       0.047
+      ]
+     ],
+     "std": 16100,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       1348,
+       0.02
+      ],
+      [
+       2696,
+       0.025
+      ],
+      [
+       4044,
+       0.03
+      ],
+      [
+       5392,
+       0.035
+      ],
+      [
+       6740,
+       0.04
+      ],
+      [
+       8088,
+       0.045
+      ],
+      [
+       9436,
+       0.047
+      ]
+     ],
+     "std": 32200,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "MT": {
    "rent": {
@@ -554,7 +1704,40 @@
     "utilities": 72.3,
     "other": 98.7
    },
-   "stateTaxPct": 4.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.047
+      ],
+      [
+       47500,
+       0.0565
+      ]
+     ],
+     "std": 16100,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.047
+      ],
+      [
+       95000,
+       0.0565
+      ]
+     ],
+     "std": 32200,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "NE": {
    "rent": {
@@ -574,7 +1757,48 @@
     "utilities": 75.6,
     "other": 93
    },
-   "stateTaxPct": 4.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.0246
+      ],
+      [
+       4130,
+       0.0351
+      ],
+      [
+       24760,
+       0.0455
+      ]
+     ],
+     "std": 8850,
+     "exemption": 176,
+     "exemptionIsCredit": true
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.0246
+      ],
+      [
+       8250,
+       0.0351
+      ],
+      [
+       49530,
+       0.0455
+      ]
+     ],
+     "std": 17700,
+     "exemption": 352,
+     "exemptionIsCredit": true
+    },
+    "dependent": 176,
+    "dependentIsCredit": true
+   }
   },
   "NV": {
    "rent": {
@@ -594,7 +1818,22 @@
     "utilities": 90.5,
     "other": 98.7
    },
-   "stateTaxPct": 0
+   "stateTax": {
+    "single": {
+     "brackets": [],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "NH": {
    "rent": {
@@ -614,7 +1853,22 @@
     "utilities": 133.7,
     "other": 103.9
    },
-   "stateTaxPct": 0
+   "stateTax": {
+    "single": {
+     "brackets": [],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "NJ": {
    "rent": {
@@ -634,7 +1888,88 @@
     "utilities": 114.2,
     "other": 103.5
    },
-   "stateTaxPct": 4
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.013999999999999999
+      ],
+      [
+       20000,
+       0.0175
+      ],
+      [
+       35000,
+       0.035
+      ],
+      [
+       40000,
+       0.0553
+      ],
+      [
+       75000,
+       0.0637
+      ],
+      [
+       500000,
+       0.0897
+      ],
+      [
+       1000000,
+       0.1075
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "std": 0,
+     "exemption": 1000,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.013999999999999999
+      ],
+      [
+       20000,
+       0.0175
+      ],
+      [
+       50000,
+       0.0245
+      ],
+      [
+       70000,
+       0.035
+      ],
+      [
+       80000,
+       0.0553
+      ],
+      [
+       150000,
+       0.0637
+      ],
+      [
+       500000,
+       0.0897
+      ],
+      [
+       1000000,
+       0.1075
+      ]
+     ],
+     "std": 0,
+     "exemption": 2000,
+     "exemptionIsCredit": false
+    },
+    "dependent": 1500,
+    "dependentIsCredit": false
+   }
   },
   "NM": {
    "rent": {
@@ -654,7 +1989,72 @@
     "utilities": 77.9,
     "other": 98.5
    },
-   "stateTaxPct": 3.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.015
+      ],
+      [
+       5500,
+       0.032
+      ],
+      [
+       16500,
+       0.043
+      ],
+      [
+       33500,
+       0.047
+      ],
+      [
+       66500,
+       0.049
+      ],
+      [
+       210000,
+       0.059000000000000004
+      ]
+     ],
+     "std": 16100,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.015
+      ],
+      [
+       8000,
+       0.032
+      ],
+      [
+       25000,
+       0.043
+      ],
+      [
+       50000,
+       0.047
+      ],
+      [
+       100000,
+       0.049
+      ],
+      [
+       315000,
+       0.059000000000000004
+      ]
+     ],
+     "std": 32200,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 4000,
+    "dependentIsCredit": false
+   }
   },
   "NY": {
    "rent": {
@@ -674,7 +2074,96 @@
     "utilities": 134.4,
     "other": 104.1
    },
-   "stateTaxPct": 5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.039
+      ],
+      [
+       8500,
+       0.044000000000000004
+      ],
+      [
+       11700,
+       0.051500000000000004
+      ],
+      [
+       13900,
+       0.054000000000000006
+      ],
+      [
+       80650,
+       0.059000000000000004
+      ],
+      [
+       215400,
+       0.06849999999999999
+      ],
+      [
+       1077550,
+       0.0965
+      ],
+      [
+       5000000,
+       0.10300000000000001
+      ],
+      [
+       25000000,
+       0.109
+      ]
+     ],
+     "std": 8000,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.039
+      ],
+      [
+       17150,
+       0.044000000000000004
+      ],
+      [
+       23600,
+       0.051500000000000004
+      ],
+      [
+       27900,
+       0.054000000000000006
+      ],
+      [
+       161550,
+       0.059000000000000004
+      ],
+      [
+       323200,
+       0.06849999999999999
+      ],
+      [
+       2155350,
+       0.0965
+      ],
+      [
+       5000000,
+       0.10300000000000001
+      ],
+      [
+       25000000,
+       0.109
+      ]
+     ],
+     "std": 16050,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 1000,
+    "dependentIsCredit": false
+   }
   },
   "NC": {
    "rent": {
@@ -694,7 +2183,32 @@
     "utilities": 88.6,
     "other": 98.2
    },
-   "stateTaxPct": 4
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.039900000000000005
+      ]
+     ],
+     "std": 12750,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.039900000000000005
+      ]
+     ],
+     "std": 25500,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "ND": {
    "rent": {
@@ -714,7 +2228,40 @@
     "utilities": 73.7,
     "other": 91.2
    },
-   "stateTaxPct": 2
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       48475,
+       0.0195
+      ],
+      [
+       244825,
+       0.025
+      ]
+     ],
+     "std": 16100,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       80975,
+       0.0195
+      ],
+      [
+       298075,
+       0.025
+      ]
+     ],
+     "std": 32200,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "OH": {
    "rent": {
@@ -734,7 +2281,40 @@
     "utilities": 95.8,
     "other": 98.9
    },
-   "stateTaxPct": 3
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       26050,
+       0.0275
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "std": 0,
+     "exemption": 2400,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       26050,
+       0.0275
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "std": 0,
+     "exemption": 4800,
+     "exemptionIsCredit": false
+    },
+    "dependent": 2400,
+    "dependentIsCredit": false
+   }
   },
   "OK": {
    "rent": {
@@ -754,7 +2334,48 @@
     "utilities": 73.9,
     "other": 95.5
    },
-   "stateTaxPct": 4
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       3750,
+       0.025
+      ],
+      [
+       4900,
+       0.035
+      ],
+      [
+       7200,
+       0.045
+      ]
+     ],
+     "std": 6350,
+     "exemption": 1000,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       7500,
+       0.025
+      ],
+      [
+       9800,
+       0.035
+      ],
+      [
+       14400,
+       0.045
+      ]
+     ],
+     "std": 12700,
+     "exemption": 2000,
+     "exemptionIsCredit": false
+    },
+    "dependent": 1000,
+    "dependentIsCredit": false
+   }
   },
   "OR": {
    "rent": {
@@ -774,7 +2395,56 @@
     "utilities": 107,
     "other": 100.3
    },
-   "stateTaxPct": 7
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.0475
+      ],
+      [
+       4550,
+       0.0675
+      ],
+      [
+       11400,
+       0.0875
+      ],
+      [
+       125000,
+       0.099
+      ]
+     ],
+     "std": 2910,
+     "exemption": 256,
+     "exemptionIsCredit": true
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.0475
+      ],
+      [
+       9100,
+       0.0675
+      ],
+      [
+       22800,
+       0.0875
+      ],
+      [
+       250000,
+       0.099
+      ]
+     ],
+     "std": 5820,
+     "exemption": 512,
+     "exemptionIsCredit": true
+    },
+    "dependent": 256,
+    "dependentIsCredit": true
+   }
   },
   "PA": {
    "rent": {
@@ -794,7 +2464,32 @@
     "utilities": 109.3,
     "other": 99.8
    },
-   "stateTaxPct": 3.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.030699999999999998
+      ]
+     ],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.030699999999999998
+      ]
+     ],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "RI": {
    "rent": {
@@ -814,7 +2509,48 @@
     "utilities": 146.7,
     "other": 102.8
    },
-   "stateTaxPct": 4
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.0375
+      ],
+      [
+       82050,
+       0.0475
+      ],
+      [
+       186450,
+       0.0599
+      ]
+     ],
+     "std": 11200,
+     "exemption": 5250,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.0375
+      ],
+      [
+       82050,
+       0.0475
+      ],
+      [
+       186450,
+       0.0599
+      ]
+     ],
+     "std": 22400,
+     "exemption": 10500,
+     "exemptionIsCredit": false
+    },
+    "dependent": 5250,
+    "dependentIsCredit": false
+   }
   },
   "SC": {
    "rent": {
@@ -834,7 +2570,48 @@
     "utilities": 88.3,
     "other": 98.3
    },
-   "stateTaxPct": 5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0
+      ],
+      [
+       3640,
+       0.03
+      ],
+      [
+       18230,
+       0.06
+      ]
+     ],
+     "std": 8350,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0
+      ],
+      [
+       3640,
+       0.03
+      ],
+      [
+       18230,
+       0.06
+      ]
+     ],
+     "std": 16700,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 4930,
+    "dependentIsCredit": false
+   }
   },
   "SD": {
    "rent": {
@@ -854,7 +2631,22 @@
     "utilities": 79.7,
     "other": 91.9
    },
-   "stateTaxPct": 0
+   "stateTax": {
+    "single": {
+     "brackets": [],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "TN": {
    "rent": {
@@ -874,7 +2666,22 @@
     "utilities": 72.1,
     "other": 95.1
    },
-   "stateTaxPct": 0
+   "stateTax": {
+    "single": {
+     "brackets": [],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "TX": {
    "rent": {
@@ -894,7 +2701,22 @@
     "utilities": 87.5,
     "other": 97.1
    },
-   "stateTaxPct": 0
+   "stateTax": {
+    "single": {
+     "brackets": [],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   },
   "UT": {
    "rent": {
@@ -914,7 +2736,32 @@
     "utilities": 78.7,
     "other": 99
    },
-   "stateTaxPct": 4.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.045
+      ]
+     ],
+     "std": 966,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.045
+      ]
+     ],
+     "std": 1932,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 2111,
+    "dependentIsCredit": false
+   }
   },
   "VT": {
    "rent": {
@@ -934,7 +2781,56 @@
     "utilities": 125.8,
     "other": 101.6
    },
-   "stateTaxPct": 4.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.0335
+      ],
+      [
+       49400,
+       0.066
+      ],
+      [
+       119700,
+       0.076
+      ],
+      [
+       249700,
+       0.0875
+      ]
+     ],
+     "std": 7650,
+     "exemption": 5300,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.0335
+      ],
+      [
+       82500,
+       0.066
+      ],
+      [
+       199450,
+       0.076
+      ],
+      [
+       304000,
+       0.0875
+      ]
+     ],
+     "std": 15300,
+     "exemption": 10600,
+     "exemptionIsCredit": false
+    },
+    "dependent": 5300,
+    "dependentIsCredit": false
+   }
   },
   "VA": {
    "rent": {
@@ -954,7 +2850,56 @@
     "utilities": 92.2,
     "other": 100.2
    },
-   "stateTaxPct": 4.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.02
+      ],
+      [
+       3000,
+       0.03
+      ],
+      [
+       5000,
+       0.05
+      ],
+      [
+       17000,
+       0.0575
+      ]
+     ],
+     "std": 8750,
+     "exemption": 930,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.02
+      ],
+      [
+       3000,
+       0.03
+      ],
+      [
+       5000,
+       0.05
+      ],
+      [
+       17000,
+       0.0575
+      ]
+     ],
+     "std": 17500,
+     "exemption": 1860,
+     "exemptionIsCredit": false
+    },
+    "dependent": 930,
+    "dependentIsCredit": false
+   }
   },
   "WA": {
    "rent": {
@@ -974,7 +2919,7 @@
     "utilities": 92.9,
     "other": 103.9
    },
-   "stateTaxPct": 0
+   "stateTax": null
   },
   "WV": {
    "rent": {
@@ -994,7 +2939,64 @@
     "utilities": 92.2,
     "other": 99.9
    },
-   "stateTaxPct": 4
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.0222
+      ],
+      [
+       10000,
+       0.0296
+      ],
+      [
+       25000,
+       0.0333
+      ],
+      [
+       40000,
+       0.0444
+      ],
+      [
+       60000,
+       0.0482
+      ]
+     ],
+     "std": 0,
+     "exemption": 2000,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.0222
+      ],
+      [
+       10000,
+       0.0296
+      ],
+      [
+       25000,
+       0.0333
+      ],
+      [
+       40000,
+       0.0444
+      ],
+      [
+       60000,
+       0.0482
+      ]
+     ],
+     "std": 0,
+     "exemption": 4000,
+     "exemptionIsCredit": false
+    },
+    "dependent": 2000,
+    "dependentIsCredit": false
+   }
   },
   "WI": {
    "rent": {
@@ -1014,7 +3016,56 @@
     "utilities": 89.9,
     "other": 99.5
    },
-   "stateTaxPct": 4.5
+   "stateTax": {
+    "single": {
+     "brackets": [
+      [
+       0,
+       0.035
+      ],
+      [
+       15110,
+       0.044000000000000004
+      ],
+      [
+       51950,
+       0.053
+      ],
+      [
+       332720,
+       0.0765
+      ]
+     ],
+     "std": 13960,
+     "exemption": 700,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [
+      [
+       0,
+       0.035
+      ],
+      [
+       20150,
+       0.044000000000000004
+      ],
+      [
+       69260,
+       0.053
+      ],
+      [
+       443630,
+       0.0765
+      ]
+     ],
+     "std": 25840,
+     "exemption": 1400,
+     "exemptionIsCredit": false
+    },
+    "dependent": 700,
+    "dependentIsCredit": false
+   }
   },
   "WY": {
    "rent": {
@@ -1034,7 +3085,22 @@
     "utilities": 78.4,
     "other": 100.4
    },
-   "stateTaxPct": 0
+   "stateTax": {
+    "single": {
+     "brackets": [],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "married": {
+     "brackets": [],
+     "std": 0,
+     "exemption": 0,
+     "exemptionIsCredit": false
+    },
+    "dependent": 0,
+    "dependentIsCredit": false
+   }
   }
  }
 }

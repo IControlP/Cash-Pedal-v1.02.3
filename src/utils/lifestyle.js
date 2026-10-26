@@ -270,7 +270,10 @@ export function computeLifestyle(profile, priorities = DEFAULT_PRIORITIES) {
   // Housing always gets at least 25% of take-home before we call it tight; the
   // difference is drawn from Lifestyle then Cushion below.
   const housingBudget = Math.max(rawHousing, 0.25 * TH)
-  const rentCap = Math.min(housingBudget, 0.33 * gross / 12)
+  // Rent may stretch to the standard 30% of gross income (HUD's affordability
+  // line), or up to 33% when the pillar budget itself allows more. Anything above
+  // the pillar budget is drawn from Lifestyle then Cushion (see `delta` below).
+  const rentCap = Math.min(Math.max(housingBudget, 0.30 * gross / 12), 0.33 * gross / 12)
 
   // Rent by neighborhood type
   const unitRent = b => loc.rent[Math.min(4, b)] * GROSS_TO_CONTRACT
@@ -280,11 +283,13 @@ export function computeLifestyle(profile, priorities = DEFAULT_PRIORITIES) {
     const rent = roundTo(rentFor(t))
     const typicalPrice = roundTo(st.medianHome * t.price * BEDROOM_PRICE[bedrooms], 1000)
     const score = pr.city * (t.walk + t.nightlife) / 2 + pr.home * t.space + pr.family * t.schools + pr.dining * t.nightlife * 0.5
-    return { ...t, rent, typicalPrice, score, rentFits: rent <= rentCap }
+    return { ...t, rent, typicalPrice, score, rentFits: rent <= rentCap, comfortable: rent <= housingBudget }
   })
   const cheapest = types.reduce((a, b) => (b.rent < a.rent ? b : a))
-  const fitting = types.filter(t => t.rentFits).sort((a, b) => b.score - a.score)
-  const best = fitting[0] ?? cheapest
+  const byScore = (a, b) => b.score - a.score
+  const fitting = types.filter(t => t.rentFits).sort(byScore)
+  // Prefer a type that fits inside the pillar budget; only stretch when none does.
+  const best = types.filter(t => t.comfortable).sort(byScore)[0] ?? fitting[0] ?? cheapest
   const tight = fitting.length === 0
 
   // Housing spend and the flow of leftover dollars

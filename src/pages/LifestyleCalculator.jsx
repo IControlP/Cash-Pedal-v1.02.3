@@ -538,8 +538,8 @@ export default function LifestyleCalculator() {
                 Rent ~{usd(n.rent)}/mo{form.roommates > 0 ? ' each' : ''}
                 <span className="text-[var(--text-muted)]"> · {n.buyable ? 'buy ' : 'home '}~{usd(n.typicalPrice)}</span>
               </p>
-              <p className="text-xs mt-1" style={{ color: n.rentFits ? 'var(--success, #5FE0B8)' : 'var(--text-muted)' }}>
-                {n.rentFits ? 'Fits your budget' : 'A stretch right now'}
+              <p className="text-xs mt-1" style={{ color: n.comfortable ? 'var(--success, #5FE0B8)' : 'var(--text-muted)' }}>
+                {n.comfortable ? 'Fits your budget' : n.rentFits ? 'Possible — uses some of your Lifestyle budget' : 'A stretch right now'}
               </p>
             </div>
           ))}

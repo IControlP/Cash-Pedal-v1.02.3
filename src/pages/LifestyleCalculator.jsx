@@ -11,13 +11,25 @@ import {
 import { priorityQuestions, STATE_LIST, LIFE_STAGES, PILLAR_COLORS } from '../data/lifestyleSurvey'
 import { CostCenterChart, ScenarioChart } from '../components/CostCenterChart'
 
+// City picker for a state; "Statewide average" keeps the state-level data.
+function CitySelect({ state, value, onChange, cities }) {
+  const list = cities?.[state] ?? []
+  if (!list.length) return null
+  return (
+    <select className="input-field" value={value} onChange={e => onChange(e.target.value)} aria-label="City">
+      <option value="">Statewide average</option>
+      {list.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+    </select>
+  )
+}
+
 const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
 const STORAGE_KEY = 'cp_lifestyle_profile'
 
 const DEFAULT_FORM = {
   married: false, income1: '', income2: '', age: '25-34', state: 'TX',
   children: 0, roommates: 0, debt: '', saved: '',
-  destState: '', newIncome: '', newState: '',
+  city: '', destState: '', destCity: '', newIncome: '', newState: '', newCity: '',
 }
 
 const PILLARS = [
@@ -117,9 +129,18 @@ function PrioritySliders({ priorities, onChange }) {
 export default function LifestyleCalculator() {
   const [step, setStep] = useState('stage') // stage | profile | survey | results
   const [stageId, setStageId] = useState(null)
+  const [cities, setCities] = useState(null) // { [state]: city rows sorted by population }
   const [form, setForm] = useState(DEFAULT_FORM)
   const [priorities, setPriorities] = useState(DEFAULT_PRIORITIES)
   const [q, setQ] = useState(0)
+
+  useEffect(() => {
+    import('../data/lifestyleCities.json').then(m => {
+      const by = {}
+      for (const c of m.default.cities) (by[c.state] ??= []).push(c)
+      setCities(by)
+    }).catch(() => setCities({}))
+  }, [])
 
   useEffect(() => {
     try {
@@ -139,6 +160,7 @@ export default function LifestyleCalculator() {
     }))
   }, [])
 
+  const cityRow = (st, id) => (id ? cities?.[st]?.find(c => c.id === id) ?? null : null)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const income1 = Number(form.income1) || 0
   const income2 = form.married ? Number(form.income2) || 0 : 0
@@ -149,7 +171,8 @@ export default function LifestyleCalculator() {
     age: form.age, state: form.state, married: form.married,
     children: form.children, roommates: form.roommates,
     debtMonthly: Number(form.debt) || 0, savedForHome: Number(form.saved) || 0,
-  }), [form, income1, income2])
+    city: cityRow(form.state, form.city),
+  }), [form, income1, income2, cities])
 
   const stage = LIFE_STAGES.find(x => x.id === stageId) ?? null
   const destState = form.destState && form.destState !== form.state ? form.destState : ''
@@ -157,11 +180,12 @@ export default function LifestyleCalculator() {
   // The what-if: a new state (city move) and/or a new salary (new job).
   const scenario = useMemo(() => {
     if (!stage?.scenario) return null
-    if (stage.scenario === 'city') return destState ? { state: destState } : null
+    if (stage.scenario === 'city') return destState ? { state: destState, city: cityRow(destState, form.destCity) } : null
     const st = form.newState || form.state
-    if (!newIncome && st === form.state) return null
-    return { state: st, ...(newIncome ? { incomes: form.married ? [newIncome, income2] : [newIncome] } : {}) }
-  }, [stage, destState, newIncome, form.newState, form.state, form.married, income2])
+    const cityId = st === form.state && !form.newState ? form.city : form.newCity
+    if (!newIncome && st === form.state && cityId === form.city) return null
+    return { state: st, city: cityRow(st, cityId), ...(newIncome ? { incomes: form.married ? [newIncome, income2] : [newIncome] } : {}) }
+  }, [stage, destState, newIncome, form.newState, form.newCity, form.destCity, form.city, form.state, form.married, income2, cities])
 
   const result = useMemo(() => (step === 'results' && canContinue ? computeLifestyle(profile, priorities) : null), [step, profile, priorities, canContinue])
   const payoff = useMemo(() => (result ? debtPayoffGain(profile, priorities) : null), [result, profile, priorities])
@@ -169,7 +193,7 @@ export default function LifestyleCalculator() {
     ? computeLifestyle({ ...profile, roommates: 0 }, priorities) : null), [result, form, profile, priorities])
 
   const compare = useMemo(() => (result && scenario ? compareScenarios(profile, scenario, priorities) : null), [result, scenario, profile, priorities])
-  const needIncome = useMemo(() => (result && stage?.scenario === 'city' && destState ? equivalentIncome(profile, destState, priorities) : null), [result, stage, destState, profile, priorities])
+  const needIncome = useMemo(() => (result && stage?.scenario === 'city' && destState ? equivalentIncome(profile, destState, priorities, cityRow(destState, form.destCity)) : null), [result, stage, destState, form.destCity, profile, priorities, cities])
   const centers = useMemo(() => (result ? costCenters(result) : []), [result])
   const shifts = useMemo(() => (result && stage?.id === 'intention' ? priorityShifts(profile, priorities) : null), [result, stage, profile, priorities])
 
@@ -271,10 +295,15 @@ export default function LifestyleCalculator() {
               </select>
             </Field>
             <Field label="State">
-              <select className="input-field" value={form.state} onChange={e => set('state', e.target.value)}>
+              <select className="input-field" value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value, city: '' }))}>
                 {STATE_LIST.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
               </select>
             </Field>
+            {(cities?.[form.state]?.length ?? 0) > 0 && (
+              <Field label="City" hint="Rent, home prices and local price levels for your city.">
+                <CitySelect state={form.state} value={form.city} onChange={v => set('city', v)} cities={cities} />
+              </Field>
+            )}
           </div>
           <Field label="Children">
             <Segmented
@@ -302,10 +331,13 @@ export default function LifestyleCalculator() {
           </div>
           {stage?.scenario === 'city' && (
             <Field label="Where are you thinking of moving?" hint="We'll compare your costs and the pay needed to keep your lifestyle.">
-              <select className="input-field" value={form.destState} onChange={e => set('destState', e.target.value)}>
-                <option value="">Choose a state…</option>
-                {STATE_LIST.filter(([c]) => c !== form.state).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
-              </select>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <select className="input-field" value={form.destState} onChange={e => setForm(f => ({ ...f, destState: e.target.value, destCity: '' }))}>
+                  <option value="">Choose a state…</option>
+                  {STATE_LIST.filter(([c]) => c !== form.state).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+                </select>
+                {form.destState && <CitySelect state={form.destState} value={form.destCity} onChange={v => set('destCity', v)} cities={cities} />}
+              </div>
             </Field>
           )}
           {stage?.scenario === 'job' && (
@@ -314,9 +346,12 @@ export default function LifestyleCalculator() {
                 <MoneyInput value={form.newIncome} onChange={v => set('newIncome', v)} placeholder="95000" />
               </Field>
               <Field label="New job's state" hint="Leave as is if you're not relocating.">
-                <select className="input-field" value={form.newState || form.state} onChange={e => set('newState', e.target.value)}>
-                  {STATE_LIST.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
-                </select>
+                <div className="grid gap-3">
+                  <select className="input-field" value={form.newState || form.state} onChange={e => setForm(f => ({ ...f, newState: e.target.value, newCity: '' }))}>
+                    {STATE_LIST.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+                  </select>
+                  {form.newState && form.newState !== form.state && <CitySelect state={form.newState} value={form.newCity} onChange={v => set('newCity', v)} cities={cities} />}
+                </div>
               </Field>
             </div>
           )}
@@ -373,7 +408,7 @@ export default function LifestyleCalculator() {
     <>
       <h1 className="font-display font-extrabold text-white text-3xl sm:text-4xl mb-2">Here's the life you can build</h1>
       <p className="text-[var(--text-muted)] mb-8">
-        Based on about {usd(r.tax.monthly)}/month take-home in {STATE_LIST.find(s => s[0] === form.state)?.[1]}.
+        Based on about {usd(r.tax.monthly)}/month take-home in {profile.city ? `${profile.city.name}, ${profile.city.state}` : STATE_LIST.find(s => s[0] === form.state)?.[1]}.
       </p>
 
       <section className="card mb-6">
@@ -457,7 +492,7 @@ export default function LifestyleCalculator() {
             <>
               <p className="text-white font-semibold mt-1">
                 {stage.scenario === 'city'
-                  ? `In ${STATE_LIST.find(x => x[0] === destState)?.[1]}, at the same income`
+                  ? `In ${scenario?.city ? `${scenario.city.name}, ${scenario.city.state}` : STATE_LIST.find(x => x[0] === destState)?.[1]}, at the same income`
                   : 'With the new job'}
                 : take-home {compare.takeHomeDelta >= 0 ? 'rises ▲' : 'falls ▼'} {usd(Math.abs(compare.takeHomeDelta))}/month, and what's left for Lifestyle and Cushion {compare.discretionaryDelta >= 0 ? 'grows ▲' : 'shrinks ▼'} {usd(Math.abs(compare.discretionaryDelta))}/month.
               </p>
@@ -468,8 +503,8 @@ export default function LifestyleCalculator() {
                 </p>
               )}
               <div className="mt-5">
-                <ScenarioChart rows={compare.rows} nowLabel={STATE_LIST.find(x => x[0] === form.state)?.[1] ?? 'Now'}
-                  nextLabel={stage.scenario === 'city' ? STATE_LIST.find(x => x[0] === destState)?.[1] : 'New job'} />
+                <ScenarioChart rows={compare.rows} nowLabel={profile.city?.name ?? STATE_LIST.find(x => x[0] === form.state)?.[1] ?? 'Now'}
+                  nextLabel={stage.scenario === 'city' ? (scenario?.city?.name ?? STATE_LIST.find(x => x[0] === destState)?.[1]) : 'New job'} />
               </div>
             </>
           )}

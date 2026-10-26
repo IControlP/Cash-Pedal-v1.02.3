@@ -1,378 +1,1040 @@
 {
  "_meta": {
-  "status": "APPROXIMATE PLACEHOLDERS - state-level estimates entered from general knowledge of public data (HUD FMR, Census ACS, BEA RPP, Tax Foundation). Each figure must be replaced with a cited source value before launch; see docs/LIFESTYLE_CALCULATOR_SPEC.md section 5.",
+  "generatedBy": "scripts/build-lifestyle-data.mjs",
+  "acs": "ACS 2020–2024 5-year (B25031, B25064, B25077, B25103), www2.census.gov table-based summary files",
+  "bea": "BEA Regional Price Parities 2024 (SARPP state, MARPP metro), apps.bea.gov",
+  "rentNote": "ACS median GROSS rent (contract rent + utilities) of existing leases; asking rents on new leases run higher. The engine converts gross to contract rent.",
+  "propTaxNote": "Median real estate taxes paid ÷ median home value (ACS), so a blended effective rate.",
+  "stateTax": "PLACEHOLDER — effective state income tax % of gross, not yet sourced. Replace with Tax Foundation / state schedules.",
   "fields": {
-   "rent1br": "typical 1BR monthly rent, USD",
-   "medianHome": "median home value, USD",
-   "propTaxPct": "effective property tax rate, % of value per year",
-   "priceIndex": "regional price parity, 100 = US average",
-   "stateTaxPct": "effective state income tax, % of gross (median earner)"
-  },
-  "taxYear": 2025,
-  "sources": [
-   "HUD Fair Market Rents",
-   "Census ACS 5-year",
-   "BEA Regional Price Parities",
-   "Tax Foundation state tax tables"
-  ]
+   "rent": "median gross rent by bedroom count (0 = studio … 4 = 4BR), USD/month",
+   "rentMedian": "median gross rent, all units, USD/month",
+   "medianHome": "median value of owner-occupied homes, USD",
+   "propTaxPct": "effective property tax, % of value per year",
+   "rpp": "BEA regional price parities, US = 100: all, goods, housing, utilities, other (services)",
+   "stateTaxPct": "effective state income tax, % of gross (placeholder)"
+  }
  },
  "states": {
   "AL": {
-   "rent1br": 900,
-   "medianHome": 235000,
-   "propTaxPct": 0.4,
-   "priceIndex": 90,
+   "rent": {
+    "0": 789,
+    "1": 850,
+    "2": 960,
+    "3": 1127,
+    "4": 1318
+   },
+   "rentMedian": 1007,
+   "medianHome": 209900,
+   "propTaxPct": 0.38,
+   "rpp": {
+    "all": 88.8,
+    "goods": 96.4,
+    "housing": 61.8,
+    "utilities": 84.6,
+    "other": 96.7
+   },
    "stateTaxPct": 3.5
   },
   "AK": {
-   "rent1br": 1250,
-   "medianHome": 370000,
-   "propTaxPct": 1.0,
-   "priceIndex": 104,
-   "stateTaxPct": 0.0
+   "rent": {
+    "0": 976,
+    "1": 1071,
+    "2": 1434,
+    "3": 1845,
+    "4": 2186
+   },
+   "rentMedian": 1419,
+   "medianHome": 352900,
+   "propTaxPct": 1.11,
+   "rpp": {
+    "all": 102.4,
+    "goods": 106.3,
+    "housing": 93.8,
+    "utilities": 119,
+    "other": 102.2
+   },
+   "stateTaxPct": 0
   },
   "AZ": {
-   "rent1br": 1300,
-   "medianHome": 430000,
-   "propTaxPct": 0.5,
-   "priceIndex": 101,
+   "rent": {
+    "0": 1176,
+    "1": 1303,
+    "2": 1541,
+    "3": 1808,
+    "4": 2116
+   },
+   "rentMedian": 1543,
+   "medianHome": 394500,
+   "propTaxPct": 0.48,
+   "rpp": {
+    "all": 100.7,
+    "goods": 95.4,
+    "housing": 106.8,
+    "utilities": 92.3,
+    "other": 102.8
+   },
    "stateTaxPct": 2.2
   },
   "AR": {
-   "rent1br": 850,
-   "medianHome": 205000,
-   "propTaxPct": 0.6,
-   "priceIndex": 89,
+   "rent": {
+    "0": 754,
+    "1": 757,
+    "2": 907,
+    "3": 1134,
+    "4": 1360
+   },
+   "rentMedian": 947,
+   "medianHome": 188000,
+   "propTaxPct": 0.55,
+   "rpp": {
+    "all": 86.9,
+    "goods": 93.6,
+    "housing": 58.2,
+    "utilities": 74.7,
+    "other": 95.3
+   },
    "stateTaxPct": 3.5
   },
   "CA": {
-   "rent1br": 2300,
-   "medianHome": 800000,
+   "rent": {
+    "0": 1598,
+    "1": 1780,
+    "2": 2103,
+    "3": 2351,
+    "4": 2809
+   },
+   "rentMedian": 2036,
+   "medianHome": 734700,
    "propTaxPct": 0.7,
-   "priceIndex": 112,
-   "stateTaxPct": 5.0
+   "rpp": {
+    "all": 110.7,
+    "goods": 106.1,
+    "housing": 154.3,
+    "utilities": 158.9,
+    "other": 102.6
+   },
+   "stateTaxPct": 5
   },
   "CO": {
-   "rent1br": 1650,
-   "medianHome": 560000,
-   "propTaxPct": 0.5,
-   "priceIndex": 102,
+   "rent": {
+    "0": 1476,
+    "1": 1553,
+    "2": 1782,
+    "3": 2077,
+    "4": 2414
+   },
+   "rentMedian": 1761,
+   "medianHome": 539400,
+   "propTaxPct": 0.48,
+   "rpp": {
+    "all": 103.1,
+    "goods": 98.7,
+    "housing": 127.4,
+    "utilities": 85,
+    "other": 99.6
+   },
    "stateTaxPct": 3.8
   },
   "CT": {
-   "rent1br": 1500,
-   "medianHome": 400000,
-   "propTaxPct": 1.8,
-   "priceIndex": 104,
+   "rent": {
+    "0": 1073,
+    "1": 1240,
+    "2": 1584,
+    "3": 1749,
+    "4": 2120
+   },
+   "rentMedian": 1488,
+   "medianHome": 366900,
+   "propTaxPct": 1.81,
+   "rpp": {
+    "all": 103.6,
+    "goods": 97.3,
+    "housing": 117,
+    "utilities": 146.5,
+    "other": 102.7
+   },
    "stateTaxPct": 4.5
   },
   "DE": {
-   "rent1br": 1400,
-   "medianHome": 345000,
-   "propTaxPct": 0.6,
-   "priceIndex": 100,
-   "stateTaxPct": 4.0
+   "rent": {
+    "0": 1175,
+    "1": 1194,
+    "2": 1397,
+    "3": 1619,
+    "4": 1839
+   },
+   "rentMedian": 1401,
+   "medianHome": 352000,
+   "propTaxPct": 0.5,
+   "rpp": {
+    "all": 99.8,
+    "goods": 96.2,
+    "housing": 102,
+    "utilities": 103.8,
+    "other": 101.2
+   },
+   "stateTaxPct": 4
   },
   "DC": {
-   "rent1br": 2000,
-   "medianHome": 700000,
-   "propTaxPct": 0.6,
-   "priceIndex": 110,
-   "stateTaxPct": 6.0
+   "rent": {
+    "0": 1750,
+    "1": 1944,
+    "2": 2083,
+    "3": 2503,
+    "4": 3369
+   },
+   "rentMedian": 1954,
+   "medianHome": 737100,
+   "propTaxPct": 0.58,
+   "rpp": {
+    "all": 109.9,
+    "goods": 106.5,
+    "housing": 155,
+    "utilities": 112.8,
+    "other": 103
+   },
+   "stateTaxPct": 6
   },
   "FL": {
-   "rent1br": 1700,
-   "medianHome": 410000,
-   "propTaxPct": 0.8,
-   "priceIndex": 102,
-   "stateTaxPct": 0.0
+   "rent": {
+    "0": 1394,
+    "1": 1430,
+    "2": 1664,
+    "3": 1884,
+    "4": 2210
+   },
+   "rentMedian": 1669,
+   "medianHome": 359000,
+   "propTaxPct": 0.76,
+   "rpp": {
+    "all": 103.4,
+    "goods": 98.1,
+    "housing": 122.1,
+    "utilities": 90.1,
+    "other": 101.3
+   },
+   "stateTaxPct": 0
   },
   "GA": {
-   "rent1br": 1400,
-   "medianHome": 330000,
-   "propTaxPct": 0.9,
-   "priceIndex": 98,
+   "rent": {
+    "0": 1339,
+    "1": 1318,
+    "2": 1326,
+    "3": 1419,
+    "4": 1847
+   },
+   "rentMedian": 1393,
+   "medianHome": 303300,
+   "propTaxPct": 0.77,
+   "rpp": {
+    "all": 96.3,
+    "goods": 98.9,
+    "housing": 88.7,
+    "utilities": 92.8,
+    "other": 97.3
+   },
    "stateTaxPct": 4.5
   },
   "HI": {
-   "rent1br": 2200,
-   "medianHome": 850000,
-   "propTaxPct": 0.3,
-   "priceIndex": 112,
+   "rent": {
+    "0": 1436,
+    "1": 1533,
+    "2": 1996,
+    "3": 2624,
+    "4": 3301
+   },
+   "rentMedian": 1971,
+   "medianHome": 839100,
+   "propTaxPct": 0.27,
+   "rpp": {
+    "all": 110,
+    "goods": 111.6,
+    "housing": 125.3,
+    "utilities": 190.2,
+    "other": 102.9
+   },
    "stateTaxPct": 5.5
   },
   "ID": {
-   "rent1br": 1200,
-   "medianHome": 440000,
-   "propTaxPct": 0.6,
-   "priceIndex": 97,
+   "rent": {
+    "0": 974,
+    "1": 955,
+    "2": 1163,
+    "3": 1517,
+    "4": 1725
+   },
+   "rentMedian": 1238,
+   "medianHome": 418600,
+   "propTaxPct": 0.49,
+   "rpp": {
+    "all": 95.5,
+    "goods": 96.3,
+    "housing": 90,
+    "utilities": 70.4,
+    "other": 99
+   },
    "stateTaxPct": 4.5
   },
   "IL": {
-   "rent1br": 1400,
-   "medianHome": 280000,
-   "propTaxPct": 2.1,
-   "priceIndex": 100,
+   "rent": {
+    "0": 1139,
+    "1": 1121,
+    "2": 1284,
+    "3": 1480,
+    "4": 1677
+   },
+   "rentMedian": 1274,
+   "medianHome": 263300,
+   "propTaxPct": 2.01,
+   "rpp": {
+    "all": 100,
+    "goods": 103.8,
+    "housing": 93.9,
+    "utilities": 85,
+    "other": 100.2
+   },
    "stateTaxPct": 4.5
   },
   "IN": {
-   "rent1br": 1000,
-   "medianHome": 245000,
-   "propTaxPct": 0.8,
-   "priceIndex": 93,
-   "stateTaxPct": 3.0
+   "rent": {
+    "0": 893,
+    "1": 886,
+    "2": 1076,
+    "3": 1220,
+    "4": 1387
+   },
+   "rentMedian": 1062,
+   "medianHome": 218200,
+   "propTaxPct": 0.74,
+   "rpp": {
+    "all": 93.3,
+    "goods": 95.5,
+    "housing": 73.9,
+    "utilities": 85.5,
+    "other": 99.1
+   },
+   "stateTaxPct": 3
   },
   "IA": {
-   "rent1br": 900,
-   "medianHome": 215000,
-   "propTaxPct": 1.5,
-   "priceIndex": 92,
+   "rent": {
+    "0": 799,
+    "1": 770,
+    "2": 989,
+    "3": 1201,
+    "4": 1258
+   },
+   "rentMedian": 972,
+   "medianHome": 208000,
+   "propTaxPct": 1.39,
+   "rpp": {
+    "all": 87.8,
+    "goods": 93.7,
+    "housing": 65.3,
+    "utilities": 83.3,
+    "other": 92.9
+   },
    "stateTaxPct": 3.5
   },
   "KS": {
-   "rent1br": 950,
-   "medianHome": 235000,
-   "propTaxPct": 1.3,
-   "priceIndex": 92,
-   "stateTaxPct": 4.0
+   "rent": {
+    "0": 818,
+    "1": 874,
+    "2": 1042,
+    "3": 1260,
+    "4": 1440
+   },
+   "rentMedian": 1060,
+   "medianHome": 217200,
+   "propTaxPct": 1.29,
+   "rpp": {
+    "all": 90.1,
+    "goods": 94,
+    "housing": 71.2,
+    "utilities": 88.4,
+    "other": 93.8
+   },
+   "stateTaxPct": 4
   },
   "KY": {
-   "rent1br": 950,
-   "medianHome": 225000,
-   "propTaxPct": 0.8,
-   "priceIndex": 90,
-   "stateTaxPct": 4.0
+   "rent": {
+    "0": 732,
+    "1": 799,
+    "2": 968,
+    "3": 1112,
+    "4": 1314
+   },
+   "rentMedian": 967,
+   "medianHome": 205600,
+   "propTaxPct": 0.75,
+   "rpp": {
+    "all": 90.2,
+    "goods": 96,
+    "housing": 64.3,
+    "utilities": 75.3,
+    "other": 97.3
+   },
+   "stateTaxPct": 4
   },
   "LA": {
-   "rent1br": 1000,
-   "medianHome": 215000,
+   "rent": {
+    "0": 869,
+    "1": 908,
+    "2": 1055,
+    "3": 1205,
+    "4": 1379
+   },
+   "rentMedian": 1064,
+   "medianHome": 216500,
    "propTaxPct": 0.55,
-   "priceIndex": 92,
-   "stateTaxPct": 3.0
+   "rpp": {
+    "all": 88.2,
+    "goods": 93.7,
+    "housing": 63.1,
+    "utilities": 71.5,
+    "other": 95.7
+   },
+   "stateTaxPct": 3
   },
   "ME": {
-   "rent1br": 1200,
-   "medianHome": 400000,
-   "propTaxPct": 1.1,
-   "priceIndex": 99,
+   "rent": {
+    "0": 887,
+    "1": 893,
+    "2": 1224,
+    "3": 1411,
+    "4": 1489
+   },
+   "rentMedian": 1139,
+   "medianHome": 296600,
+   "propTaxPct": 1.02,
+   "rpp": {
+    "all": 97.1,
+    "goods": 97.2,
+    "housing": 78.9,
+    "utilities": 135.2,
+    "other": 103.2
+   },
    "stateTaxPct": 5.5
   },
   "MD": {
-   "rent1br": 1700,
-   "medianHome": 410000,
-   "propTaxPct": 1.0,
-   "priceIndex": 104,
-   "stateTaxPct": 5.0
+   "rent": {
+    "0": 1450,
+    "1": 1441,
+    "2": 1740,
+    "3": 1948,
+    "4": 2297
+   },
+   "rentMedian": 1705,
+   "medianHome": 419900,
+   "propTaxPct": 0.97,
+   "rpp": {
+    "all": 105,
+    "goods": 102.5,
+    "housing": 121.1,
+    "utilities": 110.9,
+    "other": 101.6
+   },
+   "stateTaxPct": 5
   },
   "MA": {
-   "rent1br": 2200,
-   "medianHome": 620000,
-   "propTaxPct": 1.1,
-   "priceIndex": 108,
-   "stateTaxPct": 5.0
+   "rent": {
+    "0": 1515,
+    "1": 1414,
+    "2": 1876,
+    "3": 1950,
+    "4": 2288
+   },
+   "rentMedian": 1762,
+   "medianHome": 562100,
+   "propTaxPct": 1.07,
+   "rpp": {
+    "all": 105.8,
+    "goods": 98.8,
+    "housing": 128.1,
+    "utilities": 152.1,
+    "other": 102.9
+   },
+   "stateTaxPct": 5
   },
   "MI": {
-   "rent1br": 1000,
-   "medianHome": 240000,
-   "propTaxPct": 1.4,
-   "priceIndex": 94,
+   "rent": {
+    "0": 896,
+    "1": 923,
+    "2": 1162,
+    "3": 1321,
+    "4": 1434
+   },
+   "rentMedian": 1129,
+   "medianHome": 231600,
+   "propTaxPct": 1.25,
+   "rpp": {
+    "all": 96.2,
+    "goods": 96,
+    "housing": 82.3,
+    "utilities": 100.2,
+    "other": 100.9
+   },
    "stateTaxPct": 4.2
   },
   "MN": {
-   "rent1br": 1250,
-   "medianHome": 320000,
-   "propTaxPct": 1.1,
-   "priceIndex": 99,
-   "stateTaxPct": 5.0
+   "rent": {
+    "0": 1037,
+    "1": 1130,
+    "2": 1356,
+    "3": 1573,
+    "4": 1785
+   },
+   "rentMedian": 1280,
+   "medianHome": 329300,
+   "propTaxPct": 1.02,
+   "rpp": {
+    "all": 98.6,
+    "goods": 100.5,
+    "housing": 91.3,
+    "utilities": 90.8,
+    "other": 100.2
+   },
+   "stateTaxPct": 5
   },
   "MS": {
-   "rent1br": 850,
-   "medianHome": 190000,
-   "propTaxPct": 0.65,
-   "priceIndex": 88,
+   "rent": {
+    "0": 741,
+    "1": 784,
+    "2": 913,
+    "3": 1055,
+    "4": 1226
+   },
+   "rentMedian": 954,
+   "medianHome": 169800,
+   "propTaxPct": 0.72,
+   "rpp": {
+    "all": 87,
+    "goods": 96.2,
+    "housing": 56.5,
+    "utilities": 78.4,
+    "other": 96.1
+   },
    "stateTaxPct": 3.5
   },
   "MO": {
-   "rent1br": 950,
-   "medianHome": 245000,
-   "propTaxPct": 0.95,
-   "priceIndex": 92,
-   "stateTaxPct": 4.0
+   "rent": {
+    "0": 839,
+    "1": 858,
+    "2": 1027,
+    "3": 1220,
+    "4": 1435
+   },
+   "rentMedian": 1033,
+   "medianHome": 230300,
+   "propTaxPct": 0.85,
+   "rpp": {
+    "all": 90.8,
+    "goods": 96.3,
+    "housing": 69.9,
+    "utilities": 79.4,
+    "other": 95.2
+   },
+   "stateTaxPct": 4
   },
   "MT": {
-   "rent1br": 1100,
-   "medianHome": 480000,
-   "propTaxPct": 0.75,
-   "priceIndex": 98,
+   "rent": {
+    "0": 760,
+    "1": 851,
+    "2": 1099,
+    "3": 1394,
+    "4": 1515
+   },
+   "rentMedian": 1081,
+   "medianHome": 375800,
+   "propTaxPct": 0.72,
+   "rpp": {
+    "all": 94.6,
+    "goods": 96,
+    "housing": 84.6,
+    "utilities": 72.3,
+    "other": 98.7
+   },
    "stateTaxPct": 4.5
   },
   "NE": {
-   "rent1br": 1000,
-   "medianHome": 270000,
-   "propTaxPct": 1.6,
-   "priceIndex": 93,
+   "rent": {
+    "0": 899,
+    "1": 928,
+    "2": 1083,
+    "3": 1307,
+    "4": 1474
+   },
+   "rentMedian": 1072,
+   "medianHome": 238600,
+   "propTaxPct": 1.49,
+   "rpp": {
+    "all": 90.1,
+    "goods": 94.1,
+    "housing": 75.2,
+    "utilities": 75.6,
+    "other": 93
+   },
    "stateTaxPct": 4.5
   },
   "NV": {
-   "rent1br": 1450,
-   "medianHome": 440000,
-   "propTaxPct": 0.5,
-   "priceIndex": 101,
-   "stateTaxPct": 0.0
+   "rent": {
+    "0": 1159,
+    "1": 1293,
+    "2": 1541,
+    "3": 1883,
+    "4": 2217
+   },
+   "rentMedian": 1597,
+   "medianHome": 435400,
+   "propTaxPct": 0.47,
+   "rpp": {
+    "all": 100,
+    "goods": 96.3,
+    "housing": 114.1,
+    "utilities": 90.5,
+    "other": 98.7
+   },
+   "stateTaxPct": 0
   },
   "NH": {
-   "rent1br": 1500,
-   "medianHome": 440000,
-   "propTaxPct": 1.9,
-   "priceIndex": 104,
-   "stateTaxPct": 0.0
+   "rent": {
+    "0": 1136,
+    "1": 1174,
+    "2": 1642,
+    "3": 1816,
+    "4": 1933
+   },
+   "rentMedian": 1491,
+   "medianHome": 402500,
+   "propTaxPct": 1.66,
+   "rpp": {
+    "all": 104.2,
+    "goods": 98.6,
+    "housing": 114.9,
+    "utilities": 133.7,
+    "other": 103.9
+   },
+   "stateTaxPct": 0
   },
   "NJ": {
-   "rent1br": 1900,
-   "medianHome": 480000,
-   "propTaxPct": 2.2,
-   "priceIndex": 108,
-   "stateTaxPct": 4.0
+   "rent": {
+    "0": 1363,
+    "1": 1465,
+    "2": 1804,
+    "3": 2037,
+    "4": 2365
+   },
+   "rentMedian": 1720,
+   "medianHome": 454400,
+   "propTaxPct": 2.11,
+   "rpp": {
+    "all": 108.8,
+    "goods": 107.1,
+    "housing": 134.3,
+    "utilities": 114.2,
+    "other": 103.5
+   },
+   "stateTaxPct": 4
   },
   "NM": {
-   "rent1br": 1050,
-   "medianHome": 330000,
+   "rent": {
+    "0": 830,
+    "1": 887,
+    "2": 1062,
+    "3": 1281,
+    "4": 1507
+   },
+   "rentMedian": 1067,
+   "medianHome": 248100,
    "propTaxPct": 0.7,
-   "priceIndex": 94,
+   "rpp": {
+    "all": 92.2,
+    "goods": 96.1,
+    "housing": 73.6,
+    "utilities": 77.9,
+    "other": 98.5
+   },
    "stateTaxPct": 3.5
   },
   "NY": {
-   "rent1br": 2000,
-   "medianHome": 450000,
-   "propTaxPct": 1.4,
-   "priceIndex": 109,
-   "stateTaxPct": 5.0
+   "rent": {
+    "0": 1508,
+    "1": 1533,
+    "2": 1620,
+    "3": 1828,
+    "4": 1960
+   },
+   "rentMedian": 1621,
+   "medianHome": 423800,
+   "propTaxPct": 1.55,
+   "rpp": {
+    "all": 107.9,
+    "goods": 107.3,
+    "housing": 122.2,
+    "utilities": 134.4,
+    "other": 104.1
+   },
+   "stateTaxPct": 5
   },
   "NC": {
-   "rent1br": 1300,
-   "medianHome": 360000,
-   "propTaxPct": 0.7,
-   "priceIndex": 98,
-   "stateTaxPct": 4.0
+   "rent": {
+    "0": 1116,
+    "1": 1155,
+    "2": 1164,
+    "3": 1321,
+    "4": 1794
+   },
+   "rentMedian": 1228,
+   "medianHome": 288900,
+   "propTaxPct": 0.66,
+   "rpp": {
+    "all": 94.3,
+    "goods": 96.6,
+    "housing": 81.4,
+    "utilities": 88.6,
+    "other": 98.2
+   },
+   "stateTaxPct": 4
   },
   "ND": {
-   "rent1br": 850,
-   "medianHome": 270000,
-   "propTaxPct": 0.95,
-   "priceIndex": 92,
-   "stateTaxPct": 2.0
+   "rent": {
+    "0": 726,
+    "1": 788,
+    "2": 950,
+    "3": 1304,
+    "4": 1496
+   },
+   "rentMedian": 954,
+   "medianHome": 249900,
+   "propTaxPct": 0.99,
+   "rpp": {
+    "all": 89,
+    "goods": 95.7,
+    "housing": 71.4,
+    "utilities": 73.7,
+    "other": 91.2
+   },
+   "stateTaxPct": 2
   },
   "OH": {
-   "rent1br": 950,
-   "medianHome": 220000,
-   "propTaxPct": 1.4,
-   "priceIndex": 93,
-   "stateTaxPct": 3.0
+   "rent": {
+    "0": 793,
+    "1": 828,
+    "2": 1063,
+    "3": 1176,
+    "4": 1304
+   },
+   "rentMedian": 1034,
+   "medianHome": 214800,
+   "propTaxPct": 1.31,
+   "rpp": {
+    "all": 92.8,
+    "goods": 93.7,
+    "housing": 73,
+    "utilities": 95.8,
+    "other": 98.9
+   },
+   "stateTaxPct": 3
   },
   "OK": {
-   "rent1br": 850,
-   "medianHome": 205000,
-   "propTaxPct": 0.85,
-   "priceIndex": 90,
-   "stateTaxPct": 4.0
+   "rent": {
+    "0": 779,
+    "1": 833,
+    "2": 993,
+    "3": 1208,
+    "4": 1428
+   },
+   "rentMedian": 1014,
+   "medianHome": 199800,
+   "propTaxPct": 0.8,
+   "rpp": {
+    "all": 87.8,
+    "goods": 93.8,
+    "housing": 62.8,
+    "utilities": 73.9,
+    "other": 95.5
+   },
+   "stateTaxPct": 4
   },
   "OR": {
-   "rent1br": 1500,
-   "medianHome": 520000,
-   "propTaxPct": 0.85,
-   "priceIndex": 103,
-   "stateTaxPct": 7.0
+   "rent": {
+    "0": 1267,
+    "1": 1301,
+    "2": 1523,
+    "3": 1850,
+    "4": 2127
+   },
+   "rentMedian": 1525,
+   "medianHome": 477600,
+   "propTaxPct": 0.81,
+   "rpp": {
+    "all": 103.4,
+    "goods": 105.3,
+    "housing": 108.6,
+    "utilities": 107,
+    "other": 100.3
+   },
+   "stateTaxPct": 7
   },
   "PA": {
-   "rent1br": 1200,
-   "medianHome": 265000,
-   "propTaxPct": 1.4,
-   "priceIndex": 98,
+   "rent": {
+    "0": 1034,
+    "1": 1025,
+    "2": 1245,
+    "3": 1373,
+    "4": 1480
+   },
+   "rentMedian": 1209,
+   "medianHome": 254500,
+   "propTaxPct": 1.3,
+   "rpp": {
+    "all": 97.6,
+    "goods": 99.4,
+    "housing": 85.1,
+    "utilities": 109.3,
+    "other": 99.8
+   },
    "stateTaxPct": 3.5
   },
   "RI": {
-   "rent1br": 1600,
-   "medianHome": 450000,
-   "propTaxPct": 1.3,
-   "priceIndex": 103,
-   "stateTaxPct": 4.0
+   "rent": {
+    "0": 968,
+    "1": 978,
+    "2": 1457,
+    "3": 1647,
+    "4": 1852
+   },
+   "rentMedian": 1342,
+   "medianHome": 404200,
+   "propTaxPct": 1.21,
+   "rpp": {
+    "all": 102.3,
+    "goods": 97.2,
+    "housing": 105.6,
+    "utilities": 146.7,
+    "other": 102.8
+   },
+   "stateTaxPct": 4
   },
   "SC": {
-   "rent1br": 1200,
-   "medianHome": 320000,
-   "propTaxPct": 0.5,
-   "priceIndex": 97,
-   "stateTaxPct": 5.0
+   "rent": {
+    "0": 1067,
+    "1": 1113,
+    "2": 1148,
+    "3": 1240,
+    "4": 1461
+   },
+   "rentMedian": 1180,
+   "medianHome": 259000,
+   "propTaxPct": 0.48,
+   "rpp": {
+    "all": 93.7,
+    "goods": 96.3,
+    "housing": 80.5,
+    "utilities": 88.3,
+    "other": 98.3
+   },
+   "stateTaxPct": 5
   },
   "SD": {
-   "rent1br": 850,
-   "medianHome": 300000,
-   "propTaxPct": 1.1,
-   "priceIndex": 92,
-   "stateTaxPct": 0.0
+   "rent": {
+    "0": 744,
+    "1": 774,
+    "2": 987,
+    "3": 1169,
+    "4": 1356
+   },
+   "rentMedian": 946,
+   "medianHome": 257400,
+   "propTaxPct": 1.06,
+   "rpp": {
+    "all": 88.6,
+    "goods": 95.5,
+    "housing": 67.6,
+    "utilities": 79.7,
+    "other": 91.9
+   },
+   "stateTaxPct": 0
   },
   "TN": {
-   "rent1br": 1250,
-   "medianHome": 360000,
-   "propTaxPct": 0.55,
-   "priceIndex": 97,
-   "stateTaxPct": 0.0
+   "rent": {
+    "0": 1021,
+    "1": 1069,
+    "2": 1143,
+    "3": 1319,
+    "4": 1593
+   },
+   "rentMedian": 1189,
+   "medianHome": 286700,
+   "propTaxPct": 0.5,
+   "rpp": {
+    "all": 91.9,
+    "goods": 96.2,
+    "housing": 79.1,
+    "utilities": 72.1,
+    "other": 95.1
+   },
+   "stateTaxPct": 0
   },
   "TX": {
-   "rent1br": 1250,
-   "medianHome": 310000,
-   "propTaxPct": 1.6,
-   "priceIndex": 100,
-   "stateTaxPct": 0.0
+   "rent": {
+    "0": 1207,
+    "1": 1237,
+    "2": 1395,
+    "3": 1650,
+    "4": 2111
+   },
+   "rentMedian": 1403,
+   "medianHome": 283800,
+   "propTaxPct": 1.49,
+   "rpp": {
+    "all": 97.1,
+    "goods": 98.1,
+    "housing": 96.5,
+    "utilities": 87.5,
+    "other": 97.1
+   },
+   "stateTaxPct": 0
   },
   "UT": {
-   "rent1br": 1350,
-   "medianHome": 540000,
-   "propTaxPct": 0.55,
-   "priceIndex": 100,
+   "rent": {
+    "0": 1203,
+    "1": 1239,
+    "2": 1423,
+    "3": 1716,
+    "4": 2025
+   },
+   "rentMedian": 1496,
+   "medianHome": 489400,
+   "propTaxPct": 0.52,
+   "rpp": {
+    "all": 98.9,
+    "goods": 96.4,
+    "housing": 107.8,
+    "utilities": 78.7,
+    "other": 99
+   },
    "stateTaxPct": 4.5
   },
   "VT": {
-   "rent1br": 1400,
-   "medianHome": 380000,
-   "propTaxPct": 1.8,
-   "priceIndex": 101,
+   "rent": {
+    "0": 997,
+    "1": 1019,
+    "2": 1384,
+    "3": 1481,
+    "4": 1670
+   },
+   "rentMedian": 1234,
+   "medianHome": 316600,
+   "propTaxPct": 1.59,
+   "rpp": {
+    "all": 98,
+    "goods": 97.3,
+    "housing": 86.5,
+    "utilities": 125.8,
+    "other": 101.6
+   },
    "stateTaxPct": 4.5
   },
   "VA": {
-   "rent1br": 1500,
-   "medianHome": 400000,
-   "propTaxPct": 0.8,
-   "priceIndex": 101,
+   "rent": {
+    "0": 1550,
+    "1": 1487,
+    "2": 1481,
+    "3": 1680,
+    "4": 2142
+   },
+   "rentMedian": 1579,
+   "medianHome": 383700,
+   "propTaxPct": 0.73,
+   "rpp": {
+    "all": 101.1,
+    "goods": 100.4,
+    "housing": 106.8,
+    "utilities": 92.2,
+    "other": 100.2
+   },
    "stateTaxPct": 4.5
   },
   "WA": {
-   "rent1br": 1700,
-   "medianHome": 600000,
-   "propTaxPct": 0.85,
-   "priceIndex": 107,
-   "stateTaxPct": 0.0
+   "rent": {
+    "0": 1517,
+    "1": 1568,
+    "2": 1756,
+    "3": 2058,
+    "4": 2535
+   },
+   "rentMedian": 1760,
+   "medianHome": 564600,
+   "propTaxPct": 0.81,
+   "rpp": {
+    "all": 107,
+    "goods": 104.4,
+    "housing": 126,
+    "utilities": 92.9,
+    "other": 103.9
+   },
+   "stateTaxPct": 0
   },
   "WV": {
-   "rent1br": 800,
-   "medianHome": 160000,
-   "propTaxPct": 0.55,
-   "priceIndex": 87,
-   "stateTaxPct": 4.0
+   "rent": {
+    "0": 645,
+    "1": 657,
+    "2": 896,
+    "3": 1034,
+    "4": 1070
+   },
+   "rentMedian": 872,
+   "medianHome": 162600,
+   "propTaxPct": 0.53,
+   "rpp": {
+    "all": 89.5,
+    "goods": 96.5,
+    "housing": 54.2,
+    "utilities": 92.2,
+    "other": 99.9
+   },
+   "stateTaxPct": 4
   },
   "WI": {
-   "rent1br": 1050,
-   "medianHome": 275000,
-   "propTaxPct": 1.6,
-   "priceIndex": 95,
+   "rent": {
+    "0": 923,
+    "1": 909,
+    "2": 1106,
+    "3": 1290,
+    "4": 1363
+   },
+   "rentMedian": 1087,
+   "medianHome": 266500,
+   "propTaxPct": 1.42,
+   "rpp": {
+    "all": 94.1,
+    "goods": 94.3,
+    "housing": 79.3,
+    "utilities": 89.9,
+    "other": 99.5
+   },
    "stateTaxPct": 4.5
   },
   "WY": {
-   "rent1br": 900,
-   "medianHome": 340000,
-   "propTaxPct": 0.6,
-   "priceIndex": 97,
-   "stateTaxPct": 0.0
+   "rent": {
+    "0": 709,
+    "1": 759,
+    "2": 961,
+    "3": 1290,
+    "4": 1447
+   },
+   "rentMedian": 992,
+   "medianHome": 309700,
+   "propTaxPct": 0.57,
+   "rpp": {
+    "all": 92.7,
+    "goods": 95.4,
+    "housing": 71.1,
+    "utilities": 78.4,
+    "other": 100.4
+   },
+   "stateTaxPct": 0
   }
  }
 }

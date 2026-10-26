@@ -18,7 +18,7 @@ const profiles = {
 
 check('51 jurisdictions', Object.keys(STATES).length === 51)
 for (const [c, s] of Object.entries(STATES)) {
-  if (!(s.rent1br > 400 && s.medianHome > 80000 && s.propTaxPct > 0 && s.priceIndex > 70)) check(`state data sane ${c}`, false)
+  if (!(s.rent[1] > 400 && s.rent[3] >= s.rent[1] * 0.9 && s.medianHome > 80000 && s.propTaxPct > 0.1 && s.rpp.all > 70 && s.rpp.other > 70)) check(`state data sane ${c}`, false)
 }
 
 const th = takeHome([75000], 'TX', false, 0)
@@ -76,6 +76,25 @@ check('saver gets more cushion', saver.pillars.percents.cushion > neutral.pillar
   check('CA needs more income than TX for the same life', need.income > 75000, `${need.income}`)
   const back = equivalentIncome({ ...base, state: 'CA' }, 'TX')
   check('TX needs less income than CA for the same life', back.income < 75000, `${back.income}`)
+}
+
+// City data: structure, and cities move results in the right direction.
+{
+  const { cities } = JSON.parse((await import('node:fs')).readFileSync(new URL('../src/data/lifestyleCities.json', import.meta.url), 'utf8'))
+  check('city table has 300+ cities', cities.length >= 300, `${cities.length}`)
+  check('every state has a city', Object.keys(STATES).every(c => cities.some(x => x.state === c)))
+  const bad = cities.filter(c => !(c.rent[1] > 300 && c.rent[3] > 300 && c.medianHome > 40000 && c.propTaxPct > 0.05 && c.propTaxPct < 4))
+  check('city rows sane', bad.length === 0, bad.map(c => c.id).join(', '))
+  const city = id => cities.find(c => c.id === id)
+  const sf = computeLifestyle({ ...base, state: 'CA', city: city('CA|San Francisco') })
+  const fresno = computeLifestyle({ ...base, state: 'CA', city: city('CA|Fresno') })
+  const stateOnly = computeLifestyle({ ...base, state: 'CA' })
+  check('San Francisco rent > Fresno rent', sf.neighborhoods[1].rent > fresno.neighborhoods[1].rent, `${sf.neighborhoods[1].rent} vs ${fresno.neighborhoods[1].rent}`)
+  check('San Francisco homes cost more than state average', sf.neighborhoods[1].typicalPrice > stateOnly.neighborhoods[1].typicalPrice)
+  check('city of another state is ignored', computeLifestyle({ ...base, state: 'TX', city: city('CA|Fresno') }).neighborhoods[0].rent === computeLifestyle(base).neighborhoods[0].rent)
+  const austin = equivalentIncome({ ...base, state: 'TX' }, 'CA', undefined, city('CA|San Francisco'))
+  const fresnoNeed = equivalentIncome({ ...base, state: 'TX' }, 'CA', undefined, city('CA|Fresno'))
+  check('SF needs more income than Fresno to keep the same life', austin.income > fresnoNeed.income, `${austin.income} vs ${fresnoNeed.income}`)
 }
 
 process.exit(failures ? 1 : 0)

@@ -196,15 +196,24 @@ Visuals (`src/components/CostCenterChart.jsx`): ranked bars of 12 cost centers c
 pillar (palette validated on the site's dark surface), direct $ and % labels, legend, and a
 "view as table" toggle; a Now-vs-New paired-bar chart for scenarios.
 
-## 12. City-level costs (not built — blocked on data)
+## 12. City-level costs (built)
 
-Requirement: costs by **city and state**, US only. Today only state-level placeholders exist.
-Plan: add `src/data/lifestyleCities.json` keyed by `STATE|City` with the same fields as the
-state table (rent by bedroom count, home value, property tax, price index, plus category
-indexes for groceries / utilities / health / transport / childcare), a city selector that
-falls back to the state row, and a one-shot build script in `scripts/patches/` that cites a
-source per figure. Candidate sources: HUD Small Area / Fair Market Rents (rent), Census ACS
-place-level tables (rent, home value, property tax), BEA Regional Price Parities by metro
-(goods and services indexes), BLS Consumer Expenditure by metro, MIT Living Wage (childcare,
-food, medical, transport by metro/county). The build environment cannot reach these hosts
-today (network policy), so this needs either an allowlist change or the source files supplied.
+`scripts/fetch-lifestyle-sources.sh` downloads the sources; `scripts/build-lifestyle-data.mjs`
+turns them into `src/data/lifestyleData.json` (51 states) and `src/data/lifestyleCities.json`
+(381 cities: every city of 100k+, plus each state's three largest of 25k+).
+
+| Field | Source |
+|---|---|
+| Rent by bedroom count (studio–4BR), median rent | Census ACS 2020–2024 5-yr, B25031 / B25064 (median **gross** rent, existing leases) |
+| Median home value | ACS B25077 |
+| Effective property tax | ACS B25103 ÷ B25077 |
+| Goods / utilities / other-services price levels | BEA Regional Price Parities 2024, state (SARPP) and metro (MARPP) |
+
+How it's used: the engine converts gross → contract rent (×0.92), prices groceries by the goods
+index, utilities by the utilities index, and childcare, dining and travel by the services index.
+A city row overrides its state's rent, home value and property tax; its BEA metro indexes apply
+when the city is a principal city of a metro (243 of 381), otherwise the state indexes.
+
+Known limits: ACS rents are existing leases (new-lease asking rents run higher); neighborhood
+types are national multipliers on the city median; suburbs of big metros that aren't principal
+cities (e.g. Irvine, Plano) use state price indexes; state income tax % is **still a placeholder**.

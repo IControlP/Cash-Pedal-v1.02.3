@@ -12,6 +12,25 @@ import {
 
 export const STATES = DATA.states
 
+// ACS reports GROSS rent (contract rent + utilities) on existing leases; the
+// engine budgets utilities separately, so convert gross → contract rent.
+export const GROSS_TO_CONTRACT = 0.92
+
+// Resolve the cost data for a profile: a city row (ACS place + metro RPP) when
+// supplied, otherwise the state row. Any field a city lacks falls back to its state.
+export function locationFor(profile) {
+  const state = STATES[profile.state] ?? STATES.TX
+  const city = profile.city && profile.city.state === profile.state ? profile.city : null
+  return {
+    state, city,
+    label: city ? `${city.name}, ${city.state}` : null,
+    rent: city?.rent ?? state.rent,
+    medianHome: city?.medianHome ?? state.medianHome,
+    propTaxPct: city?.propTaxPct ?? state.propTaxPct,
+    rpp: city?.rpp ?? state.rpp,
+  }
+}
+
 // ── Priorities (survey) ────────────────────────────────────────────────────
 export const PRIORITY_KEYS = ['home', 'city', 'dining', 'travel', 'car', 'cushion', 'family']
 export const DEFAULT_PRIORITIES = Object.fromEntries(PRIORITY_KEYS.map(k => [k, 3]))
@@ -80,7 +99,6 @@ export function pillarPercents(profile, priorities) {
 }
 
 // ── Housing model ─────────────────────────────────────────────────────────
-const BEDROOM_RENT = { 0: 0.85, 1: 1, 2: 1.3, 3: 1.6, 4: 1.9 }
 const BEDROOM_PRICE = { 0: 0.5, 1: 0.65, 2: 0.85, 3: 1, 4: 1.2 }
 
 export const NEIGHBORHOOD_TYPES = [
@@ -197,8 +215,12 @@ export function computeLifestyle(profile, priorities = DEFAULT_PRIORITIES) {
   const roommates = !married && children === 0 ? clamp(profile.roommates | 0, 0, 3) : 0
   const people = roommates + 1
   const debt = Math.max(0, Number(profile.debtMonthly) || 0)
-  const st = STATES[profile.state] ?? STATES.TX
-  const pi = st.priceIndex / 100
+  const loc = locationFor(profile)
+  const st = loc
+  // Regional price parities (US = 100) applied per category.
+  const goodsIdx = loc.rpp.goods / 100
+  const utilIdx = loc.rpp.utilities / 100
+  const svcIdx = loc.rpp.other / 100
   const household = adults + children
 
   const tax = takeHome(profile.incomes, profile.state, married, children)
@@ -208,12 +230,12 @@ export function computeLifestyle(profile, priorities = DEFAULT_PRIORITIES) {
 
   // Foundation fixed costs (everything except housing)
   const bedrooms = bedroomsNeeded(children, adults)
-  const utilitiesTotal = (150 + 40 * bedrooms) * pi
+  const utilitiesTotal = (150 + 40 * bedrooms) * utilIdx
   const sharedBedrooms = Math.max(2, people)
-  const utilities = roommates ? (150 + 40 * sharedBedrooms) * pi / people : utilitiesTotal
-  const groceries = 380 * (adults + 0.6 * children) * pi
+  const utilities = roommates ? (150 + 40 * sharedBedrooms) * utilIdx / people : utilitiesTotal
+  const groceries = 380 * (adults + 0.6 * children) * goodsIdx
   const health = 280 * adults + 120 * children
-  const childcare = 650 * children * pi
+  const childcare = 650 * children * svcIdx
   const transportPct = clamp(0.12 + 0.02 * (pr.car - 3), 0.07, 0.20)
   const transport = transportPct * TH
   const fixed = { debt, utilities, groceries, health, childcare, transport }
@@ -230,8 +252,9 @@ export function computeLifestyle(profile, priorities = DEFAULT_PRIORITIES) {
   const rentCap = Math.min(housingBudget, 0.33 * gross / 12)
 
   // Rent by neighborhood type
-  const rentOwn = t => st.rent1br * BEDROOM_RENT[bedrooms] * t.rent
-  const rentFor = t => roommates ? st.rent1br * BEDROOM_RENT[sharedBedrooms] * t.rent / people : rentOwn(t)
+  const unitRent = b => loc.rent[Math.min(4, b)] * GROSS_TO_CONTRACT
+  const rentOwn = t => unitRent(bedrooms) * t.rent
+  const rentFor = t => roommates ? unitRent(sharedBedrooms) * t.rent / people : rentOwn(t)
   const types = NEIGHBORHOOD_TYPES.map(t => {
     const rent = roundTo(rentFor(t))
     const typicalPrice = roundTo(st.medianHome * t.price * BEDROOM_PRICE[bedrooms], 1000)
@@ -268,9 +291,9 @@ export function computeLifestyle(profile, priorities = DEFAULT_PRIORITIES) {
   const diningAmt = lifestyleAmt * wD / wSum
   const travelAmt = lifestyleAmt * wT / wSum
   const funAmt = lifestyleAmt * wF / wSum
-  const mealCost = 22 * pi
+  const mealCost = 22 * svcIdx
   const mealsPerWeekPerPerson = diningAmt / (4.33 * mealCost * household)
-  const getawayCost = 600 * pi * household
+  const getawayCost = 600 * svcIdx * household
   const getawaysPerYear = (travelAmt * 12) / getawayCost
 
   // Cushion breakdown
@@ -408,12 +431,12 @@ export function compareScenarios(profile, scenario, priorities = DEFAULT_PRIORIT
 
 // Gross household income needed in `state` to keep today's Lifestyle + Cushion
 // dollars (what you can spend on life beyond fixed costs), same household.
-export function equivalentIncome(profile, state, priorities = DEFAULT_PRIORITIES) {
+export function equivalentIncome(profile, state, priorities = DEFAULT_PRIORITIES, city = null) {
   const baseline = computeLifestyle(profile, priorities)
   const target = baseline.pillars.lifestyle + baseline.pillars.cushion
   const total = profile.incomes.reduce((a, b) => a + (Number(b) || 0), 0)
   const at = k => {
-    const r = computeLifestyle({ ...profile, state, incomes: profile.incomes.map(i => (Number(i) || 0) * k) }, priorities)
+    const r = computeLifestyle({ ...profile, state, city, incomes: profile.incomes.map(i => (Number(i) || 0) * k) }, priorities)
     return r.pillars.lifestyle + r.pillars.cushion
   }
   let lo = 0.3
@@ -431,7 +454,7 @@ export function equivalentIncome(profile, state, priorities = DEFAULT_PRIORITIES
 // Cash needed to move into a first place: first month + deposit + setup.
 export function moveInCash(r) {
   const rent = r.foundation.housing * Math.max(1, r.housing.people)
-  const pi = (STATES[r.profile.state]?.priceIndex ?? 100) / 100
+  const pi = locationFor(r.profile).rpp.other / 100
   const own = r.profile.roommates ? r.foundation.housing : rent
   const setup = 1800 * pi
   return { firstAndDeposit: Math.round(own * 2), setup: Math.round(setup), total: Math.round(own * 2 + setup) }

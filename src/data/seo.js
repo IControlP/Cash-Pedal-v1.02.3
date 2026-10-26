@@ -31,6 +31,24 @@ export const ROUTE_META = {
     ],
     priority: '1.0',
   },
+  '/lifestyle': {
+    title: 'What Lifestyle Can I Afford? Budget Calculator | Cash Pedal',
+    description:
+      'Enter your income, state and household, share your priorities, and see the home, neighborhoods, dining and car your budget can support.',
+    h1: 'See the life your income can build',
+    intro: [
+      'The Cash Pedal lifestyle calculator turns your income, age range, state, household and existing debt into three budget pillars: Foundation (housing, bills, groceries, car and debt), Lifestyle (dining, travel and fun) and Cushion (savings and safety net).',
+      'A short priorities survey then shows what those pillars can buy: whether renting or buying fits, which neighborhood types suit you, how often you can eat out, and what car tier fits. Singles can compare living alone with roommates; couples use a joint income.',
+    ],
+    faq: [
+      ['What are the three budget pillars?',
+        'Foundation covers needs and fixed costs including housing and existing debt payments, Lifestyle covers dining, travel and entertainment, and Cushion covers savings and your safety net. The baseline split is roughly 50/30/20 and shifts with your priorities, age and household.'],
+      ['Should I rent or buy?',
+        'The calculator estimates the home price your budget supports, the down payment needed and the 7-year net cost of owning versus renting, then tells you whether buying fits now, soon, or whether renting keeps more money in your pocket.'],
+    ],
+    priority: '0.9',
+    calculator: true,
+  },
   '/affordability': {
     title: 'How Much Car Can I Afford? Car Affordability Calculator | Cash Pedal',
     description:
@@ -179,6 +197,7 @@ export const ROUTE_META = {
 // Featured links rendered in every pre-rendered page so crawlers can discover
 // the main tools from anywhere.
 export const PRIMARY_TOOLS = [
+  ['/lifestyle', 'What lifestyle can I afford?'],
   ['/affordability', 'How much car can I afford?'],
   ['/salary', 'What salary do I need for a car?'],
   ['/tco', 'True cost of ownership calculator'],

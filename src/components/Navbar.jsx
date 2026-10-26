@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useSubscription } from '../hooks/useSubscription'
 
 const navLinks = [
+  { to: '/lifestyle', label: 'Lifestyle' },
   { to: '/tco', label: 'TCO Calculator' },
   { to: '/compare', label: 'Compare' },
   { to: '/salary', label: 'Salary Check' },

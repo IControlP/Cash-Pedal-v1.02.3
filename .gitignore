@@ -10,3 +10,4 @@ user_data/
 
 # EPA fuel-economy response cache (scripts/fetch_epa_mpg.py)
 .epa-cache/
+.cache/

@@ -6,6 +6,7 @@
 // neighborhood types, dining & travel, a car tier. All figures are estimates.
 
 import DATA from '../data/lifestyleData.json' with { type: 'json' }
+import { planCost, travelBuys, travelRegion, TRAVEL_PLANS, PLAN_PRIORITY } from './travel.js'
 import {
   estimateInsurance, computeAnnualFuel, computeAnnualRegFees,
 } from './vehicleCosts.js'
@@ -263,7 +264,6 @@ export const COMMUTE = {
 export const GROCERY_STYLE = { budget: 0.85, standard: 1, premium: 1.3 }  // assumption: × USDA-style base
 export const FITNESS_MONTHLY = { none: 0, basic: 40, boutique: 160 }      // assumption: per adult
 export const HOBBY_MONTHLY = { low: 80, medium: 200, high: 450 }          // assumption: per adult
-export const TRIP_COST = { road: 350, flight: 800, international: 2000 }  // assumption: per traveler per trip
 export const PET_MONTHLY = 120                                            // assumption: per pet (food, vet, supplies)
 export const MEAL_COST = 22                                               // assumption: casual meal out, per person
 export const EMERGENCY_TARGET_MONTHS = { steady: 3, variable: 6, uncertain: 9 }
@@ -271,7 +271,7 @@ export const EMERGENCY_TARGET_MONTHS = { steady: 3, variable: 6, uncertain: 9 }
 export const DEFAULT_PREFS = {
   tenure: 'either', area: null, bedrooms: null, commute: 'onsite-medium', cars: null, carStyle: 3,
   mealsPerWeek: 2.5, groceryStyle: 'standard', fitness: 'none', hobbies: 'medium', pets: 0,
-  trips: 2.5, tripStyle: 'flight', goal: 'balanced', emergencyMonths: 1, stability: 'steady', schools: 3,
+  travelPlan: 'weekends', goal: 'balanced', emergencyMonths: 1, stability: 'steady', schools: 3,
 }
 
 const bucket = (v, cuts) => cuts.findIndex(c => v <= c) + 1 || cuts.length + 1
@@ -283,7 +283,7 @@ export function derivePriorities(prefs = {}) {
     home: { rent: 2, either: 3, 'buy-later': 4, 'buy-soon': 5 }[p.tenure] ?? 3,
     city: p.area ? { 'urban-core': 5, 'inner-suburb': 4, 'outer-suburb': 2, 'small-town': 1 }[p.area] : 3,
     dining: bucket(p.mealsPerWeek, [0.5, 1.5, 3.5, 6]),
-    travel: bucket(p.trips, [0.5, 1.5, 3.5, 5.5]),
+    travel: PLAN_PRIORITY[p.travelPlan] ?? 3,
     car: clamp(p.carStyle, 1, 5),
     cushion: clamp(({ emergency: 5, debt: 4, home: 4, retire: 4, balanced: 3, enjoy: 2 }[p.goal] ?? 3) + (p.stability === 'steady' ? 0 : 1), 1, 5),
     family: clamp(p.schools, 1, 5),
@@ -311,7 +311,6 @@ export function housingMenu(profile) {
   const svc = loc.rpp.other / 100
   const goods = loc.rpp.goods / 100
   const diners = adults + 0.5 * children
-  const travelers = adults + 0.7 * children
   const areaType = t => NEIGHBORHOOD_TYPES.find(x => x.type === t)
   const sizeRows = type => [0, 1, 2, 3, 4].map(b => ({
     bedrooms: b, label: b === 0 ? 'Studio' : `${b} bedroom${b > 1 ? 's' : ''}`,
@@ -332,7 +331,13 @@ export function housingMenu(profile) {
     fitness: Object.fromEntries(Object.entries(FITNESS_MONTHLY).map(([k, v]) => [k, Math.round(v * adults * svc)])),
     hobbies: Object.fromEntries(Object.entries(HOBBY_MONTHLY).map(([k, v]) => [k, Math.round(v * adults * svc)])),
     pets: [0, 1, 2].map(n => ({ value: n, monthly: Math.round(n * PET_MONTHLY * svc) })),
-    tripCost: Object.fromEntries(Object.entries(TRIP_COST).map(([k, v]) => [k, Math.round(v * travelers * svc / 50) * 50])),
+    travel: {
+      region: travelRegion(profile.state).label,
+      plans: TRAVEL_PLANS.map(pl => {
+        const c = planCost(pl.id, { state: profile.state, adults, children, svcIdx: svc })
+        return { id: pl.id, label: pl.label, summary: c.summary, annual: c.annual, monthly: Math.round(c.monthly) }
+      }),
+    },
     transitMonthly: Math.round(150 * svc),
   }
 }
@@ -447,10 +452,11 @@ export function computeLifestyle(profile, priorities) {
   // Lifestyle envelope. Over budget → every item is scaled back equally; under →
   // the remainder is "room to grow".
   const mealCost = MEAL_COST * svcIdx
-  const tripCost = (TRIP_COST[prefs.tripStyle] ?? TRIP_COST.flight) * svcIdx
+  const travelCtx = { state: profile.state, adults, children, svcIdx }
+  const plan = planCost(prefs.travelPlan, travelCtx)
   const wish = {
     dining: prefs.mealsPerWeek * 4.33 * mealCost * diners,
-    travel: prefs.trips * tripCost * travelers / 12,
+    travel: plan.monthly,
     fun: (HOBBY_MONTHLY[prefs.hobbies] ?? 0) * adults * svcIdx,
     fitness: (FITNESS_MONTHLY[prefs.fitness] ?? 0) * adults * svcIdx,
   }
@@ -459,7 +465,7 @@ export function computeLifestyle(profile, priorities) {
   const funded = Object.fromEntries(Object.entries(wish).map(([k, v]) => [k, v * coverage]))
   const flex = Math.max(0, lifestyleAmt - wishTotal)
   const mealsPerWeekPerPerson = funded.dining / (4.33 * mealCost * diners)
-  const getawaysPerYear = tripCost * travelers > 0 ? (funded.travel * 12) / (tripCost * travelers) : 0
+  const travelBuysRows = travelBuys(funded.travel * 12, travelCtx)
 
   // Cushion: emergency fund first when it's short, then the home fund and retirement
   const monthlyNeeds = fixedTotal + housingSpend
@@ -566,7 +572,8 @@ export function computeLifestyle(profile, priorities) {
       ].filter(w => w.wish > 0),
       wishTotal: Math.round(wishTotal), coverage,
       mealsOutPerPersonPerWeek: Math.round(mealsPerWeekPerPerson * 10) / 10,
-      getawaysPerYear: Math.round(getawaysPerYear * 10) / 10,
+      travelPlan: { id: plan.id, label: plan.label, summary: plan.summary, annual: plan.annual, region: plan.region, items: plan.items },
+      travelBuys: travelBuysRows,
     },
     cushion,
     car,

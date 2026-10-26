@@ -119,11 +119,11 @@ check('saver gets more cushion', saver.pillars.percents.cushion > neutral.pillar
   check('longer commute raises car running cost', run({ cars: 1, commute: 'onsite-long' }).car.maxPrice <= run({ cars: 1, commute: 'remote' }).car.maxPrice)
   check('pets add Foundation cost', run({ pets: 2 }).foundation.pets > 0 && run({ pets: 0 }).foundation.pets === 0)
   check('premium groceries cost more', run({ groceryStyle: 'premium' }).foundation.groceries > run({ groceryStyle: 'budget' }).foundation.groceries)
-  const big = run({ mealsPerWeek: 8, trips: 7, tripStyle: 'international', hobbies: 'high', fitness: 'boutique' })
+  const big = run({ mealsPerWeek: 8, travelPlan: 'wanderer', hobbies: 'high', fitness: 'boutique' })
   check('a big wish list can exceed the Lifestyle budget', big.lifestyle.coverage < 1 && big.lifestyle.flex === 0, `coverage ${big.lifestyle.coverage.toFixed(2)}`)
-  const small = run({ mealsPerWeek: 0.5, trips: 0.5, hobbies: 'low' })
+  const small = run({ mealsPerWeek: 0.5, travelPlan: 'homebody', hobbies: 'low' })
   check('a small wish list leaves room to grow', small.lifestyle.coverage === 1 && small.lifestyle.flex > 0, `flex ${small.lifestyle.flex}`)
-  check('wish list income need is above current when unfunded', (incomeForWishList({ ...p, prefs: { mealsPerWeek: 8, trips: 7, tripStyle: 'international', hobbies: 'high', fitness: 'boutique' } })?.income ?? 1e9) > 95000)
+  check('wish list income need is above current when unfunded', (incomeForWishList({ ...p, prefs: { mealsPerWeek: 8, travelPlan: 'wanderer', hobbies: 'high', fitness: 'boutique' } })?.income ?? 1e9) > 95000)
   const short = run({ emergencyMonths: 0, stability: 'uncertain' }), full = run({ emergencyMonths: 7, stability: 'steady' })
   check('short emergency fund directs more Cushion to it', short.cushion.emergency > full.cushion.emergency, `${short.cushion.emergency} vs ${full.cushion.emergency}`)
   check('buy-soon directs more Cushion to the home fund', run({ tenure: 'buy-soon' }).cushion.homeFund > run({ tenure: 'rent' }).cushion.homeFund)
@@ -131,6 +131,28 @@ check('saver gets more cushion', saver.pillars.percents.cushion > neutral.pillar
   const out = run({ area: 'urban-core', bedrooms: 4 })
   check('an out-of-reach pick is flagged with an alternative', out.housing.pick.status === 'stretch' && !!(out.housing.pick.smallerSize || out.housing.pick.alternative))
   check('derivePriorities: buy-soon raises home, urban raises city', derivePriorities({ tenure: 'buy-soon', area: 'urban-core' }).home === 5 && derivePriorities({ area: 'urban-core' }).city === 5)
+}
+
+// Travel in familiar units, priced for the visitor's region.
+{
+  const { tripCost, travelRegion, planCost, travelBuys, TRAVEL_PLANS } = await import('../src/utils/travel.js')
+  const ctx = state => ({ state, adults: 2, children: 0, svcIdx: 1 })
+  const eu = st => tripCost('week-europe', ctx(st)).total, asia = st => tripCost('week-asia', ctx(st)).total
+  check('regions: CO mountain, NY northeast, CA west, HI hawaii', travelRegion('CO').id === 'mountain' && travelRegion('NY').id === 'northeast' && travelRegion('CA').id === 'west' && travelRegion('HI').id === 'hawaii')
+  check('Europe is cheaper to reach from NY than from CA', eu('NY') < eu('CA'), `${eu('NY')} vs ${eu('CA')}`)
+  check('Asia is cheaper to reach from CA than from NY', asia('CA') < asia('NY'), `${asia('CA')} vs ${asia('NY')}`)
+  check('Hawaii pays more for mainland and Europe flights', tripCost('week-domestic', ctx('HI')).total > tripCost('week-domestic', ctx('TX')).total && eu('HI') > eu('NY'))
+  const wk = tripCost('weekend-drive', ctx('CO')).total, wf = tripCost('weekend-fly', ctx('CO')).total, wd = tripCost('week-domestic', ctx('CO')).total
+  check('trip costs rise with trip size: weekend < long weekend < week', wk < wf && wf < wd, `${wk} ${wf} ${wd}`)
+  check('a week in Europe costs several times a weekend getaway', eu('CO') > 3 * wk)
+  check('more travelers cost more', tripCost('week-europe', { ...ctx('CO'), children: 2 }).total > eu('CO'))
+  check('regional price level scales home trips only', tripCost('weekend-drive', { ...ctx('CO'), svcIdx: 1.2 }).total > wk && tripCost('week-europe', { ...ctx('CO'), svcIdx: 1.2 }).total === eu('CO'))
+  check('plans are ordered by cost: homebody < weekends < wanderer', planCost('homebody', ctx('CO')).annual < planCost('weekends', ctx('CO')).annual && planCost('weekends', ctx('CO')).annual < planCost('wanderer', ctx('CO')).annual)
+  check('every plan has an annual cost', TRAVEL_PLANS.every(p => planCost(p.id, ctx('TX')).annual > 0))
+  const lo = travelBuys(3000, ctx('CO')).find(x => x.id === 'week-europe'), hi = travelBuys(12000, ctx('CO')).find(x => x.id === 'week-europe')
+  check('travelBuys: $3k buys a Europe week every couple of years', /one every/.test(lo.phrase), lo.phrase)
+  check('travelBuys: $12k buys about two Europe weeks a year', /about 2/.test(hi.phrase), hi.phrase)
+  check('travelBuys: a tiny budget is a stretch', /stretch/.test(travelBuys(500, ctx('CO')).find(x => x.id === 'week-europe').phrase))
 }
 
 // City data: structure, and cities move results in the right direction.

@@ -124,23 +124,13 @@ export const SURVEY_QUESTIONS = [
     ],
   },
   {
-    key: 'trips', section: 'fun', type: 'cards',
-    text: 'How many trips or getaways do you want each year?',
-    options: () => [
-      { value: 0.5, label: 'One or none' },
-      { value: 2.5, label: '2–3 getaways' },
-      { value: 4.5, label: '4–5 getaways' },
-      { value: 7, label: '6 or more' },
-    ],
-  },
-  {
-    key: 'tripStyle', section: 'fun', type: 'cards',
-    text: 'What do your trips usually look like?',
-    options: ({ menu }) => [
-      { value: 'road', label: 'Road trips and budget stays', sub: `About ${usd(menu.tripCost.road)} per trip for your household` },
-      { value: 'flight', label: 'Flights and hotels', sub: `About ${usd(menu.tripCost.flight)} per trip` },
-      { value: 'international', label: 'International or premium', sub: `About ${usd(menu.tripCost.international)} per trip` },
-    ],
+    key: 'travelPlan', section: 'fun', type: 'cards',
+    text: 'What does a good year of travel look like?',
+    help: ({ menu }) => `Costs are for your household, flying from ${menu.travel.region}. Typical economy fares and mid-range stays; real prices vary by season.`,
+    options: ({ menu }) => menu.travel.plans.map(pl => ({
+      value: pl.id, label: pl.label, sub: pl.summary.charAt(0).toUpperCase() + pl.summary.slice(1),
+      detail: `About ${usd(pl.annual)} a year · ${usd(pl.monthly)}/mo`,
+    })),
   },
   {
     key: 'goal', section: 'goals', type: 'cards',
@@ -200,7 +190,7 @@ export const LIFE_STAGES = [
     prefs: { tenure: 'rent', cars: 1, carStyle: 2, goal: 'emergency', emergencyMonths: 0 }, roommates: 1 },
   { id: 'improve', emoji: '📈', label: 'Improving my finances',
     blurb: 'Find where your money goes and how fast you can build a cushion.',
-    prefs: { mealsPerWeek: 0.5, trips: 0.5, hobbies: 'low', fitness: 'none', carStyle: 2, goal: 'emergency' } },
+    prefs: { mealsPerWeek: 0.5, travelPlan: 'homebody', hobbies: 'low', fitness: 'none', carStyle: 2, goal: 'emergency' } },
   { id: 'intention', emoji: '🧭', label: 'Living with intention',
     blurb: 'Direct your money toward what you care about most.',
     prefs: {} },

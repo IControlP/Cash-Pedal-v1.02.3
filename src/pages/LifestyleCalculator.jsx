@@ -194,7 +194,11 @@ function WhatIf({ prefs, r, menu, onChange }) {
       {!menu.roommates && <Field label="Size">{pick('bedrooms', sizes.map(z => ({ value: z.bedrooms, label: z.bedrooms === 0 ? 'Studio' : `${z.bedrooms} BR` })), r.housing.bedrooms)}</Field>}
       <Field label="Cars">{pick('cars', [0, 1, 2, 3].map(n => ({ value: n, label: String(n) })), r.car.cars)}</Field>
       <Field label="Meals out per week">{pick('mealsPerWeek', [[0.5, '≤1'], [2.5, '2–3'], [5, '4–6'], [8, 'Daily']].map(([v, l]) => ({ value: v, label: l })), prefs.mealsPerWeek ?? 2.5)}</Field>
-      <Field label="Getaways per year">{pick('trips', [[0.5, '0–1'], [2.5, '2–3'], [4.5, '4–5'], [7, '6+']].map(([v, l]) => ({ value: v, label: l })), prefs.trips ?? 2.5)}</Field>
+      <Field label="Travel plan">
+        <select className="input-field" value={prefs.travelPlan ?? 'weekends'} onChange={e => onChange('travelPlan', e.target.value)} aria-label="Travel plan">
+          {menu.travel.plans.map(pl => <option key={pl.id} value={pl.id}>{pl.label} — about {usd(pl.annual)}/yr</option>)}
+        </select>
+      </Field>
     </div>
   )
 }
@@ -697,8 +701,44 @@ export default function LifestyleCalculator() {
           </p>
         )}
         <p className="text-sm text-[var(--text-muted)] mt-2">
-          That buys about {r.lifestyle.mealsOutPerPersonPerWeek} meals out per person each week and {r.lifestyle.getawaysPerYear} getaways a year.
+          Your dining budget buys about {r.lifestyle.mealsOutPerPersonPerWeek} meals out per person each week.
         </p>
+
+        <div className="mt-6">
+          <p className="text-xs uppercase tracking-widest font-semibold text-[var(--text-muted)] mb-1">✈️ What your travel budget buys</p>
+          <p className="text-sm text-white">
+            {usd(r.lifestyle.travel)}/month, or {usd(r.lifestyle.travel * 12)} a year.
+          </p>
+          <p className="text-sm text-[var(--text-muted)] mb-3">
+            Your plan — {r.lifestyle.travelPlan.summary} — runs about {usd(r.lifestyle.travelPlan.annual)} a year for your household, flying from {r.lifestyle.travelPlan.region}.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wider text-[var(--text-muted)]">
+                  <th className="py-2 pr-4 font-semibold">Trip</th>
+                  <th className="py-2 pr-4 font-semibold text-right">Costs about</th>
+                  <th className="py-2 font-semibold text-right">Your budget buys</th>
+                </tr>
+              </thead>
+              <tbody>
+                {r.lifestyle.travelBuys.map(t => (
+                  <tr key={t.id} className="border-t" style={{ borderColor: 'var(--border)' }}>
+                    <td className="py-2 pr-4 text-white">
+                      {t.label}
+                      {t.example && <span className="block text-xs text-[var(--text-muted)]">e.g. {t.example}</span>}
+                    </td>
+                    <td className="py-2 pr-4 text-white text-right tabular-nums whitespace-nowrap">{usd(t.total)}</td>
+                    <td className="py-2 text-right whitespace-nowrap" style={{ color: t.perYear >= 0.85 ? 'var(--success, #5FE0B8)' : 'var(--text-muted)' }}>{t.phrase}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-[var(--text-muted)] mt-2">
+            Typical economy airfare and mid-range stays for your household; real prices swing with season and how early you book.
+          </p>
+        </div>
       </section>
 
       <div className="grid sm:grid-cols-2 gap-6 mb-6">

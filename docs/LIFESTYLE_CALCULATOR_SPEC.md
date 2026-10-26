@@ -264,3 +264,29 @@ Housing prices: ACS 2024 1-year estimates are used where the Census publishes th
 for home value), falling back to the 2020–2024 5-year. Both still lag the market (existing leases, owner-reported
 values). Zillow's ZORI (market rent) and ZHVI (typical value by bedroom count) would be the realistic upgrade; their
 host (`files.zillowstatic.com`) is not reachable from the build environment today.
+
+## 15. Travel in familiar units (built)
+
+`src/utils/travel.js` prices real trips for the visitor's household and region, and converts the Lifestyle travel
+budget back into them.
+
+- **Trip types:** weekend getaway (a drive away; an inter-island flight from Hawaii), long weekend by air, week-long
+  U.S. vacation, week in the Caribbean or Mexico, week in Europe, week in Asia.
+- **Cost of a trip** = airfare (per person) + lodging (rooms × nights) + food and activities (per person-day) + a
+  drive allowance for weekend getaways. Home-country trips scale with the visitor's regional price level; trips abroad
+  do not.
+- **Region tailoring:** the origin state maps to one of eight travel regions. Airfare is scaled by region and fare
+  class (e.g. Europe is cheaper from the Northeast than the West Coast, Asia cheaper from the West Coast and Hawaii than
+  the East Coast, and Hawaii and Alaska pay more for mainland flights), and weekend and domestic-week examples are
+  local (Mountain West: "a ski town, Moab, a national park or Jackson").
+- **Survey:** the trips-per-year and trip-style questions became one question, "What does a good year of travel look
+  like?", with seven plans (mostly close to home … travel is a priority). Each card shows the plan's annual and monthly
+  cost for the household. The plan sets the travel wish; the "Travel & fun" budget funds it like any other wish.
+- **Results:** "What your travel budget buys" lists every trip type with its cost and how many the funded budget
+  covers ("about 2 a year", "one every 2 years", "a stretch for now"), plus the plan summary.
+
+All figures are round assumptions (base economy round-trip fares $380 domestic / $480 Caribbean / $1,000 Europe /
+$1,300 Asia; lodging $110–$230 a room-night; food and activities $65–$115 a person-day; $0.25 a mile), not cited
+data, and the regional fare multipliers are rules of thumb. To source them, replace `BASE_FARE` and the region `fare`
+multipliers with BTS domestic itinerary fares plus an international fare source; the host bts.gov is not reachable
+from the build environment today.

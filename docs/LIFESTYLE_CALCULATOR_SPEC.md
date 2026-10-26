@@ -43,7 +43,7 @@ result. Routes, SEO pages and guides are untouched.
 | Married / partnered | Joint income; taxed as married filing jointly | Own place sized to household (1–3BR by kids) |
 
 - Singles see a **Own place vs Roommates** toggle on the result. Roommates lower the
-  Foundation housing line and free dollars for Lifestyle/Future, shown as a gain:
+  Foundation housing line and free dollars for Lifestyle/Cushion, shown as a gain:
   "Roommates add ~$X/mo to travel and savings".
 - Roommate count only applies to rent; buy mode assumes the household alone (an
   optional "house hack" note can come later).
@@ -51,26 +51,29 @@ result. Routes, SEO pages and guides are untouched.
 
 ## 3. Budget pillars
 
-Four pillars of **take-home** pay (the user never needs to know the term "net"):
+Three pillars of **take-home** pay (decided: Foundation / Lifestyle / Cushion):
 
 | Pillar | Contains | Baseline |
 |---|---|---|
-| **Foundation** (needs) | Housing, utilities, groceries, transport (car costs), insurance, minimum debt, childcare | 50% |
-| **Lifestyle** (wants) | Dining out, entertainment, travel, hobbies, upgrades | 30% |
-| **Future** (savings) | Emergency fund, retirement, down-payment fund | 15% |
-| **Cushion** | Irregular costs, buffer, giving | 5% |
+| **Foundation** (needs + fixed costs) | Housing, utilities, groceries, health, transport (car), childcare, **existing debt repayment** | 50% |
+| **Lifestyle** (wants) | Dining out, entertainment, travel, hobbies | 30% |
+| **Cushion** (future + buffer) | Emergency fund, retirement, down-payment fund, irregular costs | 20% |
 
-Baseline is then **shifted by profile and priorities**:
+Existing debt (student loans, car loan, cards, other) is entered as total required
+monthly payments and treated as a **fixed cost inside Foundation**. Housing is what
+remains of the Foundation budget after debt and the other fixed needs, so more debt
+means a smaller housing budget; the result says so plainly and shows the gain from
+paying it down ("clearing $400/mo of debt adds ~$X to your housing budget").
 
-- Children: Foundation +4 to +10 pts (childcare), Lifestyle −2 to −6.
-- Age: 25–34 Future +0, 35–54 Future +3 to +5, 55+ Future +5 and shorter housing horizon.
-- Each priority rating (1–5, centered at 3) moves its pillar by ±1.5 pts, capped.
-- Guardrails: Foundation ≤ 65%, Future ≥ 10%, Cushion ≥ 3%. Housing alone ≤ 30% of
-  gross for rent, and the standard 28/36 front/back-end ratios for a mortgage.
-- Result is a single `allocation` object that always sums to 100%.
+Baseline shifts by priorities and profile:
 
-Stated as presets the user can accept or override: *Balanced*, *Experience-first*,
-*Home-first*, *Future-first*.
+- Dining / travel priorities: Lifestyle +1.5 pts per step above 3 (symmetrically below).
+- Saving priority and age: Cushion +2 pts per step; +2 (35–44), +4 (45–54), +5 (55+).
+- Car priority sets the transport slice of Foundation (8% of take-home, ±1.5 per step).
+- Children are priced bottom-up (childcare, groceries, health), not by shifting percentages.
+- Guardrails: Cushion 10–35%, Lifestyle 10–40%, Foundation ≤ 65%; rent ≤ 33% and mortgage
+  PITI ≤ 28% of gross. If Foundation costs overshoot the budget the shortfall is taken from
+  Lifestyle and flagged as "tight".
 
 ## 4. Calculation engine (`src/utils/lifestyle.js`, Node-importable like `affordability.js`)
 
@@ -80,7 +83,7 @@ reuse them.
 - `takeHome(incomes[], state, maritalStatus, children)` — federal brackets
   (standard deduction, filing status), FICA, state income tax via static table in
   `src/data/taxData.json`. Child tax credit simplified. Estimates only.
-- `buildAllocation(profile, priorities)` → `{ foundation, lifestyle, future, cushion }`
+- `buildAllocation(profile, priorities)` → `{ foundation, lifestyle, cushion }`
   in dollars/month with sub-lines.
 - `housingOptions(allocation, profile, stateData) // profile.roommates: 0–3 (singles)` →
   `{ rent: {maxMonthly, typicalBedrooms}, buy: {maxPrice, monthlyPITI, downPaymentNeeded, yearsToSave}, verdict }`
@@ -172,6 +175,6 @@ PDF export, debt and student-loan inputs, second-income detail, server-side API.
 
 1. ~~Single household income or two incomes?~~ **Decided:** by marital status — one income
    for singles, joint income for couples; singles also choose own place vs roommates.
-2. Add debt (student loans, existing car payment) in v1? It materially changes results.
-3. Pillar names — keep Foundation / Lifestyle / Future / Cushion, or use needs / wants / savings?
-4. Brand: stay "Cash Pedal", or reposition the name and domain copy?
+2. ~~Debt in v1?~~ **Decided:** yes; total monthly debt payments are a fixed cost in Foundation.
+3. ~~Pillar names~~ **Decided:** Foundation / Lifestyle / Cushion (savings folds into Cushion).
+4. ~~Brand~~ **Decided:** stay "Cash Pedal" for now.

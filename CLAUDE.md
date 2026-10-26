@@ -25,6 +25,7 @@ Verification (no unit-test framework — these are the checks that run in CI):
 
 ```bash
 node scripts/verify-tco.mjs                     # TCO/maintenance accuracy harness (±10% vs AAA/CR benchmarks)
+node scripts/verify-lifestyle.mjs               # Lifestyle engine sanity harness (pillars sum, monotonicity, debt/roommate effects)
 python3 scripts/validate_vehicle_data.py        # Validates src/data/vehicles.json (required for any change to it)
 python3 scripts/validate_vehicle_data.py --write-baseline   # Accept verified pricing anomalies
 node scripts/smoke-test.mjs [base-url]          # Headless-Chromium smoke test (needs: npm install --no-save playwright && npx playwright install chromium)
@@ -70,6 +71,7 @@ src/
 | Path | Component | Description |
 |---|---|---|
 | `/` | `Landing` | Hero page with tool grid (only eagerly-loaded route) |
+| `/lifestyle` | `LifestyleCalculator` | Lifestyle calculator (primary entry point): profile + priorities survey → Foundation/Lifestyle/Cushion pillars → housing (rent vs buy, roommates), neighborhood types, dining/travel, car tier. Engine: `src/utils/lifestyle.js`; data: `src/data/lifestyleData.json` (**placeholder state-level figures — replace with cited sources before launch**); spec: `docs/LIFESTYLE_CALCULATOR_SPEC.md` |
 | `/tco` | `TCOFlow` | Guided/simple TCO estimate flow — the primary funnel |
 | `/tco-full` | `TCOCalculator` | Full TCO / loan calculator with live math (~3,700 lines) |
 | `/compare` | `MultiVehicleComparison` | Compare up to 5 vehicles |

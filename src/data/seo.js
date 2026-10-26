@@ -24,12 +24,31 @@ export const ROUTE_META = {
   '/': {
     title: 'Cash Pedal — How Much Car Can I Afford? Free Car Cost Calculators',
     description: DEFAULT_DESCRIPTION,
-    h1: 'Know the true cost of owning any vehicle before you sign',
+    h1: 'See the life your income can build',
     intro: [
-      'Cash Pedal is a free vehicle financial toolkit. It answers the questions car buyers actually ask: how much car can I afford on my salary, what salary do I need for a specific car, and what will a car really cost to own once fuel, insurance, maintenance, registration and depreciation are added in.',
+      'Cash Pedal is a free lifestyle budget calculator. Share your income, state and household and what matters most, and it shows the home, neighborhoods, dining, travel and car your budget can support, using three pillars: Foundation, Lifestyle and Cushion.',
+      'It also answers the car questions buyers ask: how much car can I afford on my salary, what salary a specific car needs, and what a car really costs to own once fuel, insurance, maintenance, registration and depreciation are added in.',
       'Estimates are state-aware (insurance, fuel prices and registration fees vary by state) and cover more than 50 brands and thousands of make/model/year/trim combinations.',
     ],
     priority: '1.0',
+  },
+  '/lifestyle': {
+    title: 'What Lifestyle Can I Afford? Budget Calculator | Cash Pedal',
+    description:
+      'Enter your income, state and household, share your priorities, and see the home, neighborhoods, dining and car your budget can support.',
+    h1: 'See the life your income can build',
+    intro: [
+      'The Cash Pedal lifestyle calculator turns your income, age range, state, household and existing debt into three budget pillars: Foundation (housing, bills, groceries, car and debt), Lifestyle (dining, travel and fun) and Cushion (savings and safety net).',
+      'A short priorities survey then shows what those pillars can buy: whether renting or buying fits, which neighborhood types suit you, how often you can eat out, and what car tier fits. Singles can compare living alone with roommates; couples use a joint income.',
+    ],
+    faq: [
+      ['What are the three budget pillars?',
+        'Foundation covers needs and fixed costs including housing and existing debt payments, Lifestyle covers dining, travel and entertainment, and Cushion covers savings and your safety net. The baseline split is roughly 50/30/20 and shifts with your priorities, age and household.'],
+      ['Should I rent or buy?',
+        'The calculator estimates the home price your budget supports, the down payment needed and the 7-year net cost of owning versus renting, then tells you whether buying fits now, soon, or whether renting keeps more money in your pocket.'],
+    ],
+    priority: '0.9',
+    calculator: true,
   },
   '/affordability': {
     title: 'How Much Car Can I Afford? Car Affordability Calculator | Cash Pedal',
@@ -179,6 +198,7 @@ export const ROUTE_META = {
 // Featured links rendered in every pre-rendered page so crawlers can discover
 // the main tools from anywhere.
 export const PRIMARY_TOOLS = [
+  ['/lifestyle', 'What lifestyle can I afford?'],
   ['/affordability', 'How much car can I afford?'],
   ['/salary', 'What salary do I need for a car?'],
   ['/tco', 'True cost of ownership calculator'],

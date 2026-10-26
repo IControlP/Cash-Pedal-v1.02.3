@@ -21,3 +21,5 @@ jobs:
         run: npm run build
       - name: TCO / maintenance accuracy verification
         run: node scripts/verify-tco.mjs
+      - name: Lifestyle engine verification
+        run: node scripts/verify-lifestyle.mjs

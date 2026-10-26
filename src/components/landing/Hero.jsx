@@ -1,18 +1,18 @@
 import { useState, useEffect, Fragment } from 'react'
 import { Link } from 'react-router-dom'
 import { trackEvent, trackHeroCtaClick, trackAbHeroImpression } from '../../utils/analytics'
-import HeroEntryCard from './HeroEntryCard'
+import LifestyleEntryCard from './LifestyleEntryCard'
 import { getHeroVariant } from '../../utils/abTest'
 
 const VARIANTS = {
-  A: { headline: "Can you actually afford this car?",          cta: "Show my true cost" },
-  B: { headline: "Before you buy, see the real 5-year cost",  cta: "Reveal my 5-year cost" },
+  A: { headline: "See the life your income can build",        cta: "Show what I can have" },
+  B: { headline: "Your income buys more than you think",      cta: "Show what I can have" },
 }
 
 const TRUST_ITEMS = ['Free to start', 'No signup required', 'Results in under 60 seconds']
 
 const QUICK_START = [
-  { emoji: '🎯', label: 'Car Survey',   sub: 'Find your fit',   to: '/survey'  },
+  { emoji: '🚗', label: 'Cars You Can Buy', sub: 'By salary',   to: '/affordability'  },
   { emoji: '💰', label: 'Salary Check', sub: '20/4/10 rule',    to: '/salary'  },
   { emoji: '⚖️', label: 'Compare Cars', sub: 'Side-by-side',    to: '/compare' },
   { emoji: '✅', label: 'Checklist',    sub: 'Used car audit',   to: '/checklist' },
@@ -37,7 +37,7 @@ export default function Hero() {
           <div>
             <span className="eyebrow anim-0">
               <span className="dot" />
-              The car-buying decision that funds — or drains — your future
+              Your home, your nights out, your next car — all in one budget
             </span>
 
             <h1 className="hero-h font-display anim-1">
@@ -45,8 +45,9 @@ export default function Hero() {
             </h1>
 
             <p className="hero-sub anim-2">
-              Most buyers only compare the monthly payment. Cash Pedal shows the true
-              5-year cost — financing, insurance, fuel, maintenance and depreciation — before you buy.
+              Share your income and what matters most. Cash Pedal shows the home, neighborhoods,
+              dining, travel and car your budget can support — built on three simple pillars:
+              Foundation, Lifestyle and Cushion.
             </p>
 
             {/* Trust line */}
@@ -61,7 +62,7 @@ export default function Hero() {
 
             {/* Mobile: entry card sits here, right below the trust line */}
             <div className="lg:hidden anim-3 mt-6">
-              <HeroEntryCard />
+              <LifestyleEntryCard />
             </div>
 
             {/* Below-fold fallback CTA for visitors who scroll past the card.
@@ -69,7 +70,7 @@ export default function Hero() {
                 split by A/B test arm alongside the existing landing_cta_click. */}
             <div className="hidden lg:flex hero-cta anim-3">
               <Link
-                to="/tco"
+                to="/lifestyle"
                 className="btn-primary btn-lg"
                 onClick={() => {
                   trackEvent('landing_cta_click', { location: 'hero_primary', ab_variant: variant })
@@ -105,26 +106,19 @@ export default function Hero() {
 
           {/* ── Right: entry card (desktop only) ── */}
           <div className="hidden lg:block anim-1">
-            <HeroEntryCard />
+            <LifestyleEntryCard />
 
-            {/* Annotated cost teaser below the card on desktop */}
-            <div className="mt-4 grid grid-cols-2 gap-2">
+            {/* Sample pillar split */}
+            <div className="mt-4 grid grid-cols-3 gap-2">
               {[
-                { label: 'Sticker price',  val: '$34,500', dim: true    },
-                { label: 'Real 5-yr cost', val: '$61,200', accent: true  },
-                { label: 'Hidden costs',   val: '$26,700', warn: true    },
-                { label: 'Right car saves',val: '$9,150',  green: true   },
-              ].map(({ label, val, dim, accent, warn, green }) => (
-                <div key={label}
-                  className="rounded-xl border px-3 py-2.5"
-                  style={{
-                    borderColor: accent ? 'rgba(255,184,0,0.35)'    : green ? 'rgba(95,224,184,0.3)' : 'var(--border)',
-                    background:  accent ? 'rgba(255,184,0,0.05)'    : green ? 'rgba(95,224,184,0.05)' : 'rgba(255,255,255,0.02)',
-                  }}>
+                { label: 'Foundation', val: '50%', color: '#5FE0B8' },
+                { label: 'Lifestyle',  val: '30%', color: 'var(--accent)' },
+                { label: 'Cushion',    val: '20%', color: '#7aa2ff' },
+              ].map(({ label, val, color }) => (
+                <div key={label} className="rounded-xl border px-3 py-2.5"
+                  style={{ borderColor: 'var(--border)', background: 'rgba(255,255,255,0.02)' }}>
                   <p className="text-[9px] uppercase tracking-widest font-semibold text-[var(--text-muted)] mb-0.5">{label}</p>
-                  <p className={`font-display font-bold text-base leading-tight ${
-                    accent ? 'text-[var(--accent)]' : green ? 'text-[var(--success)]' : warn ? 'text-[#f87171]' : 'text-white/50 line-through'
-                  }`}>{val}</p>
+                  <p className="font-display font-bold text-base leading-tight" style={{ color }}>{val}</p>
                 </div>
               ))}
             </div>

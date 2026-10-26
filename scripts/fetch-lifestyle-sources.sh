@@ -8,6 +8,9 @@ ACS=https://www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-S
 for t in b01003 b25064 b25077 b25031 b25103; do
   [ -s "$DIR/acsdt5y2024-$t.dat" ] || curl -fsSL -o "$DIR/acsdt5y2024-$t.dat" "$ACS/data/5YRData/acsdt5y2024-$t.dat"
 done
+for t in b25064 b25077 b25031 b25103; do
+  [ -s "$DIR/acsdt1y2024-$t.dat" ] || curl -fsSL -o "$DIR/acsdt1y2024-$t.dat" "$ACS/data/1YRData/acsdt1y2024-$t.dat"
+done
 [ -s "$DIR/Geos20245YR.txt" ] || curl -fsSL -o "$DIR/Geos20245YR.txt" "$ACS/documentation/Geos20245YR.txt"
 for z in SARPP MARPP; do
   [ -s "$DIR/bea/${z}.zip" ] || curl -fsSL -o "$DIR/bea/${z}.zip" "https://apps.bea.gov/regional/zip/${z}.zip"

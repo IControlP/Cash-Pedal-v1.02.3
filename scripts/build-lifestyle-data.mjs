@@ -51,15 +51,30 @@ const geo = new Map() // GEO_ID → { level, st, name }
 }
 
 // ── ACS tables ───────────────────────────────────────────────────────────
-async function readTable(table, cols) {
+// Reads one ACS table. The 2024 1-year file (reference year 2024, published for
+// places of 65k+) is preferred when it has every requested column for a geography;
+// otherwise the 2020–2024 5-year estimate is used. `vintage` records which won.
+async function readOne(file, cols) {
   const out = new Map()
+  if (!fs.existsSync(file)) return out
   let header = null
-  await eachLine(path.join(DIR, `acsdt5y2024-${table}.dat`), line => {
+  await eachLine(file, line => {
     const f = line.split('|')
     if (!header) { header = Object.fromEntries(f.map((k, i) => [k, i])); return }
     if (!geo.has(f[0])) return
     out.set(f[0], Object.fromEntries(Object.entries(cols).map(([k, c]) => [k, num(f[header[c]])])))
   })
+  return out
+}
+async function readTable(table, cols) {
+  const five = await readOne(path.join(DIR, `acsdt5y2024-${table}.dat`), cols)
+  const one = await readOne(path.join(DIR, `acsdt1y2024-${table}.dat`), cols)
+  const out = new Map()
+  for (const [id, row5] of five) {
+    const row1 = one.get(id)
+    const use1 = row1 && Object.values(row1).every(v => v != null)
+    out.set(id, { ...(use1 ? row1 : row5), vintage: use1 ? '2024 1-yr' : '2020–2024 5-yr' })
+  }
   return out
 }
 const pop = await readTable('b01003', { pop: 'B01003_E001' })
@@ -74,6 +89,7 @@ const row = id => ({
   home: home.get(id)?.home ?? null,
   tax: tax.get(id)?.tax ?? null,
   br: rentBr.get(id) ?? {},
+  vintage: { rent: rentBr.get(id)?.vintage ?? null, home: home.get(id)?.vintage ?? null },
 })
 
 // ── BEA RPP ──────────────────────────────────────────────────────────────
@@ -184,6 +200,13 @@ function parseMit(file) {
 }
 const stateFips = Object.fromEntries([...geo.entries()].filter(([, g]) => g.level === '040').map(([id, g]) => [g.st, id.slice(-2)]))
 
+// ACS bedroom-count medians are noisy (a 4BR can read below a 3BR in a small sample).
+// Rent must not fall as bedrooms are added; a lower 4BR is lifted to 12% above the 3BR.
+const monotone = r => {
+  const o = { ...r }
+  for (let k = 1; k <= 4; k++) if (o[k] != null && o[k - 1] != null && o[k] < o[k - 1]) o[k] = k === 4 ? Math.round(o[3] * 1.12) : o[k - 1]
+  return o
+}
 // ── States ───────────────────────────────────────────────────────────────
 const states = {}
 const stateRatios = {}
@@ -196,7 +219,7 @@ for (const [id, g] of geo) {
   const med = r.rentMedian
   stateRatios[code] = [0, 1, 2, 3, 4].map(k => (b[`r${k}`] && med ? b[`r${k}`] / med : null))
   states[code] = {
-    rent: { 0: b.r0, 1: b.r1, 2: b.r2, 3: b.r3, 4: b.r4 },
+    rent: monotone({ 0: b.r0, 1: b.r1, 2: b.r2, 3: b.r3, 4: b.r4 }),
     rentMedian: med,
     medianHome: r.home,
     propTaxPct: r.home && r.tax ? Math.round((r.tax / r.home) * 10000) / 100 : null,
@@ -211,7 +234,7 @@ if (Object.keys(states).length !== 51) throw new Error(`expected 51 states, got 
 const out = {
   _meta: {
     generatedBy: 'scripts/build-lifestyle-data.mjs',
-    acs: `ACS ${ACS_YEAR} 5-year (B25031, B25064, B25077, B25103), www2.census.gov table-based summary files`,
+    acs: `ACS 2024 1-year where published (places of 65k+; reference year 2024), otherwise ACS ${ACS_YEAR} 5-year (B25031, B25064, B25077, B25103); www2.census.gov table-based summary files. Each city row records which vintage it uses.`,
     bea: `BEA Regional Price Parities ${BEA_YEAR} (SARPP state, MARPP metro), apps.bea.gov`,
     rentNote: 'ACS median GROSS rent (contract rent + utilities) of existing leases; asking rents on new leases run higher. The engine converts gross to contract rent.',
     propTaxNote: 'Median real estate taxes paid ÷ median home value (ACS), so a blended effective rate.',
@@ -273,12 +296,14 @@ const outCities = kept.map(c => {
     }
     rent[k] = round5(v)
   }
+  Object.assign(rent, monotone(rent))
   const cands = [c.name, c.name.split('/')[0], c.name.split(/[-/]/)[0]].map(norm)
   const m = cands.map(k => metroIndex.get(`${c.st}|${k}`)).find(Boolean)
   return {
     id: `${c.st}|${c.name}`,
     name: c.name, state: c.st, pop: c.pop,
     rent, rentMedian: c.r.rentMedian, medianHome: c.r.home,
+    vintage: { rent: c.r.vintage.rent, home: c.r.vintage.home },
     propTaxPct: c.r.tax ? Math.round((c.r.tax / c.r.home) * 10000) / 100 : st.propTaxPct,
     rpp: m ? { all: m.all, goods: m.goods, utilities: m.utilities, other: m.other } : null,
     metro: m?.name ?? null,

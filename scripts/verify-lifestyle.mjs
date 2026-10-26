@@ -1,5 +1,5 @@
 // Sanity harness for the lifestyle engine (runs in CI alongside verify-tco.mjs).
-import { computeLifestyle, takeHome, stateIncomeTax, childcareMonthly, cheapCarInsuranceFactor, STATES, debtPayoffGain, costCenters, compareScenarios, equivalentIncome } from '../src/utils/lifestyle.js'
+import { computeLifestyle, housingMenu, derivePriorities, incomeForWishList, takeHome, stateIncomeTax, childcareMonthly, cheapCarInsuranceFactor, STATES, debtPayoffGain, costCenters, compareScenarios, equivalentIncome } from '../src/utils/lifestyle.js'
 
 let failures = 0
 const check = (name, ok, info = '') => {
@@ -102,6 +102,35 @@ check('saver gets more cushion', saver.pillars.percents.cushion > neutral.pillar
   check('cheap-car insurance factor ramps 0.6 → 1', cheapCarInsuranceFactor(5000) === 0.6 && cheapCarInsuranceFactor(15000) === 1 && cheapCarInsuranceFactor(11500) > 0.6)
   const den55 = computeLifestyle({ ...base, incomes: [55000], state: 'CO', city: den })
   check('Denver $55k single gets a car tier, not car-light', den55.car.maxPrice > 0, `${den55.car.tier} ${den55.car.maxPrice}`)
+}
+
+// Survey answers (prefs) must move the numbers they describe, in the right direction.
+{
+  const den = JSON.parse((await import('node:fs')).readFileSync(new URL('../src/data/lifestyleCities.json', import.meta.url), 'utf8')).cities.find(c => c.id === 'CO|Denver')
+  const p = { ...base, incomes: [95000], state: 'CO', city: den }
+  const run = prefs => computeLifestyle({ ...p, prefs })
+  const rent = prefs => run(prefs).neighborhoods.find(n => n.type === (prefs.area ?? 'inner-suburb')).rent
+  check('more bedrooms cost more rent', rent({ area: 'inner-suburb', bedrooms: 3 }) > rent({ area: 'inner-suburb', bedrooms: 1 }))
+  check('urban core costs more than small town', rent({ area: 'urban-core', bedrooms: 1 }) > rent({ area: 'small-town', bedrooms: 1 }))
+  check('menu matches engine rent', housingMenu(p).areas[1].rent === run({}).neighborhoods[1].rent)
+  check('menu sizes are non-decreasing', ['urban-core', 'inner-suburb', 'outer-suburb', 'small-town'].every(a => housingMenu(p).sizes[a].every((z, i, arr) => i === 0 || z.rent >= arr[i - 1].rent)))
+  check('second car raises transport', run({ cars: 2 }).foundation.transport > run({ cars: 1 }).foundation.transport)
+  check('no car → car-free tier and low transport', run({ cars: 0 }).car.tier === 'Car-free' && run({ cars: 0 }).foundation.transport < run({ cars: 1 }).foundation.transport)
+  check('longer commute raises car running cost', run({ cars: 1, commute: 'onsite-long' }).car.maxPrice <= run({ cars: 1, commute: 'remote' }).car.maxPrice)
+  check('pets add Foundation cost', run({ pets: 2 }).foundation.pets > 0 && run({ pets: 0 }).foundation.pets === 0)
+  check('premium groceries cost more', run({ groceryStyle: 'premium' }).foundation.groceries > run({ groceryStyle: 'budget' }).foundation.groceries)
+  const big = run({ mealsPerWeek: 8, trips: 7, tripStyle: 'international', hobbies: 'high', fitness: 'boutique' })
+  check('a big wish list can exceed the Lifestyle budget', big.lifestyle.coverage < 1 && big.lifestyle.flex === 0, `coverage ${big.lifestyle.coverage.toFixed(2)}`)
+  const small = run({ mealsPerWeek: 0.5, trips: 0.5, hobbies: 'low' })
+  check('a small wish list leaves room to grow', small.lifestyle.coverage === 1 && small.lifestyle.flex > 0, `flex ${small.lifestyle.flex}`)
+  check('wish list income need is above current when unfunded', (incomeForWishList({ ...p, prefs: { mealsPerWeek: 8, trips: 7, tripStyle: 'international', hobbies: 'high', fitness: 'boutique' } })?.income ?? 1e9) > 95000)
+  const short = run({ emergencyMonths: 0, stability: 'uncertain' }), full = run({ emergencyMonths: 7, stability: 'steady' })
+  check('short emergency fund directs more Cushion to it', short.cushion.emergency > full.cushion.emergency, `${short.cushion.emergency} vs ${full.cushion.emergency}`)
+  check('buy-soon directs more Cushion to the home fund', run({ tenure: 'buy-soon' }).cushion.homeFund > run({ tenure: 'rent' }).cushion.homeFund)
+  check('cost centers still sum to take-home with prefs', Math.abs(costCenters(big).reduce((a, c) => a + c.amount, 0) - big.tax.monthly) <= 16)
+  const out = run({ area: 'urban-core', bedrooms: 4 })
+  check('an out-of-reach pick is flagged with an alternative', out.housing.pick.status === 'stretch' && !!(out.housing.pick.smallerSize || out.housing.pick.alternative))
+  check('derivePriorities: buy-soon raises home, urban raises city', derivePriorities({ tenure: 'buy-soon', area: 'urban-core' }).home === 5 && derivePriorities({ area: 'urban-core' }).city === 5)
 }
 
 // City data: structure, and cities move results in the right direction.

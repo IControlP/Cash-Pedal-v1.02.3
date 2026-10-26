@@ -234,3 +234,33 @@ exclusions (Washington's capital-gains-only tax is treated as no wage tax).
   For the lifestyle car tier only, premiums scale to 60% below $8k and ramp to 100% at $15k (cheap used cars are
   commonly liability-only). The shared model and the TCO tools are unchanged. The budget floor is a $2,500 car;
   below that the tier reads "Car-light".
+
+## 14. Regional, choice-based survey (built)
+
+The 7 abstract 1–5 sliders were replaced by a 16–17 question survey of concrete choices, each priced in the
+visitor's own city (`housingMenu()` in `src/utils/lifestyle.js`, questions in `src/data/lifestyleSurvey.js`):
+
+| Section | Questions (answer → what it changes) |
+|---|---|
+| Your home | tenure (rent / buy in ~2 yrs / buy in 3–5 / unsure) → home-fund share; **area** (4 types, shown with local rent and typical home price) → the home priced and checked against the budget; **size** (studio–4BR, local rent and price per size) → rent, utilities, price; schools (if children) |
+| Getting around | commute (remote → 40+ min) → annual miles → fuel; cars (0–3) → transport budget (each extra car +60%); car style → transport share |
+| Day to day | meals out/week, grocery style, gym, hobbies, pets → priced wishes and Foundation costs |
+| Travel & fun | getaways/year, trip style → priced travel wish |
+| Money goals | top goal, months saved today, income stability → emergency-fund target (3/6/9 months), Cushion split |
+
+Mechanics: answers (`profile.prefs`) derive the five priorities that shift the pillar split, set the home size and
+area, and price a **wish list** (dining, travel, hobbies, fitness) in the visitor's region. The budget still decides:
+if the wish list costs more than the Lifestyle envelope every item is scaled back equally (and the page shows the
+income that would fund it); if less, the remainder is "room to grow". The visitor's housing pick is labelled
+comfortable (inside the Foundation budget), possible (draws on Lifestyle) or a stretch (above 30% of gross), with a
+smaller size or a nearby area suggested when it is a stretch. The results page ends with a "What if…?" panel (area,
+size, cars, meals out, getaways) that recomputes live.
+
+Unit costs behind the wishes are round national assumptions scaled by BEA price parities, not cited data: $22 per
+casual meal, $350 / $800 / $2,000 per traveler per road / flight / international trip, $40 / $160 gym, $80 / $200 /
+$450 hobbies per adult, $120 per pet, grocery styles 0.85 / 1.0 / 1.3 of the base, commute miles 6,000 – 17,500.
+
+Housing prices: ACS 2024 1-year estimates are used where the Census publishes them (333 of 381 cities for rent, 361
+for home value), falling back to the 2020–2024 5-year. Both still lag the market (existing leases, owner-reported
+values). Zillow's ZORI (market rent) and ZHVI (typical value by bedroom count) would be the realistic upgrade; their
+host (`files.zillowstatic.com`) is not reachable from the build environment today.

@@ -210,8 +210,8 @@ export function cheapCarInsuranceFactor(price) {
   return 0.6 + 0.4 * (price - 8000) / 7000
 }
 
-function carRunningMonthly(price, state) {
-  const fuel = computeAnnualFuel(false, 28, null, state, 13500) / 12
+function carRunningMonthly(price, state, miles = 13500) {
+  const fuel = computeAnnualFuel(false, 28, null, state, miles) / 12
   const ins = estimateInsurance(price, null, null, null, state) / 12 * cheapCarInsuranceFactor(price)
   const reg = computeAnnualRegFees(state, price) / 12
   const maint = clamp(50 + price * 0.0021, 60, 180)
@@ -220,8 +220,8 @@ function carRunningMonthly(price, state) {
 
 const CAR_LOAN = { downPct: 0.2, apr: 6.5, months: 60 }
 
-export function carTier(transportMonthly, state) {
-  const cost = price => monthlyPayment(price * (1 - CAR_LOAN.downPct), CAR_LOAN.apr, CAR_LOAN.months) + carRunningMonthly(price, state)
+export function carTier(transportMonthly, state, miles = 13500) {
+  const cost = price => monthlyPayment(price * (1 - CAR_LOAN.downPct), CAR_LOAN.apr, CAR_LOAN.months) + carRunningMonthly(price, state, miles)
   const FLOOR = 2500
   if (cost(FLOOR) > transportMonthly) return { maxPrice: 0, tier: 'Car-light', monthlyBudget: Math.round(transportMonthly) }
   let lo = FLOOR
@@ -248,11 +248,102 @@ export function childcareMonthly(annual, under6, schoolAge) {
   return (total(under6) + schoolAge * SCHOOL_AGE_CARE_SHARE * annual[1]) / 12
 }
 
+// ── Survey answers ("prefs") ──────────────────────────────────────────────
+// The survey collects concrete choices, not abstract sliders. Each one is priced
+// in the visitor's own region and compared with the pillar budget. The unit costs
+// below (marked "assumption") are round national figures scaled by the regional
+// price parities; they are not drawn from a cited dataset.
+export const COMMUTE = {
+  remote: { label: 'Work from home', miles: 6000 },
+  hybrid: { label: 'Hybrid (2–3 days in the office)', miles: 9500 },
+  'onsite-short': { label: 'On-site, under 20 minutes', miles: 10500 },
+  'onsite-medium': { label: 'On-site, 20–40 minutes', miles: 13500 },
+  'onsite-long': { label: 'On-site, 40+ minutes', miles: 17500 },
+}
+export const GROCERY_STYLE = { budget: 0.85, standard: 1, premium: 1.3 }  // assumption: × USDA-style base
+export const FITNESS_MONTHLY = { none: 0, basic: 40, boutique: 160 }      // assumption: per adult
+export const HOBBY_MONTHLY = { low: 80, medium: 200, high: 450 }          // assumption: per adult
+export const TRIP_COST = { road: 350, flight: 800, international: 2000 }  // assumption: per traveler per trip
+export const PET_MONTHLY = 120                                            // assumption: per pet (food, vet, supplies)
+export const MEAL_COST = 22                                               // assumption: casual meal out, per person
+export const EMERGENCY_TARGET_MONTHS = { steady: 3, variable: 6, uncertain: 9 }
+
+export const DEFAULT_PREFS = {
+  tenure: 'either', area: null, bedrooms: null, commute: 'onsite-medium', cars: null, carStyle: 3,
+  mealsPerWeek: 2.5, groceryStyle: 'standard', fitness: 'none', hobbies: 'medium', pets: 0,
+  trips: 2.5, tripStyle: 'flight', goal: 'balanced', emergencyMonths: 1, stability: 'steady', schools: 3,
+}
+
+const bucket = (v, cuts) => cuts.findIndex(c => v <= c) + 1 || cuts.length + 1
+
+// Maps survey answers onto the five-step priorities that shape the pillar split.
+export function derivePriorities(prefs = {}) {
+  const p = { ...DEFAULT_PREFS, ...prefs }
+  return {
+    home: { rent: 2, either: 3, 'buy-later': 4, 'buy-soon': 5 }[p.tenure] ?? 3,
+    city: p.area ? { 'urban-core': 5, 'inner-suburb': 4, 'outer-suburb': 2, 'small-town': 1 }[p.area] : 3,
+    dining: bucket(p.mealsPerWeek, [0.5, 1.5, 3.5, 6]),
+    travel: bucket(p.trips, [0.5, 1.5, 3.5, 5.5]),
+    car: clamp(p.carStyle, 1, 5),
+    cushion: clamp(({ emergency: 5, debt: 4, home: 4, retire: 4, balanced: 3, enjoy: 2 }[p.goal] ?? 3) + (p.stability === 'steady' ? 0 : 1), 1, 5),
+    family: clamp(p.schools, 1, 5),
+  }
+}
+
+function typeRent(loc, t, bedrooms, roommates) {
+  const unit = b => loc.rent[Math.min(4, b)] * GROSS_TO_CONTRACT
+  if (roommates) {
+    const people = roommates + 1
+    return roundTo(unit(Math.max(2, people)) * t.rent / people)
+  }
+  return roundTo(unit(bedrooms) * t.rent)
+}
+const typePrice = (loc, t, bedrooms) => roundTo(loc.medianHome * t.price * BEDROOM_PRICE[bedrooms], 1000)
+
+// Regional prices the survey shows next to each choice. Pure and cheap.
+export function housingMenu(profile) {
+  const loc = locationFor(profile)
+  const married = !!profile.married
+  const adults = married ? 2 : 1
+  const children = Math.max(0, profile.children | 0)
+  const roommates = !married && children === 0 ? clamp(profile.roommates | 0, 0, 3) : 0
+  const need = bedroomsNeeded(children, adults)
+  const svc = loc.rpp.other / 100
+  const goods = loc.rpp.goods / 100
+  const diners = adults + 0.5 * children
+  const travelers = adults + 0.7 * children
+  const areaType = t => NEIGHBORHOOD_TYPES.find(x => x.type === t)
+  const sizeRows = type => [0, 1, 2, 3, 4].map(b => ({
+    bedrooms: b, label: b === 0 ? 'Studio' : `${b} bedroom${b > 1 ? 's' : ''}`,
+    rent: typeRent(loc, areaType(type), b, 0), price: typePrice(loc, areaType(type), b),
+    recommended: b === need,
+  }))
+  return {
+    label: loc.label, bedroomsNeeded: need, roommates,
+    areas: NEIGHBORHOOD_TYPES.map(t => ({
+      type: t.type, label: t.label, blurb: t.blurb,
+      rent: typeRent(loc, t, need, roommates), price: typePrice(loc, t, need),
+    })),
+    sizes: Object.fromEntries(NEIGHBORHOOD_TYPES.map(t => [t.type, sizeRows(t.type)])),
+    downPaymentTypical: Math.round(typePrice(loc, areaType('inner-suburb'), need) * (MORTGAGE.downPct + MORTGAGE.closingPct)),
+    mealCost: Math.round(MEAL_COST * svc),
+    dining: [0.5, 2.5, 5, 8].map(m => ({ value: m, monthly: Math.round(m * 4.33 * MEAL_COST * svc * diners) })),
+    groceries: Object.fromEntries(Object.entries(GROCERY_STYLE).map(([k, m]) => [k, Math.round(380 * (adults + 0.6 * children) * goods * m)])),
+    fitness: Object.fromEntries(Object.entries(FITNESS_MONTHLY).map(([k, v]) => [k, Math.round(v * adults * svc)])),
+    hobbies: Object.fromEntries(Object.entries(HOBBY_MONTHLY).map(([k, v]) => [k, Math.round(v * adults * svc)])),
+    pets: [0, 1, 2].map(n => ({ value: n, monthly: Math.round(n * PET_MONTHLY * svc) })),
+    tripCost: Object.fromEntries(Object.entries(TRIP_COST).map(([k, v]) => [k, Math.round(v * travelers * svc / 50) * 50])),
+    transitMonthly: Math.round(150 * svc),
+  }
+}
+
 // ── Main entry ────────────────────────────────────────────────────────────
-// profile: { incomes: number[], age, state, married, children, roommates (singles, 0–3),
-//            debtMonthly, savedForHome }
-export function computeLifestyle(profile, priorities = DEFAULT_PRIORITIES) {
-  const pr = { ...DEFAULT_PRIORITIES, ...priorities }
+// profile: { incomes: number[], age, state, city?, married, children, childrenUnder6?,
+//            roommates (singles, 0–3), debtMonthly, savedForHome, prefs? (survey answers) }
+// priorities: optional override; by default derived from the survey answers.
+export function computeLifestyle(profile, priorities) {
+  const prefs = { ...DEFAULT_PREFS, ...(profile.prefs || {}) }
+  const pr = { ...DEFAULT_PRIORITIES, ...(priorities ?? derivePriorities(prefs)) }
   const married = !!profile.married
   const adults = married ? 2 : 1
   const children = Math.max(0, profile.children | 0)
@@ -260,12 +351,12 @@ export function computeLifestyle(profile, priorities = DEFAULT_PRIORITIES) {
   const people = roommates + 1
   const debt = Math.max(0, Number(profile.debtMonthly) || 0)
   const loc = locationFor(profile)
-  const st = loc
   // Regional price parities (US = 100) applied per category.
   const goodsIdx = loc.rpp.goods / 100
   const utilIdx = loc.rpp.utilities / 100
   const svcIdx = loc.rpp.other / 100
-  const household = adults + children
+  const diners = adults + 0.5 * children
+  const travelers = adults + 0.7 * children
 
   const tax = takeHome(profile.incomes, profile.state, married, children)
   const TH = tax.monthly
@@ -273,17 +364,21 @@ export function computeLifestyle(profile, priorities = DEFAULT_PRIORITIES) {
   const pct = pillarPercents(profile, pr)
 
   // Foundation fixed costs (everything except housing)
-  const bedrooms = bedroomsNeeded(children, adults)
+  const bedrooms = Number.isFinite(prefs.bedrooms) ? clamp(prefs.bedrooms, 0, 4) : bedroomsNeeded(children, adults)
   const utilitiesTotal = (150 + 40 * bedrooms) * utilIdx
   const sharedBedrooms = Math.max(2, people)
   const utilities = roommates ? (150 + 40 * sharedBedrooms) * utilIdx / people : utilitiesTotal
-  const groceries = 380 * (adults + 0.6 * children) * goodsIdx
+  const groceries = 380 * (adults + 0.6 * children) * goodsIdx * (GROCERY_STYLE[prefs.groceryStyle] ?? 1)
   const health = 280 * adults + 120 * children
+  const pets = Math.max(0, prefs.pets | 0) * PET_MONTHLY * svcIdx
   const under6 = clamp(profile.childrenUnder6 ?? children, 0, children)
   const childcare = childcareMonthly(loc.childcare, under6, children - under6) ?? 650 * children * svcIdx
-  const transportPct = clamp(0.12 + 0.02 * (pr.car - 3), 0.07, 0.20)
-  const transport = transportPct * TH
-  const fixed = { debt, utilities, groceries, health, childcare, transport }
+  const cars = clamp(prefs.cars ?? (married ? 2 : 1), 0, 3)
+  const miles = (COMMUTE[prefs.commute] ?? COMMUTE['onsite-medium']).miles
+  const carShare = clamp(0.12 + 0.02 * (pr.car - 3), 0.07, 0.20)
+  // A second and third car each add 60% of the first car's budget.
+  const transport = cars === 0 ? 150 * svcIdx : Math.min(0.30, carShare * (1 + 0.6 * (cars - 1))) * TH
+  const fixed = { debt, utilities, groceries, health, childcare, transport, pets }
   const fixedTotal = Object.values(fixed).reduce((a, b) => a + b, 0)
 
   // Childcare comes off the top: the pillar split applies to what's left, and
@@ -299,25 +394,40 @@ export function computeLifestyle(profile, priorities = DEFAULT_PRIORITIES) {
   // the pillar budget is drawn from Lifestyle then Cushion (see `delta` below).
   const rentCap = Math.min(Math.max(housingBudget, 0.30 * gross / 12), 0.33 * gross / 12)
 
-  // Rent by neighborhood type
-  const unitRent = b => loc.rent[Math.min(4, b)] * GROSS_TO_CONTRACT
-  const rentOwn = t => unitRent(bedrooms) * t.rent
-  const rentFor = t => roommates ? unitRent(sharedBedrooms) * t.rent / people : rentOwn(t)
+  // Rent and typical purchase price by neighborhood type, for the chosen size
   const types = NEIGHBORHOOD_TYPES.map(t => {
-    const rent = roundTo(rentFor(t))
-    const typicalPrice = roundTo(st.medianHome * t.price * BEDROOM_PRICE[bedrooms], 1000)
+    const rent = typeRent(loc, t, bedrooms, roommates)
+    const typicalPrice = typePrice(loc, t, bedrooms)
     const score = pr.city * (t.walk + t.nightlife) / 2 + pr.home * t.space + pr.family * t.schools + pr.dining * t.nightlife * 0.5
     return { ...t, rent, typicalPrice, score, rentFits: rent <= rentCap, comfortable: rent <= housingBudget }
   })
   const cheapest = types.reduce((a, b) => (b.rent < a.rent ? b : a))
   const byScore = (a, b) => b.score - a.score
   const fitting = types.filter(t => t.rentFits).sort(byScore)
-  // Prefer a type that fits inside the pillar budget; only stretch when none does.
-  const best = types.filter(t => t.comfortable).sort(byScore)[0] ?? fitting[0] ?? cheapest
+  // Fallback pick: a type inside the pillar budget, else one that stretches, else the cheapest.
+  const altBest = types.filter(t => t.comfortable).sort(byScore)[0] ?? fitting[0] ?? cheapest
+  const wanted = prefs.area ? types.find(t => t.type === prefs.area) : null
+  const best = wanted && wanted.rentFits ? wanted : altBest
   const tight = fitting.length === 0
 
+  // The visitor's own pick, priced and checked against the budget
+  let pick = null
+  if (wanted) {
+    const smaller = !roommates && !wanted.rentFits
+      ? [0, 1, 2, 3, 4].filter(b => b < bedrooms).reverse().map(b => ({ bedrooms: b, rent: typeRent(loc, NEIGHBORHOOD_TYPES.find(x => x.type === wanted.type), b, 0) })).find(x => x.rent <= rentCap) ?? null
+      : null
+    pick = {
+      type: wanted.type, label: wanted.label, bedrooms, rent: wanted.rent, price: wanted.typicalPrice,
+      status: wanted.comfortable ? 'comfortable' : wanted.rentFits ? 'possible' : 'stretch',
+      overBudget: Math.max(0, Math.round(wanted.rent - housingBudget)),
+      overCap: Math.max(0, Math.round(wanted.rent - rentCap)),
+      smallerSize: smaller,
+      alternative: wanted.rentFits ? null : { type: altBest.type, label: altBest.label, rent: altBest.rent },
+    }
+  }
+
   // Housing spend and the flow of leftover dollars
-  let housingSpend = best.rent
+  const housingSpend = best.rent
   let lifestyleAmt = (pct.lifestyle / 100) * splitBase
   let cushionAmt = (pct.cushion / 100) * splitBase
   const delta = rawHousing - housingSpend
@@ -333,33 +443,52 @@ export function computeLifestyle(profile, priorities = DEFAULT_PRIORITIES) {
   }
   const stretched = cushionAmt < 0 || tight
 
-  // Lifestyle breakdown → concrete units
-  const wD = 1 + 0.35 * (pr.dining - 3)
-  const wT = 1 + 0.35 * (pr.travel - 3)
-  const wF = 1
-  const wSum = wD + wT + wF
-  const diningAmt = lifestyleAmt * wD / wSum
-  const travelAmt = lifestyleAmt * wT / wSum
-  const funAmt = lifestyleAmt * wF / wSum
-  const mealCost = 22 * svcIdx
-  const mealsPerWeekPerPerson = diningAmt / (4.33 * mealCost * household)
-  const getawayCost = 600 * svcIdx * household
-  const getawaysPerYear = (travelAmt * 12) / getawayCost
+  // Lifestyle: price the visitor's wish list in their region, then fund it from the
+  // Lifestyle envelope. Over budget → every item is scaled back equally; under →
+  // the remainder is "room to grow".
+  const mealCost = MEAL_COST * svcIdx
+  const tripCost = (TRIP_COST[prefs.tripStyle] ?? TRIP_COST.flight) * svcIdx
+  const wish = {
+    dining: prefs.mealsPerWeek * 4.33 * mealCost * diners,
+    travel: prefs.trips * tripCost * travelers / 12,
+    fun: (HOBBY_MONTHLY[prefs.hobbies] ?? 0) * adults * svcIdx,
+    fitness: (FITNESS_MONTHLY[prefs.fitness] ?? 0) * adults * svcIdx,
+  }
+  const wishTotal = Object.values(wish).reduce((a, b) => a + b, 0)
+  const coverage = wishTotal > 0 ? Math.min(1, Math.max(0, lifestyleAmt) / wishTotal) : 1
+  const funded = Object.fromEntries(Object.entries(wish).map(([k, v]) => [k, v * coverage]))
+  const flex = Math.max(0, lifestyleAmt - wishTotal)
+  const mealsPerWeekPerPerson = funded.dining / (4.33 * mealCost * diners)
+  const getawaysPerYear = tripCost * travelers > 0 ? (funded.travel * 12) / (tripCost * travelers) : 0
 
-  // Cushion breakdown
-  const downShare = pr.home >= 3 ? 0.4 : 0.2
+  // Cushion: emergency fund first when it's short, then the home fund and retirement
+  const monthlyNeeds = fixedTotal + housingSpend
+  const emergencyTarget = Math.round((EMERGENCY_TARGET_MONTHS[prefs.stability] ?? 3) * monthlyNeeds)
+  const emergencyHave = Math.round(Math.max(0, prefs.emergencyMonths) * monthlyNeeds)
+  const emergencyGap = Math.max(0, emergencyTarget - emergencyHave)
+  const share = {
+    home: clamp(({ rent: 0.05, either: 0.15, 'buy-later': 0.25, 'buy-soon': 0.40 }[prefs.tenure] ?? 0.15) + (prefs.goal === 'home' ? 0.15 : 0), 0, 0.6),
+    emergency: emergencyGap > 0 ? (prefs.goal === 'emergency' ? 0.5 : 0.3) : 0.05,
+    extraDebt: debt > 0 && prefs.goal === 'debt' ? 0.3 : 0,
+    retirement: 0.2,
+  }
+  const shareSum = Object.values(share).reduce((a, b) => a + b, 0)
+  const cushionPos = Math.max(0, cushionAmt)
+  const part = k => Math.round(cushionPos * share[k] / shareSum)
   const cushion = {
     total: Math.round(cushionAmt),
-    homeFund: Math.round(cushionAmt * downShare),
-    retirementAndEmergency: Math.round(cushionAmt * (1 - downShare)),
+    homeFund: part('home'), emergency: part('emergency'), extraDebt: part('extraDebt'), retirement: part('retirement'),
+    emergencyTarget, emergencyHave, emergencyGap,
+    monthsToEmergencyFund: emergencyGap > 0 && part('emergency') > 0 ? Math.ceil(emergencyGap / part('emergency')) : emergencyGap > 0 ? null : 0,
   }
+  cushion.retirementAndEmergency = cushion.emergency + cushion.retirement
 
   // Buying
   const maxPiti = Math.min(housingBudget, 0.28 * gross / 12)
-  const maxPrice = maxHomePrice(maxPiti, st.propTaxPct)
+  const maxPrice = maxHomePrice(maxPiti, st_propTax(loc))
   const buyTypes = types.map(t => ({ type: t.type, affordable: t.typicalPrice <= maxPrice }))
-  const buyable = types.filter(t => t.typicalPrice <= maxPrice).sort((a, b) => b.score - a.score)
-  const buyTarget = buyable[0] ?? null
+  const buyable = types.filter(t => t.typicalPrice <= maxPrice).sort(byScore)
+  const buyTarget = (wanted && wanted.typicalPrice <= maxPrice) ? wanted : (buyable[0] ?? null)
   let housing
   if (!buyTarget) {
     const closest = types.reduce((a, b) => (b.typicalPrice < a.typicalPrice ? b : a))
@@ -374,7 +503,7 @@ export function computeLifestyle(profile, priorities = DEFAULT_PRIORITIES) {
     const monthlyToHome = cushion.homeFund
     const monthsToReady = saved >= downNeeded ? 0 : monthlyToHome > 0 ? Math.ceil((downNeeded - saved) / monthlyToHome) : Infinity
     const years = monthsToReady / 12
-    const cmp = rentVsBuy(buyTarget.typicalPrice, st.propTaxPct, buyTarget.rent * (roommates ? people : 1))
+    const cmp = rentVsBuy(buyTarget.typicalPrice, loc.propTaxPct, buyTarget.rent * (roommates ? people : 1))
     const buyBeatsRent = cmp.buyNet <= cmp.rentTotal * 1.1
     let verdict
     let headline
@@ -400,9 +529,18 @@ export function computeLifestyle(profile, priorities = DEFAULT_PRIORITIES) {
       compare: cmp,
     }
   }
+  if (wanted) {
+    housing.wantedPrice = wanted.typicalPrice
+    housing.wantedPriceGap = Math.max(0, wanted.typicalPrice - maxPrice)
+  }
+
+  // Cars: budget is per household; the tier is per car
+  const car = cars === 0
+    ? { maxPrice: 0, tier: 'Car-free', monthlyBudget: Math.round(transport), cars }
+    : { ...carTier(transport / cars, profile.state, miles), cars, householdBudget: Math.round(transport) }
 
   return {
-    profile: { ...profile, married, children, roommates, childrenUnder6: under6 },
+    profile: { ...profile, married, children, roommates, childrenUnder6: under6, prefs },
     tax, pillars: {
       percents: pct,
       foundation: Math.round(fixedTotal + housingSpend),
@@ -413,19 +551,29 @@ export function computeLifestyle(profile, priorities = DEFAULT_PRIORITIES) {
       housing: Math.round(housingSpend),
       ...Object.fromEntries(Object.entries(fixed).map(([k, v]) => [k, Math.round(v)])),
     },
-    housing: { ...housing, housingBudget: Math.round(housingBudget), rentCap: Math.round(rentCap), bedrooms, people, tight, stretched },
+    housing: { ...housing, housingBudget: Math.round(housingBudget), rentCap: Math.round(rentCap), bedrooms, people, tight, stretched, pick, tenure: prefs.tenure },
     neighborhoods: types.map(({ score, ...t }) => ({ ...t, best: t.type === best.type, buyable: buyTypes.find(b => b.type === t.type).affordable })),
     best: best.type,
     lifestyle: {
       total: Math.round(lifestyleAmt),
-      dining: Math.round(diningAmt), travel: Math.round(travelAmt), fun: Math.round(funAmt),
+      dining: Math.round(funded.dining), travel: Math.round(funded.travel), fun: Math.round(funded.fun), fitness: Math.round(funded.fitness),
+      flex: Math.round(flex),
+      wishes: [
+        { key: 'dining', label: 'Dining out', wish: Math.round(wish.dining), funded: Math.round(funded.dining) },
+        { key: 'travel', label: 'Travel', wish: Math.round(wish.travel), funded: Math.round(funded.travel) },
+        { key: 'fun', label: 'Hobbies & entertainment', wish: Math.round(wish.fun), funded: Math.round(funded.fun) },
+        { key: 'fitness', label: 'Fitness', wish: Math.round(wish.fitness), funded: Math.round(funded.fitness) },
+      ].filter(w => w.wish > 0),
+      wishTotal: Math.round(wishTotal), coverage,
       mealsOutPerPersonPerWeek: Math.round(mealsPerWeekPerPerson * 10) / 10,
       getawaysPerYear: Math.round(getawaysPerYear * 10) / 10,
     },
     cushion,
-    car: carTier(transport, profile.state),
+    car,
   }
 }
+
+const st_propTax = loc => loc.propTaxPct
 
 // What would clearing existing debt free up? Debt is a fixed cost inside
 // Foundation, so paying it off flows to Lifestyle and Cushion (and a bigger
@@ -448,12 +596,17 @@ export const COST_CENTER_DEFS = [
   { key: 'utilities',  label: 'Utilities',               pillar: 'foundation', get: r => r.foundation.utilities },
   { key: 'health',     label: 'Health & insurance',      pillar: 'foundation', get: r => r.foundation.health },
   { key: 'childcare',  label: 'Childcare',               pillar: 'foundation', get: r => r.foundation.childcare },
+  { key: 'pets',       label: 'Pets',                    pillar: 'foundation', get: r => r.foundation.pets },
   { key: 'debt',       label: 'Debt payments',           pillar: 'foundation', get: r => r.foundation.debt },
   { key: 'dining',     label: 'Dining out',              pillar: 'lifestyle',  get: r => r.lifestyle.dining },
   { key: 'travel',     label: 'Travel',                  pillar: 'lifestyle',  get: r => r.lifestyle.travel },
   { key: 'fun',        label: 'Hobbies & entertainment', pillar: 'lifestyle',  get: r => r.lifestyle.fun },
+  { key: 'fitness',    label: 'Fitness',                 pillar: 'lifestyle',  get: r => r.lifestyle.fitness },
+  { key: 'flex',       label: 'Room to grow',            pillar: 'lifestyle',  get: r => r.lifestyle.flex },
+  { key: 'emergency',  label: 'Emergency fund',          pillar: 'cushion',    get: r => r.cushion.emergency },
   { key: 'homeFund',   label: 'Home fund',               pillar: 'cushion',    get: r => r.cushion.homeFund },
-  { key: 'retirement', label: 'Retirement & safety net', pillar: 'cushion',    get: r => r.cushion.retirementAndEmergency },
+  { key: 'extraDebt',  label: 'Extra debt payoff',       pillar: 'cushion',    get: r => r.cushion.extraDebt },
+  { key: 'retirement', label: 'Retirement',              pillar: 'cushion',    get: r => r.cushion.retirement },
 ]
 
 // All cost centers with their monthly amount and share of take-home pay.
@@ -467,7 +620,7 @@ export function costCenters(r) {
 
 // ── Scenarios: new job and/or new city ────────────────────────────────────
 // scenario: { state?, incomes? } — anything omitted stays as in `profile`.
-export function compareScenarios(profile, scenario, priorities = DEFAULT_PRIORITIES) {
+export function compareScenarios(profile, scenario, priorities) {
   const now = computeLifestyle(profile, priorities)
   const next = computeLifestyle({ ...profile, ...scenario }, priorities)
   const a = Object.fromEntries(costCenters(now).map(c => [c.key, c.amount]))
@@ -481,7 +634,7 @@ export function compareScenarios(profile, scenario, priorities = DEFAULT_PRIORIT
 
 // Gross household income needed in `state` to keep today's Lifestyle + Cushion
 // dollars (what you can spend on life beyond fixed costs), same household.
-export function equivalentIncome(profile, state, priorities = DEFAULT_PRIORITIES, city = null) {
+export function equivalentIncome(profile, state, priorities, city = null) {
   const baseline = computeLifestyle(profile, priorities)
   const target = baseline.pillars.lifestyle + baseline.pillars.cushion
   const total = profile.incomes.reduce((a, b) => a + (Number(b) || 0), 0)
@@ -510,16 +663,37 @@ export function moveInCash(r) {
   return { firstAndDeposit: Math.round(own * 2), setup: Math.round(setup), total: Math.round(own * 2 + setup) }
 }
 
-// Months to build a 3-month Foundation emergency fund using half of Cushion.
+// Emergency fund: target from income stability, what's already saved, and the pace
+// the Cushion allows.
 export function emergencyFund(r) {
-  const target = Math.round(3 * r.pillars.foundation)
-  const monthly = Math.max(0, r.cushion.total * 0.5)
-  return { target, monthly: Math.round(monthly), months: monthly > 0 ? Math.ceil(target / monthly) : null }
+  const c = r.cushion
+  return { target: c.emergencyTarget, have: c.emergencyHave, gap: c.emergencyGap, monthly: c.emergency, months: c.monthsToEmergencyFund }
 }
 
-// How the user's priorities redirect money versus a neutral set of priorities.
-export function priorityShifts(profile, priorities) {
-  const mine = costCenters(computeLifestyle(profile, priorities))
-  const base = Object.fromEntries(costCenters(computeLifestyle(profile, DEFAULT_PRIORITIES)).map(c => [c.key, c.amount]))
-  return mine.map(c => ({ ...c, delta: c.amount - base[c.key] })).sort((a, b) => b.delta - a.delta)
+// How the visitor's answers redirect money versus a neutral set of answers.
+export function priorityShifts(profile) {
+  const mine = costCenters(computeLifestyle(profile))
+  const base = Object.fromEntries(costCenters(computeLifestyle({ ...profile, prefs: {}, roommates: profile.roommates })).map(c => [c.key, c.amount]))
+  return mine.map(c => ({ ...c, delta: c.amount - (base[c.key] ?? 0) })).sort((a, b) => b.delta - a.delta)
+}
+
+// Smallest gross income (same household, same place) at which the visitor's whole
+// wish list is funded and their chosen home is no stretch. Returns null when it
+// already is, or when even 4× today's income would not do it.
+export function incomeForWishList(profile, priorities) {
+  const ok = k => {
+    const r = computeLifestyle({ ...profile, incomes: profile.incomes.map(i => (Number(i) || 0) * k) }, priorities)
+    return r.lifestyle.coverage >= 0.999 && (!r.housing.pick || r.housing.pick.status !== 'stretch') && r.cushion.total >= 0
+  }
+  if (ok(1)) return null
+  if (!ok(4)) return null
+  let lo = 1
+  let hi = 4
+  for (let i = 0; i < 30; i++) {
+    const mid = (lo + hi) / 2
+    if (ok(mid)) hi = mid
+    else lo = mid
+  }
+  const total = profile.incomes.reduce((a, b) => a + (Number(b) || 0), 0)
+  return { income: Math.round(total * hi / 1000) * 1000, ratio: hi }
 }

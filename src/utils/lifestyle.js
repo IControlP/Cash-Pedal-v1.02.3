@@ -366,3 +366,87 @@ export function debtPayoffGain(profile, priorities) {
     homePrice: clear.housing.maxPrice - base.housing.maxPrice,
   }
 }
+
+// ── Cost centers (for charts) ─────────────────────────────────────────────
+export const COST_CENTER_DEFS = [
+  { key: 'housing',    label: 'Housing',                 pillar: 'foundation', get: r => r.foundation.housing },
+  { key: 'groceries',  label: 'Groceries',               pillar: 'foundation', get: r => r.foundation.groceries },
+  { key: 'transport',  label: 'Car & transport',         pillar: 'foundation', get: r => r.foundation.transport },
+  { key: 'utilities',  label: 'Utilities',               pillar: 'foundation', get: r => r.foundation.utilities },
+  { key: 'health',     label: 'Health & insurance',      pillar: 'foundation', get: r => r.foundation.health },
+  { key: 'childcare',  label: 'Childcare',               pillar: 'foundation', get: r => r.foundation.childcare },
+  { key: 'debt',       label: 'Debt payments',           pillar: 'foundation', get: r => r.foundation.debt },
+  { key: 'dining',     label: 'Dining out',              pillar: 'lifestyle',  get: r => r.lifestyle.dining },
+  { key: 'travel',     label: 'Travel',                  pillar: 'lifestyle',  get: r => r.lifestyle.travel },
+  { key: 'fun',        label: 'Hobbies & entertainment', pillar: 'lifestyle',  get: r => r.lifestyle.fun },
+  { key: 'homeFund',   label: 'Home fund',               pillar: 'cushion',    get: r => r.cushion.homeFund },
+  { key: 'retirement', label: 'Retirement & safety net', pillar: 'cushion',    get: r => r.cushion.retirementAndEmergency },
+]
+
+// All cost centers with their monthly amount and share of take-home pay.
+export function costCenters(r) {
+  const take = Math.max(1, r.tax.monthly)
+  return COST_CENTER_DEFS.map(d => {
+    const amount = Math.max(0, Math.round(d.get(r)))
+    return { key: d.key, label: d.label, pillar: d.pillar, amount, share: amount / take }
+  })
+}
+
+// ── Scenarios: new job and/or new city ────────────────────────────────────
+// scenario: { state?, incomes? } — anything omitted stays as in `profile`.
+export function compareScenarios(profile, scenario, priorities = DEFAULT_PRIORITIES) {
+  const now = computeLifestyle(profile, priorities)
+  const next = computeLifestyle({ ...profile, ...scenario }, priorities)
+  const a = Object.fromEntries(costCenters(now).map(c => [c.key, c.amount]))
+  const rows = costCenters(next).map(c => ({ ...c, before: a[c.key], delta: c.amount - a[c.key] }))
+  return {
+    now, next, rows,
+    takeHomeDelta: next.tax.monthly - now.tax.monthly,
+    discretionaryDelta: (next.pillars.lifestyle + next.pillars.cushion) - (now.pillars.lifestyle + now.pillars.cushion),
+  }
+}
+
+// Gross household income needed in `state` to keep today's Lifestyle + Cushion
+// dollars (what you can spend on life beyond fixed costs), same household.
+export function equivalentIncome(profile, state, priorities = DEFAULT_PRIORITIES) {
+  const baseline = computeLifestyle(profile, priorities)
+  const target = baseline.pillars.lifestyle + baseline.pillars.cushion
+  const total = profile.incomes.reduce((a, b) => a + (Number(b) || 0), 0)
+  const at = k => {
+    const r = computeLifestyle({ ...profile, state, incomes: profile.incomes.map(i => (Number(i) || 0) * k) }, priorities)
+    return r.pillars.lifestyle + r.pillars.cushion
+  }
+  let lo = 0.3
+  let hi = 4
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2
+    if (at(mid) < target) lo = mid
+    else hi = mid
+  }
+  const income = Math.round(total * hi / 500) * 500
+  return { income, ratio: hi }
+}
+
+// Life-stage helpers --------------------------------------------------------
+// Cash needed to move into a first place: first month + deposit + setup.
+export function moveInCash(r) {
+  const rent = r.foundation.housing * Math.max(1, r.housing.people)
+  const pi = (STATES[r.profile.state]?.priceIndex ?? 100) / 100
+  const own = r.profile.roommates ? r.foundation.housing : rent
+  const setup = 1800 * pi
+  return { firstAndDeposit: Math.round(own * 2), setup: Math.round(setup), total: Math.round(own * 2 + setup) }
+}
+
+// Months to build a 3-month Foundation emergency fund using half of Cushion.
+export function emergencyFund(r) {
+  const target = Math.round(3 * r.pillars.foundation)
+  const monthly = Math.max(0, r.cushion.total * 0.5)
+  return { target, monthly: Math.round(monthly), months: monthly > 0 ? Math.ceil(target / monthly) : null }
+}
+
+// How the user's priorities redirect money versus a neutral set of priorities.
+export function priorityShifts(profile, priorities) {
+  const mine = costCenters(computeLifestyle(profile, priorities))
+  const base = Object.fromEntries(costCenters(computeLifestyle(profile, DEFAULT_PRIORITIES)).map(c => [c.key, c.amount]))
+  return mine.map(c => ({ ...c, delta: c.amount - base[c.key] })).sort((a, b) => b.delta - a.delta)
+}

@@ -178,3 +178,33 @@ PDF export, debt and student-loan inputs, second-income detail, server-side API.
 2. ~~Debt in v1?~~ **Decided:** yes; total monthly debt payments are a fixed cost in Foundation.
 3. ~~Pillar names~~ **Decided:** Foundation / Lifestyle / Cushion (savings folds into Cushion).
 4. ~~Brand~~ **Decided:** stay "Cash Pedal" for now.
+
+## 11. Life stages and cost-center visuals (built)
+
+Step 0 asks what brings the visitor here; the answer seeds the survey sliders and adds a
+tailored panel to the results:
+
+| Stage | Seeds | Results panel |
+|---|---|---|
+| Moving out of parents' home | roommates = 1, walkability up | cash needed to move in (first + deposit + setup) |
+| Improving my finances | Cushion 5, dining/travel low | months to a 3-month safety net; levers (trim dining, clear debt) |
+| Living with intention | neutral, user-driven | where priorities move dollars vs a neutral split |
+| Moving to a new city | asks destination state | cost-center comparison + income needed to keep today's Lifestyle + Cushion |
+| Taking a new job | asks new salary / state | take-home and cost-center change |
+
+Visuals (`src/components/CostCenterChart.jsx`): ranked bars of 12 cost centers colored by
+pillar (palette validated on the site's dark surface), direct $ and % labels, legend, and a
+"view as table" toggle; a Now-vs-New paired-bar chart for scenarios.
+
+## 12. City-level costs (not built — blocked on data)
+
+Requirement: costs by **city and state**, US only. Today only state-level placeholders exist.
+Plan: add `src/data/lifestyleCities.json` keyed by `STATE|City` with the same fields as the
+state table (rent by bedroom count, home value, property tax, price index, plus category
+indexes for groceries / utilities / health / transport / childcare), a city selector that
+falls back to the state row, and a one-shot build script in `scripts/patches/` that cites a
+source per figure. Candidate sources: HUD Small Area / Fair Market Rents (rent), Census ACS
+place-level tables (rent, home value, property tax), BEA Regional Price Parities by metro
+(goods and services indexes), BLS Consumer Expenditure by metro, MIT Living Wage (childcare,
+food, medical, transport by metro/county). The build environment cannot reach these hosts
+today (network policy), so this needs either an allowlist change or the source files supplied.

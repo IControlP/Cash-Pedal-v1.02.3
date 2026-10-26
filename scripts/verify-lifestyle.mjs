@@ -1,5 +1,5 @@
 // Sanity harness for the lifestyle engine (runs in CI alongside verify-tco.mjs).
-import { computeLifestyle, takeHome, STATES, debtPayoffGain } from '../src/utils/lifestyle.js'
+import { computeLifestyle, takeHome, STATES, debtPayoffGain, costCenters, compareScenarios, equivalentIncome } from '../src/utils/lifestyle.js'
 
 let failures = 0
 const check = (name, ok, info = '') => {
@@ -59,5 +59,23 @@ const saver = computeLifestyle(base, { cushion: 5 })
 const neutral = computeLifestyle(base)
 check('foodie gets more lifestyle', foodie.pillars.percents.lifestyle > neutral.pillars.percents.lifestyle)
 check('saver gets more cushion', saver.pillars.percents.cushion > neutral.pillars.percents.cushion)
+
+// Cost centers add up to the three pillars.
+{
+  const r = computeLifestyle(profiles.couple160kids)
+  const cc = costCenters(r)
+  const sum = cc.reduce((a, c) => a + c.amount, 0)
+  check('cost centers sum to take-home', Math.abs(sum - r.tax.monthly) <= 12, `${sum} vs ${r.tax.monthly}`)
+}
+
+// Scenarios: a raise helps, an equivalent income in a pricier state is higher.
+{
+  const up = compareScenarios(base, { incomes: [100000] })
+  check('raise increases discretionary money', up.discretionaryDelta > 0)
+  const need = equivalentIncome({ ...base, state: 'TX' }, 'CA')
+  check('CA needs more income than TX for the same life', need.income > 75000, `${need.income}`)
+  const back = equivalentIncome({ ...base, state: 'CA' }, 'TX')
+  check('TX needs less income than CA for the same life', back.income < 75000, `${back.income}`)
+}
 
 process.exit(failures ? 1 : 0)

@@ -5,9 +5,11 @@ import Footer from '../components/Footer'
 import { trackEvent } from '../utils/analytics'
 import { safeGet, safeSet } from '../utils/safeStorage'
 import {
-  computeLifestyle, debtPayoffGain, AGE_RANGES, DEFAULT_PRIORITIES, PRIORITY_KEYS,
+  computeLifestyle, debtPayoffGain, AGE_RANGES, DEFAULT_PRIORITIES,
+  costCenters, compareScenarios, equivalentIncome, moveInCash, emergencyFund, priorityShifts,
 } from '../utils/lifestyle.js'
-import { priorityQuestions, STATE_LIST } from '../data/lifestyleSurvey'
+import { priorityQuestions, STATE_LIST, LIFE_STAGES, PILLAR_COLORS } from '../data/lifestyleSurvey'
+import { CostCenterChart, ScenarioChart } from '../components/CostCenterChart'
 
 const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
 const STORAGE_KEY = 'cp_lifestyle_profile'
@@ -15,12 +17,13 @@ const STORAGE_KEY = 'cp_lifestyle_profile'
 const DEFAULT_FORM = {
   married: false, income1: '', income2: '', age: '25-34', state: 'TX',
   children: 0, roommates: 0, debt: '', saved: '',
+  destState: '', newIncome: '', newState: '',
 }
 
 const PILLARS = [
-  { key: 'foundation', label: 'Foundation', sub: 'Housing, bills, groceries, car, debt', color: '#5FE0B8' },
-  { key: 'lifestyle', label: 'Lifestyle', sub: 'Dining, travel, fun', color: 'var(--accent)' },
-  { key: 'cushion', label: 'Cushion', sub: 'Savings, home fund, safety net', color: '#7aa2ff' },
+  { key: 'foundation', label: 'Foundation', sub: 'Housing, bills, groceries, car, debt', color: PILLAR_COLORS.foundation },
+  { key: 'lifestyle', label: 'Lifestyle', sub: 'Dining, travel, fun', color: PILLAR_COLORS.lifestyle },
+  { key: 'cushion', label: 'Cushion', sub: 'Savings, home fund, safety net', color: PILLAR_COLORS.cushion },
 ]
 
 function Field({ label, children, hint }) {
@@ -112,7 +115,8 @@ function PrioritySliders({ priorities, onChange }) {
 }
 
 export default function LifestyleCalculator() {
-  const [step, setStep] = useState('profile') // profile | survey | results
+  const [step, setStep] = useState('stage') // stage | profile | survey | results
+  const [stageId, setStageId] = useState(null)
   const [form, setForm] = useState(DEFAULT_FORM)
   const [priorities, setPriorities] = useState(DEFAULT_PRIORITIES)
   const [q, setQ] = useState(0)
@@ -122,6 +126,7 @@ export default function LifestyleCalculator() {
       const saved = JSON.parse(safeGet(STORAGE_KEY) || 'null')
       if (saved?.form) setForm(f => ({ ...f, ...saved.form }))
       if (saved?.priorities) setPriorities(p => ({ ...p, ...saved.priorities }))
+      if (saved?.stageId) setStageId(saved.stageId)
     } catch { /* ignore corrupt cache */ }
     // Prefill from the landing entry card (?income=75000&state=TX)
     const qs = new URLSearchParams(window.location.search)
@@ -146,13 +151,39 @@ export default function LifestyleCalculator() {
     debtMonthly: Number(form.debt) || 0, savedForHome: Number(form.saved) || 0,
   }), [form, income1, income2])
 
+  const stage = LIFE_STAGES.find(x => x.id === stageId) ?? null
+  const destState = form.destState && form.destState !== form.state ? form.destState : ''
+  const newIncome = Number(form.newIncome) || 0
+  // The what-if: a new state (city move) and/or a new salary (new job).
+  const scenario = useMemo(() => {
+    if (!stage?.scenario) return null
+    if (stage.scenario === 'city') return destState ? { state: destState } : null
+    const st = form.newState || form.state
+    if (!newIncome && st === form.state) return null
+    return { state: st, ...(newIncome ? { incomes: form.married ? [newIncome, income2] : [newIncome] } : {}) }
+  }, [stage, destState, newIncome, form.newState, form.state, form.married, income2])
+
   const result = useMemo(() => (step === 'results' && canContinue ? computeLifestyle(profile, priorities) : null), [step, profile, priorities, canContinue])
   const payoff = useMemo(() => (result ? debtPayoffGain(profile, priorities) : null), [result, profile, priorities])
   const ownPlace = useMemo(() => (result && !form.married && form.children === 0 && form.roommates > 0
     ? computeLifestyle({ ...profile, roommates: 0 }, priorities) : null), [result, form, profile, priorities])
 
+  const compare = useMemo(() => (result && scenario ? compareScenarios(profile, scenario, priorities) : null), [result, scenario, profile, priorities])
+  const needIncome = useMemo(() => (result && stage?.scenario === 'city' && destState ? equivalentIncome(profile, destState, priorities) : null), [result, stage, destState, profile, priorities])
+  const centers = useMemo(() => (result ? costCenters(result) : []), [result])
+  const shifts = useMemo(() => (result && stage?.id === 'intention' ? priorityShifts(profile, priorities) : null), [result, stage, profile, priorities])
+
+  function chooseStage(st) {
+    setStageId(st.id)
+    setPriorities(st.preset)
+    setForm(f => ({ ...f, roommates: st.roommates != null && !f.married && f.children === 0 ? st.roommates : f.roommates }))
+    trackEvent('lifestyle_stage_selected', { stage: st.id })
+    setStep('profile')
+    window.scrollTo?.({ top: 0 })
+  }
+
   function persist() {
-    try { safeSet(STORAGE_KEY, JSON.stringify({ form, priorities })) } catch { /* storage blocked */ }
+    try { safeSet(STORAGE_KEY, JSON.stringify({ form, priorities, stageId })) } catch { /* storage blocked */ }
   }
 
   function goSurvey() {
@@ -182,11 +213,35 @@ export default function LifestyleCalculator() {
     </div>
   )
 
+  // ── Step 0: life stage ──
+  if (step === 'stage') {
+    return shell(
+      <>
+        <h1 className="font-display font-extrabold text-white text-3xl sm:text-4xl mb-3">See the life your income can build</h1>
+        <p className="text-[var(--text-muted)] text-lg mb-8">What brings you here? We'll tailor your results to where you are right now.</p>
+        <div className="grid gap-3">
+          {LIFE_STAGES.map(st => (
+            <button key={st.id} type="button" onClick={() => chooseStage(st)}
+              className="card text-left flex items-start gap-4 transition-colors hover:border-[var(--accent)]">
+              <span className="text-3xl">{st.emoji}</span>
+              <span>
+                <span className="block text-white font-bold text-lg">{st.label}</span>
+                <span className="block text-sm text-[var(--text-muted)]">{st.blurb}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-[var(--text-muted)] mt-6">United States only. Estimates for education, not financial advice.</p>
+      </>
+    )
+  }
+
   // ── Step 1: profile ──
   if (step === 'profile') {
     return shell(
       <>
-        <h1 className="font-display font-extrabold text-white text-3xl sm:text-4xl mb-3">See the life your income can build</h1>
+        <button className="text-sm text-[var(--text-muted)] hover:text-white mb-4" onClick={() => setStep('stage')}>← {stage?.label}</button>
+        <h1 className="font-display font-extrabold text-white text-3xl sm:text-4xl mb-3">Your financial profile</h1>
         <p className="text-[var(--text-muted)] text-lg mb-8">
           Tell us a little about you, then what matters most. We'll show the home, neighborhoods, nights out and
           car your budget supports.
@@ -245,6 +300,26 @@ export default function LifestyleCalculator() {
               <MoneyInput value={form.saved} onChange={v => set('saved', v)} placeholder="0" />
             </Field>
           </div>
+          {stage?.scenario === 'city' && (
+            <Field label="Where are you thinking of moving?" hint="We'll compare your costs and the pay needed to keep your lifestyle.">
+              <select className="input-field" value={form.destState} onChange={e => set('destState', e.target.value)}>
+                <option value="">Choose a state…</option>
+                {STATE_LIST.filter(([c]) => c !== form.state).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+              </select>
+            </Field>
+          )}
+          {stage?.scenario === 'job' && (
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Field label="New job's gross annual income">
+                <MoneyInput value={form.newIncome} onChange={v => set('newIncome', v)} placeholder="95000" />
+              </Field>
+              <Field label="New job's state" hint="Leave as is if you're not relocating.">
+                <select className="input-field" value={form.newState || form.state} onChange={e => set('newState', e.target.value)}>
+                  {STATE_LIST.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+                </select>
+              </Field>
+            </div>
+          )}
           <button className="btn-primary justify-center py-4" disabled={!canContinue} onClick={goSurvey}>
             Next: what matters to you →
           </button>
@@ -318,6 +393,88 @@ export default function LifestyleCalculator() {
           </p>
         )}
       </section>
+
+      <section className="card mb-6">
+        <h2 className="font-display font-bold text-white text-xl mb-1">Where your money goes</h2>
+        <p className="text-sm text-[var(--text-muted)] mb-4">Each cost center per month, and its share of your take-home pay.</p>
+        <CostCenterChart centers={centers} />
+      </section>
+
+      {stage && (
+        <section className="card mb-6" style={{ borderColor: 'var(--accent)' }}>
+          <h2 className="font-display font-bold text-white text-xl mb-1">{stage.emoji} {stage.label}</h2>
+          {stage.id === 'moving-out' && (() => {
+            const m = moveInCash(r)
+            return (
+              <>
+                <p className="text-white font-semibold">Plan on about {usd(m.total)} in cash to move in</p>
+                <p className="text-sm text-[var(--text-muted)] mt-1">
+                  First month plus deposit (~{usd(m.firstAndDeposit)}) and about {usd(m.setup)} to furnish and set up. Once you're in,
+                  you can still direct {usd(r.pillars.lifestyle)}/month to Lifestyle and {usd(r.pillars.cushion)}/month to Cushion.
+                </p>
+              </>
+            )
+          })()}
+          {stage.id === 'improve' && (() => {
+            const e = emergencyFund(r)
+            const trim = Math.round(r.lifestyle.dining * 0.25)
+            return (
+              <>
+                <p className="text-white font-semibold">
+                  {e.months != null ? `A 3-month safety net (${usd(e.target)}) is about ${e.months} months away` : `A 3-month safety net is ${usd(e.target)}`}
+                </p>
+                <p className="text-sm text-[var(--text-muted)] mt-1">
+                  Using half of your Cushion ({usd(e.monthly)}/month). Trimming dining out by a quarter would add {usd(trim)}/month
+                  {payoff?.monthly > 0 ? `, and clearing debt payments frees ${usd(payoff.monthly)}/month` : ''}.
+                </p>
+              </>
+            )
+          })()}
+          {stage.id === 'intention' && shifts && (
+            <>
+              <p className="text-white font-semibold">Your priorities, in dollars</p>
+              <p className="text-sm text-[var(--text-muted)] mt-1 mb-3">Compared with a neutral set of priorities, here is where your money moves.</p>
+              {shifts.every(x => x.delta === 0) && (
+                <p className="text-sm text-[var(--text-muted)]">Your answers match the neutral split. Move the sliders below to see money shift toward what you care about.</p>
+              )}
+              <ul className="flex flex-col gap-1.5">
+                {[...shifts.slice(0, 3), ...shifts.slice(-1)].filter((x, i, a) => x.delta !== 0 && a.indexOf(x) === i).map(x => (
+                  <li key={x.key} className="flex justify-between text-sm">
+                    <span className="text-white">{x.label}</span>
+                    <span className="tabular-nums text-white">{x.delta > 0 ? '▲' : '▼'} {usd(Math.abs(x.delta))}/mo</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {stage.scenario && !compare && (
+            <p className="text-sm text-[var(--text-muted)]">
+              {stage.scenario === 'city' ? 'Choose a destination state to compare.' : 'Enter a new salary or a new state to compare.'}{' '}
+              <button className="underline" onClick={() => setStep('profile')}>Add it now</button>
+            </p>
+          )}
+          {compare && (
+            <>
+              <p className="text-white font-semibold mt-1">
+                {stage.scenario === 'city'
+                  ? `In ${STATE_LIST.find(x => x[0] === destState)?.[1]}, at the same income`
+                  : 'With the new job'}
+                : take-home {compare.takeHomeDelta >= 0 ? 'rises ▲' : 'falls ▼'} {usd(Math.abs(compare.takeHomeDelta))}/month, and what's left for Lifestyle and Cushion {compare.discretionaryDelta >= 0 ? 'grows ▲' : 'shrinks ▼'} {usd(Math.abs(compare.discretionaryDelta))}/month.
+              </p>
+              {needIncome && (
+                <p className="text-sm mt-1" style={{ color: 'var(--success, #5FE0B8)' }}>
+                  To keep today's Lifestyle and Cushion there, you'd want about {usd(needIncome.income)}/year
+                  ({needIncome.ratio >= 1 ? `${Math.round((needIncome.ratio - 1) * 100)}% more` : `${Math.round((1 - needIncome.ratio) * 100)}% less`} than now).
+                </p>
+              )}
+              <div className="mt-5">
+                <ScenarioChart rows={compare.rows} nowLabel={STATE_LIST.find(x => x[0] === form.state)?.[1] ?? 'Now'}
+                  nextLabel={stage.scenario === 'city' ? STATE_LIST.find(x => x[0] === destState)?.[1] : 'New job'} />
+              </div>
+            </>
+          )}
+        </section>
+      )}
 
       <section className="card mb-6">
         <h2 className="font-display font-bold text-white text-xl mb-1">🏡 Where you can live</h2>

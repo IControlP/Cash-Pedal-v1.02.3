@@ -14,10 +14,12 @@ result. Routes, SEO pages and guides are untouched.
 ## 2. User flow (target: under 2 minutes)
 
 1. **Profile** (one screen)
-   - Gross annual salary (household if married/partnered; optional second income)
+   - Marital status: single / married-partnered (asked first; it changes the income fields)
+   - Gross annual salary — **single**: one income. **Married/partnered**: your income plus
+     partner's income (joint household; partner may be $0)
    - Age range: 18–24, 25–34, 35–44, 45–54, 55+
    - State (existing `US_STATES`)
-   - Marital status: single / married-partnered
+   - Living arrangement (singles only): **own place** or **with roommates** (1–3)
    - Children: none / 1 / 2 / 3+
 2. **Priorities survey** (8–10 short questions, 1–5 scale, reusing the slider UI of `CarSurvey`)
    - Space & home ownership · Walkability / city life · Dining & entertainment ·
@@ -32,6 +34,20 @@ result. Routes, SEO pages and guides are untouched.
    - **Savings**: monthly amount and a "you could do more of X by trading Y" toggle
 4. **Trade-off sliders** — drag a priority up and watch the other lines shift, always
    phrased as "you gain" first, with the cost shown as a smaller secondary line.
+
+### 2a. Household and living arrangement
+
+| Household | Income used | Housing options modeled |
+|---|---|---|
+| Single | One income | Own place (studio / 1BR) **or** roommates: rent = shared 2–4BR rent ÷ people, plus a roommate utilities split |
+| Married / partnered | Joint income; taxed as married filing jointly | Own place sized to household (1–3BR by kids) |
+
+- Singles see a **Own place vs Roommates** toggle on the result. Roommates lower the
+  Foundation housing line and free dollars for Lifestyle/Future, shown as a gain:
+  "Roommates add ~$X/mo to travel and savings".
+- Roommate count only applies to rent; buy mode assumes the household alone (an
+  optional "house hack" note can come later).
+- Tax, childcare and the 28/36 mortgage ratios use the joint figure for couples.
 
 ## 3. Budget pillars
 
@@ -61,12 +77,12 @@ Stated as presets the user can accept or override: *Balanced*, *Experience-first
 Pure functions, no browser APIs, so the server can pre-render and an agent API can
 reuse them.
 
-- `takeHome(grossAnnual, state, maritalStatus, children)` — federal brackets
+- `takeHome(incomes[], state, maritalStatus, children)` — federal brackets
   (standard deduction, filing status), FICA, state income tax via static table in
   `src/data/taxData.json`. Child tax credit simplified. Estimates only.
 - `buildAllocation(profile, priorities)` → `{ foundation, lifestyle, future, cushion }`
   in dollars/month with sub-lines.
-- `housingOptions(allocation, profile, stateData)` →
+- `housingOptions(allocation, profile, stateData) // profile.roommates: 0–3 (singles)` →
   `{ rent: {maxMonthly, typicalBedrooms}, buy: {maxPrice, monthlyPITI, downPaymentNeeded, yearsToSave}, verdict }`
   - Buy affordability: max PITI at 28% of gross and ≤ Foundation housing line;
     20% or 10% down, 30-yr rate default (editable), tax + insurance from state data.
@@ -154,7 +170,8 @@ PDF export, debt and student-loan inputs, second-income detail, server-side API.
 
 ## 10. Open questions
 
-1. Single gross household income input, or collect two incomes?
+1. ~~Single household income or two incomes?~~ **Decided:** by marital status — one income
+   for singles, joint income for couples; singles also choose own place vs roommates.
 2. Add debt (student loans, existing car payment) in v1? It materially changes results.
 3. Pillar names — keep Foundation / Lifestyle / Future / Cushion, or use needs / wants / savings?
 4. Brand: stay "Cash Pedal", or reposition the name and domain copy?

@@ -1,5 +1,5 @@
 // Sanity harness for the lifestyle engine (runs in CI alongside verify-tco.mjs).
-import { computeLifestyle, takeHome, stateIncomeTax, STATES, debtPayoffGain, costCenters, compareScenarios, equivalentIncome } from '../src/utils/lifestyle.js'
+import { computeLifestyle, takeHome, stateIncomeTax, childcareMonthly, cheapCarInsuranceFactor, STATES, debtPayoffGain, costCenters, compareScenarios, equivalentIncome } from '../src/utils/lifestyle.js'
 
 let failures = 0
 const check = (name, ok, info = '') => {
@@ -88,6 +88,20 @@ check('saver gets more cushion', saver.pillars.percents.cushion > neutral.pillar
   check('NY $100k single in 4k–6.5k', ny > 4000 && ny < 6500, `${ny}`)
   check('state tax rises with income', ['CA', 'NY', 'OR', 'MA'].every(s => stateIncomeTax(200000, s, false) > stateIncomeTax(100000, s, false)))
   check('kids never raise state tax', stateIncomeTax(100000, 'AL', true, 0) >= stateIncomeTax(100000, 'AL', true, 2))
+}
+
+// Child care: daycare for under-6s costs far more than school-age care, and more kids cost more.
+{
+  const den = JSON.parse((await import('node:fs')).readFileSync(new URL('../src/data/lifestyleCities.json', import.meta.url), 'utf8')).cities.find(c => c.id === 'CO|Denver')
+  const kid = (n, u) => computeLifestyle({ ...base, incomes: [90000, 70000], married: true, state: 'CO', city: den, children: n, childrenUnder6: u }).foundation.childcare
+  check('Denver 1 child in daycare ≈ $1,500–2,000/mo', kid(1, 1) > 1500 && kid(1, 1) < 2000, `${kid(1, 1)}`)
+  check('daycare costs more than school-age care', kid(2, 2) > kid(2, 0) * 2)
+  check('more children cost more', kid(2, 2) > kid(1, 1) && kid(3, 3) > kid(2, 2))
+  check('no children, no child care', kid(0, 0) === 0)
+  check('childcareMonthly(null) falls back', childcareMonthly(null, 1, 0) === null)
+  check('cheap-car insurance factor ramps 0.6 → 1', cheapCarInsuranceFactor(5000) === 0.6 && cheapCarInsuranceFactor(15000) === 1 && cheapCarInsuranceFactor(11500) > 0.6)
+  const den55 = computeLifestyle({ ...base, incomes: [55000], state: 'CO', city: den })
+  check('Denver $55k single gets a car tier, not car-light', den55.car.maxPrice > 0, `${den55.car.tier} ${den55.car.maxPrice}`)
 }
 
 // City data: structure, and cities move results in the right direction.

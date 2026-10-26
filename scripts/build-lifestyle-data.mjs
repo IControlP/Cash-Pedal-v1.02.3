@@ -10,6 +10,9 @@
 //       B01003 population
 //   • BEA Regional Price Parities 2024 (apps.bea.gov): SARPP (state) and MARPP
 //       (metro) — all items, goods, housing, utilities, other services
+//   • MIT Living Wage Calculator typical expenses (livingwage.mit.edu): annual center-based
+//       child care for 1, 2 and 3 children, per state and metro area (MIT builds it from the
+//       US DOL National Database of Childcare Prices and Child Care Aware of America).
 //   • Tax Foundation, State Individual Income Tax Rates and Brackets, 2026
 //       (taxfoundation.org): brackets, standard deduction and exemptions by state.
 
@@ -108,8 +111,8 @@ const STATE_ABBR = Object.fromEntries([...geo.values()].filter(g => g.level === 
 const beaState = readBea('SARPP_STATE_2008_2024.csv', (_id, name) => STATE_ABBR[name.replace(/\*/g, '').trim()])
 for (const v of Object.values(beaState)) delete v.name
 const beaMetroRaw = readBea('MARPP_MSA_2008_2024.csv', id => (id === '00000' ? null : id))
-const metros = Object.values(beaMetroRaw)
-  .map(x => ({ ...x, name: x.name.replace(/\s*\(Metropolitan Statistical Area\)\s*/i, '').trim() }))
+const metros = Object.entries(beaMetroRaw)
+  .map(([code, x]) => ({ ...x, code, name: x.name.replace(/\s*\(Metropolitan Statistical Area\)\s*/i, '').trim() }))
   .filter(x => x.all && x.goods && x.utilities && x.other)
 
 // Principal-city lookup: "Austin-Round Rock-Georgetown, TX" → tokens + states.
@@ -166,6 +169,21 @@ const stateTax = parseStateTax()
 // Washington's 7% applies to long-term capital gains only; there is no tax on wages.
 delete stateTax.WA
 
+// ── Child care (MIT Living Wage typical expenses) ─────────────────────────
+// The "Child Care" row lists 12 annual figures: 1 adult (0,1,2,3 children), then
+// 2 adults one working, then 2 adults both working. The 1-adult columns for 1–3
+// children are what we need.
+function parseMit(file) {
+  if (!fs.existsSync(file)) return null
+  const t = stripTags(fs.readFileSync(file, 'utf8'))
+  const i = t.indexOf('Child Care')
+  if (i < 0) return null
+  const vals = [...t.slice(i, i + 400).matchAll(/\$([\d,]+)/g)].slice(0, 12).map(m => Number(m[1].replace(/,/g, '')))
+  if (vals.length < 4 || vals[0] !== 0 || !(vals[1] > 0 && vals[2] >= vals[1] && vals[3] >= vals[2])) return null
+  return { 1: vals[1], 2: vals[2], 3: vals[3] }
+}
+const stateFips = Object.fromEntries([...geo.entries()].filter(([, g]) => g.level === '040').map(([id, g]) => [g.st, id.slice(-2)]))
+
 // ── States ───────────────────────────────────────────────────────────────
 const states = {}
 const stateRatios = {}
@@ -184,6 +202,7 @@ for (const [id, g] of geo) {
     propTaxPct: r.home && r.tax ? Math.round((r.tax / r.home) * 10000) / 100 : null,
     rpp: beaState[code],
     stateTax: stateTax[code] ?? null,
+    childcare: parseMit(path.join(DIR, 'mit', 'states', `${stateFips[code]}.html`)),
   }
 }
 // DC is a state-equivalent in both sources; make sure all 51 are present.
@@ -203,6 +222,7 @@ const out = {
       medianHome: 'median value of owner-occupied homes, USD',
       propTaxPct: 'effective property tax, % of value per year',
       rpp: 'BEA regional price parities, US = 100: all, goods, housing, utilities, other (services)',
+      childcare: 'annual center-based child care for 1, 2 and 3 children (MIT Living Wage; blended toddler/preschool/school-age)',
       stateTax: 'per filing status: brackets [[floor, rate]], std deduction, personal exemption (or credit), plus dependent exemption',
     },
   },
@@ -262,6 +282,7 @@ const outCities = kept.map(c => {
     propTaxPct: c.r.tax ? Math.round((c.r.tax / c.r.home) * 10000) / 100 : st.propTaxPct,
     rpp: m ? { all: m.all, goods: m.goods, utilities: m.utilities, other: m.other } : null,
     metro: m?.name ?? null,
+    childcare: m ? parseMit(path.join(DIR, 'mit', 'metros', `${m.code}.html`)) : null,
     ...(estimated ? { rentEstimated: true } : {}),
   }
 }).sort((a, b) => a.state.localeCompare(b.state) || b.pop - a.pop)

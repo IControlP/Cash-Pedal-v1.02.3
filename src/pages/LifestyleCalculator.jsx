@@ -28,7 +28,7 @@ const STORAGE_KEY = 'cp_lifestyle_profile'
 
 const DEFAULT_FORM = {
   married: false, income1: '', income2: '', age: '25-34', state: 'TX',
-  children: 0, roommates: 0, debt: '', saved: '',
+  children: 0, under6: '', roommates: 0, debt: '', saved: '',
   city: '', destState: '', destCity: '', newIncome: '', newState: '', newCity: '',
 }
 
@@ -169,7 +169,7 @@ export default function LifestyleCalculator() {
   const profile = useMemo(() => ({
     incomes: form.married ? [income1, income2] : [income1],
     age: form.age, state: form.state, married: form.married,
-    children: form.children, roommates: form.roommates,
+    children: form.children, childrenUnder6: form.under6 === '' ? form.children : Math.min(form.under6, form.children), roommates: form.roommates,
     debtMonthly: Number(form.debt) || 0, savedForHome: Number(form.saved) || 0,
     city: cityRow(form.state, form.city),
   }), [form, income1, income2, cities])
@@ -308,10 +308,19 @@ export default function LifestyleCalculator() {
           <Field label="Children">
             <Segmented
               value={form.children}
-              onChange={v => setForm(f => ({ ...f, children: v, roommates: v ? 0 : f.roommates }))}
+              onChange={v => setForm(f => ({ ...f, children: v, under6: '', roommates: v ? 0 : f.roommates }))}
               options={[{ value: 0, label: 'None' }, { value: 1, label: '1' }, { value: 2, label: '2' }, { value: 3, label: '3+' }]}
             />
           </Field>
+          {form.children > 0 && (
+            <Field label="How many are under 6?" hint="Young children are priced at full-time daycare, which costs far more than after-school care.">
+              <Segmented
+                value={form.under6 === '' ? form.children : Math.min(form.under6, form.children)}
+                onChange={v => set('under6', v)}
+                options={Array.from({ length: form.children + 1 }, (_, i) => ({ value: i, label: String(i) }))}
+              />
+            </Field>
+          )}
           {!form.married && form.children === 0 && (
             <Field label="Living arrangement" hint="Roommates split rent and utilities, which frees money for the rest of your life.">
               <Segmented
@@ -569,7 +578,7 @@ export default function LifestyleCalculator() {
             </>
           ) : (
             <p className="text-sm text-[var(--text-muted)] mb-3">
-              Your transport budget of {usd(r.car.monthlyBudget)}/month fits transit, a ride-share mix or a paid-off car.
+              Your transport budget of {usd(r.car.monthlyBudget)}/month is best spent on transit, car-share or ride-share, or on keeping a car you already own paid off.
             </p>
           )}
           <div className="flex gap-2 flex-wrap">

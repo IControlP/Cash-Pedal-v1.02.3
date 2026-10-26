@@ -208,6 +208,7 @@ turns them into `src/data/lifestyleData.json` (51 states) and `src/data/lifestyl
 | Median home value | ACS B25077 |
 | Effective property tax | ACS B25103 ÷ B25077 |
 | Goods / utilities / other-services price levels | BEA Regional Price Parities 2024, state (SARPP) and metro (MARPP) |
+| Child care (center-based, 1/2/3 children), state and metro | MIT Living Wage Calculator typical expenses (livingwage.mit.edu), built from the US DOL National Database of Childcare Prices and Child Care Aware; MIT blends toddler, preschool and school-age rates, so infant care in particular may cost more |
 | State income tax (brackets, standard deduction, exemptions/credits by filing status) | Tax Foundation, State Individual Income Tax Rates and Brackets, 2026 |
 | Federal 2026 brackets, standard deduction, child tax credit | Rev. Proc. 2025-32 as published by Tax Foundation; SS wage base $184,500 from SSA's announcement (not re-verified) |
 
@@ -221,3 +222,15 @@ types are national multipliers on the city median; suburbs of big metros that ar
 cities (e.g. Irvine, Plano) use state price indexes. State income tax is computed on wages from the
 2026 brackets with no federal-deduction add-backs, local income taxes or retirement/Social Security
 exclusions (Washington's capital-gains-only tax is treated as no wage tax).
+
+## 13. Child care and car-cost assumptions (built)
+
+- **Child care.** The profile asks how many children are under 6. Those children are priced at full-time
+  daycare using MIT's 1/2/3-child totals for the city's metro (state when no metro): each additional child costs
+  the difference between consecutive totals (a sibling discount). School-age children use after-school/summer
+  care at 35% of the one-child daycare figure (our assumption). Denver, one child under 6: about $1,700/month.
+  If no under-6 count is given, all children are treated as daycare-age.
+- **Cheap cars.** The shared insurance model charges the same full-coverage rate for every car under $15k.
+  For the lifestyle car tier only, premiums scale to 60% below $8k and ramp to 100% at $15k (cheap used cars are
+  commonly liability-only). The shared model and the TCO tools are unchanged. The budget floor is a $2,500 car;
+  below that the tier reads "Car-light".

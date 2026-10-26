@@ -28,6 +28,7 @@ export function locationFor(profile) {
     medianHome: city?.medianHome ?? state.medianHome,
     propTaxPct: city?.propTaxPct ?? state.propTaxPct,
     rpp: city?.rpp ?? state.rpp,
+    childcare: city?.childcare ?? state.childcare,
   }
 }
 
@@ -200,9 +201,18 @@ function rentVsBuy(price, propTaxPct, monthlyRent, years = 7) {
 }
 
 // ── Car tier ──────────────────────────────────────────────────────────────
+// The shared insurance model prices every car under $15k at the same (full-coverage)
+// rate. Cheap used cars are commonly insured liability-only or with high deductibles,
+// so the lifestyle tool scales premiums down to ~60% below $8k, ramping to 100% at $15k.
+export function cheapCarInsuranceFactor(price) {
+  if (price <= 8000) return 0.6
+  if (price >= 15000) return 1
+  return 0.6 + 0.4 * (price - 8000) / 7000
+}
+
 function carRunningMonthly(price, state) {
   const fuel = computeAnnualFuel(false, 28, null, state, 13500) / 12
-  const ins = estimateInsurance(price, null, null, null, state) / 12
+  const ins = estimateInsurance(price, null, null, null, state) / 12 * cheapCarInsuranceFactor(price)
   const reg = computeAnnualRegFees(state, price) / 12
   const maint = clamp(50 + price * 0.0021, 60, 180)
   return fuel + ins + reg + maint
@@ -212,8 +222,9 @@ const CAR_LOAN = { downPct: 0.2, apr: 6.5, months: 60 }
 
 export function carTier(transportMonthly, state) {
   const cost = price => monthlyPayment(price * (1 - CAR_LOAN.downPct), CAR_LOAN.apr, CAR_LOAN.months) + carRunningMonthly(price, state)
-  if (cost(5000) > transportMonthly) return { maxPrice: 0, tier: 'Transit & budget used', monthlyBudget: Math.round(transportMonthly) }
-  let lo = 5000
+  const FLOOR = 2500
+  if (cost(FLOOR) > transportMonthly) return { maxPrice: 0, tier: 'Car-light', monthlyBudget: Math.round(transportMonthly) }
+  let lo = FLOOR
   let hi = 200000
   for (let i = 0; i < 40; i++) {
     const mid = (lo + hi) / 2
@@ -221,8 +232,20 @@ export function carTier(transportMonthly, state) {
     else lo = mid
   }
   const maxPrice = Math.floor(lo / 500) * 500
-  const tier = maxPrice >= 60000 ? 'Luxury' : maxPrice >= 35000 ? 'Premium' : maxPrice >= 20000 ? 'Mainstream' : 'Practical'
+  const tier = maxPrice >= 60000 ? 'Luxury' : maxPrice >= 35000 ? 'Premium' : maxPrice >= 20000 ? 'Mainstream' : maxPrice >= 8000 ? 'Practical' : 'Budget used'
   return { maxPrice, tier, monthlyBudget: Math.round(transportMonthly), monthlyAtMax: Math.round(cost(maxPrice)) }
+}
+
+// ── Child care ───────────────────────────────────────────────────────────
+// `annual` = MIT Living Wage center-based care for 1, 2 and 3 children (a blend of
+// toddler, preschool and school-age rates). Children under 6 are in full-time
+// daycare (marginal cost of each additional child follows MIT's totals); school-age
+// children use after-school/summer care at ~35% of the one-child daycare figure.
+export const SCHOOL_AGE_CARE_SHARE = 0.35
+export function childcareMonthly(annual, under6, schoolAge) {
+  if (!annual) return null
+  const total = n => (n <= 0 ? 0 : n <= 3 ? annual[n] : annual[3] + (n - 3) * (annual[3] - annual[2]))
+  return (total(under6) + schoolAge * SCHOOL_AGE_CARE_SHARE * annual[1]) / 12
 }
 
 // ── Main entry ────────────────────────────────────────────────────────────
@@ -256,7 +279,8 @@ export function computeLifestyle(profile, priorities = DEFAULT_PRIORITIES) {
   const utilities = roommates ? (150 + 40 * sharedBedrooms) * utilIdx / people : utilitiesTotal
   const groceries = 380 * (adults + 0.6 * children) * goodsIdx
   const health = 280 * adults + 120 * children
-  const childcare = 650 * children * svcIdx
+  const under6 = clamp(profile.childrenUnder6 ?? children, 0, children)
+  const childcare = childcareMonthly(loc.childcare, under6, children - under6) ?? 650 * children * svcIdx
   const transportPct = clamp(0.12 + 0.02 * (pr.car - 3), 0.07, 0.20)
   const transport = transportPct * TH
   const fixed = { debt, utilities, groceries, health, childcare, transport }
@@ -378,7 +402,7 @@ export function computeLifestyle(profile, priorities = DEFAULT_PRIORITIES) {
   }
 
   return {
-    profile: { ...profile, married, children, roommates },
+    profile: { ...profile, married, children, roommates, childrenUnder6: under6 },
     tax, pillars: {
       percents: pct,
       foundation: Math.round(fixedTotal + housingSpend),

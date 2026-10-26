@@ -12,6 +12,7 @@
    "medianHome": "median value of owner-occupied homes, USD",
    "propTaxPct": "effective property tax, % of value per year",
    "rpp": "BEA regional price parities, US = 100: all, goods, housing, utilities, other (services)",
+   "childcare": "annual center-based child care for 1, 2 and 3 children (MIT Living Wage; blended toddler/preschool/school-age)",
    "stateTax": "per filing status: brackets [[floor, rate]], std deduction, personal exemption (or credit), plus dependent exemption"
   }
  },
@@ -75,6 +76,11 @@
     },
     "dependent": 1000,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 7977,
+    "2": 15463,
+    "3": 20815
    }
   },
   "AK": {
@@ -110,6 +116,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 16443,
+    "2": 31222,
+    "3": 38296
    }
   },
   "AZ": {
@@ -155,6 +166,11 @@
     },
     "dependent": 100,
     "dependentIsCredit": true
+   },
+   "childcare": {
+    "1": 11641,
+    "2": 23282,
+    "3": 31201
    }
   },
   "AR": {
@@ -208,6 +224,11 @@
     },
     "dependent": 29,
     "dependentIsCredit": true
+   },
+   "childcare": {
+    "1": 9450,
+    "2": 18384,
+    "3": 24149
    }
   },
   "CA": {
@@ -325,6 +346,11 @@
     },
     "dependent": 153,
     "dependentIsCredit": true
+   },
+   "childcare": {
+    "1": 15617,
+    "2": 30686,
+    "3": 40856
    }
   },
   "CO": {
@@ -370,6 +396,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 18791,
+    "2": 35327,
+    "3": 44583
    }
   },
   "CT": {
@@ -463,6 +494,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 20218,
+    "2": 36644,
+    "3": 48270
    }
   },
   "DE": {
@@ -548,6 +584,11 @@
     },
     "dependent": 110,
     "dependentIsCredit": true
+   },
+   "childcare": {
+    "1": 10318,
+    "2": 21151,
+    "3": 26203
    }
   },
   "DC": {
@@ -641,6 +682,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 26923,
+    "2": 50375,
+    "3": 61163
    }
   },
   "FL": {
@@ -676,6 +722,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 10747,
+    "2": 20656,
+    "3": 26381
    }
   },
   "GA": {
@@ -721,6 +772,11 @@
     },
     "dependent": 4000,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 9227,
+    "2": 18095,
+    "3": 21499
    }
   },
   "HI": {
@@ -854,6 +910,11 @@
     },
     "dependent": 1144,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 14308,
+    "2": 28615,
+    "3": 34496
    }
   },
   "ID": {
@@ -899,6 +960,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 9523,
+    "2": 18251,
+    "3": 24746
    }
   },
   "IL": {
@@ -944,6 +1010,11 @@
     },
     "dependent": 2925,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 13646,
+    "2": 26202,
+    "3": 29724
    }
   },
   "IN": {
@@ -989,6 +1060,11 @@
     },
     "dependent": 1000,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 17183,
+    "2": 30639,
+    "3": 40494
    }
   },
   "IA": {
@@ -1042,6 +1118,11 @@
     },
     "dependent": 40,
     "dependentIsCredit": true
+   },
+   "childcare": {
+    "1": 8568,
+    "2": 17135,
+    "3": 22481
    }
   },
   "KS": {
@@ -1095,6 +1176,11 @@
     },
     "dependent": 2320,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 8931,
+    "2": 17075,
+    "3": 21676
    }
   },
   "KY": {
@@ -1148,6 +1234,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 8419,
+    "2": 16837,
+    "3": 23123
    }
   },
   "LA": {
@@ -1201,6 +1292,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 8658,
+    "2": 17065,
+    "3": 23041
    }
   },
   "ME": {
@@ -1262,6 +1358,11 @@
     },
     "dependent": 305,
     "dependentIsCredit": true
+   },
+   "childcare": {
+    "1": 13008,
+    "2": 25254,
+    "3": 32694
    }
   },
   "MD": {
@@ -1379,6 +1480,11 @@
     },
     "dependent": 3200,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 14878,
+    "2": 29756,
+    "3": 40469
    }
   },
   "MA": {
@@ -1432,6 +1538,11 @@
     },
     "dependent": 1000,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 23448,
+    "2": 41712,
+    "3": 51443
    }
   },
   "MI": {
@@ -1477,6 +1588,11 @@
     },
     "dependent": 5900,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 9989,
+    "2": 19168,
+    "3": 25567
    }
   },
   "MN": {
@@ -1546,6 +1662,11 @@
     },
     "dependent": 5300,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 17341,
+    "2": 32932,
+    "3": 42526
    }
   },
   "MS": {
@@ -1591,6 +1712,11 @@
     },
     "dependent": 1500,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 7258,
+    "2": 14162,
+    "3": 18895
    }
   },
   "MO": {
@@ -1684,6 +1810,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 12563,
+    "2": 22837,
+    "3": 28645
    }
   },
   "MT": {
@@ -1737,6 +1868,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 13923,
+    "2": 25822,
+    "3": 35104
    }
   },
   "NE": {
@@ -1798,6 +1934,11 @@
     },
     "dependent": 176,
     "dependentIsCredit": true
+   },
+   "childcare": {
+    "1": 12286,
+    "2": 23465,
+    "3": 31333
    }
   },
   "NV": {
@@ -1833,6 +1974,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 13725,
+    "2": 26730,
+    "3": 36061
    }
   },
   "NH": {
@@ -1868,6 +2014,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 16711,
+    "2": 31360,
+    "3": 41574
    }
   },
   "NJ": {
@@ -1969,6 +2120,11 @@
     },
     "dependent": 1500,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 17946,
+    "2": 35892,
+    "3": 42607
    }
   },
   "NM": {
@@ -2054,6 +2210,11 @@
     },
     "dependent": 4000,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 11647,
+    "2": 22378,
+    "3": 31452
    }
   },
   "NY": {
@@ -2163,6 +2324,11 @@
     },
     "dependent": 1000,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 16444,
+    "2": 31830,
+    "3": 42309
    }
   },
   "NC": {
@@ -2208,6 +2374,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 10879,
+    "2": 19507,
+    "3": 23908
    }
   },
   "ND": {
@@ -2261,6 +2432,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 11743,
+    "2": 22640,
+    "3": 31029
    }
   },
   "OH": {
@@ -2314,6 +2490,11 @@
     },
     "dependent": 2400,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 14287,
+    "2": 26811,
+    "3": 33282
    }
   },
   "OK": {
@@ -2375,6 +2556,11 @@
     },
     "dependent": 1000,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 10977,
+    "2": 21955,
+    "3": 27552
    }
   },
   "OR": {
@@ -2444,6 +2630,11 @@
     },
     "dependent": 256,
     "dependentIsCredit": true
+   },
+   "childcare": {
+    "1": 17558,
+    "2": 31456,
+    "3": 35675
    }
   },
   "PA": {
@@ -2489,6 +2680,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 15226,
+    "2": 28598,
+    "3": 39961
    }
   },
   "RI": {
@@ -2550,6 +2746,11 @@
     },
     "dependent": 5250,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 16875,
+    "2": 31695,
+    "3": 34654
    }
   },
   "SC": {
@@ -2611,6 +2812,11 @@
     },
     "dependent": 4930,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 10394,
+    "2": 20551,
+    "3": 26991
    }
   },
   "SD": {
@@ -2646,6 +2852,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 8955,
+    "2": 17318,
+    "3": 23762
    }
   },
   "TN": {
@@ -2681,6 +2892,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 8128,
+    "2": 16255,
+    "3": 19465
    }
   },
   "TX": {
@@ -2716,6 +2932,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 9724,
+    "2": 19178,
+    "3": 26128
    }
   },
   "UT": {
@@ -2761,6 +2982,11 @@
     },
     "dependent": 2111,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 10995,
+    "2": 21040,
+    "3": 28673
    }
   },
   "VT": {
@@ -2830,6 +3056,11 @@
     },
     "dependent": 5300,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 19315,
+    "2": 36364,
+    "3": 47072
    }
   },
   "VA": {
@@ -2899,6 +3130,11 @@
     },
     "dependent": 930,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 12508,
+    "2": 25096,
+    "3": 33338
    }
   },
   "WA": {
@@ -2919,7 +3155,12 @@
     "utilities": 92.9,
     "other": 103.9
    },
-   "stateTax": null
+   "stateTax": null,
+   "childcare": {
+    "1": 17350,
+    "2": 34701,
+    "3": 46282
+   }
   },
   "WV": {
    "rent": {
@@ -2996,6 +3237,11 @@
     },
     "dependent": 2000,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 9552,
+    "2": 19336,
+    "3": 26179
    }
   },
   "WI": {
@@ -3065,6 +3311,11 @@
     },
     "dependent": 700,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 13680,
+    "2": 27360,
+    "3": 36183
    }
   },
   "WY": {
@@ -3100,6 +3351,11 @@
     },
     "dependent": 0,
     "dependentIsCredit": false
+   },
+   "childcare": {
+    "1": 9319,
+    "2": 18648,
+    "3": 27457
    }
   }
  }

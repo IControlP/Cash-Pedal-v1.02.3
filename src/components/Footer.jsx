@@ -11,6 +11,7 @@ const links = [
   { to: '/checklist', label: 'Buying Checklist' },
   { to: '/wheelzard', label: 'Wheel-Zard AI' },
   { to: '/resources', label: 'Resources' },
+  { to: '/account', label: 'My Account' },
   { to: '/about', label: 'About' },
   { to: '/privacy', label: 'Privacy Policy' },
   { to: '/terms', label: 'Terms of Service' },

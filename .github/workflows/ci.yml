@@ -23,3 +23,5 @@ jobs:
         run: node scripts/verify-tco.mjs
       - name: Lifestyle engine verification
         run: node scripts/verify-lifestyle.mjs
+      - name: Account helpers verification (crypto, tokens, CSRF, payload rules)
+        run: node scripts/verify-account.mjs

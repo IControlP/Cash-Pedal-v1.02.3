@@ -52,6 +52,20 @@ export const ROUTE_META = {
     priority: '0.9',
     calculator: true,
   },
+  '/account': {
+    title: 'Your Account | Cash Pedal',
+    description: 'Sign in to save your lifestyle profile and compare life events and cities. Passwordless, encrypted, and deletable at any time.',
+    h1: 'Your account',
+    intro: ['Sign in with an emailed link to save lifestyle profiles and scenarios and compare them side by side.'],
+    indexable: false,
+  },
+  '/account/verify': {
+    title: 'Signing you in | Cash Pedal',
+    description: 'Finishing your Cash Pedal sign-in.',
+    h1: 'Signing you in',
+    intro: [],
+    indexable: false,
+  },
   '/affordability': {
     title: 'How Much Car Can I Afford? Car Affordability Calculator | Cash Pedal',
     description:

@@ -315,3 +315,11 @@ The first screen asks what the visitor wants to explore. All three paths end in 
 When a household-changing event is chosen (marriage, cohabiting, baby), "today" uses the home size and car count the household
 needs, not the size picked for the new life. Cohabiting couples are taxed separately (higher earner claims children); a
 lopsided married couple pays less federal tax than the same unmarried couple (marriage bonus), which the checks assert.
+
+## 17. Accounts and saved profiles (built)
+
+Passwordless sign-in, encrypted saved profiles and scenarios (max 20), side-by-side comparison of 2–4 of them, export,
+erasure, and a consent ledger. A "Save and compare" card on the results page saves the current mode, answers and life
+events; "Open" in the account restores a saved item to its results. Saved items are rebuilt with the same code path
+(`src/utils/lifestyleSession.js`), so a saved scenario computes exactly as it did when saved. See
+`docs/ACCOUNT_DATA_COMPLIANCE.md` for the data inventory and the open legal questions about lead generation.

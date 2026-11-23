@@ -11,6 +11,8 @@ import {
 } from '../utils/lifestyle.js'
 import { SURVEY_QUESTIONS, SURVEY_SECTIONS, STATE_LIST, MODES, LIFE_EVENTS, PILLAR_COLORS } from '../data/lifestyleSurvey'
 import { CostCenterChart, ScenarioChart } from '../components/CostCenterChart'
+import { profileFromForm, eventInputsFromForm } from '../utils/lifestyleSession.js'
+import { useAccount } from '../hooks/useAccount'
 
 const householdPartnered = p => !!p.married || (!!p.cohabiting && (p.incomes?.length ?? 0) > 1)
 
@@ -56,7 +58,7 @@ function MoneyInput({ value, onChange, placeholder }) {
     <div className="relative">
       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">$</span>
       <input
-        className="input-field" style={{ paddingLeft: '1.75rem' }}
+        className="input-field" style={{ paddingLeft: '1.75rem' }} data-clarity-mask="True"
         inputMode="numeric" placeholder={placeholder} value={value}
         onChange={e => onChange(e.target.value.replace(/[^0-9]/g, ''))}
       />
@@ -214,6 +216,9 @@ export default function LifestyleCalculator() {
   const [form, setForm] = useState(DEFAULT_FORM)
   const [prefs, setPrefs] = useState({}) // survey answers
   const [qKey, setQKey] = useState(null)
+  const acct = useAccount()
+  const [saveLabel, setSaveLabel] = useState('')
+  const [saveState, setSaveState] = useState('idle') // idle | saving | saved | error | full
 
   useEffect(() => {
     import('../data/lifestyleCities.json').then(m => {
@@ -228,6 +233,9 @@ export default function LifestyleCalculator() {
       const saved = JSON.parse(safeGet(STORAGE_KEY) || 'null')
       if (saved?.form) setForm(f => ({ ...f, ...saved.form }))
       if (saved?.prefs) setPrefs(p => ({ ...p, ...saved.prefs }))
+      if (saved?.mode) setMode(saved.mode)
+      if (Array.isArray(saved?.events)) setEvents(saved.events)
+      if (saved?.mode && new URLSearchParams(window.location.search).get('resume') === '1') setStep('results')
     } catch { /* ignore corrupt cache */ }
     // Prefill from the landing entry card (?income=75000&state=TX)
     const qs = new URLSearchParams(window.location.search)
@@ -248,22 +256,10 @@ export default function LifestyleCalculator() {
   const canContinue = income1 > 0
 
   // Today's household and finances.
-  const profile = useMemo(() => ({
-    incomes: partnered ? [income1, income2] : [income1],
-    age: form.age, state: form.state, married: form.married, cohabiting: form.cohabiting,
-    children: form.children, childrenUnder6: form.under6 === '' ? form.children : Math.min(form.under6, form.children), roommates: form.roommates,
-    debtMonthly: Number(form.debt) || 0, savedForHome: Number(form.saved) || 0,
-    city: cityRow(form.state, form.city),
-    prefs,
-  }), [form, income1, income2, partnered, cities, prefs])
+  const profile = useMemo(() => profileFromForm(form, prefs, cityRow), [form, cities, prefs])
 
   // Life events: the life after the change, composed from today's profile.
-  const eventInputs = useMemo(() => ({
-    newIncome: Number(form.newIncome) || 0,
-    jobState: form.newState || '', jobCity: cityRow(form.newState, form.newCity),
-    destState: form.destState, destCity: cityRow(form.destState, form.destCity),
-    partnerIncome: Number(form.partnerIncome) || 0, babies: form.babies,
-  }), [form, cities])
+  const eventInputs = useMemo(() => eventInputsFromForm(form, cityRow), [form, cities])
   const after = useMemo(() => (mode === 'change' ? applyLifeEvents(profile, events, eventInputs) : null), [mode, profile, events, eventInputs])
   // Today's profile for comparison. When the household itself changes, the home size
   // they picked for the new life isn't today's, so today's uses the size the household needs.
@@ -307,6 +303,18 @@ export default function LifestyleCalculator() {
 
   function persist() {
     try { safeSet(STORAGE_KEY, JSON.stringify({ form, prefs, mode, events })) } catch { /* storage blocked */ }
+  }
+
+  // A fresh results screen starts with a fresh save form.
+  useEffect(() => { if (step !== 'results') { setSaveState('idle'); setSaveLabel('') } }, [step])
+
+  async function saveToAccount() {
+    const where = activeProfile.city ? activeProfile.city.name : STATE_LIST.find(x => x[0] === activeProfile.state)?.[1]
+    const label = (saveLabel || `${modeInfo?.label ?? 'My profile'} · ${where}`).trim()
+    setSaveState('saving')
+    const r = await acct.save(label, mode === 'current' ? 'profile' : 'scenario', { form, prefs, mode, events })
+    if (r.ok) { trackEvent('account_profile_saved', { mode }); setSaveState('saved') }
+    else setSaveState(r.status === 409 ? 'full' : 'error')
   }
 
   // Questions visible for a given set of answers (some depend on earlier ones).
@@ -891,6 +899,40 @@ export default function LifestyleCalculator() {
         <h2 className="font-display font-bold text-white text-xl mb-1">What if…?</h2>
         <p className="text-sm text-[var(--text-muted)] mb-5">Change an answer and watch everything above update.</p>
         <WhatIf prefs={prefs} r={r} menu={menu} onChange={(k, v) => setPrefs(p => ({ ...p, [k]: v }))} />
+      </section>
+
+      <section className="card mb-6" data-clarity-mask="True">
+        <h2 className="font-display font-bold text-white text-xl mb-1">💾 Save and compare</h2>
+        {acct.loading ? (
+          <p className="text-sm text-[var(--text-muted)]">Checking your account…</p>
+        ) : !acct.me ? (
+          <>
+            <p className="text-sm text-[var(--text-muted)] mb-3">
+              Sign in to keep this profile and compare it with other cities and life events later. No password: we email you a link.
+            </p>
+            <Link className="btn-ghost text-sm" to="/account" onClick={persist}>Sign in to save →</Link>
+          </>
+        ) : !acct.me.features.storage ? (
+          <p className="text-sm text-[var(--text-muted)]">Saving is temporarily unavailable.</p>
+        ) : saveState === 'saved' ? (
+          <p className="text-sm" style={{ color: 'var(--success, #5FE0B8)' }}>
+            Saved. Compare it with your other profiles in <Link className="underline" to="/account">your account</Link>.{' '}
+            <button className="underline text-[var(--text-muted)]" onClick={() => { setSaveState('idle'); setSaveLabel('') }}>Save another version</button>
+          </p>
+        ) : (
+          <>
+            <p className="text-sm text-[var(--text-muted)] mb-3">
+              Saved to your account, encrypted. Save a version for today and another for a new city or life change, then compare them side by side.
+            </p>
+            <div className="flex gap-3 flex-wrap items-center">
+              <input className="input-field" style={{ maxWidth: '20rem' }} value={saveLabel} onChange={e => setSaveLabel(e.target.value)}
+                placeholder={`${modeInfo?.label ?? 'My profile'} · ${activeProfile.city?.name ?? STATE_LIST.find(x => x[0] === activeProfile.state)?.[1]}`} aria-label="Name for this profile" />
+              <button className="btn-primary" onClick={saveToAccount} disabled={saveState === 'saving'}>{saveState === 'saving' ? 'Saving…' : 'Save to my account'}</button>
+            </div>
+            {saveState === 'full' && <p className="text-sm text-[#f87171] mt-2">You've reached the limit of {acct.me.limits.maxProfiles} saved profiles. Delete one in your account first.</p>}
+            {saveState === 'error' && <p className="text-sm text-[#f87171] mt-2">Couldn't save right now. Try again in a moment.</p>}
+          </>
+        )}
       </section>
 
       <div className="flex gap-3 flex-wrap">

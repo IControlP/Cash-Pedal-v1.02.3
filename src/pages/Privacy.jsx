@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
-const LAST_UPDATED = 'July 2026'
+const LAST_UPDATED = 'November 2026'
 const CONTACT_EMAIL = 'support@cashpedal.io'
 
 function Section({ title, children }) {
@@ -56,7 +56,7 @@ export default function Privacy() {
             Your Data &amp; Privacy
           </h1>
           <p className="text-[var(--text-muted)] text-sm mb-8 anim-1">
-            Last updated: {LAST_UPDATED} &nbsp;·&nbsp; Version 1.1
+            Last updated: {LAST_UPDATED} &nbsp;·&nbsp; Version 1.2
           </p>
 
           <Section title="1. Who we are">
@@ -120,10 +120,34 @@ export default function Privacy() {
                 'Legitimate interests (Art. 6(1)(f)) — product analytics',
                 '365 days, then auto-deleted',
               ],
+              [
+                'Account',
+                'Email address, sign-in times, hashed sign-in link and session tokens',
+                'Optional: signing in so you can save and compare lifestyle profiles. Passwordless — we email you a one-time link',
+                'Contract / your request (Art. 6(1)(b))',
+                'Until you delete the account, or automatically after 24 months without signing in. Links expire in 15 minutes; sessions after 30 days',
+              ],
+              [
+                'Saved lifestyle profiles',
+                'What you choose to save from the lifestyle calculator: income, debts, savings toward a home, state and city, household, and your survey answers',
+                'Optional: letting you return to, and compare, profiles for different cities and life events. Encrypted before it is stored; only readable while you are signed in',
+                'Contract / your request (Art. 6(1)(b))',
+                'Until you delete it or the account (see above)',
+              ],
+              [
+                'Account consent and activity records',
+                'The wording you agreed to and when, with a pseudonymized IP; a log of sign-ins, saves, exports and deletions',
+                'Proving what you agreed to and protecting your account',
+                'Legal obligation / legitimate interests (Art. 6(1)(c), (f))',
+                'Consent records are kept, without your email, after you delete the account; the activity log for 24 months',
+              ],
             ]} />
             <p className="text-xs italic">
-              Calculator inputs (vehicle, loan terms, ZIP code) are processed entirely in your browser
-              and are never sent to our servers.
+              Calculator inputs (vehicle, loan terms, ZIP code, and the lifestyle calculator's income and
+              household details) are processed in your browser and are not sent to our servers unless you
+              choose to save a profile to your account. You can download or delete everything held for your
+              account at any time from the account page. Cash Pedal does not share saved profiles or email
+              addresses with partner companies.
             </p>
           </Section>
 

@@ -9,6 +9,7 @@ import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import compression from 'compression'
 import { registerAiSearchRoutes, createSpaHandler, refreshPageVersions } from './ai-search.js'
+import { registerAccountRoutes, initAccountTables, sweepAccounts, eraseAccountByEmail } from './account.js'
 
 const { Pool } = pg
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -1018,6 +1019,9 @@ async function initTables() {
         ON cookie_consent_log(timestamp_utc)
     `)
 
+    // ── Accounts, saved profiles, consent ledger ──────
+    await initAccountTables(client)
+
     // ── Data-retention enforcement ────────────────────
     // user_data_collection is marketing/analytics data — 365-day retention.
     // Consent records are legal evidence of agreement and are intentionally exempt
@@ -1056,6 +1060,7 @@ async function initTables() {
     // NHTSA cache — expire rows older than 30 days (TTL check in queries is 7 days,
     // this keeps the table from growing unbounded on dormant make/model combos).
     await client.query(`DELETE FROM nhtsa_cache WHERE fetched_at < NOW() - INTERVAL '30 days'`)
+    await sweepAccounts(pool)
   } finally {
     client.release()
   }
@@ -2042,6 +2047,8 @@ app.post('/api/delete-my-data', sensitiveLimiter, async (req, res) => {
        WHERE email = $1`,
       [normalizedEmail, crypto.createHash('sha256').update(normalizedEmail).digest('hex')]
     )
+    // Saved financial profiles, sign-in links and sessions tied to this email
+    await eraseAccountByEmail(pool, normalizedEmail)
     // Propagate erasure to the CRM processor (HubSpot) so the disclosed
     // recipient of this personal data drops it too.
     queueCrmErasure(normalizedEmail)
@@ -2053,6 +2060,14 @@ app.post('/api/delete-my-data', sensitiveLimiter, async (req, res) => {
     console.error('[delete-my-data] error:', err.message)
     res.status(500).json({ error: 'Internal server error' })
   }
+})
+
+// ── Accounts: passwordless sign-in, saved profiles, consent ledger ──
+// See account.js. Saved profiles are encrypted at rest (PROFILE_ENC_KEY); without
+// the key sign-in works but saving is disabled.
+registerAccountRoutes(app, {
+  pool, appUrl: APP_URL, deliverEmail, emailLayout, emailEnabled: !!RESEND_API_KEY,
+  anonymizeIp, pseudonymizeIp, redactEmail, isValidEmail, normalizeEmail, limiter: sensitiveLimiter,
 })
 
 // ── API: Verify / redeem promo code ───────────────────
@@ -2660,6 +2675,7 @@ async function runRetentionSweep() {
     await pool.query(`DELETE FROM subscriber_devices WHERE last_seen < NOW() - INTERVAL '${DEVICE_EXPIRY_DAYS} days'`)
     await pool.query(`DELETE FROM market_value_cache WHERE fetched_at < NOW() - INTERVAL '${MARKET_VALUE_MAX_DAYS} days'`)
     await pool.query(`DELETE FROM nhtsa_cache WHERE fetched_at < NOW() - INTERVAL '30 days'`)
+    await sweepAccounts(pool)
   } catch (err) {
     console.error('[retention] daily sweep error:', err.message)
   }

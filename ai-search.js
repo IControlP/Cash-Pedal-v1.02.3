@@ -267,7 +267,8 @@ function robotsTxt() {
 
 // Every indexable path, with its sitemap priority.
 function publicPages() {
-  const pages = Object.entries(ROUTE_META).map(([path, m]) => ({ path, priority: m.priority || '0.5' }))
+  // `indexable: false` routes (account pages) stay out of the sitemap, like seo.js promises.
+  const pages = Object.entries(ROUTE_META).filter(([, m]) => m.indexable !== false).map(([path, m]) => ({ path, priority: m.priority || '0.5' }))
   for (const p of posts) pages.push({ path: `/blog/${p.slug}`, priority: '0.6', published: p.date })
   pages.push({ path: '/guides', priority: '0.8' })
   for (const path of allGuidePaths()) pages.push({ path, priority: '0.8' })
@@ -292,7 +293,7 @@ function sitemapXml() {
 
 function llmsTxt() {
   const tools = Object.entries(ROUTE_META)
-    .filter(([, m]) => m.calculator)
+    .filter(([, m]) => m.calculator && m.indexable !== false)
     .map(([path, m]) => `- [${m.h1}](${SITE_URL}${path}): ${m.description}`)
   const blog = posts.map(p => `- [${p.title}](${SITE_URL}/blog/${p.slug}): ${p.excerpt}`)
   return `# ${SITE_NAME}
@@ -632,7 +633,7 @@ export function createSpaHandler(distDir) {
       return res.status(404).type('html').send(template.replace(SEO_BLOCK, headHtml(notFound, { noindex: true })))
     }
     const html = template
-      .replace(SEO_BLOCK, headHtml(meta, { noindex: false }))
+      .replace(SEO_BLOCK, headHtml(meta, { noindex: meta.indexable === false }))
       .replace(EMPTY_ROOT, bodyHtml(meta, req.query))
     res.type('html').send(html)
   }

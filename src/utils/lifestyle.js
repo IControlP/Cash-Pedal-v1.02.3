@@ -105,6 +105,25 @@ export function takeHome(incomes, state, married, children = 0) {
   }
 }
 
+// ── Households ───────────────────────────────────────────────────────────
+// A household is one adult, a married couple (joint return), or an unmarried couple
+// living together ("cohabiting": two adults, each filing as single).
+export function householdOf(profile) {
+  const married = !!profile.married
+  const cohabiting = !married && !!profile.cohabiting && (profile.incomes?.length ?? 0) > 1
+  return { married, cohabiting, partnered: married || cohabiting, adults: married || cohabiting ? 2 : 1 }
+}
+
+// Take-home for the household. Unmarried partners are taxed separately; the higher
+// earner claims the children.
+function householdTakeHome(profile, children) {
+  const { married, cohabiting } = householdOf(profile)
+  if (!cohabiting) return takeHome(profile.incomes, profile.state, married, children)
+  const parts = [...profile.incomes].sort((a, b) => b - a).map((inc, i) => takeHome([inc], profile.state, false, i === 0 ? children : 0))
+  const sum = k => parts.reduce((a, x) => a + x[k], 0)
+  return { gross: sum('gross'), federal: sum('federal'), fica: sum('fica'), state: sum('state'), annual: sum('annual'), monthly: Math.round(sum('annual') / 12) }
+}
+
 // ── Pillar split ──────────────────────────────────────────────────────────
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 
@@ -303,10 +322,9 @@ const typePrice = (loc, t, bedrooms) => roundTo(loc.medianHome * t.price * BEDRO
 // Regional prices the survey shows next to each choice. Pure and cheap.
 export function housingMenu(profile) {
   const loc = locationFor(profile)
-  const married = !!profile.married
-  const adults = married ? 2 : 1
+  const { partnered, adults } = householdOf(profile)
   const children = Math.max(0, profile.children | 0)
-  const roommates = !married && children === 0 ? clamp(profile.roommates | 0, 0, 3) : 0
+  const roommates = !partnered && children === 0 ? clamp(profile.roommates | 0, 0, 3) : 0
   const need = bedroomsNeeded(children, adults)
   const svc = loc.rpp.other / 100
   const goods = loc.rpp.goods / 100
@@ -349,10 +367,9 @@ export function housingMenu(profile) {
 export function computeLifestyle(profile, priorities) {
   const prefs = { ...DEFAULT_PREFS, ...(profile.prefs || {}) }
   const pr = { ...DEFAULT_PRIORITIES, ...(priorities ?? derivePriorities(prefs)) }
-  const married = !!profile.married
-  const adults = married ? 2 : 1
+  const { married, cohabiting, partnered, adults } = householdOf(profile)
   const children = Math.max(0, profile.children | 0)
-  const roommates = !married && children === 0 ? clamp(profile.roommates | 0, 0, 3) : 0
+  const roommates = !partnered && children === 0 ? clamp(profile.roommates | 0, 0, 3) : 0
   const people = roommates + 1
   const debt = Math.max(0, Number(profile.debtMonthly) || 0)
   const loc = locationFor(profile)
@@ -363,7 +380,7 @@ export function computeLifestyle(profile, priorities) {
   const diners = adults + 0.5 * children
   const travelers = adults + 0.7 * children
 
-  const tax = takeHome(profile.incomes, profile.state, married, children)
+  const tax = householdTakeHome(profile, children)
   const TH = tax.monthly
   const gross = tax.gross
   const pct = pillarPercents(profile, pr)
@@ -378,7 +395,7 @@ export function computeLifestyle(profile, priorities) {
   const pets = Math.max(0, prefs.pets | 0) * PET_MONTHLY * svcIdx
   const under6 = clamp(profile.childrenUnder6 ?? children, 0, children)
   const childcare = childcareMonthly(loc.childcare, under6, children - under6) ?? 650 * children * svcIdx
-  const cars = clamp(prefs.cars ?? (married ? 2 : 1), 0, 3)
+  const cars = clamp(prefs.cars ?? (partnered ? 2 : 1), 0, 3)
   const miles = (COMMUTE[prefs.commute] ?? COMMUTE['onsite-medium']).miles
   const carShare = clamp(0.12 + 0.02 * (pr.car - 3), 0.07, 0.20)
   // A second and third car each add 60% of the first car's budget.
@@ -546,7 +563,7 @@ export function computeLifestyle(profile, priorities) {
     : { ...carTier(transport / cars, profile.state, miles), cars, householdBudget: Math.round(transport) }
 
   return {
-    profile: { ...profile, married, children, roommates, childrenUnder6: under6, prefs },
+    profile: { ...profile, married, cohabiting, children, roommates, childrenUnder6: under6, prefs },
     tax, pillars: {
       percents: pct,
       foundation: Math.round(fixedTotal + housingSpend),
@@ -627,16 +644,20 @@ export function costCenters(r) {
 
 // ── Scenarios: new job and/or new city ────────────────────────────────────
 // scenario: { state?, incomes? } — anything omitted stays as in `profile`.
-export function compareScenarios(profile, scenario, priorities) {
-  const now = computeLifestyle(profile, priorities)
-  const next = computeLifestyle({ ...profile, ...scenario }, priorities)
+export function compareProfiles(before, after, priorities) {
+  const now = computeLifestyle(before, priorities)
+  const next = computeLifestyle(after, priorities)
   const a = Object.fromEntries(costCenters(now).map(c => [c.key, c.amount]))
-  const rows = costCenters(next).map(c => ({ ...c, before: a[c.key], delta: c.amount - a[c.key] }))
+  const rows = costCenters(next).map(c => ({ ...c, before: a[c.key] ?? 0, delta: c.amount - (a[c.key] ?? 0) }))
   return {
     now, next, rows,
     takeHomeDelta: next.tax.monthly - now.tax.monthly,
     discretionaryDelta: (next.pillars.lifestyle + next.pillars.cushion) - (now.pillars.lifestyle + now.pillars.cushion),
   }
+}
+
+export function compareScenarios(profile, scenario, priorities) {
+  return compareProfiles(profile, { ...profile, ...scenario }, priorities)
 }
 
 // Gross household income needed in `state` to keep today's Lifestyle + Cushion
@@ -703,4 +724,59 @@ export function incomeForWishList(profile, priorities) {
   }
   const total = profile.incomes.reduce((a, b) => a + (Number(b) || 0), 0)
   return { income: Math.round(total * hi / 1000) * 1000, ratio: hi }
+}
+
+// ── Life events ──────────────────────────────────────────────────────────
+// Compose "the life after the change" from today's profile. Events can be combined
+// (a new job in a new city, then marriage).
+//   job       inputs.newIncome (your new gross), optional inputs.jobState / jobCity
+//   city      inputs.destState, optional inputs.destCity
+//   marriage  inputs.partnerIncome  → married, joint return
+//   cohabit   inputs.partnerIncome  → two adults sharing a home, each taxed as single
+//   baby      inputs.babies (default 1) → more children, all in daycare age
+export function applyLifeEvents(profile, events, inputs = {}) {
+  const p = { ...profile }
+  const has = id => events.includes(id)
+  const partner = Math.max(0, Number(inputs.partnerIncome) || 0)
+  if (has('marriage') && !profile.married) {
+    p.married = true; p.cohabiting = false; p.roommates = 0
+    p.incomes = [profile.incomes[0], partner]
+  } else if (has('cohabit') && !profile.married && !profile.cohabiting) {
+    p.cohabiting = true; p.roommates = 0
+    p.incomes = [profile.incomes[0], partner]
+  }
+  if (has('job') && Number(inputs.newIncome) > 0) p.incomes = [Number(inputs.newIncome), ...p.incomes.slice(1)]
+  if (has('job') && inputs.jobState && inputs.jobState !== profile.state) { p.state = inputs.jobState; p.city = inputs.jobCity ?? null }
+  if (has('city') && inputs.destState && inputs.destState !== profile.state) { p.state = inputs.destState; p.city = inputs.destCity ?? null }
+  if (has('baby')) {
+    const n = Math.max(1, Number(inputs.babies) | 0 || 1)
+    p.children = Math.max(0, profile.children | 0) + n
+    p.childrenUnder6 = (profile.childrenUnder6 ?? (profile.children | 0)) + n
+    p.roommates = 0
+  }
+  return p
+}
+
+// Does any chosen event change who lives in the household?
+export const HOUSEHOLD_EVENTS = ['marriage', 'cohabit', 'baby']
+
+// Gross household income needed AFTER the change to keep today's Lifestyle + Cushion dollars.
+export function incomeToKeepLifestyle(before, after, priorities) {
+  const base = computeLifestyle(before, priorities)
+  const target = base.pillars.lifestyle + base.pillars.cushion
+  const total = after.incomes.reduce((a, b) => a + (Number(b) || 0), 0)
+  if (!(total > 0)) return null
+  const at = k => {
+    const r = computeLifestyle({ ...after, incomes: after.incomes.map(i => (Number(i) || 0) * k) }, priorities)
+    return r.pillars.lifestyle + r.pillars.cushion
+  }
+  let lo = 0.3
+  let hi = 5
+  if (at(hi) < target) return null
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2
+    if (at(mid) < target) lo = mid
+    else hi = mid
+  }
+  return { income: Math.round(total * hi / 500) * 500, ratio: hi }
 }

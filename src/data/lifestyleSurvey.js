@@ -182,24 +182,29 @@ export const STATE_LIST = [
   ['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming'],
 ]
 
-// Life stages: what the visitor is trying to do right now. `preset` seeds the
-// survey answers; `scenario` adds extra fields and a comparison panel.
-export const LIFE_STAGES = [
-  { id: 'moving-out', emoji: '📦', label: "Moving out of my parents' home",
-    blurb: 'See what a first place costs and what you can still enjoy.',
+// How the visitor wants to use the tool. Every path ends in the same priced picture of
+// their life; they differ in what is asked and what is compared.
+export const MODES = [
+  { id: 'current', emoji: '🧭', label: 'My life today',
+    blurb: 'See where your income goes and what it supports right now, then tune it to what you care about.',
+    survey: 'Answer for how you live today.' },
+  { id: 'dream', emoji: '✨', label: 'My dream lifestyle',
+    blurb: 'Describe the life you want and see what it costs where you live, and what income it takes.',
+    survey: 'Answer for the life you want. If your income covers it, great; if not, we will show what it takes.' },
+  { id: 'change', emoji: '🔀', label: 'A life change',
+    blurb: 'See how a new job, a move, marriage, moving in together or a baby changes your budget.',
+    survey: 'Answer for your life after the change.' },
+]
+
+// Classifiable life events. Pick one or several; each asks only for what it changes.
+export const LIFE_EVENTS = [
+  { id: 'job', emoji: '💼', label: 'Taking a new job', blurb: 'A new salary, in the same place or a new one.' },
+  { id: 'city', emoji: '🚚', label: 'Moving to a new city', blurb: 'Rent, prices, taxes and the pay to keep your lifestyle.' },
+  { id: 'marriage', emoji: '💍', label: 'Getting married', blurb: 'Two incomes on one joint return, one household.' },
+  { id: 'cohabit', emoji: '🏠', label: 'Moving in with a partner', blurb: 'Two incomes, shared home, each taxed on their own.' },
+  { id: 'baby', emoji: '👶', label: 'Having a baby', blurb: 'Daycare, groceries, health costs and a bigger home.' },
+  { id: 'move-out', emoji: '📦', label: "Moving out of my parents' home", blurb: 'Move-in cash and what a first place leaves for you.',
     prefs: { tenure: 'rent', cars: 1, carStyle: 2, goal: 'emergency', emergencyMonths: 0 }, roommates: 1 },
-  { id: 'improve', emoji: '📈', label: 'Improving my finances',
-    blurb: 'Find where your money goes and how fast you can build a cushion.',
-    prefs: { mealsPerWeek: 0.5, travelPlan: 'homebody', hobbies: 'low', fitness: 'none', carStyle: 2, goal: 'emergency' } },
-  { id: 'intention', emoji: '🧭', label: 'Living with intention',
-    blurb: 'Direct your money toward what you care about most.',
-    prefs: {} },
-  { id: 'city', emoji: '🚚', label: 'Moving to a new city',
-    blurb: 'Compare your life here with a new state, and the pay to keep it.',
-    prefs: {}, scenario: 'city' },
-  { id: 'job', emoji: '💼', label: 'Taking a new job',
-    blurb: 'See what a new salary (or location) changes about your life.',
-    prefs: {}, scenario: 'job' },
 ]
 
 // Pillar colors, validated for the site's dark surface (dataviz palette slots 1/4/3).

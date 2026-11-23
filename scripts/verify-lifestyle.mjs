@@ -1,5 +1,5 @@
 // Sanity harness for the lifestyle engine (runs in CI alongside verify-tco.mjs).
-import { computeLifestyle, housingMenu, derivePriorities, incomeForWishList, takeHome, stateIncomeTax, childcareMonthly, cheapCarInsuranceFactor, STATES, debtPayoffGain, costCenters, compareScenarios, equivalentIncome } from '../src/utils/lifestyle.js'
+import { computeLifestyle, applyLifeEvents, incomeToKeepLifestyle, householdOf, housingMenu, derivePriorities, incomeForWishList, takeHome, stateIncomeTax, childcareMonthly, cheapCarInsuranceFactor, STATES, debtPayoffGain, costCenters, compareScenarios, equivalentIncome } from '../src/utils/lifestyle.js'
 
 let failures = 0
 const check = (name, ok, info = '') => {
@@ -153,6 +153,34 @@ check('saver gets more cushion', saver.pillars.percents.cushion > neutral.pillar
   check('travelBuys: $3k buys a Europe week every couple of years', /one every/.test(lo.phrase), lo.phrase)
   check('travelBuys: $12k buys about two Europe weeks a year', /about 2/.test(hi.phrase), hi.phrase)
   check('travelBuys: a tiny budget is a stretch', /stretch/.test(travelBuys(500, ctx('CO')).find(x => x.id === 'week-europe').phrase))
+}
+
+// Life events compose the life after a change.
+{
+  const solo = { ...base, incomes: [80000], state: 'TX', age: '25-34' }
+  const after = (events, inputs) => applyLifeEvents(solo, events, inputs)
+  const marry = after(['marriage'], { partnerIncome: 70000 })
+  check('marriage: two incomes, married, no roommates', marry.married && marry.incomes.length === 2 && marry.incomes[1] === 70000 && marry.roommates === 0)
+  const cohab = after(['cohabit'], { partnerIncome: 70000 })
+  check('cohabiting: two adults, not married', householdOf(cohab).cohabiting && householdOf(cohab).adults === 2 && !cohab.married)
+  const cTH = computeLifestyle(cohab).tax
+  // A lopsided couple gets a marriage bonus: one high earner uses the wider joint brackets.
+  const lopsided = inc => applyLifeEvents({ ...solo, incomes: [250000] }, [inc], { partnerIncome: 40000 })
+  check('marriage bonus: a lopsided couple pays less federal tax married than cohabiting', computeLifestyle(lopsided('marriage')).tax.federal < computeLifestyle(lopsided('cohabit')).tax.federal)
+  check('cohabiting take-home = sum of two single returns', Math.abs(cTH.annual - (computeLifestyle({ ...solo, incomes: [80000] }).tax.annual + computeLifestyle({ ...solo, incomes: [70000] }).tax.annual)) <= 2)
+  check('a second adult adds groceries and health cost', computeLifestyle(marry).foundation.groceries > computeLifestyle(solo).foundation.groceries && computeLifestyle(cohab).foundation.health > computeLifestyle(solo).foundation.health)
+  const baby = after(['baby'], { babies: 1 })
+  check('baby: one more child, daycare age', baby.children === 1 && baby.childrenUnder6 === 1 && computeLifestyle(baby).foundation.childcare > 0)
+  const job = after(['job'], { newIncome: 110000 })
+  check('job: new income, same place', job.incomes[0] === 110000 && job.state === 'TX')
+  const move = after(['city'], { destState: 'CA' })
+  check('city: new state', move.state === 'CA' && move.city === null)
+  const combo = after(['job', 'city', 'marriage'], { newIncome: 100000, destState: 'WA', partnerIncome: 60000 })
+  check('events combine', combo.married && combo.state === 'WA' && combo.incomes[0] === 100000 && combo.incomes[1] === 60000)
+  check('marriage is ignored when already married', applyLifeEvents({ ...solo, married: true, incomes: [80000, 50000] }, ['marriage'], { partnerIncome: 1 }).incomes[1] === 50000)
+  const need = incomeToKeepLifestyle(solo, after(['baby'], { babies: 2 }))
+  check('two babies need more income to keep the same life', need && need.income > 80000, `${need?.income}`)
+  check('events never mutate the input profile', solo.married === false && solo.incomes.length === 1)
 }
 
 // City data: structure, and cities move results in the right direction.

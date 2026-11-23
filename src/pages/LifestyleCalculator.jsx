@@ -6,10 +6,13 @@ import { trackEvent } from '../utils/analytics'
 import { safeGet, safeSet } from '../utils/safeStorage'
 import {
   computeLifestyle, debtPayoffGain, AGE_RANGES, housingMenu, incomeForWishList,
-  costCenters, compareScenarios, equivalentIncome, moveInCash, emergencyFund, priorityShifts,
+  costCenters, compareProfiles, applyLifeEvents, incomeToKeepLifestyle, HOUSEHOLD_EVENTS,
+  moveInCash, emergencyFund, priorityShifts,
 } from '../utils/lifestyle.js'
-import { SURVEY_QUESTIONS, SURVEY_SECTIONS, STATE_LIST, LIFE_STAGES, PILLAR_COLORS } from '../data/lifestyleSurvey'
+import { SURVEY_QUESTIONS, SURVEY_SECTIONS, STATE_LIST, MODES, LIFE_EVENTS, PILLAR_COLORS } from '../data/lifestyleSurvey'
 import { CostCenterChart, ScenarioChart } from '../components/CostCenterChart'
+
+const householdPartnered = p => !!p.married || (!!p.cohabiting && (p.incomes?.length ?? 0) > 1)
 
 // City picker for a state; "Statewide average" keeps the state-level data.
 function CitySelect({ state, value, onChange, cities }) {
@@ -27,9 +30,9 @@ const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: '
 const STORAGE_KEY = 'cp_lifestyle_profile'
 
 const DEFAULT_FORM = {
-  married: false, income1: '', income2: '', age: '25-34', state: 'TX',
+  married: false, cohabiting: false, income1: '', income2: '', age: '25-34', state: 'TX',
   children: 0, under6: '', roommates: 0, debt: '', saved: '',
-  city: '', destState: '', destCity: '', newIncome: '', newState: '', newCity: '',
+  city: '', destState: '', destCity: '', newIncome: '', newState: '', newCity: '', partnerIncome: '', babies: 1,
 }
 
 const PILLARS = [
@@ -204,8 +207,9 @@ function WhatIf({ prefs, r, menu, onChange }) {
 }
 
 export default function LifestyleCalculator() {
-  const [step, setStep] = useState('stage') // stage | profile | survey | results
-  const [stageId, setStageId] = useState(null)
+  const [step, setStep] = useState('mode') // mode | events | profile | survey | results
+  const [mode, setMode] = useState(null) // current | dream | change
+  const [events, setEvents] = useState([]) // life events, when mode is 'change'
   const [cities, setCities] = useState(null) // { [state]: city rows sorted by population }
   const [form, setForm] = useState(DEFAULT_FORM)
   const [prefs, setPrefs] = useState({}) // survey answers
@@ -224,7 +228,6 @@ export default function LifestyleCalculator() {
       const saved = JSON.parse(safeGet(STORAGE_KEY) || 'null')
       if (saved?.form) setForm(f => ({ ...f, ...saved.form }))
       if (saved?.prefs) setPrefs(p => ({ ...p, ...saved.prefs }))
-      if (saved?.stageId) setStageId(saved.stageId)
     } catch { /* ignore corrupt cache */ }
     // Prefill from the landing entry card (?income=75000&state=TX)
     const qs = new URLSearchParams(window.location.search)
@@ -239,65 +242,81 @@ export default function LifestyleCalculator() {
 
   const cityRow = (st, id) => (id ? cities?.[st]?.find(c => c.id === id) ?? null : null)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const partnered = form.married || form.cohabiting
   const income1 = Number(form.income1) || 0
-  const income2 = form.married ? Number(form.income2) || 0 : 0
+  const income2 = partnered ? Number(form.income2) || 0 : 0
   const canContinue = income1 > 0
 
+  // Today's household and finances.
   const profile = useMemo(() => ({
-    incomes: form.married ? [income1, income2] : [income1],
-    age: form.age, state: form.state, married: form.married,
+    incomes: partnered ? [income1, income2] : [income1],
+    age: form.age, state: form.state, married: form.married, cohabiting: form.cohabiting,
     children: form.children, childrenUnder6: form.under6 === '' ? form.children : Math.min(form.under6, form.children), roommates: form.roommates,
     debtMonthly: Number(form.debt) || 0, savedForHome: Number(form.saved) || 0,
     city: cityRow(form.state, form.city),
     prefs,
-  }), [form, income1, income2, cities, prefs])
+  }), [form, income1, income2, partnered, cities, prefs])
 
-  const stage = LIFE_STAGES.find(x => x.id === stageId) ?? null
-  const destState = form.destState && form.destState !== form.state ? form.destState : ''
-  const newIncome = Number(form.newIncome) || 0
-  // The what-if: a new state (city move) and/or a new salary (new job).
-  const scenario = useMemo(() => {
-    if (!stage?.scenario) return null
-    if (stage.scenario === 'city') return destState ? { state: destState, city: cityRow(destState, form.destCity) } : null
-    const st = form.newState || form.state
-    const cityId = st === form.state && !form.newState ? form.city : form.newCity
-    if (!newIncome && st === form.state && cityId === form.city) return null
-    return { state: st, city: cityRow(st, cityId), ...(newIncome ? { incomes: form.married ? [newIncome, income2] : [newIncome] } : {}) }
-  }, [stage, destState, newIncome, form.newState, form.newCity, form.destCity, form.city, form.state, form.married, income2, cities])
+  // Life events: the life after the change, composed from today's profile.
+  const eventInputs = useMemo(() => ({
+    newIncome: Number(form.newIncome) || 0,
+    jobState: form.newState || '', jobCity: cityRow(form.newState, form.newCity),
+    destState: form.destState, destCity: cityRow(form.destState, form.destCity),
+    partnerIncome: Number(form.partnerIncome) || 0, babies: form.babies,
+  }), [form, cities])
+  const after = useMemo(() => (mode === 'change' ? applyLifeEvents(profile, events, eventInputs) : null), [mode, profile, events, eventInputs])
+  // Today's profile for comparison. When the household itself changes, the home size
+  // they picked for the new life isn't today's, so today's uses the size the household needs.
+  const before = useMemo(() => (events.some(e => HOUSEHOLD_EVENTS.includes(e)) ? { ...profile, prefs: { ...prefs, bedrooms: undefined, cars: undefined } } : profile), [profile, events, prefs])
+  const activeProfile = after ?? profile
+  const changed = !!after && JSON.stringify([after.incomes, after.state, after.city?.id, after.married, after.cohabiting, after.children]) !== JSON.stringify([profile.incomes, profile.state, profile.city?.id, profile.married, profile.cohabiting, profile.children])
 
-  const result = useMemo(() => (step === 'results' && canContinue ? computeLifestyle(profile) : null), [step, profile, canContinue])
-  const payoff = useMemo(() => (result ? debtPayoffGain(profile) : null), [result, profile])
-  const ownPlace = useMemo(() => (result && !form.married && form.children === 0 && form.roommates > 0
-    ? computeLifestyle({ ...profile, roommates: 0 }) : null), [result, form, profile])
+  const result = useMemo(() => (step === 'results' && canContinue ? computeLifestyle(activeProfile) : null), [step, activeProfile, canContinue])
+  const payoff = useMemo(() => (result ? debtPayoffGain(activeProfile) : null), [result, activeProfile])
+  const ownPlace = useMemo(() => (result && !householdPartnered(activeProfile) && (activeProfile.children | 0) === 0 && activeProfile.roommates > 0
+    ? computeLifestyle({ ...activeProfile, roommates: 0 }) : null), [result, activeProfile])
 
-  const compare = useMemo(() => (result && scenario ? compareScenarios(profile, scenario) : null), [result, scenario, profile])
-  const needIncome = useMemo(() => (result && stage?.scenario === 'city' && destState ? equivalentIncome(profile, destState, undefined, cityRow(destState, form.destCity)) : null), [result, stage, destState, form.destCity, profile, cities])
+  const compare = useMemo(() => (result && changed ? compareProfiles(before, after) : null), [result, changed, before, after])
+  const needIncome = useMemo(() => (result && changed ? incomeToKeepLifestyle(before, after) : null), [result, changed, before, after])
   const centers = useMemo(() => (result ? costCenters(result) : []), [result])
-  const menu = useMemo(() => housingMenu(profile), [profile])
-  const wishIncome = useMemo(() => (result ? incomeForWishList(profile) : null), [result, profile])
-  const shifts = useMemo(() => (result && stage?.id === 'intention' ? priorityShifts(profile) : null), [result, stage, profile])
+  const menu = useMemo(() => housingMenu(activeProfile), [activeProfile])
+  const wishIncome = useMemo(() => (result ? incomeForWishList(activeProfile) : null), [result, activeProfile])
+  const shifts = useMemo(() => (result ? priorityShifts(activeProfile) : null), [result, activeProfile])
+  const modeInfo = MODES.find(m => m.id === mode) ?? null
 
-  function chooseStage(st) {
-    setStageId(st.id)
-    setPrefs({ ...st.prefs })
-    setForm(f => ({ ...f, roommates: st.roommates != null && !f.married && f.children === 0 ? st.roommates : f.roommates }))
-    trackEvent('lifestyle_stage_selected', { stage: st.id })
+  function chooseMode(m) {
+    setMode(m.id)
+    setEvents([])
+    trackEvent('lifestyle_mode_selected', { mode: m.id })
+    setStep(m.id === 'change' ? 'events' : 'profile')
+    window.scrollTo?.({ top: 0 })
+  }
+
+  function confirmEvents() {
+    const picked = LIFE_EVENTS.filter(e => events.includes(e.id))
+    // A move-out seeds the survey with a first-place starting point.
+    const seed = picked.find(e => e.prefs)
+    if (seed) {
+      setPrefs(p => ({ ...seed.prefs, ...p }))
+      setForm(f => ({ ...f, roommates: seed.roommates != null && !f.married && !f.cohabiting && f.children === 0 ? seed.roommates : f.roommates }))
+    }
+    trackEvent('lifestyle_events_selected', { events: events.join(',') })
     setStep('profile')
     window.scrollTo?.({ top: 0 })
   }
 
   function persist() {
-    try { safeSet(STORAGE_KEY, JSON.stringify({ form, prefs, stageId })) } catch { /* storage blocked */ }
+    try { safeSet(STORAGE_KEY, JSON.stringify({ form, prefs, mode, events })) } catch { /* storage blocked */ }
   }
 
   // Questions visible for a given set of answers (some depend on earlier ones).
   const visibleFor = answers => {
-    const m = housingMenu({ ...profile, prefs: answers })
-    return SURVEY_QUESTIONS.filter(item => !item.when || item.when({ menu: m, profile, answers }))
+    const m = housingMenu({ ...activeProfile, prefs: answers })
+    return SURVEY_QUESTIONS.filter(item => !item.when || item.when({ menu: m, profile: activeProfile, answers }))
   }
 
   function goSurvey() {
-    trackEvent('lifestyle_profile_completed', { state: form.state, married: form.married, children: form.children })
+    trackEvent('lifestyle_profile_completed', { mode, state: form.state, partnered, children: form.children })
     setQKey(visibleFor(prefs)[0].key); setStep('survey')
   }
 
@@ -334,20 +353,27 @@ export default function LifestyleCalculator() {
     </div>
   )
 
-  // ── Step 0: life stage ──
-  if (step === 'stage') {
+  // ── Step 0: how do you want to use this? ──
+  if (step === 'mode') {
     return shell(
       <>
         <h1 className="font-display font-extrabold text-white text-3xl sm:text-4xl mb-3">See the life your income can build</h1>
-        <p className="text-[var(--text-muted)] text-lg mb-8">What brings you here? We'll tailor your results to where you are right now.</p>
+        <p className="text-[var(--text-muted)] text-lg mb-8">
+          Cash Pedal turns your income into a clear, priced picture of your life, wherever you live. What would you like to explore?
+        </p>
         <div className="grid gap-3">
-          {LIFE_STAGES.map(st => (
-            <button key={st.id} type="button" onClick={() => chooseStage(st)}
+          {MODES.map(m => (
+            <button key={m.id} type="button" onClick={() => chooseMode(m)}
               className="card text-left flex items-start gap-4 transition-colors hover:border-[var(--accent)]">
-              <span className="text-3xl">{st.emoji}</span>
+              <span className="text-3xl">{m.emoji}</span>
               <span>
-                <span className="block text-white font-bold text-lg">{st.label}</span>
-                <span className="block text-sm text-[var(--text-muted)]">{st.blurb}</span>
+                <span className="block text-white font-bold text-lg">{m.label}</span>
+                <span className="block text-sm text-[var(--text-muted)]">{m.blurb}</span>
+                {m.id === 'change' && (
+                  <span className="block text-xs text-[var(--text-muted)] mt-2">
+                    {LIFE_EVENTS.map(e => `${e.emoji} ${e.label.replace(/^(Taking|Moving to|Getting|Moving in with|Having|Moving out of) (a |an |my )?/i, '').replace(/^./, c => c.toUpperCase())}`).join(' · ')}
+                  </span>
+                )}
               </span>
             </button>
           ))}
@@ -357,29 +383,61 @@ export default function LifestyleCalculator() {
     )
   }
 
+  // ── Step 0b: which life events? ──
+  if (step === 'events') {
+    const toggle = id => setEvents(es => (es.includes(id) ? es.filter(x => x !== id) : [...es, id]))
+    return shell(
+      <>
+        <button className="text-sm text-[var(--text-muted)] hover:text-white mb-4" onClick={() => setStep('mode')}>← Back</button>
+        <h1 className="font-display font-extrabold text-white text-3xl sm:text-4xl mb-3">What's changing?</h1>
+        <p className="text-[var(--text-muted)] text-lg mb-8">Pick one or several. We'll compare your life today with your life after.</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {LIFE_EVENTS.map(e => {
+            const on = events.includes(e.id)
+            return (
+              <button key={e.id} type="button" onClick={() => toggle(e.id)} aria-pressed={on}
+                className="card text-left flex items-start gap-3 transition-colors hover:border-[var(--accent)]"
+                style={{ borderColor: on ? 'var(--accent)' : undefined, background: on ? 'var(--accent-muted)' : undefined }}>
+                <span className="text-2xl">{e.emoji}</span>
+                <span>
+                  <span className="block text-white font-bold">{e.label}</span>
+                  <span className="block text-sm text-[var(--text-muted)]">{e.blurb}</span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+        <button className="btn-primary justify-center py-4 w-full mt-6" disabled={events.length === 0} onClick={confirmEvents}>
+          Continue →
+        </button>
+      </>
+    )
+  }
+
   // ── Step 1: profile ──
   if (step === 'profile') {
     return shell(
       <>
-        <button className="text-sm text-[var(--text-muted)] hover:text-white mb-4" onClick={() => setStep('stage')}>← {stage?.label}</button>
-        <h1 className="font-display font-extrabold text-white text-3xl sm:text-4xl mb-3">Your financial profile</h1>
+        <button className="text-sm text-[var(--text-muted)] hover:text-white mb-4" onClick={() => setStep(mode === 'change' ? 'events' : 'mode')}>← {modeInfo?.label}</button>
+        <h1 className="font-display font-extrabold text-white text-3xl sm:text-4xl mb-3">{mode === 'change' ? 'Your life today' : 'Your financial profile'}</h1>
         <p className="text-[var(--text-muted)] text-lg mb-8">
-          Tell us a little about you, then what matters most. We'll show the home, neighborhoods, nights out and
-          car your budget supports.
+          {mode === 'change'
+            ? "Start with where you are now. We'll ask about the change next."
+            : "Tell us a little about you, then what matters most. We'll show the home, neighborhoods, nights out and car your budget supports."}
         </p>
         <div className="card flex flex-col gap-6">
           <Field label="Household">
             <Segmented
-              value={form.married}
-              onChange={v => setForm(f => ({ ...f, married: v, roommates: v ? 0 : f.roommates }))}
-              options={[{ value: false, label: 'Just me' }, { value: true, label: 'Married / partnered' }]}
+              value={form.married ? 'married' : form.cohabiting ? 'cohabit' : 'single'}
+              onChange={v => setForm(f => ({ ...f, married: v === 'married', cohabiting: v === 'cohabit', roommates: v === 'single' ? f.roommates : 0 }))}
+              options={[{ value: 'single', label: 'Just me' }, { value: 'cohabit', label: 'Living with a partner' }, { value: 'married', label: 'Married' }]}
             />
           </Field>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Field label={form.married ? 'Your gross annual income' : 'Gross annual income'}>
+            <Field label={partnered ? 'Your gross annual income' : 'Gross annual income'}>
               <MoneyInput value={form.income1} onChange={v => set('income1', v)} placeholder="75000" />
             </Field>
-            {form.married && (
+            {partnered && (
               <Field label="Partner's gross annual income" hint="Leave blank if one income.">
                 <MoneyInput value={form.income2} onChange={v => set('income2', v)} placeholder="60000" />
               </Field>
@@ -418,7 +476,7 @@ export default function LifestyleCalculator() {
               />
             </Field>
           )}
-          {!form.married && form.children === 0 && (
+          {!partnered && form.children === 0 && (
             <Field label="Living arrangement" hint="Roommates split rent and utilities, which frees money for the rest of your life.">
               <Segmented
                 value={form.roommates}
@@ -435,34 +493,57 @@ export default function LifestyleCalculator() {
               <MoneyInput value={form.saved} onChange={v => set('saved', v)} placeholder="0" />
             </Field>
           </div>
-          {stage?.scenario === 'city' && (
-            <Field label="Where are you thinking of moving?" hint="We'll compare your costs and the pay needed to keep your lifestyle.">
-              <div className="grid sm:grid-cols-2 gap-3">
-                <select className="input-field" value={form.destState} onChange={e => setForm(f => ({ ...f, destState: e.target.value, destCity: '' }))}>
-                  <option value="">Choose a state…</option>
-                  {STATE_LIST.filter(([c]) => c !== form.state).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
-                </select>
-                {form.destState && <CitySelect state={form.destState} value={form.destCity} onChange={v => set('destCity', v)} cities={cities} />}
-              </div>
-            </Field>
-          )}
-          {stage?.scenario === 'job' && (
-            <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="New job's gross annual income">
-                <MoneyInput value={form.newIncome} onChange={v => set('newIncome', v)} placeholder="95000" />
-              </Field>
-              <Field label="New job's state" hint="Leave as is if you're not relocating.">
-                <div className="grid gap-3">
-                  <select className="input-field" value={form.newState || form.state} onChange={e => setForm(f => ({ ...f, newState: e.target.value, newCity: '' }))}>
-                    {STATE_LIST.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
-                  </select>
-                  {form.newState && form.newState !== form.state && <CitySelect state={form.newState} value={form.newCity} onChange={v => set('newCity', v)} cities={cities} />}
+          {mode === 'change' && (
+            <div className="rounded-xl border p-4 flex flex-col gap-5" style={{ borderColor: 'var(--accent)' }}>
+              <p className="text-xs uppercase tracking-widest font-semibold text-[var(--accent)]">After the change</p>
+              {events.includes('job') && (
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Field label="💼 New job's gross annual income">
+                    <MoneyInput value={form.newIncome} onChange={v => set('newIncome', v)} placeholder="95000" />
+                  </Field>
+                  {!events.includes('city') && (
+                    <Field label="Is the job in a different state?" hint="Leave as is if you're not relocating.">
+                      <div className="grid gap-3">
+                        <select className="input-field" value={form.newState || form.state} onChange={e => setForm(f => ({ ...f, newState: e.target.value === f.state ? '' : e.target.value, newCity: '' }))}>
+                          {STATE_LIST.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+                        </select>
+                        {form.newState && <CitySelect state={form.newState} value={form.newCity} onChange={v => set('newCity', v)} cities={cities} />}
+                      </div>
+                    </Field>
+                  )}
                 </div>
-              </Field>
+              )}
+              {events.includes('city') && (
+                <Field label="🚚 Where are you moving?" hint="We'll compare your costs and the pay needed to keep your lifestyle.">
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <select className="input-field" value={form.destState} onChange={e => setForm(f => ({ ...f, destState: e.target.value, destCity: '' }))}>
+                      <option value="">Choose a state…</option>
+                      {STATE_LIST.filter(([c]) => c !== form.state).map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+                    </select>
+                    {form.destState && <CitySelect state={form.destState} value={form.destCity} onChange={v => set('destCity', v)} cities={cities} />}
+                  </div>
+                </Field>
+              )}
+              {(events.includes('marriage') || events.includes('cohabit')) && (partnered ? (
+                <p className="text-sm text-[var(--text-muted)]">You already share a household with a partner, so we'll keep it as is.</p>
+              ) : (
+                <Field label={events.includes('marriage') ? "💍 Your spouse's gross annual income" : "🏠 Your partner's gross annual income"}
+                  hint={events.includes('marriage') ? 'Married couples file one joint return.' : 'Unmarried partners are taxed on their own incomes.'}>
+                  <MoneyInput value={form.partnerIncome} onChange={v => set('partnerIncome', v)} placeholder="60000" />
+                </Field>
+              ))}
+              {events.includes('baby') && (
+                <Field label="👶 How many babies?" hint="Priced as full-time daycare, with a bigger home and higher health and grocery costs.">
+                  <Segmented value={form.babies} onChange={v => set('babies', v)} options={[1, 2, 3].map(n => ({ value: n, label: String(n) }))} />
+                </Field>
+              )}
+              {events.includes('move-out') && (
+                <p className="text-sm text-[var(--text-muted)]">📦 We'll show the cash to move into a first place and what it leaves for you. Choose your housing in the next questions.</p>
+              )}
             </div>
           )}
           <button className="btn-primary justify-center py-4" disabled={!canContinue} onClick={goSurvey}>
-            Next: what matters to you →
+            {mode === 'change' ? 'Next: your life after the change →' : mode === 'dream' ? 'Next: design your dream →' : 'Next: what matters to you →'}
           </button>
         </div>
         <p className="text-xs text-[var(--text-muted)] mt-4">
@@ -477,7 +558,7 @@ export default function LifestyleCalculator() {
     const list = visibleFor(prefs)
     const idx = Math.max(0, list.findIndex(x => x.key === qKey))
     const item = list[idx]
-    const ctx = { menu, profile, answers: prefs }
+    const ctx = { menu, profile: activeProfile, answers: prefs }
     const sec = SURVEY_SECTIONS[item.section]
     return shell(
       <>
@@ -487,6 +568,7 @@ export default function LifestyleCalculator() {
           </div>
           <span className="text-xs text-[var(--text-muted)] font-semibold tabular-nums">{idx + 1} / {list.length}</span>
         </div>
+        {idx === 0 && modeInfo && <p className="text-sm text-[var(--text-muted)] mb-3">{modeInfo.survey}</p>}
         <p className="text-xs uppercase tracking-widest font-semibold text-[var(--accent)] mb-4">{sec.emoji} {sec.label}</p>
         <div className="card">
           <Question item={item} ctx={ctx} value={prefs[item.key]} onAnswer={v => answer(item.key, v)} />
@@ -505,9 +587,12 @@ export default function LifestyleCalculator() {
   const r = result
   return shell(
     <>
-      <h1 className="font-display font-extrabold text-white text-3xl sm:text-4xl mb-2">Here's the life you can build</h1>
+      <p className="text-xs uppercase tracking-widest font-semibold text-[var(--accent)] mb-2">{modeInfo?.emoji} {modeInfo?.label}</p>
+      <h1 className="font-display font-extrabold text-white text-3xl sm:text-4xl mb-2">
+        {mode === 'dream' ? 'Your dream lifestyle, priced' : mode === 'change' ? 'Your life after the change' : "Here's the life you can build"}
+      </h1>
       <p className="text-[var(--text-muted)] mb-8">
-        Based on about {usd(r.tax.monthly)}/month take-home in {profile.city ? `${profile.city.name}, ${profile.city.state}` : STATE_LIST.find(s => s[0] === form.state)?.[1]}.
+        Based on about {usd(r.tax.monthly)}/month take-home in {activeProfile.city ? `${activeProfile.city.name}, ${activeProfile.city.state}` : STATE_LIST.find(x => x[0] === activeProfile.state)?.[1]}.
       </p>
 
       <section className="card mb-6">
@@ -515,7 +600,7 @@ export default function LifestyleCalculator() {
         <PillarBar pillars={r.pillars} />
         {r.housing.stretched && (
           <p className="text-sm text-[var(--text-muted)] mt-4">
-            Your fixed costs are using most of your budget right now. {form.roommates === 0 && !form.married && form.children === 0
+            Your fixed costs are using most of your budget right now. {activeProfile.roommates === 0 && !householdPartnered(activeProfile) && !(activeProfile.children | 0)
               ? 'Adding a roommate or paying down debt is the quickest way to open up room.'
               : 'Paying down debt or choosing a lower-cost neighborhood type opens up room.'}
           </p>
@@ -534,28 +619,19 @@ export default function LifestyleCalculator() {
         <CostCenterChart centers={centers} />
       </section>
 
-      {stage && (
+      {modeInfo && (
         <section className="card mb-6" style={{ borderColor: 'var(--accent)' }}>
-          <h2 className="font-display font-bold text-white text-xl mb-1">{stage.emoji} {stage.label}</h2>
-          {stage.id === 'moving-out' && (() => {
-            const m = moveInCash(r)
-            return (
-              <>
-                <p className="text-white font-semibold">Plan on about {usd(m.total)} in cash to move in</p>
-                <p className="text-sm text-[var(--text-muted)] mt-1">
-                  First month plus deposit (~{usd(m.firstAndDeposit)}) and about {usd(m.setup)} to furnish and set up. Once you're in,
-                  you can still direct {usd(r.pillars.lifestyle)}/month to Lifestyle and {usd(r.pillars.cushion)}/month to Cushion.
-                </p>
-              </>
-            )
-          })()}
-          {stage.id === 'improve' && (() => {
+          <h2 className="font-display font-bold text-white text-xl mb-2">
+            {mode === 'current' ? '🧭 Your life today' : mode === 'dream' ? '✨ Your dream, in dollars' : '🔀 Today vs after the change'}
+          </h2>
+
+          {mode === 'current' && (() => {
             const e = emergencyFund(r)
             const trim = Math.round(r.lifestyle.dining * 0.25)
             return (
               <>
                 <p className="text-white font-semibold">
-                  {e.gap <= 0 ? `Your safety net is already at its ${usd(e.target)} target`
+                  {e.gap <= 0 ? `Your safety net is at its ${usd(e.target)} target`
                     : e.months != null ? `Your ${usd(e.target)} safety net is about ${e.months} month${e.months === 1 ? '' : 's'} away`
                     : `Your safety net target is ${usd(e.target)}`}
                 </p>
@@ -567,47 +643,78 @@ export default function LifestyleCalculator() {
               </>
             )
           })()}
-          {stage.id === 'intention' && shifts && (
+
+          {mode === 'dream' && (
             <>
-              <p className="text-white font-semibold">Your answers, in dollars</p>
-              <p className="text-sm text-[var(--text-muted)] mt-1 mb-3">Compared with a neutral set of answers, here is where your money moves.</p>
-              {shifts.every(x => x.delta === 0) && (
-                <p className="text-sm text-[var(--text-muted)]">Your answers match the neutral split. Change your answers below to see money shift toward what you care about.</p>
-              )}
-              <ul className="flex flex-col gap-1.5">
-                {[...shifts.slice(0, 3), ...shifts.slice(-1)].filter((x, i, a) => x.delta !== 0 && a.indexOf(x) === i).map(x => (
-                  <li key={x.key} className="flex justify-between text-sm">
-                    <span className="text-white">{x.label}</span>
-                    <span className="tabular-nums text-white">{x.delta > 0 ? '▲' : '▼'} {usd(Math.abs(x.delta))}/mo</span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-          {stage.scenario && !compare && (
-            <p className="text-sm text-[var(--text-muted)]">
-              {stage.scenario === 'city' ? 'Choose a destination state to compare.' : 'Enter a new salary or a new state to compare.'}{' '}
-              <button className="underline" onClick={() => setStep('profile')}>Add it now</button>
-            </p>
-          )}
-          {compare && (
-            <>
-              <p className="text-white font-semibold mt-1">
-                {stage.scenario === 'city'
-                  ? `In ${scenario?.city ? `${scenario.city.name}, ${scenario.city.state}` : STATE_LIST.find(x => x[0] === destState)?.[1]}, at the same income`
-                  : 'With the new job'}
-                : take-home {compare.takeHomeDelta >= 0 ? 'rises ▲' : 'falls ▼'} {usd(Math.abs(compare.takeHomeDelta))}/month, and what's left for Lifestyle and Cushion {compare.discretionaryDelta >= 0 ? 'grows ▲' : 'shrinks ▼'} {usd(Math.abs(compare.discretionaryDelta))}/month.
+              <p className="text-white font-semibold">
+                {r.lifestyle.coverage >= 0.999
+                  ? (r.housing.pick?.status === 'stretch' ? 'Your day-to-day dream fits, but your dream home is a stretch.' : 'Your dream fits your income today.')
+                  : `Your income funds about ${Math.round(r.lifestyle.coverage * 100)}% of your dream lifestyle${r.housing.pick?.status === 'stretch' ? ', and your dream home is a stretch' : ''}.`}
               </p>
-              {needIncome && (
+              {wishIncome && (
                 <p className="text-sm mt-1" style={{ color: 'var(--success, #5FE0B8)' }}>
-                  To keep today's Lifestyle and Cushion there, you'd want about {usd(needIncome.income)}/year
-                  ({needIncome.ratio >= 1 ? `${Math.round((needIncome.ratio - 1) * 100)}% more` : `${Math.round((1 - needIncome.ratio) * 100)}% less`} than now).
+                  To fund all of it where you live, you'd want roughly {usd(wishIncome.income)}/year, about {Math.round((wishIncome.ratio - 1) * 100)}% more than today.
                 </p>
               )}
-              <div className="mt-5">
-                <ScenarioChart rows={compare.rows} nowLabel={profile.city?.name ?? STATE_LIST.find(x => x[0] === form.state)?.[1] ?? 'Now'}
-                  nextLabel={stage.scenario === 'city' ? (scenario?.city?.name ?? STATE_LIST.find(x => x[0] === destState)?.[1]) : 'New job'} />
-              </div>
+              {shifts && shifts.some(x => x.delta !== 0) && (
+                <>
+                  <p className="text-sm text-[var(--text-muted)] mt-3 mb-2">Compared with a typical life at your income, your dream spends differently here:</p>
+                  <ul className="flex flex-col gap-1.5">
+                    {[...shifts.slice(0, 3), ...shifts.slice(-2)].filter((x, i, arr) => x.delta !== 0 && arr.indexOf(x) === i).map(x => (
+                      <li key={x.key} className="flex justify-between text-sm">
+                        <span className="text-white">{x.label}</span>
+                        <span className="tabular-nums text-white">{x.delta > 0 ? '▲' : '▼'} {usd(Math.abs(x.delta))}/mo</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </>
+          )}
+
+          {mode === 'change' && (
+            <>
+              <p className="text-sm text-[var(--text-muted)] mb-3">
+                {LIFE_EVENTS.filter(e => events.includes(e.id)).map(e => `${e.emoji} ${e.label}`).join('  ·  ')}
+              </p>
+              {events.includes('move-out') && (() => {
+                const m = moveInCash(r)
+                return (
+                  <p className="text-sm text-white mb-3">
+                    📦 Plan on about {usd(m.total)} in cash to move in: first month plus deposit (~{usd(m.firstAndDeposit)}) and about {usd(m.setup)} to furnish and set up.
+                  </p>
+                )
+              })()}
+              {!compare && !events.every(e => e === 'move-out') && (
+                <p className="text-sm text-[var(--text-muted)]">
+                  Add the details of the change (a new income, a destination, your partner's income) so we can compare.{' '}
+                  <button className="underline" onClick={() => setStep('profile')}>Add them now</button>
+                </p>
+              )}
+              {compare && (
+                <>
+                  <p className="text-white font-semibold">
+                    Take-home {compare.takeHomeDelta >= 0 ? 'rises ▲' : 'falls ▼'} {usd(Math.abs(compare.takeHomeDelta))}/month, and what's left for Lifestyle and Cushion {compare.discretionaryDelta >= 0 ? 'grows ▲' : 'shrinks ▼'} {usd(Math.abs(compare.discretionaryDelta))}/month.
+                  </p>
+                  {(events.includes('marriage') || events.includes('cohabit') || events.includes('job') || events.includes('city')) && (
+                    <p className="text-sm text-[var(--text-muted)] mt-1">
+                      Income taxes and payroll taxes: {usd(compare.now.tax.federal + compare.now.tax.state + compare.now.tax.fica)} → {usd(compare.next.tax.federal + compare.next.tax.state + compare.next.tax.fica)} a year.
+                    </p>
+                  )}
+                  {events.includes('baby') && (
+                    <p className="text-sm text-[var(--text-muted)] mt-1">Child care alone adds about {usd(compare.next.foundation.childcare - compare.now.foundation.childcare)}/month.</p>
+                  )}
+                  {needIncome && (
+                    <p className="text-sm mt-1" style={{ color: 'var(--success, #5FE0B8)' }}>
+                      To keep today's Lifestyle and Cushion after the change, you'd want about {usd(needIncome.income)}/year household income
+                      ({needIncome.ratio >= 1 ? `${Math.round((needIncome.ratio - 1) * 100)}% more` : `${Math.round((1 - needIncome.ratio) * 100)}% less`} than the new figure).
+                    </p>
+                  )}
+                  <div className="mt-5">
+                    <ScenarioChart rows={compare.rows} nowLabel="Today" nextLabel="After" />
+                  </div>
+                </>
+              )}
             </>
           )}
         </section>
@@ -789,6 +896,7 @@ export default function LifestyleCalculator() {
       <div className="flex gap-3 flex-wrap">
         <button className="btn-ghost" onClick={() => { persist(); setStep('profile') }}>← Edit my details</button>
         <button className="btn-ghost" onClick={goSurvey}>Edit my answers</button>
+        <button className="btn-ghost" onClick={() => { persist(); setStep('mode') }}>Explore something else</button>
       </div>
       <p className="text-xs text-[var(--text-muted)] mt-6">
         Estimates only, based on 2026 federal and state tax rules, state-level price data and a {6.75}% 30-year mortgage. Not financial, tax or legal advice.

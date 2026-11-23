@@ -34,15 +34,18 @@ export const ROUTE_META = {
   '/lifestyle': {
     title: 'What Lifestyle Can I Afford? Budget Calculator | Cash Pedal',
     description:
-      'Enter your income, state and household, share your priorities, and see the home, neighborhoods, dining and car your budget can support.',
+      'See your life today, design your dream lifestyle, or preview a life change like a new job, a move, marriage or a baby, priced for your city.',
     h1: 'See the life your income can build',
     intro: [
-      'The Cash Pedal lifestyle calculator turns your income, age range, state, household and existing debt into three budget pillars: Foundation (housing, bills, groceries, car and debt), Lifestyle (dining, travel and fun) and Cushion (savings and safety net).',
-      'A short priorities survey then shows what those pillars can buy: whether renting or buying fits, which neighborhood types suit you, how often you can eat out, and what car tier fits. Singles can compare living alone with roommates; couples use a joint income.',
+      'The Cash Pedal lifestyle calculator turns your income, age range, city and state, household and existing debt into three budget pillars: Foundation (housing, bills, groceries, car and debt), Lifestyle (dining, travel and fun) and Cushion (savings and safety net).',
+      'Use it three ways: see your life today, design your dream lifestyle and what income it takes, or preview a life change. Life events you can compare include taking a new job, moving to a new city, getting married, moving in with a partner, having a baby and moving out of your parents\' home, alone or combined.',
+      'A short survey of concrete choices, priced for your city, shows what your budget supports: whether renting or buying fits, which kind of area suits you, how often you can eat out, the trips you can take, and what car fits.',
     ],
     faq: [
       ['What are the three budget pillars?',
-        'Foundation covers needs and fixed costs including housing and existing debt payments, Lifestyle covers dining, travel and entertainment, and Cushion covers savings and your safety net. The baseline split is roughly 50/30/20 and shifts with your priorities, age and household.'],
+        'Foundation covers needs and fixed costs including housing and existing debt payments, Lifestyle covers dining, travel and entertainment, and Cushion covers savings and your safety net. The baseline split is roughly 50/30/20 and shifts with your answers, age and household.'],
+      ['What life changes can I preview?',
+        'A new job, moving to a new city, getting married, moving in with a partner, having a baby, or moving out of your parents\' home. Pick one or several and compare your budget today with your budget after the change.'],
       ['Should I rent or buy?',
         'The calculator estimates the home price your budget supports, the down payment needed and the 7-year net cost of owning versus renting, then tells you whether buying fits now, soon, or whether renting keeps more money in your pocket.'],
     ],

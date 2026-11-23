@@ -290,3 +290,28 @@ $1,300 Asia; lodging $110–$230 a room-night; food and activities $65–$115 a 
 data, and the regional fare multipliers are rules of thumb. To source them, replace `BASE_FARE` and the region `fare`
 multipliers with BTS domestic itinerary fares plus an international fare source; the host bts.gov is not reachable
 from the build environment today.
+
+## 16. Three ways to use it, and classifiable life events (built)
+
+The first screen asks what the visitor wants to explore. All three paths end in the same priced picture of their life.
+
+| Path | Survey framing | Results emphasis |
+|---|---|---|
+| **My life today** | "Answer for how you live today." | Where income goes, wish list vs budget, safety-net status and levers (trim dining, clear debt) |
+| **My dream lifestyle** | "Answer for the life you want." | How much of the dream the income funds, the income it would take, and where it spends differently from a typical life |
+| **A life change** | "Answer for your life after the change." | Today vs after: take-home, discretionary dollars, taxes, per-cost-center change, and the income needed to keep today's lifestyle |
+
+**Life events** (pick one or several; each asks only for what it changes; `applyLifeEvents()` composes the life after):
+
+| Event | Input | Effect |
+|---|---|---|
+| Taking a new job | new gross income, optional new state/city | income (and place) changes |
+| Moving to a new city | destination state, optional city | rent, home prices, price levels, taxes |
+| Getting married | spouse's income | joint return, two adults (ignored if already married) |
+| Moving in with a partner | partner's income | two adults, each taxed as single (new `cohabiting` household) |
+| Having a baby | number of babies | children added at daycare age: daycare, groceries, health, bigger home |
+| Moving out of my parents' home | none | move-in cash, first-place starting answers (rent, a roommate) |
+
+When a household-changing event is chosen (marriage, cohabiting, baby), "today" uses the home size and car count the household
+needs, not the size picked for the new life. Cohabiting couples are taxed separately (higher earner claims children); a
+lopsided married couple pays less federal tax than the same unmarried couple (marriage bonus), which the checks assert.
